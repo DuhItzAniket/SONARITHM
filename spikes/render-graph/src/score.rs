@@ -158,3 +158,15 @@ pub fn canonical_bytes(score: &Score) -> Vec<u8> {
     }
     out
 }
+
+/// Test Score: the first 2 s of a benchmark Score (0.1 s under Miri, which is slow).
+#[cfg(test)]
+pub fn short_score() -> Score {
+    let frames = if cfg!(miri) { 4_800 } else { 96_000 };
+    let mut score = benchmark(48_000, 2, 7);
+    for t in &mut score.tracks {
+        t.notes.retain(|n| n.start < frames);
+    }
+    score.frames = frames;
+    score
+}
