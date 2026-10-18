@@ -4,8 +4,13 @@
 //! The SONARITHM compiler: pipeline orchestration, the engine registry and diagnostics
 //! aggregation. It compiles a spec plus data into a Score.
 //!
-//! Skeleton created in phase A01; the pipeline skeleton arrives in A03 and the first engine
-//! in A06 (docs/architecture/05-compiler-and-score-ir.md).
+//! The pipeline skeleton arrives in A03 and the first engine in A06
+//! (docs/architecture/05-compiler-and-score-ir.md).
 
 #![forbid(unsafe_code)]
 #![deny(missing_docs)]
+
+pub mod codes;
+pub mod registry;
+
+pub use registry::build_registry;

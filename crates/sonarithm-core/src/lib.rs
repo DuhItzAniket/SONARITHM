@@ -14,6 +14,7 @@
 pub mod codes;
 pub mod diagnostic;
 pub mod digest;
+pub mod engine;
 pub mod ids;
 pub mod math;
 pub mod provenance;
