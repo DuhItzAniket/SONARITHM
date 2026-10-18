@@ -18,9 +18,9 @@ Write an ADR when a decision is hard to reverse, affects several crates or engin
 |---|---|---|---|
 | [0000](0000-use-madr.md) | Record architecture decisions with MADR | accepted | — |
 | [0001](0001-rust-workspace-core.md) | Rust workspace as the single core | accepted | — |
-| [0002](0002-desktop-shell-tauri.md) | Tauri 2 as the desktop shell, Electron as fallback | accepted (provisional) | A02 prototype gate |
-| [0003](0003-frontend-react-and-react-aria.md) | React 19 + React Aria Components for the UI | accepted (provisional) | A02 prototype gate |
-| [0004](0004-audio-backend-and-render-graph.md) | Own render graph over a cpal-backed `AudioBackend` trait | accepted (provisional) | A02 graph spike |
+| [0002](0002-desktop-shell-tauri.md) | Tauri 2 as the desktop shell, Electron as fallback | accepted (provisional) | A02 prototype gate: Windows evidence in; WebKitGTK, WKWebView and screen-reader steps pending ([gate report](../sdlc/reviews/A02-prototype-gate.md#adr-decisions)) |
+| [0003](0003-frontend-react-and-react-aria.md) | React 19 + React Aria Components for the UI | accepted (provisional) | A02 prototype gate: prototype built; NVDA, Narrator, VoiceOver and Orca walkthroughs pending ([gate report](../sdlc/reviews/A02-prototype-gate.md#adr-decisions)) |
+| [0004](0004-audio-backend-and-render-graph.md) | Own render graph over a cpal-backed `AudioBackend` trait | accepted | Confirmed at the A02 gate, 2026-10-19: owned graph kept, Firewheel not adopted ([gate report](../sdlc/reviews/A02-prototype-gate.md#spike-2-render-graph-owned-versus-firewheel-a02-t02-t03)); the PB-01 latency gap goes to ADR-0016 |
 | [0005](0005-declarative-spec-and-score-ir.md) | Declarative spec compiled to a canonical Score IR | accepted | Spec v0.1 frozen by RFC-0001 (2026-10-19, ADR-0015) |
 | [0006](0006-arrow-data-model.md) | Apache Arrow as the internal data model | accepted | — |
 | [0007](0007-engines-as-pipeline-capabilities.md) | Nine engines as capabilities of one compiler | accepted | — |
@@ -31,6 +31,7 @@ Write an ADR when a decision is hard to reverse, affects several crates or engin
 | [0012](0012-privacy-and-telemetry.md) | No default telemetry; offline by default | accepted | — |
 | [0013](0013-determinism-and-provenance.md) | Determinism and render provenance | accepted | A05 golden tests |
 | [0015](0015-spec-v0.1-frozen.md) | Spec v0.1 frozen per RFC-0001 | accepted (2026-10-19) | A03-T06..T11 implement it |
+| [0016](0016-windows-low-latency-backend.md) | A Windows low-latency audio backend and per-device latency calibration | proposed | A05 cable measurement against PB-01 |
 
 ## Process
 

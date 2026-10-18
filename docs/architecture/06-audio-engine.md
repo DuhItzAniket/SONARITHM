@@ -81,7 +81,14 @@ flowchart LR
 
 ### 3.1 Own graph or Firewheel
 
-A02 builds both behind the same `RenderGraph` trait and measures them. The baseline plan is a **small, owned graph**: fixed buses plus a voice pool, which is all a sonification needs. Firewheel 0.14 (DAG compile, real-time-safe events, sample/musical clocks) is the strongest candidate if the owned graph proves limiting. Against it: Firewheel is pre-1.0 and a Bevy audit found undefined behaviour ([research report](../research/research-report.md#the-audio-core-should-own-its-graph-and-treat-devices-as-plug-ins)). The decision is recorded by amending ADR-0004 at the A02 gate.
+A02 built both behind the same contract and measured them ([A02 gate report](../sdlc/reviews/A02-prototype-gate.md#spike-2-render-graph-owned-versus-firewheel-a02-t02-t03)). **Decision: the owned graph** ([ADR-0004](../decisions/0004-audio-backend-and-render-graph.md), confirmed at the A02 gate).
+
+Firewheel 0.14 produced bit-identical output at the same CPU cost. It brings no synthesis voices, adds 43 crates, and allocates on the audio thread by default when an event buffer fills (F-035).
+
+The contract has two halves (F-036):
+
+- a control half on a non-real-time thread: `prepare` builds the voice pools and schedule, `update` is the control tick, `seek`. It is not `Send`: it stays on the thread that built it.
+- a `GraphProcessor` moved to the audio thread: `process(out)` renders one block, with every event at its exact sample offset, and publishes counters through atomics.
 
 ## 4. Real-time communication
 
@@ -119,7 +126,8 @@ pub trait AudioBackend {
 | `CpalBackend` | A05 | cpal 0.18: WASAPI (shared) / ASIO (feature), CoreAudio, PipeWire/PulseAudio/ALSA/JACK (feature). Stream rebuilds after device loss happen on the control thread |
 | `OfflineBackend` | A05 | A plain loop at a fixed block size into a sink (file writer, null, analyzer) |
 | `WebAudioBackend` | D05 | cpal's WebAudio/AudioWorklet host for `sonarithm-wasm` |
-| Exclusive mode | Later | WASAPI or CoreAudio exclusive via the `wasapi` crate if latency budgets require it ([risk R-03](../planning/risk-register.md)) |
+| `WasapiBackend` | A05 (proposed, [ADR-0016](../decisions/0016-windows-low-latency-backend.md)) | Windows: shared mode with the RAW stream option by default (no OEM enhancement APOs), exclusive mode as an opt-in low-latency setting. A02 measured cpal's shared mode at 123 ms p95 key-to-onset on the development laptop, against PB-01's 50 ms ([risk R-03](../planning/risk-register.md)) |
+| CoreAudio exclusive (hog mode) | Later | Only if macOS measurements (pending, R-22) miss PB-01 |
 
 ## 7. Export
 
@@ -164,7 +172,7 @@ The **Score IR is the strict artifact** (byte-identical). Audio is compared with
 
 ## 9. Latency and clock synchronization
 
-1. Each block records `(sample_position, host_time_at_output)`. The output time is estimated from cpal's timestamp plus the reported device latency.
+1. Each block records `(sample_position, host_time_at_output)`. The output time is estimated from the backend's timestamp plus a **per-device latency offset from calibration** ([ADR-0016](../decisions/0016-windows-low-latency-backend.md)). The reported device latency is only a fallback: A02 found cpal's prediction about 80 ms early on Windows (F-033).
 2. The telemetry pump sends an **anchor** `(sample_position, host_time, speed, playing)` to the UI **only when state changes** (play, pause, seek, speed) and every 2 s as drift correction.
 3. The UI extrapolates the playhead each animation frame from the anchor. Rendering cost is constant and IPC jitter is irrelevant.
 4. **Interactive cue latency** = input handling + IPC + control enqueue + up to one block + device latency. The budget is ≤ 50 ms p95 at a 256-frame buffer and 48 kHz, measured by the loopback harness in A02 and B03.
