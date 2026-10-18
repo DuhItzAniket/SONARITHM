@@ -1,0 +1,71 @@
+# TEMPORARY (A02-T04): renders the spike benchmark Score on Linux, Windows and macOS and
+# compares the audio against PB-06 (docs/architecture/12-cross-cutting-concerns.md §8).
+# Not a required check. Delete together with spikes/ after the A02 gate.
+name: spike-a02-determinism
+
+on:
+  pull_request:
+    paths:
+      - "spikes/render-graph/**"
+      - ".github/workflows/spike-a02-determinism.yml"
+  workflow_dispatch:
+
+permissions: {}
+
+concurrency:
+  group: spike-a02-determinism-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  render:
+    name: render (${{ matrix.os }})
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    permissions:
+      contents: read
+    timeout-minutes: 30
+    defaults:
+      run:
+        working-directory: spikes/render-graph
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      # The toolchain pinned in the root rust-toolchain.toml applies to the spike too.
+      - run: rustup toolchain install
+      - run: rustc --version --verbose
+      # Without the `realtime` feature there is no cpal, so Linux needs no audio libraries.
+      - run: cargo run --release --locked --no-default-features -- render-set --out renders/${{ matrix.os }} --seconds 60
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: renders-${{ matrix.os }}
+          path: spikes/render-graph/renders/${{ matrix.os }}
+          retention-days: 14
+
+  compare:
+    needs: render
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    timeout-minutes: 20
+    defaults:
+      run:
+        working-directory: spikes/render-graph
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - run: rustup toolchain install
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          path: spikes/render-graph/renders
+      - name: Compare against the Linux render set
+        # `shell: bash` adds pipefail, so a failed comparison fails the job despite `tee`.
+        shell: bash
+        run: |
+          cargo run --release --locked --no-default-features -- compare \
+            renders/renders-ubuntu-latest renders/renders-windows-latest renders/renders-macos-latest \
+            | tee -a "$GITHUB_STEP_SUMMARY"

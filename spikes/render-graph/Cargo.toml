@@ -12,13 +12,18 @@ publish = false
 [dependencies]
 assert_no_alloc = "=1.1.2"   # BSD-1-Clause: not yet in deny.toml's allow list (finding)
 audioadapter-buffers = "=5.2.0" # the buffer adapters Firewheel's processor takes
-cpal = "=0.18.2"
+cpal = { version = "=0.18.2", optional = true }
 ebur128 = "=0.1.10"
 # A02-T03: no cpal backend (the bench drives the processor), with sample-accurate scheduling.
 firewheel = { version = "=0.14.0", default-features = false, features = ["std", "scheduled_events"] }
 hound = "=3.5.1"
 libm = "=0.2.16"
 sha2 = "=0.11.1"
+
+[features]
+# `realtime` (cpal playback). Off for the cross-OS determinism job, so Linux CI needs no audio libraries.
+default = ["realtime"]
+realtime = ["dep:cpal"]
 
 [lints.rust]
 # `--cfg spike_miri_system_alloc` drops the assert_no_alloc allocator (Miri runs, see main.rs).

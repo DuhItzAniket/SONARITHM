@@ -4,6 +4,7 @@
 //! A02-T02/T03/T04 spike: render graphs behind a draft `RenderGraph` trait, driven offline
 //! and from a cpal stream. Usage and results: `README.md`. Throwaway code.
 
+mod determinism;
 mod fw;
 mod graph;
 mod own;
@@ -11,24 +12,27 @@ mod score;
 mod voice;
 
 use std::error::Error;
+#[cfg(feature = "realtime")]
 use std::sync::Arc;
+#[cfg(feature = "realtime")]
 use std::sync::atomic::{AtomicU64, Ordering};
 use std::time::{Duration, Instant};
 
+#[cfg(feature = "realtime")]
 use cpal::traits::{DeviceTrait, HostTrait, StreamTrait};
 use sha2::{Digest, Sha256};
 
 use crate::graph::{RenderConfig, RenderGraph};
 use crate::voice::MathMode;
 
-// Debug builds abort on any allocation inside `assert_no_alloc` (06 §12). Off under Miri when
-// `SPIKE_MIRI_SYSTEM_ALLOC` is set at build time, to tell its findings apart from ours.
+// Debug builds abort on any allocation inside `assert_no_alloc` (06 §12). Building with
+// `--cfg spike_miri_system_alloc` drops this allocator, to tell Miri's findings apart (README).
 #[cfg(all(debug_assertions, not(spike_miri_system_alloc)))]
 #[global_allocator]
 static ALLOC: assert_no_alloc::AllocDisabler = assert_no_alloc::AllocDisabler;
 
 const SEED: u64 = 1729;
-const SAMPLE_RATE: u32 = 48_000;
+pub(crate) const SAMPLE_RATE: u32 = 48_000;
 
 fn make_graph(name: &str) -> Result<Box<dyn RenderGraph>, Box<dyn Error>> {
     match name {
@@ -60,18 +64,32 @@ fn loudness(samples: &[f32]) -> Result<(f64, f32), Box<dyn Error>> {
     ))
 }
 
-fn offline(args: &Args) -> Result<(), Box<dyn Error>> {
-    let score = score::benchmark(SAMPLE_RATE, args.seconds, SEED);
+/// One offline render of the benchmark Score and what was measured on the way.
+pub(crate) struct Rendered {
+    pub(crate) samples: Vec<f32>,
+    pub(crate) lufs: f64,
+    pub(crate) audio_hash: String,
+    pub(crate) score_hash: String,
+    line: String,
+}
+
+pub(crate) fn render_offline(
+    graph_name: &str,
+    block: usize,
+    seconds: u32,
+    math: MathMode,
+) -> Result<Rendered, Box<dyn Error>> {
+    let score = score::benchmark(SAMPLE_RATE, seconds, SEED);
     let cfg = RenderConfig {
         sample_rate: SAMPLE_RATE,
-        max_block: args.block,
-        math: args.math,
+        max_block: block,
+        math,
     };
-    let mut graph = make_graph(&args.graph)?;
+    let mut graph = make_graph(graph_name)?;
     let mut proc = graph.prepare(&score, &cfg)?;
-    let blocks = (score.frames as usize).div_ceil(args.block);
-    let mut out = Vec::with_capacity(blocks * args.block * 2);
-    let mut buf = vec![0.0f32; args.block * 2];
+    let blocks = (score.frames as usize).div_ceil(block);
+    let mut out = Vec::with_capacity(blocks * block * 2);
+    let mut buf = vec![0.0f32; block * 2];
     let mut times = Vec::with_capacity(blocks);
     let mut control = Duration::ZERO;
     for _ in 0..blocks {
@@ -87,20 +105,17 @@ fn offline(args: &Args) -> Result<(), Box<dyn Error>> {
     out.truncate(score.frames as usize * 2);
     let busy: f64 = times.iter().sum::<f64>() / 1e6;
     let (lufs, peak) = loudness(&out)?;
-    let hash = hex(&Sha256::digest(
+    let audio_hash = hex(&Sha256::digest(
         out.iter()
             .flat_map(|s| s.to_le_bytes())
             .collect::<Vec<u8>>(),
     ));
     let score_hash = hex(&Sha256::digest(score::canonical_bytes(&score)));
     let st = graph.stats();
-    println!(
-        "graph={} block={} math={:?} seconds={} rtf={:.0} control_ms={:.1} block_us_p50={:.1} p99={:.1} max={:.1} voices={} max_active={} dispatched={} stolen={} lufs={lufs:.2} peak={peak:.4} audio_sha256={hash} score_sha256={score_hash}",
+    let line = format!(
+        "graph={} block={block} math={math:?} seconds={seconds} rtf={:.0} control_ms={:.1} block_us_p50={:.1} p99={:.1} max={:.1} voices={} max_active={} dispatched={} stolen={} lufs={lufs:.2} peak={peak:.4} audio_sha256={audio_hash} score_sha256={score_hash}",
         graph.name(),
-        args.block,
-        args.math,
-        args.seconds,
-        f64::from(args.seconds) / busy,
+        f64::from(seconds) / busy,
         control.as_secs_f64() * 1e3,
         percentile(&mut times.clone(), 50.0),
         percentile(&mut times.clone(), 99.0),
@@ -110,22 +125,41 @@ fn offline(args: &Args) -> Result<(), Box<dyn Error>> {
         st.dispatched,
         st.stolen,
     );
+    Ok(Rendered {
+        samples: out,
+        lufs,
+        audio_hash,
+        score_hash,
+        line,
+    })
+}
+
+/// Writes interleaved stereo as 32-bit float WAV.
+pub(crate) fn write_wav(path: &std::path::Path, samples: &[f32]) -> Result<(), Box<dyn Error>> {
+    let spec = hound::WavSpec {
+        channels: 2,
+        sample_rate: SAMPLE_RATE,
+        bits_per_sample: 32,
+        sample_format: hound::SampleFormat::Float,
+    };
+    let mut w = hound::WavWriter::create(path, spec)?;
+    for s in samples {
+        w.write_sample(*s)?;
+    }
+    w.finalize()?;
+    Ok(())
+}
+
+fn offline(args: &Args) -> Result<(), Box<dyn Error>> {
+    let r = render_offline(&args.graph, args.block, args.seconds, args.math)?;
+    println!("{}", r.line);
     if let Some(path) = &args.wav {
-        let spec = hound::WavSpec {
-            channels: 2,
-            sample_rate: SAMPLE_RATE,
-            bits_per_sample: 32,
-            sample_format: hound::SampleFormat::Float,
-        };
-        let mut w = hound::WavWriter::create(path, spec)?;
-        for s in &out {
-            w.write_sample(*s)?;
-        }
-        w.finalize()?;
+        write_wav(std::path::Path::new(path), &r.samples)?;
     }
     Ok(())
 }
 
+#[cfg(feature = "realtime")]
 /// Plays the benchmark Score through the default output for `seconds` and records the CPU
 /// time of every callback. Output is muted unless `--audible` (the graph still renders).
 fn realtime(args: &Args) -> Result<(), Box<dyn Error>> {
@@ -262,6 +296,10 @@ struct Args {
     seconds: u32,
     math: MathMode,
     wav: Option<String>,
+    #[cfg_attr(
+        not(feature = "realtime"),
+        expect(dead_code, reason = "read by `realtime`")
+    )]
     audible: bool,
 }
 
@@ -288,13 +326,16 @@ fn main() -> Result<(), Box<dyn Error>> {
     };
     match args.command.as_str() {
         "offline" => offline(&args),
+        #[cfg(feature = "realtime")]
         "realtime" => realtime(&args),
+        "render-set" => determinism::render_set(std::path::Path::new(&arg("--out").unwrap_or_else(|| "renders".into())), args.seconds),
+        "compare" => determinism::compare(&raw[2..].iter().map(std::path::PathBuf::from).collect::<Vec<_>>()),
         "null" => null(&raw[2..]),
         // Proves the checker is live: a debug build must abort here.
         "selftest-alloc" => {
             let v = assert_no_alloc::assert_no_alloc(|| vec![0u8; 16]);
             Err(format!("allocated {} bytes without aborting (release build?)", v.len()).into())
         }
-        _ => Err("usage: spike-render-graph offline|realtime [--graph own|firewheel] [--block N] [--seconds N] [--math poly|std] [--wav FILE] [--audible]".into()),
+        _ => Err("usage: spike-render-graph offline|realtime|render-set|compare|null|selftest-alloc (see README.md)".into()),
     }
 }

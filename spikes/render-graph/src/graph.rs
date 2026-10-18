@@ -67,6 +67,10 @@ pub trait RenderGraph {
     fn update(&mut self);
 
     /// Moves the playhead to `frame`; sounding voices stop.
+    #[cfg_attr(
+        not(any(test, feature = "realtime")),
+        expect(dead_code, reason = "used by `realtime` and tests")
+    )]
     fn seek(&mut self, frame: u64);
 
     fn counters(&self) -> &Arc<Counters>;
