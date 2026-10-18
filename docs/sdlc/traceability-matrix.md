@@ -77,7 +77,7 @@
 | FR-130 | [10 §4](../architecture/10-ingestion-and-extraction.md#4-ai-assistance-policy) | D04 | UT (numeric verification) | Planned |
 | FR-131 | [10 §4](../architecture/10-ingestion-and-extraction.md#4-ai-assistance-policy) | D04 | IT | Planned |
 | FR-132 | [10 §4](../architecture/10-ingestion-and-extraction.md#4-ai-assistance-policy) | C05, D04 | UT; EXP for H-07 | Planned |
-| NFR-01 | [12 §8](../architecture/12-cross-cutting-concerns.md#8-performance-budgets) | A02 → C06 | BM | Planned |
+| NFR-01 | [12 §8](../architecture/12-cross-cutting-concerns.md#8-performance-budgets) | A02 → C06 | BM | In progress: A02 spikes measured PB-01 (fails on Windows shared mode), PB-06, PB-08 and PB-09 (pass where measured); [A02 gate report](reviews/A02-prototype-gate.md#performance-budgets) |
 | NFR-02 | [design/accessibility-conformance-plan](../design/accessibility-conformance-plan.md) | B02 → | AT, ACR, CD | Planned |
 | NFR-03 | [ADR-0013](../decisions/0013-determinism-and-provenance.md) | A05 | GT, PT | Planned |
 | NFR-04 | [ADR-0012](../decisions/0012-privacy-and-telemetry.md) | B01 | IT (network-deny) | Planned |
