@@ -1,7 +1,7 @@
 # Licensing annotations for files that do not carry SPDX headers (REUSE specification 3.x).
 # Policy: docs/decisions/0010-licensing.md and docs/engineering/supply-chain-and-licensing.md.
 # Source files (.rs, .ts, .tsx, .js) carry their own SPDX headers; a header always wins over
-# these annotations ("closest" precedence). Add annotations here when schemas/, tests/golden/,
+# these annotations ("closest" precedence). Add annotations here when tests/golden/,
 # assets/ or examples/ data first appear.
 version = 1
 
@@ -11,6 +11,13 @@ path = ["**.md", "docs/**", "CITATION.cff"]
 precedence = "closest"
 SPDX-FileCopyrightText = "2026 SONARITHM contributors"
 SPDX-License-Identifier = "CC-BY-4.0"
+
+# Generated JSON Schemas (`cargo xtask codegen`): generated from the code, same licence.
+[[annotations]]
+path = ["schemas/**"]
+precedence = "closest"
+SPDX-FileCopyrightText = "2026 SONARITHM contributors"
+SPDX-License-Identifier = "MIT OR Apache-2.0"
 
 # Test snapshots (insta) and proptest regression seeds: same licence as the code.
 [[annotations]]
