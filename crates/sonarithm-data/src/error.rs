@@ -84,6 +84,14 @@ pub enum DataError {
         #[source]
         source: std::io::Error,
     },
+    /// The JSON at the pointer is not a table.
+    #[error("the JSON at `{pointer}` is {found}, not a table")]
+    NotTabular {
+        /// The JSON pointer (empty for the root).
+        pointer: String,
+        /// What was found instead.
+        found: &'static str,
+    },
     /// A source option has a value that cannot be used.
     #[error("the `{option}` option is invalid: {reason}")]
     InvalidOption {
@@ -162,6 +170,14 @@ impl DataError {
             Self::Io { locator, source } => (
                 &codes::UNREADABLE_SOURCE,
                 format!("`{locator}` cannot be read: {source}. Check the path and permissions."),
+            ),
+            Self::NotTabular { pointer, found } => (
+                &codes::NOT_TABULAR,
+                format!(
+                    "The JSON at `{}` is {found}, not a table. Point `pointer` at an array of \
+                     records, an array of rows or an object of equal-length arrays.",
+                    if pointer.is_empty() { "/" } else { pointer }
+                ),
             ),
             Self::InvalidOption { option, reason } => (
                 &codes::INVALID_OPTION,

@@ -121,6 +121,22 @@ code!(
 );
 
 code!(
+    /// The JSON shape that was read.
+    JSON_SHAPE, "SNR-DATA-020", Info,
+    "The JSON shape was detected",
+    "Set `pointer` in the source options if the wrong part of the document was read.",
+    []
+);
+
+code!(
+    /// The JSON at the pointer is not a table.
+    NOT_TABULAR, "SNR-DATA-021", Error,
+    "The JSON is not a table",
+    "Point `pointer` at an array of records, an array of rows or an object of equal-length arrays.",
+    []
+);
+
+code!(
     /// Spreadsheet error values became missing values.
     CELL_ERRORS, "SNR-DATA-024", Warning,
     "Spreadsheet error values became missing values",
@@ -201,6 +217,8 @@ pub const CODES: CodeTable = CodeTable {
         COLUMN_NAMES_CHANGED,
         INVALID_BYTES,
         PREAMBLE_SKIPPED,
+        JSON_SHAPE,
+        NOT_TABULAR,
         CELL_ERRORS,
         NAN_TO_NULL,
         INFINITE_VALUES,

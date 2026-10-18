@@ -23,7 +23,7 @@ Status values: `Not started` · `In progress` · `In review` · `Done` · `Block
 | A | A01 | Repository bootstrap and governance | **Done** | 100% | 2026-10-19; [phase review](reviews/A01-phase-review.md), [retro](retrospectives/A01-retro.md). See [A01 tasks](#a01-tasks) |
 | A | A02 | Technical spikes and prototype gate | **In review** | ≈80% | All spikes built and measured on Windows and CI; gate report draft: Conditional go recommended. PB-01 fails on Windows shared mode; screen-reader, macOS and Linux manual steps pending. See [A02 tasks](#a02-tasks) |
 | A | A03 | Core types, Spec v0.1, Score IR | **In progress** | ≈15% | T01 merged (#4); RFC-0001 accepted (T05); T02–T04 in review. See [A03 tasks](#a03-tasks) |
-| A | A04 | Data layer | **In progress** | ≈5% | T01 in review (field metadata). See [A04 tasks](#a04-tasks) |
+| A | A04 | Data layer | **In progress** | ≈25% | T01–T03 in review. See [A04 tasks](#a04-tasks) |
 | A | A05 | Render engine, audio backend, export | **In progress** | ≈5% | T01, T03 and T04 in review. See [A05 tasks](#a05-tasks) |
 | A | A06 | NUMISONA v1 | Not started | 0% | |
 | A | A07 | CLI, Python, v0.1.0-alpha | Not started | 0% | |
@@ -108,8 +108,8 @@ Work runs in a separate agent session, in parallel with A03, through small PRs i
 | Task | Status | Notes |
 |---|---|---|
 | A04-T01 `DataBundle`/`Table`/`FieldMeta` on Arrow; `snr.*` metadata | Done | `FieldMeta` and the `SNR-DATA` code table (#113); tables and bundles (#114); Parquet and Arrow IPC round trips in T03 |
-| A04-T02 CSV/TSV and JSON/NDJSON sources | Not started | |
-| A04-T03 Parquet and Arrow IPC sources | Not started | |
+| A04-T02 CSV/TSV and JSON/NDJSON sources | In review | Encoding, delimiter and header sniffing; 95% type rule; corpus of 23 messy CSVs; JSON records, columns and rows at a pointer |
+| A04-T03 Parquet and Arrow IPC sources | In review | Metadata and provenance columns survive both formats (property test) |
 | A04-T04 XLSX/ODS via calamine | Not started | |
 | A04-T05 Type, role and concept inference | Not started | |
 | A04-T06 Provenance columns and propagation | Not started | |

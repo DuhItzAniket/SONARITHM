@@ -26,5 +26,5 @@ pub use error::{DataError, Limit};
 pub use meta::{Concept, FieldMeta, FieldType, Role, Unit};
 #[cfg(feature = "fs")]
 pub use source::read_file;
-pub use source::{CsvOptions, Limits, Loaded, ReadOptions, read_bytes};
+pub use source::{CsvOptions, JsonOptions, Limits, Loaded, ReadOptions, read_bytes};
 pub use table::Table;

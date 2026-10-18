@@ -10,6 +10,7 @@
 mod columnar;
 mod columns;
 mod csv;
+mod json;
 
 use sonarithm_core::{Diagnostics, TableId};
 
@@ -19,6 +20,7 @@ use crate::meta::{FieldMeta, InvalidMetadata};
 use crate::table::Table;
 
 pub use self::csv::CsvOptions;
+pub use self::json::JsonOptions;
 pub use columnar::{write_ipc, write_parquet};
 
 /// Size limits for one source, so that a hostile or mistaken input fails cleanly instead
@@ -100,6 +102,8 @@ pub struct ReadOptions {
     pub table: TableId,
     /// Options for CSV and TSV.
     pub csv: CsvOptions,
+    /// Options for JSON and NDJSON.
+    pub json: JsonOptions,
 }
 
 impl ReadOptions {
@@ -128,6 +132,13 @@ impl ReadOptions {
     #[must_use]
     pub fn with_csv(mut self, csv: CsvOptions) -> Self {
         self.csv = csv;
+        self
+    }
+
+    /// The same options with other JSON options.
+    #[must_use]
+    pub fn with_json(mut self, json: JsonOptions) -> Self {
+        self.json = json;
         self
     }
 }
@@ -161,6 +172,7 @@ pub fn read_bytes(
     let name = table_name(locator);
     let (table, diagnostics) = match format {
         Format::Csv | Format::Tsv => self::csv::read_csv(bytes, &name, format, options)?,
+        Format::Json | Format::Ndjson => self::json::read_json(bytes, &name, format, options)?,
         Format::Arrow => (
             columnar::read_ipc(bytes, &name, format, options)?,
             Diagnostics::new(),
