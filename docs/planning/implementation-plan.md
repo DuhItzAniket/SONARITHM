@@ -178,8 +178,8 @@ Research work with fixed external deadlines runs beside the engineering phases, 
 
 | Task | Description | Acceptance criteria | Size | Deadline | Read |
 |---|---|---|---|---|---|
-| RL-T01 | Settle the ethics route (OD-04, OQ-R1): find a faculty mentor and RV University's ethics committee process; prepare accessible consent materials | Institution or board identified | M | end Nov 2026 | evaluation-plan |
-| RL-T02 | **File the ethics application** for co-design round 1 and the first perception study | Application submitted | M | Dec 2026 | evaluation-plan, EXP-000 |
+| RL-T01 | Check RV University's policy on non-research usability sessions with BLV participants (OD-04: the owner works alone, so there is no ethics route). Prepare accessible consent, compensation and data-handling materials for those sessions | Policy confirmed in writing; materials drafted | M | Mar 2027 | evaluation-plan, accessibility-conformance-plan |
+| RL-T02 | **Deferred (OD-04).** Ethics application for research studies (perception studies, publishable co-design). Revisit at Gate B or when a collaborator offers an ethics route | Decision recorded at Gate B | S | Gate B | evaluation-plan, EXP-000 |
 | RL-T03 | P01 related-work and framing sections drafted from [related-work.md](../research-paper/related-work.md) | Draft sections reviewed | M | Jan 2027 | P01 outline |
 | RL-T04 | BLV co-designer outreach (recruiting channels, compensation budget per OD-10) | ≥ 10 prospective participants for B07 | M | Mar 2027 | accessibility-conformance-plan |
 | RL-T05 | Monthly re-check of venue deadlines; update the publication plan | Plan current | S | Monthly | publication-plan |

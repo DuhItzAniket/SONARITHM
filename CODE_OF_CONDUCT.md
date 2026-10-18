@@ -24,7 +24,7 @@ SONARITHM is built with and for blind and low-vision people. The moderators trea
 
 Report privately to the project lead, [@DuhItzAniket](https://github.com/DuhItzAniket), through GitHub:
 
-1. **For a specific comment, issue, pull request or discussion:** use GitHub's "Report content" option on that item and choose to report it to the repository maintainers. (Maintainer reports are enabled in the repository's moderation settings during phase A01.)
+1. **For a specific comment, issue, pull request or discussion:** use the channel in item 2 to tell the project lead, with a link to the item. GitHub's "report to repository maintainers" option is only available for organization-owned repositories, and SONARITHM is currently a personal repository, so it cannot be enabled yet. It will be enabled if the project moves to a GitHub organization ([GOVERNANCE.md](GOVERNANCE.md)). You can always also report content to GitHub itself with its "Report abuse" option.
 2. **For anything else:** use a contact option listed on the project lead's GitHub profile. If none fits, open a minimal issue that says only that you want to raise a code-of-conduct concern privately. Put no details in it; the project lead will reply with a private channel.
 3. **If the concern is about the project lead:** report it to GitHub through its "Report abuse" option until a second moderator exists. [GOVERNANCE.md](GOVERNANCE.md) will name additional moderators as maintainers join.
 

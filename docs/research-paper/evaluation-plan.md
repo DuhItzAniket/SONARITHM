@@ -118,6 +118,8 @@ About $50–85 per hour (A11Y-34). For planning, a round of 15 participants with
 
 ## Ethics and IRB timeline
 
+> **Current constraint (2026-10-19, OD-04).** The owner works alone without institutional ethics review. No study in the user-study portfolio below runs as research until an ethics route exists (revisit at Gate B). Technical evaluation and the replication gallery are unaffected. BLV co-design continues as product usability feedback, with consent and compensation and with no research data published. RV University's policy on such sessions is checked first (RL-T01). The timeline below applies once an ethics route exists.
+
 Ethics approval must precede every study with participants. CHI, for example, requires that human-subjects research meets the authors' local ethics-review requirements, and ACM's 2021 policy on research involving human participants applies ([notes/07 §7](../research/notes/07-engineering-publication.md)). Starting applications by December 2026 keeps spring 2027 deadlines realistic ([research report](../research/research-report.md#publishable-research-sits-in-the-fields-admitted-gaps)).
 
 | When | Step |
