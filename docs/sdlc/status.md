@@ -7,11 +7,11 @@
 
 | Item | State |
 |---|---|
-| Overall health | **Green**: A01 workspace, CI, licensing and GitHub settings in place; first CI run is on the A01 pull request |
-| Current focus | Get the A01 PR green and merged; then A01-T10 (project board) and A02/A03. Owner decisions OD-02, OD-04, OD-10 |
+| Overall health | **Green**: A01 merged (#1, `02a44f3`); all CI checks green on Windows, macOS and Linux |
+| Current focus | A02 (spikes) and A03 (core types) in parallel; A01-T10 once the `project` scope is granted. Owner: faculty mentor and ethics route (OD-04), funding (OD-10) |
 | Latest release | none |
 | Blocking decisions | none for A01 (OD-01 and OD-09 closed 2026-10-18) |
-| Top risks | R-08 scope creep (20), R-09 bus factor (20), R-02 screen readers in the webview (15) |
+| Top risks | R-08 scope creep (20), R-09 bus factor (20), R-02 screen readers in the webview (15), R-22 no macOS/Linux hardware (9) |
 
 ## 2. Phase board
 
@@ -20,7 +20,7 @@ Status values: `Not started` · `In progress` · `In review` · `Done` · `Block
 | Stage | Phase | Name | Status | Progress | Notes |
 |---|---|---|---|---|---|
 | — | — | Kickoff: research and documentation baseline | **Done** | 100% | 2026-10-18; see [worklog](worklog/2026-10-18-project-kickoff.md) |
-| A | A01 | Repository bootstrap and governance | **In progress** | ≈80% | T01, T02, T11 done; T03–T09, T12, T13 pass locally and await their first CI run on the A01 PR; T10 not started. See [A01 tasks](#a01-tasks) |
+| A | A01 | Repository bootstrap and governance | **In progress** | ≈95% | Everything merged in #1 except T10 (project board), which waits for the `project` token scope. See [A01 tasks](#a01-tasks) |
 | A | A02 | Technical spikes and prototype gate | Not started | 0% | |
 | A | A03 | Core types, Spec v0.1, Score IR | Not started | 0% | RFC-0001 to open |
 | A | A04 | Data layer | Not started | 0% | |
@@ -56,17 +56,17 @@ Status values: `Not started` · `In progress` · `In review` · `Done` · `Block
 |---|---|---|
 | A01-T01 Licence decision (ADR-0010, OD-09) | **Done** | 2026-10-18: code `MIT OR Apache-2.0`, docs and data `CC-BY-4.0`, DCO; ADR-0010 accepted |
 | A01-T02 Repository, `main`, ruleset | **Done** | `main` ruleset active (PR required, 1 review + code owners, linear history, no force-push or deletion, 6 required checks, admin bypass per the interim rule). Squash-only merges, sign-off kept |
-| A01-T03 Cargo workspace skeleton | In progress | Local: 11 crates build and test, all `license = "MIT OR Apache-2.0"` |
-| A01-T04 Toolchain, rustfmt, clippy, editorconfig | In progress | Local: fmt and clippy `-D warnings` clean. Rust 1.99.0 pinned, MSRV 1.88 |
-| A01-T05 `deny.toml` | In progress | Local: `cargo deny check` passes; a GPL test crate is rejected |
-| A01-T06 `xtask` (`ci`, `check-deps`, `codegen`, `wasm-check`) | In progress | Local: `check-deps` fails on engine→engine and core→cpal (unit and fixture tests) |
-| A01-T07 `ci.yml` | In progress | Written; needs a green run on a PR (≤ 15 min) |
-| A01-T08 PR title, DCO, Scorecard, CodeQL, Dependabot, label sync | In progress | Workflows written, first run on the A01 PR. 52 labels synced from `labels.yml` with `gh` (a sync workflow is optional); Dependabot alerts and security updates on |
-| A01-T09 pnpm workspace skeleton | In progress | Local: `pnpm install` and `pnpm -r lint` pass |
-| A01-T10 GitHub Project and issues | Not started | |
-| A01-T11 Secret scanning, vulnerability reporting, Discussions | **Done** | Secret scanning + push protection on; private vulnerability reporting and Discussions enabled; workflow token read-only by default. Reported-content moderation is a web-UI setting, still to enable |
-| A01-T12 Docs CI | In progress | Local: markdownlint and offline link check pass on the baseline, with listed exceptions; `reuse` job added |
-| A01-T13 Licence files, REUSE | In progress | `LICENSE-MIT`, `LICENSE-APACHE`, `LICENSES/`, `REUSE.toml`, SPDX headers; local `reuse lint`: 167/167 files compliant. Awaits CI |
+| A01-T03 Cargo workspace skeleton | **Done** | 11 crates build and test on 3 OSes (#1); all `license = "MIT OR Apache-2.0"` |
+| A01-T04 Toolchain, rustfmt, clippy, editorconfig | **Done** | fmt and clippy `-D warnings` green in CI; Rust 1.99.0 pinned; MSRV 1.88 job green |
+| A01-T05 `deny.toml` | **Done** | `cargo deny check` green in CI, including our own crates' licences |
+| A01-T06 `xtask` (`ci`, `check-deps`, `codegen`, `wasm-check`) | **Done** | `check-deps` job green; rejects engine→engine and core→cpal (unit and fixture tests) |
+| A01-T07 `ci.yml` | **Done** | Green on #1 across ubuntu, windows and macos; wall time about 1–2 min (budget ≤ 15 min) |
+| A01-T08 PR title, DCO, Scorecard, CodeQL, Dependabot, label sync | **Done** | pr-title, dco and CodeQL green on #1; Scorecard green on `main`; 52 labels synced with `gh`; Dependabot alerts and security updates on |
+| A01-T09 pnpm workspace skeleton | **Done** | `frontend` CI job green (install, lint, typecheck) |
+| A01-T10 GitHub Project and issues | Blocked | Needs the `project` scope on the GitHub CLI token: the owner runs `gh auth refresh -s project` |
+| A01-T11 Secret scanning, vulnerability reporting, Discussions | **Done** | Secret scanning + push protection on; private vulnerability reporting and Discussions enabled; workflow token read-only by default. Owner still to enable reported-content moderation (web UI only) |
+| A01-T12 Docs CI | **Done** | markdown, internal-links, reuse and schema-diff green; external links advisory on PRs, failing only on the weekly run (`lychee.toml`) |
+| A01-T13 Licence files, REUSE | **Done** | Licence files, `REUSE.toml` and SPDX headers; `reuse` check green in CI |
 
 ## 3. Current iteration
 
@@ -106,3 +106,4 @@ Maturity scale: `Designed` → `Prototype` → `Alpha` → `Beta` → `Stable` �
 | 2026-10-18 | Status board created at the documentation baseline |
 | 2026-10-18 | A01 started: workspace, tooling, xtask, workflows and pnpm skeleton built locally (T03–T09, T12) |
 | 2026-10-18 | Licence decided (T01); licence files and REUSE (T13); GitHub ruleset, security and repo settings (T02, T11); A01 PR opened |
+| 2026-10-18 | A01 PR #1 merged as `02a44f3` with all checks green; owner context recorded (RV University, Windows-only hardware) |

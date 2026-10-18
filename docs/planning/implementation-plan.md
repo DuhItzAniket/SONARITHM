@@ -178,7 +178,7 @@ Research work with fixed external deadlines runs beside the engineering phases, 
 
 | Task | Description | Acceptance criteria | Size | Deadline | Read |
 |---|---|---|---|---|---|
-| RL-T01 | Settle the ethics route (OD-04, OQ-R1); prepare accessible consent materials | Institution or board identified | M | end Nov 2026 | evaluation-plan |
+| RL-T01 | Settle the ethics route (OD-04, OQ-R1): find a faculty mentor and RV University's ethics committee process; prepare accessible consent materials | Institution or board identified | M | end Nov 2026 | evaluation-plan |
 | RL-T02 | **File the ethics application** for co-design round 1 and the first perception study | Application submitted | M | Dec 2026 | evaluation-plan, EXP-000 |
 | RL-T03 | P01 related-work and framing sections drafted from [related-work.md](../research-paper/related-work.md) | Draft sections reviewed | M | Jan 2027 | P01 outline |
 | RL-T04 | BLV co-designer outreach (recruiting channels, compensation budget per OD-10) | ≥ 10 prospective participants for B07 | M | Mar 2027 | accessibility-conformance-plan |
