@@ -1,5 +1,5 @@
 ---
-status: accepted (provisional)
+status: accepted
 date: 2026-10-18
 decision-makers: ["@DuhItzAniket"]
 ---

@@ -236,7 +236,12 @@ The exclusive-mode accessibility cost (it can silence the screen reader's speech
 | [ADR-0002](../../decisions/0002-desktop-shell-tauri.md) Tauri 2 shell | **Keep provisional; no amendment yet.** The Windows evidence supports it (PB-08, PB-09), and IPC passes on all CI runners. The deciding Linux evidence (WebKitGTK frame rates on real GPUs, Orca) is pending; the Electron trigger is not evaluated | F-040 to F-044 |
 | [ADR-0003](../../decisions/0003-frontend-react-and-react-aria.md) React + React Aria Components | **Keep provisional.** The prototype is built and the UI Automation tree is as expected; the screen-reader walkthroughs, which are the confirmation the ADR names, are pending | F-045 |
 
-The ADR texts are not edited in this PR: the owner decides at sign-off, and an amendment then follows as its own ADR change.
+Recorded (the coordinator reviews these with the approval the owner delegated):
+
+- ADR-0004's status line is now `accepted`.
+- The backend amendment is the new [ADR-0016](../../decisions/0016-windows-low-latency-backend.md) (proposed); the ADRs are immutable once accepted.
+- 06 §3.1, §6 and §9 describe the two-half contract, the proposed `WasapiBackend` and the latency calibration.
+- ADR-0002 and ADR-0003 stay `accepted (provisional)`; the ADR index records their evidence status.
 
 ## Risk register review
 
