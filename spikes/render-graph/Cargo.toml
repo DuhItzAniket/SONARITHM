@@ -1,0 +1,23 @@
+# A02-T02/T03/T04 spike: owned render graph vs Firewheel behind a draft `RenderGraph` trait,
+# plus the offline determinism check (throwaway, see README.md).
+# Standalone: excluded from the root workspace (`exclude = ["spikes"]`).
+[package]
+name = "spike-render-graph"
+version = "0.0.0"
+edition = "2024"
+rust-version = "1.88"
+license = "MIT OR Apache-2.0"
+publish = false
+
+[dependencies]
+assert_no_alloc = "=1.1.2"   # BSD-1-Clause: not yet in deny.toml's allow list (finding)
+cpal = "=0.18.2"
+ebur128 = "=0.1.10"
+hound = "=3.5.1"
+libm = "=0.2.16"
+sha2 = "=0.11.1"
+
+[profile.release]
+debug = "line-tables-only"
+
+[workspace]
