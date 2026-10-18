@@ -56,6 +56,8 @@ cargo_metadata = "0.23.1"   # xtask check-deps
 # `arch` feature only swaps in IEEE-exact instructions (sqrt, rounding), so results stay
 # identical on every platform.
 libm = "0.2.16"
+# Diagnostic reports for spec errors (12 §1); no `fancy` features in libraries.
+miette = { version = "7.6.0", default-features = false }
 # Seeded, portable random streams per track (SDR-02, coding-standards §10).
 rand_chacha = { version = "0.9.0", default-features = false }
 # JSON Schema generation for the spec (04 §1); `derive` only, no optional integrations.
