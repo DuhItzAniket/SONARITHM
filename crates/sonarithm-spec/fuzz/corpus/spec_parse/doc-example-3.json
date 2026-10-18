@@ -1,0 +1,43 @@
+{
+ "specVersion": "0.1",
+ "data": {
+  "source": {
+   "kind": "function",
+   "expr": "sin(x) / x",
+   "domain": [
+    -20,
+    20
+   ],
+   "samples": 2000
+  }
+ },
+ "substrate": {
+  "time": {
+   "pace": {
+    "duration": {
+     "s": 8
+    }
+   }
+  }
+ },
+ "tracks": [
+  {
+   "id": "f",
+   "mark": "glide",
+   "channels": {
+    "pitch": {
+     "field": "y"
+    },
+    "brightness": {
+     "field": "dy"
+    }
+   }
+  }
+ ],
+ "analysis": {
+  "detect": [
+   "critical-points"
+  ],
+  "cue": "earcon"
+ }
+}

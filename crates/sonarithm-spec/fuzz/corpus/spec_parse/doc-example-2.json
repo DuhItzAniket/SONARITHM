@@ -1,0 +1,63 @@
+{
+ "specVersion": "0.1",
+ "mode": "analysis",
+ "seed": 7,
+ "data": {
+  "source": {
+   "kind": "file",
+   "path": "co2_temp.csv"
+  }
+ },
+ "substrate": {
+  "time": {
+   "field": "year",
+   "pace": {
+    "duration": {
+     "s": 24
+    }
+   }
+  }
+ },
+ "tracks": [
+  {
+   "id": "co2",
+   "mark": "tone",
+   "instrument": "mallet",
+   "channels": {
+    "pitch": {
+     "field": "co2_ppm"
+    },
+    "pan": {
+     "value": -0.5
+    }
+   }
+  },
+  {
+   "id": "temp",
+   "mark": "tone",
+   "instrument": "clarinet-like",
+   "channels": {
+    "pitch": {
+     "field": "anomaly",
+     "polarity": "positive"
+    },
+    "pan": {
+     "value": 0.5
+    }
+   },
+   "redundant": [
+    "taps"
+   ]
+  }
+ ],
+ "context": {
+  "ticks": {
+   "axis": "x",
+   "every": 10
+  },
+  "reference": {
+   "kind": "dynamic-extreme",
+   "track": "temp"
+  }
+ }
+}

@@ -18,7 +18,7 @@ members = [
     "xtask",
 ]
 # A02 spikes are standalone throwaway projects with their own lockfiles (roadmap A02).
-exclude = ["spikes"]
+exclude = ["spikes", "crates/sonarithm-spec/fuzz"]
 
 [workspace.package]
 # One shared version for all library crates until v1.0 (02 §6). Nothing is released

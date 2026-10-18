@@ -1,0 +1,42 @@
+{
+ "specVersion": "0.1",
+ "mode": "monitoring",
+ "data": {
+  "source": {
+   "kind": "stream",
+   "transport": "websocket",
+   "url": "ws://127.0.0.1:9000/cpu",
+   "window": {
+    "s": 300
+   }
+  }
+ },
+ "tracks": [
+  {
+   "id": "cpu",
+   "mark": "glide",
+   "channels": {
+    "pitch": {
+     "field": "load",
+     "range": {
+      "hz": [
+       300,
+       900
+      ]
+     }
+    }
+   }
+  }
+ ],
+ "analysis": {
+  "detect": [
+   "outliers"
+  ],
+  "cue": "earcon"
+ },
+ "playback": {
+  "monitor": {
+   "soundscape": "forest"
+  }
+ }
+}

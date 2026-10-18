@@ -1,0 +1,229 @@
+{
+ "specVersion": "0.1",
+ "name": "Every section",
+ "mode": "presentation",
+ "seed": 1729,
+ "data": {
+  "source": {
+   "kind": "inline",
+   "values": [
+    {
+     "t": 1,
+     "v": 2.5,
+     "g": "a"
+    },
+    {
+     "t": 2,
+     "v": -0.001,
+     "g": "b"
+    }
+   ]
+  },
+  "fields": {
+   "v": {
+    "type": "quantitative",
+    "unit": "°C",
+    "concept": "temperature",
+    "role": "y"
+   }
+  },
+  "missing": "earcon"
+ },
+ "transform": [
+  {
+   "op": "filter",
+   "expr": "t > 0"
+  },
+  {
+   "op": "smooth",
+   "field": "v",
+   "method": "ema",
+   "alpha": 0.3,
+   "as": "v_smooth"
+  },
+  {
+   "op": "aggregate",
+   "groupby": [
+    "g"
+   ],
+   "ops": [
+    {
+     "op": "mean",
+     "field": "v",
+     "as": "v_mean"
+    }
+   ]
+  }
+ ],
+ "substrate": {
+  "time": {
+   "field": "t",
+   "pace": {
+    "duration": {
+     "ms": 2500
+    }
+   }
+  }
+ },
+ "tracks": [
+  {
+   "id": "v",
+   "mark": "tone",
+   "instrument": "mallet",
+   "channels": {
+    "pitch": {
+     "field": "v",
+     "scale": {
+      "type": "pow",
+      "exponent": 2,
+      "domain": [
+       -5,
+       5
+      ],
+      "nice": true
+     },
+     "range": {
+      "midi": [
+       60,
+       84
+      ]
+     },
+     "space": "erb",
+     "polarity": "negative"
+    },
+    "duration": {
+     "value": {
+      "s": 0.25
+     }
+    },
+    "pan": {
+     "value": -0.5
+    },
+    "timbre": {
+     "field": "g"
+    },
+    "taps": {
+     "value": 2
+    }
+   },
+   "redundant": [
+    "taps",
+    "duration"
+   ],
+   "filter": {
+    "expr": "g != 'c'"
+   }
+  },
+  {
+   "id": "w",
+   "mark": "audify",
+   "audify": {
+    "band": {
+     "hz": [
+      200,
+      2000
+     ]
+    }
+   },
+   "channels": {
+    "loudness": {
+     "value": {
+      "db": -12
+     }
+    }
+   }
+  }
+ ],
+ "context": {
+  "ticks": {
+   "axis": "x",
+   "every": 1,
+   "minor": true,
+   "enabled": true
+  },
+  "reference": {
+   "kind": "static-value",
+   "track": "v",
+   "timbre": "triangle",
+   "value": 0
+  },
+  "legend": {
+   "speak": "on-demand",
+   "parts": [
+    "title",
+    "units"
+   ]
+  },
+  "earcons": {
+   "boundary": true,
+   "landmarks": false,
+   "thresholds": [
+    {
+     "track": "v",
+     "value": 0
+    }
+   ]
+  },
+  "spatial": {
+   "mode": "stereo"
+  }
+ },
+ "analysis": {
+  "detect": [
+   "extrema",
+   "changepoints"
+  ],
+  "cue": "speech",
+  "describe": {
+   "levels": [
+    "L1",
+    "L3"
+   ]
+  }
+ },
+ "music": {
+  "quantize": {
+   "scale": "C major pentatonic",
+   "tuning": "12-TET"
+  },
+  "tempo": {
+   "bpm": 96
+  },
+  "voicing": "none"
+ },
+ "playback": {
+  "speed": 1.5,
+  "loop": true,
+  "monitor": {
+   "soundscape": "forest",
+   "alarms": [
+    {
+     "detector": "outliers",
+     "salience": "high"
+    }
+   ]
+  }
+ },
+ "output": {
+  "sampleRate": 44100,
+  "channels": 2,
+  "blockSize": 512,
+  "loudness": {
+   "targetLufs": -16,
+   "truePeakDbtp": -1
+  },
+  "sinks": [
+   {
+    "kind": "midi-file",
+    "path": "out.mid"
+   },
+   {
+    "kind": "osc",
+    "address": "127.0.0.1:57120"
+   }
+  ]
+ },
+ "x-tool": {
+  "name": "seed"
+ }
+}

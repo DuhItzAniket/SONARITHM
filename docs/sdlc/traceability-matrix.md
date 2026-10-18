@@ -16,10 +16,10 @@
 | FR-008 | [03 §4](../architecture/03-data-model.md#4-provenance-and-confidence) | A04, C01 | PT (propagation), ST (announcements) | Planned |
 | FR-009 | [07 CURVASONA](../architecture/07-engines.md) | C03 | UT (40-curve suite) | Planned |
 | FR-010 | [10 §3–4](../architecture/10-ingestion-and-extraction.md) | D04 | BM (extraction benchmark), RV (consent flow) | Planned |
-| FR-020 | [04](../architecture/04-sonification-spec.md) | A03 | UT, fuzz, doc-example test | Planned |
-| FR-021 | [04 §2](../architecture/04-sonification-spec.md#2-top-level-structure) | A03 | UT | Planned |
-| FR-022 | [05 §3](../architecture/05-compiler-and-score-ir.md#3-engine-registry-and-capability-traits), [ADR-0013](../decisions/0013-determinism-and-provenance.md) | A03 | PT (determinism invariant 6) | Planned |
-| FR-023 | [04 §7](../architecture/04-sonification-spec.md#7-versioning-and-compatibility) | A03, A07 | UT (migration fixtures) | Planned |
+| FR-020 | [04](../architecture/04-sonification-spec.md), [RFC-0001](../rfcs/0001-spec-v0.1.md) | A03 | UT (`validate/tests.rs`, a failing and a passing case per rule), fuzz (`spec_parse`), doc-example test (`doc_examples.rs`), schema diff (`docs / schema-diff`) | In review (#66, #96, #97) |
+| FR-021 | [04 §2](../architecture/04-sonification-spec.md#2-top-level-structure) | A03 | UT (`sdr_36_sdr_17_mode_and_reference_defaults`, `sdr_10_music_only_in_presentation_mode`, `sdr_10_quantize_runs_only_in_presentation_mode`) | In review (#96, #99, #100) |
+| FR-022 | [05 §3](../architecture/05-compiler-and-score-ir.md#3-engine-registry-and-capability-traits), [ADR-0013](../decisions/0013-determinism-and-provenance.md) | A03 | PT (`canonical_form_round_trips_byte_for_byte`), UT on 3 OSes (`canonical_hash_is_identical_on_every_platform`, `sdr_02_track_streams_are_seeded_and_portable`, `spec_hash_is_pinned_and_ignores_key_order`), IT (`the_same_input_gives_byte_identical_scores`) | In review (#8, #10, #99, #100) |
+| FR-023 | [04 §7](../architecture/04-sonification-spec.md#7-versioning-and-compatibility) | A03, A07 | UT (`migrate.rs` test chain, idempotence), PT (`migrating_a_current_spec_changes_nothing`), fuzz (`spec_migrate`); `sonarithm spec migrate` in A07 | Framework in review (#99) |
 | FR-024 | [04 §9](../architecture/04-sonification-spec.md#9-importers) | A06 | IT (Erie gallery subset) | Planned |
 | FR-025 | [07 NUMISONA](../architecture/07-engines.md) | A06 | ST (templates × datasets) | Planned |
 | FR-026 | [05 §7](../architecture/05-compiler-and-score-ir.md#7-diagnostics) | A06 | ST (diagnostics) | Planned |
