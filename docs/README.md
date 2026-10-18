@@ -1,0 +1,77 @@
+# SONARITHM Documentation
+
+> **Status:** Documentation baseline v1 (2026-10-18). No code has been written yet. Stage A phase A01 creates the workspace.
+
+## Start here
+
+| If you want to… | Read |
+|---|---|
+| Understand what SONARITHM is and why | [product/vision.md](product/vision.md) → [product/engines.md](product/engines.md) |
+| See what the research found | [research/research-report.md](research/research-report.md) → [research/design-rules.md](research/design-rules.md) |
+| Understand the system design | [architecture/README.md](architecture/README.md) (12 documents) → [decisions/README.md](decisions/README.md) (ADRs) |
+| Know what is being built and when | [planning/roadmap.md](planning/roadmap.md) → [planning/implementation-plan.md](planning/implementation-plan.md) |
+| Know where the project stands today | [sdlc/status.md](sdlc/status.md) |
+| Contribute code | [../CONTRIBUTING.md](../CONTRIBUTING.md) → [engineering/](#engineering) → [../AGENTS.md](../AGENTS.md) (also for AI agents) |
+| Contribute research or run a study | [research-paper/README.md](research-paper/README.md) |
+| Design UI or sound | [design/](#design) |
+
+## Map
+
+### Product
+- [vision.md](product/vision.md): problem, vision, positioning, personas, principles, success measures, non-goals
+- [requirements.md](product/requirements.md): FR-xxx functional and NFR-xx non-functional requirements
+- [engines.md](product/engines.md): the platform and the nine engines
+
+### Research
+- [research-report.md](research/research-report.md): synthesized kickoff research (tools, science, accessibility, stack, practice, publication)
+- [design-rules.md](research/design-rules.md): SDR-01..42 sonification rules and A11Y-01..34 accessibility requirements, with evidence
+- [notes/](research/notes/): seven detailed research notes with sources
+- [references.bib](research/references.bib): bibliography
+- [README.md](research/README.md): how research is organized and updated
+
+### Architecture
+- [architecture/](architecture/README.md): overview, crate layout, data model, spec language, compiler and Score IR, audio engine, engines, interaction and accessibility, desktop app, ingestion and AI, bindings and plugins, cross-cutting concerns
+- [decisions/](decisions/README.md): Architecture Decision Records (MADR 4)
+- [rfcs/](rfcs/README.md): proposals for contract changes
+
+### Planning
+- [roadmap.md](planning/roadmap.md): Stages A–D, phases A01–D06, gates, releases
+- [implementation-plan.md](planning/implementation-plan.md): task-level plan (Stage A in full)
+- [risk-register.md](planning/risk-register.md): risks R-01..R-21
+- [open-decisions.md](planning/open-decisions.md): decisions awaiting the owner or a spike
+
+### Engineering
+- [tech-stack.md](engineering/tech-stack.md): stack, versions, rings, avoid list
+- [coding-standards.md](engineering/coding-standards.md): Rust, TypeScript, Python; real-time audio rules
+- [testing-strategy.md](engineering/testing-strategy.md): test pyramid, golden audio, accessibility testing
+- [git-workflow.md](engineering/git-workflow.md): trunk-based development, Conventional Commits, DCO
+- [ci-cd.md](engineering/ci-cd.md): workflows, hardening, signing
+- [release-process.md](engineering/release-process.md): versioning, channels, checklists
+- [supply-chain-and-licensing.md](engineering/supply-chain-and-licensing.md): licence policy, SBOM, security baseline
+- [dev-environment.md](engineering/dev-environment.md): setting up a development machine
+
+### Design
+- [design-language.md](design/design-language.md): visual system, principles and anti-patterns
+- [engine-identity.md](design/engine-identity.md): engine names, icons, colours
+- [keyboard-and-navigation.md](design/keyboard-and-navigation.md): keymap, navigation, announcements, earcons
+- [sound-design.md](design/sound-design.md): sound defaults, modes, levels, presets
+- [accessibility-conformance-plan.md](design/accessibility-conformance-plan.md): WCAG 2.2 AA programme, AT matrix, co-design
+
+### SDLC records
+- [sdlc/README.md](sdlc/README.md): how the project is run
+- [status.md](sdlc/status.md) · [traceability-matrix.md](sdlc/traceability-matrix.md) · [definition-of-ready-and-done.md](sdlc/definition-of-ready-and-done.md)
+- [worklog/](sdlc/worklog/README.md) · [reviews/](sdlc/reviews/README.md) · [retrospectives/](sdlc/retrospectives/README.md)
+
+### Research paper track
+- [research-paper/](research-paper/README.md): findings log, hypotheses, experiments, evaluation plan, publication plan, paper outlines, benchmarks log
+
+### Reference
+- [glossary.md](glossary.md)
+
+## Documentation conventions
+
+1. **Diátaxis.** User-facing docs (from A07) are split into tutorials, how-to guides, reference and explanation. This baseline is mostly *explanation* (architecture, research) and *reference* (rules, requirements).
+2. **Status block.** Every document starts with its status, date and owner.
+3. **IDs are permanent:** FR/NFR, SDR/A11Y, ADR, RFC, R (risks), OD (open decisions), H (hypotheses), F (findings), EXP (experiments), P (papers), PB (performance budgets), phases (A01…D06).
+4. **Link, don't duplicate.** Each fact has one home, and other documents link to it.
+5. **Research claims carry citations.** Estimates and inferences are labelled.

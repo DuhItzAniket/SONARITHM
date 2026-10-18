@@ -1,0 +1,30 @@
+# SONARITHM .editorconfig (https://editorconfig.org)
+root = true
+
+[*]
+charset = utf-8
+end_of_line = lf
+insert_final_newline = true
+trim_trailing_whitespace = true
+indent_style = space
+indent_size = 4
+
+# Rust, TOML, Python, WIT
+[*.{rs,toml,py,pyi,wit}]
+indent_size = 4
+
+# Frontend, data and markup
+[*.{ts,tsx,js,jsx,mjs,cjs,json,jsonc,yml,yaml,css,html,md,mdx,cff}]
+indent_size = 2
+
+# Markdown: two trailing spaces can be a deliberate line break.
+[*.md]
+trim_trailing_whitespace = false
+
+# Windows batch files
+[*.{bat,cmd}]
+end_of_line = crlf
+
+# Makefile recipes require tabs.
+[{Makefile,*.mk}]
+indent_style = tab

@@ -1,0 +1,41 @@
+# Citation metadata for SONARITHM.
+# Format: Citation File Format 1.2.0 (https://citation-file-format.github.io/).
+# GitHub renders this file as "Cite this repository"; Zenodo reads it when archiving releases.
+# Completed in roadmap phase A07 (first release and Zenodo DOI). See docs/engineering/release-process.md.
+cff-version: 1.2.0
+message: "If you use SONARITHM in your work, please cite it using the metadata from this file."
+type: software
+title: SONARITHM
+abstract: >-
+  SONARITHM is an open-source application and framework that turns graphs,
+  charts and numerical data into structured, navigable sound. A declarative
+  sonification specification is compiled into a canonical intermediate
+  representation (the Score) and rendered by one deterministic Rust core, which
+  is shared by a desktop application (Tauri 2 with React Aria), a command-line
+  tool and Python bindings. Its design defaults are traced to published
+  auditory-display and accessibility research, and its interface is designed to
+  be used by blind and low-vision people with their own assistive technology.
+  Renders carry provenance (engine version, spec hash and data fingerprint) so
+  that results can be reproduced.
+authors:
+  # TODO: add given-names, family-names, ORCID
+  - alias: "DuhItzAniket"
+repository-code: "https://github.com/DuhItzAniket/SONARITHM"
+keywords:
+  - sonification
+  - auditory display
+  - auditory graphs
+  - parameter mapping sonification
+  - data accessibility
+  - blind and low vision
+  - screen reader
+  - data visualization
+  - reproducible research
+  - research software
+  - Rust
+# license: omitted until ADR-0010 (licensing) is accepted. ADR-0010 proposes MIT OR Apache-2.0.
+#   When accepted, list both SPDX identifiers: license: [MIT, Apache-2.0]
+#   (the CFF 1.2.0 schema reads a list of licences as OR, not AND).
+version: "0.0.0"
+# date-released: omitted until the first tagged release (v0.1.0-alpha, phase A07).
+# doi: add the Zenodo concept DOI after the first release is archived (phase A07).

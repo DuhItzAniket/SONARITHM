@@ -1,0 +1,115 @@
+name: Feature request
+description: Propose a new capability or an improvement.
+title: "Feature: "
+labels: ["kind/feature", "status/needs-triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thank you for the proposal. Please check the [roadmap](https://github.com/DuhItzAniket/SONARITHM/blob/main/docs/planning/roadmap.md) and existing issues first.
+
+        Changes to the spec format, plugin API, file formats or a new engine need an RFC, and architectural changes need an ADR. This issue can start that discussion. Open-ended ideas fit better in [Discussions](https://github.com/DuhItzAniket/SONARITHM/discussions).
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem or need
+      description: What are you trying to do, and what stops you today? Describe the need, not only the solution.
+    validations:
+      required: true
+
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed solution
+      description: What should SONARITHM do? Include example specs, CLI commands, Python calls or interaction steps if you can.
+    validations:
+      required: true
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+      description: Other approaches or tools, and why they fall short.
+    validations:
+      required: false
+
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      multiple: true
+      options:
+        - Desktop app
+        - CLI
+        - Python package
+        - Rust API
+        - Spec language
+        - Data import
+        - Audio rendering or export
+        - Documentation
+        - Other or not sure
+    validations:
+      required: true
+
+  - type: dropdown
+    id: engine
+    attributes:
+      label: Engine
+      multiple: true
+      options:
+        - Not engine-specific or not sure
+        - NUMISONA (parameter mapping)
+        - AUDAXIS (axes, navigation, speech)
+        - SONOTRACE (time series, streams)
+        - PLOTSONA (chart ingestion)
+        - CURVASONA (functions, audification)
+        - AXONOTE (musical mapping, MIDI/OSC)
+        - ECHOMETRIC (analytics, descriptions, lint)
+        - TONALENS (multivariate lens)
+        - RESONUM (model-based sonification)
+    validations:
+      required: false
+
+  - type: dropdown
+    id: users
+    attributes:
+      label: Who benefits?
+      multiple: true
+      options:
+        - Blind and low-vision users
+        - Sighted analysts and scientists
+        - Educators and students
+        - Researchers running studies
+        - Developers embedding SONARITHM
+        - Other
+    validations:
+      required: true
+
+  - type: textarea
+    id: accessibility
+    attributes:
+      label: Accessibility considerations
+      description: How would this work with a keyboard, a screen reader or a braille display? Is the information also available without sound (text, visual or braille)?
+    validations:
+      required: false
+
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Evidence or references
+      description: Research, design rules (SDR-##, A11Y-##), prior tools or user feedback that support the request.
+    validations:
+      required: false
+
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Before submitting
+      options:
+        - label: I searched the existing issues and the roadmap.
+          required: true
+        - label: I would like to help implement or test this.
+          required: false
+        - label: I agree to follow this project's code of conduct.
+          required: true

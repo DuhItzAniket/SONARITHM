@@ -1,0 +1,88 @@
+name: Research question
+description: Propose a hypothesis, report a finding, or suggest a change to a design rule.
+title: "Research: "
+labels: ["research", "status/needs-triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Use this form for research input to SONARITHM: hypotheses, findings, design-rule changes, replications and study design.
+
+        - Design rules have permanent IDs (`SDR-##`, `A11Y-##`) in [design-rules.md](https://github.com/DuhItzAniket/SONARITHM/blob/main/docs/research/design-rules.md).
+        - Accepted findings are logged with `F-###` IDs in the [findings log](https://github.com/DuhItzAniket/SONARITHM/blob/main/docs/research-paper/findings-log.md).
+        - Never include participant data or anything that could identify a study participant.
+
+  - type: dropdown
+    id: kind
+    attributes:
+      label: Kind of contribution
+      options:
+        - Hypothesis proposal
+        - Finding (evidence for or against a rule or default)
+        - Design-rule change proposal
+        - Replication of a classic design
+        - Study design or method question
+        - Literature pointer
+    validations:
+      required: true
+
+  - type: input
+    id: rule-ids
+    attributes:
+      label: Related design-rule IDs
+      description: Comma-separated, for example "SDR-17, A11Y-20". Write "none" if no rule applies yet.
+      placeholder: "SDR-17, A11Y-20"
+    validations:
+      required: true
+
+  - type: input
+    id: related-ids
+    attributes:
+      label: Related hypothesis, finding or experiment IDs
+      description: For example "H-01, F-012, EXP-003", if any.
+    validations:
+      required: false
+
+  - type: textarea
+    id: claim
+    attributes:
+      label: Question or claim
+      description: State the question, hypothesis or finding in one or two precise sentences.
+    validations:
+      required: true
+
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Evidence
+      description: Citations with DOI or URL, or a SONARITHM measurement with its spec, data description and render manifest. Say how strong you think the evidence is.
+    validations:
+      required: true
+
+  - type: textarea
+    id: method
+    attributes:
+      label: Proposed method
+      description: How could SONARITHM test this? Stimuli, task, metric, participants (blind, low-vision, sighted), and which engine or harness feature is needed.
+    validations:
+      required: false
+
+  - type: textarea
+    id: defaults
+    attributes:
+      label: Effect on defaults
+      description: Which default or rule would change, with the old and new values. Rule changes need evidence (design-rules change control).
+    validations:
+      required: false
+
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Before submitting
+      options:
+        - label: This contains no participant data and nothing that could identify a study participant.
+          required: true
+        - label: I understand that any study involving people needs ethics approval before data collection.
+          required: true
+        - label: I agree to follow this project's code of conduct.
+          required: true

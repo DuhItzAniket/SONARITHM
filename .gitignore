@@ -1,0 +1,120 @@
+# SONARITHM .gitignore
+# Layout reference: docs/architecture/02-repository-and-crate-layout.md
+
+# --- Rust ------------------------------------------------------------------
+# Covers the workspace target/, apps/desktop/src-tauri/target/ and spikes/**/target/.
+/target/
+**/target/
+/spikes/**/target/
+**/*.rs.bk
+# Pending insta snapshots (review with `cargo insta review`, then commit the .snap files)
+*.snap.new
+*.pending-snap
+# cargo-fuzz outputs (whether corpora are committed is decided in the testing strategy)
+**/fuzz/artifacts/
+**/fuzz/coverage/
+# cargo-mutants
+mutants.out/
+mutants.out.old/
+
+# --- Coverage and profiling -----------------------------------------------
+*.profraw
+*.profdata
+lcov.info
+cobertura.xml
+/coverage/
+tarpaulin-report.*
+flamegraph.svg
+perf.data
+perf.data.old
+
+# --- Node and frontend -----------------------------------------------------
+node_modules/
+dist/
+.pnpm-store/
+*.tsbuildinfo
+.vite/
+.eslintcache
+storybook-static/
+playwright-report/
+test-results/
+blob-report/
+npm-debug.log*
+pnpm-debug.log*
+
+# --- Tauri -----------------------------------------------------------------
+# Generated capability schemas. Mobile targets are not planned; revisit this rule if
+# gen/android or gen/apple are ever added (Tauri commits those).
+apps/desktop/src-tauri/gen/
+
+# --- Python and maturin ----------------------------------------------------
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+*.egg-info/
+.eggs/
+*.whl
+wheelhouse/
+/bindings/python/build/
+/bindings/python/target/
+# Compiled extension modules placed in the source tree by `maturin develop`
+/bindings/python/**/*.so
+/bindings/python/**/*.pyd
+/bindings/python/**/*.dylib
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.tox/
+.nox/
+.coverage
+.coverage.*
+htmlcov/
+.ipynb_checkpoints/
+
+# --- Render outputs --------------------------------------------------------
+# Local renders. Golden references live in tests/golden/ and examples in examples/.
+/out/
+/renders/
+
+# --- Local environment and secrets ----------------------------------------
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.p12
+*.pfx
+*.keystore
+# Tauri updater keys must never be in the repository (see docs/engineering/ci-cd.md).
+*.key.pub
+.tauri/
+
+# --- Agent and editor files ------------------------------------------------
+# Personal Claude Code instructions. Note: under Claude Code's default setting, a
+# CLAUDE.local.md stops AGENTS.md from loading natively; keep `@AGENTS.md` imported.
+CLAUDE.local.md
+.claude/settings.local.json
+.idea/
+.fleet/
+.vscode/*
+!.vscode/extensions.json
+*.swp
+*.swo
+*~
+*.code-workspace
+
+# --- OS files --------------------------------------------------------------
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+.Spotlight-V100
+.Trashes
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+
+# --- Logs ------------------------------------------------------------------
+*.log

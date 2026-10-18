@@ -1,0 +1,180 @@
+# Label taxonomy for SONARITHM, applied by a label-sync workflow (phase A01).
+# Schema: a list of {name, color, description}, the common format read by label-sync
+# actions (for example EndBug/label-sync or crazy-max/ghaction-github-labeler; the action
+# is chosen in A01). Colours are hex without "#". Descriptions stay under 100 characters.
+#
+# Families: kind/* (what), area/* (where), engine/* (which engine), stage/* (when),
+# priority/* (how urgent), status/* (workflow state), plus cross-cutting labels.
+# Issue forms in .github/ISSUE_TEMPLATE/ apply kind/bug, kind/feature, a11y, research
+# and status/needs-triage, so those names must not change without updating the forms.
+# Dependabot applies "dependencies" by default; keep that name.
+
+# --- kind/* ---------------------------------------------------------------
+- name: kind/bug
+  color: "d73a4a"
+  description: Something does not work as documented
+- name: kind/feature
+  color: "a2eeef"
+  description: New capability or improvement
+- name: kind/docs
+  color: "0075ca"
+  description: Documentation only
+- name: kind/refactor
+  color: "c5def5"
+  description: Restructuring with no behaviour change
+- name: kind/perf
+  color: "f9d0c4"
+  description: Performance improvement or regression
+- name: kind/test
+  color: "bfd4f2"
+  description: Tests, fixtures, golden files or benchmarks
+- name: kind/chore
+  color: "ededed"
+  description: Maintenance, build or tooling
+- name: kind/security
+  color: "b60205"
+  description: Security hardening (report vulnerabilities privately, see SECURITY.md)
+
+# --- area/* ---------------------------------------------------------------
+- name: area/core
+  color: "bfdadc"
+  description: sonarithm-core (units, Score IR, traits) and the sonarithm facade crate
+- name: area/spec
+  color: "bfdadc"
+  description: sonarithm-spec, JSON Schema in schemas/, validation, migrations, importers
+- name: area/data
+  color: "bfdadc"
+  description: sonarithm-data (Arrow DataBundle, file sources, transforms, downsampling)
+- name: area/compiler
+  color: "bfdadc"
+  description: sonarithm-compiler (pipeline, engine registry, diagnostics)
+- name: area/dsp
+  color: "bfdadc"
+  description: sonarithm-dsp (synthesis nodes, envelopes, panning, loudness)
+- name: area/render
+  color: "bfdadc"
+  description: sonarithm-render (render graph, scheduler, voices, offline driver)
+- name: area/audio
+  color: "bfdadc"
+  description: sonarithm-audio (backends, devices, latency) and sonarithm-speech
+- name: area/export
+  color: "bfdadc"
+  description: sonarithm-export (WAV, FLAC, MIDI writers, render manifest)
+- name: area/stream
+  color: "bfdadc"
+  description: sonarithm-stream (WebSocket, MQTT, serial, OSC, file-tail sources)
+- name: area/app
+  color: "bfdadc"
+  description: sonarithm-app headless core and the Tauri host (apps/desktop/src-tauri)
+- name: area/desktop-ui
+  color: "bfdadc"
+  description: Desktop webview UI (apps/desktop/src) and packages ui, viz and ipc
+- name: area/cli
+  color: "bfdadc"
+  description: sonarithm CLI (apps/cli)
+- name: area/python
+  color: "bfdadc"
+  description: Python bindings and package (bindings/python)
+- name: area/wasm
+  color: "bfdadc"
+  description: WebAssembly build (bindings/wasm)
+- name: area/plugins
+  color: "bfdadc"
+  description: Plugin host (sonarithm-plugin-host) and WIT worlds (wit/)
+- name: area/ci
+  color: "bfdadc"
+  description: Workflows, xtask, release automation and repository settings
+- name: area/docs
+  color: "bfdadc"
+  description: Documentation structure, site and governance files
+
+# --- engine/* -------------------------------------------------------------
+- name: engine/numisona
+  color: "d4c5f9"
+  description: NUMISONA, parameter mapping of numeric fields to auditory channels
+- name: engine/audaxis
+  color: "d4c5f9"
+  description: AUDAXIS, auditory axes, navigation structure, speech and spatial cues
+- name: engine/sonotrace
+  color: "d4c5f9"
+  description: SONOTRACE, time-series transport, live streams and monitoring
+- name: engine/plotsona
+  color: "d4c5f9"
+  description: PLOTSONA, chart ingestion and chart-type templates (incl. ML extraction)
+- name: engine/curvasona
+  color: "d4c5f9"
+  description: CURVASONA, math functions, critical-point cues and audification
+- name: engine/axonote
+  color: "d4c5f9"
+  description: AXONOTE, musical mapping, instruments and MIDI/OSC output
+- name: engine/echometric
+  color: "d4c5f9"
+  description: ECHOMETRIC, pattern analytics, descriptions, perceptual lint, evaluation harness
+- name: engine/tonalens
+  color: "d4c5f9"
+  description: TONALENS, multivariate exploration lens with linked selection
+- name: engine/resonum
+  color: "d4c5f9"
+  description: RESONUM, model-based sonification
+
+# --- stage/* --------------------------------------------------------------
+- name: stage/a
+  color: "fef2c0"
+  description: Stage A, Foundation (phases A01-A08)
+- name: stage/b
+  color: "fef2c0"
+  description: Stage B, Accessible desktop (phases B01-B07)
+- name: stage/c
+  color: "fef2c0"
+  description: Stage C, Bring any chart (phases C01-C06)
+- name: stage/d
+  color: "fef2c0"
+  description: Stage D, Discover (phases D01-D06)
+
+# --- priority/* -----------------------------------------------------------
+- name: priority/p0
+  color: "b60205"
+  description: Critical, drop other work (release blocker, data loss, critical a11y barrier)
+- name: priority/p1
+  color: "d93f0b"
+  description: High, needed for the current phase or release
+- name: priority/p2
+  color: "fbca04"
+  description: Medium, planned for a coming phase
+- name: priority/p3
+  color: "0e8a16"
+  description: Low, nice to have
+
+# --- status/* -------------------------------------------------------------
+- name: status/needs-triage
+  color: "e99695"
+  description: New, not yet reviewed by a maintainer
+- name: status/blocked
+  color: "5c0f0f"
+  description: Waiting on another issue, decision or external party
+- name: status/needs-design
+  color: "c2e0c6"
+  description: Needs an ADR, RFC or design decision before implementation
+- name: status/ready
+  color: "0e8a16"
+  description: Meets the Definition of Ready and can be picked up
+
+# --- cross-cutting --------------------------------------------------------
+- name: a11y
+  color: "1d76db"
+  description: Accessibility (screen readers, braille, keyboard, contrast, WCAG)
+- name: research
+  color: "5319e7"
+  description: Research question, hypothesis, finding or design-rule change
+- name: good first issue
+  color: "7057ff"
+  description: Well scoped and documented, suitable for a first contribution
+- name: help wanted
+  color: "008672"
+  description: Maintainers would welcome a contributor for this
+- name: breaking-change
+  color: "b60205"
+  description: Changes public API, CLI, spec or file formats incompatibly
+- name: dependencies
+  color: "0366d6"
+  description: Dependency updates (applied by Dependabot or Renovate)

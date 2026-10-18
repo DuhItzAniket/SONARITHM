@@ -1,0 +1,190 @@
+# 06 · Audio Engine: Render Graph, Backends and Export
+
+> **Status:** Baseline v1 (2026-10-18). Built in A05, after the A02 graph decision.
+> **Decision:** [ADR-0004 Audio backend and render graph](../decisions/0004-audio-backend-and-render-graph.md). **Rules:** [coding-standards §Real-time audio](../engineering/coding-standards.md).
+> **Evidence:** [notes/04-rust-core-stack.md](../research/notes/04-rust-core-stack.md) §§1–4, 13–14.
+
+## 1. Goals
+
+1. **One render path** for real-time playback and offline export ([P4](01-overview.md#2-architectural-principles)).
+2. **Glitch-free.** Zero xruns at 128-frame buffers on reference hardware (A05 exit).
+3. **Interactive.** A key press reaches the onset of its cue in ≤ 50 ms p95.
+4. **Deterministic export.** The same Score gives the same audio within tolerance across platforms (H-08).
+5. **Replaceable edges.** cpal and any third-party graph sit behind our traits.
+
+## 2. Threading model
+
+```mermaid
+flowchart LR
+  subgraph NonRT["Non-real-time threads"]
+    UI[Tauri / IPC handlers<br/>tokio]
+    CTRL[Control thread<br/>transport, cues, live events]
+    PB[Plan builder<br/>worker pool]
+    GC[basedrop collector<br/>deferred frees]
+    TEL[Telemetry pump<br/>30–60 Hz]
+  end
+  subgraph RT["Audio thread (device callback)"]
+    G[RenderGraph.process(block)]
+  end
+  UI --> CTRL
+  CTRL -- rtrb SPSC: Command --> G
+  PB -- basedrop Shared: RenderPlan --> CTRL
+  CTRL -- rtrb SPSC: PlanSwap / LiveEvent --> G
+  G -- triple_buffer: EngineState --> TEL
+  G -- drop old plan --> GC
+  TEL -- Tauri Channel: clock anchors, meters --> UI
+```
+
+| Thread | May allocate or lock | Responsibilities |
+|---|---|---|
+| Audio (RT) | **No** | Process blocks, dispatch scheduled events, apply commands, publish state |
+| Control | Yes | Owns the transport state machine (authoritative), translates UI intents to `Command`s, feeds live events (cues, lens, streams) |
+| Plan builder | Yes | Score → RenderPlan ([05 §5](05-compiler-and-score-ir.md#5-from-score-to-renderplan)) |
+| Collector | Yes | Frees retired plans and buffers off the RT thread (basedrop) |
+| Telemetry pump | Yes | Reads the triple buffer, sends clock anchors **only on change**, batches meter frames into binary Channel messages |
+
+## 3. Render graph
+
+```mermaid
+flowchart LR
+  subgraph Voices
+    VD[Data voices<br/>tone, glide, grain, audify]
+    VC[Context voices<br/>ticks, reference tone]
+    VE[Earcon voices]
+    VM[Monitor soundscape]
+    VL[Live cue voices<br/>navigation, lens]
+  end
+  VD --> BD[Data bus<br/>ISO 226 comp.]
+  VC --> BC[Context bus]
+  VE --> BE[Earcon bus]
+  VM --> BM[Monitor bus]
+  VL --> BD
+  BD & BC & BE & BM --> SP[Spatializer<br/>stereo / binaural D03]
+  SP --> DUCK[Speech ducker<br/>−20 dB while self-voicing]
+  DUCK --> MASTER[Master: sonification volume<br/>A11Y-15]
+  MASTER --> LIM[True-peak limiter<br/>−1 dBTP]
+  LIM --> METER[Meters: peak, RMS,<br/>LUFS momentary]
+  METER --> OUT[Device or file]
+```
+
+| Component | Implementation | Notes |
+|---|---|---|
+| Voices | `trait Voice { fn note_on(..); fn note_off(..); fn set_param(..); fn process(&mut self, out: &mut [f32]) }`, built from fundsp graphs or custom nodes | Preallocated. Polyphony is fixed per plan. Voice stealing takes the oldest or quietest voice and raises a counted diagnostic |
+| Envelopes | ADSR with **mandatory ramps ≥ 5 ms** (default about 40 ms onset per SDR-22) | Never zero |
+| Oscillators | fundsp PolyBLEP saw/square, sine, triangle; wavetable (custom); FM | The square preset serves BLV chart reading (SDR-29) |
+| Granular | Custom node: grain pool, density-driven scheduler, Hann windows | SDR-32; D01 |
+| Audifier | Custom node: resampling playback of `Arc<[f32]>` with rubato | SDR-31; C03 |
+| Modal | Custom resonator bank (excitation → damped sinusoids) | SDR-33; D02 |
+| Loudness compensation | Per-voice gain from an ISO 226:2023-derived table indexed by pitch | SDR-24; precomputed in the plan |
+| Spatializer | Constant-power pan; ITD/ILD; SOFA HRTF convolution via sofar (D03) | SDR-30 |
+| Limiter | Look-ahead true-peak limiter on master | Hearing safety |
+
+### 3.1 Own graph or Firewheel
+
+A02 builds both behind the same `RenderGraph` trait and measures them. The baseline plan is a **small, owned graph**: fixed buses plus a voice pool, which is all a sonification needs. Firewheel 0.14 (DAG compile, real-time-safe events, sample/musical clocks) is the strongest candidate if the owned graph proves limiting. Against it: Firewheel is pre-1.0 and a Bevy audit found undefined behaviour ([research report](../research/research-report.md#the-audio-core-should-own-its-graph-and-treat-devices-as-plug-ins)). The decision is recorded by amending ADR-0004 at the A02 gate.
+
+## 4. Real-time communication
+
+| Channel | Direction | Mechanism | Payload |
+|---|---|---|---|
+| Commands | Control → RT | `rtrb` SPSC ring, fixed capacity (1024) | `Play`, `Pause`, `Seek(frames)`, `SetSpeed(f32)`, `SetLoop`, `SetGain(bus, Db)`, `TriggerCue(CueId, params)`, `StopAll` |
+| Plan swap | Control → RT | `rtrb` carrying a `basedrop::Shared<RenderPlan>` | A new plan, applied at the next block boundary with crossfade |
+| Live events | Control → RT | `rtrb` SPSC, timestamped with a target frame | Stream-derived notes, lens events, excitations |
+| Engine state | RT → telemetry | `triple_buffer` | Sample position, host timestamp of the block, playing flag, speed, xrun count, peak/RMS per bus |
+| Retired resources | RT → collector | basedrop handles | Old plans, buffers |
+
+**Capacity overflow policy.** If the command ring is full, the control thread coalesces commands (latest seek wins). It never blocks the RT thread. Overflows are counted and logged off-thread.
+
+## 5. Scheduler and transport
+
+- **Score time vs device time.** The transport maps score seconds to device frames: `frame = start_frame + (t_score − t0) × sr / speed`. Changing speed changes only the mapping, never the pitch.
+- **Sample-accurate dispatch.** Each block dispatches every event whose frame falls in `[block_start, block_end)`, at its sample offset inside the block.
+- **Seek and scrub.** On seek, the scheduler binary-searches the next event index per voice group, and voices crossfade out in ≤ 10 ms. Scrub (drag or keyboard) is a stream of seeks plus short **scrub grains** that preview the local value.
+- **Loop.** Loop points are wrapped seamlessly with a short crossfade.
+- **Transport state machine.** The control thread holds the authoritative state: `Stopped → Playing ⇄ Paused`, `Seeking`, `Exporting`. The UI mirrors it with an XState machine and never assumes a transition succeeded until the authoritative state arrives.
+
+## 6. Backends
+
+```rust
+// sonarithm-audio (sketch)
+pub trait AudioBackend {
+    fn devices(&self) -> Result<Vec<DeviceInfo>, AudioError>;
+    fn open(&mut self, cfg: &StreamConfig, graph: RenderGraphHandle) -> Result<StreamHandle, AudioError>;
+    fn latency(&self) -> Option<LatencyInfo>;     // reported output latency, used for clock compensation
+}
+```
+
+| Backend | Phase | Notes |
+|---|---|---|
+| `CpalBackend` | A05 | cpal 0.18: WASAPI (shared) / ASIO (feature), CoreAudio, PipeWire/PulseAudio/ALSA/JACK (feature). Stream rebuilds after device loss happen on the control thread |
+| `OfflineBackend` | A05 | A plain loop at a fixed block size into a sink (file writer, null, analyzer) |
+| `WebAudioBackend` | D05 | cpal's WebAudio/AudioWorklet host for `sonarithm-wasm` |
+| Exclusive mode | Later | WASAPI or CoreAudio exclusive via the `wasapi` crate if latency budgets require it ([risk R-03](../planning/risk-register.md)) |
+
+## 7. Export
+
+| Artifact | Writer | Default | Notes |
+|---|---|---|---|
+| WAV | hound | 48 kHz, 24-bit PCM (or 32-bit float) | |
+| FLAC | flacenc | 48 kHz, 24-bit | Pure Rust |
+| MIDI (SMF) | midly via the AXONOTE Sink | Type 1, one track per Score track | Notes from `Note` events; glides as pitch-bend (±2 semitones per channel) or as quantized notes, user's choice |
+| Render manifest | serde_json | `<name>.render.json` | Required. See below |
+| Cue sidecar | WebVTT | `<name>.cues.vtt` | Speech and insight cues with timestamps. Gives Deaf/HoH users and players a text track (A11Y-24) |
+| Stems | Per-bus WAV/FLAC | off | Data, context, earcons separately (Presentation workflows) |
+| MP3, Opus, Vorbis | Optional features | off | MP3 via LAME is **LGPL** and never on by default |
+
+**Render manifest (`*.render.json`).** Required by [ADR-0013](../decisions/0013-determinism-and-provenance.md):
+
+```json
+{
+  "sonarithm": { "version": "0.1.0", "git": "<commit>", "engines": { "numisona": "0.1.0" } },
+  "spec": { "version": "0.1", "hash": "sha256:…", "embedded": { } },
+  "data": { "fingerprint": "sha256:…", "source": { "kind": "file", "name": "temps.csv" }, "provenance": { "exact": 1.0 } },
+  "render": { "sampleRate": 48000, "blockSize": 256, "seed": 1729, "mode": "analysis", "durationS": 42.0 },
+  "output": { "file": "temps.flac", "sha256": "…", "integratedLufs": -16.1, "truePeakDbtp": -1.2 },
+  "platform": { "os": "windows", "arch": "x86_64" }
+}
+```
+
+Paths are written **relative or redacted**, never as absolute user paths (privacy).
+
+## 8. Determinism
+
+| Source of variance | Control |
+|---|---|
+| Random numbers | Seeded per track (SDR-02); no OS entropy in render paths |
+| Wall clock | Never read in compile or offline render |
+| Sample rate and block size | Fixed per export and recorded in the manifest |
+| Floating point and SIMD | Same code path everywhere. Denormals flushed (FTZ/DAZ). Golden comparisons use tolerances: peak null residual ≤ −90 dBFS, ΔLUFS ≤ 0.1 |
+| Platform maths libraries | Compile-time and plan-time values (pitch conversion, scales, loudness tables) use pure-Rust `libm`, not the platform's `std` float functions, so the Score is byte-identical ([ADR-0013](../decisions/0013-determinism-and-provenance.md)) |
+| Iteration order | No `HashMap` iteration in outputs |
+| Threading | The offline renderer is single-threaded per Score (parallel only across independent exports) |
+
+The **Score IR is the strict artifact** (byte-identical). Audio is compared within tolerance ([testing-strategy](../engineering/testing-strategy.md)).
+
+## 9. Latency and clock synchronization
+
+1. Each block records `(sample_position, host_time_at_output)`. The output time is estimated from cpal's timestamp plus the reported device latency.
+2. The telemetry pump sends an **anchor** `(sample_position, host_time, speed, playing)` to the UI **only when state changes** (play, pause, seek, speed) and every 2 s as drift correction.
+3. The UI extrapolates the playhead each animation frame from the anchor. Rendering cost is constant and IPC jitter is irrelevant.
+4. **Interactive cue latency** = input handling + IPC + control enqueue + up to one block + device latency. The budget is ≤ 50 ms p95 at a 256-frame buffer and 48 kHz, measured by the loopback harness in A02 and B03.
+
+## 10. Hearing safety and levels
+
+- **Start-up.** Master gain starts at −20 dB and ramps over 500 ms. There are no full-scale onsets.
+- **Limiter.** A look-ahead true-peak limiter at −1 dBTP on the master. Limiter activity is metered and warned about in lint when it is sustained.
+- **Independent sonification volume** (A11Y-15), separate from the system volume. A **Stop all audio** command is always available (global shortcut).
+- **Session comfort.** An optional reminder after long sessions (SDR-39, experimental).
+
+## 11. Failure handling
+
+| Failure | Behaviour |
+|---|---|
+| Device lost or changed | The stream stops. The control thread rebuilds on the new default device and keeps the transport position. The UI announces "Audio device changed to …" |
+| xrun | Counted in engine state. Repeated xruns trigger a diagnostic suggesting a larger buffer |
+| Panic in RT code | Policy: RT code is panic-free by construction (no indexing without proof, no `unwrap`). The backend callback wrapper catches unwinds, outputs silence, sets a fatal flag, and the control thread tears the stream down and reports it |
+| Plan build failure | The previous plan keeps playing; a diagnostic is shown |
+
+## 12. Real-time rules (summary)
+
+The audio thread must never allocate or free memory, take a lock, perform I/O or syscalls (including logging), panic or block on a channel, or run a loop not bounded by the block size and polyphony. Debug builds wrap the callback in `assert_no_alloc`, and CI runs a debug soak test that fails on any allocation. The full rules and review checklist are in [coding-standards.md](../engineering/coding-standards.md).

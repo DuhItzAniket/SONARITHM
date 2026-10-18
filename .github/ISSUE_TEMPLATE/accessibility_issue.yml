@@ -1,0 +1,149 @@
+name: Accessibility issue
+description: A barrier for screen-reader, braille, magnifier, switch, voice-control or keyboard-only use.
+title: "A11y: "
+labels: ["a11y", "status/needs-triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thank you. Reports from people who use assistive technology every day are among the most valuable this project receives.
+
+        Each field has a label and a description. Required fields are marked. If this form is hard to use with your setup, write everything in the "Steps to reproduce" field in your own words, or start a [discussion](https://github.com/DuhItzAniket/SONARITHM/discussions) instead, and a maintainer will tidy it up.
+
+        Share only what is needed to reproduce the problem. You do not need to describe any disability or health information.
+
+  - type: dropdown
+    id: component
+    attributes:
+      label: Component
+      options:
+        - Desktop app
+        - CLI (sonarithm)
+        - Python package or notebooks
+        - Documentation or website
+        - Other or not sure
+    validations:
+      required: true
+
+  - type: input
+    id: version
+    attributes:
+      label: SONARITHM version or commit
+      placeholder: "0.5.0-beta, or a commit SHA"
+    validations:
+      required: true
+
+  - type: input
+    id: os
+    attributes:
+      label: Operating system and version
+      description: Include the desktop environment and display server on Linux.
+      placeholder: "Windows 11; macOS and its version; Ubuntu with GNOME on Wayland"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: assistive-technology
+    attributes:
+      label: Assistive technology used
+      description: Select all that were active when the problem occurred.
+      multiple: true
+      options:
+        - NVDA
+        - JAWS
+        - Narrator
+        - VoiceOver (macOS)
+        - Orca
+        - Screen magnifier
+        - Braille display
+        - Switch access
+        - Voice control or dictation
+        - Keyboard only, no other assistive technology
+        - High contrast or forced colours
+        - Other
+    validations:
+      required: true
+
+  - type: input
+    id: screen-reader-version
+    attributes:
+      label: Screen reader and version
+      description: The name and version as shown in the screen reader's About dialog or settings. Write "none" if you did not use a screen reader.
+    validations:
+      required: true
+
+  - type: input
+    id: braille
+    attributes:
+      label: Braille display
+      description: Model, connection (USB or Bluetooth), braille table or grade, and the driver in use (for example through NVDA, JAWS, VoiceOver or BRLTTY). Leave empty if not used.
+    validations:
+      required: false
+
+  - type: textarea
+    id: settings
+    attributes:
+      label: Relevant settings
+      description: Anything that may matter, such as speech rate, verbosity, audio ducking, NVDA sound split, mono audio, the audio output device, magnification level or theme.
+    validations:
+      required: false
+
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      description: Numbered steps, including every key pressed and where focus was before each step.
+      placeholder: |
+        1. Open a CSV file with Ctrl+O.
+        2. Press F6 until focus is on the chart.
+        3. Press the Right Arrow key.
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected announcement or behaviour
+      description: What did you expect to hear, feel on the braille display, or be able to do?
+    validations:
+      required: true
+
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual announcement or behaviour
+      description: What was announced or happened instead? If you can, copy the exact speech output (for example from NVDA's Speech Viewer) or the braille line.
+    validations:
+      required: true
+
+  - type: dropdown
+    id: impact
+    attributes:
+      label: Impact
+      options:
+        - Blocker. I cannot complete the task.
+        - Serious. A workaround exists but is hard.
+        - Moderate. It slows me down or confuses me.
+        - Minor. It is an annoyance.
+    validations:
+      required: true
+
+  - type: input
+    id: wcag
+    attributes:
+      label: WCAG success criterion (optional)
+      description: If you know which criterion applies, name it, for example "4.1.3 Status Messages".
+    validations:
+      required: false
+
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Before submitting
+      options:
+        - label: I am happy for a maintainer to ask follow-up questions in this issue.
+          required: false
+        - label: I would like to be credited by my GitHub handle in the release notes when this is fixed.
+          required: false
+        - label: I agree to follow this project's code of conduct.
+          required: true

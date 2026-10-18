@@ -1,0 +1,144 @@
+name: Bug report
+description: Something in SONARITHM does not work as documented.
+title: "Bug: "
+labels: ["kind/bug", "status/needs-triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thank you for reporting a bug. Please search the existing issues first.
+
+        - **Security vulnerabilities must not be reported here.** Follow the [security policy](https://github.com/DuhItzAniket/SONARITHM/security/policy).
+        - **Accessibility problems** (screen reader, braille, keyboard, contrast, magnification) have their own form, which asks for your assistive-technology setup.
+        - Do not attach confidential or personal data. A small synthetic dataset that reproduces the problem is best.
+
+  - type: dropdown
+    id: component
+    attributes:
+      label: Component
+      description: Where did the problem occur?
+      options:
+        - Desktop app
+        - CLI (sonarithm)
+        - Python package
+        - Rust crates
+        - Documentation
+        - Other or not sure
+    validations:
+      required: true
+
+  - type: dropdown
+    id: engine
+    attributes:
+      label: Engine
+      description: Which engine is involved, if you know? Select all that apply.
+      multiple: true
+      options:
+        - Not engine-specific or not sure
+        - NUMISONA (parameter mapping)
+        - AUDAXIS (axes, navigation, speech)
+        - SONOTRACE (time series, streams)
+        - PLOTSONA (chart ingestion)
+        - CURVASONA (functions, audification)
+        - AXONOTE (musical mapping, MIDI/OSC)
+        - ECHOMETRIC (analytics, descriptions, lint)
+        - TONALENS (multivariate lens)
+        - RESONUM (model-based sonification)
+    validations:
+      required: false
+
+  - type: input
+    id: version
+    attributes:
+      label: SONARITHM version or commit
+      description: The release version (from the CLI's version flag, the desktop app's About dialog, or the Python package), or a commit SHA if you built from source.
+      placeholder: "0.1.0-alpha, or a commit SHA"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: os
+    attributes:
+      label: Operating system
+      multiple: true
+      options:
+        - Windows
+        - macOS
+        - Linux (X11)
+        - Linux (Wayland)
+        - Other
+    validations:
+      required: true
+
+  - type: input
+    id: os-version
+    attributes:
+      label: OS version and architecture
+      placeholder: "Windows 11 x64; macOS version on Apple silicon; Linux distribution on x86_64"
+    validations:
+      required: true
+
+  - type: textarea
+    id: audio-setup
+    attributes:
+      label: Audio setup
+      description: For audio problems, give the output device, audio backend (WASAPI, ASIO, CoreAudio, PipeWire, ALSA, JACK), sample rate and buffer size, if known.
+    validations:
+      required: false
+
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      description: Numbered steps, including the exact command, keys pressed or menu items used.
+      placeholder: |
+        1. Run `sonarithm render spec.json --data temps.csv --out temps.flac`
+        2. ...
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behaviour
+      description: What did you expect to happen or to hear?
+    validations:
+      required: true
+
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual behaviour
+      description: What happened or what did you hear instead? Describe audio problems in words (for example "a click at every note onset").
+    validations:
+      required: true
+
+  - type: textarea
+    id: spec
+    attributes:
+      label: Spec and data to reproduce
+      description: A minimal spec, plus a small synthetic dataset or a description of the data's shape (columns, types, row count).
+      render: json
+    validations:
+      required: false
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs and diagnostics
+      description: Error output, diagnostics (for example SNR-SPEC-012) or the render manifest (*.render.json). Paste as text.
+      render: shell
+    validations:
+      required: false
+
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Before submitting
+      options:
+        - label: I searched the existing issues and this is not a duplicate.
+          required: true
+        - label: This report contains no security vulnerability details and no confidential or personal data.
+          required: true
+        - label: I agree to follow this project's code of conduct.
+          required: true

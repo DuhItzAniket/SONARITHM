@@ -1,0 +1,52 @@
+# CODEOWNERS for SONARITHM.
+# Code owners are requested for review automatically. Where the branch ruleset requires
+# code-owner review (core, real-time audio, accessibility-critical paths, workflows),
+# their approval is mandatory. See GOVERNANCE.md and docs/engineering/git-workflow.md.
+#
+# The last matching pattern takes precedence, so the catch-all comes first.
+
+* @DuhItzAniket
+
+# ---------------------------------------------------------------------------
+# Future per-area owners. Uncomment and replace the <placeholders> when maintainers
+# join (GOVERNANCE.md, "Becoming a maintainer"). Team handles such as
+# @<org>/<team> require the repository to live in a GitHub organisation.
+# ---------------------------------------------------------------------------
+#
+# Core, compiler and spec (code-owner review required)
+# /crates/sonarithm-core/              @DuhItzAniket @<core-maintainer>
+# /crates/sonarithm-spec/              @DuhItzAniket @<core-maintainer>
+# /crates/sonarithm-compiler/          @DuhItzAniket @<core-maintainer>
+# /schemas/                            @DuhItzAniket @<core-maintainer>
+#
+# Real-time audio (code-owner review required)
+# /crates/sonarithm-dsp/               @DuhItzAniket @<audio-maintainer>
+# /crates/sonarithm-render/            @DuhItzAniket @<audio-maintainer>
+# /crates/sonarithm-audio/             @DuhItzAniket @<audio-maintainer>
+#
+# Engines
+# /crates/engines/                     @DuhItzAniket @<engines-maintainer>
+# /crates/engines/sonarithm-audaxis/   @<engines-maintainer> @<accessibility-lead>
+# /crates/engines/sonarithm-echometric/ @<engines-maintainer> @<research-lead>
+#
+# Desktop app and UI (accessibility-critical, code-owner review required)
+# /apps/desktop/                       @<desktop-maintainer> @<accessibility-lead>
+# /packages/ui/                        @<desktop-maintainer> @<accessibility-lead>
+# /packages/viz/                       @<desktop-maintainer>
+# /packages/ipc/                       @<desktop-maintainer> @<core-maintainer>
+# /crates/sonarithm-speech/            @<accessibility-lead>
+#
+# Bindings and CLI
+# /apps/cli/                           @<cli-maintainer>
+# /bindings/python/                    @<python-maintainer>
+#
+# Research and design documentation
+# /docs/research/design-rules.md       @<research-lead> @<accessibility-lead>
+# /docs/research-paper/                @<research-lead>
+# /docs/design/                        @<accessibility-lead> @<design-owner>
+#
+# Supply chain, workflows and policy (code-owner review required)
+# /.github/                            @DuhItzAniket @<release-manager>
+# /deny.toml                           @DuhItzAniket @<release-manager>
+# /SECURITY.md                         @DuhItzAniket
+# /GOVERNANCE.md                       @DuhItzAniket
