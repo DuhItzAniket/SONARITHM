@@ -1,6 +1,6 @@
 # 04 · Sonification Spec Language (v0.1 draft)
 
-> **Status:** Draft for RFC-0001 (to be opened in A03). Field names may change before `specVersion: "0.1"` is frozen at the end of A03.
+> **Status:** Draft under [RFC-0001](../rfcs/0001-spec-v0.1.md) (in discussion). Field names may change before `specVersion: "0.1"` is frozen at the end of A03; the RFC holds the precise key set, defaults, codes and open questions.
 > **Decision:** [ADR-0005 Declarative spec and Score IR](../decisions/0005-declarative-spec-and-score-ir.md). **Owner:** Spec lead.
 > **Evidence:** [SDR-01..06](../research/design-rules.md#a-specification-and-reproducibility).
 

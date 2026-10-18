@@ -22,7 +22,7 @@ Status values: `Not started` · `In progress` · `In review` · `Done` · `Block
 | — | — | Kickoff: research and documentation baseline | **Done** | 100% | 2026-10-18; see [worklog](worklog/2026-10-18-project-kickoff.md) |
 | A | A01 | Repository bootstrap and governance | **In progress** | ≈95% | Everything merged in #1 except T10 (project board), which waits for the `project` token scope. See [A01 tasks](#a01-tasks) |
 | A | A02 | Technical spikes and prototype gate | Not started | 0% | |
-| A | A03 | Core types, Spec v0.1, Score IR | **In progress** | ≈5% | T01 in review. See [A03 tasks](#a03-tasks) |
+| A | A03 | Core types, Spec v0.1, Score IR | **In progress** | ≈15% | T01 merged (#4); RFC-0001 accepted (T05); T02–T04 in review. See [A03 tasks](#a03-tasks) |
 | A | A04 | Data layer | Not started | 0% | |
 | A | A05 | Render engine, audio backend, export | Not started | 0% | |
 | A | A06 | NUMISONA v1 | Not started | 0% | |
@@ -74,12 +74,12 @@ Work runs in a separate agent session in parallel with A02 (spikes). Each task l
 
 | Task | Status | Notes |
 |---|---|---|
-| A03-T01 Units newtypes | In review | `Hz`, `Cents`, `Midi`, `Db`, `Seconds`, `Frames`, `SampleRate`, `Pan`; `sonarithm_core::math` over `libm`; round-trip property tests |
-| A03-T02 IDs, provenance, diagnostics, error-code registry | Not started | |
-| A03-T03 Score IR, canonical hash, review snapshots | Not started | |
-| A03-T04 Capability traits, registry | Not started | |
-| A03-T05 RFC-0001 Spec v0.1 | In review | |
-| A03-T06 Spec types, JSON Schema export | Not started | |
+| A03-T01 Units newtypes | **Done** | Merged in #4: `Hz`, `Cents`, `Midi`, `Db`, `Seconds`, `Frames`, `SampleRate`, `Pan`; `sonarithm_core::math` over `libm`; round-trip property tests |
+| A03-T02 IDs, provenance, diagnostics, error-code registry | In review | #12 (IDs, provenance, diagnostics), #6 (code registry) |
+| A03-T03 Score IR, canonical hash, review snapshots | In review | #7 (Score IR types), #8 (canonical hash and snapshots) |
+| A03-T04 Capability traits, registry | In review | #10; ADR-0014 (trait signatures) needs owner approval |
+| A03-T05 RFC-0001 Spec v0.1 | **Done** | [RFC-0001](../rfcs/0001-spec-v0.1.md) accepted by the owner on 2026-10-19 with all 21 proposed resolutions; spec v0.1 frozen ([ADR-0015](../decisions/0015-spec-v0.1-frozen.md)) |
+| A03-T06 Spec types, JSON Schema export | Not started | Follows RFC-0001 |
 | A03-T07 Semantic validation | Not started | |
 | A03-T08 Canonicalization, spec hash, migrations | Not started | |
 | A03-T09 Compiler skeleton, `CompileContext` | Not started | |
@@ -124,5 +124,6 @@ Maturity scale: `Designed` → `Prototype` → `Alpha` → `Beta` → `Stable` �
 | 2026-10-18 | Status board created at the documentation baseline |
 | 2026-10-18 | A01 started: workspace, tooling, xtask, workflows and pnpm skeleton built locally (T03–T09, T12) |
 | 2026-10-18 | Licence decided (T01); licence files and REUSE (T13); GitHub ruleset, security and repo settings (T02, T11); A01 PR opened |
-| 2026-10-19 | A03 started: unit newtypes (T01) |
+| 2026-10-19 | A03 started: unit newtypes (T01) and RFC-0001 (T05) |
+| 2026-10-19 | RFC-0001 accepted with all 21 resolutions; spec v0.1 frozen (ADR-0015) |
 | 2026-10-18 | A01 PR #1 merged as `02a44f3` with all checks green; owner context recorded (RV University, Windows-only hardware) |
