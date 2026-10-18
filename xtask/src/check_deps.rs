@@ -91,7 +91,8 @@ const LAYERS: &[(&str, &[&str])] = &[
     ("sonarithm-py", &["sonarithm"]),
     ("sonarithm-wasm", &["sonarithm"]),
     ("sonarithm-plugin-host", &["sonarithm-core"]),
-    ("xtask", &[]),
+    // xtask reads code tables and schemas from the library crates (codegen, codes).
+    ("xtask", &["sonarithm-compiler"]),
 ];
 
 /// Crates `sonarithm-core` must not reach (§3 rule 1): async runtimes, audio I/O,

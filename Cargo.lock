@@ -454,6 +454,9 @@ version = "0.0.0"
 [[package]]
 name = "sonarithm-spec"
 version = "0.0.0"
+dependencies = [
+ "sonarithm-core",
+]
 
 [[package]]
 name = "syn"
@@ -580,6 +583,8 @@ version = "0.0.0"
 dependencies = [
  "anyhow",
  "cargo_metadata",
+ "sonarithm-core",
+ "sonarithm-spec",
 ]
 
 [[package]]

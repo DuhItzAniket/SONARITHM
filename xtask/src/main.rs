@@ -17,6 +17,7 @@
 mod check_deps;
 mod ci;
 mod codegen;
+mod codes;
 
 use std::path::{Path, PathBuf};
 use std::process::ExitCode;
@@ -30,7 +31,8 @@ Tasks:
   ci                 Run the local equivalent of the required CI checks
   check-deps         Check the crate dependency rules (02-repository-and-crate-layout.md §3)
                      Options: --manifest-path <path>  check another workspace
-  codegen            Regenerate generated files (nothing to generate until A03)
+  codegen            Regenerate every generated file (code registry; JSON Schemas from A03-T06)
+  codes              Check the diagnostic code tables and write docs/reference/error-codes.md
   wasm-check         Build the wasm32-compatible crates for wasm32-unknown-unknown
   help               Show this message";
 
@@ -60,7 +62,11 @@ fn run() -> Result<()> {
         }
         Some("codegen") => {
             no_options(&rest)?;
-            codegen::run()
+            codegen::run(&root)
+        }
+        Some("codes") => {
+            no_options(&rest)?;
+            codes::run(&root)
         }
         Some("wasm-check") => {
             no_options(&rest)?;

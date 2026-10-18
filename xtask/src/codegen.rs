@@ -3,19 +3,21 @@
 
 //! `cargo xtask codegen`: regenerates every generated artifact.
 //!
-//! Nothing is generated yet. The JSON Schemas in `schemas/` arrive in A03 and the
-//! TypeScript IPC types in `packages/ipc/src/generated/` in B01
-//! (docs/engineering/dev-environment.md#common-commands). The `docs / schema-diff` CI job
-//! already runs this task and then `git diff --exit-code`, so the check is in place before
-//! the first generator lands.
+//! | Output | Generator |
+//! |---|---|
+//! | `docs/reference/error-codes.md` | [`crate::codes`] (A03-T02) |
+//!
+//! The JSON Schemas in `schemas/` join in A03-T06 and the TypeScript IPC types in
+//! `packages/ipc/src/generated/` in B01 (docs/engineering/dev-environment.md#common-commands).
+//! The `docs / schema-diff` CI job runs this task and then fails on any diff, so a stale
+//! generated file cannot be merged.
+
+use std::path::Path;
 
 use anyhow::Result;
 
-#[expect(
-    clippy::unnecessary_wraps,
-    reason = "generators are fallible; the stub keeps the signature they need"
-)]
-pub(crate) fn run() -> Result<()> {
-    println!("codegen: nothing to generate yet (JSON Schemas arrive in A03, IPC types in B01)");
-    Ok(())
+use crate::codes;
+
+pub(crate) fn run(root: &Path) -> Result<()> {
+    codes::run(root)
 }
