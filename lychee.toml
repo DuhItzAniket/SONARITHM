@@ -37,6 +37,9 @@ exclude = [
     '^https://doaj\.org/',
     '^https://industrialmonitordirect\.com/',
     '^https://lawplayer\.com/',
+    # Answers automated clients with 503; the cited files exist (checked against the
+    # GitHub mirror, chromium/chromium).
+    '^https://chromium\.googlesource\.com/',
 
     # Hosts whose TLS or connections fail on their side.
     '^https://blog\.bookshare\.org/',
