@@ -4,6 +4,7 @@
 //! A02-T02/T03/T04 spike: render graphs behind a draft `RenderGraph` trait, driven offline
 //! and from a cpal stream. Usage and results: `README.md`. Throwaway code.
 
+mod fw;
 mod graph;
 mod own;
 mod score;
@@ -20,8 +21,9 @@ use sha2::{Digest, Sha256};
 use crate::graph::{RenderConfig, RenderGraph};
 use crate::voice::MathMode;
 
-// Debug builds abort on any allocation inside `assert_no_alloc` (06 §12).
-#[cfg(debug_assertions)]
+// Debug builds abort on any allocation inside `assert_no_alloc` (06 §12). Off under Miri when
+// `SPIKE_MIRI_SYSTEM_ALLOC` is set at build time, to tell its findings apart from ours.
+#[cfg(all(debug_assertions, not(spike_miri_system_alloc)))]
 #[global_allocator]
 static ALLOC: assert_no_alloc::AllocDisabler = assert_no_alloc::AllocDisabler;
 
@@ -31,6 +33,7 @@ const SAMPLE_RATE: u32 = 48_000;
 fn make_graph(name: &str) -> Result<Box<dyn RenderGraph>, Box<dyn Error>> {
     match name {
         "own" => Ok(Box::new(own::OwnGraph::new())),
+        "firewheel" => Ok(Box::new(fw::FwGraph::new())),
         _ => Err(format!("unknown graph {name}").into()),
     }
 }
@@ -230,6 +233,28 @@ fn realtime(args: &Args) -> Result<(), Box<dyn Error>> {
     Ok(())
 }
 
+/// Null test of two WAV files: peak difference in dBFS and the first differing frame.
+fn null(paths: &[String]) -> Result<(), Box<dyn Error>> {
+    let read = |p: &String| -> Result<Vec<f32>, Box<dyn Error>> {
+        Ok(hound::WavReader::open(p)?
+            .samples::<f32>()
+            .collect::<Result<_, _>>()?)
+    };
+    let (a, b) = (read(&paths[0])?, read(&paths[1])?);
+    let peak = a
+        .iter()
+        .zip(&b)
+        .fold(0.0f32, |m, (x, y)| m.max((x - y).abs()));
+    let first = a.iter().zip(&b).position(|(x, y)| x != y).map(|i| i / 2);
+    println!(
+        "samples={}/{} peak_diff={peak:e} residual_dbfs={:.1} first_diff_frame={first:?}",
+        a.len(),
+        b.len(),
+        20.0 * peak.log10()
+    );
+    Ok(())
+}
+
 struct Args {
     command: String,
     graph: String,
@@ -264,11 +289,12 @@ fn main() -> Result<(), Box<dyn Error>> {
     match args.command.as_str() {
         "offline" => offline(&args),
         "realtime" => realtime(&args),
+        "null" => null(&raw[2..]),
         // Proves the checker is live: a debug build must abort here.
         "selftest-alloc" => {
             let v = assert_no_alloc::assert_no_alloc(|| vec![0u8; 16]);
             Err(format!("allocated {} bytes without aborting (release build?)", v.len()).into())
         }
-        _ => Err("usage: spike-render-graph offline|realtime [--graph own] [--block N] [--seconds N] [--math poly|std] [--wav FILE] [--audible]".into()),
+        _ => Err("usage: spike-render-graph offline|realtime [--graph own|firewheel] [--block N] [--seconds N] [--math poly|std] [--wav FILE] [--audible]".into()),
     }
 }

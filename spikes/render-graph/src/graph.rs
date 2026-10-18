@@ -50,8 +50,9 @@ pub trait GraphProcessor: Send {
     fn process(&mut self, out: &mut [f32]);
 }
 
-/// The control half: runs on a non-real-time thread and may allocate.
-pub trait RenderGraph: Send {
+/// The control half: runs on a non-real-time thread and may allocate. Not `Send`: it stays
+/// on the thread that built it (Firewheel's context is `!Send`).
+pub trait RenderGraph {
     fn name(&self) -> &'static str;
 
     /// Builds voice pools, buses and the event schedule for `score`; returns the processor.
