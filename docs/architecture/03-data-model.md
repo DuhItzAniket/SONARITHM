@@ -65,7 +65,7 @@ classDiagram
 | `FieldMeta` | Stored in Arrow field metadata under the `snr.` prefix (`snr.type`, `snr.unit`, `snr.unit.ucum`, `snr.concept`, `snr.role`, `snr.label`, `snr.description`), so it survives Parquet and Arrow IPC round trips. Values use the spec vocabulary (`quantitative`, `x`, …). An unreadable value is ignored with warning `SNR-DATA-040`; other keys, including unknown `snr.*` keys, are preserved. |
 | `RowRef` | `(TableId, Generation, row: u64)`. It is stable for the life of a generation and is used by Score events, the NavTree and selections. |
 | `RowRange` | A half-open range over one table generation. |
-| `Fingerprint` | SHA-256 over a canonical Arrow IPC serialization: schema with sorted metadata, then batches in order. It is recorded in render manifests ([ADR-0013](../decisions/0013-determinism-and-provenance.md)). |
+| `Fingerprint` | SHA-256 over a canonical Arrow IPC serialization: schema with sorted metadata, then batches in order. It is recorded in render manifests ([ADR-0013](../decisions/0013-determinism-and-provenance.md)). Implementation (A04): the batches are concatenated first and every array is rebuilt with zeroed slots under nulls, so chunking and computation history do not change it; table name, ID and generation are not covered. A bundle's fingerprint hashes a version tag and its tables' fingerprints in order. Pinned digests for the test corpus are checked on all three CI operating systems. |
 | `Annotations` | Analyzer output (extrema, outliers, change points, periodicity, critical points, insights). It is separate from the tables, so re-analysis never mutates data. |
 
 ## 3. Field semantics

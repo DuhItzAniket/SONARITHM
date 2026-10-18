@@ -15,6 +15,7 @@ pub mod bundle;
 pub mod codes;
 pub mod downsample;
 pub mod error;
+pub mod fingerprint;
 mod infer;
 pub mod meta;
 pub mod provenance;
@@ -27,6 +28,7 @@ pub use bundle::{
 };
 pub use downsample::{TileCache, XRange, lttb, m4};
 pub use error::{DataError, Limit};
+pub use fingerprint::{bundle_fingerprint, table_fingerprint};
 pub use meta::{Concept, FieldMeta, FieldType, Role, Unit};
 pub use provenance::{ProvenanceMix, RowProvenance};
 #[cfg(feature = "fs")]
