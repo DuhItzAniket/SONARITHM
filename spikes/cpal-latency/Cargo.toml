@@ -1,0 +1,24 @@
+# A02-T01 spike: cpal 0.18 output and loopback latency harness (throwaway, see README.md).
+# Standalone: excluded from the root workspace (`exclude = ["spikes"]`).
+[package]
+name = "spike-cpal-latency"
+version = "0.0.0"
+edition = "2024"
+rust-version = "1.88"
+license = "MIT OR Apache-2.0"
+publish = false
+
+[dependencies]
+cpal = "=0.18.2"
+
+# Direct WASAPI path (RAW mode, IAudioClient3 periods); the same version cpal 0.18.2 uses.
+[target.'cfg(windows)'.dependencies]
+windows = { version = "=0.62.2", features = [
+    "Win32_Foundation",
+    "Win32_Media_Audio",
+    "Win32_System_Com",
+    "Win32_System_Performance",
+    "Win32_System_Threading",
+] }
+
+[workspace]
