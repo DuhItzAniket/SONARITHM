@@ -52,6 +52,14 @@ pub fn render_set(dir: &Path, seconds: u32) -> Result<(), Box<dyn Error>> {
     Ok(())
 }
 
+/// The render set's folder name only: no absolute user paths in output (ADR-0012).
+fn label(dir: &Path) -> String {
+    dir.file_name().map_or_else(
+        || dir.display().to_string(),
+        |n| n.to_string_lossy().into_owned(),
+    )
+}
+
 fn read_wav(path: &Path) -> Result<Vec<f32>, Box<dyn Error>> {
     Ok(hound::WavReader::open(path)?
         .samples::<f32>()
@@ -73,7 +81,7 @@ pub fn compare(dirs: &[PathBuf]) -> Result<(), Box<dyn Error>> {
     let ref_summary = std::fs::read_to_string(reference.join("summary.txt"))?;
     println!(
         "Reference: `{}` ({})\n",
-        reference.display(),
+        label(reference),
         ref_summary.lines().next().unwrap_or_default()
     );
     println!(
@@ -115,7 +123,7 @@ pub fn compare(dirs: &[PathBuf]) -> Result<(), Box<dyn Error>> {
             };
             println!(
                 "| {name} | `{}` | {} | {} | {residual_text} | {delta:.4} | {} | {} |",
-                dir.display(),
+                label(dir),
                 summary.lines().next().unwrap_or_default(),
                 if peak == 0.0 && a.len() == b.len() {
                     "yes"

@@ -114,3 +114,30 @@ A deadline miss is a callback whose processing took longer than its period. A la
 | `RUSTFLAGS="--cfg spike_miri_system_alloc"` | Miri's built-in allocator (no custom global allocator) | `firewheel_matches_owned_graph` **passes**; the owned-graph tests are still running |
 
 So the one report is not attributable to Firewheel's code or to ours: it needs a custom global allocator that forwards to `System` on Windows. A rerun under Tree Borrows classifies it; until then it is recorded as `TODO(verify)` in the gate report. Firewheel's own `unsafe` (81 occurrences) is exercised only as far as this benchmark reaches it (graph compile, scheduling, processing, drop); the audit's "nontrivial UB" (notes/04 §1) did not show up in this path.
+
+## A02-T04: offline determinism across operating systems (PB-06)
+
+`render-set --out <dir>` renders the 60 s benchmark Score at 256-frame blocks in three variants and writes 32-bit float WAV plus `summary.txt` (integrated loudness, SHA-256 of the samples and of the canonical Score bytes):
+
+| Variant | Graph | Sine oscillator |
+|---|---|---|
+| `own-poly` | Owned | Polynomial approximation: IEEE 754 arithmetic only |
+| `own-std` | Owned | `f32::sin`, which calls the platform maths library |
+| `firewheel-poly` | Firewheel | Polynomial |
+
+Everything else in the render path is basic arithmetic. Plan-time values (pan gains, limiter release, pitches) use `libm`, as 06 §8 prescribes. `compare <reference> <set>...` reports bit identity, the peak null residual, ΔLUFS and Score-byte identity, and fails if PB-06 is missed: residual ≤ −90 dBFS, ΔLUFS ≤ 0.1, Score bytes identical. The temporary workflow `spike-a02-determinism.yml` renders on ubuntu-latest, windows-latest and macos-latest (Apple silicon), then compares in a fourth job.
+
+### Results (2026-10-19)
+
+Reference: the Linux x86-64 render set from CI. Compared with it: the Windows and macOS CI sets, and a set rendered on the owner's laptop (i7-14650HX). CI run: `spike-a02-determinism` on the A02-T04 pull request.
+
+| Variant | Laptop (Windows, x86-64) | CI Windows (x86-64) | CI macOS (AArch64) | PB-06 |
+|---|---|---|---|---|
+| `own-poly` | bit-identical | bit-identical | bit-identical | pass |
+| `own-std` | −144.5 dBFS, ΔLUFS 0.0000 | −144.5 dBFS, ΔLUFS 0.0000 | −150.5 dBFS, ΔLUFS 0.0000 | pass |
+| `firewheel-poly` | bit-identical | bit-identical | bit-identical | pass |
+| Score bytes | identical | identical | identical | pass |
+
+SHA-256 of `own-poly` and `firewheel-poly`, everywhere: `962fbce201ce76350256bfda35ad6ca48f00d5283586d36f5df15f01cd8088ce`. The `own-std` hashes differ per OS but are the same on the laptop and on the CI Windows runner (different CPUs, same maths library).
+
+**PB-06 is met on all three platforms**, across two CPU architectures. When the render path avoids the platform maths library, the output is bit-identical, which is stronger than the tolerance. Calling `f32::sin` per sample costs bit identity across OSes, though the difference stays 55–60 dB below the PB-06 tolerance. For A05: keep oscillators table-based or polynomial (or route through `libm`) where byte-identical audio is wanted, and keep the tolerance comparison for everything else. These renders run single-threaded with fixed block sizes and no SIMD intrinsics; A05 must re-check this with fundsp nodes and any SIMD code.
