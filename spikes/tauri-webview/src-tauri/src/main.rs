@@ -83,6 +83,35 @@ fn bench_channel(channel: Channel<InvokeResponseBody>, size: usize, count: usize
     });
 }
 
+/// A02-T07 (OD-05): speaks `text` through a UI Automation notification on the window
+/// (`UiaRaiseNotificationEvent`), the native route of 08 §4. Windows only.
+#[tauri::command]
+fn announce_native(window: tauri::WebviewWindow, text: String, assertive: bool) -> Result<(), String> {
+    #[cfg(windows)]
+    {
+        use windows::Win32::Foundation::HWND;
+        use windows::Win32::UI::Accessibility::{
+            NotificationKind_Other, NotificationProcessing_ImportantMostRecent, NotificationProcessing_MostRecent,
+            UiaHostProviderFromHwnd, UiaRaiseNotificationEvent,
+        };
+        use windows::core::BSTR;
+        let hwnd = HWND(window.hwnd().map_err(|e| e.to_string())?.0);
+        let processing = if assertive { NotificationProcessing_ImportantMostRecent } else { NotificationProcessing_MostRecent };
+        // SAFETY: `hwnd` is the live top-level window of this webview; the provider and the
+        // BSTRs outlive the call.
+        unsafe {
+            let provider = UiaHostProviderFromHwnd(hwnd).map_err(|e| e.to_string())?;
+            UiaRaiseNotificationEvent(&provider, NotificationKind_Other, processing, &BSTR::from(text), &BSTR::from("sonarithm.announce"))
+                .map_err(|e| e.to_string())
+        }
+    }
+    #[cfg(not(windows))]
+    {
+        let _ = (window, text, assertive);
+        Err("the native route is prototyped on Windows only".into())
+    }
+}
+
 /// Receives the suite's results, adds host facts, writes them, and exits after an autorun.
 #[tauri::command]
 fn report(app: AppHandle, opts: State<'_, Opts>, mut results: serde_json::Value) -> Result<(), String> {
@@ -124,7 +153,15 @@ fn main() {
             builder.build()?;
             Ok(())
         })
-        .invoke_handler(tauri::generate_handler![autorun, bench_ping, bench_binary, bench_json, bench_channel, report])
+        .invoke_handler(tauri::generate_handler![
+            autorun,
+            bench_ping,
+            bench_binary,
+            bench_json,
+            bench_channel,
+            announce_native,
+            report
+        ])
         .run(tauri::generate_context!());
     if let Err(e) = result {
         eprintln!("tauri: {e}");

@@ -1,0 +1,18 @@
+// SPDX-FileCopyrightText: 2026 SONARITHM contributors
+// SPDX-License-Identifier: MIT OR Apache-2.0
+
+import { StrictMode } from "react";
+import { createRoot } from "react-dom/client";
+import { App } from "./App";
+import { mountAnnouncer } from "./announcer";
+import "./a11y.css";
+
+mountAnnouncer();
+const root = document.querySelector("#root");
+if (root) {
+  createRoot(root).render(
+    <StrictMode>
+      <App />
+    </StrictMode>,
+  );
+}

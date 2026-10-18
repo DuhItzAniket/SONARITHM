@@ -1,0 +1,153 @@
+/* SPDX-FileCopyrightText: 2026 SONARITHM contributors */
+/* SPDX-License-Identifier: MIT OR Apache-2.0 */
+
+/* Spike styling only. System colours keep it legible in Windows high contrast. */
+:root {
+  color-scheme: light dark;
+  font-family: system-ui, sans-serif;
+}
+body {
+  max-width: 60rem;
+  margin: 1rem auto;
+  padding: 0 1rem;
+}
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+:focus-visible,
+[data-focus-visible] {
+  outline: 3px solid Highlight;
+  outline-offset: 2px;
+}
+button,
+.react-aria-Button,
+.react-aria-ToggleButton {
+  font: inherit;
+  padding: 0.35rem 0.8rem;
+  margin: 0.2rem;
+  border: 1px solid ButtonBorder;
+  background: ButtonFace;
+  color: ButtonText;
+}
+.react-aria-ToggleButton[data-selected] {
+  background: Highlight;
+  color: HighlightText;
+}
+.react-aria-Toolbar {
+  display: flex;
+  align-items: center;
+}
+.react-aria-Separator {
+  align-self: stretch;
+  border-left: 1px solid CanvasText;
+  margin: 0 0.5rem;
+}
+.react-aria-TreeItem {
+  padding: 0.2rem 0.4rem;
+  padding-left: calc((var(--tree-item-level) - 1) * 1.25rem + 0.4rem);
+}
+.react-aria-TreeItem[data-selected] {
+  background: Highlight;
+  color: HighlightText;
+}
+.chevron,
+.chevron-space {
+  display: inline-block;
+  width: 1.25rem;
+  padding: 0;
+  margin: 0;
+  border: none;
+  background: none;
+}
+/* A CSS triangle, not an icon font or emoji (design-language anti-patterns). */
+.chevron::before {
+  content: "";
+  display: inline-block;
+  border: 0.3rem solid transparent;
+  border-left-color: currentcolor;
+}
+.react-aria-TreeItem[data-expanded] .chevron::before {
+  transform: rotate(90deg);
+}
+.slider {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  max-width: 24rem;
+  margin-top: 0.75rem;
+}
+.track {
+  grid-column: 1 / -1;
+  height: 1.5rem;
+}
+.track::before {
+  content: "";
+  display: block;
+  position: absolute;
+  height: 3px;
+  width: 100%;
+  top: 50%;
+  background: CanvasText;
+}
+.thumb {
+  top: 50%;
+  width: 1.1rem;
+  height: 1.1rem;
+  border-radius: 50%;
+  background: Highlight;
+  border: 2px solid CanvasText;
+}
+.row {
+  display: flex;
+  flex-wrap: wrap;
+}
+.chart {
+  display: flex;
+  align-items: flex-end;
+  gap: 4px;
+  height: 100px;
+  padding: 0.5rem;
+  border: 1px solid CanvasText;
+}
+.bar {
+  width: 1.2rem;
+  background: GrayText;
+}
+.bar.current {
+  background: Highlight;
+  outline: 2px solid CanvasText;
+}
+.log {
+  font-size: 0.85rem;
+  max-height: 14rem;
+  overflow: auto;
+}
+.react-aria-RadioGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+.react-aria-Radio {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+.react-aria-Radio::before {
+  content: "";
+  width: 0.9rem;
+  height: 0.9rem;
+  border: 2px solid CanvasText;
+  border-radius: 50%;
+}
+.react-aria-Radio[data-selected]::before {
+  background: Highlight;
+  box-shadow: inset 0 0 0 2px Canvas;
+}
+.react-aria-Radio[data-focus-visible] {
+  outline: 3px solid Highlight;
+  outline-offset: 2px;
+}

@@ -15,7 +15,7 @@ pnpm tauri build --no-bundle
 ./src-tauri/target/release/spike-tauri-webview --autorun ipc --out results/ipc.json
 ```
 
-`pnpm tauri dev` runs it interactively; each suite has a button.
+`pnpm tauri dev` runs it interactively; each suite has a button. `--page a11y.html` opens the accessibility prototype (A02-T07).
 
 ## A02-T05: IPC (PB-09)
 
@@ -85,3 +85,38 @@ The owner's laptop: a 2560 × 1600 panel at 60 Hz, driven by the Intel GPU. Wind
 - M4 in JavaScript took 3.6–4.3 ms for 1M points (once per zoom level); the product does it in Rust.
 
 Not measured here: WKWebView (macOS) and WebKitGTK (Linux, including NVIDIA). CI runners have no GPU, so those are owner or volunteer steps, listed in the gate report.
+
+## A02-T07: accessibility prototype (`a11y.html`)
+
+A React 19.3 page built with React Aria Components 1.22 (`src/a11y/`). It holds:
+
+- a **Tree** (the dataset, fields and tracks);
+- a **Toolbar** (Play/Pause, Stop, a Loop toggle button, Where am I);
+- a **Slider** (playback speed);
+- a **RadioGroup** that picks the announcement route;
+- buttons that send single, rapid (superseding) and assertive announcements;
+- a chart explorer with `role="application"` scoped to the chart, an accessible name, a description and an `H` help key (08 §5);
+- an on-screen log of every announcement sent.
+
+The announcement routes (08 §4, OD-05) are in `src/a11y/announcer.ts`:
+
+| Route | Mechanism |
+|---|---|
+| ARIA live region | One managed pair of regions (`polite`, `assertive`) created at start-up; clear-then-set with an 80 ms delay; a newer announcement cancels a pending one (supersede, A11Y-17) |
+| Native notification | The host command `announce_native` raises `UiaRaiseNotificationEvent` on the window's UI Automation host provider (`ImportantMostRecent` for assertive, `MostRecent` for polite). Windows only; macOS and Linux return an error |
+| Both | Both at once, to check for double speech |
+
+**The screen-reader walkthroughs are owner and volunteer tasks:** [WALKTHROUGH.md](WALKTHROUGH.md) has step-by-step scripts for NVDA and Narrator (Windows), Orca (Ubuntu live USB) and VoiceOver (macOS), with expected results and a results table. No screen-reader result is recorded yet.
+
+### Smoke test (Windows, 2026-10-19, not a screen-reader result)
+
+An automated UI Automation dump of the page in WebView2 155 ([`results/a11y-uia-windows.txt`](results/a11y-uia-windows.txt)) checks what the walkthroughs will test:
+
+- **Exposed roles:** document, header, main and named regions; radio group and radio buttons; the Tree as a *tree grid* (UIA `DataGrid`) with tree items; the toolbar with buttons, a separator and a toggle button; the slider; the chart explorer as an "app" pane; and the announcement list.
+- **Native route:** selecting it and invoking **Announce once** through UI Automation returned success from `UiaRaiseNotificationEvent`.
+
+Three points for the walkthroughs, from the dump:
+
+1. React Aria's Tree is a `treegrid`. Each row's grid cell takes its name from all its content, including the expand button: "Collapse temps.csv, 20 rows temps.csv, 20 rows". Screen readers may read the name twice (walkthrough step 5).
+2. `SliderOutput` renders an `<output>` element, which is a `status` live region. Slider changes may be spoken twice (step 10).
+3. Four unnamed live regions exist: the prototype's two plus React Aria's own announcer. The product must route React Aria's built-in announcements through the same queue, or accept two announcers.
