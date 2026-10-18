@@ -84,6 +84,14 @@ pub enum DataError {
         #[source]
         source: std::io::Error,
     },
+    /// A source option has a value that cannot be used.
+    #[error("the `{option}` option is invalid: {reason}")]
+    InvalidOption {
+        /// The option name, as written in a spec.
+        option: &'static str,
+        /// What a valid value looks like.
+        reason: &'static str,
+    },
     /// A table cannot be encoded.
     #[error("the table cannot be written as {format}: {reason}")]
     Write {
@@ -154,6 +162,10 @@ impl DataError {
             Self::Io { locator, source } => (
                 &codes::UNREADABLE_SOURCE,
                 format!("`{locator}` cannot be read: {source}. Check the path and permissions."),
+            ),
+            Self::InvalidOption { option, reason } => (
+                &codes::INVALID_OPTION,
+                format!("The source option `{option}` is invalid: {reason}."),
             ),
             Self::Write { format, reason } => (
                 &codes::WRITE_FAILED,

@@ -33,6 +33,19 @@ Owner: `sonarithm-data`.
 | `SNR-DATA-003` | error | The data source exceeds a size limit | Filter or split the data, or raise the source limits for trusted input. | — |
 | `SNR-DATA-004` | error | A table is malformed | Build each table from equal-length columns that match its schema, and give each table in a bundle its own ID. | — |
 | `SNR-DATA-005` | error | A table cannot be written | Report the problem with the table's schema; every table the data layer builds can be written. | — |
+| `SNR-DATA-006` | error | A source option is invalid | Fix the option in `data.source.options`; the message says what a valid value looks like. | — |
+| `SNR-DATA-010` | info | The delimiter and header row were detected | Set `delimiter` and `header` in the source options if the guess is wrong. | — |
+| `SNR-DATA-011` | info | The text encoding was detected and converted | Set `encoding` (a WHATWG label such as windows-1252) if the letters look wrong. | — |
+| `SNR-DATA-012` | warning | Some rows have the wrong number of fields | Check the delimiter and the quoting of values that contain it. | — |
+| `SNR-DATA-013` | info | Blank or repeated field names were replaced | Give every column a unique name in the header row. | — |
+| `SNR-DATA-014` | warning | Invalid bytes were replaced | Check the file's encoding and set `encoding` if it was guessed wrong. | — |
+| `SNR-DATA-015` | info | Lines above the header were skipped | Remove title lines above the header, or set `header` explicitly. | — |
+| `SNR-DATA-024` | warning | Spreadsheet error values became missing values | Fix the formulas that produce errors such as #DIV/0! in the source workbook. | — |
+| `SNR-DATA-033` | info | NaN values became missing values | None needed: NaN is treated as missing (03 §5). Missing values are silent by default. | — |
+| `SNR-DATA-034` | warning | Infinite values were kept | Check whether the infinities are real; they sound at the range edge with an off-scale cue (03 §5). | A11Y-28 |
+| `SNR-DATA-035` | warning | Some values do not fit the field type and became missing | Fix the values the message points to, or declare the field's type in `data.fields`. | — |
+| `SNR-DATA-036` | warning | Dates could be day-first or month-first, so they stayed text | Set `dateFormat` in the source options, for example `%d/%m/%Y`. | — |
+| `SNR-DATA-037` | info | A unit was read from the values or the field name | Declare the unit in `data.fields` if it is wrong. | — |
 | `SNR-DATA-040` | warning | A field metadata value cannot be read and was ignored | Fix the `snr.*` value in the file (03 §3 lists the allowed values) or declare the field in the spec's `data.fields`. | — |
 | `SNR-DATA-050` | error | Unknown field | Name a field of the table; field names are case-sensitive. | — |
 
