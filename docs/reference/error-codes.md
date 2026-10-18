@@ -45,6 +45,9 @@ Owner: `sonarithm-data`.
 | `SNR-DATA-022` | info | A spreadsheet sheet was read | Set `sheet` and `range` in the source if the wrong cells were read. | — |
 | `SNR-DATA-023` | error | The sheet does not exist | Name an existing sheet, or give its position counted from 0. | — |
 | `SNR-DATA-024` | warning | Spreadsheet error values became missing values | Fix the formulas that produce errors such as #DIV/0! in the source workbook. | — |
+| `SNR-DATA-030` | info | A field type was inferred | Declare the field's `type` in `data.fields` if the inference is wrong (03 §3.1). | — |
+| `SNR-DATA-031` | info | A field role was inferred | Declare the field's `role` in `data.fields` if the inference is wrong (03 §3.4). | — |
+| `SNR-DATA-032` | info | A field concept was inferred | Declare the field's `concept` in `data.fields` if the inference is wrong; the concept sets the default polarity (03 §3.3). | SDR-12 |
 | `SNR-DATA-033` | info | NaN values became missing values | None needed: NaN is treated as missing (03 §5). Missing values are silent by default. | — |
 | `SNR-DATA-034` | warning | Infinite values were kept | Check whether the infinities are real; they sound at the range edge with an off-scale cue (03 §5). | A11Y-28 |
 | `SNR-DATA-035` | warning | Some values do not fit the field type and became missing | Fix the values the message points to, or declare the field's type in `data.fields`. | — |

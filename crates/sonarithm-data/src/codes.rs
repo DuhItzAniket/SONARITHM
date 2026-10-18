@@ -161,6 +161,30 @@ code!(
 );
 
 code!(
+    /// A field type was inferred.
+    TYPE_INFERRED, "SNR-DATA-030", Info,
+    "A field type was inferred",
+    "Declare the field's `type` in `data.fields` if the inference is wrong (03 §3.1).",
+    []
+);
+
+code!(
+    /// A field role was inferred.
+    ROLE_INFERRED, "SNR-DATA-031", Info,
+    "A field role was inferred",
+    "Declare the field's `role` in `data.fields` if the inference is wrong (03 §3.4).",
+    []
+);
+
+code!(
+    /// A field concept was inferred.
+    CONCEPT_INFERRED, "SNR-DATA-032", Info,
+    "A field concept was inferred",
+    "Declare the field's `concept` in `data.fields` if the inference is wrong; the concept sets the default polarity (03 §3.3).",
+    ["SDR-12"]
+);
+
+code!(
     /// NaN values became missing values.
     NAN_TO_NULL, "SNR-DATA-033", Info,
     "NaN values became missing values",
@@ -238,6 +262,9 @@ pub const CODES: CodeTable = CodeTable {
         SHEET_READ,
         SHEET_NOT_FOUND,
         CELL_ERRORS,
+        TYPE_INFERRED,
+        ROLE_INFERRED,
+        CONCEPT_INFERRED,
         NAN_TO_NULL,
         INFINITE_VALUES,
         UNPARSED_VALUES,

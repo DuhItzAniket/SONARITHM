@@ -40,6 +40,7 @@ fn storage(data_type: &DataType) -> &'static str {
         DataType::Timestamp(_, None) => "datetime",
         DataType::Timestamp(_, Some(_)) => "instant",
         DataType::Utf8 => "text",
+        DataType::Dictionary(..) => "dict",
         _ => "other",
     }
 }
