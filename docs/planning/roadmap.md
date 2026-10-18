@@ -144,7 +144,7 @@ gantt
 | **Deliverables** | ECHOMETRIC harness v0: stimulus generators (trend reversals × density per Nees & Walker 2008; Smith & Walker 2005 price series; SNR-controlled transit series per Tucker Brown et al. 2022; correlation triplets); a **replication gallery** that re-creates classic designs from specs (Smith & Walker context cues, Dombois audification, Erie examples); an experiment-runner CLI (`sonarithm study run`) with structured logs; technical benchmarks (latency, real-time factor, determinism). **Release `v0.2.0-alpha`.** Paper P01 drafted and submitted. |
 | **Exit criteria** | Every gallery item renders reproducibly from a committed spec with its manifest. P01 is submitted (or consciously deferred at the gate with a recorded reason). |
 | **Depends on** | A07 |
-| **Research hooks** | Papers P01 (ICAD 2027) and P03 (benchmark). Hypotheses H-01, H-02 prepared. The ethics application is filed in Dec 2026 by the parallel research lane ([implementation plan §2.1](implementation-plan.md#21-research-lane-parallel-to-stage-a)), before A08 starts. |
+| **Research hooks** | Papers P01 (ICAD 2027) and P03 (benchmark). Hypotheses H-01, H-02 prepared. The owner works alone without institutional ethics review (OD-04), so P01 relies on demonstration, the replication gallery and technical benchmarks, with no participant studies. |
 | **Size** | M (≈4 weeks, overlaps A07) |
 
 **Gate A (alpha).** CLI and Python are released. Exit criteria A01–A08 are met. The risk register is reviewed. Stage B scope is confirmed.
@@ -207,7 +207,7 @@ gantt
 
 | | |
 |---|---|
-| **Deliverables** | A built-in 15-minute interactive tutorial (SDR-37, A11Y-30); context help; ACR v0 (WCAG 2.2 AA via WCAG2ICT); the manual screen-reader matrix (A11Y-32); Chartability audit (A11Y-33); co-design round 1 with 10–15 BLV participants (A11Y-34, ethics approved); fixes. **Release `v0.5.0-beta`.** JOSS submission (P02). |
+| **Deliverables** | A built-in 15-minute interactive tutorial (SDR-37, A11Y-30); context help; ACR v0 (WCAG 2.2 AA via WCAG2ICT); the manual screen-reader matrix (A11Y-32); Chartability audit (A11Y-33); co-design round 1 with 10–15 BLV participants (A11Y-34) run as product usability feedback, not as a research study (OD-04); fixes. **Release `v0.5.0-beta`.** JOSS submission (P02). |
 | **Exit criteria** | No open "critical" accessibility issues. Co-design findings are logged and triaged. The ACR is published. P02 is submitted. |
 | **Size** | M (≈4 weeks) |
 

@@ -3,6 +3,8 @@
 > **Status:** Baseline v1 (2026-10-18). **Owner:** Research lead. **Deadlines last checked:** 2026-10-18.
 > **Related:** [papers](papers/README.md) · [contributions](contributions.md) · [evaluation plan](evaluation-plan.md) · [roadmap](../planning/roadmap.md) · [research report, publishable gaps](../research/research-report.md#publishable-research-sits-in-the-fields-admitted-gaps) · [notes/07 §6–§9](../research/notes/07-engineering-publication.md)
 
+**Current constraint (2026-10-19, OD-04).** The owner works alone without a faculty mentor or institutional ethics review, so no human-participant studies can be published for now. **Active:** P01 (toolkit: demonstration, replication gallery, technical benchmarks), P02 (JOSS) and P07 (engine). **Deferred** until an ethics route exists (revisit at Gate B): P03's study extension, P04, P05's usage evaluation, P06, P08 and P09. The benchmark *harness* part of P03 needs no participants and can still go ahead.
+
 Publication deadlines are fixed points in the [roadmap](../planning/roadmap.md): scope moves to fit them, not dates. This file maps the papers `P01`..`P09` to venues and phases, and sets the policies every paper follows.
 
 > **Re-check deadlines monthly.** Except for the passed CHI 2027 deadline and the confirmed event dates noted below, every 2027–2028 deadline here is an estimate from previous cycles, marked `[EST]`. Check each venue's official site at least monthly and update this file and the roadmap milestones in the same PR.

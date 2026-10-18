@@ -15,7 +15,7 @@
 | R-08 | **Scope creep** across nine engines, plus desktop, Python and web | 4 | 5 | **20** | Project lead | Waves (ADR-0007); gates; "no tenth engine without an ADR"; Stage D engines are research-grade | Phase overrunning by > 50%; parallel half-finished engines | Open |
 | R-09 | **Bus factor of 1** (single core maintainer) | 4 | 5 | **20** | Project lead | AGENTS.md and thorough docs; small PRs; recruit co-maintainers from Stage B; GOVERNANCE.md path to maintainership; grants (OD-10) | No external reviewer by Gate B | Open |
 | R-10 | Cannot recruit or pay BLV co-designers | 3 | 4 | 12 | Accessibility lead | Early outreach (NFB, Program-L, local organizations); budget via grants (OD-10); remote sessions on the participant's own AT | No participants confirmed 6 weeks before B07 | Open |
-| R-11 | Ethics approval delayed or unavailable | 2 | 3 | 6 | Research lead | Route identified: RV University (OD-04). Find a faculty mentor by Nov 2026; file by Dec 2026; technical-only papers do not need ethics approval | No mentor or committee contact by end of Nov 2026 | Open |
+| R-11 | No ethics route, so human-participant studies cannot be published | 4 | 3 | 12 | Research lead | Owner works alone (OD-04, 2026-10-19). Prioritize technical papers (P01, P02, P07); keep BLV co-design as non-research usability feedback; revisit at Gate B or when a collaborator with an ethics route appears | A study-dependent paper becomes necessary for the project's goals | Open (accepted constraint) |
 | R-12 | ICAD 2027 deadline missed | 3 | 3 | 9 | Research lead | A08 scoped to demonstration + technical benchmarks; fallback venues (IEEE VIS short paper, ICAD 2028, JOSS) | A07 not released by mid-Feb 2027 | Open |
 | R-13 | Chart extraction accuracy disappoints users | 4 | 3 | 12 | PLOTSONA owner | Exact-first tiers; human correction; honest provenance labels; ML in Stage D only | Corpus targets missed in C01/C02 | Open |
 | R-14 | Code-signing eligibility or cost blocks trusted installers | 3 | 3 | 9 | Release lead | Resolve the legal home (OD-02). Azure Artifact Signing is not available to the owner as an individual in India, so use SignPath Foundation's OSS programme or signing through RV University; budget the Apple Developer Program | Unsigned builds at C06 | Open |
@@ -34,3 +34,4 @@
 |---|---|---|
 | 2026-10-18 | Baseline created from the kickoff research | R-01..R-21 opened |
 | 2026-10-18 | Owner context recorded (solo, RV University, Windows-only hardware) | R-11 lowered to 6; R-14 mitigation updated; R-22 opened |
+| 2026-10-19 | Owner works alone without institutional ethics review (OD-04) | R-11 raised to 12 and reframed as an accepted constraint |

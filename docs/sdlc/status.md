@@ -8,7 +8,7 @@
 | Item | State |
 |---|---|
 | Overall health | **Green**: A01 merged (#1, `02a44f3`); all CI checks green on Windows, macOS and Linux |
-| Current focus | A02 (spikes) and A03 (core types) in parallel; A01-T10 once the `project` scope is granted. Owner: faculty mentor and ethics route (OD-04), funding (OD-10) |
+| Current focus | A02 (spikes) and A03 (core types) in parallel; tasks tracked on the [project board](https://github.com/users/DuhItzAniket/projects/2). Owner: funding for paid BLV usability sessions (OD-10) |
 | Latest release | none |
 | Blocking decisions | none for A01 (OD-01 and OD-09 closed 2026-10-18) |
 | Top risks | R-08 scope creep (20), R-09 bus factor (20), R-02 screen readers in the webview (15), R-22 no macOS/Linux hardware (9) |
@@ -20,14 +20,14 @@ Status values: `Not started` · `In progress` · `In review` · `Done` · `Block
 | Stage | Phase | Name | Status | Progress | Notes |
 |---|---|---|---|---|---|
 | — | — | Kickoff: research and documentation baseline | **Done** | 100% | 2026-10-18; see [worklog](worklog/2026-10-18-project-kickoff.md) |
-| A | A01 | Repository bootstrap and governance | **In progress** | ≈95% | Everything merged in #1 except T10 (project board), which waits for the `project` token scope. See [A01 tasks](#a01-tasks) |
+| A | A01 | Repository bootstrap and governance | **Done** | 100% | 2026-10-19; [phase review](reviews/A01-phase-review.md), [retro](retrospectives/A01-retro.md). See [A01 tasks](#a01-tasks) |
 | A | A02 | Technical spikes and prototype gate | Not started | 0% | |
 | A | A03 | Core types, Spec v0.1, Score IR | **In progress** | ≈15% | T01 merged (#4); RFC-0001 accepted (T05); T02–T04 in review. See [A03 tasks](#a03-tasks) |
 | A | A04 | Data layer | Not started | 0% | |
 | A | A05 | Render engine, audio backend, export | Not started | 0% | |
 | A | A06 | NUMISONA v1 | Not started | 0% | |
 | A | A07 | CLI, Python, v0.1.0-alpha | Not started | 0% | |
-| A | A08 | Research instrumentation v0, ICAD 2027 | Not started | 0% | Ethics application filed by the research lane, RL-T02 (Dec 2026) |
+| A | A08 | Research instrumentation v0, ICAD 2027 | Not started | 0% | P01 without participant studies (OD-04) |
 | B | B01 | Desktop shell, IPC, app core | Not started | 0% | |
 | B | B02 | Design system and application frame | Not started | 0% | |
 | B | B03 | AUDAXIS v1 | Not started | 0% | |
@@ -63,8 +63,8 @@ Status values: `Not started` · `In progress` · `In review` · `Done` · `Block
 | A01-T07 `ci.yml` | **Done** | Green on #1 across ubuntu, windows and macos; wall time about 1–2 min (budget ≤ 15 min) |
 | A01-T08 PR title, DCO, Scorecard, CodeQL, Dependabot, label sync | **Done** | pr-title, dco and CodeQL green on #1; Scorecard green on `main`; 52 labels synced with `gh`; Dependabot alerts and security updates on |
 | A01-T09 pnpm workspace skeleton | **Done** | `frontend` CI job green (install, lint, typecheck) |
-| A01-T10 GitHub Project and issues | Blocked | Needs the `project` scope on the GitHub CLI token: the owner runs `gh auth refresh -s project` |
-| A01-T11 Secret scanning, vulnerability reporting, Discussions | **Done** | Secret scanning + push protection on; private vulnerability reporting and Discussions enabled; workflow token read-only by default. Owner still to enable reported-content moderation (web UI only) |
+| A01-T10 GitHub Project and issues | **Done** | [SONARITHM Roadmap](https://github.com/users/DuhItzAniket/projects/2): fields Status, Phase and Size; milestones A01–A08; one issue per Stage A task (82) |
+| A01-T11 Secret scanning, vulnerability reporting, Discussions | **Done** | Secret scanning + push protection on; private vulnerability reporting and Discussions enabled; workflow token read-only by default. Reported-content moderation is unavailable for personal repositories; CODE_OF_CONDUCT.md now names the alternative channels |
 | A01-T12 Docs CI | **Done** | markdown, internal-links, reuse and schema-diff green; external links advisory on PRs, failing only on the weekly run (`lychee.toml`) |
 | A01-T13 Licence files, REUSE | **Done** | Licence files, `REUSE.toml` and SPDX headers; `reuse` check green in CI |
 
@@ -115,7 +115,7 @@ Maturity scale: `Designed` → `Prototype` → `Alpha` → `Beta` → `Stable` �
 | Findings logged | Background findings from the kickoff research ([findings-log](../research-paper/findings-log.md)) |
 | Hypotheses | H-01..H-12 proposed ([hypotheses](../research-paper/hypotheses.md)) |
 | Next paper | P01, ICAD 2027 (deadline est. Mar 2027) |
-| Ethics | Not started (OD-04) |
+| Ethics | Not pursued: the owner works alone (OD-04, 2026-10-19); participant studies deferred, revisit at Gate B |
 
 ## 6. Change history
 
@@ -126,4 +126,5 @@ Maturity scale: `Designed` → `Prototype` → `Alpha` → `Beta` → `Stable` �
 | 2026-10-18 | Licence decided (T01); licence files and REUSE (T13); GitHub ruleset, security and repo settings (T02, T11); A01 PR opened |
 | 2026-10-19 | A03 started: unit newtypes (T01) and RFC-0001 (T05) |
 | 2026-10-19 | RFC-0001 accepted with all 21 resolutions; spec v0.1 frozen (ADR-0015) |
+| 2026-10-19 | A01 done: project board and Stage A issues (T10); phase review and retrospective |
 | 2026-10-18 | A01 PR #1 merged as `02a44f3` with all checks green; owner context recorded (RV University, Windows-only hardware) |
