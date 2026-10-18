@@ -93,7 +93,7 @@ A deadline miss is a callback whose processing took longer than its period. A la
 | Third-party code added | none beyond `libm` | 43 crates, including `bevy_platform`, `ringbuf`, `thunderdome`, `triple_buffer` and two `toml_edit` versions. Firewheel itself is 28,100 lines with 81 `unsafe` occurrences |
 | Licences (`cargo deny check licenses`, repository policy) | pass | pass (MIT OR Apache-2.0 throughout) |
 | Advisories (`cargo deny check advisories`) | ok | ok |
-| Miri (see below) | Block-size test passes; other tests still running | The Firewheel test passes with Miri's own allocator; a Stacked Borrows report appears only with the `assert_no_alloc` allocator, inside std's Windows `System::dealloc` |
+| Miri (see below) | All spike tests pass on the Linux target with `assert_no_alloc` (3 passed, 1 ignored by design) | The Firewheel test passes with Miri's own allocator; a Stacked Borrows report appears only with the `assert_no_alloc` allocator, inside std's Windows `System::dealloc` |
 | Seek | One atomic store; the processor binary-searches the schedule | Cancel scheduled events, send an all-notes-off event, re-anchor the Score on Firewheel's clock (which only moves forward), then refill |
 
 ### Ergonomics notes
@@ -111,9 +111,10 @@ A deadline miss is a callback whose processing took longer than its period. A la
 | Run | Allocator | Result |
 |---|---|---|
 | Default | `assert_no_alloc::AllocDisabler` wrapping `System` | `output_is_independent_of_block_size` passes. `firewheel_matches_owned_graph` stops with a Stacked Borrows error in std's `sys::alloc::windows::dealloc` (it reads the header stored before an over-aligned allocation). It happens while `FirewheelContext` drops a `ringbuf` buffer, and it is reached through the custom global allocator |
-| `RUSTFLAGS="--cfg spike_miri_system_alloc"` | Miri's built-in allocator (no custom global allocator) | `firewheel_matches_owned_graph` **passes**; the owned-graph tests are still running |
+| `RUSTFLAGS="--cfg spike_miri_system_alloc"` | Miri's built-in allocator (no custom global allocator) | `firewheel_matches_owned_graph` **passes**; every spike test passes on the Windows target (gate report) |
+| Linux target (`x86_64-unknown-linux-gnu`), default | `assert_no_alloc::AllocDisabler` wrapping `System` | **All pass**: 3 passed, 0 failed, 1 ignored (`seek_matches_full_render_after_tail`, skipped under Miri by design), 3713 s, 2026-10-19 |
 
-So the one report is not attributable to Firewheel's code or to ours: it needs a custom global allocator that forwards to `System` on Windows. A rerun under Tree Borrows classifies it; until then it is recorded as `TODO(verify)` in the gate report. Firewheel's own `unsafe` (81 occurrences) is exercised only as far as this benchmark reaches it (graph compile, scheduling, processing, drop); the audit's "nontrivial UB" (notes/04 §1) did not show up in this path.
+So the one report is not attributable to Firewheel's code or to ours: it needs a custom global allocator that forwards to `System` on Windows. The same tests pass on the Linux target with `assert_no_alloc`, so the gate report records Miri as a pass with the F-037 caveat. Firewheel's own `unsafe` (81 occurrences) is exercised only as far as this benchmark reaches it (graph compile, scheduling, processing, drop); the audit's "nontrivial UB" (notes/04 §1) did not show up in this path.
 
 ## A02-T04: offline determinism across operating systems (PB-06)
 
