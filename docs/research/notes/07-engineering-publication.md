@@ -380,3 +380,12 @@ Deadlines: **confirmed** = officially published; **[EST]** = estimate from previ
 ### Gaps
 - All 2027 deadlines other than CHI 2027 (passed) are estimates; ICAD 2027, ASSETS 2027, VIS 2027, EuroVis 2027, NIME 2027, DAFx27, SMC 2027 and Audio Mostly 2027 calls should be re-checked monthly from their official sites.
 - Legal eligibility for Azure Artifact Signing depends on SONARITHM's legal/organizational home (individual vs university vs foundation), which is not specified.
+
+## Errata
+
+Dated corrections. The text above is kept as the kickoff snapshot ([research README](../README.md)).
+
+- **2026-10-18, link check.**
+  - **MADR conventions (§1).** The SAIF Forge example page (`docs.platformdev.saif.com/…`) returned HTTP 404. The MADR conventions it illustrated (files in `docs/decisions/NNNN-title-with-dashes.md`; statuses proposed, accepted, rejected, deprecated, superseded) are documented by MADR itself: <https://adr.github.io/madr/>.
+  - **covector (§1).** `github.com/tauri-apps/covector` returned HTTP 404. covector is maintained at <https://github.com/jbolda/covector>, verified 2026-10-18 (not archived).
+  - **FAIR4RS (§6).** The RDA archive PDF of the FAIR4RS principles returned HTTP 404. The canonical reference is the DOI <https://doi.org/10.15497/RDA00068>, which resolves to Zenodo record 6623556 (verified 2026-10-18).

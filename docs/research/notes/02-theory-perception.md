@@ -1987,3 +1987,9 @@ The rules below turn the evidence into defaults. Each is traced to sources. "(In
   year      = {1996}
 }
 ```
+
+## Errata
+
+Dated corrections. The text above is kept as the kickoff snapshot ([research README](../README.md)).
+
+- **2026-10-18, link check.** `http://sonification.de/publications/Hermann2002-SFE`, cited in §1 for Hermann's 2002 Bielefeld PhD thesis *Sonification for Exploratory Data Analysis*, returned HTTP 404 in CI, and sonification.de refused connections during the kickoff research. No replacement URL has been verified yet: Bielefeld University's PUB repository blocks automated requests. Re-check by hand before citing the thesis in a paper.

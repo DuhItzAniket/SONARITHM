@@ -1,0 +1,57 @@
+# Link-check policy for the `docs / internal-links` and `docs / external-links` jobs
+# (docs/engineering/ci-cd.md). External links are checked but not a required check.
+# Add an exclusion only with a reason; prefer fixing the link, or an Errata entry for
+# the frozen research notes (docs/research/README.md).
+
+# 429 means rate-limited: the page exists.
+accept = ["100..=103", "200..=299", "429"]
+max_retries = 3
+retry_wait_time = 5
+timeout = 30
+
+exclude = [
+    # DOIs are stable identifiers, verified against Crossref during the research. From CI,
+    # publishers and the ICAD repository answer with 403, time out, or return 502.
+    '^https?://(dx\.|www\.)?doi\.org/',
+
+    # Sites that reject automated clients with HTTP 403 although the pages exist.
+    '^https://dl\.acm\.org/',
+    '^https://www\.acm\.org/',
+    '^https://www\.aes\.org/',
+    '^https://help\.desmos\.com/',
+    '^https://help\.ableton\.com/',
+    '^https://www\.npmjs\.com/',
+    '^https://www\.iso\.org/',
+    '^https://webstore\.ansi\.org/',
+    '^https://(www\.)?sourceforge\.net/',
+    '^https://www\.academia\.edu/',
+    '^https://skyandtelescope\.org/',
+    '^https://unpaywall\.org/',
+    '^https://www\.spglobal\.com/',
+    '^https://ort\.pyke\.io/',
+    '^https://(www\.)?lib\.rs/',
+    '^https://skemman\.is/',
+    '^https://tech-insider\.org/',
+    '^https://medium\.com/',
+    '^https://devops\.com/',
+    '^https://doaj\.org/',
+    '^https://industrialmonitordirect\.com/',
+    '^https://lawplayer\.com/',
+
+    # Hosts whose TLS or connections fail on their side.
+    '^https://blog\.bookshare\.org/',
+    '^https://eprints-dev5\.cs\.univie\.ac\.at/',
+    '^https://clgiles\.ist\.psu\.edu',
+
+    # Dead links kept in the frozen research notes; replacements are in each note's
+    # Errata section.
+    '^https?://sonification\.de/publications/Hermann2002-SFE',
+    '^https://cs\.uwaterloo\.ca/~dmasson/pdfs/chartdetective\.pdf',
+    '^https://github\.com/markummitchell/engauge-digitizer',
+    '^https://archive\.rd-alliance\.org/',
+    '^https://docs\.platformdev\.saif\.com/',
+    '^https://github\.com/tauri-apps/covector',
+    '^https://blog\.repl\.it/',
+    '^https://webcf\.waybackmachine\.org/',
+    '^https://www\.automeris\.io/blog',
+]
