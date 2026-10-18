@@ -63,10 +63,10 @@ Start Narrator with `Win+Ctrl+Enter`; scan mode toggles with `Caps Lock+Space`. 
    ```bash
    unzip spike-tauri-ubuntu-24.04.zip
    sudo apt update && sudo apt install -y ./src-tauri/target/release/bundle/deb/sonarithm-a02-spike_0.0.0_amd64.deb mesa-utils
-   dpkg -L sonarithm-a02-spike | grep /bin/
+   APP=/usr/bin/spike-tauri-webview
    ```
 
-   The last command prints the program's path; `APP` below means that path.
+   The package pulls in `libwebkit2gtk-4.1-0` and `libgtk-3-0`. `APP` below means `/usr/bin/spike-tauri-webview`; the `APP=` line sets it for the current terminal.
 4. Write down the WebKitGTK version (`apt-cache policy libwebkit2gtk-4.1-0`), the session type (`echo $XDG_SESSION_TYPE`) and the GPU (`glxinfo -B | grep -E "renderer|vendor"`).
 5. **Copy every JSON file to another USB stick or upload it before shutting down.** The live session keeps nothing.
 
