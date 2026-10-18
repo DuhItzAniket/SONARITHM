@@ -205,3 +205,180 @@ Use the template above. One entry per finding; link the PR, commit, render
 manifest, benchmark row or EXP-### that carries the evidence. Set Status to
 "new"; the research lead changes it at weekly triage.
 -->
+
+<!--
+A02 (spikes) uses F-030 to F-049 so that it can append in parallel with A03, which
+continues at F-021. IDs F-021 to F-029 belong to A03 entries.
+-->
+
+### F-030 · WASAPI shared mode on the development laptop ignores the requested buffer size
+
+- **Date:** 2026-10-19 · **Phase:** A02 · **Type:** engineering · **Status:** new
+- **Statement:** On the owner's laptop (Realtek audio, Windows 11 build 26300, 48 kHz), the shared-mode engine period is fixed at 480 frames (10 ms): the driver reports the same minimum and maximum period to `IAudioClient3`. cpal 0.18.2 called back every 480 frames for `BufferSize::Fixed(128)`, `Fixed(256)`, `Fixed(512)` and `Default`, with 1,056 frames on the first fill. A requested 128-frame `IAudioClient3` period was clamped to 480.
+- **Evidence:** A02-T01 harness, `spikes/cpal-latency` ([#9](https://github.com/DuhItzAniket/SONARITHM/pull/9)), `results/2026-10-19-windows-speakers.json`; cpal 0.18.2 source (`host/wasapi/device.rs`: "The callback period is always GetDevicePeriod()")
+- **Evidence level / confidence:** EV-C / Strong for this machine; other drivers may offer smaller periods
+- **Affects:** PB-01, PB-02 (the 128-frame soak cannot run at 128 frames on this driver); ADR-0004; R-03
+- **Papers:** P07
+
+### F-031 · Key press to cue onset is about 123 ms p95 through cpal in WASAPI shared mode, 2.5 times PB-01
+
+- **Date:** 2026-10-19 · **Phase:** A02 · **Type:** benchmark · **Status:** new
+- **Statement:** On the development laptop, a trigger on a control thread to the cue's onset in a WASAPI loopback capture of the same endpoint took p50 116.4 ms and p95 123.1 ms (p99 123.8, max 124.6; 200 trials) through cpal 0.18.2 at the 256-frame setting. The 128, 512 and default settings were within 1 ms of that. That misses PB-01 (≤ 50 ms p95) before webview input and IPC are added. The loopback tap excludes time after the audio engine, so the acoustic latency is at least this; acoustic confirmation is pending (the built-in microphone's echo cancellation removed the cue).
+- **Evidence:** [#9](https://github.com/DuhItzAniket/SONARITHM/pull/9), `spikes/cpal-latency/results/2026-10-19-windows-speakers.json`; benchmarks-log row "A02 spike (Windows)"
+- **Evidence level / confidence:** EV-C / Moderate (one machine; software method)
+- **Affects:** PB-01; R-03 (trigger met); ADR-0004; 06 §9
+- **Papers:** P07
+
+### F-032 · An OEM enhancement APO adds about 38 ms, 20 dB of gain and a 200 ms tail to everything the app plays
+
+- **Date:** 2026-10-19 · **Phase:** A02 · **Type:** engineering · **Status:** new
+- **Statement:** On the development laptop the default Realtek endpoints process the output stream with an enhancement APO (Nahimic is installed). A −45 dBFS cue reached the loopback tap at −24.4 dBFS (+20.6 dB), with a reverb-like tail of about 200 ms. Opening the same endpoint with `AUDCLNT_STREAMOPTIONS_RAW` returned the cue at −45.0 dBFS and cut the trigger-to-onset time from p50 117 ms to p50 79.2 ms (p95 83.7 ms). cpal 0.18 cannot request RAW mode (cpal #1173). The gain is applied after SONARITHM's limiter, so 06 §10's level guarantees do not hold on such systems.
+- **Evidence:** [#9](https://github.com/DuhItzAniket/SONARITHM/pull/9) (`raw` mode, `src/direct.rs`); same results file
+- **Evidence level / confidence:** EV-C / Moderate (one machine and driver)
+- **Affects:** PB-01; 06 §10 (hearing safety), SDR-24 (loudness compensation); R-03; proposed new risk on platform audio processing
+- **Papers:** P07
+
+### F-033 · cpal's predicted playback time is about 80 ms earlier than the loopback onset on Windows
+
+- **Date:** 2026-10-19 · **Phase:** A02 · **Type:** engineering · **Status:** new
+- **Statement:** For the same 200 cues, cpal 0.18.2 reported `playback − callback` as 31.8 ms (p50), while the cue appeared at the loopback tap 112 ms after the callback (p50). Even in RAW mode the tap came 74 ms after the callback. If loopback timestamps are accurate, a playhead extrapolated from cpal's timestamp (06 §9) would run about 80 ms ahead of the sound on this machine. A per-device latency calibration would remove the error.
+- **Evidence:** [#9](https://github.com/DuhItzAniket/SONARITHM/pull/9), results file (`reportedMs`, `pathMs`)
+- **Evidence level / confidence:** EV-C / Weak (rests on the accuracy of WASAPI loopback timestamps, not cross-checked acoustically)
+- **Affects:** 06 §9 (clock synchronization); B04 linked cursor; ADR-0004
+- **Papers:** P07
+
+### F-034 · The owned render graph renders the benchmark Score at about 350 times real time without allocating
+
+- **Date:** 2026-10-19 · **Phase:** A02 · **Type:** benchmark · **Status:** new
+- **Statement:** The owned spike graph renders the 60 s benchmark Score (4 tracks, 10,000 notes, 64 preallocated voices) offline on one core:
+  - 349×, 361× and 352× real time at 128-, 256- and 512-frame blocks (median of 3);
+  - CPU per 256-frame block: p50 14.4 µs, p99 24.0 µs.
+
+  Through cpal for 120 s at the 480-frame WASAPI period:
+  - p99 is 85.7 µs per callback (0.86% load), with no deadline misses;
+  - pinned to 4 E-cores, p99 is 151.5 µs.
+
+  `process` runs inside `assert_no_alloc` in debug builds without aborting. The output is bit-identical at block sizes 64, 256 and 1000.
+- **Evidence:** [#98](https://github.com/DuhItzAniket/SONARITHM/pull/98), `spikes/render-graph/README.md`; benchmarks-log row "A02 spike (Windows)"
+- **Evidence level / confidence:** EV-C / Strong (one machine)
+- **Affects:** PB-02, PB-03 (A05); ADR-0004
+- **Papers:** P07
+
+### F-035 · Firewheel 0.14 matches the owned graph bit for bit at equal CPU, but adds 43 crates and allocates on the audio thread by default
+
+- **Date:** 2026-10-19 · **Phase:** A02 · **Type:** engineering · **Status:** new
+- **Statement:** With the same voice, gain and limiter code, Firewheel 0.14.0 produced the same samples as the owned graph (null residual −∞ over 5.76M samples). It ran at 337× real time offline against 361×, with a real-time p99 of 85.4 µs against 85.7 µs. It added 43 crates and about 28,100 lines with 81 `unsafe` occurrences, but no synthesis voices (a stated non-goal). Its default `BufferOutOfSpaceMode::AllocateOnAudioThread` allocates on the audio thread when an event buffer fills; `Panic` avoids it.
+- **Evidence:** [#103](https://github.com/DuhItzAniket/SONARITHM/pull/103), `spikes/render-graph/src/fw.rs` and README comparison table; unit test `firewheel_matches_owned_graph`
+- **Evidence level / confidence:** EV-C / Strong
+- **Affects:** ADR-0004 (the graph choice); R-04
+- **Papers:** P07
+
+### F-036 · A render-graph contract that hosts an engine context must split into a control half and a real-time processor
+
+- **Date:** 2026-10-19 · **Phase:** A02 · **Type:** engineering · **Status:** new
+- **Statement:** Firewheel's `FirewheelContext` is `!Send`, and its `update` is not real-time safe; only `FirewheelProcessor::process` may run on the audio thread. The draft contract therefore has a non-real-time control half (`prepare`, `update`, `seek`; no `Send` bound) and a `GraphProcessor` that moves to the audio thread, matching 06 §2. The owned graph fits the same shape: its whole schedule goes to the processor at prepare time, and a seek is one atomic store.
+- **Evidence:** [#98](https://github.com/DuhItzAniket/SONARITHM/pull/98), [#103](https://github.com/DuhItzAniket/SONARITHM/pull/103), `spikes/render-graph/src/graph.rs`
+- **Evidence level / confidence:** EV-C / Strong
+- **Affects:** 06 §3, §6 (the `RenderGraph` and `AudioBackend` sketches); A05-T02
+- **Papers:** none yet
+
+### F-037 · Miri on Windows reports undefined behaviour in std's allocator whenever a global allocator wraps `System`
+
+- **Date:** 2026-10-19 · **Phase:** A02 · **Type:** engineering · **Status:** new
+- **Statement:** Under Miri (nightly 1.101.0, 2026-10-17, target `x86_64-pc-windows-msvc`), the spike's Firewheel test stopped with a Stacked Borrows error, and with a Tree Borrows error. Both were raised inside std's `sys::alloc::windows` while an over-aligned buffer was freed through `assert_no_alloc`'s global allocator. A 15-line program with a pass-through `#[global_allocator]` over `System` and one 128-byte-aligned `Box` reproduces both; on the `x86_64-unknown-linux-gnu` target it runs clean. With Miri's built-in allocator the Firewheel test passes. The report is therefore not attributable to Firewheel or to the spike's code.
+- **Evidence:** [#103](https://github.com/DuhItzAniket/SONARITHM/pull/103) README, Miri section; reproduction program in the [A02 worklog entry](../sdlc/worklog/2026-10-19-a02-spikes.md)
+- **Evidence level / confidence:** EV-C / Moderate. TODO(verify): whether a rust-lang/rust or rust-lang/miri issue already tracks it
+- **Affects:** testing-strategy (Miri runs: use the Linux target or Miri's allocator); R-04
+- **Papers:** none yet
+
+### F-038 · assert_no_alloc is BSD-1-Clause, which deny.toml does not allow
+
+- **Date:** 2026-10-19 · **Phase:** A02 · **Type:** engineering · **Status:** new
+- **Statement:** `assert_no_alloc` 1.1.2, which the coding standards name for the real-time allocation check, is licensed BSD-1-Clause. `cargo deny check licenses` with the repository's `deny.toml` rejects it. Every other spike dependency, including Firewheel's 43 crates, passes.
+- **Evidence:** [#98](https://github.com/DuhItzAniket/SONARITHM/pull/98) (DoD notes); `cargo deny check licenses` run on `spikes/render-graph` with the root `deny.toml`
+- **Evidence level / confidence:** EV-C / Strong
+- **Affects:** deny.toml (an allow-list change with rationale, or another crate) before A05; ADR-0010
+- **Papers:** none yet
+
+### F-039 · Offline renders are bit-identical across Linux, Windows and macOS on x86-64 and AArch64 when the render path avoids the platform maths library
+
+- **Date:** 2026-10-19 · **Phase:** A02 · **Type:** benchmark · **Status:** new
+- **Statement:** These renders produced the same SHA-256 on four machines (Linux x86-64, Windows x86-64 and macOS AArch64 CI runners, and the owner's laptop): the 60 s benchmark Score through the owned graph and through Firewheel, with polynomial sines, plan-time `libm` and basic IEEE 754 arithmetic. The Score bytes were also identical. A variant calling `f32::sin` per sample differed by OS at −144.5 dBFS (Windows) and −150.5 dBFS (macOS) against Linux, with ΔLUFS 0.0000, inside PB-06 (≤ −90 dBFS, ≤ 0.1).
+- **Evidence:** [#104](https://github.com/DuhItzAniket/SONARITHM/pull/104) and its `spike-a02-determinism` workflow run; `spikes/render-graph/README.md`
+- **Evidence level / confidence:** EV-C / Strong (single-threaded, fixed blocks, no SIMD intrinsics)
+- **Affects:** PB-06; ADR-0013; 06 §8; H-08
+- **Papers:** P07
+
+### F-040 · A 1 MB binary Tauri response takes about 12 ms p95 on the development laptop and 8 ms or less on CI runners
+
+- **Date:** 2026-10-19 · **Phase:** A02 · **Type:** benchmark · **Status:** new
+- **Statement:** A Tauri 2.12.4 command returning `ipc::Response` with 1 MB had these round-trip times, all inside PB-09 (≤ 30 ms):
+  - development laptop, WebView2 155 (3 runs of 100): p50 10.0–10.4 ms, p95 11.5–11.8 ms;
+  - the same, pinned to 4 E-cores: p95 15.7–20.7 ms;
+  - CI runners (one run each): p95 7.8 ms on Windows (WebView2 154), 8 ms on macOS (WKWebView, AArch64) and 7 ms on Linux (WebKitGTK 2.52.6 under Xvfb).
+
+  10 MB took p50 80.5–81.6 ms on the laptop.
+- **Evidence:** [#101](https://github.com/DuhItzAniket/SONARITHM/pull/101), `spikes/tauri-webview/results/ipc-windows-*.json` and the `spike-a02-tauri` workflow artifacts; benchmarks-log rows "A02 spike (WebView2/WKWebView/WebKitGTK)"
+- **Evidence level / confidence:** EV-C / Moderate (CI runners are virtual machines; WKWebView and WebKitGTK timers have 1 ms resolution)
+- **Affects:** PB-09; ADR-0002; 09 §2
+- **Papers:** P07
+
+### F-041 · JSON costs 3.4 times as much as binary in Tauri IPC, and 30 Hz Channel messages arrive in about 2 ms
+
+- **Date:** 2026-10-19 · **Phase:** A02 · **Type:** benchmark · **Status:** new
+- **Statement:** On the development laptop (WebView2 155):
+  - returning 1 MB as a JSON array took p50 34–35 ms against 10.0–10.4 ms as binary;
+  - 1 KB binary Channel messages at 30 Hz arrived one-way in p50 1.8–1.9 ms and p95 2.1–2.4 ms;
+  - a burst of 64 KB Channel messages moved 147–156 MB/s.
+
+  On the macOS CI runner the 30 Hz stream arrived at only 8 messages per second (max one-way 107 ms). That is consistent with App Nap or timer coalescing of a background app, a hypothesis to check on a real Mac.
+- **Evidence:** [#101](https://github.com/DuhItzAniket/SONARITHM/pull/101) results and workflow artifacts
+- **Evidence level / confidence:** EV-C / Moderate (Windows); EV-D / Weak (the macOS observation)
+- **Affects:** 09 §2 (no JSON on hot paths; meters on Channels); 06 §2 telemetry pump on macOS
+- **Papers:** none yet
+
+### F-042 · A strict CSP without the IPC origins silently turns Tauri's binary IPC into JSON
+
+- **Date:** 2026-10-19 · **Phase:** A02 · **Type:** engineering · **Status:** new
+- **Statement:** With `default-src 'self'` and no `connect-src ipc: http://ipc.localhost`, Tauri 2.12.4 on WebView2 fell back to its postMessage IPC without an error. A command returning `ipc::Response` then delivered a JSON number array instead of an `ArrayBuffer`. Adding the two origins to `connect-src` restored the binary path.
+- **Evidence:** [#101](https://github.com/DuhItzAniket/SONARITHM/pull/101) (README; `tauri.conf.json`)
+- **Evidence level / confidence:** EV-C / Strong
+- **Affects:** 09 §4 (CSP); B01 (a test that the binary path is in use)
+- **Papers:** none yet
+
+### F-043 · In WebView2, a moving playhead over a 1M-point waveform holds 60 fps on both GPUs, but a full 1M-point redraw every frame does not on the integrated GPU
+
+- **Date:** 2026-10-19 · **Phase:** A02 · **Type:** benchmark · **Status:** new
+- **Statement:** On a 2016 × 630 WebGL2 canvas in WebView2 155 on a 60 Hz panel, these cases ran at 60 fps on both the Intel UHD and the RTX 4050, with at most 0.6 ms of script per frame:
+  - a CSS-transformed playhead over a 1M-point waveform drawn once;
+  - the waveform reduced by M4 per pixel column (Intel GPU time p50 1.7 ms);
+  - a 2048 × 512 scrolling spectrogram (Intel GPU time p50 1.7 ms).
+
+  Redrawing all 1M points every frame reached 37 fps on the Intel GPU (GPU p50 26 ms) and 60 fps on the RTX 4050 (GPU p50 0.6 ms).
+- **Evidence:** [#102](https://github.com/DuhItzAniket/SONARITHM/pull/102), `spikes/tauri-webview/results/webgl-windows-*.json`
+- **Evidence level / confidence:** EV-C / Strong (one machine)
+- **Affects:** PB-08; ADR-0002; notes/05 §6; 09 §2 (`view_get` M4 tiles)
+- **Papers:** P07
+
+### F-044 · The WebView2 switch `--force_high_performance_gpu` moves WebGL to the discrete GPU of a hybrid laptop
+
+- **Date:** 2026-10-19 · **Phase:** A02 · **Type:** engineering · **Status:** new
+- **Statement:** On the development laptop (Intel UHD plus RTX 4050), WebView2's default WebGL renderer was the Intel GPU. Passing `--force_high_performance_gpu` through Tauri's `additional_browser_args` gave "ANGLE (NVIDIA, NVIDIA GeForce RTX 4050 Laptop GPU …)", and `--force_low_power_gpu` kept the Intel GPU. Tauri's default browser arguments must be repeated when replacing them.
+- **Evidence:** [#102](https://github.com/DuhItzAniket/SONARITHM/pull/102) (renderer strings in the results)
+- **Evidence level / confidence:** EV-C / Strong
+- **Affects:** B04 (an optional high-performance setting); 09 §1
+- **Papers:** none yet
+
+### F-045 · In WebView2, React Aria's Tree is a tree grid whose row names repeat the expand button label
+
+- **Date:** 2026-10-19 · **Phase:** A02 · **Type:** accessibility · **Status:** new
+- **Statement:** A UI Automation dump of the A02 prototype in WebView2 155 found the expected roles: the Tree, Toolbar, toggle button, Slider, radio group, landmarks and the `role="application"` explorer. It also found three things for the walkthroughs to check:
+  - React Aria Components 1.22's Tree is exposed as a tree grid, and each row's cell is named from its whole content, including the expand button: "Collapse temps.csv, 20 rows temps.csv, 20 rows";
+  - `SliderOutput` is a `status` live region;
+  - React Aria adds live regions of its own next to the app's announcer.
+
+  `UiaRaiseNotificationEvent` on the window's host provider returned success. No screen reader was run.
+- **Evidence:** [#107](https://github.com/DuhItzAniket/SONARITHM/pull/107), `spikes/tauri-webview/results/a11y-uia-windows.txt`
+- **Evidence level / confidence:** EV-D / Weak (an automated tree dump, not a screen-reader session)
+- **Affects:** ADR-0003; OD-05; A11Y-17; 08 §4–5; B02 tree component
+- **Papers:** none yet

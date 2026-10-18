@@ -29,15 +29,22 @@ To be defined at A02 (open question OQ-R5 in the [evaluation plan](evaluation-pl
 
 | HW ID | Machine | CPU | RAM | OS and version | Audio device / host | GPU (UI metrics) |
 |---|---|---|---|---|---|---|
-| | | | | | | |
+| HW-01 | Owner's laptop, the development machine of [12 §8](../architecture/12-cross-cutting-concerns.md#8-performance-budgets) (much faster than the Windows reference machine) | Intel i7-14650HX, 8 P-cores + 8 E-cores, 24 threads | 16 GB | Windows 11 Home 10.0.26300, AC power, Balanced plan | Realtek(R) Audio, WASAPI shared, 48 kHz; OEM enhancement APO active (Nahimic installed) | Intel UHD Graphics (default) and NVIDIA RTX 4050 Laptop 6 GB; 2560 × 1600 panel at 60 Hz |
+| HW-01e | HW-01 pinned to 4 E-cores (`start /affinity F0000`; child processes inherit it). A conservative stand-in for the 4-core reference laptop, used for the 12 §8 headroom rule | 4 Gracemont E-cores | 16 GB | As HW-01 | As HW-01 | As HW-01 |
+| CI-LNX | GitHub-hosted runner, virtual machine | x86-64 | — | `ubuntu-24.04` image 20261012 | none | none (Xvfb, software rendering) |
+| CI-WIN | GitHub-hosted runner, virtual machine | x86-64 | — | `windows-2025-vs2026` image 20261007 | none | none |
+| CI-MAC | GitHub-hosted runner, virtual machine | Apple silicon (AArch64) | — | `macos-26-arm64` image 20261013 | none | none |
+
+No reference-class machine is available yet (risk R-22). Rows on HW-01 apply the headroom rule of 12 §8.
 
 ## Audio engine
 
 | Phase / release | Date | Tag or commit | HW ID | Buffer @ rate | Latency p50 (ms) | Latency p95 (ms) | Xruns in soak (duration) | Real-time factor (×) | Null residual (dBFS) | LUFS Δ | Score IR identical across OS | Evidence |
 |---|---|---|---|---|---|---|---|---|---|---|---|---|
-| A02 spike (Windows) | | | | | | | | | | | | |
-| A02 spike (macOS) | | | | | | | | | | | | |
-| A02 spike (Linux) | | | | | | | | | | | | |
+| A02 spike (Windows) | 2026-10-19 | [#9](https://github.com/DuhItzAniket/SONARITHM/pull/9) `705dc67`; [#98](https://github.com/DuhItzAniket/SONARITHM/pull/98), [#103](https://github.com/DuhItzAniket/SONARITHM/pull/103) | HW-01 | 480-frame period (256 requested) @ 48 kHz, cpal 0.18.2 | 116.4 | 123.1 | 0 deadline misses, 0 late callbacks (120 s, owned graph and Firewheel); 7 and 12 late callbacks, 0 misses on HW-01e | 361 owned, 337 Firewheel (256-frame blocks, 1 thread) | −∞ against CI-LNX (bit-identical) | 0.0000 | yes | Latency: loopback method, software path only, F-031. Graph: F-034, F-035. Determinism: F-039 ([#104](https://github.com/DuhItzAniket/SONARITHM/pull/104)) |
+| A02 spike (Windows, RAW stream) | 2026-10-19 | [#9](https://github.com/DuhItzAniket/SONARITHM/pull/9) `705dc67` | HW-01 | 480-frame period @ 48 kHz, direct WASAPI with `AUDCLNT_STREAMOPTIONS_RAW` | 79.2 | 83.7 | — | — | — | — | — | Bypasses the OEM enhancement APO; not available through cpal 0.18 (F-032) |
+| A02 spike (macOS) | 2026-10-19 | [#104](https://github.com/DuhItzAniket/SONARITHM/pull/104) | CI-MAC | — | pending | pending | — | — | −∞ against CI-LNX (bit-identical) | 0.0000 | yes | Latency needs a loopback device and a port of the harness (R-22); determinism F-039 |
+| A02 spike (Linux) | 2026-10-19 | [#104](https://github.com/DuhItzAniket/SONARITHM/pull/104) | CI-LNX | — | pending | pending | — | — | reference | reference | yes | Latency harness not ported; determinism F-039 |
 | A05 | | | | | | | | | | | | |
 | A07 `v0.1.0-alpha` | | | | | | | | | | | | |
 | A08 `v0.2.0-alpha` | | | | | | | | | | | | |
@@ -61,9 +68,9 @@ To be defined at A02 (open question OQ-R5 in the [evaluation plan](evaluation-pl
 
 | Phase / release | Date | Tag or commit | HW ID | Webview | Cold start (s) | Playhead fps | Scripting per frame, 1M points (ms) | Installer size (MB) | Network calls without consent | Evidence |
 |---|---|---|---|---|---|---|---|---|---|---|
-| A02 spike (WebView2) | | | | | | | | | | |
-| A02 spike (WKWebView) | | | | | | | | | | |
-| A02 spike (WebKitGTK) | | | | | | | | | | |
+| A02 spike (WebView2) | 2026-10-19 | [#101](https://github.com/DuhItzAniket/SONARITHM/pull/101), [#102](https://github.com/DuhItzAniket/SONARITHM/pull/102) | HW-01 (Intel UHD and RTX 4050) | WebView2 155.0.4283.62 | — | 60 (panel limit) on both GPUs; full 1M redraw every frame: 37 on Intel UHD | ≤ 0.6 | — | — | PB-09: 1 MB binary p95 11.5–11.8 ms on HW-01, 15.7–20.7 ms on HW-01e, 7.8 ms on CI-WIN (F-040, F-041); PB-08: F-043 |
+| A02 spike (WKWebView) | 2026-10-19 | [#101](https://github.com/DuhItzAniket/SONARITHM/pull/101) | CI-MAC | WKWebView (WebKit 21624.5.1.11.3) | — | pending | pending | — | — | PB-09: 1 MB binary p95 8 ms (F-040). Frame rates need a GPU: owner or volunteer step |
+| A02 spike (WebKitGTK) | 2026-10-19 | [#101](https://github.com/DuhItzAniket/SONARITHM/pull/101) | CI-LNX | WebKitGTK 2.52.6 (Xvfb) | — | pending | pending | — | — | PB-09: 1 MB binary p95 7 ms (F-040). Frame rates on Intel, AMD and NVIDIA GPUs: owner live-USB step |
 | B01 | | | | | | | | | | |
 | B04 | | | | | | | | | | |
 | Gate B `v0.5.0-beta` | | | | | | | | | | |
@@ -96,3 +103,4 @@ The A01 research hook records CI times as a baseline.
 | Date | Change | By |
 |---|---|---|
 | 2026-10-18 | Baseline tables and budgets from architecture overview §7 and roadmap exit criteria. | Research lead |
+| 2026-10-19 | A02 spike rows; hardware IDs HW-01, HW-01e, CI-LNX, CI-WIN and CI-MAC. | A02 session (AI agent), for review |

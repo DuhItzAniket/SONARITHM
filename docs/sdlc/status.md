@@ -21,7 +21,7 @@ Status values: `Not started` · `In progress` · `In review` · `Done` · `Block
 |---|---|---|---|---|---|
 | — | — | Kickoff: research and documentation baseline | **Done** | 100% | 2026-10-18; see [worklog](worklog/2026-10-18-project-kickoff.md) |
 | A | A01 | Repository bootstrap and governance | **Done** | 100% | 2026-10-19; [phase review](reviews/A01-phase-review.md), [retro](retrospectives/A01-retro.md). See [A01 tasks](#a01-tasks) |
-| A | A02 | Technical spikes and prototype gate | Not started | 0% | |
+| A | A02 | Technical spikes and prototype gate | **In review** | ≈80% | All spikes built and measured on Windows and CI; gate report draft: Conditional go recommended. PB-01 fails on Windows shared mode; screen-reader, macOS and Linux manual steps pending. See [A02 tasks](#a02-tasks) |
 | A | A03 | Core types, Spec v0.1, Score IR | **In progress** | ≈15% | T01 merged (#4); RFC-0001 accepted (T05); T02–T04 in review. See [A03 tasks](#a03-tasks) |
 | A | A04 | Data layer | Not started | 0% | |
 | A | A05 | Render engine, audio backend, export | Not started | 0% | |
@@ -67,6 +67,21 @@ Status values: `Not started` · `In progress` · `In review` · `Done` · `Block
 | A01-T11 Secret scanning, vulnerability reporting, Discussions | **Done** | Secret scanning + push protection on; private vulnerability reporting and Discussions enabled; workflow token read-only by default. Reported-content moderation is unavailable for personal repositories; CODE_OF_CONDUCT.md now names the alternative channels |
 | A01-T12 Docs CI | **Done** | markdown, internal-links, reuse and schema-diff green; external links advisory on PRs, failing only on the weekly run (`lychee.toml`) |
 | A01-T13 Licence files, REUSE | **Done** | Licence files, `REUSE.toml` and SPDX headers; `reuse` check green in CI |
+
+### A02 tasks
+
+Work runs in a separate agent session in parallel with A03. The spikes are throwaway code in `spikes/`. Details: [gate report](reviews/A02-prototype-gate.md), [worklog](worklog/2026-10-19-a02-spikes.md).
+
+| Task | Status | Notes |
+|---|---|---|
+| A02-T01 cpal output + loopback latency harness | **Done** (Windows) | Merged in #9. PB-01 **fails**: p95 123.1 ms at the 256 setting (F-031). macOS and Linux pending (R-22) |
+| A02-T02 Owned render graph behind a draft `RenderGraph` | In review | #98: 361× real time offline, 0 deadline misses in 120 s (F-034) |
+| A02-T03 Firewheel 0.14 behind the same contract; Miri | In review | #103: bit-identical output at equal CPU (F-035); Miri passes with Miri's allocator (F-037) |
+| A02-T04 Offline determinism across OSes | In review | #104: bit-identical on Linux, Windows, macOS AArch64 (F-039) |
+| A02-T05 Tauri 2.12 Channel and binary IPC | In review | #101: 1 MB p95 11.5–11.8 ms on HW-01, 7–8 ms on all CI runners (F-040). Real macOS and Linux hardware pending |
+| A02-T06 WebGL2 1M-point waveform and spectrogram | In review | #102: 60 fps in WebView2 on both GPUs (F-043). WKWebView and WebKitGTK pending |
+| A02-T07 React Aria prototype, screen-reader walkthroughs, OD-05 prototype | In review (prototype); walkthroughs pending | #107: prototype, UIA smoke test (F-045) and walkthrough scripts. NVDA, Narrator, Orca and VoiceOver runs are owner or volunteer tasks |
+| A02-T08 Gate report; ADR-0002/0003/0004 recommendations | In review | Gate report draft; ADR-0004 amend; ADR-0002 and ADR-0003 stay provisional until the manual steps |
 
 ### A03 tasks
 
@@ -128,3 +143,4 @@ Maturity scale: `Designed` → `Prototype` → `Alpha` → `Beta` → `Stable` �
 | 2026-10-19 | RFC-0001 accepted with all 21 resolutions; spec v0.1 frozen (ADR-0015) |
 | 2026-10-19 | A01 done: project board and Stage A issues (T10); phase review and retrospective |
 | 2026-10-18 | A01 PR #1 merged as `02a44f3` with all checks green; owner context recorded (RV University, Windows-only hardware) |
+| 2026-10-19 | A02 spikes measured (T01 merged in #9; T02–T07 in review); gate report draft recommends a conditional go; PB-01 fails on Windows shared mode |
