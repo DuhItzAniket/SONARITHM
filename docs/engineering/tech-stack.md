@@ -31,12 +31,12 @@
 | Export | hound (WAV); flacenc (FLAC); midly (SMF) | 3.5.1; 0.5.1; 0.5.3 | Adopt (flacenc Trial) | Apache/MIT | A05/C04 | MP3 via mp3lame-encoder is **LGPL**, optional feature only |
 | Live MIDI / OSC | midir; rosc | 0.11.1; 0.11.4 | Adopt | MIT/Apache | C04 | |
 | Speech | tts | 0.26.3 | Trial | MIT | B03 | Last release Jul 2024; repo active. Self-voicing only |
-| Data model | arrow + parquet; bytes | 60; 1.12 | Adopt | Apache-2.0; MIT | A04 | The split crates (`arrow-array`, `-schema`, `-select`, `-ipc`) instead of the `arrow` umbrella; parquet without its async (tokio) default and with pure-Rust codecs. zstd (C) is the default-on `zstd` feature of `sonarithm-data`, off in the wasm32 build |
+| Data model | arrow + parquet; bytes | 60; 1.12 | Adopt | Apache-2.0; MIT | A04 | The split crates (`arrow-array`, `-schema`, `-select`, `-ipc`, `-ord`) instead of the `arrow` umbrella; parquet without its async (tokio) default and with pure-Rust codecs. zstd (C) is the default-on `zstd` feature of `sonarithm-data`, off in the wasm32 build |
 | File formats | csv; encoding_rs + chardetng; calamine; jiff (+ chrono interop) | 1.4; 0.8.42 + 1.0.0; 0.37.0; 0.2.38 | Adopt | MIT/Unlicense; MIT/Apache (+ BSD-3-Clause data tables) | A04 | encoding_rs and chardetng (both by H. Sivonen) decode and guess non-UTF-8 CSV. calamine sits behind the default `xlsx` feature. jiff without default features: civil date-time parsing only, no time-zone database and no clock |
 | DataFrame adapter | polars | 0.55.2 | Trial (feature) | MIT | A04 | Rust API breaks without deprecation |
 | Streaming | tokio; tokio-tungstenite; serialport; rumqttc | 1.53; 0.30; 4.10.1; 0.25.1 | Adopt (rumqttc Trial) | MIT/Apache (serialport MPL-2.0) | B06 | |
 | Expressions | exmex (behind a facade) | 0.21 | Trial | MIT/Apache | C03 | Symbolic derivatives. Single maintainer, hence the facade |
-| Scripting | rhai | 1.26.1 | Adopt | MIT/Apache | A04 | Sandboxed spec expressions |
+| Scripting | rhai | 1.26.1 | Adopt | MIT/Apache | A04 | Sandboxed spec expressions (`filter`, `derive`): a raw engine without default features (no runtime RNG, no time package), user functions, modules, closures and custom syntax compiled out, fuel-limited per row. Its dependency `smartstring` is unmaintained (RUSTSEC-2026-0249, ignored in `deny.toml`, tracked in #115) |
 | Analytics | statrs; ndarray; augurs | 0.19.1; 0.17.2; 0.10.2 | Adopt / Trial (augurs) | MIT/Apache | C05 | linfa 0.8, changepoint Assess |
 | Chart ML | tract-onnx (default); ort (opt-in) | 0.23.9; 2.0.0-rc.14 | Trial | MIT/Apache | D04 | ort is still RC; use `load-dynamic` |
 | Python | pyo3 + maturin + numpy | 0.30.1; 1.15; 0.30 | Adopt | MIT/Apache | A07 | abi3 wheels; Arrow PyCapsule interop |

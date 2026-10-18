@@ -113,7 +113,7 @@ Work runs in a separate agent session, in parallel with A03, through small PRs i
 | A04-T04 XLSX/ODS via calamine | In review | Sheet and range selection, cached formula values, dates through number formats; workbook suite built in the tests |
 | A04-T05 Type, role and concept inference | In review | Corpus of 27 files, 74 fields: precision 100% type, 98.5% role (one known miss), 100% concept |
 | A04-T06 Provenance columns and propagation | In review | Canonical `__snr_prov`/`__snr_conf` at ingest; property tests for weakest class and lowest confidence; propagation table in 03 §4 |
-| A04-T07 Transforms with a sandboxed rhai subset | Not started | |
+| A04-T07 Transforms with a sandboxed rhai subset | In progress | `filter`, `sort`, `derive` and the fuel-limited rhai subset in review; `aggregate`, `bin`, `smooth`, `resample`, `normalize` follow |
 | A04-T08 M4 and LTTB downsampling; tile cache | Not started | |
 | A04-T09 Data fingerprinting | Not started | |
 | A04-T10 Benchmarks (PB-05); CSV and XLSX fuzzers | Not started | |

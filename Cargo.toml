@@ -54,6 +54,7 @@ anyhow = "1.0.100"          # apps/* and xtask only (coding-standards §4.1)
 # set small (no prettyprint, CSV or JSON readers) and wasm32-clean.
 arrow-array = "60.0.0"
 arrow-ipc = { version = "60.0.0", features = ["lz4"] }
+arrow-ord = "60.0.0"
 arrow-schema = "60.0.0"
 arrow-select = "60.0.0"
 bytes = "1.12.1"            # Parquet input buffers
@@ -70,6 +71,9 @@ jiff = { version = "0.2.38", default-features = false, features = ["std"] }
 libm = "0.2.16"
 # Diagnostic reports for spec errors (12 §1); no `fancy` features in libraries.
 miette = { version = "7.6.0", default-features = false }
+# Sandboxed transform expressions (03 §6): no default features, so no runtime RNG (wasm32)
+# and no time package; user functions, modules, closures and custom syntax are compiled out.
+rhai = { version = "1.26.1", default-features = false, features = ["std", "no_time", "no_function", "no_module", "no_closure", "no_custom_syntax"] }
 # Parquet through Arrow, without the async (tokio) default. Pure-Rust codecs only; zstd is
 # a sonarithm-data feature because it builds C code.
 parquet = { version = "60.0.0", default-features = false, features = ["arrow", "snap", "brotli", "flate2-zlib-rs", "lz4", "simdutf8"] }

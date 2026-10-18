@@ -248,6 +248,54 @@ code!(
     []
 );
 
+code!(
+    /// A transform needs another kind of field.
+    FIELD_TYPE_MISMATCH, "SNR-DATA-051", Error,
+    "The transform needs another kind of field",
+    "Pick a field of the kind the message names, or convert one with `derive`.",
+    []
+);
+
+code!(
+    /// An expression does not compile or gives values of different types.
+    INVALID_EXPRESSION, "SNR-DATA-052", Error,
+    "The expression is invalid",
+    "Write one rhai expression over the row's fields; statements, loops, functions and `**` are not available (03 §6).",
+    []
+);
+
+code!(
+    /// An expression failed on some rows; those values are missing.
+    EXPRESSION_FAILED, "SNR-DATA-053", Warning,
+    "The expression failed on some rows",
+    "Check the rows the message names, for example for division by zero; their values are missing.",
+    []
+);
+
+code!(
+    /// An expression needs more operations per row than allowed.
+    EXPRESSION_BUDGET, "SNR-DATA-054", Error,
+    "The expression needs too many operations",
+    "Simplify the expression; each row may use at most 10 000 operations.",
+    []
+);
+
+code!(
+    /// Transform parameters that cannot be used.
+    INVALID_TRANSFORM, "SNR-DATA-055", Error,
+    "Invalid transform parameters",
+    "Fix the parameters the message names (RFC-0001 §4).",
+    []
+);
+
+code!(
+    /// A transform ran.
+    TRANSFORM_APPLIED, "SNR-DATA-056", Info,
+    "A transform ran",
+    "None needed; the message states the rows in and out.",
+    []
+);
+
 /// Every `SNR-DATA` code, in ascending order.
 pub const CODES: CodeTable = CodeTable {
     area: Area::Data,
@@ -281,6 +329,12 @@ pub const CODES: CodeTable = CodeTable {
         INVALID_METADATA,
         INVALID_PROVENANCE,
         UNKNOWN_FIELD,
+        FIELD_TYPE_MISMATCH,
+        INVALID_EXPRESSION,
+        EXPRESSION_FAILED,
+        EXPRESSION_BUDGET,
+        INVALID_TRANSFORM,
+        TRANSFORM_APPLIED,
     ],
 };
 

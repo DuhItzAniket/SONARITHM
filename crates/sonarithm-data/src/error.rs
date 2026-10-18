@@ -137,6 +137,48 @@ pub enum DataError {
         /// The repeated ID.
         id: u32,
     },
+    /// A bundle has no table with this ID.
+    #[error("the bundle has no table {id}")]
+    UnknownTable {
+        /// The ID asked for.
+        id: u32,
+    },
+    /// A transform needs another kind of field.
+    #[error("{op} needs {expected} for `{field}`, which holds {found}")]
+    FieldTypeMismatch {
+        /// The transform.
+        op: &'static str,
+        /// The field.
+        field: String,
+        /// What the transform needs, such as "numbers".
+        expected: &'static str,
+        /// The field's storage type.
+        found: String,
+    },
+    /// Transform parameters that cannot be used.
+    #[error("invalid {op} parameters: {reason}")]
+    InvalidTransform {
+        /// The transform.
+        op: &'static str,
+        /// What is wrong.
+        reason: String,
+    },
+    /// An expression that does not compile or gives unusable values.
+    #[error("the expression `{expr}` is invalid: {reason}")]
+    InvalidExpression {
+        /// The expression.
+        expr: String,
+        /// What is wrong.
+        reason: String,
+    },
+    /// An expression that needs more operations per row than allowed.
+    #[error("the expression `{expr}` needs more than {fuel} operations on a row")]
+    ExpressionBudget {
+        /// The expression.
+        expr: String,
+        /// The budget.
+        fuel: u64,
+    },
     /// A field name that the table does not have.
     #[error("table `{table}` has no field `{field}`")]
     UnknownField {
@@ -150,6 +192,7 @@ pub enum DataError {
 impl DataError {
     /// The diagnostic that reports this error to the user.
     #[must_use]
+    #[expect(clippy::too_many_lines, reason = "one short arm per error variant")]
     pub fn to_diagnostic(&self) -> Diagnostic {
         let (code, message) = match self {
             Self::Unreadable { format, reason } => (
@@ -225,6 +268,40 @@ impl DataError {
             Self::DuplicateTable { id } => (
                 &codes::MALFORMED_TABLE,
                 format!("Table ID {id} is used twice in one bundle. Give each table its own ID."),
+            ),
+            Self::UnknownTable { id } => (
+                &codes::MALFORMED_TABLE,
+                format!("The bundle has no table {id}. Use the ID of one of its tables."),
+            ),
+            Self::FieldTypeMismatch {
+                op,
+                field,
+                expected,
+                found,
+            } => (
+                &codes::FIELD_TYPE_MISMATCH,
+                format!(
+                    "The {op} transform needs {expected} in `{field}`, which holds {found}. Pick \
+                     another field or convert it with `derive`."
+                ),
+            ),
+            Self::InvalidTransform { op, reason } => (
+                &codes::INVALID_TRANSFORM,
+                format!("The {op} transform has invalid parameters: {reason}."),
+            ),
+            Self::InvalidExpression { expr, reason } => (
+                &codes::INVALID_EXPRESSION,
+                format!(
+                    "The expression `{expr}` is invalid: {reason}. Expressions are one rhai \
+                     expression over the row's fields (03 §6)."
+                ),
+            ),
+            Self::ExpressionBudget { expr, fuel } => (
+                &codes::EXPRESSION_BUDGET,
+                format!(
+                    "The expression `{expr}` needs more than {fuel} operations on a row. \
+                     Simplify it."
+                ),
             ),
             Self::UnknownField { table, field } => (
                 &codes::UNKNOWN_FIELD,

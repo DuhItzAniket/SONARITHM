@@ -19,6 +19,7 @@ pub mod meta;
 pub mod provenance;
 pub mod source;
 pub mod table;
+pub mod transform;
 
 pub use bundle::{
     Annotation, AnnotationKind, BundleId, DataBundle, Format, SourceDescriptor, SourceKind,
@@ -32,3 +33,4 @@ pub use source::{CsvOptions, JsonOptions, Limits, Loaded, ReadOptions, read_byte
 #[cfg(feature = "xlsx")]
 pub use source::{SheetOptions, SheetRef};
 pub use table::Table;
+pub use transform::{SortOrder, Transform, TransformRecord, apply, apply_all};

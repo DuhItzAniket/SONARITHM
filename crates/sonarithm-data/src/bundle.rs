@@ -10,6 +10,7 @@ use sonarithm_core::{AnalyzerId, Confidence, RowRange, RuleId, TableId};
 
 use crate::error::DataError;
 use crate::table::Table;
+use crate::transform::TransformRecord;
 
 /// Identifies a data bundle within a project or session.
 #[derive(
@@ -209,6 +210,7 @@ pub struct DataBundle {
     tables: Vec<Table>,
     source: SourceDescriptor,
     annotations: Vec<Annotation>,
+    transforms: Vec<TransformRecord>,
 }
 
 impl DataBundle {
@@ -232,6 +234,7 @@ impl DataBundle {
             tables,
             source,
             annotations: Vec::new(),
+            transforms: Vec::new(),
         })
     }
 
@@ -243,6 +246,7 @@ impl DataBundle {
             tables: vec![table],
             source,
             annotations: Vec::new(),
+            transforms: Vec::new(),
         }
     }
 
@@ -300,6 +304,17 @@ impl DataBundle {
     /// Adds an analyzer annotation.
     pub fn annotate(&mut self, annotation: Annotation) {
         self.annotations.push(annotation);
+    }
+
+    /// The transforms applied to the bundle's tables, in order (03 §6); render manifests
+    /// include it.
+    #[must_use]
+    pub fn transform_log(&self) -> &[TransformRecord] {
+        &self.transforms
+    }
+
+    pub(crate) fn log_transform(&mut self, record: TransformRecord) {
+        self.transforms.push(record);
     }
 }
 
