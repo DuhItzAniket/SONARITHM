@@ -99,8 +99,8 @@ jobs:
           persist-credentials: false
       - uses: fsfe/reuse-action@676e2d560c9a403aa252096d99fcab3e1132b0f5 # v6.0.0
 
-  # Placeholder until A03: `cargo xtask codegen` generates nothing yet. From A03 it
-  # regenerates schemas/ (and from B01 packages/ipc/src/generated/); any diff fails the job.
+  # `cargo xtask codegen` regenerates docs/reference/error-codes.md (A03-T02), schemas/
+  # (A03-T06) and from B01 packages/ipc/src/generated/; any diff fails the job.
   schema-diff:
     runs-on: ubuntu-latest
     permissions:

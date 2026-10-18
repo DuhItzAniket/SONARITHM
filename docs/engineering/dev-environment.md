@@ -135,6 +135,7 @@ All commands run from the repository root unless stated. Available after A01; th
 | `pnpm install` | Installs the JavaScript workspace | A01 |
 | `cargo insta review` | Reviews pending snapshot changes interactively | A03 |
 | `cargo xtask codegen` | Regenerates all generated artifacts: JSON Schemas in `schemas/` (A03) and TypeScript IPC types in `packages/ipc/src/generated/` (B01) | A03 |
+| `cargo xtask codes` | Checks the diagnostic code tables and writes `docs/reference/error-codes.md` (also run by `codegen`) | A03 |
 | `cargo +nightly fuzz run <target>` | Runs a fuzz target (from the owning crate's directory) | A03 |
 | `cargo xtask golden --update` | Re-renders golden references; state the reason in the PR ([testing-strategy §5.3](testing-strategy.md#53-golden-file-policy)) | A05 |
 | `cargo +nightly miri test -p <crate>` | Runs a crate's tests under Miri | A05 |

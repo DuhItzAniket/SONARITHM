@@ -1,6 +1,6 @@
 [package]
 name = "xtask"
-description = "SONARITHM workspace automation (`cargo xtask ci`, `check-deps`, `codegen`, `wasm-check`)."
+description = "SONARITHM workspace automation (`cargo xtask ci`, `check-deps`, `codegen`, `codes`, `wasm-check`)."
 version.workspace = true
 edition.workspace = true
 rust-version.workspace = true
@@ -11,6 +11,8 @@ publish.workspace = true
 [dependencies]
 anyhow.workspace = true
 cargo_metadata.workspace = true
+sonarithm-core.workspace = true
+sonarithm-spec.workspace = true
 
 [lints]
 workspace = true
