@@ -65,3 +65,4 @@ Owner: `sonarithm-spec`.
 | `SNR-SPEC-061` | error | Invalid playback parameters | Use a positive, finite playback speed. | — |
 | `SNR-SPEC-070` | error | Unknown field | Name a field of the data, or declare it in `data.fields`. | — |
 | `SNR-SPEC-071` | error | Field type not compatible with the channel | Map nominal fields to timbre and quantitative fields to pitch, duration or rate. | SDR-25 |
+| `SNR-SPEC-080` | info | Default applied | The compiler filled in a default; write the key to choose another value. | — |

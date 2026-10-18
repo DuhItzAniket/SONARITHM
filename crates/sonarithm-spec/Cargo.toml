@@ -10,11 +10,16 @@ publish.workspace = true
 
 [dependencies]
 miette.workspace = true
+ryu.workspace = true
 schemars.workspace = true
 serde.workspace = true
 serde_json.workspace = true
 serde_path_to_error.workspace = true
 sonarithm-core.workspace = true
+thiserror.workspace = true
 
 [lints]
 workspace = true
+
+[dev-dependencies]
+proptest.workspace = true

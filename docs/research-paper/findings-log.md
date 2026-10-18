@@ -220,6 +220,15 @@ continues at F-021. IDs F-021 to F-029 belong to A03 entries.
 - **Affects:** ADR-0013, H-08 (cross-platform byte identity also needs exact parsing, not only exact formatting and `libm`)
 - **Papers:** P07 (engine paper, determinism section)
 
+### F-020 · Rust's float formatting breaks exact decimal ties upward, which RFC 8785 forbids
+
+- **Date:** 2026-10-19 · **Phase:** A03 · **Type:** engineering · **Status:** new
+- **Statement:** For the double `0x43143ff3c1cb0959` (exactly 1424953923781206.25), Rust's `{}` and `{:e}` formatting print the 17-digit tie as `1424953923781206.3`, while ECMAScript `Number.prototype.toString`, and therefore RFC 8785, require the even digit, `1424953923781206.2`. The `ryu` crate (used by serde_json) and Python's `repr` print `.2`. Spec canonicalization therefore takes its digits from `ryu`, and the RFC 8785 Appendix B number vectors are a unit test.
+- **Evidence:** A03-T08 PR (`crates/sonarithm-spec/src/canonical.rs`, test `rfc_8785_appendix_b_numbers`); RFC 8785 Appendix B; ECMA-262 §6.1.6.1.20.
+- **Evidence level / confidence:** EV-C / Strong
+- **Affects:** ADR-0013, H-08 (spec hashes must match those any RFC 8785 implementation computes, for example in Python or the browser)
+- **Papers:** P07 (engine paper, determinism section)
+
 ### F-030 · WASAPI shared mode on the development laptop ignores the requested buffer size
 
 - **Date:** 2026-10-19 · **Phase:** A02 · **Type:** engineering · **Status:** new

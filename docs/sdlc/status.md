@@ -94,12 +94,12 @@ Work runs in a separate agent session in parallel with A02 (spikes). Each task l
 | A03-T03 Score IR, canonical hash, review snapshots | In review | #7 (Score IR types), #8 (canonical hash and snapshots) |
 | A03-T04 Capability traits, registry | In review | #10; ADR-0014 (trait signatures) needs owner approval |
 | A03-T05 RFC-0001 Spec v0.1 | **Done** | [RFC-0001](../rfcs/0001-spec-v0.1.md) accepted by the owner on 2026-10-19 with all 21 proposed resolutions; spec v0.1 frozen ([ADR-0015](../decisions/0015-spec-v0.1-frozen.md)) |
-| A03-T06 Spec types, JSON Schema export | Not started | Follows RFC-0001 |
-| A03-T07 Semantic validation | Not started | |
-| A03-T08 Canonicalization, spec hash, migrations | Not started | |
+| A03-T06 Spec types, JSON Schema export | In review | #66: serde + schemars types per RFC-0001; `schemas/sonarithm-spec-0.1.schema.json` from `cargo xtask codegen`, diffed by `docs / schema-diff` |
+| A03-T07 Semantic validation | In review | #96 (parse layers and semantic rules, a failing and a passing test each), #97 (miette reports with spans from JSON pointers) |
+| A03-T08 Canonicalization, spec hash, migrations | In review | RFC 8785 canonical form (Appendix B vectors pass), defaults as `Info` (`SNR-SPEC-080`), spec hash pinned on 3 OSes, migration framework; F-020 |
 | A03-T09 Compiler skeleton, `CompileContext` | Not started | |
 | A03-T10 Spec parser fuzz target, proptest generators | Not started | |
-| A03-T11 Doc-example validation test | Not started | |
+| A03-T11 Doc-example validation test | In review | #97: every JSON example in 04 validates (4 specs, 9 fragments, the §2 skeleton) |
 
 ### A04 tasks
 

@@ -263,7 +263,7 @@ The compiler fills in the substrate from `role=x` (or row order), pace 3 points/
 | RFC scope | An RFC is required for a major bump, a new top-level section, a new substrate, mark or channel kind, or any reinterpretation of existing fields. Adding an optional field or enum value inside an existing construct needs only a normal PR with schema regeneration |
 | Migrations | `sonarithm spec migrate` rewrites documents explicitly. The compiler may read old versions through in-memory migration, with a `Warning` diagnostic. It never silently rewrites files |
 | Pre-1.0 | Until SONARITHM 1.0, `0.x` minor versions may break, with a migration provided |
-| Canonical form | For hashing, specs are canonicalized per RFC 8785 (JSON Canonicalization Scheme) after defaults are applied. The **spec hash** in manifests is SHA-256 of that form ([ADR-0013](../decisions/0013-determinism-and-provenance.md)) |
+| Canonical form | For hashing, specs are canonicalized per RFC 8785 (JSON Canonicalization Scheme) after the data-independent defaults are applied. The **spec hash** in manifests is SHA-256 of that form ([ADR-0013](../decisions/0013-determinism-and-provenance.md)). Implemented by `sonarithm_spec::prepare` (A03-T08); every applied default is reported as `SNR-SPEC-080` (Info) with its rule ID |
 
 ## 8. Validation layers
 
