@@ -10,7 +10,7 @@
 | Linux | The `spike-tauri-ubuntu-24.04` artifact: a `.deb` |
 | macOS | The `spike-tauri-macos-latest` artifact: an unsigned `.app` |
 
-The artifacts are under **Actions → spike-a02-tauri → the latest run → Artifacts** (sign in to GitHub). They are kept for 30 days; re-run the workflow for a fresh build.
+The artifacts are under **Actions → spike-a02-tauri → a run for the `spike/a02-a11y` branch (pull request #107), or for `main` once it is merged → Artifacts** (sign in to GitHub). Older runs (#101, #102) do not contain the accessibility page. Artifacts are kept for 30 days; re-run the workflow for a fresh build.
 
 Every run writes JSON with `--out`. Keep the files: they are the evidence.
 
