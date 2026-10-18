@@ -1,0 +1,27 @@
+/* SPDX-FileCopyrightText: 2026 SONARITHM contributors */
+/* SPDX-License-Identifier: MIT OR Apache-2.0 */
+
+/* Spike styling only; the product uses the design tokens of docs/design/design-language.md. */
+:root {
+  color-scheme: light dark;
+  font-family: system-ui, sans-serif;
+}
+main {
+  max-width: 72rem;
+  margin: 1.5rem auto;
+  padding: 0 1rem;
+}
+button {
+  font: inherit;
+  padding: 0.4rem 0.9rem;
+  margin-right: 0.5rem;
+}
+:focus-visible {
+  outline: 3px solid Highlight;
+  outline-offset: 2px;
+}
+pre {
+  font-size: 0.8rem;
+  overflow: auto;
+  max-height: 60vh;
+}

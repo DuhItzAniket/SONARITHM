@@ -1,0 +1,21 @@
+{
+  "name": "spike-tauri-webview",
+  "private": true,
+  "version": "0.0.0",
+  "license": "MIT OR Apache-2.0",
+  "description": "A02-T05..T07 spike: Tauri 2.12 IPC, WebGL2 and accessibility prototypes (throwaway; see README.md)",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "tauri": "tauri"
+  },
+  "dependencies": {
+    "@tauri-apps/api": "2.12.4"
+  },
+  "devDependencies": {
+    "@tauri-apps/cli": "2.12.3",
+    "typescript": "~6.0.3",
+    "vite": "8.3.4"
+  }
+}
