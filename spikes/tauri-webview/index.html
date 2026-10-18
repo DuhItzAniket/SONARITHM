@@ -1,0 +1,24 @@
+<!doctype html>
+<!-- SPDX-FileCopyrightText: 2026 SONARITHM contributors -->
+<!-- SPDX-License-Identifier: MIT OR Apache-2.0 -->
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>SONARITHM A02 spike: benchmarks</title>
+    <link rel="stylesheet" href="/src/style.css" />
+  </head>
+  <body>
+    <main>
+      <h1>A02 spike benchmarks</h1>
+      <p>Throwaway prototypes for the A02 prototype gate. Results are written by the host.</p>
+      <div role="group" aria-label="Benchmark suites">
+        <button type="button" data-suite="ipc">Run IPC benchmark</button>
+      </div>
+      <p id="status" role="status"></p>
+      <h2>Results</h2>
+      <pre id="output" tabindex="0" aria-label="Results as JSON"></pre>
+    </main>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>

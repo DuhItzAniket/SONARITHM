@@ -1,0 +1,85 @@
+# TEMPORARY (A02-T05..T07): builds the Tauri spike on Linux, Windows and macOS, runs its IPC
+# benchmark headless (PB-09 on CI runners, not reference hardware) and uploads the builds the
+# owner and volunteers use for the manual walkthroughs. Not a required check. Delete together
+# with spikes/ after the A02 gate.
+name: spike-a02-tauri
+
+on:
+  pull_request:
+    paths:
+      - "spikes/tauri-webview/**"
+      - ".github/workflows/spike-a02-tauri.yml"
+  workflow_dispatch:
+
+permissions: {}
+
+concurrency:
+  group: spike-a02-tauri-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: build and IPC benchmark (${{ matrix.os }})
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-24.04
+            bundle: --bundles deb
+            run: xvfb-run -a ./src-tauri/target/release/spike-tauri-webview
+          - os: windows-latest
+            bundle: --no-bundle
+            run: ./src-tauri/target/release/spike-tauri-webview.exe
+          - os: macos-latest
+            bundle: --bundles app
+            run: ./src-tauri/target/release/spike-tauri-webview
+    runs-on: ${{ matrix.os }}
+    permissions:
+      contents: read
+    timeout-minutes: 45
+    defaults:
+      run:
+        shell: bash
+        working-directory: spikes/tauri-webview
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Linux build dependencies (WebKitGTK 4.1) and Xvfb
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libwebkit2gtk-4.1-dev libgtk-3-dev librsvg2-dev libayatana-appindicator3-dev libxdo-dev xvfb
+      # The toolchain pinned in the root rust-toolchain.toml applies to the spike too.
+      - run: rustup toolchain install
+      - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
+        with:
+          workspaces: spikes/tauri-webview/src-tauri
+          save-if: false
+      # pnpm version from the `packageManager` field of the root package.json.
+      - uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 24
+          cache: pnpm
+          cache-dependency-path: spikes/tauri-webview/pnpm-lock.yaml
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm tauri build ${{ matrix.bundle }}
+      - name: IPC benchmark (autorun)
+        # Informational: a runner without a usable display must not fail the build job.
+        continue-on-error: true
+        timeout-minutes: 10
+        run: |
+          ${{ matrix.run }} --autorun ipc --out "ipc-${{ runner.os }}.json"
+          echo '### IPC benchmark (${{ matrix.os }}, CI runner)' >> "$GITHUB_STEP_SUMMARY"
+          { echo '```json'; cat "ipc-${{ runner.os }}.json"; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: spike-tauri-${{ matrix.os }}
+          path: |
+            spikes/tauri-webview/ipc-*.json
+            spikes/tauri-webview/src-tauri/target/release/bundle/deb/*.deb
+            spikes/tauri-webview/src-tauri/target/release/bundle/macos/*.app
+            spikes/tauri-webview/src-tauri/target/release/spike-tauri-webview.exe
+          if-no-files-found: warn
+          retention-days: 30

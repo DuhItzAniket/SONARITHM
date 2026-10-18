@@ -1,0 +1,2 @@
+# A02 spike: its own pnpm root, so it stays out of the repository workspace (pnpm -r).
+packages: []

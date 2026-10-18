@@ -46,6 +46,7 @@ pnpm-debug.log*
 # Generated capability schemas. Mobile targets are not planned; revisit this rule if
 # gen/android or gen/apple are ever added (Tauri commits those).
 apps/desktop/src-tauri/gen/
+/spikes/**/src-tauri/gen/
 
 # --- Python and maturin ----------------------------------------------------
 __pycache__/

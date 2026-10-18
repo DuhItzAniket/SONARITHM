@@ -1,0 +1,74 @@
+{
+  "binary10MB": {
+    "clockCheckMinMs": [
+      2.804,
+      95.099
+    ],
+    "max": 139.6,
+    "mean": 106.203,
+    "n": 30,
+    "p50": 103.1,
+    "p95": 132.6,
+    "p99": 139.6
+  },
+  "binary1MB": {
+    "clockCheckMinMs": [
+      0.914,
+      11.201
+    ],
+    "max": 20.5,
+    "mean": 14.064,
+    "n": 100,
+    "p50": 13.9,
+    "p95": 15.7,
+    "p99": 19.2
+  },
+  "channel30Hz1KB": {
+    "max": 8.604,
+    "mbPerS": 0,
+    "mean": 3.853,
+    "messages": 300,
+    "msgsPerS": 30,
+    "n": 300,
+    "p50": 3.697,
+    "p95": 5.232,
+    "p99": 5.659
+  },
+  "channelBurst64KB": {
+    "max": 585.026,
+    "mbPerS": 49.3,
+    "mean": 453.182,
+    "messages": 500,
+    "msgsPerS": 789,
+    "n": 500,
+    "p50": 432.335,
+    "p95": 583.047,
+    "p99": 584.942
+  },
+  "host": {
+    "arch": "x86_64",
+    "gpuRequest": null,
+    "os": "windows",
+    "tauri": "2.12.4",
+    "webview": "155.0.4283.62"
+  },
+  "json1MB": {
+    "max": 60.9,
+    "mean": 54.62,
+    "n": 10,
+    "p50": 53.9,
+    "p95": 60.9,
+    "p99": 60.9
+  },
+  "ok": true,
+  "ping": {
+    "max": 2.6,
+    "mean": 1.652,
+    "n": 500,
+    "p50": 1.7,
+    "p95": 2,
+    "p99": 2.3
+  },
+  "suite": "ipc",
+  "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36 Edg/155.0.0.0"
+}

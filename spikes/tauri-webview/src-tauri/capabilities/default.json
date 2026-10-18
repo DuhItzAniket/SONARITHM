@@ -1,0 +1,7 @@
+{
+  "$schema": "../gen/schemas/desktop-schema.json",
+  "identifier": "default",
+  "description": "The spike window: core defaults only (app commands need no permission entry)",
+  "windows": ["main"],
+  "permissions": ["core:default"]
+}
