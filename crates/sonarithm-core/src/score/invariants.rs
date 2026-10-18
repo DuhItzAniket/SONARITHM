@@ -6,7 +6,7 @@
 //! The compiler checks them in debug builds after every compile (`debug_assert!`), and
 //! property tests check them on generated Scores. Invariant 4 (polarity flips mirror
 //! pitches) is a property of encoders and is tested with them (A06); invariant 6
-//! (byte-identical output) is tested through the canonical serialization.
+//! (byte-identical output) is tested through [`super::canonical`].
 
 use super::{Breakpoint, Mode, Score, ScoreEvent, ShaperStage};
 use crate::units::Seconds;

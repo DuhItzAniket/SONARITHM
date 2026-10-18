@@ -205,3 +205,12 @@ Use the template above. One entry per finding; link the PR, commit, render
 manifest, benchmark row or EXP-### that carries the evidence. Set Status to
 "new"; the research lead changes it at weekly triage.
 -->
+
+### F-019 · serde_json's default float parser can be one ULP off, which breaks full-precision round trips
+
+- **Date:** 2026-10-19 · **Phase:** A03 · **Type:** engineering · **Status:** new
+- **Statement:** With default features, `serde_json` 1.0 parsed `45.10693334729107` (written by its own shortest round-trip formatter) back as `45.106933347291076`, one ULP away, so a Score serialized and re-read was no longer byte-identical. Enabling the `float_roundtrip` feature (correct parsing at about twice the parse cost) fixed it; the A03 property test `canonical_form_round_trips_byte_for_byte` now guards it.
+- **Evidence:** A03-T03 PR (proptest case committed in `crates/sonarithm-core/proptest-regressions/score/tests.txt`); serde_json feature documentation.
+- **Evidence level / confidence:** EV-C / Strong (reproducible with the committed regression seed)
+- **Affects:** ADR-0013, H-08 (cross-platform byte identity also needs exact parsing, not only exact formatting and `libm`)
+- **Papers:** P07 (engine paper, determinism section)

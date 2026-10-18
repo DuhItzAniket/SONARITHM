@@ -171,7 +171,7 @@ pub enum ScoreEvent {
 
 ### 4.3 Snapshot format
 
-Two forms exist. The **canonical form** is a full-precision serialization whose SHA-256 is recorded in each golden test case and in render manifests. This is what "byte-identical" refers to. The **review form** is a human-readable JSON snapshot through `insta`, with floats rounded to 1 µs for time, 0.01 cents for pitch and 0.01 dB for gain, so diffs stay legible. Large Scores are snapshotted as **summaries** (counts, extents, hashes of event arrays) plus the first and last N events. The golden-file policy is in [testing-strategy.md](../engineering/testing-strategy.md).
+Two forms exist. The **canonical form** is a full-precision serialization whose SHA-256 is recorded in each golden test case and in render manifests. This is what "byte-identical" refers to. It is compact JSON: struct fields in declaration order, map keys sorted, integers exact, floats as the shortest decimal that round-trips, finite numbers only; a Score that breaks an invariant has no canonical form (`Score::canonical_json`, `Score::canonical_hash`). The **review form** is a human-readable JSON snapshot through `insta`, with floats rounded to 1 µs for time, 0.01 cents for pitch and 0.01 dB for gain, so diffs stay legible. Large Scores are snapshotted as **summaries** (counts, extents, hashes of event arrays) plus the first and last N events. The golden-file policy is in [testing-strategy.md](../engineering/testing-strategy.md).
 
 ## 5. From Score to RenderPlan
 

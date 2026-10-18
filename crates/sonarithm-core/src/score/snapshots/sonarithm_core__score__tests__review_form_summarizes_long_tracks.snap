@@ -1,0 +1,90 @@
+---
+source: crates/sonarithm-core/src/score/tests.rs
+expression: score.review_json(&options)
+---
+{
+  "header": {
+    "data_fingerprint": "3a6eb0790f39ac87c94f3856b2dd2c5d110e6811602261a9a923d3bb23adc8b7",
+    "duration": 2.0,
+    "engines": {
+      "numisona": "0.0.0"
+    },
+    "ir_version": 1,
+    "mode": "analysis",
+    "seed": 1729,
+    "shapers": [
+      "loudness",
+      "lint"
+    ],
+    "spec_hash": "d4f02eaafd1a9e9de7d10972ca8e47fa7a985825c3c9c1e249c72683cb3e4f19",
+    "spec_version": "0.1"
+  },
+  "markers": [],
+  "tracks": [
+    {
+      "engine": "numisona",
+      "events": {
+        "summary": {
+          "count": 5,
+          "first": [
+            {
+              "conf": 0.875,
+              "dur": 0.25,
+              "gain": -18.06,
+              "pan": 0.0,
+              "pitch": -165.0,
+              "src": {
+                "generation": 1,
+                "row": 0,
+                "table": 0
+              },
+              "t": 0.0,
+              "taps": 1,
+              "timbre": {
+                "brightness": 0.5,
+                "preset": null
+              },
+              "type": "note"
+            }
+          ],
+          "first_t": 0.0,
+          "last": [
+            {
+              "curve": [
+                {
+                  "brightness": 0.5,
+                  "gain": 0.0,
+                  "pan": 0.0,
+                  "pitch": -165.0,
+                  "t": 1.5
+                },
+                {
+                  "brightness": 0.5,
+                  "gain": 0.0,
+                  "pan": 0.0,
+                  "pitch": 2003.82,
+                  "t": 1.75
+                }
+              ],
+              "src": null,
+              "t0": 1.5,
+              "t1": 1.75,
+              "type": "glide"
+            }
+          ],
+          "last_t": 1.5,
+          "sha256": "00c8a9ce640983768fcd48b39da1cf54e99a300d1db21a7694bbd1c22c5d4628"
+        }
+      },
+      "gain": 0.0,
+      "id": "anomaly",
+      "instrument": "mallet",
+      "pan": 0.0,
+      "pitch_range": {
+        "high": 2003.82,
+        "low": -165.0
+      },
+      "role": "data"
+    }
+  ]
+}
