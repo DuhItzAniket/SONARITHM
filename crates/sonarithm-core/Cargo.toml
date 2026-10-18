@@ -8,9 +8,16 @@ repository.workspace = true
 license.workspace = true
 publish.workspace = true
 
+[features]
+# proptest strategies for core types, for other crates' tests (testing-strategy §3).
+test-support = ["dep:proptest"]
+
 [dependencies]
 libm.workspace = true
+proptest = { workspace = true, optional = true }
 serde.workspace = true
+sha2.workspace = true
+thiserror.workspace = true
 
 [dev-dependencies]
 proptest.workspace = true

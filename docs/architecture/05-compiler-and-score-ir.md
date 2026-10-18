@@ -147,6 +147,8 @@ pub enum ScoreEvent {
 }
 ```
 
+**Implemented in A03** (`sonarithm_core::score`, A03-T03). Differences from the sketch above: events are serialized with a `type` tag (`Earcon` has its own `kind`); `ScoreTrack` records its resolved `pitch_range` (invariant 3, the loudness table and the spoken legend need it) and `ScoreHeader` records the `shapers` that ran (invariant 5); `Note.timbre` is `{ preset, brightness }`. IR version 1 has the `Note`, `Glide`, `Earcon` and `Speech` events; `Audify`, `Grains` and `Excite` are added, additively, when CURVASONA, TONALENS and RESONUM land (C03, D01, D02).
+
 ### 4.1 Representation choices
 
 | Choice | Reason |
