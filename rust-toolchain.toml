@@ -1,0 +1,8 @@
+# Pinned stable toolchain for local builds and CI reproducibility (coding-standards §1).
+# rustup installs it, with these components and targets, on the first cargo call.
+# The core MSRV (1.88) is separate: it lives in Cargo.toml and the CI `msrv` job checks it.
+[toolchain]
+channel = "1.99.0"
+components = ["rustfmt", "clippy"]
+targets = ["wasm32-unknown-unknown"]
+profile = "minimal"

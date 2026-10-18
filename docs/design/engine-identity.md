@@ -140,7 +140,7 @@ The tile is the mockup's rounded-square badge: a tinted background with a satura
 The glyphs are Lucide icons, licensed under ISC; icons derived from Feather are additionally under MIT, © Cole Bemis ([05 §8](../research/notes/05-desktop-frontend-stack.md); [Lucide licence](https://github.com/lucide-icons/lucide/blob/main/LICENSE)). B02 adds:
 
 - `assets/brand/LICENSE-LUCIDE` with the ISC text and the Feather MIT notice (both included for every glyph, since the per-icon origin is not tracked here);
-- REUSE metadata assigning each SVG both the Lucide notices (for the glyph) and the project licence (for the tile composition), pending the project licence decision (ADR-0010);
+- REUSE metadata assigning each SVG both the Lucide notices (for the glyph) and the project licence (for the tile composition, `MIT OR Apache-2.0` per ADR-0010);
 - a line in the app's third-party notices.
 
 ## 10. Change control

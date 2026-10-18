@@ -1,0 +1,115 @@
+# Documentation checks (docs/engineering/ci-cd.md#workflow-inventory). Runs on every PR with
+# no path filter: a path-filtered workflow used as a required check would leave PRs that
+# skip it waiting forever. Required checks: `docs / markdown`, `docs / internal-links`, `docs / reuse` and
+# from A03 `docs / schema-diff`. External links are checked but not required.
+name: docs
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  merge_group:
+  schedule:
+    - cron: "23 3 * * 1"
+
+permissions: {}
+
+concurrency:
+  group: docs-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  markdown:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      # Rules and ignores: .markdownlint-cli2.jsonc
+      - uses: DavidAnson/markdownlint-cli2-action@21c1be1b93ad9ed58fa840aacc3f279cde2a72ff # v24.2.0
+        with:
+          globs: "**/*.md"
+
+  internal-links:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      # Relative links and heading anchors only; no network access.
+      - uses: lycheeverse/lychee-action@e7477775783ea5526144ba13e8db5eec57747ce8 # v2.9.0
+        with:
+          args: >-
+            --offline
+            --include-fragments
+            --no-progress
+            --root-dir ${{ github.workspace }}
+            --exclude-path node_modules
+            --exclude-path target
+            './**/*.md'
+          fail: true
+
+  external-links:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: lycheeverse/lychee-action@e7477775783ea5526144ba13e8db5eec57747ce8 # v2.9.0
+        with:
+          args: >-
+            --scheme https
+            --scheme http
+            --exclude-all-private
+            --max-retries 3
+            --no-progress
+            --exclude-path node_modules
+            --exclude-path target
+            './**/*.md'
+          fail: true
+
+  # Every file carries licensing information (REUSE.toml and SPDX headers; ADR-0010).
+  reuse:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: fsfe/reuse-action@676e2d560c9a403aa252096d99fcab3e1132b0f5 # v6.0.0
+
+  # Placeholder until A03: `cargo xtask codegen` generates nothing yet. From A03 it
+  # regenerates schemas/ (and from B01 packages/ipc/src/generated/); any diff fails the job.
+  schema-diff:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - run: rustup toolchain install
+      - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
+        with:
+          save-if: ${{ github.ref == 'refs/heads/main' }}
+      - run: cargo xtask codegen
+      - name: Generated files are up to date
+        run: |
+          if [ -n "$(git status --porcelain)" ]; then
+            git status --short
+            git diff
+            echo "::error::Generated files are out of date. Run 'cargo xtask codegen' and commit the result."
+            exit 1
+          fi

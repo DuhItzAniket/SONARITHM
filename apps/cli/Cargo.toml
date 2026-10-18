@@ -1,0 +1,19 @@
+[package]
+name = "sonarithm-cli"
+description = "The `sonarithm` command-line interface."
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+repository.workspace = true
+license.workspace = true
+publish.workspace = true
+
+[[bin]]
+name = "sonarithm"
+path = "src/main.rs"
+# The facade crate `sonarithm` owns target/doc/sonarithm; documenting this binary too
+# would collide with it.
+doc = false
+
+[lints]
+workspace = true

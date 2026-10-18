@@ -1,0 +1,12 @@
+[package]
+name = "sonarithm-core"
+description = "Foundational SONARITHM types: units, IDs, Score IR, engine traits, provenance and diagnostics."
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+repository.workspace = true
+license.workspace = true
+publish.workspace = true
+
+[lints]
+workspace = true

@@ -33,9 +33,11 @@ keywords:
   - reproducible research
   - research software
   - Rust
-# license: omitted until ADR-0010 (licensing) is accepted. ADR-0010 proposes MIT OR Apache-2.0.
-#   When accepted, list both SPDX identifiers: license: [MIT, Apache-2.0]
-#   (the CFF 1.2.0 schema reads a list of licences as OR, not AND).
+# Code licence per ADR-0010. CFF 1.2.0 reads a list of licences as OR, not AND.
+# (Documentation and datasets are CC-BY-4.0; see REUSE.toml.)
+license:
+  - MIT
+  - Apache-2.0
 version: "0.0.0"
 # date-released: omitted until the first tagged release (v0.1.0-alpha, phase A07).
 # doi: add the Zenodo concept DOI after the first release is archived (phase A07).

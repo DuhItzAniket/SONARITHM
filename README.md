@@ -90,7 +90,12 @@ Citation metadata is in [CITATION.cff](CITATION.cff). A Zenodo DOI will be minte
 
 ## Licence
 
-**Not yet decided.** The proposal is MIT OR Apache-2.0 for code, with contributions under the Developer Certificate of Origin ([ADR-0010](docs/decisions/0010-licensing.md)). Until a licence file is added, all rights are reserved by the author.
+- **Code** is licensed under either of [Apache License 2.0](LICENSE-APACHE) or [MIT License](LICENSE-MIT), at your option (`MIT OR Apache-2.0`).
+- **Documentation, example datasets and study stimuli** are licensed under [Creative Commons Attribution 4.0](LICENSES/CC-BY-4.0.txt) (`CC-BY-4.0`).
+
+Each file's licence is declared by its SPDX header or in [REUSE.toml](REUSE.toml) ([ADR-0010](docs/decisions/0010-licensing.md)).
+
+Unless you explicitly state otherwise, any contribution you intentionally submit for inclusion in SONARITHM is licensed as above, without any additional terms or conditions. Contributions require a [DCO](CONTRIBUTING.md) sign-off.
 
 ## Acknowledgements
 

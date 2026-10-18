@@ -1,0 +1,4 @@
+# `cargo xtask <task>` runs the workspace automation in xtask/
+# (docs/engineering/dev-environment.md#recommended-tools). Run `cargo xtask help` for the list.
+[alias]
+xtask = "run --package xtask --"

@@ -1,15 +1,13 @@
 # Supply chain and licensing
 
-> **Status:** Baseline v1 (2026-10-18). The project licence is pending [ADR-0010](../decisions/0010-licensing.md). **Owner:** Project lead.
+> **Status:** Baseline v1 (2026-10-18). Project licence decided in [ADR-0010](../decisions/0010-licensing.md) (accepted 2026-10-18). **Owner:** Project lead.
 > Related: [CI/CD](ci-cd.md) · [Release process](release-process.md) · [SECURITY.md](../../SECURITY.md) · [CONTRIBUTING.md](../../CONTRIBUTING.md#licence-of-contributions) · [Tech stack](tech-stack.md) · [Crate layout](../architecture/02-repository-and-crate-layout.md) · [Risk register](../planning/risk-register.md)
 
 This document sets the licence policy for SONARITHM and its dependencies, models and assets, and the controls that keep the dependency supply chain auditable. Sources: [research notes 07 §4–§5](../research/notes/07-engineering-publication.md), [notes 04 §12–§14](../research/notes/04-rust-core-stack.md), [notes 06](../research/notes/06-chart-extraction-ai.md) and the [research report](../research/research-report.md#security-supply-chain-and-the-cyber-resilience-act).
 
 ## Project licence
 
-**Pending ADR-0010.** The proposal is **`MIT OR Apache-2.0`** for all code: the crates, the CLI, the Python bindings and the desktop app. ADR-0010 must be accepted in phase A01 (roadmap exit criterion) before any code is merged.
-
-If accepted:
+**Decided in ADR-0010 (accepted 2026-10-18):** **`MIT OR Apache-2.0`** for all code, including the crates, the CLI, the Python bindings, the desktop app, the frontend packages and the build and CI configuration.
 
 - Every `Cargo.toml` inherits `license = "MIT OR Apache-2.0"` from `[workspace.package]`. The repository root holds `LICENSE-MIT` and `LICENSE-APACHE`.
 - **Inbound equals outbound.** Contributions are licensed under the same terms (Apache-2.0 §5), certified per commit with the **DCO**. There is no CLA.
@@ -21,7 +19,7 @@ Why this licence ([notes 07 §5](../research/notes/07-engineering-publication.md
 - It is OSI-approved, as JOSS requires, and it lets labs, companies and other open-source projects embed SONARITHM.
 - A DCO, unlike a CLA, does not deter casual academic contributors and implies no relicensing power.
 
-Documentation, example datasets and audio stimuli are not software and are licensed separately; datasets and study stimuli use CC BY 4.0 ([crate layout §1](../architecture/02-repository-and-crate-layout.md#1-repository-tree-target)). For documentation, ADR-0010 recommends CC BY 4.0 or the code licence, at the owner's choice ([open decision OD-09](../planning/open-decisions.md)).
+Documentation, example datasets and audio stimuli are not software and are licensed separately; datasets and study stimuli use CC BY 4.0 ([crate layout §1](../architecture/02-repository-and-crate-layout.md#1-repository-tree-target)). Documentation is also licensed CC BY 4.0 (ADR-0010; open decision OD-09, closed).
 
 ## Dependency licence policy
 
@@ -170,9 +168,9 @@ Applies from D04 (ML extraction and AI assist) ([notes 06](../research/notes/06-
 
 ## REUSE and SPDX headers
 
-Adopted once ADR-0010 is accepted (A01), following the [REUSE specification](https://reuse.software/spec/):
+Adopted in A01-T13, following the [REUSE specification](https://reuse.software/spec/):
 
-- Source files carry `SPDX-License-Identifier` and `SPDX-FileCopyrightText` headers. The copyright-holder wording (for example "SONARITHM contributors") is fixed in ADR-0010.
+- Source files carry `SPDX-License-Identifier: MIT OR Apache-2.0` and `SPDX-FileCopyrightText: 2026 SONARITHM contributors` headers. The copyright-holder wording is fixed in ADR-0010.
 - Licence texts live in `LICENSES/`. `REUSE.toml` annotates files that cannot carry headers in bulk: generated `schemas/`, golden audio, snapshots, fonts, icons and datasets.
 - The root `LICENSE-MIT` and `LICENSE-APACHE` files stay for GitHub's licence detection and are annotated in `REUSE.toml`.
 - `reuse lint` runs in CI.

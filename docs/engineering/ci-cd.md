@@ -50,7 +50,7 @@ This table lists CI jobs. The authoritative list of test types per phase is [tes
 | `python` | ubuntu, windows, macos | Build the wheel with maturin, install it, run the pytest smoke suite | A07 |
 | `frontend` | ubuntu, windows, macos | `pnpm install --frozen-lockfile`, lint, typecheck, Vitest browser-mode tests, Storybook axe checks and Playwright with Tauri IPC mocking (both from B02) | B01 |
 | `licenses-npm` | ubuntu | npm licence allowlist check ([supply chain](supply-chain-and-licensing.md#npm-licence-checking)) | B01 |
-| `reuse` | ubuntu | `reuse lint` once SPDX headers are adopted ([supply chain](supply-chain-and-licensing.md#reuse-and-spdx-headers)) | After ADR-0010 is accepted (A01) |
+| `reuse` | ubuntu | `reuse lint` ([supply chain](supply-chain-and-licensing.md#reuse-and-spdx-headers)); runs in `docs.yml` | A01 |
 | `all-checks-pass` | ubuntu | Fails if any job above failed or was cancelled | A01 |
 
 Golden-audio and soak tests on GitHub-hosted runners have no audio device; they exercise the offline renderer. Real-device soak tests (the A05 "0 xruns in a 10-min soak" criterion) run on reference hardware, started manually by a maintainer on a trusted ref. Self-hosted runners are never used for untrusted PR code.
@@ -66,7 +66,10 @@ Configured in the `main` ruleset. Job names are part of the contract; renaming o
 | `dco` (workflow job or DCO App status) | A01 |
 | `docs / markdown` | A01 |
 | `docs / internal-links` | A01 |
+| `docs / reuse` | A01 |
 | `docs / schema-diff` | A03 |
+
+In the ruleset, each check is the job's check-run name (`all-checks-pass`, `pr-title`, `dco`, `markdown`, `internal-links`, `reuse`), bound to the GitHub Actions app (integration ID 15368) so that no other app can satisfy it. The `main` ruleset was created in A01 with these checks before their first run, as the bootstrap exception to the rule below. The A01 pull request is their first run.
 
 Not required: Scorecard, scheduled jobs and external link checks. CodeQL alerts are triaged rather than gating merges; requiring code-scanning results in the ruleset is reconsidered at C06.
 

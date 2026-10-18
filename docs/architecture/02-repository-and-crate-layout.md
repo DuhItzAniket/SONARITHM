@@ -11,7 +11,8 @@ SONARITHM/
 ├── CLAUDE.md                  # Imports AGENTS.md for Claude Code
 ├── README.md  CHANGELOG.md  CONTRIBUTING.md  CODE_OF_CONDUCT.md
 ├── SECURITY.md  GOVERNANCE.md  CITATION.cff
-├── LICENSE-MIT  LICENSE-APACHE        # pending ADR-0010 (licence decision)
+├── LICENSE-MIT  LICENSE-APACHE        # code licence: MIT OR Apache-2.0 (ADR-0010)
+├── LICENSES/  REUSE.toml              # REUSE licence texts (incl. CC-BY-4.0 for docs and data) and annotations
 ├── Cargo.toml                 # [workspace], [workspace.dependencies], [workspace.lints]
 ├── Cargo.lock                 # committed (we ship binaries)
 ├── rust-toolchain.toml        # pinned stable for CI reproducibility

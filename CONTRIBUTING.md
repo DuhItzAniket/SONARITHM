@@ -103,7 +103,7 @@ A sign-off is a human certification. An AI agent must not add a `Signed-off-by:`
 
 ## Licence of contributions
 
-By signing off, you agree that your contribution is licensed under the project's licence, inbound equal to outbound. That licence is pending [ADR-0010](docs/decisions/0010-licensing.md), which proposes `MIT OR Apache-2.0` for all code. ADR-0010 must be accepted in phase A01, before the first code is merged. See [supply chain and licensing](docs/engineering/supply-chain-and-licensing.md).
+By signing off, you agree that your contribution is licensed under the project's licence, inbound equal to outbound. Per [ADR-0010](docs/decisions/0010-licensing.md), code is licensed `MIT OR Apache-2.0`, and documentation, example datasets and study stimuli are licensed `CC-BY-4.0`. New source files carry the SPDX header `SPDX-License-Identifier: MIT OR Apache-2.0` and `SPDX-FileCopyrightText: 2026 SONARITHM contributors` (use the current year). See [supply chain and licensing](docs/engineering/supply-chain-and-licensing.md).
 
 Do not copy code from projects under incompatible licences. In particular, PLOTSONA's raster digitizer re-implements WebPlotDigitizer's documented behaviour; WebPlotDigitizer's AGPL source must never be copied.
 

@@ -1,0 +1,54 @@
+# Dependabot version updates (docs/engineering/supply-chain-and-licensing.md#dependency-updates-dependabot-or-renovate).
+# Weekly, grouped per ecosystem, labelled `dependencies`, Conventional Commit titles with
+# the `deps` scope. Updates wait 7 days after a release before Dependabot proposes them.
+# pip joins when bindings/python lands (A07).
+version: 2
+
+updates:
+  - package-ecosystem: cargo
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+    cooldown:
+      default-days: 7
+    labels: [dependencies]
+    commit-message:
+      prefix: build
+      include: scope
+    groups:
+      cargo:
+        patterns: ["*"]
+        update-types: [minor, patch]
+
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+    cooldown:
+      default-days: 7
+    labels: [dependencies]
+    commit-message:
+      prefix: build
+      include: scope
+    groups:
+      npm:
+        patterns: ["*"]
+        update-types: [minor, patch]
+
+  # Updates the pinned SHAs in workflows together with their version comments.
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+    cooldown:
+      default-days: 7
+    labels: [dependencies]
+    commit-message:
+      prefix: ci
+      include: scope
+    groups:
+      github-actions:
+        patterns: ["*"]

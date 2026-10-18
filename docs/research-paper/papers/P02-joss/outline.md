@@ -20,7 +20,7 @@ From [JOSS submitting](https://joss.readthedocs.io/en/latest/submitting.html) an
 - [ ] At least six months of public history with releases, public issues and pull requests ("A repo dump is not a history").
 - [ ] Commit history that passes JOSS's automated checks on commit distribution and burst commits. Development with AI coding agents can produce bursty history; keep a steady cadence of reviewed PRs from A01 onward.
 - [ ] Evidence of research use (see "Research impact statement" below).
-- [ ] OSI-approved licence (MIT OR Apache-2.0, subject to ADR-0010).
+- [x] OSI-approved licence: MIT OR Apache-2.0 (ADR-0010, accepted 2026-10-18).
 - [ ] Issue tracker open without registration.
 - [ ] Paper files in the same repository.
 - [ ] The submitting author is a major contributor.

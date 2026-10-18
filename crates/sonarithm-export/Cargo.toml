@@ -1,0 +1,12 @@
+[package]
+name = "sonarithm-export"
+description = "SONARITHM export: WAV, FLAC and MIDI writers, render manifest and cue sidecar."
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+repository.workspace = true
+license.workspace = true
+publish.workspace = true
+
+[lints]
+workspace = true
