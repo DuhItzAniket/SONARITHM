@@ -102,6 +102,28 @@ Conditions (conditional go):
 - a rerun with enhancements off;
 - macOS and Linux.
 
+### Options for PB-01
+
+The measured floor on HW-01 is about 117 ms p50 and 123 ms p95 through cpal, and 84 ms p95 with the RAW stream. These are the ways forward, for the A05 plan:
+
+| Option | What it changes | Evidence so far | Cost and risk |
+|---|---|---|---|
+| **RAW stream mode** (`AUDCLNT_STREAMOPTIONS_RAW`) | Bypasses OEM enhancement APOs (about 38 ms on HW-01) and their extra gain | Measured: p50 79.2 ms, p95 83.7 ms. That alone still misses 50 ms | Needs a second WASAPI backend (`wasapi` crate) or upstream cpal work (cpal #1173). The driver must support RAW processing |
+| **WASAPI exclusive mode** (`wasapi` crate) | Bypasses the shared audio engine: the period becomes the driver's own minimum | Not measured. Loopback capture cannot observe an exclusive stream, so it needs a cable or acoustic setup (P6) | Takes the device from every other app, including the screen reader's speech output on the same device. That is a serious accessibility cost, so only an opt-in mode |
+| **ASIO** (cpal `asio` feature, opt-in build) | A low-latency driver model, where the device has an ASIO driver | Not measured. HW-01's Realtek driver offers no ASIO driver; generic wrappers exist. TODO(verify): the licence terms of the Steinberg ASIO SDK, which cpal's build needs, under `deny.toml` and ADR-0010 | Opt-in build only; the same device-exclusivity concern as above |
+| **USB audio interface** | Hardware with small shared-mode periods or a native low-latency driver; it also gives the cable loopback that PB-01 sign-off needs | Not measured | Hardware cost; not something to assume for users. It is the reference setup for measurements |
+| **`IAudioClient3` small shared periods** | Shared mode at 128–256 frames where the driver allows it, without exclusivity | Not available on HW-01 (minimum = maximum = 480) | Driver-dependent; cpal does not use it yet (cpal #1343) |
+| **Revised budget** | For example, PB-01 ≤ 50 ms p95 for a low-latency mode (exclusive, ASIO or a USB interface), and a documented, higher shared-mode figure | Shared mode measured 84–124 ms p95 here; other machines are unknown | Needs change control and evidence: what latency still supports interactive exploration (A11Y and SDR rules). Not a decision for this report |
+| **Latency compensation** (calibrate per device) | Aligns the playhead and visual cues with the sound (F-033); it does not shorten key-to-sound time | — | Cheap; worth doing regardless |
+
+**Recommendation.** Keep PB-01 as it is for now, and plan three things in A05:
+
+1. a `wasapi`-crate backend behind `AudioBackend`, with RAW mode on by default and exclusive mode as an opt-in "low-latency mode";
+2. per-device latency calibration;
+3. a cable measurement with a USB interface (P6), before any decision to revise the budget.
+
+The exclusive-mode accessibility cost (it can silence the screen reader's speech on the same device) needs its own test with NVDA.
+
 ## Spike 2: render graph, owned versus Firewheel (A02-T02, T03)
 
 **Method.** Both graphs sit behind one draft contract: a control half and a real-time `GraphProcessor` (F-036). They render a seeded benchmark Score with the DS-006 shape (4 tracks, 10,000 notes, 60 s) using the same voice, bus and limiter code. The two are measured:
@@ -199,7 +221,7 @@ Conditions (conditional go):
 
 | Budget | Target | Measured | Verdict | Re-baseline proposal |
 |---|---|---|---|---|
-| PB-01 interactive response | ≤ 50 ms p95 (256 frames, 48 kHz) | 123.1 ms p95, loopback, cpal shared mode, HW-01; 83.7 ms with RAW | **Fail** | None yet. Keep the budget; A05 plans a backend that can meet it, and measures acoustically |
+| PB-01 interactive response | ≤ 50 ms p95 (256 frames, 48 kHz) | 123.1 ms p95, loopback, cpal shared mode, HW-01; 83.7 ms with RAW | **Fail** | None yet: see [Options for PB-01](#options-for-pb-01). Keep the budget; A05 plans a backend that can meet it, and measures with a cable |
 | PB-02 audio robustness | 0 xruns in 10 min at 128 frames | Not in A02 (A05). 0 deadline misses in 120 s at the 480-frame period | — | Note: on HW-01's driver a 128-frame soak runs at 480 frames (F-030) |
 | PB-03 offline render speed | ≥ 50× | 361× owned, 337× Firewheel (256 frames, 1 thread) | Preview pass (A05 owns it) | — |
 | PB-06 determinism | Identical Score; residual ≤ −90 dBFS; ΔLUFS ≤ 0.1 | Identical Score; bit-identical audio; −144.5 dBFS worst with `f32::sin` | **Pass** | — |
