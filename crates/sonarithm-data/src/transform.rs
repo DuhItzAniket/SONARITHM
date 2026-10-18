@@ -18,13 +18,16 @@
 mod aggregate;
 mod expr;
 mod rows;
+mod series;
 
 use std::sync::Arc;
 
-use arrow_array::{ArrayRef, RecordBatch, RecordBatchOptions};
-use arrow_schema::{Field, Schema};
+use arrow_array::cast::AsArray;
+use arrow_array::types::Int64Type;
+use arrow_array::{ArrayRef, Int64Array, RecordBatch, RecordBatchOptions};
+use arrow_schema::{DataType, Field, Schema};
 use serde::{Deserialize, Serialize};
-use sonarithm_core::{Diagnostic, Diagnostics, TableId};
+use sonarithm_core::{Diagnostic, Diagnostics, Seconds, TableId};
 
 use crate::bundle::DataBundle;
 use crate::codes;
@@ -35,6 +38,7 @@ use crate::table::Table;
 
 pub use aggregate::{AggregateFn, AggregateOp, BinMethod};
 pub use expr::FUEL_PER_ROW;
+pub use series::{NormalizeMethod, ResampleMethod, SmoothMethod};
 
 /// One transform (03 §6, RFC-0001 §4).
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
@@ -80,6 +84,31 @@ pub enum Transform {
         #[serde(rename = "as")]
         output: String,
     },
+    /// Smooths a number field with a moving average (SDR-21).
+    Smooth {
+        /// The number field.
+        field: String,
+        /// `ema` or `sma`.
+        method: SmoothMethod,
+        /// The weight of the newest value for `ema`, in (0, 1].
+        #[serde(default)]
+        alpha: Option<f64>,
+        /// The number of rows for `sma`, at least 1.
+        #[serde(default)]
+        window: Option<u32>,
+        /// The output field; by default the input field is replaced.
+        #[serde(default, rename = "as")]
+        output: Option<String>,
+    },
+    /// Regularizes the table on a time grid.
+    Resample {
+        /// The time field: dates, timestamps or numbers.
+        field: String,
+        /// The grid step; for a number field, in the field's own units.
+        every: Seconds,
+        /// How each grid point is filled.
+        method: ResampleMethod,
+    },
     /// Adds (or replaces) a field computed from each row.
     Derive {
         /// The expression.
@@ -87,6 +116,16 @@ pub enum Transform {
         /// The name of the new field.
         #[serde(rename = "as")]
         output: String,
+    },
+    /// Rescales a number field.
+    Normalize {
+        /// The number field.
+        field: String,
+        /// `z-score`, `min-max` or `rank`.
+        method: NormalizeMethod,
+        /// The output field; by default the input field is replaced.
+        #[serde(default, rename = "as")]
+        output: Option<String>,
     },
 }
 
@@ -99,6 +138,9 @@ impl Transform {
             Self::Sort { .. } => "sort",
             Self::Aggregate { .. } => "aggregate",
             Self::Bin { .. } => "bin",
+            Self::Smooth { .. } => "smooth",
+            Self::Resample { .. } => "resample",
+            Self::Normalize { .. } => "normalize",
             Self::Derive { .. } => "derive",
         }
     }
@@ -206,6 +248,28 @@ impl Working {
     }
 }
 
+/// A 64-bit column (timestamps, dates in milliseconds, durations) as its raw `Int64`
+/// values; the buffer is shared, not copied.
+pub(crate) fn raw_i64(column: &ArrayRef) -> Int64Array {
+    reinterpret(column, &DataType::Int64)
+        .as_primitive::<Int64Type>()
+        .clone()
+}
+
+/// The same 64-bit buffer viewed as another 64-bit type (for example `Int64` as a
+/// timestamp with a time zone); an all-missing column of that type if it is not 64-bit.
+pub(crate) fn reinterpret(column: &ArrayRef, data_type: &DataType) -> ArrayRef {
+    match column
+        .to_data()
+        .into_builder()
+        .data_type(data_type.clone())
+        .build()
+    {
+        Ok(data) => arrow_array::make_array(data),
+        Err(_) => arrow_array::new_null_array(data_type, column.len()),
+    }
+}
+
 /// A field for a computed column: its type from the storage, no other semantics.
 pub(crate) fn computed_field(name: &str, column: &ArrayRef) -> Field {
     let ftype = if column.data_type().is_numeric() {
@@ -252,9 +316,33 @@ pub fn apply(
             edges.as_deref(),
             output,
         )?,
+        Transform::Smooth {
+            field,
+            method,
+            alpha,
+            window,
+            output,
+        } => series::smooth(
+            &mut working,
+            field,
+            *method,
+            *alpha,
+            *window,
+            output.as_deref(),
+        )?,
+        Transform::Resample {
+            field,
+            every,
+            method,
+        } => series::resample(&mut working, field, *every, *method)?,
         Transform::Derive { expr, output } => {
             rows::derive(&mut working, expr, output, diagnostics)?
         }
+        Transform::Normalize {
+            field,
+            method,
+            output,
+        } => series::normalize(&mut working, field, *method, output.as_deref())?,
     };
     diagnostics.push(Diagnostic::new(
         &codes::TRANSFORM_APPLIED,
@@ -304,7 +392,57 @@ pub fn apply_all(
 
 #[cfg(test)]
 mod tests {
+    use arrow_array::Float64Array;
+    use sonarithm_core::Generation;
+
     use super::*;
+    use crate::bundle::{BundleId, Format, SourceDescriptor, SourceKind};
+
+    fn bundle() -> DataBundle {
+        let schema = Arc::new(Schema::new(vec![Field::new("v", DataType::Float64, true)]));
+        let batch = RecordBatch::try_new(
+            schema,
+            vec![Arc::new(Float64Array::from(vec![3.0, -1.0, 2.0]))],
+        )
+        .unwrap();
+        let source = SourceDescriptor::new(SourceKind::File(Format::Csv), "v.csv", "csv");
+        DataBundle::single(
+            BundleId(1),
+            source,
+            Table::from_batch(TableId(0), "v", batch),
+        )
+    }
+
+    #[test]
+    fn apply_all_logs_each_step_and_keeps_the_bundle_on_failure() {
+        let mut b = bundle();
+        let steps = [
+            Transform::Filter {
+                expr: "v > 0.0".into(),
+            },
+            Transform::Sort {
+                field: "v".into(),
+                order: SortOrder::Ascending,
+            },
+        ];
+        let diagnostics = apply_all(&mut b, TableId(0), &steps).unwrap();
+        assert_eq!(diagnostics.len(), 2);
+        let log: Vec<_> = b
+            .transform_log()
+            .iter()
+            .map(|r| (r.transform.op(), r.rows_in, r.rows_out))
+            .collect();
+        assert_eq!(log, [("filter", 3, 2), ("sort", 2, 2)]);
+        assert_eq!(b.primary().unwrap().generation(), Generation(2));
+        let before = b.clone();
+        let bad = [Transform::Sort {
+            field: "nope".into(),
+            order: SortOrder::Ascending,
+        }];
+        assert!(apply_all(&mut b, TableId(0), &bad).is_err());
+        assert_eq!(b, before);
+        assert!(apply_all(&mut b, TableId(9), &steps).is_err());
+    }
 
     #[test]
     fn transforms_deserialize_from_spec_json() {

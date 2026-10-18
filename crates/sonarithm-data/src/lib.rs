@@ -34,5 +34,6 @@ pub use source::{CsvOptions, JsonOptions, Limits, Loaded, ReadOptions, read_byte
 pub use source::{SheetOptions, SheetRef};
 pub use table::Table;
 pub use transform::{
-    AggregateFn, AggregateOp, BinMethod, SortOrder, Transform, TransformRecord, apply, apply_all,
+    AggregateFn, AggregateOp, BinMethod, NormalizeMethod, ResampleMethod, SmoothMethod, SortOrder,
+    Transform, TransformRecord, apply, apply_all,
 };

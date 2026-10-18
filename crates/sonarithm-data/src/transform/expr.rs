@@ -90,7 +90,7 @@ impl Column {
             ),
             DataType::Date32 => ints!(Date32Type),
             DataType::Timestamp(..) | DataType::Date64 | DataType::Duration(_) => {
-                Self::Int(reinterpret_i64(array).as_primitive::<Int64Type>().clone())
+                Self::Int(super::raw_i64(array))
             }
             DataType::Float64 => Self::Float(array.as_primitive::<Float64Type>().clone()),
             DataType::Float32 => Self::Float(
@@ -128,15 +128,6 @@ impl Column {
             Self::Text(a) if valid(a) => Dynamic::from(ImmutableString::from(a.value(row))),
             _ => Dynamic::UNIT,
         }
-    }
-}
-
-/// A 64-bit temporal array viewed as plain `Int64` values (same buffer, no copy).
-fn reinterpret_i64(array: &ArrayRef) -> ArrayRef {
-    let data = array.to_data().into_builder().data_type(DataType::Int64);
-    match data.build() {
-        Ok(data) => arrow_array::make_array(data),
-        Err(_) => arrow_array::new_null_array(&DataType::Int64, array.len()),
     }
 }
 
