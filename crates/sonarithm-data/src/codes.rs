@@ -25,10 +25,42 @@ macro_rules! code {
 }
 
 code!(
+    /// The input is not valid data in the expected format, or a file cannot be read.
+    UNREADABLE_SOURCE, "SNR-DATA-001", Error,
+    "The data source cannot be read",
+    "Check that the file exists, is complete and is in the format `format` names (or its extension implies).",
+    []
+);
+
+code!(
+    /// This build cannot read the format, or the extension names no supported format.
+    UNSUPPORTED_FORMAT, "SNR-DATA-002", Error,
+    "The data format is not supported",
+    "Set `format` to one of csv, tsv, json, ndjson, parquet, arrow, xlsx or ods, or convert the file.",
+    []
+);
+
+code!(
+    /// The input breaks a size limit.
+    LIMIT_EXCEEDED, "SNR-DATA-003", Error,
+    "The data source exceeds a size limit",
+    "Filter or split the data, or raise the source limits for trusted input.",
+    []
+);
+
+code!(
     /// A table's columns do not match its schema, or two tables share an ID.
     MALFORMED_TABLE, "SNR-DATA-004", Error,
     "A table is malformed",
     "Build each table from equal-length columns that match its schema, and give each table in a bundle its own ID.",
+    []
+);
+
+code!(
+    /// A table cannot be encoded as Arrow IPC or Parquet.
+    WRITE_FAILED, "SNR-DATA-005", Error,
+    "A table cannot be written",
+    "Report the problem with the table's schema; every table the data layer builds can be written.",
     []
 );
 
@@ -52,7 +84,15 @@ code!(
 pub const CODES: CodeTable = CodeTable {
     area: Area::Data,
     owner: "sonarithm-data",
-    codes: &[MALFORMED_TABLE, INVALID_METADATA, UNKNOWN_FIELD],
+    codes: &[
+        UNREADABLE_SOURCE,
+        UNSUPPORTED_FORMAT,
+        LIMIT_EXCEEDED,
+        MALFORMED_TABLE,
+        WRITE_FAILED,
+        INVALID_METADATA,
+        UNKNOWN_FIELD,
+    ],
 };
 
 const _: () = assert!(validate(&CODES).is_ok(), "invalid SNR-DATA code table");

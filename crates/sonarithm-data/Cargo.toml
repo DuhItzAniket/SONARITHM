@@ -8,10 +8,20 @@ repository.workspace = true
 license.workspace = true
 publish.workspace = true
 
+[features]
+default = ["fs", "zstd"]
+# Read sources from file paths. Off for wasm32-unknown-unknown (02 §2: "Partial (no fs)").
+fs = []
+# Zstandard-compressed Parquet and Arrow IPC (the Polars default). Builds the C library.
+zstd = ["parquet/zstd", "arrow-ipc/zstd"]
+
 [dependencies]
 arrow-array.workspace = true
+arrow-ipc.workspace = true
 arrow-schema.workspace = true
 arrow-select.workspace = true
+bytes.workspace = true
+parquet.workspace = true
 serde.workspace = true
 sonarithm-core.workspace = true
 thiserror.workspace = true

@@ -7,15 +7,91 @@
 //! inferred type or an ignored metadata value, are [`Diagnostic`]s instead. Every error
 //! converts to a diagnostic with a stable code through [`DataError::to_diagnostic`].
 
+use std::fmt;
+
 use arrow_schema::ArrowError;
 use sonarithm_core::Diagnostic;
 
+use crate::bundle::Format;
 use crate::codes;
+
+/// A size limit of a source ([`Limits`](crate::source::Limits)).
+#[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[non_exhaustive]
+pub enum Limit {
+    /// Input size in bytes.
+    Bytes,
+    /// Rows.
+    Rows,
+    /// Fields (columns).
+    Fields,
+    /// Cells (rows × fields).
+    Cells,
+}
+
+impl fmt::Display for Limit {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.write_str(match self {
+            Self::Bytes => "bytes",
+            Self::Rows => "rows",
+            Self::Fields => "fields",
+            Self::Cells => "cells",
+        })
+    }
+}
 
 /// An error from the data layer.
 #[derive(Debug, thiserror::Error)]
 #[non_exhaustive]
 pub enum DataError {
+    /// The input is not valid data in the expected format.
+    #[error("the {format} data cannot be read: {reason}")]
+    Unreadable {
+        /// The format the input was read as.
+        format: Format,
+        /// What the parser reported.
+        reason: String,
+    },
+    /// This build has no reader for the format (a disabled feature).
+    #[error("this build cannot read {format} data")]
+    UnsupportedFormat {
+        /// The format.
+        format: Format,
+    },
+    /// A file extension that names no supported format.
+    #[error("the format of `{locator}` cannot be told from its extension")]
+    UnknownFormat {
+        /// The file name.
+        locator: String,
+    },
+    /// The input breaks a size limit.
+    #[error("the data has {found} {limit}, more than the limit of {max}")]
+    LimitExceeded {
+        /// Which limit.
+        limit: Limit,
+        /// The limit.
+        max: u64,
+        /// The size found (or reached when reading stopped).
+        found: u64,
+    },
+    /// A file cannot be opened or read.
+    #[cfg(feature = "fs")]
+    #[error("`{locator}` cannot be read: {source}")]
+    Io {
+        /// The file name.
+        locator: String,
+        /// The operating-system error.
+        #[source]
+        source: std::io::Error,
+    },
+    /// A table cannot be encoded.
+    #[error("the table cannot be written as {format}: {reason}")]
+    Write {
+        /// The output format.
+        format: Format,
+        /// What the encoder reported.
+        reason: String,
+    },
     /// A table's batches do not match its schema, or its columns differ in length.
     #[error("table `{table}` is malformed: {source}")]
     MalformedTable {
@@ -46,6 +122,43 @@ impl DataError {
     #[must_use]
     pub fn to_diagnostic(&self) -> Diagnostic {
         let (code, message) = match self {
+            Self::Unreadable { format, reason } => (
+                &codes::UNREADABLE_SOURCE,
+                format!(
+                    "The data cannot be read as {format}: {reason}. Check that the file is \
+                     complete and that `format` names its real format."
+                ),
+            ),
+            Self::UnsupportedFormat { format } => (
+                &codes::UNSUPPORTED_FORMAT,
+                format!(
+                    "This build of SONARITHM cannot read {format} data. Convert the file to \
+                     CSV or Parquet, or use a build with the format's feature enabled."
+                ),
+            ),
+            Self::UnknownFormat { locator } => (
+                &codes::UNSUPPORTED_FORMAT,
+                format!(
+                    "The format of `{locator}` cannot be told from its extension. Set \
+                     `format` in the data source."
+                ),
+            ),
+            Self::LimitExceeded { limit, max, found } => (
+                &codes::LIMIT_EXCEEDED,
+                format!(
+                    "The data has {found} {limit}, more than the limit of {max}. Filter or \
+                     split the data, or raise the limit for trusted input."
+                ),
+            ),
+            #[cfg(feature = "fs")]
+            Self::Io { locator, source } => (
+                &codes::UNREADABLE_SOURCE,
+                format!("`{locator}` cannot be read: {source}. Check the path and permissions."),
+            ),
+            Self::Write { format, reason } => (
+                &codes::WRITE_FAILED,
+                format!("The table cannot be written as {format}: {reason}."),
+            ),
             Self::MalformedTable { table, .. } => (
                 &codes::MALFORMED_TABLE,
                 format!(

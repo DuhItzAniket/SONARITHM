@@ -30,6 +30,13 @@ pub(crate) const WASM_CRATES: &[&str] = &[
     "sonarithm-export",
 ];
 
+/// Crates in [`WASM_CRATES`] that build for wasm32 without their default features, because
+/// a default feature reads the file system or builds C code (`sonarithm-data`: "Partial
+/// (no fs)" in 02 §2). They get a cargo invocation of their own, so the flag does not
+/// change the other crates. Workspace crates depend on them with `default-features =
+/// false`, so the first invocation does not turn the defaults back on.
+pub(crate) const WASM_NO_DEFAULT_FEATURES: &[&str] = &["sonarithm-data"];
+
 const WASM_TARGET: &str = "wasm32-unknown-unknown";
 
 /// One cargo invocation run by `cargo xtask ci`.
@@ -73,7 +80,7 @@ pub(crate) fn run(root: &Path) -> Result<()> {
         );
         Step::cargo("tests", &["test", "--workspace", "--locked"])
     };
-    let steps = [
+    let mut steps = vec![
         Step::cargo("format", &["fmt", "--all", "--check"]),
         Step::cargo(
             "clippy",
@@ -92,15 +99,17 @@ pub(crate) fn run(root: &Path) -> Result<()> {
         Step::cargo("doctests", &["test", "--workspace", "--doc", "--locked"]),
         Step::cargo("rustdoc", &["doc", "--workspace", "--no-deps", "--locked"])
             .env("RUSTDOCFLAGS", "-D warnings"),
-        Step {
-            name: "wasm32 build",
-            args: wasm_args(),
-            env: Vec::new(),
-            requires: None,
-        },
+    ];
+    steps.extend(wasm_invocations().into_iter().map(|args| Step {
+        name: "wasm32 build",
+        args,
+        env: Vec::new(),
+        requires: None,
+    }));
+    steps.push(
         Step::cargo("cargo-deny", &["deny", "check"])
             .requires("deny", "cargo install --locked cargo-deny"),
-    ];
+    );
 
     let mut failed: Vec<String> = Vec::new();
     for step in &steps {
@@ -143,28 +152,43 @@ pub(crate) fn run(root: &Path) -> Result<()> {
 
 /// Builds every crate in [`WASM_CRATES`] for `wasm32-unknown-unknown`.
 pub(crate) fn wasm_check(root: &Path) -> Result<()> {
-    let status = Command::new(cargo())
-        .args(wasm_args())
-        .current_dir(root)
-        .status()
-        .context("starting the wasm32 build")?;
-    if status.success() {
-        Ok(())
-    } else {
-        bail!("the wasm32 build failed (is the {WASM_TARGET} target installed?)")
+    for args in wasm_invocations() {
+        let status = Command::new(cargo())
+            .args(&args)
+            .current_dir(root)
+            .status()
+            .context("starting the wasm32 build")?;
+        if !status.success() {
+            bail!("the wasm32 build failed (is the {WASM_TARGET} target installed?)");
+        }
     }
+    Ok(())
 }
 
-fn wasm_args() -> Vec<String> {
-    let mut args: Vec<String> = ["build", "--locked", "--target", WASM_TARGET]
+/// The cargo arguments of the wasm32 builds: the crates with their default features, then
+/// [`WASM_NO_DEFAULT_FEATURES`] without them.
+fn wasm_invocations() -> Vec<Vec<String>> {
+    let build = |crates: &[&str], extra: &[&str]| {
+        let mut args: Vec<String> = ["build", "--locked", "--target", WASM_TARGET]
+            .iter()
+            .chain(extra)
+            .map(|arg| (*arg).to_owned())
+            .collect();
+        for krate in crates {
+            args.push("-p".to_owned());
+            args.push((*krate).to_owned());
+        }
+        args
+    };
+    let defaults: Vec<&str> = WASM_CRATES
         .iter()
-        .map(|arg| (*arg).to_owned())
+        .copied()
+        .filter(|krate| !WASM_NO_DEFAULT_FEATURES.contains(krate))
         .collect();
-    for krate in WASM_CRATES {
-        args.push("-p".to_owned());
-        args.push((*krate).to_owned());
-    }
-    args
+    vec![
+        build(&defaults, &[]),
+        build(WASM_NO_DEFAULT_FEATURES, &["--no-default-features"]),
+    ]
 }
 
 /// The cargo that runs xtask, so child commands use the same toolchain.
