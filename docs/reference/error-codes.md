@@ -5,6 +5,14 @@
 
 Every diagnostic carries a stable code `SNR-<AREA>-<NNN>`. A code, once released, is never reused or renumbered; retired codes stay listed. Severity is the default; settings such as `--deny-warnings` can raise it.
 
+## SNR-DATA
+
+Owner: `sonarithm-data`.
+
+| Code | Severity | Meaning | How to fix | Rules |
+|---|---|---|---|---|
+| `SNR-DATA-040` | warning | A field metadata value cannot be read and was ignored | Fix the `snr.*` value in the file (03 §3 lists the allowed values) or declare the field in the spec's `data.fields`. | — |
+
 ## SNR-SPEC
 
 Owner: `sonarithm-spec`.

@@ -20,7 +20,7 @@ pub(crate) const OUTPUT: &str = "docs/reference/error-codes.md";
 
 /// Every code table in the workspace. Add a crate's table here when it gets one.
 fn tables() -> Vec<CodeTable> {
-    vec![sonarithm_spec::codes::CODES]
+    vec![sonarithm_spec::codes::CODES, sonarithm_data::codes::CODES]
 }
 
 /// Checks the tables and writes the registry page.

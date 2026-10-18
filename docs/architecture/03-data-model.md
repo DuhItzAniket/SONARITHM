@@ -62,7 +62,7 @@ classDiagram
 |---|---|
 | `DataBundle` | The unit the compiler consumes. It usually holds one table. Multi-table bundles cover cases like a chart with several series sources, or functions sampled on several domains. |
 | `Table` | An Arrow schema plus record batches. It is **immutable** once published. Edits produce a new `Generation`. |
-| `FieldMeta` | Stored in Arrow field metadata under the `snr.` prefix (`snr.type`, `snr.unit`, `snr.concept`, `snr.role`), so it survives Parquet and Arrow IPC round trips. |
+| `FieldMeta` | Stored in Arrow field metadata under the `snr.` prefix (`snr.type`, `snr.unit`, `snr.unit.ucum`, `snr.concept`, `snr.role`, `snr.label`, `snr.description`), so it survives Parquet and Arrow IPC round trips. Values use the spec vocabulary (`quantitative`, `x`, …). An unreadable value is ignored with warning `SNR-DATA-040`; other keys, including unknown `snr.*` keys, are preserved. |
 | `RowRef` | `(TableId, Generation, row: u64)`. It is stable for the life of a generation and is used by Score events, the NavTree and selections. |
 | `RowRange` | A half-open range over one table generation. |
 | `Fingerprint` | SHA-256 over a canonical Arrow IPC serialization: schema with sorted metadata, then batches in order. It is recorded in render manifests ([ADR-0013](../decisions/0013-determinism-and-provenance.md)). |

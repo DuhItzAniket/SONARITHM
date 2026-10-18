@@ -23,7 +23,7 @@ Status values: `Not started` · `In progress` · `In review` · `Done` · `Block
 | A | A01 | Repository bootstrap and governance | **Done** | 100% | 2026-10-19; [phase review](reviews/A01-phase-review.md), [retro](retrospectives/A01-retro.md). See [A01 tasks](#a01-tasks) |
 | A | A02 | Technical spikes and prototype gate | **In review** | ≈80% | All spikes built and measured on Windows and CI; gate report draft: Conditional go recommended. PB-01 fails on Windows shared mode; screen-reader, macOS and Linux manual steps pending. See [A02 tasks](#a02-tasks) |
 | A | A03 | Core types, Spec v0.1, Score IR | **In progress** | ≈15% | T01 merged (#4); RFC-0001 accepted (T05); T02–T04 in review. See [A03 tasks](#a03-tasks) |
-| A | A04 | Data layer | Not started | 0% | |
+| A | A04 | Data layer | **In progress** | ≈5% | T01 in review (field metadata). See [A04 tasks](#a04-tasks) |
 | A | A05 | Render engine, audio backend, export | Not started | 0% | |
 | A | A06 | NUMISONA v1 | Not started | 0% | |
 | A | A07 | CLI, Python, v0.1.0-alpha | Not started | 0% | |
@@ -101,6 +101,23 @@ Work runs in a separate agent session in parallel with A02 (spikes). Each task l
 | A03-T10 Spec parser fuzz target, proptest generators | Not started | |
 | A03-T11 Doc-example validation test | Not started | |
 
+### A04 tasks
+
+Work runs in a separate agent session, in parallel with A03, through small PRs into `crates/sonarithm-data`. A task is Done when its PRs are merged with CI green.
+
+| Task | Status | Notes |
+|---|---|---|
+| A04-T01 `DataBundle`/`Table`/`FieldMeta` on Arrow; `snr.*` metadata | In review | `FieldMeta` and the `SNR-DATA` code table; tables, bundles and the round-trip tests follow |
+| A04-T02 CSV/TSV and JSON/NDJSON sources | Not started | |
+| A04-T03 Parquet and Arrow IPC sources | Not started | |
+| A04-T04 XLSX/ODS via calamine | Not started | |
+| A04-T05 Type, role and concept inference | Not started | |
+| A04-T06 Provenance columns and propagation | Not started | |
+| A04-T07 Transforms with a sandboxed rhai subset | Not started | |
+| A04-T08 M4 and LTTB downsampling; tile cache | Not started | |
+| A04-T09 Data fingerprinting | Not started | |
+| A04-T10 Benchmarks (PB-05); CSV and XLSX fuzzers | Not started | |
+
 ## 3. Current iteration
 
 | Iteration | Dates | Goal | Tasks |
@@ -144,3 +161,4 @@ Maturity scale: `Designed` → `Prototype` → `Alpha` → `Beta` → `Stable` �
 | 2026-10-19 | A01 done: project board and Stage A issues (T10); phase review and retrospective |
 | 2026-10-18 | A01 PR #1 merged as `02a44f3` with all checks green; owner context recorded (RV University, Windows-only hardware) |
 | 2026-10-19 | A02 spikes measured (T01 merged in #9; T02–T07 in review); gate report draft recommends a conditional go; PB-01 fails on Windows shared mode |
+| 2026-10-19 | A04 started: `FieldMeta` with `snr.*` metadata and the `SNR-DATA` code table (T01) |
