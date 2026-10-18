@@ -1,0 +1,133 @@
+{
+  "canvas": [
+    2016,
+    630
+  ],
+  "devicePixelRatio": 1.75,
+  "gpuTimerQuery": true,
+  "host": {
+    "arch": "x86_64",
+    "gpuRequest": null,
+    "os": "windows",
+    "tauri": "2.12.4",
+    "webview": "155.0.4283.62"
+  },
+  "m4DownsampleMs": 3.8,
+  "ok": true,
+  "playheadOver1M": {
+    "droppedFrames": 3,
+    "fps": 59.7,
+    "frameMs": {
+      "max": 50.1,
+      "mean": 16.761,
+      "n": 659,
+      "p50": 16.7,
+      "p95": 16.8,
+      "p99": 16.9
+    },
+    "gpuMs": {
+      "max": 0,
+      "mean": 0,
+      "n": 657,
+      "p50": 0,
+      "p95": 0,
+      "p99": 0
+    },
+    "scriptMs": {
+      "max": 0.5,
+      "mean": 0.036,
+      "n": 660,
+      "p50": 0,
+      "p95": 0.1,
+      "p99": 0.1
+    }
+  },
+  "renderer": "ANGLE (Intel, Intel(R) UHD Graphics (0x0000A78B) Direct3D11 vs_5_0 ps_5_0, D3D11)",
+  "spectrogram": {
+    "droppedFrames": 0,
+    "fps": 60,
+    "frameMs": {
+      "max": 16.9,
+      "mean": 16.66,
+      "n": 659,
+      "p50": 16.7,
+      "p95": 16.8,
+      "p99": 16.9
+    },
+    "gpuMs": {
+      "max": 9.724,
+      "mean": 1.794,
+      "n": 657,
+      "p50": 1.704,
+      "p95": 1.755,
+      "p99": 5.941
+    },
+    "scriptMs": {
+      "max": 0.3,
+      "mean": 0.098,
+      "n": 660,
+      "p50": 0.1,
+      "p95": 0.2,
+      "p99": 0.2
+    }
+  },
+  "suite": "webgl",
+  "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36 Edg/155.0.0.0",
+  "vendor": "Google Inc. (Intel)",
+  "waveform1M": {
+    "droppedFrames": 8,
+    "fps": 37.2,
+    "frameMs": {
+      "max": 83.4,
+      "mean": 26.899,
+      "n": 659,
+      "p50": 33.2,
+      "p95": 33.5,
+      "p99": 50
+    },
+    "gpuMs": {
+      "max": 78.461,
+      "mean": 25.708,
+      "n": 655,
+      "p50": 26.087,
+      "p95": 31.136,
+      "p99": 33.196
+    },
+    "scriptMs": {
+      "max": 0.4,
+      "mean": 0.116,
+      "n": 660,
+      "p50": 0.1,
+      "p95": 0.2,
+      "p99": 0.3
+    }
+  },
+  "waveformM4": {
+    "droppedFrames": 0,
+    "fps": 60,
+    "frameMs": {
+      "max": 17,
+      "mean": 16.66,
+      "n": 659,
+      "p50": 16.7,
+      "p95": 16.8,
+      "p99": 16.9
+    },
+    "gpuMs": {
+      "max": 6.938,
+      "mean": 1.752,
+      "n": 657,
+      "p50": 1.68,
+      "p95": 1.767,
+      "p99": 6.023
+    },
+    "scriptMs": {
+      "max": 0.3,
+      "mean": 0.068,
+      "n": 660,
+      "p50": 0.1,
+      "p95": 0.2,
+      "p99": 0.2
+    }
+  }
+}

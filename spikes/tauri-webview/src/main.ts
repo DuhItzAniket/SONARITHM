@@ -3,9 +3,10 @@
 
 import { invoke } from "@tauri-apps/api/core";
 import { runIpc } from "./ipc";
+import { runWebgl } from "./webgl";
 
 type Suite = (progress: (s: string) => void) => Promise<Record<string, unknown>>;
-const suites: Record<string, Suite> = { ipc: runIpc };
+const suites: Record<string, Suite> = { ipc: runIpc, webgl: runWebgl };
 
 const status = document.querySelector<HTMLElement>("#status");
 const output = document.querySelector<HTMLElement>("#output");
