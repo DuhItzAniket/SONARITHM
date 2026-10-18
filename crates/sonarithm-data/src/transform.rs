@@ -15,6 +15,7 @@
 //! row, fields as variables or `col("name")`, missing values as `()`, deterministic maths,
 //! and at most 10 000 operations per row.
 
+mod aggregate;
 mod expr;
 mod rows;
 
@@ -32,6 +33,7 @@ use crate::meta::{FieldMeta, FieldType};
 use crate::provenance::{self, CONF_COLUMN, PROV_COLUMN, RowProvenance};
 use crate::table::Table;
 
+pub use aggregate::{AggregateFn, AggregateOp, BinMethod};
 pub use expr::FUEL_PER_ROW;
 
 /// One transform (03 §6, RFC-0001 §4).
@@ -52,6 +54,32 @@ pub enum Transform {
         #[serde(default)]
         order: SortOrder,
     },
+    /// Groups rows by `groupby` (in order of first appearance; no fields: one group) and
+    /// computes `ops` per group.
+    Aggregate {
+        /// The fields that form the group key.
+        #[serde(default)]
+        groupby: Vec<String>,
+        /// The outputs.
+        ops: Vec<AggregateOp>,
+    },
+    /// Adds each row's bin as `{as}` (start) and `{as}_end`.
+    Bin {
+        /// The number field to bin.
+        field: String,
+        /// How edges are placed.
+        #[serde(default)]
+        method: BinMethod,
+        /// The number of bins (`equal-width`, `quantile`).
+        #[serde(default)]
+        count: Option<u32>,
+        /// The edges, increasing (`edges`).
+        #[serde(default)]
+        edges: Option<Vec<f64>>,
+        /// The name of the start field.
+        #[serde(rename = "as")]
+        output: String,
+    },
     /// Adds (or replaces) a field computed from each row.
     Derive {
         /// The expression.
@@ -69,6 +97,8 @@ impl Transform {
         match self {
             Self::Filter { .. } => "filter",
             Self::Sort { .. } => "sort",
+            Self::Aggregate { .. } => "aggregate",
+            Self::Bin { .. } => "bin",
             Self::Derive { .. } => "derive",
         }
     }
@@ -207,6 +237,21 @@ pub fn apply(
     let summary = match transform {
         Transform::Filter { expr } => rows::filter(&mut working, expr, diagnostics)?,
         Transform::Sort { field, order } => rows::sort(&mut working, field, *order)?,
+        Transform::Aggregate { groupby, ops } => aggregate::aggregate(&mut working, groupby, ops)?,
+        Transform::Bin {
+            field,
+            method,
+            count,
+            edges,
+            output,
+        } => aggregate::bin(
+            &mut working,
+            field,
+            *method,
+            *count,
+            edges.as_deref(),
+            output,
+        )?,
         Transform::Derive { expr, output } => {
             rows::derive(&mut working, expr, output, diagnostics)?
         }

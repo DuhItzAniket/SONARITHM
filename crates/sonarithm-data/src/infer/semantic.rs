@@ -322,7 +322,7 @@ impl Facts {
 
 /// A numeric or temporal column as `f64` values, used only to count distinct values and
 /// check order.
-fn numbers(column: &ArrayRef) -> Option<Float64Array> {
+pub(crate) fn numbers(column: &ArrayRef) -> Option<Float64Array> {
     use arrow_array::types::{
         Date32Type, Date64Type, DurationMicrosecondType, DurationMillisecondType,
         DurationNanosecondType, DurationSecondType, Float32Type, Float64Type, Int8Type, Int16Type,
