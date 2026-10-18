@@ -61,3 +61,12 @@
 - [ ] Enable reported-content moderation in the repository's moderation settings (web UI only) (@DuhItzAniket).
 - [ ] A01-T10: GitHub Project board and Stage A issues (agent, with the owner's go-ahead).
 - [ ] Start A02 spikes and A03 core types after merge.
+
+## Update: merge and owner context
+
+- **CI on #1.** The first CI run on #1 was green on every required check. The external link check failed on third-party hosts: 265 errors, nearly all bot blocks or DOI resolution. Two follow-up commits added `lychee.toml`, errata for the genuinely dead links in research notes 02, 05, 06 and 07, and made the check advisory on PRs. The weekly scheduled run stays authoritative.
+- **Merge.** #1 was squash-merged by the agent on the owner's instruction ("Merge PR #1 for me (squash)") as `02a44f3`, through the admin bypass in the interim review rule. The DCO sign-off is preserved in the squash commit.
+- **Owner context, recorded in open decisions, the risk register and 12 §8:**
+  - Solo developer at RV University. This gives the ethics route (OD-04) and affects signing eligibility (OD-02).
+  - One Windows laptop: i7-14650HX, RTX 4050 with 6 GB, 16 GB RAM. With no macOS or Linux machine, risk R-22 is opened.
+- **Blocked.** A01-T10 needs the `project` scope on the GitHub CLI token. The owner runs `gh auth refresh -s project`.

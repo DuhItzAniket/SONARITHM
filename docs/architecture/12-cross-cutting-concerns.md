@@ -106,6 +106,8 @@ Covered in [06 §10](06-audio-engine.md#10-hearing-safety-and-levels) and [08](0
 | macOS | Apple M1, 8 GB RAM, built-in audio |
 | Linux | The same x86-64 class as Windows, PipeWire, Mesa GPU (and an NVIDIA variant for webview checks) |
 
+**Development machine (owner, 2026-10-18):** Windows 11 laptop, Intel i7-14650HX, NVIDIA RTX 4050 Laptop GPU (6 GB) plus the Intel iGPU, 16 GB RAM. It is much faster than the Windows reference machine, so a budget measured on it passes only with headroom: a result above 50% of a budget is re-measured on reference-class hardware, or with the CPU limited, before the budget is declared met. Linux checks run from an Ubuntu live USB or dual boot on this machine, which also covers the NVIDIA WebKitGTK case. macOS checks run on CI runners until a Mac is available (risk R-22).
+
 | ID | Budget | Target | Measured by | From phase |
 |---|---|---|---|---|
 | PB-01 | Key press → cue onset | ≤ 50 ms p95 (256 frames, 48 kHz) | Loopback harness | A02, B03 |
