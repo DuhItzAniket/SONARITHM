@@ -1,7 +1,8 @@
 # Documentation checks (docs/engineering/ci-cd.md#workflow-inventory). Runs on every PR with
 # no path filter: a path-filtered workflow used as a required check would leave PRs that
 # skip it waiting forever. Required checks: `docs / markdown`, `docs / internal-links`, `docs / reuse` and
-# from A03 `docs / schema-diff`. External links are checked but not required.
+# from A03 `docs / schema-diff`. External links are checked but not required: advisory
+# (warning only) on pull requests and pushes, failing only in the weekly scheduled run.
 name: docs
 
 on:
@@ -65,7 +66,8 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
-      - uses: lycheeverse/lychee-action@e7477775783ea5526144ba13e8db5eec57747ce8 # v2.9.0
+      - id: lychee
+        uses: lycheeverse/lychee-action@e7477775783ea5526144ba13e8db5eec57747ce8 # v2.9.0
         with:
           args: >-
             --scheme https
@@ -77,7 +79,13 @@ jobs:
             --exclude-path node_modules
             --exclude-path target
             './**/*.md'
-          fail: true
+          # Advisory on pull requests and pushes: third-party hosts fail transiently
+          # (rate limits, connection resets), which must not block or re-trigger PR work.
+          # The weekly scheduled run is authoritative and fails on any error.
+          fail: ${{ github.event_name == 'schedule' }}
+      - name: Flag broken external links (advisory)
+        if: github.event_name != 'schedule' && steps.lychee.outputs.exit_code != '0'
+        run: echo "::warning title=External links::lychee reported errors; see the job summary. Advisory on pull requests; the weekly scheduled run fails on them."
 
   # Every file carries licensing information (REUSE.toml and SPDX headers; ADR-0010).
   reuse:
