@@ -21,7 +21,7 @@ Write an ADR when a decision is hard to reverse, affects several crates or engin
 | [0002](0002-desktop-shell-tauri.md) | Tauri 2 as the desktop shell, Electron as fallback | accepted (provisional) | A02 prototype gate |
 | [0003](0003-frontend-react-and-react-aria.md) | React 19 + React Aria Components for the UI | accepted (provisional) | A02 prototype gate |
 | [0004](0004-audio-backend-and-render-graph.md) | Own render graph over a cpal-backed `AudioBackend` trait | accepted (provisional) | A02 graph spike |
-| [0005](0005-declarative-spec-and-score-ir.md) | Declarative spec compiled to a canonical Score IR | accepted | RFC-0001 freezes spec v0.1 (A03) |
+| [0005](0005-declarative-spec-and-score-ir.md) | Declarative spec compiled to a canonical Score IR | accepted | Spec v0.1 frozen by RFC-0001 (2026-10-19, ADR-0015) |
 | [0006](0006-arrow-data-model.md) | Apache Arrow as the internal data model | accepted | — |
 | [0007](0007-engines-as-pipeline-capabilities.md) | Nine engines as capabilities of one compiler | accepted | — |
 | [0008](0008-offline-first-extraction-and-ai.md) | Exact-first, offline-first chart extraction and AI | accepted | — |
@@ -30,6 +30,7 @@ Write an ADR when a decision is hard to reverse, affects several crates or engin
 | [0011](0011-typed-ipc-ts-rs.md) | Typed IPC via ts-rs and JSON Schema | accepted | B01 |
 | [0012](0012-privacy-and-telemetry.md) | No default telemetry; offline by default | accepted | — |
 | [0013](0013-determinism-and-provenance.md) | Determinism and render provenance | accepted | A05 golden tests |
+| [0015](0015-spec-v0.1-frozen.md) | Spec v0.1 frozen per RFC-0001 | accepted (2026-10-19) | A03-T06..T11 implement it |
 
 ## Process
 

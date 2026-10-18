@@ -1,6 +1,6 @@
-# 04 · Sonification Spec Language (v0.1 draft)
+# 04 · Sonification Spec Language (v0.1)
 
-> **Status:** Draft under [RFC-0001](../rfcs/0001-spec-v0.1.md) (in discussion). Field names may change before `specVersion: "0.1"` is frozen at the end of A03; the RFC holds the precise key set, defaults, codes and open questions.
+> **Status:** **Frozen as v0.1** by [RFC-0001](../rfcs/0001-spec-v0.1.md), accepted 2026-10-19 ([ADR-0015](../decisions/0015-spec-v0.1-frozen.md)). The RFC is normative: it holds the exact key set, defaults, validation codes and the 21 resolutions, and it wins wherever this overview is less precise. Changes follow the versioning rules in §7.
 > **Decision:** [ADR-0005 Declarative spec and Score IR](../decisions/0005-declarative-spec-and-score-ir.md). **Owner:** Spec lead.
 > **Evidence:** [SDR-01..06](../research/design-rules.md#a-specification-and-reproducibility).
 
@@ -131,8 +131,8 @@ Each track is one stream of auditory marks. Tracks overlay in time by default.
 | `tone` | PMSon | One discrete note per datum | pitch, duration, loudness, pan, timbre, brightness, taps | NUMISONA |
 | `glide` | PMSon | A continuous contour through the data | pitch, loudness, pan, timbre, brightness, rate | NUMISONA |
 | `grain` | PMSon (granular) | A grain cloud whose density follows the data (SDR-32) | density, pitch, duration, pan, brightness | TONALENS |
-| `audify` | Audification | The data series played as a waveform (SDR-31) | gain only; speed is set by `audify.k` or a target band | CURVASONA |
-| `sample` | Auditory icon | A recorded sound per event | gain, pan, rate | platform |
+| `audify` | Audification | The data series played as a waveform (SDR-31) | loudness only; speed is set by `tracks[].audify` (`k` or `band`) | CURVASONA |
+| `sample` | Auditory icon | A recorded sound per event | loudness, pan, rate | platform |
 | `model` | MBS | An excitable data model (SDR-33). Stage D | model-specific | RESONUM |
 | `auto` | — | Chooses tone, glide or audify from density and size | — | NUMISONA |
 
