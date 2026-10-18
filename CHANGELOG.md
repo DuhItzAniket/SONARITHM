@@ -23,5 +23,10 @@ From phase A07, release-plz maintains this file: it generates each release's ent
   - Community and governance: `CONTRIBUTING.md`, `CODE_OF_CONDUCT.md` (Contributor Covenant 3.0 by reference), `SECURITY.md`, `GOVERNANCE.md`, `CITATION.cff`, issue forms, pull request template, `CODEOWNERS` and the label taxonomy.
   - Agent instructions: `AGENTS.md` and `CLAUDE.md`.
   - Repository hygiene: `.gitignore`, `.gitattributes` and `.editorconfig`.
+- Repository bootstrap (phase A01):
+  - Cargo workspace with 11 skeleton crates, pinned toolchain, workspace lints, `rustfmt`, `clippy` and `cargo-deny` configuration, and `cargo xtask` automation (`ci`, `check-deps`, `codegen`, `wasm-check`).
+  - pnpm workspace with placeholder frontend packages, ESLint and Prettier.
+  - GitHub Actions workflows for CI, documentation checks, PR titles, DCO, CodeQL and OpenSSF Scorecard, plus Dependabot configuration.
+- Licensing ([ADR-0010](docs/decisions/0010-licensing.md)): code under `MIT OR Apache-2.0`; documentation, example datasets and study stimuli under `CC-BY-4.0`. Adds `LICENSE-MIT`, `LICENSE-APACHE`, `LICENSES/`, `REUSE.toml`, SPDX headers and a REUSE check in CI.
 
 [Unreleased]: https://github.com/DuhItzAniket/SONARITHM/commits/main

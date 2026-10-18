@@ -1,0 +1,70 @@
+# SONARITHM Cargo workspace.
+# Layout and dependency rules: docs/architecture/02-repository-and-crate-layout.md
+# Lint policy: docs/engineering/coding-standards.md §2
+
+[workspace]
+resolver = "3"
+members = [
+    "crates/sonarithm",
+    "crates/sonarithm-core",
+    "crates/sonarithm-spec",
+    "crates/sonarithm-data",
+    "crates/sonarithm-compiler",
+    "crates/sonarithm-dsp",
+    "crates/sonarithm-render",
+    "crates/sonarithm-audio",
+    "crates/sonarithm-export",
+    "apps/cli",
+    "xtask",
+]
+
+[workspace.package]
+# One shared version for all library crates until v1.0 (02 §6). Nothing is released
+# yet; release-plz sets the first version in A07.
+version = "0.0.0"
+edition = "2024"
+rust-version = "1.88"
+repository = "https://github.com/DuhItzAniket/SONARITHM"
+license = "MIT OR Apache-2.0"   # ADR-0010
+# Nothing is published until release automation lands in A07 (release-plz).
+publish = false
+
+[workspace.dependencies]
+# Internal crates. Use `dep.workspace = true` in member manifests.
+sonarithm = { path = "crates/sonarithm", version = "0.0.0" }
+sonarithm-core = { path = "crates/sonarithm-core", version = "0.0.0" }
+sonarithm-spec = { path = "crates/sonarithm-spec", version = "0.0.0" }
+sonarithm-data = { path = "crates/sonarithm-data", version = "0.0.0" }
+sonarithm-compiler = { path = "crates/sonarithm-compiler", version = "0.0.0" }
+sonarithm-dsp = { path = "crates/sonarithm-dsp", version = "0.0.0" }
+sonarithm-render = { path = "crates/sonarithm-render", version = "0.0.0" }
+sonarithm-audio = { path = "crates/sonarithm-audio", version = "0.0.0" }
+sonarithm-export = { path = "crates/sonarithm-export", version = "0.0.0" }
+
+# Third-party crates. Each addition needs a justification in its PR and must pass
+# `cargo deny check` (docs/engineering/supply-chain-and-licensing.md).
+anyhow = "1.0.100"          # apps/* and xtask only (coding-standards §4.1)
+cargo_metadata = "0.23.1"   # xtask check-deps
+
+[workspace.lints.rust]
+unsafe_code = "deny"                  # backstop; crates on the unsafe register opt in locally (section 5)
+unsafe_op_in_unsafe_fn = "deny"       # warn-by-default in edition 2024; we deny
+unreachable_pub = "warn"              # keep the public surface intentional
+
+[workspace.lints.clippy]
+pedantic = { level = "warn", priority = -1 }
+# Noisy pedantic lints are allowed here one by one, each with a comment giving the reason.
+# The initial allow list is set in A01 and reviewed at every phase review.
+# A01: none needed yet.
+
+# Restriction lints we opt into
+unwrap_used = "deny"
+expect_used = "deny"
+undocumented_unsafe_blocks = "deny"   # every `unsafe {}` needs a `// SAFETY:` comment
+allow_attributes_without_reason = "warn"
+panic = "warn"
+dbg_macro = "warn"
+todo = "warn"
+unimplemented = "warn"
+print_stdout = "warn"
+print_stderr = "warn"

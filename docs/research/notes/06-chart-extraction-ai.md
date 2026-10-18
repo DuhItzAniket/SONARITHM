@@ -554,3 +554,10 @@ Every value should carry provenance and an uncertainty estimate, so that sonific
 - No published end-to-end system was found that combines exact parsers, classical calibration and VLMs with per-cell uncertainty. The design above is a synthesis, not a validated reference architecture.
 - No user-study evidence was found on how to best convey extraction uncertainty in *audio* to blind users.
 - Calibration of confidence scores (whether a 0.8 confidence really means about 80% within tolerance) is unstudied for chart extraction. Only rank correlations were reported (ρ ≈ −0.3 to −0.37).
+
+## Errata
+
+Dated corrections. The text above is kept as the kickoff snapshot ([research README](../README.md)).
+
+- **2026-10-18, link check.** The ChartDetective PDF cited in §1 (`cs.uwaterloo.ca/~dmasson/pdfs/chartdetective.pdf`) returned HTTP 404. Use the HAL record given on the same line: <https://hal-lara.archives-ouvertes.fr/CRISTAL-LOKI/hal-04017638v1>.
+- The Engauge Digitizer GitHub link in §1 is a dead link on purpose: it records the 404 itself. The automeris.io blog link in §1 was already noted as unreachable (TLS host mismatch). Both are excluded from the CI link check.

@@ -1,0 +1,12 @@
+[package]
+name = "sonarithm-audio"
+description = "SONARITHM audio backends: AudioBackend trait, cpal backend, devices and latency reporting."
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+repository.workspace = true
+license.workspace = true
+publish.workspace = true
+
+[lints]
+workspace = true

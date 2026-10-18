@@ -620,3 +620,11 @@ SONARITHM should look and behave like a calibrated instrument: neutral, dense, p
 ### Gaps
 - These principles are a synthesis. Primary design writing from Ableton, Bitwig, iZotope, MATLAB, Grafana and Observable was not retrieved and would strengthen the pro-audio/scientific rationale.
 - No user research with SONARITHM's blind and low-vision audience was found. Validate the principles with them.
+
+## Errata
+
+Dated corrections. The text above is kept as the kickoff snapshot ([research README](../README.md)).
+
+- **2026-10-18, link check.**
+  - The archived CodeMirror 6 page cited in §7 (`webcf.waybackmachine.org/…`) fails TLS. The same snapshot is available at <https://web.archive.org/web/20211102230227/https://codemirror.net/6>, verified 2026-10-18.
+  - The Replit post cited in §7 (`blog.repl.it/codemirror`) no longer resolves. It moved to <https://replit.com/blog/codemirror>, verified 2026-10-18.

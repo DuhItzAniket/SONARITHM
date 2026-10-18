@@ -1,0 +1,39 @@
+# Every commit in a PR carries a Developer Certificate of Origin sign-off
+# (`git commit -s`; docs/engineering/git-workflow.md#dco-sign-off). This workflow replaces a
+# DCO GitHub App; use one or the other.
+name: dco
+
+on:
+  pull_request:
+
+permissions: {}
+
+jobs:
+  dco:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+      - name: Every commit has a Signed-off-by trailer
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          missing=0
+          for sha in $(git rev-list --no-merges "$BASE_SHA..$HEAD_SHA"); do
+            signoff=$(git show -s --format='%(trailers:key=Signed-off-by,valueonly)' "$sha")
+            if ! printf '%s\n' "$signoff" | grep -qE '^.+ <[^>]+@[^>]+>$'; then
+              echo "::error::Commit $sha has no 'Signed-off-by: Name <email>' trailer."
+              missing=1
+            fi
+          done
+          if [ "$missing" -ne 0 ]; then
+            echo "Sign off each commit with 'git commit -s'; to fix a branch, run"
+            echo "'git rebase --signoff origin/main' and force-push your branch."
+            exit 1
+          fi

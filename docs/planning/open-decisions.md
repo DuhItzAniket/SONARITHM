@@ -5,7 +5,7 @@
 
 | ID | Decision | Options | Recommendation | Owner | Needed by | Status |
 |---|---|---|---|---|---|---|
-| OD-01 | Code licence | MIT OR Apache-2.0; Apache-2.0; MPL-2.0; GPL-3.0 | MIT OR Apache-2.0 + DCO ([ADR-0010](../decisions/0010-licensing.md)) | **Owner** | A01 (before first public code) | Open |
+| OD-01 | Code licence | MIT OR Apache-2.0; Apache-2.0; MPL-2.0; GPL-3.0 | MIT OR Apache-2.0 + DCO ([ADR-0010](../decisions/0010-licensing.md)) | **Owner** | A01 (before first public code) | **Closed** |
 | OD-02 | Legal and organizational home: individual, university lab, or foundation/fiscal host | Individual; university; fiscal host | Decide before C06. It determines code-signing eligibility (Azure Artifact Signing covers individuals in US/Canada and organizations in EU/UK), CRA role, grant eligibility and ethics route | **Owner** | B07 (for signing planning) | Open |
 | OD-03 | AXONOTE icon: the mockup glyph matches the SONARITHM platform icon (`audio-lines`) | Keep `audio-lines`; `audio-waveform`; a music-note glyph | `audio-waveform` (distinct, still "sound") | Owner + design | B02 | Open |
 | OD-04 | Institution for ethics review (IRB) of user studies | University affiliation; collaborator's institution; independent review board | Identify by Dec 2026 to keep ICAD/ASSETS 2027 studies feasible | **Owner** + research lead | Dec 2026 | Open |
@@ -13,7 +13,7 @@
 | OD-06 | Default keys for lateral and local navigation | Per [keyboard-and-navigation](../design/keyboard-and-navigation.md) v0 | Validate in co-design round 1 | Accessibility lead | B07 | Open |
 | OD-07 | Sonic treatment of low-confidence (estimated) data | Timbre change; noise layer; speech only | Speech/text always; timbre only after the H-06 study | Research lead | D06 | Open |
 | OD-08 | Golden audio storage | Git LFS; regenerate-on-demand + hashes; external artifact store | Decide in A05-T11 | Core lead | A05 | Open |
-| OD-09 | Documentation licence | CC BY 4.0; same as code | CC BY 4.0 for docs and datasets | **Owner** | A01 | Open |
+| OD-09 | Documentation licence | CC BY 4.0; same as code | CC BY 4.0 for docs and datasets | **Owner** | A01 | **Closed** |
 | OD-10 | Team capacity and funding (co-maintainers, BLV co-designer compensation, signing costs) | Volunteers; open-source grants; university funding; sponsorships | Draft a funding plan before Gate A (participant compensation of about $50–85/h is the largest research cost) | **Owner** | Gate A | Open |
 | OD-11 | Python API docs tool | pdoc; Sphinx + autodoc | Decide in A07 | Core lead | A07 | Open |
 | OD-12 | Second UI locale | Community-driven choice | Pick with the community during B05 | Project lead | B07 | Open |
@@ -23,4 +23,5 @@
 
 | ID | Decision | Outcome | Date | Record |
 |---|---|---|---|---|
-| — | — | — | — | — |
+| OD-01 | Code licence | **MIT OR Apache-2.0**, contributions under the DCO; copyright notice "SONARITHM contributors" | 2026-10-18 | [ADR-0010](../decisions/0010-licensing.md) |
+| OD-09 | Documentation and data licence | **CC BY 4.0** for documentation, example datasets and study stimuli | 2026-10-18 | [ADR-0010](../decisions/0010-licensing.md) |

@@ -1,0 +1,6 @@
+# Clippy configuration (coding-standards §2.1). Clippy reads the MSRV from each
+# crate's `rust-version`, so it is not repeated here.
+allow-unwrap-in-tests = true
+allow-expect-in-tests = true
+allow-dbg-in-tests = true
+allow-print-in-tests = true

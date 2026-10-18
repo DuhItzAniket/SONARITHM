@@ -1,0 +1,12 @@
+[package]
+name = "sonarithm-spec"
+description = "SONARITHM spec types, JSON (de)serialization, JSON Schema export, validation and migrations."
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+repository.workspace = true
+license.workspace = true
+publish.workspace = true
+
+[lints]
+workspace = true

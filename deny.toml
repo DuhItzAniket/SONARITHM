@@ -1,0 +1,61 @@
+# cargo-deny configuration: licences, advisories, bans and sources.
+# Policy and rationale: docs/engineering/supply-chain-and-licensing.md
+# Written for cargo-deny 0.20 (https://embarkstudios.github.io/cargo-deny/).
+
+[graph]
+# Licence and ban checks run on default features. Optional copyleft features are
+# checked by a separate CI job with explicit, crate-scoped exceptions (added with the
+# first such feature).
+all-features = false
+
+[advisories]
+# RustSec advisory database. Ignoring an advisory needs a reason and a tracking issue.
+yanked = "deny"
+ignore = [
+    # { id = "RUSTSEC-YYYY-NNNN", reason = "why, and a link to the tracking issue" },
+]
+
+[licenses]
+# Anything not listed is denied: AGPL, GPL, SSPL, BUSL-1.1, and LGPL in default
+# features. Adding a licence needs a PR with a rationale.
+allow = [
+    "MIT",
+    "Apache-2.0",
+    "Apache-2.0 WITH LLVM-exception",
+    "BSD-2-Clause",
+    "BSD-3-Clause",
+    "ISC",
+    "Zlib",
+    "Unicode-3.0",
+    "BSL-1.0",                         # Boost Software License (not BUSL-1.1, which is denied)
+    "CC0-1.0",
+    "MPL-2.0",                         # file-level copyleft; modified MPL files stay MPL-2.0
+]
+confidence-threshold = 0.9
+# The list is policy, not an inventory: a licence may be allowed before any dependency uses it.
+unused-allowed-license = "allow"
+# Used only by the optional-features job, never for default features:
+# exceptions = [
+#     { crate = "mp3lame-encoder", allow = ["LGPL-3.0-only"] }, # the exact SPDX expression the crate declares
+# ]
+
+[licenses.private]
+# Workspace crates are `publish = false` until A07 but carry `MIT OR Apache-2.0`
+# (ADR-0010), so check them like any other crate.
+ignore = false
+
+[bans]
+multiple-versions = "warn"
+wildcards = "deny"
+# Internal path dependencies of private workspace crates carry no version requirement.
+allow-wildcard-paths = true
+deny = [
+    { crate = "evalexpr", reason = "AGPL-3.0 since 12.0.0; use exmex" },
+    { crate = "anomaly_detection", reason = "GPL-3.0-or-later; use augurs" },
+    { crate = "oxisynth", reason = "LGPL-2.1; use rustysynth" },
+]
+
+[sources]
+unknown-registry = "deny"
+unknown-git = "deny"
+allow-registry = ["https://github.com/rust-lang/crates.io-index"]

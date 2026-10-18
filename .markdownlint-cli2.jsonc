@@ -1,0 +1,30 @@
+// markdownlint configuration for the `docs / markdown` job (.github/workflows/docs.yml).
+// Run locally: npx markdownlint-cli2 "**/*.md"
+// Rules: https://github.com/DavidAnson/markdownlint/blob/main/doc/Rules.md
+{
+  "config": {
+    "default": true,
+    // House style: prose is not hard-wrapped, and tables are often wide.
+    "MD013": false,
+    // House style: compact table delimiter rows (|---|).
+    "MD060": false,
+    // Headings such as "Consequences" repeat under different parents.
+    "MD024": { "siblings_only": true },
+    // CLAUDE.md starts with the `@AGENTS.md` import; GitHub templates start with a comment or an H2.
+    "MD041": false,
+    // Baseline exceptions (A01): parts of the documentation baseline break these rules.
+    // Re-enable each rule once those files are fixed (listed in the A01 worklog entry,
+    // docs/sdlc/worklog/2026-10-18-a01-repository-bootstrap.md).
+    "MD022": false, // headings directly followed by a list (MADR option blocks, docs/README.md)
+    "MD032": false, // lists without surrounding blank lines
+    "MD033": false, // template placeholders written as <name>, which GitHub hides as unknown HTML
+    "MD036": false // bold paragraphs used as headings
+  },
+  "ignores": [
+    "**/node_modules/**",
+    "**/target/**",
+    // Baseline exceptions (A01): bare URLs, and a broken table row at line 177 of 06.
+    "docs/research/notes/01-tools-landscape.md",
+    "docs/research/notes/06-chart-extraction-ai.md"
+  ]
+}

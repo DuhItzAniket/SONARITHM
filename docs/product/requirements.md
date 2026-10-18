@@ -171,7 +171,7 @@
 | ID | Type | Statement |
 |---|---|---|
 | CON-01 | Constraint | Core implementation language is Rust ([ADR-0001](../decisions/0001-rust-workspace-core.md)) |
-| CON-02 | Constraint | No copyleft dependencies in default features ([ADR-0010](../decisions/0010-licensing.md), pending) |
+| CON-02 | Constraint | No copyleft dependencies in default features ([ADR-0010](../decisions/0010-licensing.md)) |
 | CON-03 | Constraint | Offline-first; no telemetry ([ADR-0012](../decisions/0012-privacy-and-telemetry.md)) |
 | ASM-01 | Assumption | Capacity: one core developer with AI coding agents (≈1.5–2 FTE effective) until Stage C |
 | ASM-02 | Assumption | Paid BLV co-designers (A11Y-34) can be recruited from Stage B (budget needed: OD-10 in [open decisions](../planning/open-decisions.md)) |
