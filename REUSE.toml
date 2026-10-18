@@ -12,6 +12,13 @@ precedence = "closest"
 SPDX-FileCopyrightText = "2026 SONARITHM contributors"
 SPDX-License-Identifier = "CC-BY-4.0"
 
+# Test snapshots (insta) and proptest regression seeds: same licence as the code.
+[[annotations]]
+path = ["**.snap", "**/proptest-regressions/**"]
+precedence = "closest"
+SPDX-FileCopyrightText = "2026 SONARITHM contributors"
+SPDX-License-Identifier = "MIT OR Apache-2.0"
+
 # Build, CI, editor and package configuration, and lockfiles: same licence as the code.
 [[annotations]]
 path = [

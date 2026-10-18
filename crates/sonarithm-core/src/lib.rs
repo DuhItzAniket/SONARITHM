@@ -13,12 +13,22 @@
 
 pub mod codes;
 pub mod diagnostic;
+pub mod digest;
 pub mod ids;
 pub mod math;
 pub mod provenance;
+pub mod score;
+#[cfg(any(test, feature = "test-support"))]
+pub mod testing;
 pub mod units;
 
 pub use diagnostic::{Code, Diagnostic, Diagnostics, Severity, SpecPointer};
+pub use digest::Sha256Digest;
 pub use ids::{AnalyzerId, EngineId, Generation, RowRange, RowRef, RuleId, TableId, TrackId};
 pub use provenance::{Confidence, Provenance, ProvenanceClass};
+pub use score::{
+    Breakpoint, Earcon, EarconKind, EngineVersion, Glide, InstrumentRef, Marker, MarkerKind, Mode,
+    Note, PitchRange, Priority, Score, ScoreEvent, ScoreHeader, ScoreTrack, ShaperStage,
+    SpecVersion, Speech, Timbre, TrackRole,
+};
 pub use units::{Cents, Db, Frames, Hz, Midi, Pan, SampleRate, Seconds};
