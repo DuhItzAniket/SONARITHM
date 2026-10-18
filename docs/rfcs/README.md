@@ -75,4 +75,4 @@ Every accepted RFC produces an ADR. Many ADRs have no RFC: a decision that does 
 
 | RFC | Title | Status | ADR | Phase |
 |---|---|---|---|---|
-| 0001 | Spec v0.1 freeze (planned) | Not yet opened | [ADR-0005](../decisions/0005-declarative-spec-and-score-ir.md) | A03 |
+| [0001](0001-spec-v0.1.md) | Spec v0.1 freeze | Accepted (2026-10-19) | [ADR-0005](../decisions/0005-declarative-spec-and-score-ir.md), [ADR-0015](../decisions/0015-spec-v0.1-frozen.md) | A03 |
