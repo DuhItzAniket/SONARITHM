@@ -126,7 +126,7 @@ pub trait AudioBackend {
 | `CpalBackend` | A05 | cpal 0.18: WASAPI (shared) / ASIO (feature), CoreAudio, PipeWire/PulseAudio/ALSA/JACK (feature). Stream rebuilds after device loss happen on the control thread |
 | `OfflineBackend` | A05 | A plain loop at a fixed block size into a sink (file writer, null, analyzer) |
 | `WebAudioBackend` | D05 | cpal's WebAudio/AudioWorklet host for `sonarithm-wasm` |
-| `WasapiBackend` | A05 (proposed, [ADR-0016](../decisions/0016-windows-low-latency-backend.md)) | Windows: shared mode with the RAW stream option by default (no OEM enhancement APOs), exclusive mode as an opt-in low-latency setting. A02 measured cpal's shared mode at 123 ms p95 key-to-onset on the development laptop, against PB-01's 50 ms ([risk R-03](../planning/risk-register.md)) |
+| `WasapiBackend` | A05 (accepted, [ADR-0016](../decisions/0016-windows-low-latency-backend.md)) | Windows: shared mode with the RAW stream option by default (no OEM enhancement APOs), exclusive mode as an opt-in low-latency setting. A02 measured cpal's shared mode at 123 ms p95 key-to-onset on the development laptop, against PB-01's 50 ms ([risk R-03](../planning/risk-register.md)) |
 | CoreAudio exclusive (hog mode) | Later | Only if macOS measurements (pending, R-22) miss PB-01 |
 
 ## 7. Export

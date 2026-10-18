@@ -1,7 +1,8 @@
 ---
-status: proposed
+status: accepted
 date: 2026-10-19
 decision-makers: ["@DuhItzAniket"]
+consulted: ["coordinator agent (Claude Code), under the owner's delegation of ADR approvals"]
 ---
 
 # 0016 · A Windows low-latency audio backend and per-device latency calibration
@@ -37,7 +38,7 @@ How does SONARITHM meet PB-01 on Windows, and keep the playhead in step with the
 
 ## Decision outcome
 
-Proposed option: **a `WasapiBackend` on the `wasapi` crate, behind the existing `AudioBackend` trait**, built in A05.
+Chosen option: **a `WasapiBackend` on the `wasapi` crate, behind the existing `AudioBackend` trait**, built in A05.
 
 * **Shared mode with RAW by default** on Windows, falling back to the default processing mode where the driver lacks RAW support.
 * **Exclusive mode as an opt-in low-latency setting**, with a clear warning that it can silence the screen reader's speech on the same device.
@@ -57,6 +58,8 @@ Also:
 * Bad: a second backend to maintain, Windows-only code with `unsafe` COM calls (unsafe register entry needed), and more test surface.
 * Bad: RAW alone measured 83.7 ms p95, so PB-01 may still need exclusive mode or better hardware. Exclusive mode conflicts with screen-reader speech on a shared device.
 * Neutral: macOS and Linux latency are unmeasured (risk R-22); this ADR changes nothing there.
+
+**Acceptance (2026-10-19).** Accepted by the coordinator agent under the owner's standing delegation of ADR and spec approvals ("Approve them yourself", 2026-10-19). The owner reviews it with the morning report. Implementation and confirmation belong to A05 (below).
 
 ### Confirmation
 
