@@ -17,6 +17,9 @@ use crate::infer::text::{self, ColumnReport, Storage, TextOptions};
 use crate::meta::{FieldMeta, Unit};
 use crate::table::Table;
 
+/// Values per column used to decide whether the first row is a header.
+const HEADER_SAMPLE: usize = 100;
+
 /// Values of one column, stored contiguously.
 #[derive(Default)]
 pub(super) struct RawColumn {
@@ -28,6 +31,16 @@ impl RawColumn {
     pub(super) fn push(&mut self, value: &str) {
         self.text.push_str(value);
         self.ends.push(self.text.len());
+    }
+
+    /// Puts a value in front of the others.
+    pub(super) fn prepend(&mut self, value: &str) {
+        let mut with_first = Self::default();
+        with_first.push(value);
+        for v in self.values() {
+            with_first.push(v);
+        }
+        *self = with_first;
     }
 
     pub(super) fn values(&self) -> impl Iterator<Item = &str> + Clone {
@@ -165,6 +178,35 @@ fn report_column(
             ),
         ));
     }
+}
+
+/// Whether the first record is a header: some typed column's first value does not fit the
+/// column's type. With only text columns, a row of distinct non-empty names is a header.
+pub(super) fn detect_header(first: &[&str], columns: &[RawColumn], options: &TextOptions) -> bool {
+    let mut header_votes = 0;
+    let mut data_votes = 0;
+    for (value, column) in first.iter().zip(columns) {
+        let sample: Vec<&str> = column.values().take(HEADER_SAMPLE).collect();
+        let storage = text::storage_of(sample.iter().copied(), options);
+        if storage == Storage::Text {
+            continue;
+        }
+        if text::fits(value, storage, options) && !value.trim().is_empty() {
+            data_votes += 1;
+        } else {
+            header_votes += 1;
+        }
+    }
+    if header_votes > 0 {
+        return true;
+    }
+    if data_votes > 0 {
+        return false;
+    }
+    let mut names: Vec<&str> = first.iter().map(|v| v.trim()).collect();
+    let all_named = names.iter().all(|name| !name.is_empty());
+    names.sort_unstable();
+    all_named && names.windows(2).all(|pair| pair[0] != pair[1])
 }
 
 /// Field names: the given names with blanks replaced by `column_N` and repeats suffixed

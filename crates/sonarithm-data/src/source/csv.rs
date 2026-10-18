@@ -16,12 +16,12 @@ use encoding_rs::Encoding;
 use serde::Deserialize;
 use sonarithm_core::{Diagnostic, Diagnostics};
 
-use super::columns::{RawColumn, row_range, text_table, unique_names};
+use super::columns::{RawColumn, detect_header, row_range, text_table, unique_names};
 use super::{ReadOptions, to_u64};
 use crate::bundle::Format;
 use crate::codes;
 use crate::error::DataError;
-use crate::infer::text::{self, Storage, TextOptions};
+use crate::infer::text::TextOptions;
 use crate::table::Table;
 
 /// Delimiters tried when sniffing, in order of preference for ties.
@@ -54,6 +54,49 @@ pub struct CsvOptions {
     pub decimal_comma: bool,
     /// A `strftime`-style format for dates that are not ISO-8601, such as `%d.%m.%Y`.
     pub date_format: Option<String>,
+}
+
+impl CsvOptions {
+    /// The default options: everything sniffed, `.` as the decimal point.
+    #[must_use]
+    pub fn new() -> Self {
+        Self::default()
+    }
+
+    /// The same options with a declared delimiter.
+    #[must_use]
+    pub fn with_delimiter(mut self, delimiter: char) -> Self {
+        self.delimiter = Some(delimiter);
+        self
+    }
+
+    /// The same options with the header row declared instead of detected.
+    #[must_use]
+    pub fn with_header(mut self, header: bool) -> Self {
+        self.header = Some(header);
+        self
+    }
+
+    /// The same options with a declared encoding (a WHATWG label).
+    #[must_use]
+    pub fn with_encoding(mut self, label: impl Into<String>) -> Self {
+        self.encoding = Some(label.into());
+        self
+    }
+
+    /// The same options reading `,` as the decimal separator.
+    #[must_use]
+    pub fn with_decimal_comma(mut self) -> Self {
+        self.decimal_comma = true;
+        self
+    }
+
+    /// The same options with a `strftime`-style date format.
+    #[must_use]
+    pub fn with_date_format(mut self, format: impl Into<String>) -> Self {
+        self.date_format = Some(format.into());
+        self
+    }
 }
 
 /// Reads CSV or TSV into a table and the diagnostics that describe what was assumed.
@@ -138,12 +181,7 @@ impl Parsed {
     /// Puts the first record in front of the data (it was not a header).
     fn prepend(&mut self, first: &[&str]) {
         for (column, value) in self.columns.iter_mut().zip(first) {
-            let mut with_first = RawColumn::default();
-            with_first.push(value);
-            for v in column.values() {
-                with_first.push(v);
-            }
-            *column = with_first;
+            column.prepend(value);
         }
         self.rows += 1;
         if let Some(row) = &mut self.ragged.first {
@@ -403,35 +441,6 @@ fn preamble_len(head: &[csv::StringRecord]) -> usize {
     } else {
         0
     }
-}
-
-/// Whether the first record is a header: some typed column's first value does not fit the
-/// column's type. With only text columns, a row of distinct non-empty names is a header.
-fn detect_header(first: &[&str], columns: &[RawColumn], options: &TextOptions) -> bool {
-    let mut header_votes = 0;
-    let mut data_votes = 0;
-    for (value, column) in first.iter().zip(columns) {
-        let sample: Vec<&str> = column.values().take(SNIFF_RECORDS).collect();
-        let storage = text::storage_of(sample.iter().copied(), options);
-        if storage == Storage::Text {
-            continue;
-        }
-        if text::fits(value, storage, options) && !value.trim().is_empty() {
-            data_votes += 1;
-        } else {
-            header_votes += 1;
-        }
-    }
-    if header_votes > 0 {
-        return true;
-    }
-    if data_votes > 0 {
-        return false;
-    }
-    let mut names: Vec<&str> = first.iter().map(|v| v.trim()).collect();
-    let all_named = names.iter().all(|name| !name.is_empty());
-    names.sort_unstable();
-    all_named && names.windows(2).all(|pair| pair[0] != pair[1])
 }
 
 fn describe_delimiter(delimiter: u8) -> String {

@@ -9,11 +9,13 @@ license.workspace = true
 publish.workspace = true
 
 [features]
-default = ["fs", "zstd"]
+default = ["fs", "xlsx", "zstd"]
 # Read sources from file paths. Off for wasm32-unknown-unknown (02 §2: "Partial (no fs)").
 fs = []
 # Zstandard-compressed Parquet and Arrow IPC (the Polars default). Builds the C library.
 zstd = ["parquet/zstd", "arrow-ipc/zstd"]
+# Spreadsheets through calamine (02 §4: `xlsx`, on by default).
+xlsx = ["dep:calamine"]
 
 [dependencies]
 arrow-array.workspace = true
@@ -21,6 +23,7 @@ arrow-ipc.workspace = true
 arrow-schema.workspace = true
 arrow-select.workspace = true
 bytes.workspace = true
+calamine = { workspace = true, optional = true }
 chardetng.workspace = true
 csv.workspace = true
 encoding_rs.workspace = true
@@ -33,7 +36,7 @@ thiserror.workspace = true
 
 [dev-dependencies]
 proptest.workspace = true
-serde_json.workspace = true
+zip.workspace = true
 
 [lints]
 workspace = true

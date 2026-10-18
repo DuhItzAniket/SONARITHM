@@ -34,7 +34,7 @@ const NAN_TOKENS: &[&str] = &["NaN", "nan", "NAN", "-NaN", "-nan"];
 
 /// Spreadsheet error values, which become missing with a warning.
 const ERROR_TOKENS: &[&str] = &[
-    "#DIV/0!", "#VALUE!", "#REF!", "#NAME?", "#NUM!", "#NULL!", "#SPILL!", "#CALC!",
+    "#DIV/0!", "#VALUE!", "#REF!", "#NAME?", "#NUM!", "#NULL!", "#SPILL!", "#CALC!", "#DATA!",
 ];
 
 /// Currency symbols accepted before or after a number; they become the field's unit.

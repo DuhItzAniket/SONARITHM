@@ -38,6 +38,28 @@ pub struct JsonOptions {
     pub date_format: Option<String>,
 }
 
+impl JsonOptions {
+    /// The default options: no pointer, ISO-8601 dates.
+    #[must_use]
+    pub fn new() -> Self {
+        Self::default()
+    }
+
+    /// The same options reading the table at a JSON pointer.
+    #[must_use]
+    pub fn with_pointer(mut self, pointer: impl Into<String>) -> Self {
+        self.pointer = Some(pointer.into());
+        self
+    }
+
+    /// The same options with a `strftime`-style date format.
+    #[must_use]
+    pub fn with_date_format(mut self, format: impl Into<String>) -> Self {
+        self.date_format = Some(format.into());
+        self
+    }
+}
+
 /// A JSON value that keeps object members in document order.
 #[derive(Clone, Debug, PartialEq)]
 enum Json {

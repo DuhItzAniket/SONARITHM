@@ -42,6 +42,8 @@ Owner: `sonarithm-data`.
 | `SNR-DATA-015` | info | Lines above the header were skipped | Remove title lines above the header, or set `header` explicitly. | — |
 | `SNR-DATA-020` | info | The JSON shape was detected | Set `pointer` in the source options if the wrong part of the document was read. | — |
 | `SNR-DATA-021` | error | The JSON is not a table | Point `pointer` at an array of records, an array of rows or an object of equal-length arrays. | — |
+| `SNR-DATA-022` | info | A spreadsheet sheet was read | Set `sheet` and `range` in the source if the wrong cells were read. | — |
+| `SNR-DATA-023` | error | The sheet does not exist | Name an existing sheet, or give its position counted from 0. | — |
 | `SNR-DATA-024` | warning | Spreadsheet error values became missing values | Fix the formulas that produce errors such as #DIV/0! in the source workbook. | — |
 | `SNR-DATA-033` | info | NaN values became missing values | None needed: NaN is treated as missing (03 §5). Missing values are silent by default. | — |
 | `SNR-DATA-034` | warning | Infinite values were kept | Check whether the infinities are real; they sound at the range edge with an off-scale cue (03 §5). | A11Y-28 |
