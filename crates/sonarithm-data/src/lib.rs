@@ -16,6 +16,7 @@ pub mod codes;
 pub mod error;
 mod infer;
 pub mod meta;
+pub mod provenance;
 pub mod source;
 pub mod table;
 
@@ -24,6 +25,7 @@ pub use bundle::{
 };
 pub use error::{DataError, Limit};
 pub use meta::{Concept, FieldMeta, FieldType, Role, Unit};
+pub use provenance::{ProvenanceMix, RowProvenance};
 #[cfg(feature = "fs")]
 pub use source::read_file;
 pub use source::{CsvOptions, JsonOptions, Limits, Loaded, ReadOptions, read_bytes};

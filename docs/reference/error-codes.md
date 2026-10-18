@@ -54,6 +54,7 @@ Owner: `sonarithm-data`.
 | `SNR-DATA-036` | warning | Dates could be day-first or month-first, so they stayed text | Set `dateFormat` in the source options, for example `%d/%m/%Y`. | — |
 | `SNR-DATA-037` | info | A unit was read from the values or the field name | Declare the unit in `data.fields` if it is wrong. | — |
 | `SNR-DATA-040` | warning | A field metadata value cannot be read and was ignored | Fix the `snr.*` value in the file (03 §3 lists the allowed values) or declare the field in the spec's `data.fields`. | — |
+| `SNR-DATA-041` | error | The provenance columns are invalid | Write `__snr_prov` as class names (exact, vector, cv_estimate, ml_estimate, cloud_estimate, user_edited, derived, synthetic) and `__snr_conf` as numbers from 0 to 1 (03 §4). | — |
 | `SNR-DATA-050` | error | Unknown field | Name a field of the table; field names are case-sensitive. | — |
 
 ## SNR-RENDER
