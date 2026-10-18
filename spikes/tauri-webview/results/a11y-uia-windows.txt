@@ -1,0 +1,54 @@
+﻿UI Automation tree of a11y.html in WebView2 155 (Windows 11 build 26300), dumped with System.Windows.Automation on 2026-10-19, then the native route exercised (A02-T07 smoke test; not a screen-reader result).
+
+Type        Name                                                       LocalizedType AriaRole
+----        ----                                                       ------------- --------
+Pane                                                                   pane                  
+Pane        SONARITHM A02 spike: accessibility prototype               pane                  
+Pane                                                                   pane                  
+Pane        SONARITHM A02 spike: accessibility prototype - Web content region                
+Pane                                                                   region                
+Pane                                                                   region                
+Pane                                                                   region                
+Pane                                                                   region                
+Document    SONARITHM A02 spike: accessibility prototype               document              
+Group                                                                  header                
+Group                                                                  main                  
+Group       Announcement route                                         region                
+Group       Announcement route                                         radio group           
+RadioButton ARIA live region                                           radio button          
+RadioButton Native notification (Windows UI Automation)                radio button          
+RadioButton Both                                                       radio button          
+Group       Dataset                                                    region                
+DataGrid    Dataset                                                    tree grid             
+TreeItem    temps.csv, 20 rows                                         tree item             
+DataItem    Collapse temps.csv, 20 rows temps.csv, 20 rows             item                  
+Button      Collapse temps.csv, 20 rows                                button                
+TreeItem    Fields                                                     tree item             
+DataItem    Expand Fields Fields                                       item                  
+Button      Expand Fields                                              button                
+TreeItem    Tracks                                                     tree item             
+DataItem    Expand Tracks Tracks                                       item                  
+Button      Expand Tracks                                              button                
+Group       Transport                                                  region                
+ToolBar     Transport                                                  tool bar              
+Button      Play                                                       button                
+Button      Stop                                                       button                
+Separator                                                              separator             
+Button      Loop                                                       toggle button         
+Button      Where am I                                                 button                
+Group       Playback speed, times real time                            group                 
+StatusBar                                                              status                
+Slider      Playback speed, times real time                            slider                
+Group       Announcement tests                                         region                
+Button      Announce once                                              button                
+Button      Announce 10 rapid updates                                  button                
+Button      Assertive alert                                            button                
+Group       Chart explorer                                             region                
+Pane        Chart explorer: temperature over time                      app                   
+Group       Announcement log                                           region                
+List                                                                   list                  
+Pane                                                                   region                
+
+
+
+log: 5.330 s, polite, UIA notification: Compiled 4 tracks in 120 milliseconds
