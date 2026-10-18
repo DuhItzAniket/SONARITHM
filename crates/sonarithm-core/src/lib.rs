@@ -11,7 +11,14 @@
 #![forbid(unsafe_code)]
 #![deny(missing_docs)]
 
+pub mod codes;
+pub mod diagnostic;
+pub mod ids;
 pub mod math;
+pub mod provenance;
 pub mod units;
 
+pub use diagnostic::{Code, Diagnostic, Diagnostics, Severity, SpecPointer};
+pub use ids::{AnalyzerId, EngineId, Generation, RowRange, RowRef, RuleId, TableId, TrackId};
+pub use provenance::{Confidence, Provenance, ProvenanceClass};
 pub use units::{Cents, Db, Frames, Hz, Midi, Pan, SampleRate, Seconds};
