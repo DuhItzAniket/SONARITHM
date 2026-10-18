@@ -14,6 +14,11 @@
       <p>Throwaway prototypes for the A02 prototype gate. Results are written by the host.</p>
       <div role="group" aria-label="Benchmark suites">
         <button type="button" data-suite="ipc">Run IPC benchmark</button>
+        <button type="button" data-suite="webgl">Run WebGL2 benchmark</button>
+      </div>
+      <div class="plot">
+        <canvas id="plot" aria-hidden="true"></canvas>
+        <div id="playhead" class="playhead" aria-hidden="true"></div>
       </div>
       <p id="status" role="status"></p>
       <h2>Results</h2>

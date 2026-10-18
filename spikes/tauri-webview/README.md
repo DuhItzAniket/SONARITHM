@@ -53,3 +53,35 @@ Machine: the owner's laptop (i7-14650HX, 16 GB, Windows 11 build 26300, on AC po
 - **A strict CSP must allow the IPC origins.** With `default-src 'self'` and no `connect-src ipc: http://ipc.localhost`, Tauri silently falls back to its postMessage IPC: responses arrive as JSON arrays instead of `ArrayBuffer`s, and the binary path is lost. `tauri.conf.json` sets `connect-src` explicitly. The production CSP (09 §4) needs a test for this.
 
 macOS and Linux numbers come from the CI runners (workflow summary and artifacts). They are virtual machines, not reference hardware: Linux runs WebKitGTK under Xvfb with software rendering.
+
+## A02-T06: WebGL2 frame times (PB-08)
+
+`src/webgl.ts` draws into a WebGL2 canvas of 2016 × 630 device pixels (the page width at device-pixel ratio 1.75) and measures 600 animation frames per case:
+
+| Case | What it draws each frame |
+|---|---|
+| `waveform1M` | A 1,000,000-point line strip, fully redrawn every frame with a slow zoom and pan (the worst case) |
+| `playheadOver1M` | The same waveform drawn once; only the playhead moves (a CSS-transformed element over the canvas, notes/05 §6) |
+| `waveformM4` | The waveform reduced by M4 to one first/min/max/last quadruple per pixel column (8,064 points), redrawn every frame |
+| `spectrogram` | A 2048 × 512 magnitude texture (R8 ring buffer) with one new column uploaded per frame, through a 256-entry colour lookup |
+
+Per frame it records the `requestAnimationFrame` interval, the script time (draw calls and the playhead update) and, where `EXT_disjoint_timer_query_webgl2` exists, the GPU time of the draw calls. `--gpu high` and `--gpu low` pass `--force_high_performance_gpu` or `--force_low_power_gpu` to WebView2. The report's renderer string confirms which adapter rendered.
+
+### Results (Windows, 2026-10-19)
+
+The owner's laptop: a 2560 × 1600 panel at 60 Hz, driven by the Intel GPU. Windows' default adapter for WebView2 is the Intel UHD. Raw reports are in [`results/`](results/).
+
+| Case | Intel UHD (default and `--gpu low`): fps | frame p95 | script max | GPU p50 / p95 | RTX 4050 (`--gpu high`): fps | frame p95 | script max | GPU p50 / p95 |
+|---|---|---|---|---|---|---|---|---|
+| Full 1M redraw | **36.6–37.2** | 33.5 ms | 0.4 ms | 26.1–26.4 / 31.1–33.3 ms | 59.6 | 16.8 ms | 0.4 ms | 0.59 / 1.46 ms |
+| Playhead over static 1M | 59.7 | 16.8 ms | 0.5 ms | 0 / 0 ms | 60.0 | 17.3 ms | 0.2 ms | 0 / 0 ms |
+| M4 per pixel column | 60.0 | 16.8 ms | 0.5 ms | 1.68 / 1.77 ms | 60.0 | 17.2 ms | 0.4 ms | 0.23 / 0.31 ms |
+| Spectrogram 2048 × 512 | 60.0 | 16.8 ms | 0.4 ms | 1.70 / 1.84 ms | 60.0 | 17.1 ms | 0.6 ms | 0.19 / 0.35 ms |
+
+**PB-08 (60 fps playhead; ≤ 8 ms script per frame with a 1M-point series) is met in WebView2 on both GPUs** for the design of notes/05 §6: data drawn once or reduced in Rust, and a playhead that never redraws the data. Script time is at most 0.6 ms (8% of the budget), so the headroom rule needs no CPU-limited rerun. The frame rate is capped by the 60 Hz panel. Other observations:
+
+- **A full 1M-point redraw every frame does not reach 60 fps on the integrated GPU**: 37 fps, GPU-bound at 26 ms per frame. Continuous zoom over a raw 1M-point series must use the M4 path (09 §2 `view_get`), which costs the Intel GPU 1.7 ms per frame.
+- `--force_high_performance_gpu` selects the RTX 4050, and the default stays on the Intel GPU. The product can ask for the discrete GPU with that switch, at a battery cost; the integrated GPU already meets the budget with M4.
+- M4 in JavaScript took 3.6–4.3 ms for 1M points (once per zoom level); the product does it in Rust.
+
+Not measured here: WKWebView (macOS) and WebKitGTK (Linux, including NVIDIA). CI runners have no GPU, so those are owner or volunteer steps, listed in the gate report.
