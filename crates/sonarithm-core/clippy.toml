@@ -1,0 +1,26 @@
+# Clippy configuration for a crate whose output reaches the Score IR. Clippy uses the
+# nearest clippy.toml and does not merge it with the root one, so the first block repeats
+# the workspace settings (/clippy.toml). Keep the copies in sync.
+allow-unwrap-in-tests = true
+allow-expect-in-tests = true
+allow-dbg-in-tests = true
+allow-print-in-tests = true
+
+# The std float functions can differ in the last bits between platforms; the Score IR
+# must be byte-identical everywhere (ADR-0013). Use sonarithm_core::math instead.
+disallowed-methods = [
+    { path = "f64::exp", reason = "platform-dependent; use sonarithm_core::math::exp (ADR-0013)" },
+    { path = "f64::exp2", reason = "platform-dependent; use sonarithm_core::math::exp2 (ADR-0013)" },
+    { path = "f64::ln", reason = "platform-dependent; use sonarithm_core::math::ln (ADR-0013)" },
+    { path = "f64::log2", reason = "platform-dependent; use sonarithm_core::math::log2 (ADR-0013)" },
+    { path = "f64::log10", reason = "platform-dependent; use sonarithm_core::math::log10 (ADR-0013)" },
+    { path = "f64::powf", reason = "platform-dependent; use sonarithm_core::math::pow (ADR-0013)" },
+    { path = "f64::powi", reason = "platform-dependent; use sonarithm_core::math::pow (ADR-0013)" },
+    { path = "f64::sin", reason = "platform-dependent; use sonarithm_core::math::sin (ADR-0013)" },
+    { path = "f64::cos", reason = "platform-dependent; use sonarithm_core::math::cos (ADR-0013)" },
+    { path = "f64::tan", reason = "platform-dependent; add a wrapper to sonarithm_core::math (ADR-0013)" },
+    { path = "f64::exp_m1", reason = "platform-dependent; add a wrapper to sonarithm_core::math (ADR-0013)" },
+    { path = "f64::ln_1p", reason = "platform-dependent; add a wrapper to sonarithm_core::math (ADR-0013)" },
+    { path = "f64::log", reason = "platform-dependent; add a wrapper to sonarithm_core::math (ADR-0013)" },
+    { path = "f64::atan2", reason = "platform-dependent; add a wrapper to sonarithm_core::math (ADR-0013)" },
+]

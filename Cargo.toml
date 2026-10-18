@@ -45,6 +45,15 @@ sonarithm-export = { path = "crates/sonarithm-export", version = "0.0.0" }
 # `cargo deny check` (docs/engineering/supply-chain-and-licensing.md).
 anyhow = "1.0.100"          # apps/* and xtask only (coding-standards §4.1)
 cargo_metadata = "0.23.1"   # xtask check-deps
+# Pure-Rust maths for every Score-affecting transcendental function (ADR-0013). The default
+# `arch` feature only swaps in IEEE-exact instructions (sqrt, rounding), so results stay
+# identical on every platform.
+libm = "0.2.16"
+serde = { version = "1.0.228", features = ["derive"] }
+serde_json = "1.0.145"
+
+# Test-only crates (dev-dependencies).
+proptest = "1.9.0"
 
 [workspace.lints.rust]
 unsafe_code = "deny"                  # backstop; crates on the unsafe register opt in locally (section 5)
