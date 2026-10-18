@@ -13,6 +13,7 @@
 
 pub mod bundle;
 pub mod codes;
+pub mod downsample;
 pub mod error;
 mod infer;
 pub mod meta;
@@ -24,6 +25,7 @@ pub mod transform;
 pub use bundle::{
     Annotation, AnnotationKind, BundleId, DataBundle, Format, SourceDescriptor, SourceKind,
 };
+pub use downsample::{TileCache, XRange, lttb, m4};
 pub use error::{DataError, Limit};
 pub use meta::{Concept, FieldMeta, FieldType, Role, Unit};
 pub use provenance::{ProvenanceMix, RowProvenance};

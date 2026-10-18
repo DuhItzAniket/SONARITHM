@@ -5,7 +5,7 @@
 //!
 //! Codes are grouped by tens: 001–009 sources and limits; 010–019 delimited text; 020–029
 //! JSON and spreadsheets; 030–039 inference; 040–049 metadata and provenance; 050–059
-//! transforms. A released code is never reused.
+//! transforms; 060–069 views. A released code is never reused.
 
 use sonarithm_core::codes::{Area, CodeInfo, CodeStatus, CodeTable, validate};
 use sonarithm_core::diagnostic::Severity;
@@ -296,6 +296,14 @@ code!(
     []
 );
 
+code!(
+    /// A downsampled view request cannot be drawn.
+    INVALID_VIEW, "SNR-DATA-060", Error,
+    "The view cannot be drawn",
+    "Ask for a finite, increasing x range and a width of at least one pixel.",
+    []
+);
+
 /// Every `SNR-DATA` code, in ascending order.
 pub const CODES: CodeTable = CodeTable {
     area: Area::Data,
@@ -335,6 +343,7 @@ pub const CODES: CodeTable = CodeTable {
         EXPRESSION_BUDGET,
         INVALID_TRANSFORM,
         TRANSFORM_APPLIED,
+        INVALID_VIEW,
     ],
 };
 

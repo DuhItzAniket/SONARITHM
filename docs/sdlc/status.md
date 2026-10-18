@@ -23,7 +23,7 @@ Status values: `Not started` · `In progress` · `In review` · `Done` · `Block
 | A | A01 | Repository bootstrap and governance | **Done** | 100% | 2026-10-19; [phase review](reviews/A01-phase-review.md), [retro](retrospectives/A01-retro.md). See [A01 tasks](#a01-tasks) |
 | A | A02 | Technical spikes and prototype gate | **In review** | ≈80% | All spikes built and measured on Windows and CI; gate report draft: Conditional go recommended. PB-01 fails on Windows shared mode; screen-reader, macOS and Linux manual steps pending. See [A02 tasks](#a02-tasks) |
 | A | A03 | Core types, Spec v0.1, Score IR | **In progress** | ≈15% | T01 merged (#4); RFC-0001 accepted (T05); T02–T04 in review. See [A03 tasks](#a03-tasks) |
-| A | A04 | Data layer | **In progress** | ≈70% | T01–T07 in review. See [A04 tasks](#a04-tasks) |
+| A | A04 | Data layer | **In progress** | ≈80% | T01–T08 in review. See [A04 tasks](#a04-tasks) |
 | A | A05 | Render engine, audio backend, export | **In progress** | ≈5% | T01, T03 and T04 in review. See [A05 tasks](#a05-tasks) |
 | A | A06 | NUMISONA v1 | **In progress** | ≈10% | T01 (scales) and T02 (pitch spaces) in review. See [A06 tasks](#a06-tasks) |
 | A | A07 | CLI, Python, v0.1.0-alpha | Not started | 0% | |
@@ -114,7 +114,7 @@ Work runs in a separate agent session, in parallel with A03, through small PRs i
 | A04-T05 Type, role and concept inference | In review | Corpus of 27 files, 74 fields: precision 100% type, 98.5% role (one known miss), 100% concept |
 | A04-T06 Provenance columns and propagation | In review | Canonical `__snr_prov`/`__snr_conf` at ingest; property tests for weakest class and lowest confidence; propagation table in 03 §4 |
 | A04-T07 Transforms with a sandboxed rhai subset | In review | All eight transforms with unit and property tests; rhai subset fuel-limited (10 000 operations per row); provenance propagated per 03 §4 |
-| A04-T08 M4 and LTTB downsampling; tile cache | Not started | |
+| A04-T08 M4 and LTTB downsampling; tile cache | In review | M4 pixel-exact against the full polyline and the paper's reference query (property test); LTTB keeps ends and threshold; LRU tile cache per generation |
 | A04-T09 Data fingerprinting | Not started | |
 | A04-T10 Benchmarks (PB-05); CSV and XLSX fuzzers | Not started | |
 
