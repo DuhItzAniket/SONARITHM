@@ -11,6 +11,8 @@
 #![deny(missing_docs)]
 
 pub mod codes;
+pub mod pipeline;
 pub mod registry;
 
+pub use pipeline::{Compiled, Compiler, CompilerData, Failure};
 pub use registry::build_registry;
