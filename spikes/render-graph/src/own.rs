@@ -207,7 +207,13 @@ impl GraphProcessor for OwnProcessor {
             mr[i] *= MASTER_GAIN;
         }
         self.limiter.process(&mut ml[..frames], &mut mr[..frames]);
-        for (i, frame) in out.as_chunks_mut::<2>().0.iter_mut().take(frames).enumerate() {
+        for (i, frame) in out
+            .as_chunks_mut::<2>()
+            .0
+            .iter_mut()
+            .take(frames)
+            .enumerate()
+        {
             frame[0] = ml[i];
             frame[1] = mr[i];
         }
@@ -222,18 +228,7 @@ impl GraphProcessor for OwnProcessor {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::score::benchmark;
-
-    /// The first `frames` of a 2 s benchmark Score (0.1 s under Miri, which is slow).
-    fn short_score() -> crate::score::Score {
-        let frames = if cfg!(miri) { 4_800 } else { 96_000 };
-        let mut score = benchmark(48_000, 2, 7);
-        for t in &mut score.tracks {
-            t.notes.retain(|n| n.start < frames);
-        }
-        score.frames = frames;
-        score
-    }
+    use crate::score::short_score;
 
     fn render(block: usize, seek: Option<u64>) -> Vec<f32> {
         let score = short_score();

@@ -11,7 +11,8 @@
 | `src/score.rs` | The benchmark Score: 4 tracks, 10,000 notes over 60 s at 48 kHz (the DS-006 shape), from SplitMix64 seed 1729 |
 | `src/voice.rs` | DSP shared by every graph: voice (sine, triangle, PolyBLEP square; ramps per SDR-22; constant-power pan), oldest-first stealing, master peak limiter |
 | `src/own.rs` | The owned graph: a voice pool per track, four fixed buses, master limiter, a scheduler that splits each block at event onsets |
-| `src/main.rs` | The bench: `offline`, `realtime`, `selftest-alloc` |
+| `src/fw.rs` | Firewheel 0.14 behind the same contract: a synth node per track, a gain node per bus, a master node, events scheduled through `FirewheelContext` |
+| `src/main.rs` | The bench: `offline`, `realtime`, `null` (compares two WAV files), `selftest-alloc` |
 
 ### The draft contract
 
@@ -34,8 +35,9 @@ The contract is split in two because a graph engine with its own control context
 ## Run it
 
 ```bash
-cargo run --release -- offline --graph own --block 256 --seconds 60 [--math std] [--wav out.wav]
-cargo run --release -- realtime --graph own --block 256 --seconds 120 [--audible]
+cargo run --release -- offline --graph own|firewheel --block 256 --seconds 60 [--math std] [--wav out.wav]
+cargo run --release -- realtime --graph own|firewheel --block 256 --seconds 120 [--audible]
+cargo run --release -- null a.wav b.wav
 cargo run -- selftest-alloc
 cargo test --release
 cargo +nightly miri test
@@ -70,4 +72,45 @@ A deadline miss is a callback whose processing took longer than its period. A la
 
 - `cargo test --release`: 3 tests pass. The output is bit-identical at block sizes 64, 256 and 1000, which shows sample-accurate dispatch. A seek converges to the full render once earlier notes end. A seek to 0 replays all 10,000 events.
 - A debug build runs the whole 10 s offline render inside `assert_no_alloc` without aborting; `selftest-alloc` aborts as intended (exit 127). The A05 rule "no allocation on the RT thread" therefore holds for `process`.
-- Miri: see A02-T03, which runs it on both graphs.
+- Miri: see the comparison below.
+
+## A02-T03: Firewheel 0.14 behind the same contract
+
+`src/fw.rs` builds the benchmark as a Firewheel graph. Each track is a custom node holding the same voice pool. Bus gains and the master limiter are custom nodes (same code). Notes are `CustomBytes` events scheduled at exact sample times through `FirewheelContext::schedule_event_for`, 200 ms ahead of the playhead. The bench drives `FirewheelProcessor::process` itself, from the offline loop or a cpal callback, so no Firewheel backend is involved. Firewheel features: `std`, `scheduled_events`; default features (cpal backend, sampler, Symphonium) are off.
+
+### Comparison (Windows, 2026-10-19, same machine and builds as above)
+
+| Criterion | Owned graph | Firewheel 0.14.0 |
+|---|---|---|
+| Output | Reference | **Bit-identical** to the owned graph: null residual −∞ over 5,760,000 samples (`null`), also a unit test |
+| Offline real-time factor, 128 / 256 / 512 frames (median of 3) | 349× / 361× / 352× | 331× / 337× / 332× |
+| CPU per 256-frame block, p50 / p99 | 14.4 / 24.0 µs | 15.5 / 25.4 µs |
+| Control-thread work over the 60 s render | 0.3 ms | 1.8 ms (scheduling events and `update`) |
+| Real time, 120 s, all cores: p99 per callback, deadline misses, late callbacks | 85.7 µs, 0, 0 | 85.4 µs, 0, 0 |
+| Real time, 120 s, 4 E-cores | 151.5 µs, 0, 7 | 124.0 µs, 0, 12 |
+| Allocation in `process` (debug, `assert_no_alloc`) | none | none, after setting `BufferOutOfSpaceMode::Panic`; the default mode, `AllocateOnAudioThread`, allocates on the audio thread when an event buffer fills |
+| Code we write for this benchmark (non-blank, non-comment lines) | 190 (graph and scheduler; tests excluded) | 240 (node boilerplate, event encoding, feeding, seek re-anchoring) |
+| Third-party code added | none beyond `libm` | 43 crates, including `bevy_platform`, `ringbuf`, `thunderdome`, `triple_buffer` and two `toml_edit` versions. Firewheel itself is 28,100 lines with 81 `unsafe` occurrences |
+| Licences (`cargo deny check licenses`, repository policy) | pass | pass (MIT OR Apache-2.0 throughout) |
+| Advisories (`cargo deny check advisories`) | ok | ok |
+| Miri (see below) | Block-size test passes; other tests still running | The Firewheel test passes with Miri's own allocator; a Stacked Borrows report appears only with the `assert_no_alloc` allocator, inside std's Windows `System::dealloc` |
+| Seek | One atomic store; the processor binary-searches the schedule | Cancel scheduled events, send an all-notes-off event, re-anchor the Score on Firewheel's clock (which only moves forward), then refill |
+
+### Ergonomics notes
+
+- **The threading model matches ours.** `FirewheelContext` (control) and `FirewheelProcessor` (audio thread) are the split of 06 §2. The context is `!Send`: it must live on the thread that created it. This is why the draft contract's control half has no `Send` bound.
+- **Firewheel brings graph compilation, mixing and sample-accurate event scheduling.** Events land at their exact sample: Firewheel splits the block into sub-chunks at event times, which the bit-identical output shows. It brings no synthesis voices ("built-in synth instruments" are a stated non-goal), so the voice pool, envelopes and stealing are ours either way.
+- **The real-time defaults need care.** `buffer_out_of_space_mode` defaults to allocating on the audio thread, and `scheduled_event_capacity` (default 512) caps how far ahead the control thread can schedule.
+- **A note costs one event.** `CustomBytes([u8; 36])` carries a note without heap allocation; larger payloads need `Custom(OwnedGc<Box<dyn Any>>)`.
+- **Pre-1.0 churn.** 0.14 shipped in September 2026; upstreaming into Bevy may reshape the API (notes/04 §1).
+
+### Miri
+
+`cargo +nightly miri test` (nightly 1.101.0, 2026-10-17, target `x86_64-pc-windows-msvc`). Under `cfg(miri)` the tests use 0.1 s of the benchmark Score, because a 0.1 s render already takes minutes under Miri; the Firewheel test compares Firewheel against the owned graph on that Score. Results so far:
+
+| Run | Allocator | Result |
+|---|---|---|
+| Default | `assert_no_alloc::AllocDisabler` wrapping `System` | `output_is_independent_of_block_size` passes. `firewheel_matches_owned_graph` stops with a Stacked Borrows error in std's `sys::alloc::windows::dealloc` (it reads the header stored before an over-aligned allocation). It happens while `FirewheelContext` drops a `ringbuf` buffer, and it is reached through the custom global allocator |
+| `RUSTFLAGS="--cfg spike_miri_system_alloc"` | Miri's built-in allocator (no custom global allocator) | `firewheel_matches_owned_graph` **passes**; the owned-graph tests are still running |
+
+So the one report is not attributable to Firewheel's code or to ours: it needs a custom global allocator that forwards to `System` on Windows. A rerun under Tree Borrows classifies it; until then it is recorded as `TODO(verify)` in the gate report. Firewheel's own `unsafe` (81 occurrences) is exercised only as far as this benchmark reaches it (graph compile, scheduling, processing, drop); the audit's "nontrivial UB" (notes/04 §1) did not show up in this path.
