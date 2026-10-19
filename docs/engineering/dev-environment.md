@@ -143,6 +143,14 @@ All commands run from the repository root unless stated. Available after A01; th
 | `pytest` (from `bindings/python`) | Runs the Python tests against the installed module | A07 |
 | `pnpm -C apps/desktop tauri dev` | Runs the desktop app with the frontend dev server and the Rust host | B01 |
 
+## Disk usage
+
+Rust build output in `target/` grows quickly. Every worktree has its own, and cargo keeps outdated artifacts after each rebase. On 2026-10-19, four agent worktrees held about 70 GB, most of it debug info and incremental caches ([F-090](../research-paper/findings-log.md)).
+
+- **Debug info is trimmed by default.** The root `Cargo.toml` builds our crates with line tables only, so backtraces still show file and line, and builds dependencies without debug info. This roughly halves a clean test build (982 MB to 528 MB at the time of the change). For full debug info in a debugger session, build with `--config 'profile.dev.debug="full"' --config 'profile.dev.package."*".debug="full"'`.
+- **Incremental caches are disposable.** Delete `target/*/incremental` (and `target/<triple>/*/incremental`) at any time. The next build is slower once.
+- **Clean up after a branch or phase lands.** Run `cargo clean` in its worktree. Fuzz targets keep their own target directory: `cargo clean --manifest-path crates/<crate>/fuzz/Cargo.toml`.
+
 ## Audio devices during development
 
 - **Use headphones.** Closed-back headphones avoid feedback during loopback tests, keep the sound to yourself and make clicks audible (every note needs onset and offset ramps, SDR-22).

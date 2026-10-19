@@ -209,6 +209,7 @@ manifest, benchmark row or EXP-### that carries the evidence. Set Status to
 <!--
 A02 (spikes) uses F-030 to F-049 so that it can append in parallel with A03, which
 continues at F-021. IDs F-021 to F-029 belong to A03 entries.
+Cross-phase build and repository infrastructure (the coordinator) uses F-090 to F-099.
 -->
 
 ### F-019 · serde_json's default float parser can be one ULP off, which breaks full-precision round trips
@@ -399,4 +400,15 @@ continues at F-021. IDs F-021 to F-029 belong to A03 entries.
 - **Evidence:** [#107](https://github.com/DuhItzAniket/SONARITHM/pull/107), `spikes/tauri-webview/results/a11y-uia-windows.txt`
 - **Evidence level / confidence:** EV-D / Weak (an automated tree dump, not a screen-reader session)
 - **Affects:** ADR-0003; OD-05; A11Y-17; 08 §4–5; B02 tree component
+- **Papers:** none yet
+
+### F-090 · Debug info and incremental caches made up most of 70 GB of build output across four agent worktrees
+
+- **Date:** 2026-10-19 · **Phase:** A05 · **Type:** engineering · **Status:** new
+- **Statement:**
+  - Four parallel agent worktrees held about 70 GB of `target/` output after a day of stacked rebases. The largest was 37.3 GB: 20.7 GB in `debug/deps` and 13.0 GB in `debug/incremental`. Incremental caches alone were about 25 GB across the three largest worktrees.
+  - On a clean build of the workspace test binaries at commit 43bc462 (Windows, `CARGO_INCREMENTAL=0`), line-table debug info for workspace crates and none for dependencies cut the build from 982 MB to 528 MB. PDB files went from 370 MB to 135 MB and rlibs from 444 MB to 228 MB. Wall time was 33 s against 25 s, from one run each.
+- **Evidence:** this PR; scratch measurement with `cargo test --workspace --no-run` into two target directories, the second with `--config 'profile.dev.debug="line-tables-only"' --config 'profile.dev.package."*".debug=false'`; robocopy size listing of the worktrees before cleanup
+- **Evidence level / confidence:** EV-D / Moderate (one machine, one run per configuration)
+- **Affects:** dev-environment.md "Disk usage"; root `Cargo.toml` profiles
 - **Papers:** none yet
