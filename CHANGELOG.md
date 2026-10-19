@@ -33,5 +33,6 @@ From phase A07, release-plz maintains this file: it generates each release's ent
   - `sonarithm-dsp` envelopes: ADSR with raised-cosine onset and offset ramps of at least 5 ms, about 40 ms for notes (SDR-22); retriggers and releases never step.
   - `sonarithm-dsp` filters (one-pole low-pass; RBJ low-, high- and band-pass), a constant-power panner and a linear parameter smoother (10 ms).
   - `sonarithm-render` plan builder: a Score becomes a `RenderPlan` in frames, with resolved frequencies, gains, pan gains, instruments and voice-pool sizes; unknown instruments raise `SNR-RENDER-001` and fall back to the mallet preset.
+  - `sonarithm-render` render graph: preallocated voice pools, data, context, earcon and monitoring buses, a sample-accurate scheduler and a transport (play, pause, stop, seek, loop, speed and live cues) with crossfades instead of cuts. Earcon sounds are provisional until B03.
 
 [Unreleased]: https://github.com/DuhItzAniket/SONARITHM/commits/main
