@@ -1971,8 +1971,10 @@ dependencies = [
 name = "sonarithm-dsp"
 version = "0.0.0"
 dependencies = [
+ "ebur128",
  "libm",
  "sonarithm-core",
+ "thiserror",
 ]
 
 [[package]]

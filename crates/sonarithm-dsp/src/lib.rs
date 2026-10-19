@@ -22,6 +22,8 @@
 pub mod env;
 pub mod filter;
 pub mod limiter;
+pub mod loudness;
+pub mod meter;
 pub mod osc;
 pub mod pan;
 pub mod smooth;
@@ -34,6 +36,8 @@ mod testing;
 pub use env::{Adsr, AdsrParams, Stage, note_ramp};
 pub use filter::{Biquad, BiquadKind, OnePole};
 pub use limiter::TruePeakLimiter;
+pub use loudness::Compensation;
+pub use meter::{Loudness, LoudnessMeter};
 pub use osc::{Oscillator, Waveform, sine_turns};
 pub use pan::PanGains;
 pub use smooth::LinearSmoother;

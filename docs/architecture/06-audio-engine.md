@@ -75,7 +75,7 @@ flowchart LR
 | Granular | Custom node: grain pool, density-driven scheduler, Hann windows | SDR-32; D01 |
 | Audifier | Custom node: resampling playback of `Arc<[f32]>` with rubato | SDR-31; C03 |
 | Modal | Custom resonator bank (excitation → damped sinusoids) | SDR-33; D02 |
-| Loudness compensation | Per-voice gain from an ISO 226:2023-derived table indexed by pitch | SDR-24; precomputed in the plan |
+| Loudness compensation | Per-voice gain from an ISO 226:2023-derived table indexed by pitch | SDR-24; precomputed in the plan. A05: ISO 226:2023 Formula (1) with Table 1 at 60 phon (provisional), normalized so the least sensitive pitch of the track's range plays at 0 dB and nothing is boosted; skipped if the Score's header lists a loudness shaper |
 | Spatializer | Constant-power pan; ITD/ILD; SOFA HRTF convolution via sofar (D03) | SDR-30 |
 | Limiter | Look-ahead true-peak limiter on master | Hearing safety |
 

@@ -302,3 +302,58 @@ proptest! {
         prop_assert_eq!(polyphony(&events), brute_force_polyphony(&events));
     }
 }
+
+fn tone_gains(plan: &RenderPlan) -> Vec<f32> {
+    plan.tracks[0]
+        .events
+        .iter()
+        .filter_map(|event| match event.kind {
+            EventKind::Tone(tone) => Some(tone.gain),
+            _ => None,
+        })
+        .collect()
+}
+
+fn two_notes() -> Score {
+    let mut header = ScoreHeader::new(SpecVersion::V0_1, Mode::Analysis, 0);
+    header.duration = Seconds(1.0);
+    let mut score = Score::new(header);
+    // 220 Hz and 880 Hz: the 60-phon contour needs about 8 dB more at 220 Hz.
+    score.tracks = vec![track(
+        "t",
+        TrackRole::Data,
+        "sine",
+        vec![note(0.0, 0.4, -1_200.0), note(0.5, 0.4, 1_200.0)],
+    )];
+    score
+}
+
+/// SDR-24 (DEFAULT): equal-loudness compensation is on, attenuates the more sensitive
+/// pitch and never boosts.
+#[test]
+fn sdr_24_compensation_is_on_by_default() {
+    let plan = RenderPlan::build(&two_notes(), &PlanConfig::new(RATE))
+        .unwrap()
+        .plan;
+    let gains = tone_gains(&plan);
+    assert_eq!(gains[0], 1.0, "the least sensitive pitch plays at 0 dB");
+    let db = 20.0 * sonarithm_core::math::log10(f64::from(gains[1]));
+    assert!((-10.0..-6.0).contains(&db), "880 Hz at {db:.2} dB");
+}
+
+#[test]
+fn sdr_24_compensation_can_be_turned_off_and_is_not_applied_twice() {
+    let off = PlanConfig::new(RATE).without_compensation();
+    let plan = RenderPlan::build(&two_notes(), &off).unwrap().plan;
+    assert_eq!(tone_gains(&plan), [1.0, 1.0]);
+    let mut shaped = two_notes();
+    shaped.header.shapers = vec![sonarithm_core::ShaperStage::Loudness];
+    let plan = RenderPlan::build(&shaped, &PlanConfig::new(RATE))
+        .unwrap()
+        .plan;
+    assert_eq!(
+        tone_gains(&plan),
+        [1.0, 1.0],
+        "the compiler's loudness shaper already ran"
+    );
+}
