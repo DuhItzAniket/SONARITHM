@@ -1,0 +1,7 @@
+# Seeds for failure cases proptest has generated in the past. It is
+# automatically read and these particular cases re-run before any
+# novel cases are generated.
+#
+# It is recommended to check this file in to source control so that
+# everyone who runs the test benefits from these saved cases.
+cc c626747690c73faeca7133336881d1d49bb4fada2fbc7ab92689f214a885c080 # shrinks to score = Score { header: ScoreHeader { ir_version: 1, spec_version: SpecVersion { major: 0, minor: 1 }, spec_hash: Sha256Digest([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]), data_fingerprint: Sha256Digest([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]), seed: 110889164652636009, mode: Analysis, duration: Seconds(113.68513545096806), engines: {}, shapers: [Lint] }, tracks: [ScoreTrack { id: TrackId("t"), role: Data, engine: EngineId("numisona"), instrument: InstrumentRef("mallet"), gain: Db(-6.0), pan: Pan(0.6043670568512063), pitch_range: Some(PitchRange { low: Cents(0.0), high: Cents(3377.1426227210136) }), events: [Note(Note { t: Seconds(45.106933347291076), dur: Seconds(0.11368513545096806), pitch: Cents(0.0), gain: Db(0.0), pan: Pan(0.0), timbre: Timbre { preset: None, brightness: 0.5 }, taps: 1, src: None, conf: None })] }], markers: [] }

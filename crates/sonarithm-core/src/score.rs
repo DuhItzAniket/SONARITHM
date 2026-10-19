@@ -9,9 +9,12 @@
 //!
 //! Event kinds for audification, grains and model excitation are added when their engines
 //! land (C03, D01, D02); new kinds and fields are additive and bump [`IR_VERSION`].
-//! [`Score::check`] verifies the invariants of 05 §4.2.
+//! [`Score::check`] verifies the invariants of 05 §4.2, and the [`canonical`] and
+//! [`review`] modules write its two serialized forms (05 §4.3).
 
+pub mod canonical;
 pub mod invariants;
+pub mod review;
 #[cfg(test)]
 mod tests;
 

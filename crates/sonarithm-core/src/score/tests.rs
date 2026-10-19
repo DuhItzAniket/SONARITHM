@@ -1,17 +1,19 @@
 // SPDX-FileCopyrightText: 2026 SONARITHM contributors
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
-//! Invariant tests for the Score IR (05 §4.2).
+//! Invariant, canonical-form and review-form tests for the Score IR (05 §4.2, §4.3).
 
 use proptest::prelude::*;
 
 use super::invariants::Location;
+use super::review::ReviewOptions;
 use super::*;
 use crate::ids::{Generation, TableId};
 use crate::testing::valid_score;
 use crate::units::Hz;
 
-/// A small valid Score whose values come from unit conversions.
+/// A small Score whose values come from unit conversions, so the canonical hash below
+/// also checks that those conversions are identical on every platform.
 fn fixture() -> Score {
     let mut header = ScoreHeader::new(SpecVersion::V0_1, Mode::Analysis, 1729);
     header.duration = Seconds(2.0);
@@ -71,6 +73,61 @@ fn fixture() -> Score {
 #[test]
 fn fixture_satisfies_the_invariants() {
     assert_eq!(fixture().check(), Ok(()));
+}
+
+/// Invariant 6 (H-08): the canonical bytes, and so this hash, are the same on every OS.
+/// CI runs this test on Linux, macOS and Windows. A change here is a determinism bug or an
+/// intentional format change that bumps `IR_VERSION`.
+#[test]
+fn canonical_hash_is_identical_on_every_platform() {
+    let score = fixture();
+    assert_eq!(
+        score.canonical_hash().unwrap().to_string(),
+        "fccb2f16ce20217bd166776552f565a397166237b148b2c965249933b71c0e58"
+    );
+}
+
+#[test]
+fn canonical_form_is_compact_json_in_declaration_order() {
+    let mut score = Score::new(ScoreHeader::new(SpecVersion::V0_1, Mode::Analysis, 7));
+    score.header.duration = Seconds(0.5);
+    let text = String::from_utf8(score.canonical_json().unwrap()).unwrap();
+    assert_eq!(
+        text,
+        concat!(
+            r#"{"header":{"ir_version":1,"spec_version":"0.1","#,
+            r#""spec_hash":"0000000000000000000000000000000000000000000000000000000000000000","#,
+            r#""data_fingerprint":"0000000000000000000000000000000000000000000000000000000000000000","#,
+            r#""seed":7,"mode":"analysis","duration":0.5,"engines":{},"shapers":[]},"#,
+            r#""tracks":[],"markers":[]}"#
+        )
+    );
+}
+
+#[test]
+fn a_score_that_breaks_an_invariant_has_no_canonical_form() {
+    let mut score = fixture();
+    score.header.duration = Seconds(f64::NAN);
+    assert!(matches!(
+        score.canonical_json(),
+        Err(canonical::CanonicalError::Invariant(_))
+    ));
+}
+
+#[test]
+fn review_form_rounds_for_legible_diffs() {
+    insta::assert_snapshot!(fixture().review_json(&ReviewOptions::default()));
+}
+
+#[test]
+fn review_form_summarizes_long_tracks() {
+    let mut score = fixture();
+    let options = ReviewOptions {
+        max_events: 3,
+        edge_events: 1,
+    };
+    score.markers.clear();
+    insta::assert_snapshot!(score.review_json(&options));
 }
 
 fn first_event_mut(score: &mut Score) -> &mut ScoreEvent {
@@ -164,6 +221,20 @@ proptest! {
     #[test]
     fn generated_scores_satisfy_the_invariants(score in valid_score()) {
         prop_assert_eq!(score.check(), Ok(()));
+    }
+
+    /// Invariant 6 at the format level: the canonical form round-trips to the same value
+    /// and the same bytes, and serializing twice gives identical bytes.
+    #[test]
+    fn canonical_form_round_trips_byte_for_byte(score in valid_score()) {
+        let bytes = score.canonical_json().unwrap();
+        let back: Score = serde_json::from_slice(&bytes).unwrap();
+        prop_assert_eq!(&back, &score);
+        prop_assert_eq!(back.canonical_json().unwrap(), bytes);
+        prop_assert_eq!(
+            score.review_json(&ReviewOptions::default()),
+            back.review_json(&ReviewOptions::default())
+        );
     }
 
     /// Invariant 4 / SDR-15 at the range level: mirroring stays in range and mirroring
