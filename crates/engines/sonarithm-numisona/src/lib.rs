@@ -21,6 +21,7 @@
 #![deny(missing_docs)]
 
 pub mod codes;
+pub mod density;
 pub mod encode;
 pub mod examples;
 pub mod import;

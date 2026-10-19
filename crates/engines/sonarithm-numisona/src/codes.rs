@@ -110,6 +110,14 @@ code!(
 );
 
 code!(
+    /// The experimental `auto` mark chose tones or a glide.
+    AUTO_MARK, "SNR-ENG-011", Info,
+    "Experimental automatic mark",
+    "`auto` rests on an untested inference; choose `tone` or `glide` explicitly for studies.",
+    ["SDR-20"]
+);
+
+code!(
     /// `polarity: "auto"` was resolved from the field's concept.
     POLARITY_FROM_CONCEPT, "SNR-ENG-020", Info,
     "Polarity taken from the concept table",
@@ -309,6 +317,7 @@ pub const CODES: CodeTable = CodeTable {
         TIMBRE_CATEGORIES,
         PSYCHOPHYSICAL,
         MISSING_VALUES,
+        AUTO_MARK,
         POLARITY_FROM_CONCEPT,
         FLAGGED_CONCEPT,
         UNKNOWN_CONCEPT,

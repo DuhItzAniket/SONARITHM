@@ -57,6 +57,7 @@ use sonarithm_spec::values::{ChannelRange, ChannelValue, UnitRange, UnitValue};
 use self::channels::RangeOrigin;
 use self::columns::Column;
 use crate::codes;
+use crate::density::{self, AutoMark};
 use crate::pitch::{DEFAULT_RANGE_HZ, PitchMap, PitchSpace, PitchValue};
 use crate::polarity::{
     ConceptOrigin, ConceptTable, Polarity, PolarityChoice, PolarityProfile, PolarityRequest,
@@ -113,7 +114,8 @@ const ROW_COLUMN: &str = "__numisona_row";
 /// How often (in rows) the encoder checks for cancellation.
 const CANCEL_EVERY: usize = 8192;
 
-/// NUMISONA: registers the `tone` and `glide` encoders (07 summary matrix). The polarity
+/// NUMISONA: registers the `tone`, `glide` and `auto` encoders (07 summary matrix; `auto`
+/// is experimental, SDR-20). The polarity
 /// profile holds the listener's polarity choices (SDR-15, SDR-38); it is part of what the
 /// Score depends on, and every choice it makes is reported as a diagnostic.
 #[derive(Clone, Debug, Default)]
@@ -162,9 +164,10 @@ impl<D: Borrow<DataBundle> + 'static> Engine<D> for Numisona {
         let encoder: Arc<dyn Encoder<D>> = Arc::new(TrackEncoder {
             profile: Arc::clone(&self.profile),
         });
-        registrar.encoder(&[MarkKind::Tone, MarkKind::Glide], &encoder)?;
+        registrar.encoder(&[MarkKind::Tone, MarkKind::Glide, MarkKind::Auto], &encoder)?;
         registrar.default_encoder(MarkKind::Tone)?;
-        registrar.default_encoder(MarkKind::Glide)
+        registrar.default_encoder(MarkKind::Glide)?;
+        registrar.default_encoder(MarkKind::Auto)
     }
 }
 
@@ -312,7 +315,14 @@ impl Run<'_> {
         let channels = self.track.channels.clone();
         let pitch = self.pitch(channels.pitch.as_ref(), &timeline)?;
         out.pitch_range = pitch.range;
-        let glide = self.track.mark == Mark::Glide;
+        let glide = match self.track.mark {
+            Mark::Glide => true,
+            Mark::Auto => self.auto_mark(&timeline) == AutoMark::Glide,
+            _ => false,
+        };
+        if !glide {
+            self.lint_pace(&timeline.onsets);
+        }
         let loudness = self.loudness(channels.loudness.as_ref(), &timeline)?;
         let pan = self.scalar(
             ChannelName::Pan,
@@ -522,13 +532,34 @@ impl Run<'_> {
                 }
             }
         };
-        self.lint_pace(&onsets);
         Ok(Timeline { rows, onsets, step })
+    }
+
+    /// SDR-20 (INFER, experimental): `auto` plays tones up to about 10 events per second
+    /// and a glide above; every use is reported as experimental.
+    fn auto_mark(&mut self, timeline: &Timeline) -> AutoMark {
+        let mark = density::choose(&timeline.onsets);
+        let rate = density::events_per_second(&timeline.onsets).map_or_else(
+            || "no measurable rate".to_owned(),
+            |rate| format!("{rate:.1} events per second"),
+        );
+        let played = match mark {
+            AutoMark::Tone => "tones",
+            AutoMark::Glide => {
+                "a glide (audification, CURVASONA, and grain textures, TONALENS, are not in this build)"
+            }
+        };
+        let message = format!(
+            "`auto` is experimental (SDR-20 is an untested inference, hypothesis H-02): the data comes at {rate}, so it plays as {played}; the switch is above {} events per second.",
+            density::GLIDE_ABOVE_EVENTS_PER_S
+        );
+        self.report(&codes::AUTO_MARK, &message, self.at.key("mark"));
+        mark
     }
 
     /// SDR-19: discrete marks above about 8 points per second.
     fn lint_pace(&mut self, onsets: &[f64]) {
-        if self.track.mark != Mark::Tone || onsets.len() < 2 {
+        if onsets.len() < 2 {
             return;
         }
         let span = onsets[onsets.len() - 1] - onsets[0];
