@@ -92,6 +92,14 @@ pub enum DataError {
         /// What was found instead.
         found: &'static str,
     },
+    /// The workbook has no sheet with this name or position.
+    #[error("the workbook has no sheet {sheet} ({available} sheets)")]
+    SheetNotFound {
+        /// The sheet asked for (a name, or `#n` for a position).
+        sheet: String,
+        /// How many sheets the workbook has.
+        available: usize,
+    },
     /// A source option has a value that cannot be used.
     #[error("the `{option}` option is invalid: {reason}")]
     InvalidOption {
@@ -177,6 +185,13 @@ impl DataError {
                     "The JSON at `{}` is {found}, not a table. Point `pointer` at an array of \
                      records, an array of rows or an object of equal-length arrays.",
                     if pointer.is_empty() { "/" } else { pointer }
+                ),
+            ),
+            Self::SheetNotFound { sheet, available } => (
+                &codes::SHEET_NOT_FOUND,
+                format!(
+                    "The workbook has no sheet `{sheet}`; it has {available} sheet(s). Check \
+                     `sheet` (a name, or a position counted from 0)."
                 ),
             ),
             Self::InvalidOption { option, reason } => (

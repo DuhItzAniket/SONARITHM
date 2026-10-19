@@ -137,6 +137,22 @@ code!(
 );
 
 code!(
+    /// The sheet and range that were read.
+    SHEET_READ, "SNR-DATA-022", Info,
+    "A spreadsheet sheet was read",
+    "Set `sheet` and `range` in the source if the wrong cells were read.",
+    []
+);
+
+code!(
+    /// The workbook has no such sheet.
+    SHEET_NOT_FOUND, "SNR-DATA-023", Error,
+    "The sheet does not exist",
+    "Name an existing sheet, or give its position counted from 0.",
+    []
+);
+
+code!(
     /// Spreadsheet error values became missing values.
     CELL_ERRORS, "SNR-DATA-024", Warning,
     "Spreadsheet error values became missing values",
@@ -219,6 +235,8 @@ pub const CODES: CodeTable = CodeTable {
         PREAMBLE_SKIPPED,
         JSON_SHAPE,
         NOT_TABULAR,
+        SHEET_READ,
+        SHEET_NOT_FOUND,
         CELL_ERRORS,
         NAN_TO_NULL,
         INFINITE_VALUES,

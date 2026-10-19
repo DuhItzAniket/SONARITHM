@@ -27,4 +27,6 @@ pub use meta::{Concept, FieldMeta, FieldType, Role, Unit};
 #[cfg(feature = "fs")]
 pub use source::read_file;
 pub use source::{CsvOptions, JsonOptions, Limits, Loaded, ReadOptions, read_bytes};
+#[cfg(feature = "xlsx")]
+pub use source::{SheetOptions, SheetRef};
 pub use table::Table;

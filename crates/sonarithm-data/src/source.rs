@@ -11,6 +11,8 @@ mod columnar;
 mod columns;
 mod csv;
 mod json;
+#[cfg(feature = "xlsx")]
+mod spreadsheet;
 
 use sonarithm_core::{Diagnostics, TableId};
 
@@ -21,6 +23,8 @@ use crate::table::Table;
 
 pub use self::csv::CsvOptions;
 pub use self::json::JsonOptions;
+#[cfg(feature = "xlsx")]
+pub use self::spreadsheet::{SheetOptions, SheetRef};
 pub use columnar::{write_ipc, write_parquet};
 
 /// Size limits for one source, so that a hostile or mistaken input fails cleanly instead
@@ -104,6 +108,9 @@ pub struct ReadOptions {
     pub csv: CsvOptions,
     /// Options for JSON and NDJSON.
     pub json: JsonOptions,
+    /// Options for spreadsheets: sheet, range and header.
+    #[cfg(feature = "xlsx")]
+    pub sheet: SheetOptions,
 }
 
 impl ReadOptions {
@@ -141,6 +148,14 @@ impl ReadOptions {
         self.json = json;
         self
     }
+
+    /// The same options with other spreadsheet options.
+    #[cfg(feature = "xlsx")]
+    #[must_use]
+    pub fn with_sheet(mut self, sheet: SheetOptions) -> Self {
+        self.sheet = sheet;
+        self
+    }
 }
 
 /// A source's result: the bundle and what the source assumed or ignored along the way.
@@ -173,6 +188,8 @@ pub fn read_bytes(
     let (table, diagnostics) = match format {
         Format::Csv | Format::Tsv => self::csv::read_csv(bytes, &name, format, options)?,
         Format::Json | Format::Ndjson => self::json::read_json(bytes, &name, format, options)?,
+        #[cfg(feature = "xlsx")]
+        Format::Xlsx | Format::Ods => self::spreadsheet::read_sheet(bytes, format, options)?,
         Format::Arrow => (
             columnar::read_ipc(bytes, &name, format, options)?,
             Diagnostics::new(),
@@ -181,7 +198,8 @@ pub fn read_bytes(
             columnar::read_parquet(bytes, &name, options)?,
             Diagnostics::new(),
         ),
-        other => return Err(DataError::UnsupportedFormat { format: other }),
+        #[cfg(not(feature = "xlsx"))]
+        Format::Xlsx | Format::Ods => return Err(DataError::UnsupportedFormat { format }),
     };
     Ok(finish(table, diagnostics, format, locator, options))
 }
@@ -291,6 +309,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(not(feature = "xlsx"))]
     fn formats_without_a_reader_are_reported() {
         let err =
             read_bytes(b"a,b\n1,2\n", Format::Ods, "x.ods", &ReadOptions::default()).unwrap_err();
