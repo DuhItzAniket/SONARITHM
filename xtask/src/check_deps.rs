@@ -36,8 +36,9 @@ use anyhow::{Context as _, Result, bail};
 use cargo_metadata::{DependencyKind, Metadata, MetadataCommand, Node, PackageId};
 
 /// The nine engine ids (02 §5). An engine's crates are `sonarithm-<engine>` and
-/// `sonarithm-<engine>-<part>`, for example `sonarithm-plotsona-ml`.
-const ENGINES: [&str; 9] = [
+/// `sonarithm-<engine>-<part>`, for example `sonarithm-plotsona-ml`. The order also sets
+/// each engine's block of `SNR-ENG` code numbers (`codes.rs`).
+pub(crate) const ENGINES: [&str; 9] = [
     "numisona",
     "audaxis",
     "sonotrace",
@@ -556,7 +557,7 @@ fn layering(krate: &CrateDeps, findings: &mut Findings) {
 }
 
 /// The engine a crate belongs to, if it is an engine crate.
-fn engine_of(krate: &str) -> Option<&'static str> {
+pub(crate) fn engine_of(krate: &str) -> Option<&'static str> {
     let rest = krate.strip_prefix("sonarithm-")?;
     ENGINES.into_iter().find(|engine| {
         rest == *engine
