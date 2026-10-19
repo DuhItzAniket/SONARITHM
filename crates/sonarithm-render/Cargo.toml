@@ -9,13 +9,17 @@ license.workspace = true
 publish.workspace = true
 
 [dependencies]
+basedrop.workspace = true
+rtrb.workspace = true
 sonarithm-core.workspace = true
 sonarithm-dsp.workspace = true
 thiserror.workspace = true
+triple_buffer.workspace = true
 
 [dev-dependencies]
 insta.workspace = true
 proptest.workspace = true
+shuttle.workspace = true
 
 [lints]
 workspace = true

@@ -102,6 +102,8 @@ The contract has two halves (F-036):
 
 **Capacity overflow policy.** If the command ring is full, the control thread coalesces commands (latest seek wins). It never blocks the RT thread. Overflows are counted and logged off-thread.
 
+**Implemented in A05** (`sonarithm_render::rt`, A05-T05). `realtime(graph)` returns the two halves: a `Controller` (control thread) and a `Processor` (audio thread). The audio thread applies at most 64 commands per block. A plan swap travels as a `basedrop::Owned<Graph>`, not a `Shared<RenderPlan>`: the new graph arrives with its voice pools already allocated, adopts the transport and levels of the old one, and the old graph fades out over 20 ms before the audio thread hands it to the collector. Live events and the retired-resource ring are not needed yet; they arrive with the first live sources (B03, B06).
+
 ## 5. Scheduler and transport
 
 - **Score time vs device time.** The transport maps score seconds to device frames: `frame = start_frame + (t_score − t0) × sr / speed`. Changing speed changes only the mapping, never the pitch.
