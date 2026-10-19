@@ -469,6 +469,12 @@ mod tests {
         let bytes = include_bytes!("../../tests/corpus/fuzz/ipc-short-validity-bitmap.arrow");
         let err = read_bytes(bytes, Format::Arrow, "x", &ReadOptions::default()).unwrap_err();
         assert_eq!(err.to_diagnostic().code.as_str(), "SNR-DATA-001", "{err}");
+        // An Arrow file whose provenance column is a dictionary with no values: arrow's
+        // `normalized_keys` panicked on it after decoding, outside the panic containment
+        // (Linux fuzz run on the A04-T10 PR). Its keys are all null, so every row is exact.
+        let bytes = include_bytes!("../../tests/corpus/fuzz/ipc-empty-provenance-dictionary.arrow");
+        let loaded = read_bytes(bytes, Format::Arrow, "x", &ReadOptions::default()).unwrap();
+        assert!(loaded.bundle.primary().is_some());
     }
 
     #[test]

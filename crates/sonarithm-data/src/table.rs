@@ -5,8 +5,13 @@
 
 use std::sync::Arc;
 
-use arrow_array::{ArrayRef, RecordBatch};
-use arrow_schema::SchemaRef;
+use arrow_array::cast::AsArray;
+use arrow_array::types::{
+    ArrowDictionaryKeyType, Int8Type, Int16Type, Int32Type, Int64Type, UInt8Type, UInt16Type,
+    UInt32Type, UInt64Type,
+};
+use arrow_array::{Array, ArrayRef, RecordBatch, UInt32Array};
+use arrow_schema::{DataType, SchemaRef};
 use arrow_select::concat::{concat, concat_batches};
 use sonarithm_core::{Generation, RowRange, RowRef, TableId};
 
@@ -259,9 +264,60 @@ fn row_count(batch: &RecordBatch) -> u64 {
     u64::try_from(batch.num_rows()).unwrap_or(u64::MAX)
 }
 
+/// The keys of a dictionary array as `UInt32` indices into its values, ready for
+/// `arrow_select::take`. Null keys stay null.
+///
+/// Arrow's `normalized_keys` panics on a dictionary with no values and clamps a key past the
+/// end to the last value. Neither is acceptable for data read from a file (fuzzing found the
+/// panic, F-071), so a key outside the values, or an array that is not an integer-keyed
+/// dictionary, is an error that names the first offending row.
+pub(crate) fn dictionary_indices(array: &dyn Array) -> Result<UInt32Array, usize> {
+    fn indices<K>(array: &dyn Array) -> Result<UInt32Array, usize>
+    where
+        K: ArrowDictionaryKeyType,
+        K::Native: TryInto<usize>,
+    {
+        let Some(dictionary) = array.as_dictionary_opt::<K>() else {
+            return Err(0);
+        };
+        let values = dictionary.values().len();
+        dictionary
+            .keys()
+            .iter()
+            .enumerate()
+            .map(|(row, key)| match key {
+                None => Ok(None),
+                Some(key) => key
+                    .try_into()
+                    .ok()
+                    .filter(|&key| key < values)
+                    .and_then(|key| u32::try_from(key).ok())
+                    .map(Some)
+                    .ok_or(row),
+            })
+            .collect()
+    }
+    let DataType::Dictionary(key, _) = array.data_type() else {
+        return Err(0);
+    };
+    match key.as_ref() {
+        DataType::Int8 => indices::<Int8Type>(array),
+        DataType::Int16 => indices::<Int16Type>(array),
+        DataType::Int32 => indices::<Int32Type>(array),
+        DataType::Int64 => indices::<Int64Type>(array),
+        DataType::UInt8 => indices::<UInt8Type>(array),
+        DataType::UInt16 => indices::<UInt16Type>(array),
+        DataType::UInt32 => indices::<UInt32Type>(array),
+        DataType::UInt64 => indices::<UInt64Type>(array),
+        _ => Err(0),
+    }
+}
+
 #[cfg(test)]
 mod tests {
-    use arrow_array::{Float64Array, Int64Array, StringArray};
+    use arrow_array::{
+        DictionaryArray, Float64Array, Int8Array, Int64Array, StringArray, UInt8Array, UInt64Array,
+    };
     use arrow_schema::{DataType, Field, Schema};
 
     use super::*;
@@ -349,5 +405,40 @@ mod tests {
         let table = Table::new(TableId(0), "empty", schema(), Vec::new()).unwrap();
         assert_eq!(table.num_rows(), 0);
         assert_eq!(table.column("v").unwrap().len(), 0);
+    }
+
+    #[test]
+    fn dictionary_indices_keep_null_keys_and_take_any_key_type() {
+        let values: ArrayRef = Arc::new(StringArray::from(vec!["a", "b"]));
+        let keys = Int8Array::from(vec![Some(1), None, Some(0)]);
+        let dictionary = DictionaryArray::try_new(keys, Arc::clone(&values)).unwrap();
+        assert_eq!(
+            dictionary_indices(&dictionary).unwrap(),
+            UInt32Array::from(vec![Some(1), None, Some(0)])
+        );
+        let keys = UInt64Array::from(vec![0, 1]);
+        let dictionary = DictionaryArray::try_new(keys, values).unwrap();
+        assert_eq!(
+            dictionary_indices(&dictionary).unwrap(),
+            UInt32Array::from(vec![0, 1])
+        );
+    }
+
+    /// Fuzzing found a file whose dictionary had no values; arrow's `normalized_keys`
+    /// panics on that (F-071).
+    #[test]
+    fn a_dictionary_without_values_has_only_null_indices() {
+        let values: ArrayRef = Arc::new(StringArray::from(Vec::<&str>::new()));
+        let dictionary =
+            DictionaryArray::try_new(UInt8Array::from(vec![None, None]), values).unwrap();
+        assert_eq!(
+            dictionary_indices(&dictionary).unwrap(),
+            UInt32Array::from(vec![None, None])
+        );
+    }
+
+    #[test]
+    fn a_plain_array_has_no_dictionary_indices() {
+        assert_eq!(dictionary_indices(&Int64Array::from(vec![1, 2])), Err(0));
     }
 }

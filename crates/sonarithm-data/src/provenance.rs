@@ -27,7 +27,7 @@ use serde::{Deserialize, Serialize};
 use sonarithm_core::{Confidence, Provenance, ProvenanceClass};
 
 use crate::error::DataError;
-use crate::table::Table;
+use crate::table::{Table, dictionary_indices};
 
 /// The class column (03 §4).
 pub const PROV_COLUMN: &str = "__snr_prov";
@@ -297,33 +297,20 @@ fn read_classes(column: &ArrayRef) -> Result<Vec<ProvenanceClass>, DataError> {
         DataType::Dictionary(_, value)
             if matches!(**value, DataType::Utf8 | DataType::LargeUtf8) =>
         {
-            let decoded = arrow_select::take::take(
-                column.as_any_dictionary().values().as_ref(),
-                &dictionary_keys(column),
-                None,
-            )
-            .map_err(|err| invalid(err.to_string()))?;
+            let keys = dictionary_indices(column.as_ref()).map_err(|row| {
+                invalid(format!(
+                    "`{PROV_COLUMN}` row {row} has a dictionary key outside its values"
+                ))
+            })?;
+            let decoded =
+                arrow_select::take::take(column.as_any_dictionary().values().as_ref(), &keys, None)
+                    .map_err(|err| invalid(err.to_string()))?;
             read_classes(&decoded)
         }
         other => Err(invalid(format!(
             "`{PROV_COLUMN}` must be text, a text dictionary or UInt8, not {other}"
         ))),
     }
-}
-
-/// The keys of any integer dictionary as `UInt32` indices (null keys stay null).
-fn dictionary_keys(column: &ArrayRef) -> arrow_array::UInt32Array {
-    let dictionary = column.as_any_dictionary();
-    let values = dictionary.values().len();
-    let keys = dictionary.normalized_keys();
-    let nulls = dictionary.keys().logical_nulls();
-    keys.iter()
-        .enumerate()
-        .map(|(i, &key)| {
-            let valid = nulls.as_ref().is_none_or(|n| n.is_valid(i)) && key < values;
-            valid.then(|| u32::try_from(key).ok()).flatten()
-        })
-        .collect()
 }
 
 fn read_confidence(column: &ArrayRef) -> Result<Vec<Option<Confidence>>, DataError> {
