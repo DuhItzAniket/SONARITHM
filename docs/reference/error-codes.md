@@ -83,6 +83,7 @@ Owner: `sonarithm-numisona`.
 | `SNR-ENG-009` | info | Psychophysical scaling, as guidance | Exponents come from magnitude-estimation studies and are a starting point, not a law. | SDR-11 |
 | `SNR-ENG-010` | info | Missing values | Set `data.missing` to `silence`, `earcon` or `interpolate`. | — |
 | `SNR-ENG-011` | info | Experimental automatic mark | `auto` rests on an untested inference; choose `tone` or `glide` explicitly for studies. | SDR-20 |
+| `SNR-ENG-012` | info | Volatile series | Smooth the field with a `smooth` transform, or slow the pace, if the listener needs the trend. | SDR-21 |
 | `SNR-ENG-020` | info | Polarity taken from the concept table | Set `polarity` to `positive` or `negative` to choose the direction yourself. | SDR-12, SDR-13, SDR-14 |
 | `SNR-ENG-021` | warning | Flagged concept with automatic polarity | Listeners disagree on the pitch direction for this concept; set `polarity` explicitly, or flip it in your profile. | SDR-13, SDR-14, SDR-41 |
 | `SNR-ENG-022` | info | Concept not in the concept table | The generic default (positive) applies; check the concept's spelling or set `polarity`. | SDR-12 |

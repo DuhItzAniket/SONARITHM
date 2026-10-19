@@ -51,5 +51,6 @@ From phase A07, release-plz maintains this file: it generates each release's ent
   - Encoders receive the spec's substrate, field semantics, missing-value treatment and mode alongside the track (`TrackRequest`).
   - `sonarithm-numisona` Erie importer (subset, SDR-05): Erie specs become spec v0.1 documents, with a report of every construct that is approximated or has no equivalent.
   - `sonarithm-compiler` compiles the data layer's `DataBundle`: spec transforms run in `sonarithm-data`, and the `Platform` engine reads `inline` records and `file` sources relative to a base directory.
+  - `sonarithm-numisona` rule-conformance suite: one named test for every design rule NUMISONA owns, checked against the design-rules catalogue; the Erie gallery subset renders; volatility advice for series with many trend reversals (SDR-21); the PB-04 compile benchmark (35 ms for 100k rows × 4 tracks on the development laptop).
 
 [Unreleased]: https://github.com/DuhItzAniket/SONARITHM/commits/main

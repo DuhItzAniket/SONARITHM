@@ -1,0 +1,5 @@
+---
+source: crates/engines/sonarithm-numisona/tests/conformance.rs
+expression: "format!(\"{owned:?}\")"
+---
+["SDR-03", "SDR-07", "SDR-08", "SDR-09", "SDR-10", "SDR-11", "SDR-12", "SDR-13", "SDR-14", "SDR-19", "SDR-20", "SDR-21", "SDR-23", "SDR-25", "SDR-27", "A11Y-13", "A11Y-14"]

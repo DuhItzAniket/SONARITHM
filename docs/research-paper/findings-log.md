@@ -459,3 +459,21 @@ A06 (NUMISONA) uses F-080 to F-089.
 - **Evidence level / confidence:** EV-C / Weak (the values are design proposals; no listening study supports them yet)
 - **Affects:** A11Y-13, SDR-19, SDR-20, SDR-23; sound-design §1 (proposals need a finding before they are settled); H-01 (redundant encodings for BLV point estimation); a candidate experiment on countable tap rates
 - **Papers:** none yet
+
+### F-083 · NUMISONA compiles 100k rows × 4 tracks in 35 ms on the development laptop and 54 ms on four E-cores, inside PB-04
+
+- **Date:** 2026-10-19 · **Phase:** A06 · **Type:** benchmark · **Status:** new
+- **Statement:** Compiling a spec with four tone tracks over 100,000 preloaded rows, through the real compiler with NUMISONA (validation, defaults, encoding, Score invariant check), takes 35.1 ms median on HW-01 and 54.3 ms on HW-01e (four E-cores), 18% and 27% of PB-04's 200 ms. A million rows take 135 ms with one track and 362 ms with four on HW-01, and 192 ms and 545 ms on HW-01e, inside the 1 s budget. Two hot-path changes before the final measurement cut the HW-01 times by about 40% (from 59, 209 and 594 ms): reading the provenance columns only when a confidence column exists, and resolving a constant timbre once per track instead of once per note.
+- **Evidence:** A06-T09 PR, criterion group `pb04_compile` (`crates/engines/sonarithm-numisona/benches/compile.rs`), 20 samples per benchmark, release profile, Rust 1.99.0, criterion 0.8.2; HW-01e via `ProcessorAffinity = 0xF0000`; [benchmarks log](benchmarks-log.md) "A06"
+- **Evidence level / confidence:** EV-C / Moderate (one machine; HW-01e is a stand-in for the reference laptop, 12 §8)
+- **Affects:** PB-04, NFR-01; the A06 exit criterion "Compile ≤ 200 ms for 100k rows × 4 tracks"
+- **Papers:** P07 (engine paper, compile performance)
+
+### F-084 · NUMISONA calls a series volatile beyond three trend reversals, the most the cited density study used
+
+- **Date:** 2026-10-19 · **Phase:** A06 · **Type:** engineering · **Status:** new
+- **Statement:** SDR-21 asks that volatile series be slowed or smoothed, because trend reversals hurt estimates more than density (Nees & Walker 2008). The encoder counts sign changes between successive non-zero steps of the pitch field and, above three reversals, reports `SNR-ENG-012` with the count and rate and advises a `smooth` transform or a slower pace; it never alters the data. Three is the largest reversal count the research notes report for the study's stimuli ("one or three reversals"), so the exact levels need checking against the paper (TODO(verify)). Without hysteresis, noisy series exceed it easily: the DS-001-like temperature example reverses 76 times in 120 points.
+- **Evidence:** A06-T09 PR (`encode::STUDIED_REVERSALS`, test `sdr_21_volatile_series_get_smoothing_advice`); research notes 02 §2 (Nees & Walker 2008)
+- **Evidence level / confidence:** EV-C / Weak (the threshold is anchored on a summary of the study, not the paper itself)
+- **Affects:** SDR-21; ECHOMETRIC lint (C05), which should own this check with hysteresis; H-02 and EXP-002 (reversals × density)
+- **Papers:** none yet
