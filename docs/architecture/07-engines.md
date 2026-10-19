@@ -120,7 +120,7 @@ Each engine is one crate under `crates/engines/` and implements `Engine`. This p
 | `describe` | Deterministic L1 (encoding facts) and L2 (statistics) text; the L3 fact list for optional LLM phrasing with numeric verification (D04); never automatic L4 (A11Y-02) |
 | `query` | min, max, mean, median, mode, sd, sum, range, value-at-x (A11Y-22) |
 | `lint` | Rules: SDR-14 (flagged concept), SDR-17 (static reference), SDR-19 (rate), SDR-23 (loudness carrying data), SDR-26 (stream count), SDR-27 (redundant spatial), SDR-28 (critical-band clash), SDR-39 (comfort), A11Y-14 (pan-only information) |
-| `harness` | Stimulus generators (Nees & Walker reversals × density; Smith & Walker price series; SNR transits; correlation triplets); the replication gallery; the trial runner; the log schema |
+| `harness` | Stimulus generators (Nees & Walker reversals × density; Smith & Walker price series; SNR transits; correlation triplets; `harness::generators`, A08); the replication gallery; the trial runner; the log schema. A generator returns a `Stimulus`: a numeric table, its ground truth, notes on departures from the published design, and a manifest with the table's SHA-256 |
 
 **Tests:** detector precision/recall on labelled synthetic sets; positive and negative tests for each lint rule; generators are deterministic given a seed.
 

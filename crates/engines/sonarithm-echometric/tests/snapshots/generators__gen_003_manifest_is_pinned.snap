@@ -1,0 +1,45 @@
+---
+source: crates/engines/sonarithm-echometric/tests/generators.rs
+expression: "manifest_json(&Params::Transits(TransitParams::curve(10.0, 2)), 20_261_019)"
+---
+{
+  "generator": "GEN-003",
+  "generator_version": 1,
+  "basis": "tuckerbrown2022evaluating",
+  "seed": 20261019,
+  "params": {
+    "generator": "GEN-003",
+    "snr": 10.0,
+    "transits": 2,
+    "points": 1000,
+    "width": 0.1,
+    "depth": 25.0,
+    "baseline": 100.0
+  },
+  "rows": 1000,
+  "columns": [
+    "t",
+    "flux"
+  ],
+  "table_sha256": "02e2d3a2f43001fd1c08046dcc8a7972a87e2e628678a7493f695e6e94157a81",
+  "truth": {
+    "kind": "transits",
+    "transits": 2,
+    "starts": [
+      490,
+      678
+    ],
+    "width-points": 100,
+    "depth-flux": 25.0,
+    "sigma": 25.0,
+    "snr": 10.0,
+    "snr-achieved": 10.1636
+  },
+  "notes": [
+    {
+      "deviation": {
+        "detail": "Tucker Brown et al. (2022) do not publish transit positions; they are drawn from the seed"
+      }
+    }
+  ]
+}

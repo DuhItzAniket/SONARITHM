@@ -27,7 +27,7 @@ Status values: `Not started` · `In progress` · `In review` · `Done` · `Block
 | A | A05 | Render engine, audio backend, export | **In progress** | ≈5% | T01, T03 and T04 in review. See [A05 tasks](#a05-tasks) |
 | A | A06 | NUMISONA v1 | **Done** | 100% | 2026-10-19; [phase review](reviews/A06-phase-review.md). See [A06 tasks](#a06-tasks) |
 | A | A07 | CLI, Python, v0.1.0-alpha | Not started | 0% | |
-| A | A08 | Research instrumentation v0, ICAD 2027 | Not started | 0% | P01 without participant studies (OD-04) |
+| A | A08 | Research instrumentation v0, ICAD 2027 | **In progress** | ≈10% | P01 without participant studies (OD-04). See [A08 tasks](#a08-tasks) |
 | B | B01 | Desktop shell, IPC, app core | Not started | 0% | |
 | B | B02 | Design system and application frame | Not started | 0% | |
 | B | B03 | AUDAXIS v1 | Not started | 0% | |
@@ -153,6 +153,19 @@ Work runs in a separate agent session through one PR per task into `crates/engin
 | A06-T08 Erie importer (subset) | **Done** | Merged in #150. Written from Erie's documentation; 8-spec gallery subset imports as valid v0.1 specs with a report of 19 approximated or unmapped constructs (`SNR-ENG-080`, `081`); F-081 |
 | A06-T09 Rule-conformance suite and compile benchmarks (PB-04) | **Done** | Merged with the phase review. A named test for every rule NUMISONA owns, checked against the catalogue; the Erie gallery subset renders; SDR-21 volatility advice; PB-04: 35 ms (HW-01) and 54 ms (HW-01e) for 100k rows × 4 tracks; F-083, F-084 |
 
+### A08 tasks
+
+Work runs in a separate agent session through one PR per task into `crates/engines/sonarithm-echometric`, in parallel with A05 and A07. No participant data is collected (OD-04). A task is Done when its PR is merged with CI green.
+
+| Task | Status | Notes |
+|---|---|---|
+| A08-T01 Stimulus generators | In review | GEN-001 to GEN-004 with published parameters verified against the papers (F-110 to F-113); pinned manifests on three OSes |
+| A08-T02 Replication gallery v0 | Not started | Needs A05's export (WAV and manifest) on main |
+| A08-T03 Study runner, `sonarithm study run` | Not started | Library first; the subcommand needs A07's CLI. Shared `SNR-ENG` blocks (#157) in review |
+| A08-T04 Technical benchmark report | Not started | Needs A05 and A07 on main |
+| A08-T05 P01 draft | Not started | Draft only; submission is the owner's act |
+| A08-T06 Release v0.2.0-alpha | Not started | Release PR and checklist only; the owner tags |
+
 ## 3. Current iteration
 
 | Iteration | Dates | Goal | Tasks |
@@ -204,3 +217,4 @@ Maturity scale: `Designed` → `Prototype` → `Alpha` → `Beta` → `Stable` �
 | 2026-10-19 | A06 done: templates (T07, #154), the auto mark (T06, #153), the rule-conformance suite and PB-04 (T09); [phase review](reviews/A06-phase-review.md) |
 | 2026-10-19 | A04 built: sources, inference, provenance, transforms, downsampling, fingerprints, PB-05 benchmark and fuzzers (T01–T10 in review) |
 | 2026-10-19 | A04 done: all ten tasks merged (#113, #114, #116, #133, #135, #136, #138, #139, #141, #142, #143); phase review and retro |
+| 2026-10-19 | A08 started: `sonarithm-echometric` with stimulus generators GEN-001 to GEN-004 (T01) |

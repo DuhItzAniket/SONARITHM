@@ -1,0 +1,43 @@
+---
+source: crates/engines/sonarithm-echometric/tests/generators.rs
+expression: "manifest_json(&params, 20_261_019)"
+---
+{
+  "generator": "GEN-004",
+  "generator_version": 1,
+  "basis": "elmquist2024parallel",
+  "seed": 20261019,
+  "params": {
+    "generator": "GEN-004",
+    "delta": 0.04,
+    "sign": "positive",
+    "items": 300,
+    "sigma": 0.07
+  },
+  "rows": 300,
+  "columns": [
+    "i",
+    "a",
+    "b",
+    "c",
+    "d"
+  ],
+  "table_sha256": "8fc5be2ce7232d98dc11a76ac969b49f846edddcb8eb74d71dcac5fd7d023e78",
+  "truth": {
+    "kind": "correlations",
+    "strongest": 1,
+    "correlations": [
+      0.8931,
+      0.9396,
+      0.8978
+    ],
+    "attempts": 1
+  },
+  "notes": [
+    {
+      "deviation": {
+        "detail": "Elmquist et al. (2024) do not state how data were normalized; each axis is min-max scaled onto [0, 1]"
+      }
+    }
+  ]
+}

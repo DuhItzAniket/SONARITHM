@@ -52,7 +52,7 @@
 | FR-081 | [10 §4](../architecture/10-ingestion-and-extraction.md#4-ai-assistance-policy) | C05 | ST (description snapshots) | Planned |
 | FR-082 | [07 ECHOMETRIC](../architecture/07-engines.md) | C05 | UT | Planned |
 | FR-083 | [07 ECHOMETRIC](../architecture/07-engines.md) | A07, C05 | UT (positive and negative per rule) | Planned |
-| FR-084 | [07 ECHOMETRIC](../architecture/07-engines.md) | A08 | IT (pilot protocol), RV | Planned |
+| FR-084 | [07 ECHOMETRIC](../architecture/07-engines.md) | A08 | UT, PT and ST (`tests/generators.rs`: pinned manifests, rule-named tests for SDR-16, 17, 19, 20, 21, 40); IT (pilot protocol), RV | In progress: stimulus generators GEN-001 to GEN-004 (A08-T01) |
 | FR-090 | [07 TONALENS](../architecture/07-engines.md) | D01 | E2E, AT | Planned |
 | FR-091 | [07 TONALENS](../architecture/07-engines.md) | D01 | UT; EXP for H-04 | Planned |
 | FR-092 | [07 TONALENS](../architecture/07-engines.md) | D01 | GT | Planned |

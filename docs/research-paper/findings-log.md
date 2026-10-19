@@ -212,6 +212,7 @@ continues at F-021. IDs F-021 to F-029 belong to A03 entries.
 A04 (data layer) uses F-070 to F-079.
 Cross-phase build and repository infrastructure (the coordinator) uses F-090 to F-099.
 A06 (NUMISONA) uses F-080 to F-089.
+A08 (research instrumentation) uses F-110 to F-119.
 -->
 
 ### F-019 · serde_json's default float parser can be one ULP off, which breaks full-precision round trips
@@ -477,3 +478,39 @@ A06 (NUMISONA) uses F-080 to F-089.
 - **Evidence level / confidence:** EV-C / Weak (the threshold is anchored on a summary of the study, not the paper itself)
 - **Affects:** SDR-21; ECHOMETRIC lint (C05), which should own this check with hysteresis; H-02 and EXP-002 (reversals × density)
 - **Papers:** none yet
+
+### F-110 · Nees & Walker (2008) crossed 1, 2, 4 and 8 points/s with 0, 1, 2 and 3 reversals, but publish no generating function
+
+- **Date:** 2026-10-19 · **Phase:** A08 · **Type:** literature · **Status:** new
+- **Statement:** The study's graphs crossed four densities (1, 2, 4, 8 points/s) with four trend-reversal levels (0, 1, 2, 3), each initially rising or falling (counterbalanced). Every graph was a stock price over a 10-hour day at 1 s per hour, spanning $6–$106 and reaching both ends, sounded as 125 ms piano tones with 10 ms ramps (10.125 s per graph), without reference tones or clicks; every hour from 8 a.m. to 6 p.m. was queried in random order (Exp. 1, N = 32), and Exp. 2 asked for the local trend of each hourly interval (increased, decreased, stayed the same; N = 32). The paper gives no generating function (Fig. 1 is labelled schematic) and no point count; 10·d + 1 points (11, 21, 41, 81) is inferred from the duration and the figure. The published top frequency, 1979.5 Hz for MIDI B6, differs from equal temperament (1975.5 Hz), probably a typo. This resolves the TODO(verify) in F-084: three is the largest studied reversal count, so NUMISONA's volatility threshold of three stands.
+- **Evidence:** Nees & Walker (2008), ACM TAP 5(3), Art. 13, [doi:10.1145/1402236.1402237](https://doi.org/10.1145/1402236.1402237), §2.1.3–2.1.6 and §3.1, read from the author PDF; GEN-001 module documentation (`sonarithm_echometric::harness::generators::reversals`); tests `sdr_19_gen_001_reproduces_the_studied_densities`, `sdr_21_gen_001_reproduces_the_studied_reversal_levels`
+- **Evidence level / confidence:** EV-L / Strong (read from the full text); the point counts and schematic shapes are inferences (EV-D)
+- **Affects:** SDR-19, SDR-20, SDR-21; F-084; GEN-001; H-02, H-03; the research notes 02 §2 summary ("one or three reversals" describes a result, not the levels)
+- **Papers:** P01, P03
+
+### F-111 · Smith & Walker (2005) used a single price series whose values are not published; its stated 200–1900 Hz is rounded
+
+- **Date:** 2026-10-19 · **Phase:** A08 · **Type:** literature · **Status:** new
+- **Statement:** Both studies sounded one series, a stock over a 10-hour day with two values per hour: $50 open, $84 maximum, $10 minimum, close equal to the open. The paper does not tabulate the values; Fig. 2 plots the hourly answers (within about ±$2). Study 1 played 20 sine tones of 0.5 s (10 s) while Study 2 glided through 21 values, so whether the 6 p.m. close sounded is ambiguous. The mapping $ = 0.0765·f^0.9256 gives 193.4 Hz for $10 and 1927.6 Hz for $84, which the paper rounds to "200–1900 Hz". The reference tone's beep rate, length and level are not published. Every hour was queried in random order (11 per test). GEN-002 therefore rebuilds the series from the stated anchors and Fig. 2, puts the $84 maximum at 10:30 and records this as a deviation.
+- **Evidence:** Smith & Walker (2005), Applied Cognitive Psychology 19(8):1065–1087, [doi:10.1002/acp.1146](https://doi.org/10.1002/acp.1146), pp. 1069–1070, 1074, 1076, read from the author PDF; GEN-002 (`sonarithm_echometric::harness::generators::prices`, `FIG2_HOURLY`); test `sdr_17_gen_002_dynamic_reference_is_the_maximum_while_rising_and_the_minimum_while_falling`
+- **Evidence level / confidence:** EV-L / Strong for the stated parameters; the reconstructed half-hour values are EV-D (figure-read)
+- **Affects:** SDR-16, SDR-17, SDR-22; GEN-002; DS-002; the gallery item for context cues (A08-T02); H-01
+- **Papers:** P01, P03
+
+### F-112 · Tucker Brown et al. (2022) define SNR as t_d·√N_t/σ over box transits; positions are not published
+
+- **Date:** 2026-10-19 · **Phase:** A08 · **Type:** literature · **Status:** new
+- **Statement:** The light curves had 1000 points with box-shaped transits 10% of the length wide and a "fractional transit depth" of 25, Gaussian noise, and 0, 1 or 2 transits; SNR = t_d·√N_t/σ, with N_t the points in a transit, at levels 3, 5, 7, 10, 30 and 100 (18 curves, 6 without a signal). With astronify's percent depth on its default baseline of 100, N_t = 100 and σ = 250/SNR (inferred; Fig. 1 agrees). Transit positions, the noise of the zero-signal curves, seeds and the astronify version are not stated. The sonification mapped each curve's range linearly onto 440–880 Hz, one tone per point every 0.01 s with 0.2 s notes; astronify's current defaults (0.5 s notes, 100–10 000 Hz) differ.
+- **Evidence:** Tucker Brown, Harrison, Zanella & Trayford (2022), MNRAS 516(4):5674–5683, [doi:10.1093/mnras/stac2590](https://doi.org/10.1093/mnras/stac2590), §2.1–2.2, read from the accepted version arXiv:2209.04465v1 (the published PDF was not reachable); GEN-003 (`sonarithm_echometric::harness::generators::transits`); test `sdr_40_gen_003_noise_follows_the_published_snr_definition`
+- **Evidence level / confidence:** EV-L / Strong for the definition and levels; Moderate for the inferred units
+- **Affects:** SDR-40; GEN-003; F-010; P03 benchmark task
+- **Papers:** P01, P03
+
+### F-113 · Elmquist et al. (2024) give the added noise as both "0.02 − 20" and "20% to 0.2%"; σ = 0.07 over 300 items gives the published r ≈ 0.95
+
+- **Date:** 2026-10-19 · **Phase:** A08 · **Type:** literature · **Status:** new
+- **Statement:** The Parallel Chords discrimination task asks which of axes B, C, D correlates most strongly with A; 300 items per axis, A and the target ~ N(i/300, 0.07²), the two distractors ~ N(i/300, (0.07 + Δσ)²), values outside [0, 1] redrawn, data normalized last, positive and negative correlations. The equation legend gives Δσ as "(0.02 − 20)" while the prose gives 20 levels from 20% to 0.2% (the thresholds in Table 2 read as percent), so GEN-004 takes Δσ in range units, 0.002–0.2. The level spacing and the normalization method are not stated. GEN-004 reproduces the published target strength: r = 0.94 for the target at seed 20261019 (pinned manifest), against r ≈ 0.95 in the paper.
+- **Evidence:** Elmquist et al. (2024), Personal and Ubiquitous Computing 28(5):657–676, [doi:10.1007/s00779-024-01795-8](https://doi.org/10.1007/s00779-024-01795-8), §5.1–5.2, Eqs. 1–4, Table 2, read from the open-access PDF; GEN-004 (`sonarithm_echometric::harness::generators::correlation`); tests `sdr_40_gen_004_the_target_is_the_strongest_correlation`, `gen_004_manifest_is_pinned`
+- **Evidence level / confidence:** EV-L / Strong for the equations; the unit of Δσ is an interpretation (Moderate)
+- **Affects:** SDR-40; GEN-004; P03 benchmark task
+- **Papers:** P01, P03
