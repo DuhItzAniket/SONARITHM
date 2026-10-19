@@ -58,6 +58,11 @@ cargo_metadata = "0.23.1"   # xtask check-deps
 libm = "0.2.16"
 # Diagnostic reports for spec errors (12 §1); no `fancy` features in libraries.
 miette = { version = "7.6.0", default-features = false }
+# Real-time communication (06 §4): wait-free SPSC rings, latest-value telemetry and
+# deferred frees off the audio thread. triple_buffer is MPL-2.0 (allowed, unmodified).
+basedrop = "0.1.3"
+rtrb = "0.4.0"
+triple_buffer = "9.0.0"
 # Seeded, portable random streams per track (SDR-02, coding-standards §10).
 rand_chacha = { version = "0.9.0", default-features = false }
 # JSON Schema generation for the spec (04 §1); `derive` only, no optional integrations.
@@ -75,6 +80,7 @@ thiserror = "2.0.17"
 # Test-only crates (dev-dependencies).
 insta = "1.43.0"
 proptest = "1.9.0"
+shuttle = "0.9.7"           # randomized concurrency testing of the RT protocol (testing-strategy §8)
 
 # Debug info is most of a `target/` directory's size (PDB files on Windows), and every
 # worktree keeps its own `target/`. Line tables keep file:line backtraces for our crates;
