@@ -1,0 +1,50 @@
+# cargo-fuzz harness for sonarithm-data (testing-strategy §7). Not part of the main
+# workspace: it needs the nightly toolchain. Run from the parent crate with
+#   cargo +nightly fuzz run csv_read -- -max_total_time=3600
+# CI runs every target in .github/workflows/nightly.yml.
+
+[package]
+name = "sonarithm-data-fuzz"
+version = "0.0.0"
+edition = "2024"
+license = "MIT OR Apache-2.0"
+publish = false
+
+[package.metadata]
+cargo-fuzz = true
+
+[dependencies]
+libfuzzer-sys = "0.4.13"
+sonarithm-data = { path = ".." }
+
+# A workspace of its own, so the main workspace (stable toolchain) never builds it.
+[workspace]
+members = ["."]
+
+[[bin]]
+name = "csv_read"
+path = "fuzz_targets/csv_read.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "json_read"
+path = "fuzz_targets/json_read.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "xlsx_read"
+path = "fuzz_targets/xlsx_read.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "columnar_read"
+path = "fuzz_targets/columnar_read.rs"
+test = false
+doc = false
+bench = false

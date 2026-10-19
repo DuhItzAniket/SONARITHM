@@ -19,7 +19,7 @@ members = [
     "xtask",
 ]
 # A02 spikes are standalone throwaway projects with their own lockfiles (roadmap A02).
-exclude = ["spikes", "crates/sonarithm-spec/fuzz"]
+exclude = ["spikes", "crates/sonarithm-spec/fuzz", "crates/sonarithm-data/fuzz"]
 
 [workspace.package]
 # One shared version for all library crates until v1.0 (02 §6). Nothing is released
@@ -95,6 +95,8 @@ thiserror = "2.0.17"
 toml = { version = "1.1.8", default-features = false, features = ["std", "parse", "serde"] }
 
 # Test-only crates (dev-dependencies).
+# Benchmarks (testing-strategy §9.1); no plotting or rayon.
+criterion = { version = "0.8.2", default-features = false, features = ["cargo_bench_support"] }
 insta = "1.43.0"
 # Builds XLSX and ODS packages in sonarithm-data tests; the version calamine already uses.
 zip = { version = "9.0.5", default-features = false }

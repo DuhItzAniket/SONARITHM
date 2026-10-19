@@ -209,6 +209,7 @@ manifest, benchmark row or EXP-### that carries the evidence. Set Status to
 <!--
 A02 (spikes) uses F-030 to F-049 so that it can append in parallel with A03, which
 continues at F-021. IDs F-021 to F-029 belong to A03 entries.
+A04 (data layer) uses F-070 to F-079.
 Cross-phase build and repository infrastructure (the coordinator) uses F-090 to F-099.
 A06 (NUMISONA) uses F-080 to F-089.
 -->
@@ -401,6 +402,24 @@ A06 (NUMISONA) uses F-080 to F-089.
 - **Evidence:** [#107](https://github.com/DuhItzAniket/SONARITHM/pull/107), `spikes/tauri-webview/results/a11y-uia-windows.txt`
 - **Evidence level / confidence:** EV-D / Weak (an automated tree dump, not a screen-reader session)
 - **Affects:** ADR-0003; OD-05; A11Y-17; 08 §4–5; B02 tree component
+- **Papers:** none yet
+
+### F-070 · CSV ingest of 1M rows × 5 columns takes about 0.51 s on the development laptop and 0.91 s on four E-cores, inside PB-05
+
+- **Date:** 2026-10-19 · **Phase:** A04 · **Type:** benchmark · **Status:** new
+- **Statement:** `sonarithm_data::read_bytes` on a 46 MB synthetic CSV (1M rows: an ISO-8601 timestamp with offset, a float, an integer, a 4-level category, a ratio), including encoding and dialect sniffing, column type inference, semantic inference and provenance normalization, took a median of 506 ms (95% CI 504–509 ms, 10 samples) on HW-01 and 912 ms (904–921 ms) on HW-01e. Without semantic inference it took 433 ms and 792 ms. PB-05 allows 1.5 s; the HW-01 result is 34% of the budget, below the 50% at which 12 §8 asks for a re-measurement, and the four-E-core stand-in is 61%.
+- **Evidence:** criterion bench `pb05_csv_ingest_1m_rows_5_columns` in `crates/sonarithm-data/benches/csv_ingest.rs` (release profile, Rust 1.99.0, criterion 0.8.2, single-threaded ingest); A04 PRs; benchmarks-log row "A04"
+- **Evidence level / confidence:** EV-C / Moderate (one machine, other processes running; HW-01e is a stand-in for the reference laptop, not the reference laptop)
+- **Affects:** PB-05; NFR-01; 03; 10 §2
+- **Papers:** P07
+
+### F-071 · arrow-ipc 60 and calamine 0.37 panic or allocate what a malformed file declares, so the data layer validates and contains them
+
+- **Date:** 2026-10-19 · **Phase:** A04 · **Type:** engineering · **Status:** new
+- **Statement:** Short local fuzzing runs (90–300 s per target, cargo-fuzz with ASan on Windows) found four ways untrusted files stopped the process in third-party readers: arrow-ipc allocated a buffer of a block's declared body length and an LZ4 buffer's declared uncompressed size (2^58 bytes), and panicked on a validity bitmap shorter than its column (in arrow-buffer); calamine panicked in `Range::range` on a zero-width range and allocates a sheet's whole bounding box (two cells at A1 and XFD1048576 ask for about 17 billion cells). `sonarithm-data` now checks IPC framing, buffer bounds and declared uncompressed sizes against the input and the limits before decoding, streams XLSX cells and checks the bounding box against the cell limit before allocating it, and turns decoder panics into `SNR-DATA-001` errors. After the fixes, one-hour runs found nothing (`csv_read` 692,702 inputs, `xlsx_read` 5.0 million) and neither did a ten-minute `json_read` run (1.7 million). The first Linux run of `columnar_read` (the two-minute smoke run on the A04-T10 pull request) found one more, after decoding: arrow-array's `normalized_keys` asserts that a dictionary has values, and a fuzzed file's provenance column was a dictionary with none. That panic was outside the decoder containment, so `sonarithm-data` now converts dictionary keys itself and reports keys outside the values instead of clamping them. The next run found a 1.8 KB Parquet file on which parquet 60's page-header decoder spends about 12 s before failing (a libFuzzer timeout, not a crash); it is not mitigated yet ([#146](https://github.com/DuhItzAniket/SONARITHM/issues/146)). Allocation failures cannot be caught, and other formats (Parquet, ODS, XLS, XLSB) have not shown these failures yet but are not proven safe.
+- **Evidence:** fuzz targets `csv_read`, `json_read`, `xlsx_read`, `columnar_read` in `crates/sonarithm-data/fuzz`; regression inputs in `crates/sonarithm-data/tests/corpus/fuzz` and the tests `fuzzer_findings_stay_fixed`, `a_dictionary_without_values_has_only_null_indices`, `declared_lengths_past_the_end_are_rejected_before_allocation`, `compressed_buffers_must_declare_sizes_within_the_limits` and `far_apart_cells_hit_the_cell_limit_instead_of_allocating_their_bounding_box`
+- **Evidence level / confidence:** EV-C / Moderate (minutes of fuzzing, not hours; on Windows, libFuzzer treats even a caught panic as a crash, so panic containment is checked by unit tests and by the Linux nightly run)
+- **Affects:** NFR-05; 10 §2 ("run untrusted input through fuzzed parsers"); 12 §6
 - **Papers:** none yet
 
 ### F-090 · Debug info and incremental caches made up most of 70 GB of build output across four agent worktrees

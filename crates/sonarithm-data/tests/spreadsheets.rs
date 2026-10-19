@@ -86,6 +86,15 @@ fn sheet_xml(rows: &[Vec<Cell>]) -> String {
 
 /// A minimal XLSX package with the given sheets and shared strings.
 fn xlsx(sheets: &[(&str, Vec<Vec<Cell>>)], shared: &[&str]) -> Vec<u8> {
+    let raw: Vec<(&str, String)> = sheets
+        .iter()
+        .map(|(name, rows)| (*name, sheet_xml(rows)))
+        .collect();
+    xlsx_raw(&raw, shared)
+}
+
+/// A minimal XLSX package from sheet XML documents.
+fn xlsx_raw(sheets: &[(&str, String)], shared: &[&str]) -> Vec<u8> {
     let main = "http://schemas.openxmlformats.org/spreadsheetml/2006/main";
     let rel = "http://schemas.openxmlformats.org/officeDocument/2006/relationships";
     let mut types = String::from(
@@ -109,7 +118,7 @@ fn xlsx(sheets: &[(&str, Vec<Vec<Cell>>)], shared: &[&str]) -> Vec<u8> {
         rels.push_str(&format!(
             r#"<Relationship Id="rId{n}" Type="{rel}/worksheet" Target="worksheets/sheet{n}.xml"/>"#
         ));
-        parts.push((format!("xl/worksheets/sheet{n}.xml"), sheet_xml(rows)));
+        parts.push((format!("xl/worksheets/sheet{n}.xml"), rows.clone()));
     }
     types.push_str("</Types>");
     workbook.push_str("</sheets></workbook>");
@@ -397,6 +406,30 @@ fn an_ods_sheet_gets_typed_fields() {
     );
     assert_eq!(table.name(), "Readings");
     assert!(codes.contains(&"SNR-DATA-022".to_owned()), "{codes:?}");
+}
+
+#[test]
+fn far_apart_cells_hit_the_cell_limit_instead_of_allocating_their_bounding_box() {
+    // Two cells at opposite corners of the largest sheet: a 17-billion-cell bounding box.
+    let sheet = format!(
+        r#"<?xml version="1.0" encoding="UTF-8"?><worksheet xmlns="{}"><sheetData><row r="1"><c r="A1"><v>1</v></c></row><row r="1048576"><c r="XFD1048576"><v>2</v></c></row></sheetData></worksheet>"#,
+        "http://schemas.openxmlformats.org/spreadsheetml/2006/main"
+    );
+    let book = xlsx_raw(&[("Data", sheet)], &[]);
+    let err = read(&book, Format::Xlsx, SheetOptions::default()).unwrap_err();
+    assert_eq!(err.to_diagnostic().code.as_str(), "SNR-DATA-003", "{err}");
+    // A huge requested range is clipped to the cells, not allocated.
+    let small = xlsx(
+        &[("Data", vec![vec![Cell::Str("x")], vec![Cell::Num(1.0)]])],
+        &[],
+    );
+    let (table, _) = read(
+        &small,
+        Format::Xlsx,
+        SheetOptions::new().with_range("A1:XFD1048576"),
+    )
+    .unwrap();
+    assert_eq!(table.num_rows(), 1);
 }
 
 #[test]

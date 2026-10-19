@@ -103,14 +103,11 @@ impl Column {
             DataType::Boolean => Self::Bool(array.as_boolean().clone()),
             DataType::Utf8 => Self::Text(array.as_string::<i32>().clone()),
             DataType::Dictionary(_, value) if **value == DataType::Utf8 => {
-                let dictionary = array.as_any_dictionary();
-                let keys: arrow_array::UInt32Array = dictionary
-                    .normalized_keys()
-                    .iter()
-                    .enumerate()
-                    .map(|(i, &k)| array.is_valid(i).then(|| u32::try_from(k).ok()).flatten())
-                    .collect();
-                match arrow_select::take::take(dictionary.values().as_ref(), &keys, None) {
+                let Ok(keys) = crate::table::dictionary_indices(array.as_ref()) else {
+                    return Self::Unsupported;
+                };
+                let values = array.as_any_dictionary().values();
+                match arrow_select::take::take(values.as_ref(), &keys, None) {
                     Ok(values) => Self::Text(values.as_string::<i32>().clone()),
                     Err(_) => Self::Unsupported,
                 }

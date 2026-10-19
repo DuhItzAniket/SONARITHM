@@ -52,10 +52,14 @@ precedence = "closest"
 SPDX-FileCopyrightText = "2026 SONARITHM contributors"
 SPDX-License-Identifier = "MIT OR Apache-2.0"
 
-# Test corpora of the data layer (synthetic files, no personal data): same licence as the
-# code, like snapshots. CSV and spreadsheet files cannot carry SPDX headers.
+# Test and fuzz corpora of the data layer (synthetic files, no personal data): same
+# licence as the code, like snapshots. CSV, spreadsheet and binary files cannot carry
+# SPDX headers.
 [[annotations]]
-path = ["crates/sonarithm-data/tests/corpus/**"]
+path = [
+    "crates/sonarithm-data/tests/corpus/**",
+    "crates/sonarithm-data/fuzz/corpus/**",
+]
 precedence = "closest"
 SPDX-FileCopyrightText = "2026 SONARITHM contributors"
 SPDX-License-Identifier = "MIT OR Apache-2.0"

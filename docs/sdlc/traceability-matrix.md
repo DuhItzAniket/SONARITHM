@@ -6,14 +6,14 @@
 
 | Req | Design | Phase | Verification | Status |
 |---|---|---|---|---|
-| FR-001 | [03](../architecture/03-data-model.md), [10 §2](../architecture/10-ingestion-and-extraction.md#2-source-adapters) | A04 | UT, IT (file corpus), fuzz | Planned |
-| FR-002 | [03 §3](../architecture/03-data-model.md#3-field-semantics) | A04 | UT (inference corpus ≥ 95%) | Planned |
-| FR-003 | [03 §6](../architecture/03-data-model.md#6-transforms) | A04 | UT, PT | Planned |
+| FR-001 | [03](../architecture/03-data-model.md), [10 §2](../architecture/10-ingestion-and-extraction.md#2-source-adapters) | A04 | UT, IT (file corpus), fuzz | In review: CSV/TSV, JSON/NDJSON, Parquet, Arrow IPC, XLSX/ODS sources; `csv_corpus` (23+ messy files), `spreadsheets`, metadata round trips; fuzz targets in `crates/sonarithm-data/fuzz` |
+| FR-002 | [03 §3](../architecture/03-data-model.md#3-field-semantics) | A04 | UT (inference corpus ≥ 95%) | In review: `inference_reaches_95_percent_precision_on_the_corpus` (27 files, 74 fields: 100% type, 98.5% role, 100% concept) |
+| FR-003 | [03 §6](../architecture/03-data-model.md#6-transforms) | A04 | UT, PT | In review: unit and property tests for all eight transforms; fuel-limited rhai subset |
 | FR-004 | [11 §3](../architecture/11-bindings-cli-plugins.md#3-python-package-sonarithm) | A07 | IT (pytest on wheels) | Planned |
 | FR-005 | [07 SONOTRACE](../architecture/07-engines.md), [03 §8](../architecture/03-data-model.md#8-streaming-tables-sonotrace) | B06 | IT, soak (PB-11), AT | Planned |
 | FR-006 | [10 §3](../architecture/10-ingestion-and-extraction.md#3-the-bring-any-chart-pipeline-plotsona) | C01 | IT (50-chart corpus) | Planned |
 | FR-007 | [10 §3](../architecture/10-ingestion-and-extraction.md#3-the-bring-any-chart-pipeline-plotsona) | C02 | IT (raster corpus), AT (correction flow) | Planned |
-| FR-008 | [03 §4](../architecture/03-data-model.md#4-provenance-and-confidence) | A04, C01 | PT (propagation), ST (announcements) | Planned |
+| FR-008 | [03 §4](../architecture/03-data-model.md#4-provenance-and-confidence) | A04, C01 | PT (propagation), ST (announcements) | In progress: A04 provenance columns and propagation in review (property tests for weakest class and lowest confidence); announcements in C01 |
 | FR-009 | [07 CURVASONA](../architecture/07-engines.md) | C03 | UT (40-curve suite) | Planned |
 | FR-010 | [10 §3–4](../architecture/10-ingestion-and-extraction.md) | D04 | BM (extraction benchmark), RV (consent flow) | Planned |
 | FR-020 | [04](../architecture/04-sonification-spec.md), [RFC-0001](../rfcs/0001-spec-v0.1.md) | A03 | UT (`validate/tests.rs`, a failing and a passing case per rule), fuzz (`spec_parse`), doc-example test (`doc_examples.rs`), schema diff (`docs / schema-diff`) | In review (#66, #96, #97) |

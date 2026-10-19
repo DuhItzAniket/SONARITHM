@@ -282,6 +282,24 @@ pub fn read_file(
     read_bytes(&bytes, format, &locator, options)
 }
 
+/// Runs a third-party decoder (arrow-ipc, parquet, calamine), turning a panic on malformed
+/// input into [`DataError::Unreadable`]. Those readers are not panic-free on hostile input
+/// (fuzzing finds panics in them); the data layer must be (coding-standards §4.1). This
+/// needs unwinding: with `panic = "abort"` (wasm32) a decoder panic still aborts. An
+/// allocation failure always aborts, which is why declared sizes are checked before
+/// decoding where possible.
+pub(crate) fn contained<T>(
+    format: Format,
+    decode: impl FnOnce() -> Result<T, DataError>,
+) -> Result<T, DataError> {
+    std::panic::catch_unwind(std::panic::AssertUnwindSafe(decode)).unwrap_or_else(|_| {
+        Err(DataError::Unreadable {
+            format,
+            reason: "the decoder rejected malformed data".to_owned(),
+        })
+    })
+}
+
 /// The table name for a locator: the file name without its extension.
 fn table_name(locator: &str) -> String {
     let file = crate::bundle::redact_locator(locator);
@@ -321,6 +339,42 @@ fn finish(
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    #[cfg(feature = "fs")]
+    fn files_are_read_by_extension_within_the_byte_limit() {
+        let dir = std::env::temp_dir().join(format!("sonarithm-data-{}", std::process::id()));
+        std::fs::create_dir_all(&dir).unwrap();
+        let csv = dir.join("readings.csv");
+        std::fs::write(&csv, "t,v\n1,0.5\n2,1.5\n").unwrap();
+        let loaded = read_file(&csv, None, &ReadOptions::new()).unwrap();
+        let table = loaded.bundle.primary().unwrap();
+        assert_eq!((table.name(), table.num_rows()), ("readings", 2));
+        assert_eq!(
+            loaded.bundle.source().locator,
+            "readings.csv",
+            "no directories (P8)"
+        );
+        let small = ReadOptions::new().with_limits(Limits {
+            max_bytes: 4,
+            ..Limits::NONE
+        });
+        let err = read_file(&csv, None, &small).unwrap_err();
+        assert_eq!(err.to_diagnostic().code.as_str(), "SNR-DATA-003");
+        let odd = dir.join("readings.unknown");
+        std::fs::write(&odd, "x").unwrap();
+        let err = read_file(&odd, None, &ReadOptions::new()).unwrap_err();
+        assert_eq!(err.to_diagnostic().code.as_str(), "SNR-DATA-002");
+        let err = read_file(&dir.join("missing.csv"), None, &ReadOptions::new()).unwrap_err();
+        assert_eq!(err.to_diagnostic().code.as_str(), "SNR-DATA-001");
+        assert!(
+            !err.to_diagnostic()
+                .message
+                .contains(&*dir.to_string_lossy()),
+            "no user paths"
+        );
+        std::fs::remove_dir_all(&dir).unwrap();
+    }
 
     #[test]
     fn table_names_drop_directories_and_extensions() {

@@ -1,7 +1,8 @@
-# Long-running checks (docs/engineering/ci-cd.md#workflow-inventory). From A03: fuzzing of
-# the spec parser and migrations (testing-strategy §7), 30 minutes per target each night.
-# Manual dispatch takes the seconds per target; use 3600 for the A03 exit run. Pull requests
-# that touch the spec or core crates run a two-minute smoke fuzz. Not a required check.
+# Long-running checks (docs/engineering/ci-cd.md#workflow-inventory). Fuzzing (testing-strategy
+# §7), 30 minutes per target each night: the spec parser and migrations (from A03) and the
+# data-layer importers (from A04: CSV/TSV, JSON/NDJSON, XLSX/ODS, Parquet/Arrow IPC).
+# Manual dispatch takes the seconds per target; use 3600 for an exit run. Pull requests that
+# touch a fuzzed crate run a two-minute smoke fuzz of every target. Not a required check.
 name: nightly
 
 on:
@@ -17,6 +18,7 @@ on:
     paths:
       - "crates/sonarithm-core/**"
       - "crates/sonarithm-spec/**"
+      - "crates/sonarithm-data/**"
       - ".github/workflows/nightly.yml"
 
 permissions: {}
@@ -35,7 +37,13 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        target: [spec_parse, spec_migrate]
+        include:
+          - { crate: sonarithm-spec, target: spec_parse }
+          - { crate: sonarithm-spec, target: spec_migrate }
+          - { crate: sonarithm-data, target: csv_read }
+          - { crate: sonarithm-data, target: json_read }
+          - { crate: sonarithm-data, target: xlsx_read }
+          - { crate: sonarithm-data, target: columnar_read }
     env:
       FUZZ_SECONDS: ${{ github.event_name == 'pull_request' && '120' || inputs.seconds || '1800' }}
     steps:
@@ -51,11 +59,11 @@ jobs:
       - run: rustup toolchain install nightly --profile minimal
       - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
         with:
-          workspaces: crates/sonarithm-spec/fuzz -> target
+          workspaces: crates/${{ matrix.crate }}/fuzz -> target
           save-if: ${{ github.ref == 'refs/heads/main' }}
       - run: cargo install --locked cargo-fuzz@0.13.2
       - name: Fuzz ${{ matrix.target }}
-        working-directory: crates/sonarithm-spec
+        working-directory: crates/${{ matrix.crate }}
         run: >-
           cargo +nightly fuzz run ${{ matrix.target }} --
           -max_total_time="$FUZZ_SECONDS"
@@ -63,10 +71,10 @@ jobs:
           -timeout=10
           -print_final_stats=1
       # A crash leaves its input under fuzz/artifacts; minimize it and commit it as a
-      # regression test in sonarithm-spec (testing-strategy §7).
+      # regression test in the owning crate (testing-strategy §7).
       - if: failure()
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: fuzz-artifacts-${{ matrix.target }}
-          path: crates/sonarithm-spec/fuzz/artifacts
+          path: crates/${{ matrix.crate }}/fuzz/artifacts
           if-no-files-found: ignore
