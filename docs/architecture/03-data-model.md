@@ -81,6 +81,8 @@ classDiagram
 
 Inference is a **suggestion**. Users or specs override it, and every inference is reported as an `Info` diagnostic so screen-reader users hear what was assumed.
 
+Implementation notes (A04): declarations in the spec's `data.fields` are merged before inference, which fills only what is left and reports each part it fills (`SNR-DATA-030` type, `031` role, `032` concept). Text whose values all belong to one ordered label set (months, weekdays, low–medium–high, Likert scales and similar) becomes `ordinal` and is stored as `Dictionary<UInt8, Utf8>` with the labels in rank order, so a key is the rank. An integer field is `ordinal` when it has at most 12 levels in a contiguous range and each level occurs about twice on average. Roles come from names first (`x`, `y`, `lower`, `upper`, `id`, `label`, `weight`), then `x` goes to the first temporal field, a field named like an axis, or the first strictly increasing number field (four rows or more); `y` goes to the first quantitative field. Concepts come from units first, then name tokens. The precision on the inference corpus (`crates/sonarithm-data/tests/corpus/csv`) is checked by a test (A04-T05: at least 95% for each of type, role and concept).
+
 ### 3.2 Units
 
 Units are free text plus an optional UCUM code (`°C` / `Cel`). They are used in announcements ("0.42 degrees Celsius"), in axis legends (SDR-18) and in unit-aware lints.

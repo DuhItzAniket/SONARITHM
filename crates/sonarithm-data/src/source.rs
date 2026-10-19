@@ -14,6 +14,8 @@ mod json;
 #[cfg(feature = "xlsx")]
 mod spreadsheet;
 
+use std::collections::BTreeMap;
+
 use sonarithm_core::{Diagnostics, TableId};
 
 use crate::bundle::{BundleId, DataBundle, Format, SourceDescriptor, SourceKind};
@@ -95,7 +97,7 @@ pub(crate) fn to_u64(value: usize) -> u64 {
 }
 
 /// Options for reading a source.
-#[derive(Clone, Debug, Default, PartialEq, Eq)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 #[non_exhaustive]
 pub struct ReadOptions {
     /// Size limits.
@@ -111,6 +113,28 @@ pub struct ReadOptions {
     /// Options for spreadsheets: sheet, range and header.
     #[cfg(feature = "xlsx")]
     pub sheet: SheetOptions,
+    /// Field semantics declared in the spec's `data.fields`. They win over the file's
+    /// metadata, and inference fills only what is left (03 §3).
+    pub fields: BTreeMap<String, FieldMeta>,
+    /// Whether to infer missing field types, roles and concepts (on by default). Turn it
+    /// off to read back exactly what a file declares.
+    pub inference: bool,
+}
+
+impl Default for ReadOptions {
+    fn default() -> Self {
+        Self {
+            limits: Limits::DEFAULT,
+            bundle: BundleId::default(),
+            table: TableId::default(),
+            csv: CsvOptions::default(),
+            json: JsonOptions::default(),
+            #[cfg(feature = "xlsx")]
+            sheet: SheetOptions::default(),
+            fields: BTreeMap::new(),
+            inference: true,
+        }
+    }
 }
 
 impl ReadOptions {
@@ -139,6 +163,21 @@ impl ReadOptions {
     #[must_use]
     pub fn with_csv(mut self, csv: CsvOptions) -> Self {
         self.csv = csv;
+        self
+    }
+
+    /// The same options without semantic inference: fields keep exactly the metadata the
+    /// file and `fields` declare.
+    #[must_use]
+    pub fn without_inference(mut self) -> Self {
+        self.inference = false;
+        self
+    }
+
+    /// The same options with declared field semantics.
+    #[must_use]
+    pub fn with_fields(mut self, fields: BTreeMap<String, FieldMeta>) -> Self {
+        self.fields = fields;
         self
     }
 
@@ -201,7 +240,7 @@ pub fn read_bytes(
         #[cfg(not(feature = "xlsx"))]
         Format::Xlsx | Format::Ods => return Err(DataError::UnsupportedFormat { format }),
     };
-    Ok(finish(table, diagnostics, format, locator, options))
+    finish(&table, diagnostics, format, locator, options)
 }
 
 /// Reads a file; the format comes from `format` or, if `None`, from the file extension.
@@ -252,24 +291,29 @@ fn table_name(locator: &str) -> String {
     }
 }
 
-/// Common post-processing: reads each field's metadata and reports values that were
-/// ignored, then wraps the table in a bundle.
+/// Common post-processing: reports metadata values that were ignored, infers missing
+/// field semantics (03 §3), then wraps the table in a bundle.
 fn finish(
-    table: Table,
+    table: &Table,
     mut diagnostics: Diagnostics,
     format: Format,
     locator: &str,
     options: &ReadOptions,
-) -> Loaded {
+) -> Result<Loaded, DataError> {
     for field in table.schema().fields() {
         let (_, invalid) = FieldMeta::read(field);
         diagnostics.extend(invalid.iter().map(InvalidMetadata::to_diagnostic));
     }
+    let table = if options.inference {
+        crate::infer::semantic::infer_table(table, &options.fields, &mut diagnostics)?
+    } else {
+        table.clone()
+    };
     let source = SourceDescriptor::new(SourceKind::File(format), locator, format.as_str());
-    Loaded {
+    Ok(Loaded {
         bundle: DataBundle::single(options.bundle, source, table),
         diagnostics,
-    }
+    })
 }
 
 #[cfg(test)]

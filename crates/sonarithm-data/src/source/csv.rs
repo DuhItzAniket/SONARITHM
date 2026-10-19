@@ -475,6 +475,12 @@ mod tests {
             .diagnostics
             .iter()
             .map(|d| d.code.as_str().to_owned())
+            .filter(|code| {
+                !matches!(
+                    code.as_str(),
+                    "SNR-DATA-030" | "SNR-DATA-031" | "SNR-DATA-032"
+                )
+            })
             .collect();
         (loaded.bundle.primary().unwrap().clone(), codes)
     }

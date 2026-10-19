@@ -3,13 +3,22 @@
     "rows": 5,
     "fields": {
       "date": {
-        "storage": "date"
+        "storage": "date",
+        "type": "temporal",
+        "role": "x",
+        "concept": null
       },
       "temperature (°C)": {
-        "storage": "float"
+        "storage": "float",
+        "type": "quantitative",
+        "role": "y",
+        "concept": "temperature"
       },
       "station": {
-        "storage": "text"
+        "storage": "text",
+        "type": "nominal",
+        "role": "series",
+        "concept": null
       }
     },
     "codes": [
@@ -20,13 +29,22 @@
     "rows": 4,
     "fields": {
       "Datum": {
-        "storage": "date"
+        "storage": "date",
+        "type": "temporal",
+        "role": "x",
+        "concept": null
       },
       "Temperatur": {
-        "storage": "float"
+        "storage": "float",
+        "type": "quantitative",
+        "role": "y",
+        "concept": "temperature"
       },
       "Ort": {
-        "storage": "text"
+        "storage": "text",
+        "type": "nominal",
+        "role": "series",
+        "concept": null
       }
     },
     "options": {
@@ -40,10 +58,16 @@
     "rows": 3,
     "fields": {
       "id": {
-        "storage": "text"
+        "storage": "text",
+        "type": "nominal",
+        "role": "id",
+        "concept": null
       },
       "value": {
-        "storage": "int"
+        "storage": "int",
+        "type": "quantitative",
+        "role": "y",
+        "concept": null
       }
     },
     "codes": [
@@ -54,10 +78,16 @@
     "rows": 4,
     "fields": {
       "city": {
-        "storage": "text"
+        "storage": "text",
+        "type": "nominal",
+        "role": "label",
+        "concept": null
       },
       "population": {
-        "storage": "int"
+        "storage": "int",
+        "type": "quantitative",
+        "role": "y",
+        "concept": null
       }
     },
     "codes": [
@@ -69,13 +99,22 @@
     "rows": 3,
     "fields": {
       "country": {
-        "storage": "text"
+        "storage": "text",
+        "type": "nominal",
+        "role": "label",
+        "concept": null
       },
       "gdp_musd": {
-        "storage": "int"
+        "storage": "int",
+        "type": "quantitative",
+        "role": "y",
+        "concept": "money"
       },
       "share": {
-        "storage": "float"
+        "storage": "float",
+        "type": "quantitative",
+        "role": null,
+        "concept": null
       }
     },
     "codes": [
@@ -86,13 +125,22 @@
     "rows": 7,
     "fields": {
       "time": {
-        "storage": "datetime"
+        "storage": "datetime",
+        "type": "temporal",
+        "role": "x",
+        "concept": null
       },
       "reading": {
-        "storage": "float"
+        "storage": "float",
+        "type": "quantitative",
+        "role": "y",
+        "concept": null
       },
       "sensor": {
-        "storage": "text"
+        "storage": "text",
+        "type": "nominal",
+        "role": "series",
+        "concept": null
       }
     },
     "codes": [
@@ -103,10 +151,16 @@
     "rows": 5,
     "fields": {
       "x": {
-        "storage": "int"
+        "storage": "int",
+        "type": "quantitative",
+        "role": "x",
+        "concept": null
       },
       "y": {
-        "storage": "float"
+        "storage": "float",
+        "type": "quantitative",
+        "role": "y",
+        "concept": null
       }
     },
     "codes": [
@@ -119,10 +173,16 @@
     "rows": 3,
     "fields": {
       "month_start": {
-        "storage": "date"
+        "storage": "date",
+        "type": "temporal",
+        "role": "x",
+        "concept": null
       },
       "rainfall (mm)": {
-        "storage": "float"
+        "storage": "float",
+        "type": "quantitative",
+        "role": "y",
+        "concept": null
       }
     },
     "codes": [
@@ -135,13 +195,22 @@
     "rows": 4,
     "fields": {
       "a": {
-        "storage": "int"
+        "storage": "int",
+        "type": "quantitative",
+        "role": "x",
+        "concept": null
       },
       "b": {
-        "storage": "int"
+        "storage": "int",
+        "type": "quantitative",
+        "role": "y",
+        "concept": null
       },
       "c": {
-        "storage": "int"
+        "storage": "int",
+        "type": "quantitative",
+        "role": null,
+        "concept": null
       }
     },
     "codes": [
@@ -153,13 +222,22 @@
     "rows": 3,
     "fields": {
       "name": {
-        "storage": "text"
+        "storage": "text",
+        "type": "nominal",
+        "role": "label",
+        "concept": null
       },
       "score": {
-        "storage": "float"
+        "storage": "float",
+        "type": "quantitative",
+        "role": "y",
+        "concept": null
       },
       "group": {
-        "storage": "text"
+        "storage": "text",
+        "type": "nominal",
+        "role": "category",
+        "concept": null
       }
     },
     "codes": [
@@ -170,13 +248,22 @@
     "rows": 4,
     "fields": {
       "year": {
-        "storage": "int"
+        "storage": "int",
+        "type": "temporal",
+        "role": "x",
+        "concept": null
       },
       "sales": {
-        "storage": "int"
+        "storage": "int",
+        "type": "quantitative",
+        "role": "y",
+        "concept": "money"
       },
       "region": {
-        "storage": "text"
+        "storage": "text",
+        "type": "nominal",
+        "role": "series",
+        "concept": null
       }
     },
     "codes": [
@@ -187,10 +274,16 @@
     "rows": 4,
     "fields": {
       "column_1": {
-        "storage": "float"
+        "storage": "float",
+        "type": "quantitative",
+        "role": "x",
+        "concept": null
       },
       "column_2": {
-        "storage": "int"
+        "storage": "int",
+        "type": "quantitative",
+        "role": "y",
+        "concept": null
       }
     },
     "codes": [
@@ -201,13 +294,22 @@
     "rows": 3,
     "fields": {
       "product": {
-        "storage": "text"
+        "storage": "text",
+        "type": "nominal",
+        "role": "label",
+        "concept": null
       },
       "price": {
-        "storage": "float"
+        "storage": "float",
+        "type": "quantitative",
+        "role": "y",
+        "concept": "money"
       },
       "discount": {
-        "storage": "int"
+        "storage": "int",
+        "type": "quantitative",
+        "role": null,
+        "concept": null
       }
     },
     "codes": [
@@ -219,10 +321,16 @@
     "rows": 3,
     "fields": {
       "timestamp": {
-        "storage": "instant"
+        "storage": "instant",
+        "type": "temporal",
+        "role": "x",
+        "concept": null
       },
       "level": {
-        "storage": "float"
+        "storage": "float",
+        "type": "quantitative",
+        "role": "y",
+        "concept": null
       }
     },
     "codes": [
@@ -233,10 +341,16 @@
     "rows": 3,
     "fields": {
       "date": {
-        "storage": "date"
+        "storage": "date",
+        "type": "temporal",
+        "role": "x",
+        "concept": null
       },
       "visitors": {
-        "storage": "int"
+        "storage": "int",
+        "type": "quantitative",
+        "role": "y",
+        "concept": null
       }
     },
     "codes": [
@@ -247,10 +361,16 @@
     "rows": 3,
     "fields": {
       "date": {
-        "storage": "date"
+        "storage": "date",
+        "type": "temporal",
+        "role": "x",
+        "concept": null
       },
       "value": {
-        "storage": "int"
+        "storage": "int",
+        "type": "quantitative",
+        "role": "y",
+        "concept": null
       }
     },
     "options": {
@@ -264,10 +384,16 @@
     "rows": 3,
     "fields": {
       "zip": {
-        "storage": "text"
+        "storage": "text",
+        "type": "nominal",
+        "role": "id",
+        "concept": null
       },
       "count": {
-        "storage": "int"
+        "storage": "int",
+        "type": "quantitative",
+        "role": "y",
+        "concept": null
       }
     },
     "codes": [
@@ -278,10 +404,16 @@
     "rows": 4,
     "fields": {
       "step": {
-        "storage": "int"
+        "storage": "int",
+        "type": "quantitative",
+        "role": "x",
+        "concept": null
       },
       "active": {
-        "storage": "bool"
+        "storage": "bool",
+        "type": "nominal",
+        "role": "category",
+        "concept": null
       }
     },
     "codes": [
@@ -292,10 +424,16 @@
     "rows": 40,
     "fields": {
       "t": {
-        "storage": "int"
+        "storage": "int",
+        "type": "quantitative",
+        "role": "x",
+        "concept": null
       },
       "value": {
-        "storage": "float"
+        "storage": "float",
+        "type": "quantitative",
+        "role": "y",
+        "concept": null
       }
     },
     "codes": [
@@ -307,16 +445,28 @@
     "rows": 2,
     "fields": {
       "Höhe (m)": {
-        "storage": "float"
+        "storage": "float",
+        "type": "quantitative",
+        "role": "y",
+        "concept": null
       },
       "column_2": {
-        "storage": "text"
+        "storage": "text",
+        "type": "nominal",
+        "role": null,
+        "concept": null
       },
       "Höhe (m)_2": {
-        "storage": "int"
+        "storage": "int",
+        "type": "quantitative",
+        "role": null,
+        "concept": null
       },
       "Name": {
-        "storage": "text"
+        "storage": "text",
+        "type": "nominal",
+        "role": "label",
+        "concept": null
       }
     },
     "codes": [
@@ -329,10 +479,16 @@
     "rows": 5,
     "fields": {
       "year": {
-        "storage": "int"
+        "storage": "int",
+        "type": "temporal",
+        "role": "x",
+        "concept": null
       },
       "co2_ppm": {
-        "storage": "float"
+        "storage": "float",
+        "type": "quantitative",
+        "role": "y",
+        "concept": null
       }
     },
     "codes": [
@@ -343,10 +499,16 @@
     "rows": 3,
     "fields": {
       "item": {
-        "storage": "text"
+        "storage": "text",
+        "type": "nominal",
+        "role": "label",
+        "concept": null
       },
       "ratio": {
-        "storage": "float"
+        "storage": "float",
+        "type": "quantitative",
+        "role": "y",
+        "concept": null
       }
     },
     "codes": [
@@ -358,10 +520,156 @@
     "rows": 15,
     "fields": {
       "reading_id": {
-        "storage": "text"
+        "storage": "text",
+        "type": "nominal",
+        "role": "id",
+        "concept": null
       },
       "wind_speed (m/s)": {
-        "storage": "int"
+        "storage": "int",
+        "type": "quantitative",
+        "role": "y",
+        "concept": "velocity"
+      }
+    },
+    "codes": [
+      "SNR-DATA-010"
+    ]
+  },
+  "24_ordinal_labels.csv": {
+    "rows": 12,
+    "fields": {
+      "month": {
+        "storage": "dict",
+        "type": "ordinal",
+        "role": "x",
+        "concept": null
+      },
+      "level": {
+        "storage": "dict",
+        "type": "ordinal",
+        "role": "category",
+        "concept": null
+      },
+      "rating": {
+        "storage": "int",
+        "type": "ordinal",
+        "role": "y",
+        "concept": null
+      }
+    },
+    "codes": [
+      "SNR-DATA-010"
+    ]
+  },
+  "25_concepts.csv": {
+    "rows": 15,
+    "fields": {
+      "station_id": {
+        "storage": "text",
+        "type": "nominal",
+        "role": "id",
+        "concept": null
+      },
+      "pressure_hpa": {
+        "storage": "float",
+        "type": "quantitative",
+        "role": "y",
+        "concept": "pressure"
+      },
+      "price_usd": {
+        "storage": "float",
+        "type": "quantitative",
+        "role": null,
+        "concept": "money"
+      },
+      "mass (kg)": {
+        "storage": "float",
+        "type": "quantitative",
+        "role": null,
+        "concept": "mass"
+      },
+      "risk_score": {
+        "storage": "float",
+        "type": "quantitative",
+        "role": null,
+        "concept": "danger"
+      },
+      "node_degree": {
+        "storage": "int",
+        "type": "quantitative",
+        "role": null,
+        "concept": "graph.degree"
+      }
+    },
+    "codes": [
+      "SNR-DATA-010"
+    ]
+  },
+  "26_ids_and_groups.csv": {
+    "rows": 15,
+    "fields": {
+      "sample_id": {
+        "storage": "int",
+        "type": "nominal",
+        "role": "id",
+        "concept": null
+      },
+      "group": {
+        "storage": "text",
+        "type": "nominal",
+        "role": "category",
+        "concept": null
+      },
+      "type": {
+        "storage": "int",
+        "type": "nominal",
+        "role": "category",
+        "concept": null
+      },
+      "measurement": {
+        "storage": "float",
+        "type": "quantitative",
+        "role": "y",
+        "concept": null
+      }
+    },
+    "codes": [
+      "SNR-DATA-010"
+    ]
+  },
+  "27_weather.csv": {
+    "rows": 8,
+    "fields": {
+      "date": {
+        "storage": "date",
+        "type": "temporal",
+        "role": "x",
+        "concept": null
+      },
+      "temp_max": {
+        "storage": "float",
+        "type": "quantitative",
+        "role": "upper",
+        "concept": "temperature"
+      },
+      "temp_min": {
+        "storage": "float",
+        "type": "quantitative",
+        "role": "lower",
+        "concept": "temperature"
+      },
+      "humidity (%)": {
+        "storage": "int",
+        "type": "quantitative",
+        "role": "y",
+        "concept": null
+      },
+      "wind_dir": {
+        "storage": "text",
+        "type": "nominal",
+        "role": "category",
+        "concept": null
       }
     },
     "codes": [

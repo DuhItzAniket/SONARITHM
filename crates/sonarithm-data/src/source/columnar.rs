@@ -209,7 +209,8 @@ mod tests {
     }
 
     fn reread(bytes: &[u8], format: Format) -> Table {
-        let loaded = read_bytes(bytes, format, "dir/t.bin", &ReadOptions::default()).unwrap();
+        let options = ReadOptions::new().without_inference();
+        let loaded = read_bytes(bytes, format, "dir/t.bin", &options).unwrap();
         assert!(loaded.diagnostics.is_empty(), "{:?}", loaded.diagnostics);
         loaded.bundle.primary().unwrap().clone()
     }
@@ -283,7 +284,8 @@ mod tests {
         )
         .unwrap();
         let bytes = write_ipc(&Table::new(TableId(0), "t", schema, vec![batch]).unwrap()).unwrap();
-        let loaded = read_bytes(&bytes, Format::Arrow, "t.arrow", &ReadOptions::default()).unwrap();
+        let options = ReadOptions::new().without_inference();
+        let loaded = read_bytes(&bytes, Format::Arrow, "t.arrow", &options).unwrap();
         let codes: Vec<_> = loaded.diagnostics.iter().map(|d| d.code.as_str()).collect();
         assert_eq!(codes, ["SNR-DATA-040"]);
     }

@@ -1,0 +1,7 @@
+# Seeds for failure cases proptest has generated in the past. It is
+# automatically read and these particular cases re-run before any
+# novel cases are generated.
+#
+# It is recommended to check this file in to source control so that
+# everyone who runs the test benefits from these saved cases.
+cc 0836ed1b33546f27a79e7dedd7264ebacf38517caf2351dce3a0123a876e16c6 # shrinks to meta = FieldMeta { ftype: None, unit: None, concept: None, role: None, label: None, description: None }
