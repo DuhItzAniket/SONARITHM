@@ -12,15 +12,19 @@
 pub mod codes;
 pub mod data;
 pub mod json;
+pub mod parse;
 pub mod schema;
 pub mod sections;
 pub mod spec;
 pub mod track;
+pub mod validate;
 pub mod values;
 
 pub use data::{DataSpec, FieldSpec, Source, Transform};
 pub use json::JsonValue;
+pub use parse::parse;
 pub use schema::json_schema;
 pub use sections::{Analysis, Context, Music, Output, Pace, Playback, Substrate};
 pub use spec::{Mode, SPEC_VERSION, Spec};
 pub use track::{Channel, Channels, Mark, TrackSpec};
+pub use validate::{FieldCatalog, validate};
