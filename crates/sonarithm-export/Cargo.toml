@@ -8,5 +8,15 @@ repository.workspace = true
 license.workspace = true
 publish.workspace = true
 
+[dependencies]
+flacenc.workspace = true
+hound.workspace = true
+sonarithm-core.workspace = true
+sonarithm-render.workspace = true
+thiserror.workspace = true
+
+[dev-dependencies]
+claxon.workspace = true
+
 [lints]
 workspace = true

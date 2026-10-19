@@ -278,6 +278,7 @@ The audio thread is sacred (P3). These rules apply to everything reachable from 
 ### 11.4 Denormals and numeric safety
 
 - Flush denormals (FTZ/DAZ) for the duration of each callback, using `no_denormals` or an equivalent guard. The offline driver sets the same mode (section 10).
+  - **A05:** the render crates use the equivalent guard by construction instead. Filter state is flushed to zero below 1e-20, and envelopes settle on exact levels, so no subnormal numbers arise and neither driver changes the floating-point mode. The reasons: `no_denormals` 0.3 does not build for `wasm32-unknown-unknown` (02 §3 rule 4), and calling it needs `unsafe`, which its own documentation calls technically undefined behaviour. The silent-input tests of `sonarithm_dsp::filter` check this.
 - Filters and feedback paths that can decay towards zero are tested with silent input for long durations to catch denormal slowdowns and NaN propagation.
 - A NaN or infinity reaching the output is a bug. Debug builds assert on non-finite output samples; release builds clamp at the limiter and raise a fault record.
 

@@ -160,6 +160,8 @@ pub trait AudioBackend {
 
 Paths are written **relative or redacted**, never as absolute user paths (privacy).
 
+**Implemented in A05** (A05-T07). `sonarithm_render::OfflineRender` is the `OfflineBackend`: it plays the plan from its start in fixed blocks (256 frames by default). `sonarithm_export::write_audio` encodes the render block by block, so an export never holds the whole render as PCM. FLAC frames stay in memory, compressed, until the stream is written. Integer samples are scaled by 2^23 − 1, rounded half to even and clamped, without dither.
+
 ## 8. Determinism
 
 | Source of variance | Control |

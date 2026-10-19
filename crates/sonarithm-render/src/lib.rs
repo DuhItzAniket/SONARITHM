@@ -22,11 +22,13 @@
 pub mod codes;
 mod earcon;
 pub mod graph;
+pub mod offline;
 pub mod plan;
 pub mod rt;
 mod voice;
 
 pub use graph::{Command, Cue, GainTarget, Graph, GraphConfig, GraphStats, LoopRange};
+pub use offline::OfflineRender;
 pub use plan::{
     Bus, EventKind, GlideRef, Instrument, PlanConfig, PlanError, Planned, PlannedBreakpoint,
     PlannedEvent, RenderPlan, Tone, TrackPlan,

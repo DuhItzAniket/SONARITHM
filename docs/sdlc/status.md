@@ -130,7 +130,7 @@ Work runs in a separate agent session through small PRs into `crates/sonarithm-d
 | A05-T04 Render graph, voice pool, scheduler, transport | In review | `Graph::process`: voice pools with oldest-first stealing, four buses at the sound-design §6.2 levels, sample-accurate dispatch (bit-identical output at blocks of 1 to 4096 frames), play, pause, stop, seek and loop with crossfades, speed without pitch change, live cues; provisional earcons |
 | A05-T05 RT communication (rtrb, triple_buffer, basedrop) | In review | `realtime(graph)` splits into `Controller` and `Processor`: rtrb command ring (1024, ≤ 64 per block, coalescing on overflow), plan swap with crossfade through `basedrop::Owned`, `EngineState` through `triple_buffer`; shuttle test of the protocol over 200 random schedules |
 | A05-T06 `AudioBackend` + `CpalBackend` | Not started | |
-| A05-T07 `OfflineBackend`; WAV and FLAC writers | Not started | |
+| A05-T07 `OfflineBackend`; WAV and FLAC writers | In review | `OfflineRender` drives `Graph::process` in fixed blocks; `write_audio` streams 24-bit or float WAV (hound) and 24-bit FLAC (flacenc). Files decode losslessly in hound, claxon and ffmpeg 9.0.1 |
 | A05-T08 Render manifest + WebVTT sidecar | Not started | |
 | A05-T09 Master limiter + start-up gain ramp | Not started | |
 | A05-T10 Allocation check in debug; 10-min soak; xrun counting | Not started | `assert_no_alloc` is BSD-1-Clause (F-038); licence question raised with the coordinator |

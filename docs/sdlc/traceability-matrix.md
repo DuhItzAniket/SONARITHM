@@ -57,7 +57,7 @@
 | FR-091 | [07 TONALENS](../architecture/07-engines.md) | D01 | UT; EXP for H-04 | Planned |
 | FR-092 | [07 TONALENS](../architecture/07-engines.md) | D01 | GT | Planned |
 | FR-093 | [07 RESONUM](../architecture/07-engines.md) | D02 | GT, CD (pilot) | Planned |
-| FR-100 | [06 §7](../architecture/06-audio-engine.md#7-export) | A05 | GT, schema test (manifest) | Planned |
+| FR-100 | [06 §7](../architecture/06-audio-engine.md#7-export) | A05 | GT, schema test (manifest), IT (decode round trip) | In progress: WAV and FLAC writers with lossless decode tests (A05-T07); manifest in A05-T08 |
 | FR-101 | [06 §7](../architecture/06-audio-engine.md#7-export) | A05, B03 | UT (VTT validity) | Planned |
 | FR-102 | [06 §7](../architecture/06-audio-engine.md#7-export) | C04 | GT | Planned |
 | FR-110 | [12 §4](../architecture/12-cross-cutting-concerns.md#4-project-file-format) | B05 | IT (round trip, crash injection) | Planned |

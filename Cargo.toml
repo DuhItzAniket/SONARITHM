@@ -69,6 +69,10 @@ csv = "1.4.0"
 encoding_rs = "0.8.42"
 # Civil date-time parsing only: no time-zone database, no system clock.
 jiff = { version = "0.2.38", default-features = false, features = ["std"] }
+# Export writers (06 §7): WAV and pure-Rust FLAC. flacenc without its default features: no
+# worker threads (`par`), logging or serde.
+flacenc = { version = "0.5.1", default-features = false }
+hound = "3.5.1"
 # Pure-Rust maths for every Score-affecting transcendental function (ADR-0013). The default
 # `arch` feature only swaps in IEEE-exact instructions (sqrt, rounding), so results stay
 # identical on every platform.
@@ -105,6 +109,7 @@ toml = { version = "1.1.8", default-features = false, features = ["std", "parse"
 # Test-only crates (dev-dependencies).
 # Benchmarks (testing-strategy §9.1); no plotting or rayon.
 criterion = { version = "0.8.2", default-features = false, features = ["cargo_bench_support"] }
+claxon = "0.4.3"            # an independent FLAC decoder, to validate flacenc output
 insta = "1.43.0"
 # Builds XLSX and ODS packages in sonarithm-data tests; the version calamine already uses.
 zip = { version = "9.0.5", default-features = false }
