@@ -132,7 +132,7 @@ Work runs in a separate agent session through small PRs into `crates/sonarithm-d
 | A05-T06 `AudioBackend` + `CpalBackend` | Not started | |
 | A05-T07 `OfflineBackend`; WAV and FLAC writers | In review | `OfflineRender` drives `Graph::process` in fixed blocks; `write_audio` streams 24-bit or float WAV (hound) and 24-bit FLAC (flacenc). Files decode losslessly in hound, claxon and ffmpeg 9.0.1 |
 | A05-T08 Render manifest + WebVTT sidecar | Not started | |
-| A05-T09 Master limiter + start-up gain ramp | Not started | |
+| A05-T09 Master limiter + start-up gain ramp | In review | Look-ahead true-peak limiter (−1 dBTP ceiling, 2 ms look-ahead, latency compensated offline); start-up ramp from −20 dB over 500 ms for playback. Stress Scores measure −1.19 and −1.16 dBTP with ebur128 (F-050) |
 | A05-T10 Allocation check in debug; 10-min soak; xrun counting | Not started | `assert_no_alloc` is BSD-1-Clause (F-038); licence question raised with the coordinator |
 | A05-T11 Golden-audio harness; cross-OS CI job (OD-08) | Not started | |
 | A05-T12 Benchmarks (PB-03) | Not started | |

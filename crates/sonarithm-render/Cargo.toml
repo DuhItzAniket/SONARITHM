@@ -17,6 +17,7 @@ thiserror.workspace = true
 triple_buffer.workspace = true
 
 [dev-dependencies]
+ebur128.workspace = true
 insta.workspace = true
 proptest.workspace = true
 shuttle.workspace = true

@@ -190,6 +190,8 @@ The **Score IR is the strict artifact** (byte-identical). Audio is compared with
 - **Independent sonification volume** (A11Y-15), separate from the system volume. A **Stop all audio** command is always available (global shortcut).
 - **Session comfort.** An optional reminder after long sessions (SDR-39, experimental).
 
+**Implemented in A05** (A05-T09). `sonarithm_dsp::TruePeakLimiter` is stereo-linked. It estimates inter-sample peaks with a 4× polyphase interpolator and aims 0.2 dB under the ceiling. The required gain is the minimum over a 2 ms window, smoothed by a moving average over the same window, and recovers with a 100 ms release. The look-ahead and release values are provisional. The limiter delays the output by 101 frames at 48 kHz; the offline driver compensates, so frame 0 of an export is score frame 0. The start-up ramp is a property of playback graphs (`GraphConfig::new`). Offline renders (`GraphConfig::offline`) start as the Score does.
+
 ## 11. Failure handling
 
 | Failure | Behaviour |

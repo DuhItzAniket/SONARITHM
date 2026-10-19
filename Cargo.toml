@@ -69,6 +69,8 @@ csv = "1.4.0"
 encoding_rs = "0.8.42"
 # Civil date-time parsing only: no time-zone database, no system clock.
 jiff = { version = "0.2.38", default-features = false, features = ["std"] }
+# EBU R128 / ITU-R BS.1770 loudness and true-peak metering (SDR-24 meter, golden ΔLUFS).
+ebur128 = "0.1.10"
 # Export writers (06 §7): WAV and pure-Rust FLAC. flacenc without its default features: no
 # worker threads (`par`), logging or serde.
 flacenc = { version = "0.5.1", default-features = false }

@@ -3,7 +3,8 @@
 
 //! The offline driver (06 §6, `OfflineBackend`): a plain loop at a fixed block size over
 //! the same [`Graph::process`] that real-time playback calls (P4), so an export sounds
-//! exactly like playback.
+//! exactly like playback. The graph runs without the start-up ramp, and the master
+//! limiter's look-ahead delay is compensated: frame 0 of the output is score frame 0.
 //!
 //! No floating-point mode is changed for the render. The DSP keeps its state free of
 //! subnormal numbers by construction (filters flush their state, envelopes settle at exact
@@ -33,14 +34,28 @@ impl OfflineRender {
     pub fn new(plan: RenderPlan, block_size: usize) -> Self {
         let block = block_size.max(1);
         let length = plan.length.0;
-        let mut graph = Graph::new(plan, GraphConfig::new(block));
+        let mut graph = Graph::new(plan, GraphConfig::offline(block));
         graph.apply(Command::Play);
+        // Skip the limiter's delay so the output lines up with the Score.
+        let mut skip = vec![0.0; 2 * block];
+        let mut latency = graph.latency();
+        while latency > 0 {
+            let frames = latency.min(block);
+            graph.process(&mut skip[..2 * frames]);
+            latency -= frames;
+        }
         Self {
             graph,
             block,
             length,
             rendered: 0,
         }
+    }
+
+    /// Frames processed with the master limiter engaged.
+    #[must_use]
+    pub fn limited_frames(&self) -> u64 {
+        self.graph.limited_frames()
     }
 
     /// The sample rate of the plan.
