@@ -39,6 +39,31 @@ const SQUARE_COMFORT_CUTOFF: f64 = 8_000.0;
 /// The highest partial frequency kept, as a fraction of the sample rate.
 const PARTIAL_LIMIT: f64 = 0.45;
 
+/// The mallet's brightness is a spectral tilt rather than a filter: partial `k` is weighted
+/// by `t^(k−1)` with `t = 2^(2b − 1)` (0.5 at brightness 0, 1 at 0.5, 2 at 1; A05
+/// provisional mapping), then the weights are normalized to sum to 1.
+fn mallet_weights(increment: f64, brightness: f64) -> [f64; 4] {
+    let tilt = sonarithm_core::math::exp2(2.0 * brightness.clamp(0.0, 1.0) - 1.0);
+    let mut weights = [0.0; 4];
+    let mut factor = 1.0;
+    for (k, (weight, amplitude)) in weights.iter_mut().zip(MALLET_PARTIALS).enumerate() {
+        // Band-limited: partials at or above 0.45 of the sample rate are left out.
+        #[expect(clippy::cast_precision_loss, reason = "k is at most 4")]
+        let harmonic = (k + 1) as f64;
+        if harmonic * increment < PARTIAL_LIMIT {
+            *weight = amplitude * factor;
+        }
+        factor *= tilt;
+    }
+    let sum: f64 = weights.iter().sum();
+    if sum > 0.0 {
+        for weight in &mut weights {
+            *weight /= sum;
+        }
+    }
+    weights
+}
+
 /// The low-pass cutoff for a brightness in [0, 1]: from 2 to 32 times the fundamental
 /// (A05 provisional mapping), capped at 0.45 of the sample rate.
 fn brightness_cutoff(
@@ -63,7 +88,8 @@ enum Source {
     Mallet {
         phase: f64,
         increment: f64,
-        partials: usize,
+        brightness: f64,
+        weights: [f64; 4],
     },
     /// An earcon synthesizer.
     Earcon(Earcon),
@@ -80,7 +106,8 @@ impl Source {
             _ => Self::Mallet {
                 phase: 0.0,
                 increment: 0.0,
-                partials: 0,
+                brightness: 0.5,
+                weights: [0.0; 4],
             },
         }
     }
@@ -90,7 +117,8 @@ impl Source {
             Self::Wave(osc) => osc.set_frequency(frequency, rate),
             Self::Mallet {
                 increment,
-                partials,
+                brightness,
+                weights,
                 ..
             } => {
                 let inc = frequency.0 / f64::from(rate.get());
@@ -99,11 +127,35 @@ impl Source {
                 } else {
                     0.0
                 };
-                *partials = (1..=MALLET_PARTIALS.len())
-                    .take_while(|k| *k as f64 * *increment < PARTIAL_LIMIT)
-                    .count();
+                *weights = mallet_weights(*increment, *brightness);
             }
             Self::Earcon(_) => {}
+        }
+    }
+
+    /// Writes the next `out.len()` samples.
+    fn fill(&mut self, out: &mut [f32]) {
+        match self {
+            Self::Wave(osc) => osc.fill(out),
+            _ => {
+                for sample in out {
+                    *sample = self.next_sample();
+                }
+            }
+        }
+    }
+
+    /// Sets the brightness of the mallet's partials; other sources are filtered instead.
+    fn set_brightness(&mut self, value: f64) {
+        if let Self::Mallet {
+            increment,
+            brightness,
+            weights,
+            ..
+        } = self
+        {
+            *brightness = value;
+            *weights = mallet_weights(*increment, value);
         }
     }
 
@@ -114,13 +166,18 @@ impl Source {
             Self::Mallet {
                 phase,
                 increment,
-                partials,
+                weights,
+                ..
             } => {
+                // sin(kθ) by the Chebyshev recurrence sin(kθ) = 2cos θ · sin((k−1)θ) −
+                // sin((k−2)θ): two polynomial evaluations for all four partials.
                 let p = *phase;
-                let mut sum = 0.0;
-                for (k, amplitude) in MALLET_PARTIALS.iter().enumerate().take(*partials) {
-                    sum += amplitude * sine_turns(p * (k + 1) as f64);
-                }
+                let (s1, cos) = (sine_turns(p), sine_turns(p + 0.25));
+                let s2 = 2.0 * cos * s1;
+                let s3 = 2.0 * cos * s2 - s1;
+                let s4 = 2.0 * cos * s3 - s2;
+                let [w1, w2, w3, w4] = *weights;
+                let sum = w1 * s1 + w2 * s2 + w3 * s3 + w4 * s4;
                 *phase += *increment;
                 if *phase >= 1.0 {
                     *phase -= 1.0;
@@ -298,8 +355,11 @@ impl Voice {
             step_right: 0.0,
             countdown: 0,
         };
+        self.source.set_brightness(brightness);
         self.source.set_frequency(Hz(frequency), rate);
-        if !matches!(instrument, Instrument::Sine) && !matches!(self.source, Source::Earcon(_)) {
+        // The sine is pure, the mallet tilts its partials, earcons are fixed: the other
+        // waveforms get a brightness low-pass.
+        if matches!(self.source, Source::Wave(_)) && instrument != Instrument::Sine {
             let cutoff = brightness_cutoff(frequency, brightness, instrument, rate);
             self.filter = Some(Biquad::new(
                 BiquadKind::LowPass,
@@ -324,26 +384,26 @@ impl Voice {
         }
     }
 
-    /// Adds `left.len()` frames into the bus buffers. RT-safe: bounded by the buffer
-    /// length; reads the track's breakpoints for glides.
+    /// Adds `left.len()` frames into the bus buffers. The work is done in runs between
+    /// the voice's own events (release point, end, glide control points), each run in
+    /// tight loops over `scratch`: source, filter, envelope and fade, then mix. Every frame
+    /// gets the same operations in the same order whatever the run boundaries, so the
+    /// output does not depend on the block size.
+    ///
+    /// RT-safe: bounded by the buffer length; `scratch` is preallocated by the graph.
     pub(crate) fn render(
         &mut self,
         left: &mut [f32],
         right: &mut [f32],
         track: &TrackPlan,
         rate: SampleRate,
+        scratch: &mut [f32],
     ) {
-        for (l, r) in left.iter_mut().zip(right.iter_mut()) {
-            if !self.active {
-                return;
-            }
-            if self.glide.is_some() {
-                if self.countdown == 0 {
-                    self.control(track, rate);
-                }
-                self.countdown -= 1;
-                self.left += self.step_left;
-                self.right += self.step_right;
+        let frames = left.len().min(right.len());
+        let mut done = 0;
+        while done < frames && self.active {
+            if self.glide.is_some() && self.countdown == 0 {
+                self.control(track, rate);
             }
             // `>=`: a voice resumed past its release point releases at once.
             if self.pos >= self.release_at
@@ -354,25 +414,58 @@ impl Voice {
             {
                 self.env.release();
             }
-            let mut level = self.env.next_level();
-            if let Some(fade) = &mut self.fade {
-                let x = f64::from(fade.remaining) / f64::from(fade.total);
-                let s = sine_turns(x / 4.0);
-                level *= to_f32(s * s);
-                if fade.remaining == 0 {
-                    self.active = false;
-                }
-                fade.remaining = fade.remaining.saturating_sub(1);
+            let mut run = (frames - done).min(scratch.len());
+            if self.pos < self.release_at {
+                run = run.min(usize::try_from(self.release_at - self.pos).unwrap_or(usize::MAX));
             }
-            let mut sample = self.source.next_sample();
+            run = run.min(usize::try_from(self.len.saturating_sub(self.pos)).unwrap_or(usize::MAX));
+            if self.glide.is_some() {
+                run = run.min(self.countdown as usize);
+            }
+            let (Some(buffer), Some(l), Some(r)) = (
+                scratch.get_mut(..run),
+                left.get_mut(done..done + run),
+                right.get_mut(done..done + run),
+            ) else {
+                break;
+            };
+            if run == 0 {
+                self.active = false;
+                break;
+            }
+            self.source.fill(buffer);
             if let Some(filter) = &mut self.filter {
-                sample = filter.process(sample);
+                filter.process_buffer(buffer);
             }
-            let sample = sample * level;
-            *l += sample * self.left;
-            *r += sample * self.right;
-            self.pos += 1;
-            if self.pos >= self.len || (!self.env.is_active() && self.pos > 0) {
+            for sample in buffer.iter_mut() {
+                let mut level = self.env.next_level();
+                if let Some(fade) = &mut self.fade {
+                    let x = f64::from(fade.remaining) / f64::from(fade.total);
+                    let s = sine_turns(x / 4.0);
+                    level *= to_f32(s * s);
+                    fade.remaining = fade.remaining.saturating_sub(1);
+                }
+                *sample *= level;
+            }
+            if self.glide.is_some() {
+                for ((l, r), sample) in l.iter_mut().zip(r.iter_mut()).zip(buffer.iter()) {
+                    self.left += self.step_left;
+                    self.right += self.step_right;
+                    *l += sample * self.left;
+                    *r += sample * self.right;
+                }
+                self.countdown -= u32::try_from(run).unwrap_or(u32::MAX).min(self.countdown);
+            } else {
+                let (gain_left, gain_right) = (self.left, self.right);
+                for ((l, r), sample) in l.iter_mut().zip(r.iter_mut()).zip(buffer.iter()) {
+                    *l += sample * gain_left;
+                    *r += sample * gain_right;
+                }
+            }
+            self.pos += run as u64;
+            done += run;
+            let faded = self.fade.is_some_and(|fade| fade.remaining == 0);
+            if self.pos >= self.len || !self.env.is_active() || faded {
                 self.active = false;
             }
         }
@@ -421,13 +514,10 @@ impl Voice {
         let period = f32::from(u16::try_from(CONTROL_PERIOD).unwrap_or(u16::MAX));
         self.step_left = (gain * pan.left - self.left) / period;
         self.step_right = (gain * pan.right - self.right) / period;
+        let brightness = mix(a.brightness, b.brightness);
+        self.source.set_brightness(brightness);
         if let Some(filter) = &mut self.filter {
-            let cutoff = brightness_cutoff(
-                frequency.0,
-                mix(a.brightness, b.brightness),
-                self.instrument,
-                rate,
-            );
+            let cutoff = brightness_cutoff(frequency.0, brightness, self.instrument, rate);
             filter.set(cutoff, sonarithm_dsp::filter::BUTTERWORTH_Q, rate);
         }
     }
@@ -656,7 +746,13 @@ mod tests {
             },
         );
         let (mut left, mut right) = (vec![0.0; 5_000], vec![0.0; 5_000]);
-        voice.render(&mut left, &mut right, &track, SampleRate::HZ_48000);
+        voice.render(
+            &mut left,
+            &mut right,
+            &track,
+            SampleRate::HZ_48000,
+            &mut vec![0.0; 256],
+        );
         assert!(!voice.is_active());
         assert!(
             left[4_799].abs() < 1e-6,

@@ -2823,6 +2823,7 @@ name = "sonarithm-render"
 version = "0.0.0"
 dependencies = [
  "basedrop",
+ "criterion",
  "ebur128",
  "insta",
  "proptest",

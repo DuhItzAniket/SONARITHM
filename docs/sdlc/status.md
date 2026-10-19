@@ -135,7 +135,7 @@ Work runs in a separate agent session through small PRs into `crates/sonarithm-d
 | A05-T09 Master limiter + start-up gain ramp | Done (#160) | Look-ahead true-peak limiter (−1 dBTP ceiling, 2 ms look-ahead, latency compensated offline); start-up ramp from −20 dB over 500 ms for playback. Stress Scores measure −1.19 and −1.16 dBTP with ebur128 (F-050) |
 | A05-T10 Allocation check in debug; 10-min soak; xrun counting | Not started | `assert_no_alloc` is BSD-1-Clause (F-038); licence question raised with the coordinator |
 | A05-T11 Golden-audio harness; cross-OS CI job (OD-08) | Not started | |
-| A05-T12 Benchmarks (PB-03) | Not started | |
+| A05-T12 Benchmarks (PB-03) | In review | criterion bench and `render_speed` on the DS-006 Score: 91–96× on HW-01, **43–46× on HW-01e (4 E-cores)**, so PB-03 is not declared met under 12 §8 (F-053). Three optimizations landed while measuring |
 | A05-T13 `WasapiBackend` (ADR-0016) | In review | RAW shared mode by default (RAW confirmed on HW-01), exclusive opt-in, latency tool and per-device calibration table. Loopback self-test: p95 104.0 ms RAW, 145.6 ms default (F-052); exclusive mode quirk on the Realtek driver (F-051). **Owner step:** cable test and NVDA check (`manual-tests/a05-cable-latency.md`), issue #123 stays open |
 
 ### A06 tasks

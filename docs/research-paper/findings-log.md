@@ -578,3 +578,24 @@ A05 (render engine, audio backends, export) uses F-050 to F-069.
 - **Evidence level / confidence:** EV-C / Strong
 - **Affects:** 11 §3, tech stack
 - **Papers:** none yet
+
+### F-053 · The A05 render graph renders the benchmark Score at 91–93× real time on HW-01, but 44× on four E-cores, below PB-03's 50×
+
+- **Date:** 2026-10-19 · **Phase:** A05 · **Type:** benchmark · **Status:** new
+- **Statement:** The DS-006 benchmark Score (`sonarithm_render::fixtures::benchmark_score`: 60 s, 4 tracks, 10,000 notes; mallet, square, sine and triangle voices, 112 voices preallocated) renders offline on one thread at 256-frame blocks, 48 kHz:
+  - criterion `pb_03/render_benchmark_score_60s_256`: 656 ms, which is 91.4× real time; the plan builds in 3.05 ms;
+  - `render_speed`, median of 5 runs: 92–96× on HW-01;
+  - 43–46× pinned to four E-cores (HW-01e).
+
+  The figure on HW-01 uses 54% of the budget's time, so 12 §8 requires the CPU-limited rerun, and that rerun misses 50×. The A02 spike graph reached 361× with simpler voices (F-034). The A05 voices add envelopes with decay, a biquad per filtered voice, PolyBLEP correction and a stereo-linked true-peak limiter.
+
+  Optimizations made while measuring, in order:
+  - the limiter skips its interpolator when a coefficient bound proves the true peak is under target: 66× to 84×;
+  - the mallet's partials come from a Chebyshev recurrence, and its brightness is a spectral tilt instead of a biquad: 84× to 96×;
+  - voices render in runs over a scratch buffer (sine-only Score 109× to 127×).
+
+  Replacing `f64::round` did not help. With no events, the graph runs at 899×, so voices dominate at about 10 ns per voice-sample.
+- **Evidence:** A05-T12 PR; `cargo bench -p sonarithm-render --bench render`; `cargo run -p sonarithm-render --example render_speed --release`, plain and under `start /affinity F0000`
+- **Evidence level / confidence:** EV-C / Strong (repeated runs, one machine)
+- **Affects:** PB-03 (not declared met until a reference-class machine or further optimization, for example SIMD across voices, shows ≥ 50×); 12 §8; P07
+- **Papers:** P07

@@ -17,10 +17,15 @@ thiserror.workspace = true
 triple_buffer.workspace = true
 
 [dev-dependencies]
+criterion.workspace = true
 ebur128.workspace = true
 insta.workspace = true
 proptest.workspace = true
 shuttle.workspace = true
+
+[[bench]]
+name = "render"
+harness = false
 
 [lints]
 workspace = true

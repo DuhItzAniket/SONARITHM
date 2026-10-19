@@ -21,6 +21,7 @@
 
 pub mod codes;
 mod earcon;
+pub mod fixtures;
 pub mod graph;
 pub mod offline;
 pub mod plan;

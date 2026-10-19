@@ -227,6 +227,8 @@ pub struct Graph {
     cues: VoicePool,
     buses: [Stereo; 4],
     master: Stereo,
+    /// Per-voice work buffer, `max_block` long.
+    scratch: Vec<f32>,
     bus_gains: [LinearSmoother; 4],
     master_gain: LinearSmoother,
     startup: Option<StartupRamp>,
@@ -281,6 +283,7 @@ impl Graph {
             cues: VoicePool::new(CUE_VOICES),
             buses: [stereo(), stereo(), stereo(), stereo()],
             master: stereo(),
+            scratch: vec![0.0; max_block],
             bus_gains: Bus::ALL.map(level),
             master_gain: LinearSmoother::new(1.0, SMOOTHING_TIME, rate),
             startup: config.startup_ramp.then(|| StartupRamp::new(rate)),
@@ -659,14 +662,14 @@ impl Graph {
                 continue;
             };
             for voice in state.pool.iter_mut().filter(|voice| voice.is_active()) {
-                voice.render(left, right, track, self.rate);
+                voice.render(left, right, track, self.rate, &mut self.scratch);
             }
         }
         // Live cues play on the data bus (06 §3).
         let [[left, right], ..] = &mut self.buses;
         if let (Some(left), Some(right)) = (left.get_mut(from..to), right.get_mut(from..to)) {
             for voice in self.cues.iter_mut().filter(|voice| voice.is_active()) {
-                voice.render(left, right, &self.cue_track, self.rate);
+                voice.render(left, right, &self.cue_track, self.rate, &mut self.scratch);
             }
         }
     }
