@@ -1656,6 +1656,7 @@ dependencies = [
  "sonarithm-compiler",
  "sonarithm-core",
  "sonarithm-data",
+ "sonarithm-render",
  "sonarithm-spec",
  "thiserror",
  "toml",

@@ -25,7 +25,7 @@
 //! already applied and reported by `sonarithm-spec`.
 
 mod channels;
-mod columns;
+pub(crate) mod columns;
 mod events;
 
 use std::borrow::Borrow;

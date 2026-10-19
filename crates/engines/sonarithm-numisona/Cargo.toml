@@ -23,6 +23,7 @@ toml.workspace = true
 insta.workspace = true
 proptest.workspace = true
 sonarithm-compiler.workspace = true
+sonarithm-render.workspace = true
 
 [lints]
 workspace = true

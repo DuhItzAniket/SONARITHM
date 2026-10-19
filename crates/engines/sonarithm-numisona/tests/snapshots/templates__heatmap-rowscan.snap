@@ -1,0 +1,43 @@
+---
+source: crates/engines/sonarithm-numisona/tests/templates.rs
+expression: "serde_json::to_string_pretty(&spec).unwrap()"
+---
+{
+  "data": {
+    "source": {
+      "kind": "file",
+      "path": "grid.json"
+    }
+  },
+  "description": "A heat map scanned row by row: pitch for the value of each cell.",
+  "name": "heatmap-rowscan",
+  "specVersion": "0.1",
+  "substrate": {
+    "time": {
+      "pace": {
+        "pointsPerSecond": 4
+      }
+    }
+  },
+  "tracks": [
+    {
+      "channels": {
+        "pitch": {
+          "field": "level"
+        }
+      },
+      "id": "cells",
+      "mark": "tone"
+    }
+  ],
+  "transform": [
+    {
+      "field": "column",
+      "op": "sort"
+    },
+    {
+      "field": "row",
+      "op": "sort"
+    }
+  ]
+}

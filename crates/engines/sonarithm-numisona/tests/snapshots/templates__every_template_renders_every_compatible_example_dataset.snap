@@ -1,0 +1,64 @@
+---
+source: crates/engines/sonarithm-numisona/tests/templates.rs
+expression: "matrix.join(\"\\n\")"
+---
+line-overview × temperature: {"x": "day", "y": "temp"}, 120 events
+line-overview × prices: {"x": "week", "y": "price"}, 20 events
+line-overview × regions: {"x": "month", "y": "rain"}, 36 events
+line-overview × fruit: not compatible
+line-overview × signal: {"x": "t", "y": "amplitude"}, 2000 events
+line-overview × scatter: {"x": "height", "y": "weight"}, 40 events
+line-overview × waiting_times: not compatible
+line-overview × reaction_times: not compatible
+line-overview × grid: not compatible
+line-overview × estimated: {"x": "x", "y": "y"}, 10 events
+bar-discrete × temperature: not compatible
+bar-discrete × prices: not compatible
+bar-discrete × regions: {"category": "region", "value": "rain"}, 36 events
+bar-discrete × fruit: {"category": "fruit", "value": "sold"}, 5 events
+bar-discrete × signal: not compatible
+bar-discrete × scatter: {"category": "group", "value": "weight"}, 40 events
+bar-discrete × waiting_times: not compatible
+bar-discrete × reaction_times: {"category": "condition", "value": "ms"}, 90 events
+bar-discrete × grid: {"category": "row", "value": "level"}, 48 events
+bar-discrete × estimated: not compatible
+scatter-xy × temperature: {"x": "day", "y": "temp"}, 120 events
+scatter-xy × prices: {"x": "week", "y": "price"}, 20 events
+scatter-xy × regions: {"series": "region", "x": "month", "y": "rain"}, 36 events
+scatter-xy × fruit: not compatible
+scatter-xy × signal: {"x": "t", "y": "amplitude"}, 2000 events
+scatter-xy × scatter: {"series": "group", "x": "height", "y": "weight"}, 40 events
+scatter-xy × waiting_times: not compatible
+scatter-xy × reaction_times: not compatible
+scatter-xy × grid: not compatible
+scatter-xy × estimated: {"x": "x", "y": "y"}, 10 events
+histogram × temperature: {"value": "temp"}, 10 events
+histogram × prices: {"value": "price"}, 8 events
+histogram × regions: {"value": "rain"}, 10 events
+histogram × fruit: {"value": "sold"}, 5 events
+histogram × signal: {"value": "amplitude"}, 10 events
+histogram × scatter: {"value": "weight"}, 9 events
+histogram × waiting_times: {"value": "minutes"}, 10 events
+histogram × reaction_times: {"value": "ms"}, 10 events
+histogram × grid: {"value": "level"}, 8 events
+histogram × estimated: {"value": "y"}, 7 events
+box-five-number × temperature: not compatible
+box-five-number × prices: not compatible
+box-five-number × regions: {"group": "region", "value": "rain"}, 15 events
+box-five-number × fruit: {"group": "fruit", "value": "sold"}, 25 events
+box-five-number × signal: not compatible
+box-five-number × scatter: {"group": "group", "value": "weight"}, 10 events
+box-five-number × waiting_times: not compatible
+box-five-number × reaction_times: {"group": "condition", "value": "ms"}, 15 events
+box-five-number × grid: {"group": "row", "value": "level"}, 30 events
+box-five-number × estimated: not compatible
+heatmap-rowscan × temperature: not compatible
+heatmap-rowscan × prices: not compatible
+heatmap-rowscan × regions: not compatible
+heatmap-rowscan × fruit: not compatible
+heatmap-rowscan × signal: not compatible
+heatmap-rowscan × scatter: {"column": "height", "row": "group", "value": "weight"}, 40 events
+heatmap-rowscan × waiting_times: not compatible
+heatmap-rowscan × reaction_times: not compatible
+heatmap-rowscan × grid: {"column": "column", "row": "row", "value": "level"}, 48 events
+heatmap-rowscan × estimated: not compatible

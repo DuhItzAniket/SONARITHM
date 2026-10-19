@@ -1,0 +1,66 @@
+---
+source: crates/engines/sonarithm-numisona/tests/templates.rs
+expression: "serde_json::to_string_pretty(&spec).unwrap()"
+---
+{
+  "data": {
+    "source": {
+      "kind": "file",
+      "path": "waiting_times.json"
+    }
+  },
+  "description": "A histogram: one tone per bin, higher counts sound higher and longer.",
+  "name": "histogram",
+  "specVersion": "0.1",
+  "substrate": {
+    "time": {
+      "field": "bin",
+      "pace": {
+        "pointsPerSecond": 2
+      }
+    }
+  },
+  "tracks": [
+    {
+      "channels": {
+        "pitch": {
+          "field": "count",
+          "scale": {
+            "domain": "zero-based"
+          }
+        }
+      },
+      "id": "bins",
+      "mark": "tone",
+      "redundant": [
+        "duration"
+      ]
+    }
+  ],
+  "transform": [
+    {
+      "as": "bin",
+      "count": 10,
+      "field": "minutes",
+      "method": "equal-width",
+      "op": "bin"
+    },
+    {
+      "groupby": [
+        "bin"
+      ],
+      "op": "aggregate",
+      "ops": [
+        {
+          "as": "count",
+          "field": "minutes",
+          "op": "count"
+        }
+      ]
+    },
+    {
+      "field": "bin",
+      "op": "sort"
+    }
+  ]
+}

@@ -1,0 +1,34 @@
+---
+source: crates/engines/sonarithm-numisona/tests/templates.rs
+expression: "serde_json::to_string_pretty(&spec).unwrap()"
+---
+{
+  "data": {
+    "source": {
+      "kind": "file",
+      "path": "temperature.json"
+    }
+  },
+  "description": "A line chart overview: time along x, pitch for y.",
+  "name": "line-overview",
+  "specVersion": "0.1",
+  "substrate": {
+    "time": {
+      "field": "day",
+      "pace": {
+        "pointsPerSecond": 3
+      }
+    }
+  },
+  "tracks": [
+    {
+      "channels": {
+        "pitch": {
+          "field": "temp"
+        }
+      },
+      "id": "line",
+      "mark": "tone"
+    }
+  ]
+}

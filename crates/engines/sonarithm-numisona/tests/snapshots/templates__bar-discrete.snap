@@ -1,0 +1,39 @@
+---
+source: crates/engines/sonarithm-numisona/tests/templates.rs
+expression: "serde_json::to_string_pretty(&spec).unwrap()"
+---
+{
+  "data": {
+    "source": {
+      "kind": "file",
+      "path": "fruit.json"
+    }
+  },
+  "description": "A bar chart: one tone per bar, higher bars sound higher and longer.",
+  "name": "bar-discrete",
+  "specVersion": "0.1",
+  "substrate": {
+    "time": {
+      "pace": {
+        "pointsPerSecond": 2
+      }
+    }
+  },
+  "tracks": [
+    {
+      "channels": {
+        "pitch": {
+          "field": "sold",
+          "scale": {
+            "domain": "zero-based"
+          }
+        }
+      },
+      "id": "bars",
+      "mark": "tone",
+      "redundant": [
+        "duration"
+      ]
+    }
+  ]
+}

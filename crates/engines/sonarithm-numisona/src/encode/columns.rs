@@ -91,6 +91,34 @@ pub(crate) fn read(array: &ArrayRef) -> Result<Column, String> {
     }
 }
 
+/// A column's numbers, if it is numeric, decimal or temporal (for templates).
+pub(crate) fn numbers_of(array: &ArrayRef) -> Option<Vec<f64>> {
+    numbers(array)
+}
+
+/// A column's values as labels, for grouping in templates: categories as written, numbers
+/// in their shortest form (an ordinal level `2` is the label `2`).
+pub(crate) fn texts_of(array: &ArrayRef) -> Option<Vec<Option<String>>> {
+    match read(array).ok()? {
+        Column::Numbers(values) => Some(
+            values
+                .into_iter()
+                .map(|v| (!v.is_nan()).then(|| v.to_string()))
+                .collect(),
+        ),
+        Column::Categories { values, .. } => Some(
+            values
+                .into_iter()
+                .map(|c| match c {
+                    Some(Category::Text(text)) => Some(text),
+                    Some(Category::Number(n)) => Some(n.to_string()),
+                    None => None,
+                })
+                .collect(),
+        ),
+    }
+}
+
 /// Text labels of a string or boolean array.
 fn texts(array: &dyn Array) -> Option<Vec<Option<Category>>> {
     let label = |text: &str| Some(Category::Text(text.to_owned()));

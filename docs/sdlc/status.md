@@ -25,7 +25,7 @@ Status values: `Not started` · `In progress` · `In review` · `Done` · `Block
 | A | A03 | Core types, Spec v0.1, Score IR | **Done** | 100% | 2026-10-19; [phase review](reviews/A03-phase-review.md), [retro](retrospectives/A03-retro.md). See [A03 tasks](#a03-tasks) |
 | A | A04 | Data layer | **Done** | 100% | 2026-10-19; [phase review](reviews/A04-phase-review.md), [retro](retrospectives/A04-retro.md). See [A04 tasks](#a04-tasks) |
 | A | A05 | Render engine, audio backend, export | **In progress** | ≈5% | T01, T03 and T04 in review. See [A05 tasks](#a05-tasks) |
-| A | A06 | NUMISONA v1 | **In progress** | ≈70% | T01–T05 and T08 done; T06 in review; T07 in progress. See [A06 tasks](#a06-tasks) |
+| A | A06 | NUMISONA v1 | **In progress** | ≈85% | T01–T06 and T08 done; T07 in review. See [A06 tasks](#a06-tasks) |
 | A | A07 | CLI, Python, v0.1.0-alpha | Not started | 0% | |
 | A | A08 | Research instrumentation v0, ICAD 2027 | Not started | 0% | P01 without participant studies (OD-04) |
 | B | B01 | Desktop shell, IPC, app core | Not started | 0% | |
@@ -148,8 +148,8 @@ Work runs in a separate agent session through one PR per task into `crates/engin
 | A06-T03 `concepts.toml`, polarity resolution, ambiguity diagnostics (SDR-12..15) | **Done** | Merged in #144. 16 rows, each citing evidence (Walker 2007 counts where they exist); explicit → profile → concept → generic resolution, one-key flip; `SNR-ENG-020`…`023`; F-080 |
 | A06-T04 `tone` and `glide` encoders, redundant duration and taps (A11Y-13), categorical timbre | **Done** | Merged in #151. `Numisona` engine and encoders with `RowRef` and confidence; filter, time order and pace; redundant taps and duration; timbre per category; missing values; `TrackRequest` gains substrate, fields, missing and mode; synthetic example datasets; snapshots; F-082 |
 | A06-T05 Psychophysical scaling (SDR-11) | **Done** | Merged in #140. `f = f_ref · (d / d_ref)^(1/m)`, labelled as guidance; reproduces the Smith & Walker (2005) dollar mapping; range from the law or clamped to a given range |
-| A06-T06 `auto` mark with density switching (SDR-20, experimental) | In review | Tones up to 10 events/s, a glide above; every use reported as experimental (`SNR-ENG-011`, H-02); `density` module |
-| A06-T07 Templates | In progress | Prerequisite in review: the compiler compiles `DataBundle` with spec transforms and the `Platform` inline/file sources |
+| A06-T06 `auto` mark with density switching (SDR-20, experimental) | **Done** | Merged in #153. Tones up to 10 events/s, a glide above; every use reported as experimental (`SNR-ENG-011`, H-02); `density` module |
+| A06-T07 Templates | In review | `line-overview`, `bar-discrete`, `scatter-xy`, `histogram`, `box-five-number`, `heatmap-rowscan` with slot binding; each renders every compatible example dataset through the render engine; the compiler compiles `DataBundle` with spec transforms |
 | A06-T08 Erie importer (subset) | **Done** | Merged in #150. Written from Erie's documentation; 8-spec gallery subset imports as valid v0.1 specs with a report of 19 approximated or unmapped constructs (`SNR-ENG-080`, `081`); F-081 |
 | A06-T09 Rule-conformance suite and compile benchmarks (PB-04) | Not started |  |
 
