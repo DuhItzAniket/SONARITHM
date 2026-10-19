@@ -12,6 +12,12 @@
 //! | Heavy or copyleft dependencies live in their leaf crate, as optional dependencies where 02 §4 makes them features | §3 rule 5 |
 //! | Every internal dependency follows the layering graph | §3 diagram |
 //!
+//! Features are those `cargo metadata` resolves for the whole workspace, which unifies
+//! the features dev-dependencies enable. A crate enabling `sonarithm-core/test-support` in
+//! its dev-dependencies therefore makes core's optional `proptest` look like a normal
+//! dependency here, so test-support dependencies must stay clear of the forbidden crates
+//! (proptest is built without `fork` and `timeout`, which pull in `tempfile`; #121).
+//!
 //! Scope: normal and build dependencies, including optional ones. Dev-dependencies are
 //! exempt because they never ship and do not affect the wasm32 build. "Reach" means a
 //! direct dependency or a path through external crates; a path that passes through another

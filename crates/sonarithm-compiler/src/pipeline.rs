@@ -452,3 +452,25 @@ fn detector_owner(detector: Detector) -> &'static str {
         "echometric"
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use proptest::prelude::*;
+    use sonarithm_core::testing::valid_score;
+
+    use super::duration;
+
+    proptest! {
+        /// The header duration the compiler stamps covers every event of any valid Score,
+        /// and never exceeds what the Score's own invariant allows. Uses core's shared
+        /// strategies through `test-support` (#121).
+        #[test]
+        fn computed_duration_covers_every_event(score in valid_score()) {
+            let computed = duration(&score);
+            prop_assert!(computed.0 <= score.header.duration.0);
+            for event in score.tracks.iter().flat_map(|track| &track.events) {
+                prop_assert!(event.start().0 <= computed.0);
+            }
+        }
+    }
+}

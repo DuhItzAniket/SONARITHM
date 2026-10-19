@@ -78,7 +78,7 @@ From the base (many, fast, every PR) to the top (few, slow, scheduled or manual)
 
 Rules:
 
-- Strategies for spec fragments and `DataBundle`s are shared through a non-default `test-support` feature of the crate that owns the types, so no extra crate is needed.
+- Strategies for spec fragments and `DataBundle`s are shared through a non-default `test-support` feature of the crate that owns the types, so no extra crate is needed. Other crates enable it from their dev-dependencies (for example `sonarithm-core = { workspace = true, features = ["test-support"] }`). Because `cargo metadata` unifies those features, a `test-support` dependency must not reach a crate the dependency rules forbid; proptest is therefore built without its `fork` and `timeout` features (#121).
 - proptest regression files (`proptest-regressions/`) are committed.
 - PR runs use the default case count; the nightly job raises it with `PROPTEST_CASES`.
 
