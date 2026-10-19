@@ -25,7 +25,7 @@ Status values: `Not started` · `In progress` · `In review` · `Done` · `Block
 | A | A03 | Core types, Spec v0.1, Score IR | **In progress** | ≈15% | T01 merged (#4); RFC-0001 accepted (T05); T02–T04 in review. See [A03 tasks](#a03-tasks) |
 | A | A04 | Data layer | **In progress** | ≈5% | T01 in review (field metadata). See [A04 tasks](#a04-tasks) |
 | A | A05 | Render engine, audio backend, export | **In progress** | ≈5% | T01, T03 and T04 in review. See [A05 tasks](#a05-tasks) |
-| A | A06 | NUMISONA v1 | Not started | 0% | |
+| A | A06 | NUMISONA v1 | **In progress** | ≈5% | T01 in review (scales). See [A06 tasks](#a06-tasks) |
 | A | A07 | CLI, Python, v0.1.0-alpha | Not started | 0% | |
 | A | A08 | Research instrumentation v0, ICAD 2027 | Not started | 0% | P01 without participant studies (OD-04) |
 | B | B01 | Desktop shell, IPC, app core | Not started | 0% | |
@@ -137,6 +137,22 @@ Work runs in a separate agent session through small PRs into `crates/sonarithm-d
 | A05-T11 Golden-audio harness; cross-OS CI job (OD-08) | Not started | |
 | A05-T12 Benchmarks (PB-03) | Not started | |
 
+### A06 tasks
+
+Work runs in a separate agent session through one PR per task into `crates/engines/sonarithm-numisona`. A task is Done when its PR is merged with CI green.
+
+| Task | Status | Notes |
+|---|---|---|
+| A06-T01 Scales | In review | `linear`, `log`, `symlog`, `sqrt`, `pow`, `quantile`, `band`, `ordinal`; `domain` auto, zero-based or explicit; `nice`; monotonicity and range property tests |
+| A06-T02 Pitch spaces and range defaults (SDR-08, SDR-09) | Not started | |
+| A06-T03 `concepts.toml`, polarity resolution, ambiguity diagnostics (SDR-12..15) | Not started | |
+| A06-T04 `tone` and `glide` encoders, redundant duration and taps (A11Y-13), categorical timbre | Not started | |
+| A06-T05 Psychophysical scaling (SDR-11) | Not started | |
+| A06-T06 `auto` mark with density switching (SDR-20, experimental) | Not started | |
+| A06-T07 Templates | Not started | |
+| A06-T08 Erie importer (subset) | Not started | |
+| A06-T09 Rule-conformance suite and compile benchmarks (PB-04) | Not started | |
+
 ## 3. Current iteration
 
 | Iteration | Dates | Goal | Tasks |
@@ -182,3 +198,4 @@ Maturity scale: `Designed` → `Prototype` → `Alpha` → `Beta` → `Stable` �
 | 2026-10-19 | A02 spikes measured (T01 merged in #9; T02–T07 in review); gate report draft recommends a conditional go; PB-01 fails on Windows shared mode |
 | 2026-10-19 | A04 started: `FieldMeta` with `snr.*` metadata and the `SNR-DATA` code table (T01) |
 | 2026-10-19 | A05 started: oscillators in `sonarithm-dsp` (T01) |
+| 2026-10-19 | A06 started: `sonarithm-numisona` crate with scales (T01) |

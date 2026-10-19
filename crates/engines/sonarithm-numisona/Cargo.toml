@@ -1,0 +1,19 @@
+[package]
+name = "sonarithm-numisona"
+description = "NUMISONA: SONARITHM's data-to-sound parameter-mapping engine (scales, pitch spaces, polarity, tone and glide encoders, templates)."
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+repository.workspace = true
+license.workspace = true
+publish.workspace = true
+
+[dependencies]
+sonarithm-core.workspace = true
+thiserror.workspace = true
+
+[dev-dependencies]
+proptest.workspace = true
+
+[lints]
+workspace = true

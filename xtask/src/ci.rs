@@ -28,6 +28,7 @@ pub(crate) const WASM_CRATES: &[&str] = &[
     "sonarithm-dsp",
     "sonarithm-render",
     "sonarithm-export",
+    "sonarithm-numisona",
 ];
 
 const WASM_TARGET: &str = "wasm32-unknown-unknown";

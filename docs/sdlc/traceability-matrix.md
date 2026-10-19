@@ -24,7 +24,7 @@
 | FR-025 | [07 NUMISONA](../architecture/07-engines.md) | A06 | ST (templates × datasets) | Planned |
 | FR-026 | [05 §7](../architecture/05-compiler-and-score-ir.md#7-diagnostics) | A06 | ST (diagnostics) | Planned |
 | FR-027 | [04 §9](../architecture/04-sonification-spec.md#9-importers) | C01 | IT | Planned |
-| FR-030 | [04 §5.3](../architecture/04-sonification-spec.md#53-marks-and-channels) | A06 | UT, ST | Planned |
+| FR-030 | [04 §5.3](../architecture/04-sonification-spec.md#53-marks-and-channels) | A06 | UT, PT (scales: `continuous_scales_are_monotonic_and_bounded`, `log_scales_are_monotonic_and_bounded`, `quantile_scales_are_monotonic_and_bounded`, `discrete_positions_rise_in_scale_order`), ST (encoders, A06-T04) | In progress (scales in review, A06-T01) |
 | FR-031 | [07 NUMISONA](../architecture/07-engines.md) | A06 | UT (`sdr_08_*`, `sdr_09_*`) | Planned |
 | FR-032 | [03 §3.3](../architecture/03-data-model.md#33-concepts-and-the-concept-table) | A06, B03 | UT (`sdr_12..15_*`), PT (flip symmetry) | Planned |
 | FR-033 | [04 §5.3](../architecture/04-sonification-spec.md#53-marks-and-channels) | A06 | UT (`sdr_11_*`) | Planned |

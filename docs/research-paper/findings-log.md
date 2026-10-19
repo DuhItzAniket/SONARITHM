@@ -210,6 +210,7 @@ manifest, benchmark row or EXP-### that carries the evidence. Set Status to
 A02 (spikes) uses F-030 to F-049 so that it can append in parallel with A03, which
 continues at F-021. IDs F-021 to F-029 belong to A03 entries.
 Cross-phase build and repository infrastructure (the coordinator) uses F-090 to F-099.
+A06 (NUMISONA) uses F-080 to F-089.
 -->
 
 ### F-019 · serde_json's default float parser can be one ULP off, which breaks full-precision round trips
