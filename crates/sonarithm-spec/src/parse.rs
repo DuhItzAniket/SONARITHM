@@ -20,18 +20,21 @@ use crate::spec::{SPEC_VERSION, Spec};
 /// One diagnostic: `SNR-SPEC-001` invalid JSON, `002` wrong type or value, `003` missing
 /// key, `004` unknown key, or `005` unsupported `specVersion`.
 pub fn parse(text: &str) -> Result<Spec, Diagnostics> {
-    let value: Value = serde_json::from_str(text).map_err(|err| {
-        one(Diagnostic::new(
-            &codes::SYNTAX,
-            format!(
-                "Invalid JSON at line {}, column {}: {}.",
-                err.line(),
-                err.column(),
-                strip_position(&err.to_string())
-            ),
-        ))
-    })?;
+    let value: Value = serde_json::from_str(text).map_err(|err| one(syntax(&err)))?;
     parse_value(value)
+}
+
+/// The `SNR-SPEC-001` diagnostic for a JSON syntax error.
+pub(crate) fn syntax(err: &serde_json::Error) -> Diagnostic {
+    Diagnostic::new(
+        &codes::SYNTAX,
+        format!(
+            "Invalid JSON at line {}, column {}: {}.",
+            err.line(),
+            err.column(),
+            strip_position(&err.to_string())
+        ),
+    )
 }
 
 /// Parses an already-decoded JSON value (layer 2 only).
@@ -47,7 +50,7 @@ pub fn parse_value(value: Value) -> Result<Spec, Diagnostics> {
     })
 }
 
-fn one(diagnostic: Diagnostic) -> Diagnostics {
+pub(crate) fn one(diagnostic: Diagnostic) -> Diagnostics {
     let mut all = Diagnostics::new();
     all.push(diagnostic);
     all

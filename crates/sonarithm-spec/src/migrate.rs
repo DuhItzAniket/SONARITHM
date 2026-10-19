@@ -1,0 +1,166 @@
+// SPDX-FileCopyrightText: 2026 SONARITHM contributors
+// SPDX-License-Identifier: MIT OR Apache-2.0
+
+//! The spec migration framework (04 §7).
+//!
+//! A migration is a pure function on the JSON document that moves it one version step
+//! forward and rewrites `specVersion`. Migrations run in order, in memory; the compiler
+//! reports a `Warning` (`SNR-SPEC-006`) and never rewrites files. `sonarithm spec migrate`
+//! (A07) writes the result only when asked. v0.1 is the first version, so [`MIGRATIONS`] is
+//! empty; the framework is exercised by tests.
+
+use serde_json::Value;
+use sonarithm_core::diagnostic::{Diagnostic, SpecPointer};
+use sonarithm_core::score::SpecVersion;
+
+use crate::codes;
+use crate::spec::SPEC_VERSION;
+
+/// One step from `from` to `to`.
+#[derive(Clone, Copy, Debug)]
+pub struct Migration {
+    /// The version this step reads.
+    pub from: SpecVersion,
+    /// The version this step writes.
+    pub to: SpecVersion,
+    /// Rewrites the document in place. It may assume `specVersion` is `from`; the
+    /// framework sets it to `to` afterwards.
+    pub apply: fn(&mut Value) -> Result<(), String>,
+}
+
+/// The migrations shipped with this crate, oldest first. Empty: v0.1 is the first version.
+pub const MIGRATIONS: &[Migration] = &[];
+
+/// The result of migrating a document.
+#[derive(Clone, Debug, PartialEq)]
+pub struct Migrated {
+    /// The migrated document.
+    pub value: Value,
+    /// The versions the document passed through, starting with its own; one element when
+    /// no migration ran.
+    pub path: Vec<SpecVersion>,
+}
+
+/// Migrates `value` to [`SPEC_VERSION`] with the shipped migrations.
+///
+/// # Errors
+///
+/// As for [`migrate_with`].
+pub fn migrate(value: Value) -> Result<Migrated, Box<Diagnostic>> {
+    migrate_with(value, MIGRATIONS, SPEC_VERSION)
+}
+
+/// Migrates `value` to `target` with `migrations`. A document already at `target` is
+/// returned unchanged, so migrating is idempotent.
+///
+/// # Errors
+///
+/// `SNR-SPEC-003` without `specVersion`, `002` for a malformed one, and `005` when no chain
+/// of migrations reaches `target` or a step fails.
+pub fn migrate_with(
+    mut value: Value,
+    migrations: &[Migration],
+    target: SpecVersion,
+) -> Result<Migrated, Box<Diagnostic>> {
+    let at = SpecPointer::root().key("specVersion");
+    let mut version = match value.get("specVersion") {
+        None => {
+            return Err(Box::new(
+                Diagnostic::new(&codes::MISSING_KEY, "The spec has no `specVersion`.")
+                    .at(SpecPointer::root()),
+            ));
+        }
+        Some(found) => found
+            .as_str()
+            .and_then(|text| text.parse::<SpecVersion>().ok())
+            .ok_or_else(|| {
+                Box::new(
+                    Diagnostic::new(
+                        &codes::INVALID_VALUE,
+                        "specVersion is written \"MAJOR.MINOR\", for example \"0.1\".",
+                    )
+                    .at(at.clone()),
+                )
+            })?,
+    };
+    let mut path = vec![version];
+    while version != target {
+        let unsupported = || {
+            Box::new(
+                Diagnostic::new(
+                    &codes::UNSUPPORTED_VERSION,
+                    format!("specVersion \"{version}\" is not supported; this SONARITHM reads \"{target}\"."),
+                )
+                .at(at.clone()),
+            )
+        };
+        let step = migrations
+            .iter()
+            .find(|step| step.from == version)
+            .ok_or_else(unsupported)?;
+        (step.apply)(&mut value).map_err(|_| unsupported())?;
+        if let Some(object) = value.as_object_mut() {
+            object.insert("specVersion".to_owned(), Value::String(step.to.to_string()));
+        }
+        version = step.to;
+        path.push(version);
+    }
+    Ok(Migrated { value, path })
+}
+
+#[cfg(test)]
+mod tests {
+    use serde_json::json;
+
+    use super::*;
+
+    const V0_0: SpecVersion = SpecVersion { major: 0, minor: 0 };
+
+    /// A test step: 0.0 called the tracks `voices`.
+    fn rename_voices(value: &mut Value) -> Result<(), String> {
+        let object = value.as_object_mut().ok_or("not an object")?;
+        if let Some(voices) = object.remove("voices") {
+            object.insert("tracks".to_owned(), voices);
+        }
+        Ok(())
+    }
+
+    const TEST: &[Migration] = &[Migration {
+        from: V0_0,
+        to: SpecVersion::V0_1,
+        apply: rename_voices,
+    }];
+
+    #[test]
+    fn a_chain_migrates_in_memory_and_records_its_path() {
+        let old = json!({ "specVersion": "0.0", "voices": [] });
+        let migrated = migrate_with(old, TEST, SpecVersion::V0_1).unwrap();
+        assert_eq!(
+            migrated.value,
+            json!({ "specVersion": "0.1", "tracks": [] })
+        );
+        assert_eq!(migrated.path, [V0_0, SpecVersion::V0_1]);
+    }
+
+    #[test]
+    fn migrating_is_idempotent() {
+        let old = json!({ "specVersion": "0.0", "voices": [1] });
+        let once = migrate_with(old, TEST, SpecVersion::V0_1).unwrap().value;
+        let twice = migrate_with(once.clone(), TEST, SpecVersion::V0_1).unwrap();
+        assert_eq!(twice.value, once);
+        assert_eq!(twice.path, [SpecVersion::V0_1]);
+    }
+
+    #[test]
+    fn versions_without_a_chain_are_unsupported() {
+        let newer = json!({ "specVersion": "0.2" });
+        let err = migrate(newer).unwrap_err();
+        assert_eq!(err.code.as_str(), "SNR-SPEC-005");
+        let current = json!({ "specVersion": "0.1" });
+        assert_eq!(migrate(current).unwrap().path, [SpecVersion::V0_1]);
+        assert_eq!(
+            migrate(json!({})).unwrap_err().code.as_str(),
+            "SNR-SPEC-003"
+        );
+    }
+}

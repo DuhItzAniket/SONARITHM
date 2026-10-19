@@ -9,10 +9,14 @@
 #![forbid(unsafe_code)]
 #![deny(missing_docs)]
 
+pub mod canonical;
 pub mod codes;
 pub mod data;
+pub mod defaults;
 pub mod json;
+pub mod migrate;
 pub mod parse;
+pub mod prepare;
 pub mod report;
 pub mod schema;
 pub mod sections;
@@ -24,6 +28,7 @@ pub mod values;
 pub use data::{DataSpec, FieldSpec, Source, Transform};
 pub use json::JsonValue;
 pub use parse::parse;
+pub use prepare::{Prepared, prepare};
 pub use report::{SpecReport, reports};
 pub use schema::json_schema;
 pub use sections::{Analysis, Context, Music, Output, Pace, Playback, Substrate};

@@ -5,7 +5,8 @@
 //!
 //! Codes are grouped by tens: 001–009 syntax, shape and version; 010–019 tracks; 020–029
 //! channels; 030–039 scales and ranges; 040–049 mode and research rules; 050–059 data, pace
-//! and transforms; 060–069 output and playback; 070–079 data-aware checks. A released code
+//! and transforms; 060–069 output and playback; 070–079 data-aware checks; 080–089 applied
+//! defaults. A released code
 //! is never reused (coding-standards §4.2).
 
 use sonarithm_core::codes::{Area, CodeInfo, CodeStatus, CodeTable, validate};
@@ -273,6 +274,14 @@ code!(
     ["SDR-25"]
 );
 
+code!(
+    /// A data-independent default was applied (05 §7: explain what you assumed).
+    DEFAULT_APPLIED, "SNR-SPEC-080", Info,
+    "Default applied",
+    "The compiler filled in a default; write the key to choose another value.",
+    []
+);
+
 /// Every `SNR-SPEC` code, in ascending order.
 pub const CODES: CodeTable = CodeTable {
     area: Area::Spec,
@@ -309,6 +318,7 @@ pub const CODES: CodeTable = CodeTable {
         INVALID_PLAYBACK,
         UNKNOWN_FIELD,
         INCOMPATIBLE_FIELD,
+        DEFAULT_APPLIED,
     ],
 };
 
