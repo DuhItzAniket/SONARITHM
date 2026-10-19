@@ -19,6 +19,7 @@ xlsx = ["dep:calamine"]
 
 [dependencies]
 arrow-array.workspace = true
+arrow-data.workspace = true
 arrow-ipc.workspace = true
 arrow-ord.workspace = true
 arrow-row.workspace = true
