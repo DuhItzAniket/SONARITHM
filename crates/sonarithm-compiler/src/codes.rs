@@ -80,13 +80,13 @@ code!(
     "Use less data, a slower pace or a shorter duration, or raise the budget."
 );
 
-/// `transform` is not applied before the data layer exists (A04).
+/// `transform` is not applied because the compiler's data type cannot apply it.
 pub const TRANSFORMS_NOT_APPLIED: CodeInfo = CodeInfo {
     severity: Severity::Warning,
     ..code_info(
         "SNR-COMP-022",
-        "Transforms are not applied in this build",
-        "Transforms run in the data layer (A04); until then the data is used as loaded.",
+        "Transforms are not applied",
+        "Compile with the data layer's `DataBundle`, which applies transforms (03 §6); otherwise the data is used as loaded.",
     )
 };
 
@@ -99,6 +99,21 @@ pub const CONTEXT_UNAVAILABLE: CodeInfo = CodeInfo {
         "Ticks, the reference tone, the spoken legend and earcons come from AUDAXIS (B03).",
     )
 };
+
+code!(
+    /// A data file cannot be read by the platform data engine.
+    DATA_UNREADABLE,
+    "SNR-COMP-024",
+    "Data file cannot be read",
+    "Check the path (relative to the spec) and the format."
+);
+code!(
+    /// A spec transform cannot be handed to the data layer.
+    TRANSFORM_UNREADABLE,
+    "SNR-COMP-025",
+    "Transform cannot run",
+    "Check the transform's parameters against RFC-0001 §4."
+);
 
 const fn code_info(code: &'static str, summary: &'static str, help: &'static str) -> CodeInfo {
     CodeInfo {
@@ -126,6 +141,8 @@ pub const CODES: CodeTable = CodeTable {
         BUDGET_EXCEEDED,
         TRANSFORMS_NOT_APPLIED,
         CONTEXT_UNAVAILABLE,
+        DATA_UNREADABLE,
+        TRANSFORM_UNREADABLE,
     ],
 };
 

@@ -32,6 +32,22 @@ use crate::registry::build_registry;
 pub trait CompilerData {
     /// SHA-256 fingerprint of the data (03 §2), recorded in the Score header.
     fn fingerprint(&self) -> Sha256Digest;
+
+    /// Applies the spec's `transform` list (03 §6), located at `at`, and returns the data
+    /// layer's diagnostics; `None` when this data type cannot apply transforms, in which
+    /// case the compiler warns (`SNR-COMP-022`) and uses the data as loaded.
+    ///
+    /// # Errors
+    ///
+    /// The `Some(Err(…))` diagnostic of the first transform that cannot run.
+    fn transform(
+        &mut self,
+        transforms: &[sonarithm_spec::Transform],
+        at: &SpecPointer,
+    ) -> Option<Result<Diagnostics, Box<Diagnostic>>> {
+        let _ = (transforms, at);
+        None
+    }
 }
 
 /// A successful compile.
@@ -157,16 +173,22 @@ struct Run<'a, D> {
 
 impl<D: CompilerData> Run<'_, D> {
     fn stages(&mut self, spec: &Spec, spec_hash: Sha256Digest) -> Result<Score, Stop> {
-        let data = self.resolve_source(spec)?;
-        // Transforms run in sonarithm-data (A04); until then they are reported, not dropped.
+        let mut data = self.resolve_source(spec)?;
         if !spec.transform.is_empty() {
-            self.diagnostics.push(
-                Diagnostic::new(
-                    &codes::TRANSFORMS_NOT_APPLIED,
-                    "This build does not apply `transform` yet (the data layer arrives in A04); the data is used as loaded.",
-                )
-                .at(SpecPointer::root().key("transform")),
-            );
+            let at = SpecPointer::root().key("transform");
+            match data.transform(&spec.transform, &at) {
+                Some(Ok(diagnostics)) => self.diagnostics.extend(diagnostics),
+                Some(Err(diagnostic)) => return Err(Stop::Error(diagnostic)),
+                // Reported, never dropped silently.
+                None => self.diagnostics.push(
+                    Diagnostic::new(
+                        &codes::TRANSFORMS_NOT_APPLIED,
+                        "This compiler's data type cannot apply `transform`; the data is used as loaded.",
+                    )
+                    .at(at),
+                ),
+            }
+            self.cx.check_cancelled().map_err(stop)?;
         }
         let annotations = self.analyze(spec, &data)?;
         let mut header = ScoreHeader::new(

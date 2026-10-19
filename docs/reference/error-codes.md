@@ -19,8 +19,10 @@ Owner: `sonarithm-compiler`.
 | `SNR-COMP-015` | error | Two engines register the same shaper stage | Each shaper stage (quantize, loudness, spatial, lint) belongs to one engine. | — |
 | `SNR-COMP-020` | error | The compiled Score breaks an invariant | This is a bug in an engine; please report it with the spec that triggered it. | — |
 | `SNR-COMP-021` | error | Compile budget exceeded | Use less data, a slower pace or a shorter duration, or raise the budget. | — |
-| `SNR-COMP-022` | warning | Transforms are not applied in this build | Transforms run in the data layer (A04); until then the data is used as loaded. | — |
+| `SNR-COMP-022` | warning | Transforms are not applied | Compile with the data layer's `DataBundle`, which applies transforms (03 §6); otherwise the data is used as loaded. | — |
 | `SNR-COMP-023` | warning | Context cues are not available in this build | Ticks, the reference tone, the spoken legend and earcons come from AUDAXIS (B03). | — |
+| `SNR-COMP-024` | error | Data file cannot be read | Check the path (relative to the spec) and the format. | — |
+| `SNR-COMP-025` | error | Transform cannot run | Check the transform's parameters against RFC-0001 §4. | — |
 
 ## SNR-DATA
 

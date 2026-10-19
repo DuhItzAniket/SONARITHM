@@ -38,6 +38,8 @@ From phase A07, release-plz maintains this file: it generates each release's ent
   - `sonarithm-dsp` oscillators: sine, triangle, and band-limited (PolyBLEP) saw and square, computed with IEEE 754 arithmetic only so renders stay bit-identical across platforms.
   - `sonarithm-dsp` envelopes: ADSR with raised-cosine onset and offset ramps of at least 5 ms, about 40 ms for notes (SDR-22); retriggers and releases never step.
   - `sonarithm-dsp` filters (one-pole low-pass; RBJ low-, high- and band-pass), a constant-power panner and a linear parameter smoother (10 ms).
+  - `sonarithm-render` plan builder: a Score becomes a `RenderPlan` in frames, with resolved frequencies, gains, pan gains, instruments and voice-pool sizes; unknown instruments raise `SNR-RENDER-001` and fall back to the mallet preset.
+  - `sonarithm-render` render graph: preallocated voice pools, data, context, earcon and monitoring buses, a sample-accurate scheduler and a transport (play, pause, stop, seek, loop, speed and live cues) with crossfades instead of cuts. Earcon sounds are provisional until B03.
 - NUMISONA, the parameter-mapping engine (phase A06):
   - `sonarithm-numisona` scales: `linear`, `log`, `symlog`, `sqrt`, `pow`, `quantile`, `band` and `ordinal`, with `auto`, `zero-based` and explicit domains, `nice` rounding, and off-scale reporting for clamped values.
   - `sonarithm-numisona` pitch spaces and ranges: log-frequency (the default, SDR-09), linear frequency, mel, ERB-rate and Bark; the 400–1400 Hz default range and the 65–1480 Hz expanded range (SDR-08); ranges in hertz, MIDI notes or cents.
@@ -46,7 +48,6 @@ From phase A07, release-plz maintains this file: it generates each release's ent
   - `sonarithm-numisona` `tone` and `glide` encoders (the `Numisona` engine): every note keeps its row and confidence; track filters, time order and the three paces; redundant tap-count and duration encodings (A11Y-13); one timbre per category (SDR-25); missing values silenced or interpolated; warnings for loudness on data (SDR-23), pan as the only carrier (A11Y-14) and fast tones (SDR-19); synthetic example datasets.
   - Encoders receive the spec's substrate, field semantics, missing-value treatment and mode alongside the track (`TrackRequest`).
   - `sonarithm-numisona` Erie importer (subset, SDR-05): Erie specs become spec v0.1 documents, with a report of every construct that is approximated or has no equivalent.
-  - `sonarithm-render` plan builder: a Score becomes a `RenderPlan` in frames, with resolved frequencies, gains, pan gains, instruments and voice-pool sizes; unknown instruments raise `SNR-RENDER-001` and fall back to the mallet preset.
-  - `sonarithm-render` render graph: preallocated voice pools, data, context, earcon and monitoring buses, a sample-accurate scheduler and a transport (play, pause, stop, seek, loop, speed and live cues) with crossfades instead of cuts. Earcon sounds are provisional until B03.
+  - `sonarithm-compiler` compiles the data layer's `DataBundle`: spec transforms run in `sonarithm-data`, and the `Platform` engine reads `inline` records and `file` sources relative to a base directory.
 
 [Unreleased]: https://github.com/DuhItzAniket/SONARITHM/commits/main
