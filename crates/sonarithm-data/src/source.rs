@@ -13,6 +13,7 @@ mod csv;
 mod json;
 #[cfg(feature = "xlsx")]
 mod spreadsheet;
+mod thrift;
 
 use std::collections::BTreeMap;
 

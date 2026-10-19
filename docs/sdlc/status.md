@@ -116,7 +116,7 @@ Work runs in a separate agent session, in parallel with A03, through small PRs i
 | A04-T07 Transforms with a sandboxed rhai subset | Done | All eight transforms with unit and property tests; rhai subset fuel-limited (10 000 operations per row); provenance propagated per 03 §4 (#139) |
 | A04-T08 M4 and LTTB downsampling; tile cache | Done | M4 pixel-exact against the full polyline and the paper's reference query (property test); LTTB keeps ends and threshold; LRU tile cache per generation (#141) |
 | A04-T09 Data fingerprinting | Done | Canonical IPC (one batch, zeroed null slots); corpus digests pinned and checked on three OSes in CI (#142) |
-| A04-T10 Benchmarks (PB-05); CSV and XLSX fuzzers | Done | PB-05 met: 0.51 s on HW-01 (34%), 0.91 s on HW-01e (F-070); fuzz targets for CSV, JSON, XLSX/ODS and Parquet/IPC in `nightly.yml`; fuzzing found allocation and panic issues in arrow-ipc and calamine, now validated or contained (F-071); a slow Parquet input stays open (#146) (#143) |
+| A04-T10 Benchmarks (PB-05); CSV and XLSX fuzzers | Done | PB-05 met: 0.51 s on HW-01 (34%), 0.91 s on HW-01e (F-070); fuzz targets for CSV, JSON, XLSX/ODS and Parquet/IPC in `nightly.yml`; fuzzing found allocation and panic issues in arrow-ipc and calamine, now validated or contained (F-071); a slow Parquet page header contained in a follow-up (#146) (#143) |
 
 ### A05 tasks
 
