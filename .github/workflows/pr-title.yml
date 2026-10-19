@@ -74,11 +74,13 @@ jobs:
             tonalens
             resonum
           requireScope: false
-          # Description: lower case first letter, no full stop at the end.
-          subjectPattern: ^(?![A-Z]).*[^.]$
+          # Description: lower case first letter, no full stop at the end. Dependabot writes
+          # "Bump ..." even with a lower-case commit-message prefix (dependabot.yml), so that
+          # one verb is accepted as is.
+          subjectPattern: ^(?:Bump |(?![A-Z])).*[^.]$
           subjectPatternError: |
-            The description "{subject}" must start with a lower-case letter and must not end
-            with a full stop (docs/engineering/git-workflow.md).
+            The description "{subject}" must start with a lower-case letter (Dependabot's
+            "Bump" excepted) and must not end with a full stop (docs/engineering/git-workflow.md).
       - name: Header is at most 72 characters
         env:
           # Untrusted input reaches the script only through the environment.

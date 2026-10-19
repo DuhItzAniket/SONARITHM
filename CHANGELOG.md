@@ -28,6 +28,11 @@ From phase A07, release-plz maintains this file: it generates each release's ent
   - pnpm workspace with placeholder frontend packages, ESLint and Prettier.
   - GitHub Actions workflows for CI, documentation checks, PR titles, DCO, CodeQL and OpenSSF Scorecard, plus Dependabot configuration.
 - Licensing ([ADR-0010](docs/decisions/0010-licensing.md)): code under `MIT OR Apache-2.0`; documentation, example datasets and study stimuli under `CC-BY-4.0`. Adds `LICENSE-MIT`, `LICENSE-APACHE`, `LICENSES/`, `REUSE.toml`, SPDX headers and a REUSE check in CI.
+- Core types, spec v0.1 and Score IR (phase A03):
+  - `sonarithm-core`: unit newtypes with platform-independent maths (`libm`), IDs and row references, provenance, diagnostics with a compile-time-checked code registry, the Score IR with invariant checks, a canonical SHA-256 hash and rounded review snapshots, and the engine capability traits with the registry and `CompileContext`.
+  - `sonarithm-spec`: spec v0.1 as frozen by [RFC-0001](docs/rfcs/0001-spec-v0.1.md), with the generated JSON Schema in `schemas/`, validation with `SNR-SPEC` codes, JSON pointers and miette reports, RFC 8785 canonicalization, the spec hash, defaults reported as `Info`, and a migration framework.
+  - `sonarithm-compiler`: the compile pipeline skeleton.
+  - `cargo xtask codes` and the generated [error code registry](docs/reference/error-codes.md); fuzz targets for the spec parser and migrations, run nightly by `nightly.yml`.
 - Render engine (phase A05):
   - `sonarithm-dsp` oscillators: sine, triangle, and band-limited (PolyBLEP) saw and square, computed with IEEE 754 arithmetic only so renders stay bit-identical across platforms.
   - `sonarithm-dsp` envelopes: ADSR with raised-cosine onset and offset ramps of at least 5 ms, about 40 ms for notes (SDR-22); retriggers and releases never step.
