@@ -1168,6 +1168,15 @@ name = "sonarithm-export"
 version = "0.0.0"
 
 [[package]]
+name = "sonarithm-numisona"
+version = "0.0.0"
+dependencies = [
+ "proptest",
+ "sonarithm-core",
+ "thiserror",
+]
+
+[[package]]
 name = "sonarithm-render"
 version = "0.0.0"
 dependencies = [

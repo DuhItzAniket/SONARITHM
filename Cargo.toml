@@ -14,6 +14,7 @@ members = [
     "crates/sonarithm-render",
     "crates/sonarithm-audio",
     "crates/sonarithm-export",
+    "crates/engines/sonarithm-numisona",
     "apps/cli",
     "xtask",
 ]
@@ -44,6 +45,7 @@ sonarithm-dsp = { path = "crates/sonarithm-dsp", version = "0.0.0" }
 sonarithm-render = { path = "crates/sonarithm-render", version = "0.0.0" }
 sonarithm-audio = { path = "crates/sonarithm-audio", version = "0.0.0" }
 sonarithm-export = { path = "crates/sonarithm-export", version = "0.0.0" }
+sonarithm-numisona = { path = "crates/engines/sonarithm-numisona", version = "0.0.0" }
 
 # Third-party crates. Each addition needs a justification in its PR and must pass
 # `cargo deny check` (docs/engineering/supply-chain-and-licensing.md).
