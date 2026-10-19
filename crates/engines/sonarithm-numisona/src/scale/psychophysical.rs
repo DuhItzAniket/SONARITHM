@@ -15,9 +15,11 @@
 //!
 //! In cents the law is a straight line in `log2(d)`:
 //! `pitch = pitch_ref + (1200 / m) · log2(d / d_ref)`, so it is a log scale whose ends are
-//! set by the law instead of by a range. Without a `range`, the track's pitch range is the
-//! image of the data domain, kept within 20–20 000 Hz; with one, pitches are clamped to it
-//! and the clamped data are reported as off-scale.
+//! set by the law instead of by a range. With a `range`, pitches are clamped to it and the
+//! clamped data are reported as off-scale; through the spec this is the usual case, because
+//! the resolved spec writes the default 400–1400 Hz range (SDR-08) into every pitch channel.
+//! [`Psychophysical::range_for`] gives the law's own image of a data domain, kept within
+//! 20–20 000 Hz, for a caller that sets no range.
 
 use sonarithm_core::math;
 use sonarithm_core::score::PitchRange;

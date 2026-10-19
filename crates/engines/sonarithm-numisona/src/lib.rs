@@ -21,7 +21,11 @@
 #![deny(missing_docs)]
 
 pub mod codes;
+pub mod encode;
+pub mod examples;
 pub mod import;
 pub mod pitch;
 pub mod polarity;
 pub mod scale;
+
+pub use encode::{Numisona, encode};

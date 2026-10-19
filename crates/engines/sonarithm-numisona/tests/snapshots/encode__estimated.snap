@@ -1,0 +1,234 @@
+---
+source: crates/engines/sonarithm-numisona/tests/encode.rs
+expression: review(&compiled)
+---
+{
+  "header": {
+    "data_fingerprint": "fde4ad03250f13830ee2c9a063b0aecdee75040c4e152efa9347c6b9d15f4553",
+    "duration": 3.25,
+    "engines": {
+      "numisona": "0.0.0",
+      "platform": "0.0.0"
+    },
+    "ir_version": 1,
+    "mode": "analysis",
+    "seed": 0,
+    "shapers": [],
+    "spec_hash": "82f62fb71a198fe85125576bf6fad5d01920d07465c77f0438748affa413fa5e",
+    "spec_version": "0.1"
+  },
+  "markers": [],
+  "tracks": [
+    {
+      "engine": "numisona",
+      "events": [
+        {
+          "conf": null,
+          "dur": 0.25,
+          "gain": -18.0,
+          "pan": 0.0,
+          "pitch": -165.0,
+          "src": {
+            "generation": 0,
+            "row": 0,
+            "table": 0
+          },
+          "t": 0.0,
+          "taps": 1,
+          "timbre": {
+            "brightness": 0.5,
+            "preset": null
+          },
+          "type": "note"
+        },
+        {
+          "conf": null,
+          "dur": 0.25,
+          "gain": -18.0,
+          "pan": 0.0,
+          "pitch": -138.23,
+          "src": {
+            "generation": 0,
+            "row": 1,
+            "table": 0
+          },
+          "t": 0.333333,
+          "taps": 1,
+          "timbre": {
+            "brightness": 0.5,
+            "preset": null
+          },
+          "type": "note"
+        },
+        {
+          "conf": null,
+          "dur": 0.25,
+          "gain": -18.0,
+          "pan": 0.0,
+          "pitch": -57.9,
+          "src": {
+            "generation": 0,
+            "row": 2,
+            "table": 0
+          },
+          "t": 0.666667,
+          "taps": 1,
+          "timbre": {
+            "brightness": 0.5,
+            "preset": null
+          },
+          "type": "note"
+        },
+        {
+          "conf": 0.75,
+          "dur": 0.25,
+          "gain": -18.0,
+          "pan": 0.0,
+          "pitch": 75.98,
+          "src": {
+            "generation": 0,
+            "row": 3,
+            "table": 0
+          },
+          "t": 1.0,
+          "taps": 1,
+          "timbre": {
+            "brightness": 0.5,
+            "preset": null
+          },
+          "type": "note"
+        },
+        {
+          "conf": 0.75,
+          "dur": 0.25,
+          "gain": -18.0,
+          "pan": 0.0,
+          "pitch": 263.41,
+          "src": {
+            "generation": 0,
+            "row": 4,
+            "table": 0
+          },
+          "t": 1.333333,
+          "taps": 1,
+          "timbre": {
+            "brightness": 0.5,
+            "preset": null
+          },
+          "type": "note"
+        },
+        {
+          "conf": null,
+          "dur": 0.25,
+          "gain": -18.0,
+          "pan": 0.0,
+          "pitch": 504.39,
+          "src": {
+            "generation": 0,
+            "row": 5,
+            "table": 0
+          },
+          "t": 1.666667,
+          "taps": 1,
+          "timbre": {
+            "brightness": 0.5,
+            "preset": null
+          },
+          "type": "note"
+        },
+        {
+          "conf": null,
+          "dur": 0.25,
+          "gain": -18.0,
+          "pan": 0.0,
+          "pitch": 798.92,
+          "src": {
+            "generation": 0,
+            "row": 6,
+            "table": 0
+          },
+          "t": 2.0,
+          "taps": 1,
+          "timbre": {
+            "brightness": 0.5,
+            "preset": null
+          },
+          "type": "note"
+        },
+        {
+          "conf": 0.75,
+          "dur": 0.25,
+          "gain": -18.0,
+          "pan": 0.0,
+          "pitch": 1147.0,
+          "src": {
+            "generation": 0,
+            "row": 7,
+            "table": 0
+          },
+          "t": 2.333333,
+          "taps": 1,
+          "timbre": {
+            "brightness": 0.5,
+            "preset": null
+          },
+          "type": "note"
+        },
+        {
+          "conf": null,
+          "dur": 0.25,
+          "gain": -18.0,
+          "pan": 0.0,
+          "pitch": 1548.64,
+          "src": {
+            "generation": 0,
+            "row": 8,
+            "table": 0
+          },
+          "t": 2.666667,
+          "taps": 1,
+          "timbre": {
+            "brightness": 0.5,
+            "preset": null
+          },
+          "type": "note"
+        },
+        {
+          "conf": null,
+          "dur": 0.25,
+          "gain": -18.0,
+          "pan": 0.0,
+          "pitch": 2003.82,
+          "src": {
+            "generation": 0,
+            "row": 9,
+            "table": 0
+          },
+          "t": 3.0,
+          "taps": 1,
+          "timbre": {
+            "brightness": 0.5,
+            "preset": null
+          },
+          "type": "note"
+        }
+      ],
+      "gain": 0.0,
+      "id": "data",
+      "instrument": "mallet",
+      "pan": 0.0,
+      "pitch_range": {
+        "high": 2003.82,
+        "low": -165.0
+      },
+      "role": "data"
+    }
+  ]
+}
+
+NUMISONA diagnostics:
+- SNR-ENG-001: NUMISONA: track `data`: time follows field `x`, which has role x (RFC-0001 §5).
+- SNR-ENG-002: NUMISONA: track `data`: the instrument is `mallet`, the harmonic mallet-like default (SDR-29).
+- SNR-ENG-020: NUMISONA: field `y` has no concept, so its polarity is positive, the generic default: higher values sound higher (SDR-12).
+- SNR-ENG-004: NUMISONA: track `data`: loudness is constant at -18 dB, so pitch alone carries the data (SDR-23).
+- SNR-ENG-003: NUMISONA: track `data`: notes last 0.25 s, the default duration (RFC-0001 §6).

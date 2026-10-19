@@ -26,7 +26,7 @@ use serde::{Deserialize, Serialize};
 use crate::diagnostic::{Diagnostic, SpecPointer};
 use crate::ids::{AnalyzerId, EngineId, RowRange, RuleId, TrackId};
 use crate::provenance::Confidence;
-use crate::score::{EngineVersion, Score, ScoreTrack};
+use crate::score::{EngineVersion, Mode, Score, ScoreTrack};
 
 pub use context::{Budget, BudgetExceeded, CancelToken, CompileContext, TrackRng};
 pub use registry::{Registrar, Registry, RegistryError};
@@ -187,7 +187,9 @@ impl Annotation {
     }
 }
 
-/// What an encoder is asked to encode.
+/// What an encoder is asked to encode: the track, plus the spec sections every track's
+/// encoding depends on (05 §2). Encoders own the `substrate` (RFC-0001 §2), and they read
+/// field semantics and the missing-value treatment from `data`.
 #[derive(Clone, Debug, PartialEq, Eq)]
 #[non_exhaustive]
 pub struct TrackRequest {
@@ -197,13 +199,59 @@ pub struct TrackRequest {
     pub mark: MarkKind,
     /// The track object of the spec (`/tracks/<n>`).
     pub spec: SpecFragment,
+    /// The spec's `substrate` (`/substrate`): the time field and pace.
+    pub substrate: Option<SpecFragment>,
+    /// The spec's declared field semantics (`/data/fields`), which win over the data's own
+    /// metadata (04 §3).
+    pub fields: Option<SpecFragment>,
+    /// The spec's missing-value treatment (`/data/missing`).
+    pub missing: Option<SpecFragment>,
+    /// The spec's mode (SDR-36).
+    pub mode: Mode,
 }
 
 impl TrackRequest {
-    /// A request for track `id` with `mark`.
+    /// A request for track `id` with `mark`, in Analysis mode, without substrate, field
+    /// semantics or missing-value treatment.
     #[must_use]
     pub fn new(id: TrackId, mark: MarkKind, spec: SpecFragment) -> Self {
-        Self { id, mark, spec }
+        Self {
+            id,
+            mark,
+            spec,
+            substrate: None,
+            fields: None,
+            missing: None,
+            mode: Mode::Analysis,
+        }
+    }
+
+    /// The same request with the spec's `substrate`.
+    #[must_use]
+    pub fn with_substrate(mut self, substrate: SpecFragment) -> Self {
+        self.substrate = Some(substrate);
+        self
+    }
+
+    /// The same request with the spec's `data.fields`.
+    #[must_use]
+    pub fn with_fields(mut self, fields: SpecFragment) -> Self {
+        self.fields = Some(fields);
+        self
+    }
+
+    /// The same request with the spec's `data.missing`.
+    #[must_use]
+    pub fn with_missing(mut self, missing: SpecFragment) -> Self {
+        self.missing = Some(missing);
+        self
+    }
+
+    /// The same request in `mode`.
+    #[must_use]
+    pub fn with_mode(mut self, mode: Mode) -> Self {
+        self.mode = mode;
+        self
     }
 }
 

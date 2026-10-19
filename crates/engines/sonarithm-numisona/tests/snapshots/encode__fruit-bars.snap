@@ -1,0 +1,140 @@
+---
+source: crates/engines/sonarithm-numisona/tests/encode.rs
+expression: review(&compiled)
+---
+{
+  "header": {
+    "data_fingerprint": "721c92c2e1b6eb6543114ae095515ad51990b6e36e165f9e5eb4f1ec7a4818cc",
+    "duration": 1.583333,
+    "engines": {
+      "numisona": "0.0.0",
+      "platform": "0.0.0"
+    },
+    "ir_version": 1,
+    "mode": "analysis",
+    "seed": 0,
+    "shapers": [],
+    "spec_hash": "9e655bf904455712fc9d6ce53ad977073abd42e05c6a44209d99e0c6d51a6532",
+    "spec_version": "0.1"
+  },
+  "markers": [],
+  "tracks": [
+    {
+      "engine": "numisona",
+      "events": [
+        {
+          "conf": null,
+          "dur": 0.25,
+          "gain": -18.0,
+          "pan": 0.0,
+          "pitch": 1433.08,
+          "src": {
+            "generation": 0,
+            "row": 0,
+            "table": 0
+          },
+          "t": 0.0,
+          "taps": 1,
+          "timbre": {
+            "brightness": 0.5,
+            "preset": null
+          },
+          "type": "note"
+        },
+        {
+          "conf": null,
+          "dur": 0.25,
+          "gain": -18.0,
+          "pan": 0.0,
+          "pitch": 2003.82,
+          "src": {
+            "generation": 0,
+            "row": 1,
+            "table": 0
+          },
+          "t": 0.333333,
+          "taps": 1,
+          "timbre": {
+            "brightness": 0.5,
+            "preset": "square"
+          },
+          "type": "note"
+        },
+        {
+          "conf": null,
+          "dur": 0.25,
+          "gain": -18.0,
+          "pan": 0.0,
+          "pitch": 519.89,
+          "src": {
+            "generation": 0,
+            "row": 2,
+            "table": 0
+          },
+          "t": 0.666667,
+          "taps": 1,
+          "timbre": {
+            "brightness": 0.5,
+            "preset": "triangle"
+          },
+          "type": "note"
+        },
+        {
+          "conf": null,
+          "dur": 0.25,
+          "gain": -18.0,
+          "pan": 0.0,
+          "pitch": 1090.63,
+          "src": {
+            "generation": 0,
+            "row": 3,
+            "table": 0
+          },
+          "t": 1.0,
+          "taps": 1,
+          "timbre": {
+            "brightness": 0.5,
+            "preset": "saw"
+          },
+          "type": "note"
+        },
+        {
+          "conf": null,
+          "dur": 0.25,
+          "gain": -18.0,
+          "pan": 0.0,
+          "pitch": 177.44,
+          "src": {
+            "generation": 0,
+            "row": 4,
+            "table": 0
+          },
+          "t": 1.333333,
+          "taps": 1,
+          "timbre": {
+            "brightness": 0.5,
+            "preset": "sine"
+          },
+          "type": "note"
+        }
+      ],
+      "gain": 0.0,
+      "id": "data",
+      "instrument": "mallet",
+      "pan": 0.0,
+      "pitch_range": {
+        "high": 2003.82,
+        "low": -165.0
+      },
+      "role": "data"
+    }
+  ]
+}
+
+NUMISONA diagnostics:
+- SNR-ENG-001: NUMISONA: track `data`: time follows the row order, because the substrate names no time field and no field has role x.
+- SNR-ENG-002: NUMISONA: track `data`: the instrument is `mallet`, the harmonic mallet-like default (SDR-29).
+- SNR-ENG-020: NUMISONA: field `sold` has no concept, so its polarity is positive, the generic default: higher values sound higher (SDR-12).
+- SNR-ENG-004: NUMISONA: track `data`: loudness is constant at -18 dB, so pitch alone carries the data (SDR-23).
+- SNR-ENG-008: NUMISONA: track `data`: field `fruit` is categorical, so each category gets its own timbre (SDR-25): apple → mallet, banana → square, cherry → triangle, date → saw, fig → sine.
+- SNR-ENG-003: NUMISONA: track `data`: notes last 0.25 s, the default duration (RFC-0001 §6).

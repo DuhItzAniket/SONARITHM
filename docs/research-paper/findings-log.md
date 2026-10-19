@@ -450,3 +450,12 @@ A06 (NUMISONA) uses F-080 to F-089.
 - **Evidence level / confidence:** EV-C / Moderate (the documentation does not state every default, such as Erie's default pitch range and band, so some mappings rely on SONARITHM's defaults)
 - **Affects:** SDR-05; 04 §9; candidate spec minor versions (sequential composition, intervals, per-event speech); the broader importer in C05
 - **Papers:** none yet
+
+### F-082 · The encoder needs default ranges that no design rule fixes; three are recorded as proposals
+
+- **Date:** 2026-10-19 · **Phase:** A06 · **Type:** engineering · **Status:** new
+- **Statement:** RFC-0001 gives constant defaults for duration (0.25 s), taps (1) and loudness (−18 dB), but no range for a field mapped to them, and A11Y-13's redundant encodings need one. NUMISONA uses three proposals, each reported as `Info` when applied: duration 0.1–0.3 s (the ~100 ms event floor behind SDR-20, INFER, up to the 1/3 s inter-onset interval of the default pace, SDR-19); taps 1–8 (the channel's RFC bounds); loudness −24 to −12 dB (±6 dB around the default; SDR-23 warns against mapping loudness at all). At the default pace and duration, 8 taps last 31 ms each, below the ~100 ms floor, so the encoder warns that taps may fuse; redundant taps need a slower pace or longer notes to be countable.
+- **Evidence:** A06-T04 PR (`crates/engines/sonarithm-numisona/src/encode.rs` constants `PROPOSED_DURATION_RANGE_S`, `TAPS_RANGE`, `PROPOSED_LOUDNESS_RANGE_DB`; test `sdr_20_taps_that_may_fuse_warn`); render plan splits a note into equal taps (`sonarithm-render` plan builder)
+- **Evidence level / confidence:** EV-C / Weak (the values are design proposals; no listening study supports them yet)
+- **Affects:** A11Y-13, SDR-19, SDR-20, SDR-23; sound-design §1 (proposals need a finding before they are settled); H-01 (redundant encodings for BLV point estimation); a candidate experiment on countable tap rates
+- **Papers:** none yet

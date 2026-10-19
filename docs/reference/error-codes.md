@@ -70,10 +70,37 @@ Owner: `sonarithm-numisona`.
 
 | Code | Severity | Meaning | How to fix | Rules |
 |---|---|---|---|---|
+| `SNR-ENG-001` | info | Time field chosen by default | Set `substrate.time.field` to choose the field that orders the data in time. | — |
+| `SNR-ENG-002` | info | Default instrument | Set the track's `instrument` to choose another preset. | SDR-29 |
+| `SNR-ENG-003` | info | Default note duration | Set `channels.duration` to a value or a field. | — |
+| `SNR-ENG-004` | info | Default constant loudness | Set `channels.loudness.value` to change the level; avoid mapping data to loudness. | SDR-23 |
+| `SNR-ENG-005` | info | Constant default pitch | Map a field to `channels.pitch` to carry the data in pitch (SDR-07). | SDR-07, SDR-08 |
+| `SNR-ENG-006` | info | Default channel range | Set the channel's `range` to choose the output range. | — |
+| `SNR-ENG-007` | info | Redundant encoding added | Remove the entry from `redundant` to drop it. | A11Y-13 |
+| `SNR-ENG-008` | info | Timbre per category | The legend speaks this assignment; set `instrument` to change the first timbre. | SDR-25 |
+| `SNR-ENG-009` | info | Psychophysical scaling, as guidance | Exponents come from magnitude-estimation studies and are a starting point, not a law. | SDR-11 |
+| `SNR-ENG-010` | info | Missing values | Set `data.missing` to `silence`, `earcon` or `interpolate`. | — |
 | `SNR-ENG-020` | info | Polarity taken from the concept table | Set `polarity` to `positive` or `negative` to choose the direction yourself. | SDR-12, SDR-13, SDR-14 |
 | `SNR-ENG-021` | warning | Flagged concept with automatic polarity | Listeners disagree on the pitch direction for this concept; set `polarity` explicitly, or flip it in your profile. | SDR-13, SDR-14, SDR-41 |
 | `SNR-ENG-022` | info | Concept not in the concept table | The generic default (positive) applies; check the concept's spelling or set `polarity`. | SDR-12 |
 | `SNR-ENG-023` | info | Polarity set by the listener's profile | Change or clear the polarity setting in the profile to restore the spec's polarity. | SDR-15 |
+| `SNR-ENG-040` | error | No data table | Check that the data source produced a table. | — |
+| `SNR-ENG-041` | error | Unknown field | Check the field name against the data's columns. | — |
+| `SNR-ENG-042` | error | Unsupported field type | Map numbers, dates, text or dictionary fields; convert other columns with a transform. | — |
+| `SNR-ENG-043` | error | Categorical field on a continuous scale | Use a `band` or `ordinal` scale, or map the field to `timbre`. | SDR-25 |
+| `SNR-ENG-044` | error | Scale cannot be fitted | Fix the scale's domain, exponent or reference, or the channel's range. | — |
+| `SNR-ENG-045` | error | Track filter failed | Fix the expression; see the data layer's expression language. | — |
+| `SNR-ENG-046` | warning | Values outside the domain | Widen the scale's domain, or keep the clamping; the values sound at the range's ends. | — |
+| `SNR-ENG-047` | warning | Rows without a time value | Fill or filter the missing time values. | — |
+| `SNR-ENG-048` | warning | Pace in units without a numeric time field | Name a numeric or temporal time field, or use `pointsPerSecond`. | — |
+| `SNR-ENG-049` | warning | Tones faster than 8 per second | Slow the pace to 2-4 points per second for overviews, or use a glide. | SDR-19, SDR-20 |
+| `SNR-ENG-050` | warning | Taps may fuse | Lengthen the notes, lower the tap range or slow the pace. | SDR-20 |
+| `SNR-ENG-051` | warning | Loudness carries data | Map the field to pitch, duration or taps instead; keep loudness constant. | SDR-23 |
+| `SNR-ENG-052` | warning | Pan is the only carrier | Map the field to another channel as well. | A11Y-14 |
+| `SNR-ENG-053` | warning | Pan repeats the pitch field | Map pan to another field or to a constant in Analysis mode. | SDR-27 |
+| `SNR-ENG-054` | warning | Timbres repeat | Split the track by category, or announce the categories. | SDR-25, A11Y-14 |
+| `SNR-ENG-055` | warning | Channel not encoded | Remove the channel, or use a mark that supports it. | — |
+| `SNR-ENG-056` | warning | Redundant encoding not added | Map a field to pitch, or drop the explicit channel the redundant encoding would add. | A11Y-13 |
 | `SNR-ENG-080` | warning | Erie construct not imported | Spec v0.1 has no equivalent; the note says what the import does instead. Adjust the imported spec by hand if the construct matters. | SDR-05 |
 | `SNR-ENG-081` | info | Erie construct imported approximately | Check the imported spec against the note; the construct maps onto spec v0.1 with the stated difference. | SDR-05 |
 
