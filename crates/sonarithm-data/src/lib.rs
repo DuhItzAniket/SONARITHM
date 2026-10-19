@@ -11,7 +11,15 @@
 #![forbid(unsafe_code)]
 #![deny(missing_docs)]
 
+pub mod bundle;
 pub mod codes;
+pub mod error;
 pub mod meta;
+pub mod table;
 
+pub use bundle::{
+    Annotation, AnnotationKind, BundleId, DataBundle, Format, SourceDescriptor, SourceKind,
+};
+pub use error::DataError;
 pub use meta::{Concept, FieldMeta, FieldType, Role, Unit};
+pub use table::Table;

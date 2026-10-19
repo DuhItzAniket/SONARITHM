@@ -48,7 +48,9 @@ sonarithm-export = { path = "crates/sonarithm-export", version = "0.0.0" }
 anyhow = "1.0.100"          # apps/* and xtask only (coding-standards §4.1)
 # Apache Arrow, the data contract (ADR-0006). The split crates keep the default feature
 # set small (no prettyprint, CSV or JSON readers) and wasm32-clean.
+arrow-array = "60.0.0"
 arrow-schema = "60.0.0"
+arrow-select = "60.0.0"
 cargo_metadata = "0.23.1"   # xtask check-deps
 # Pure-Rust maths for every Score-affecting transcendental function (ADR-0013). The default
 # `arch` feature only swaps in IEEE-exact instructions (sqrt, rounding), so results stay

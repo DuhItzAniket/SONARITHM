@@ -25,6 +25,14 @@ macro_rules! code {
 }
 
 code!(
+    /// A table's columns do not match its schema, or two tables share an ID.
+    MALFORMED_TABLE, "SNR-DATA-004", Error,
+    "A table is malformed",
+    "Build each table from equal-length columns that match its schema, and give each table in a bundle its own ID.",
+    []
+);
+
+code!(
     /// A `snr.*` field metadata value cannot be read and was ignored.
     INVALID_METADATA, "SNR-DATA-040", Warning,
     "A field metadata value cannot be read and was ignored",
@@ -32,11 +40,19 @@ code!(
     []
 );
 
+code!(
+    /// A field name the table does not have.
+    UNKNOWN_FIELD, "SNR-DATA-050", Error,
+    "Unknown field",
+    "Name a field of the table; field names are case-sensitive.",
+    []
+);
+
 /// Every `SNR-DATA` code, in ascending order.
 pub const CODES: CodeTable = CodeTable {
     area: Area::Data,
     owner: "sonarithm-data",
-    codes: &[INVALID_METADATA],
+    codes: &[MALFORMED_TABLE, INVALID_METADATA, UNKNOWN_FIELD],
 };
 
 const _: () = assert!(validate(&CODES).is_ok(), "invalid SNR-DATA code table");
