@@ -58,6 +58,8 @@ cargo_metadata = "0.23.1"   # xtask check-deps
 libm = "0.2.16"
 # Seeded, portable random streams per track (SDR-02, coding-standards §10).
 rand_chacha = { version = "0.9.0", default-features = false }
+# JSON Schema generation for the spec (04 §1); `derive` only, no optional integrations.
+schemars = { version = "1.0.4", default-features = false, features = ["derive", "std"] }
 serde = { version = "1.0.228", features = ["derive"] }
 # `float_roundtrip`: the default parser can be 1 ULP off, which breaks full-precision Score
 # and spec round trips (ADR-0013).
