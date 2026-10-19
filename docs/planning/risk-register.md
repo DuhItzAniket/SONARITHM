@@ -27,6 +27,7 @@
 | R-20 | EU Cyber Resilience Act obligations once SONARITHM is used commercially | 2 | 3 | 6 | Project lead | Steward basics now: security policy, SBOM, vulnerability handling ([supply chain](../engineering/supply-chain-and-licensing.md)) | Commercial redistribution or a legal entity is formed | Open |
 | R-21 | Webview graphics limits (no WebGPU on Linux; GPU driver issues) | 3 | 2 | 6 | Frontend lead | WebGL2 baseline; Canvas2D fallback; WebGPU only as an enhancement | Rendering bugs on specific GPUs | Open |
 | R-22 | No macOS or Linux hardware for manual audio, webview and screen-reader tests (the owner has one Windows laptop) | 3 | 3 | 9 | Project lead | Linux: an Ubuntu live USB or dual boot on the owner's laptop for A02, B03 and B07 checks (it also covers the NVIDIA WebKitGTK case). macOS: CI runners for build and test; a university lab Mac or volunteer for VoiceOver and real-audio checks by B07 | No Mac access arranged 6 weeks before B07 | Open |
+| R-23 | Malformed data files crash the process or exhaust memory in third-party decoders (arrow-ipc, parquet, calamine), or reach a panicking arrow API after decoding | 3 | 3 | 9 | Core lead | Validate framing, buffer bounds, declared sizes and bounding boxes before decoding; contain decoder panics as `SNR-DATA-001`; nightly fuzzing of every importer (F-071) | A nightly `fuzz (…)` job fails; a crash report on a user file | Open |
 
 ## Review log
 
@@ -35,3 +36,4 @@
 | 2026-10-18 | Baseline created from the kickoff research | R-01..R-21 opened |
 | 2026-10-18 | Owner context recorded (solo, RV University, Windows-only hardware) | R-11 lowered to 6; R-14 mitigation updated; R-22 opened |
 | 2026-10-19 | Owner works alone without institutional ethics review (OD-04) | R-11 raised to 12 and reframed as an accepted constraint |
+| 2026-10-19 | A04 phase review | R-23 opened (malformed files against third-party decoders, F-071) |
