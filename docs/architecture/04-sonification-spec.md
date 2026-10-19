@@ -283,4 +283,4 @@ The compiler fills in the substrate from `role=x` (or row order), pace 3 points/
 | MAIDR JSON | C01 | Data and chart type → default spec |
 | Apple `AXChartDescriptor` semantics | Reference only | Its axis model informs the default mapping (A11Y-13) |
 
-Importers emit a report of every construct they could not map. They never drop one silently.
+Importers emit a report of every construct they could not map. They never drop one silently. The A06 Erie importer is `sonarithm_numisona::import::erie`; what spec v0.1 cannot express is listed in [F-081](../research-paper/findings-log.md#f-081--spec-v01-can-express-8-of-eries-15-documented-encoding-channels-and-neither-sequential-composition-nor-intervals).

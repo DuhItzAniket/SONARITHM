@@ -1,0 +1,109 @@
+{
+  "title": "Observed and fitted values",
+  "data": {
+    "values": [
+      {
+        "x": 0,
+        "observed": 1.1,
+        "fitted": 1.0
+      },
+      {
+        "x": 1,
+        "observed": 1.6,
+        "fitted": 1.5
+      },
+      {
+        "x": 2,
+        "observed": 2.3,
+        "fitted": 2.0
+      },
+      {
+        "x": 3,
+        "observed": 2.4,
+        "fitted": 2.5
+      },
+      {
+        "x": 4,
+        "observed": 3.2,
+        "fitted": 3.0
+      },
+      {
+        "x": 5,
+        "observed": 3.4,
+        "fitted": 3.5
+      },
+      {
+        "x": 6,
+        "observed": 4.1,
+        "fitted": 4.0
+      },
+      {
+        "x": 7,
+        "observed": 4.3,
+        "fitted": 4.5
+      },
+      {
+        "x": 8,
+        "observed": 5.2,
+        "fitted": 5.0
+      },
+      {
+        "x": 9,
+        "observed": 5.3,
+        "fitted": 5.5
+      },
+      {
+        "x": 10,
+        "observed": 6.1,
+        "fitted": 6.0
+      }
+    ]
+  },
+  "overlay": [
+    {
+      "name": "observed",
+      "tone": {
+        "type": "default"
+      },
+      "encoding": {
+        "time": {
+          "field": "x",
+          "type": "quantitative",
+          "scale": {
+            "length": 5
+          }
+        },
+        "pitch": {
+          "field": "observed",
+          "type": "quantitative"
+        },
+        "pan": {
+          "value": -0.6
+        }
+      }
+    },
+    {
+      "name": "fitted",
+      "tone": {
+        "type": "default",
+        "continued": true
+      },
+      "encoding": {
+        "time": {
+          "field": "x",
+          "type": "quantitative",
+          "scale": {
+            "length": 5
+          }
+        },
+        "pitch": {
+          "field": "fitted",
+          "type": "quantitative"
+        },
+        "pan": {
+          "value": 0.6
+        }
+      }
+    }
+  ]
+}

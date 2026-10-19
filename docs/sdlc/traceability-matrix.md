@@ -20,7 +20,7 @@
 | FR-021 | [04 §2](../architecture/04-sonification-spec.md#2-top-level-structure) | A03 | UT (`sdr_36_sdr_17_mode_and_reference_defaults`, `sdr_10_music_only_in_presentation_mode`, `sdr_10_quantize_runs_only_in_presentation_mode`) | In review (#96, #99, #100) |
 | FR-022 | [05 §3](../architecture/05-compiler-and-score-ir.md#3-engine-registry-and-capability-traits), [ADR-0013](../decisions/0013-determinism-and-provenance.md) | A03 | PT (`canonical_form_round_trips_byte_for_byte`), UT on 3 OSes (`canonical_hash_is_identical_on_every_platform`, `sdr_02_track_streams_are_seeded_and_portable`, `spec_hash_is_pinned_and_ignores_key_order`), IT (`the_same_input_gives_byte_identical_scores`) | In review (#8, #10, #99, #100) |
 | FR-023 | [04 §7](../architecture/04-sonification-spec.md#7-versioning-and-compatibility) | A03, A07 | UT (`migrate.rs` test chain, idempotence), PT (`migrating_a_current_spec_changes_nothing`), fuzz (`spec_migrate`); `sonarithm spec migrate` in A07 | Framework in review (#99) |
-| FR-024 | [04 §9](../architecture/04-sonification-spec.md#9-importers) | A06 | IT (Erie gallery subset) | Planned |
+| FR-024 | [04 §9](../architecture/04-sonification-spec.md#9-importers) | A06 | IT (`the_erie_gallery_subset_imports_as_valid_specs`, `unmapped_constructs_are_reported_at_their_pointer`, `compositions_follow_overlay_and_sequence`; snapshots), UT (`import::erie::tests`); rendering the subset in A06-T09 | In review (A06-T08) |
 | FR-025 | [07 NUMISONA](../architecture/07-engines.md) | A06 | ST (templates × datasets) | Planned |
 | FR-026 | [05 §7](../architecture/05-compiler-and-score-ir.md#7-diagnostics) | A06 | ST (diagnostics) | Planned |
 | FR-027 | [04 §9](../architecture/04-sonification-spec.md#9-importers) | C01 | IT | Planned |

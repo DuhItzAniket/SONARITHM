@@ -422,3 +422,12 @@ A06 (NUMISONA) uses F-080 to F-089.
 - **Evidence level / confidence:** EV-C / Strong
 - **Affects:** 05 §4.2 invariant 4 (clarified to "mirrors within the range in the pitch space"), SDR-09, SDR-15
 - **Papers:** none yet
+
+### F-081 · Spec v0.1 can express 8 of Erie's 15 documented encoding channels, and neither sequential composition nor intervals
+
+- **Date:** 2026-10-19 · **Phase:** A06 · **Type:** engineering · **Status:** new
+- **Statement:** Of the 15 encoding channels in Erie's documentation, NUMISONA's importer maps 8 onto spec v0.1: `time`, `pitch`, `duration`, `tapCount`, `loudness` and `pan` closely, and `tapSpeed` (as tap counts) and `detune` (as pitch in cents) approximately. The other 7 (`time2`, `repeat`, `speechBefore`, `speechAfter`, `postReverb`, `modulation`, `harmonicity`) have no v0.1 equivalent, nor do 3D pan, `roundToNote` in Analysis mode (SDR-10) or the `fold`, `density`, `quantile`, `boxplot` and `diffing` transforms. A `sequence` becomes one spec per stream, because a v0.1 spec overlays its tracks and has no sequential composition. On the 8-spec gallery subset, every imported spec validates and the report lists 19 approximated or unmapped constructs.
+- **Evidence:** A06-T08 PR (`crates/engines/sonarithm-numisona/src/import/erie.rs`; `tests/erie_gallery.rs` and its snapshots); [Erie documentation](https://see-mike-out.github.io/erie-documentation), encoding and stream pages, read 2026-10-19
+- **Evidence level / confidence:** EV-C / Moderate (the documentation does not state every default, such as Erie's default pitch range and band, so some mappings rely on SONARITHM's defaults)
+- **Affects:** SDR-05; 04 §9; candidate spec minor versions (sequential composition, intervals, per-event speech); the broader importer in C05
+- **Papers:** none yet

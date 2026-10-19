@@ -5,7 +5,7 @@
 //! (coding-standards §4.2: the message names the engine).
 //!
 //! NUMISONA uses `SNR-ENG-001` to `SNR-ENG-099`: 001–019 applied defaults (`Info`, FR-026),
-//! 020–029 polarity and the concept table. A released code is never reused
+//! 020–029 polarity and the concept table, 080–089 importers. A released code is never reused
 //! (coding-standards §4.2).
 
 use sonarithm_core::codes::{Area, CodeInfo, CodeStatus, CodeTable, validate};
@@ -61,6 +61,22 @@ code!(
     ["SDR-15"]
 );
 
+code!(
+    /// An Erie construct with no spec v0.1 equivalent was left out of an import (04 §9).
+    ERIE_UNMAPPED, "SNR-ENG-080", Warning,
+    "Erie construct not imported",
+    "Spec v0.1 has no equivalent; the note says what the import does instead. Adjust the imported spec by hand if the construct matters.",
+    ["SDR-05"]
+);
+
+code!(
+    /// An Erie construct was imported with a change of meaning (04 §9).
+    ERIE_APPROXIMATED, "SNR-ENG-081", Info,
+    "Erie construct imported approximately",
+    "Check the imported spec against the note; the construct maps onto spec v0.1 with the stated difference.",
+    ["SDR-05"]
+);
+
 /// Every NUMISONA code, in ascending order.
 pub const CODES: CodeTable = CodeTable {
     area: Area::Eng,
@@ -70,6 +86,8 @@ pub const CODES: CodeTable = CodeTable {
         FLAGGED_CONCEPT,
         UNKNOWN_CONCEPT,
         POLARITY_FROM_PROFILE,
+        ERIE_UNMAPPED,
+        ERIE_APPROXIMATED,
     ],
 };
 

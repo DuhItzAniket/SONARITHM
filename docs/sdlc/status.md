@@ -150,7 +150,7 @@ Work runs in a separate agent session through one PR per task into `crates/engin
 | A06-T05 Psychophysical scaling (SDR-11) | In review | `f = f_ref · (d / d_ref)^(1/m)`, labelled as guidance; reproduces the Smith & Walker (2005) dollar mapping; range from the law or clamped to a given range |
 | A06-T06 `auto` mark with density switching (SDR-20, experimental) | Not started | |
 | A06-T07 Templates | Not started | |
-| A06-T08 Erie importer (subset) | Not started | |
+| A06-T08 Erie importer (subset) | In review | Written from Erie's documentation; 8-spec gallery subset imports as valid v0.1 specs with a report of 19 approximated or unmapped constructs (`SNR-ENG-080`, `081`); F-081 |
 | A06-T09 Rule-conformance suite and compile benchmarks (PB-04) | Not started | |
 
 ## 3. Current iteration

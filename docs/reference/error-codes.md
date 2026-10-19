@@ -74,6 +74,8 @@ Owner: `sonarithm-numisona`.
 | `SNR-ENG-021` | warning | Flagged concept with automatic polarity | Listeners disagree on the pitch direction for this concept; set `polarity` explicitly, or flip it in your profile. | SDR-13, SDR-14, SDR-41 |
 | `SNR-ENG-022` | info | Concept not in the concept table | The generic default (positive) applies; check the concept's spelling or set `polarity`. | SDR-12 |
 | `SNR-ENG-023` | info | Polarity set by the listener's profile | Change or clear the polarity setting in the profile to restore the spec's polarity. | SDR-15 |
+| `SNR-ENG-080` | warning | Erie construct not imported | Spec v0.1 has no equivalent; the note says what the import does instead. Adjust the imported spec by hand if the construct matters. | SDR-05 |
+| `SNR-ENG-081` | info | Erie construct imported approximately | Check the imported spec against the note; the construct maps onto spec v0.1 with the stated difference. | SDR-05 |
 
 ## SNR-RENDER
 

@@ -1,0 +1,88 @@
+{
+  "title": "Penguins by island",
+  "data": {
+    "values": [
+      {
+        "island": "Biscoe",
+        "species": "Adelie",
+        "n": 44
+      },
+      {
+        "island": "Biscoe",
+        "species": "Gentoo",
+        "n": 124
+      },
+      {
+        "island": "Dream",
+        "species": "Adelie",
+        "n": 56
+      },
+      {
+        "island": "Dream",
+        "species": "Chinstrap",
+        "n": 68
+      },
+      {
+        "island": "Torgersen",
+        "species": "Adelie",
+        "n": 52
+      }
+    ]
+  },
+  "transform": [
+    {
+      "filter": "datum.n > 10 && datum.island !== 'None'"
+    },
+    {
+      "calculate": "Math.sqrt(datum.n)",
+      "as": "root_n"
+    },
+    {
+      "fold": [
+        "n",
+        "root_n"
+      ]
+    }
+  ],
+  "tone": {
+    "type": "piano",
+    "filter": [
+      "dynamicCompressor"
+    ]
+  },
+  "encoding": {
+    "time": {
+      "field": "species",
+      "type": "nominal",
+      "scale": {
+        "timing": "relative",
+        "band": 0.5
+      }
+    },
+    "pitch": {
+      "field": "n",
+      "type": "quantitative",
+      "roundToNote": true,
+      "scale": {
+        "range": [
+          1046.502,
+          261.626
+        ],
+        "polarity": "negative"
+      }
+    },
+    "repeat": {
+      "field": "island",
+      "type": "nominal",
+      "by": "sequence",
+      "speech": true
+    },
+    "panAzimuth": {
+      "field": "n",
+      "type": "quantitative"
+    }
+  },
+  "config": {
+    "speechRate": 2
+  }
+}
