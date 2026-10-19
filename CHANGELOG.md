@@ -55,4 +55,8 @@ From phase A07, release-plz maintains this file: it generates each release's ent
 - ECHOMETRIC research instrumentation (phase A08):
   - `sonarithm-echometric` stimulus generators, each deterministic from its parameters and a seed, with the published parameters documented next to SONARITHM's: GEN-001 trend reversals × density (Nees & Walker 2008), GEN-002 price series with click and reference-tone columns (Smith & Walker 2005), GEN-003 SNR-controlled transit light curves (Tucker Brown et al. 2022) and GEN-004 correlation triplets (Elmquist et al. 2024). Every stimulus carries its ground truth, a canonical CSV with a SHA-256 digest, a provenance manifest and notes on where it departs from the published design.
 
+### Fixed
+
+- `sonarithm-data`: `ReadOptions::without_inference()` keeps the field semantics declared in `fields` (type, unit, concept, role, label, description) instead of dropping them (#156).
+
 [Unreleased]: https://github.com/DuhItzAniket/SONARITHM/commits/main

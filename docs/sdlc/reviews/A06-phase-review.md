@@ -118,7 +118,7 @@ No UI changed. The engine supplies what the accessible UI and announcements need
 | Action | Owner | Due | Issue |
 |---|---|---|---|
 | Verify the trend-reversal levels of Nees & Walker 2008 behind F-084 | Research lead | Before A08 | — |
-| Make `ReadOptions::without_inference()` keep declared fields, or document that it drops them | Data-layer owner | A07 | — |
+| Make `ReadOptions::without_inference()` keep declared fields, or document that it drops them | Data-layer owner | A07 | #156 (fixed in A07) |
 | Register `Platform` and `Numisona` in the facade and CLI | A07 | A07 | — |
 | Move the encoder's perceptual warnings into ECHOMETRIC's lint | ECHOMETRIC | C05 | — |
 

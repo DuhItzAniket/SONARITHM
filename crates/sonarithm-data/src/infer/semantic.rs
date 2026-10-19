@@ -198,6 +198,33 @@ pub(crate) fn infer_table(
     Table::new(table.id(), table.name(), schema, vec![batch])
 }
 
+/// Writes the declared field semantics into the schema and infers nothing, for
+/// [`ReadOptions::without_inference`](crate::ReadOptions::without_inference). Declared
+/// parts win over the file's, as in [`infer_table`]; the data is shared, not copied.
+pub(crate) fn apply_declared(
+    table: &Table,
+    declared: &BTreeMap<String, FieldMeta>,
+) -> Result<Table, DataError> {
+    if declared.is_empty() {
+        return Ok(table.clone());
+    }
+    let fields: Vec<Field> = table
+        .schema()
+        .fields()
+        .iter()
+        .map(|field| match declared.get(field.name()) {
+            Some(declared) => {
+                let (mut meta, _) = FieldMeta::read(field);
+                merge(&mut meta, declared);
+                meta.apply(field.as_ref().clone())
+            }
+            None => field.as_ref().clone(),
+        })
+        .collect();
+    let schema = Arc::new(Schema::new(fields).with_metadata(table.schema().metadata().clone()));
+    Table::new(table.id(), table.name(), schema, table.batches().to_vec())
+}
+
 /// Declared parts win over what the file says.
 fn merge(meta: &mut FieldMeta, declared: &FieldMeta) {
     if declared.ftype.is_some() {

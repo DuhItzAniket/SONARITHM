@@ -49,20 +49,24 @@ fn meta(ftype: FieldType) -> FieldMeta {
     FieldMeta::new().with_type(ftype)
 }
 
-/// Builds a bundle from records with declared field semantics. The data layer's inference
-/// fills only what is not declared (03 §3).
+/// Builds a bundle from records with exactly the declared field semantics: no inference,
+/// so the examples do not change when the inference rules do (03 §3).
 fn bundle(
     name: &str,
     rows: &[Value],
     fields: BTreeMap<String, FieldMeta>,
 ) -> Result<DataBundle, DataError> {
     let bytes = serde_json::to_vec(&Value::Array(rows.to_vec())).unwrap_or_default();
-    let options = ReadOptions::new().with_fields(fields);
+    let options = ReadOptions::new().with_fields(fields).without_inference();
     read_bytes(&bytes, Format::Json, &format!("{name}.json"), &options).map(|loaded| loaded.bundle)
 }
 
 fn x_field() -> FieldMeta {
     meta(FieldType::Quantitative).with_role(Role::X)
+}
+
+fn y_field() -> FieldMeta {
+    meta(FieldType::Quantitative).with_role(Role::Y)
 }
 
 /// A daily temperature series over 120 days: a seasonal curve plus seeded noise
@@ -81,7 +85,7 @@ pub fn temperature() -> Result<DataBundle, DataError> {
         .collect();
     let mut fields = BTreeMap::new();
     fields.insert("day".to_owned(), x_field());
-    let temp = meta(FieldType::Quantitative)
+    let temp = y_field()
         .with_label("Temperature")
         .with_concept(Concept::new("temperature").unwrap_or_else(Concept::generic));
     let temp = Unit::new("°C").map_or(temp.clone(), |unit| temp.with_unit(unit));
@@ -107,7 +111,7 @@ pub fn prices() -> Result<DataBundle, DataError> {
         .collect();
     let mut fields = BTreeMap::new();
     fields.insert("week".to_owned(), x_field());
-    let price = meta(FieldType::Quantitative)
+    let price = y_field()
         .with_label("Price")
         .with_concept(Concept::new("money").unwrap_or_else(Concept::generic));
     let price = Unit::new("$").map_or(price.clone(), |unit| price.with_unit(unit));
@@ -140,7 +144,7 @@ pub fn regions() -> Result<DataBundle, DataError> {
         "region".to_owned(),
         meta(FieldType::Nominal).with_role(Role::Series),
     );
-    let rain = meta(FieldType::Quantitative).with_label("Rainfall");
+    let rain = y_field().with_label("Rainfall");
     let rain = Unit::new("mm").map_or(rain.clone(), |unit| rain.with_unit(unit));
     fields.insert("rain".to_owned(), rain);
     bundle("regions", &rows, fields)
@@ -167,10 +171,7 @@ pub fn fruit() -> Result<DataBundle, DataError> {
         "fruit".to_owned(),
         meta(FieldType::Nominal).with_role(Role::Category),
     );
-    fields.insert(
-        "sold".to_owned(),
-        meta(FieldType::Quantitative).with_label("Units sold"),
-    );
+    fields.insert("sold".to_owned(), y_field().with_label("Units sold"));
     bundle("fruit", &rows, fields)
 }
 
@@ -200,7 +201,7 @@ pub fn signal() -> Result<DataBundle, DataError> {
         .collect();
     let mut fields = BTreeMap::new();
     fields.insert("t".to_owned(), x_field());
-    fields.insert("amplitude".to_owned(), meta(FieldType::Quantitative));
+    fields.insert("amplitude".to_owned(), y_field());
     bundle("signal", &rows, fields)
 }
 
@@ -221,10 +222,7 @@ pub fn scatter() -> Result<DataBundle, DataError> {
         .collect();
     let mut fields = BTreeMap::new();
     fields.insert("height".to_owned(), x_field());
-    fields.insert(
-        "weight".to_owned(),
-        meta(FieldType::Quantitative).with_role(Role::Y),
-    );
+    fields.insert("weight".to_owned(), y_field());
     fields.insert(
         "group".to_owned(),
         meta(FieldType::Nominal).with_role(Role::Series),
@@ -246,10 +244,7 @@ pub fn waiting_times() -> Result<DataBundle, DataError> {
         })
         .collect();
     let mut fields = BTreeMap::new();
-    fields.insert(
-        "minutes".to_owned(),
-        meta(FieldType::Quantitative).with_label("Waiting time"),
-    );
+    fields.insert("minutes".to_owned(), y_field().with_label("Waiting time"));
     bundle("waiting", &rows, fields)
 }
 
@@ -275,10 +270,7 @@ pub fn reaction_times() -> Result<DataBundle, DataError> {
         "condition".to_owned(),
         meta(FieldType::Nominal).with_role(Role::Category),
     );
-    fields.insert(
-        "ms".to_owned(),
-        meta(FieldType::Quantitative).with_label("Reaction time"),
-    );
+    fields.insert("ms".to_owned(), y_field().with_label("Reaction time"));
     bundle("reaction", &rows, fields)
 }
 
@@ -301,7 +293,7 @@ pub fn grid() -> Result<DataBundle, DataError> {
         "column".to_owned(),
         meta(FieldType::Ordinal).with_role(Role::X),
     );
-    fields.insert("level".to_owned(), meta(FieldType::Quantitative));
+    fields.insert("level".to_owned(), y_field());
     bundle("grid", &rows, fields)
 }
 
@@ -324,7 +316,7 @@ pub fn estimated() -> Result<DataBundle, DataError> {
         .collect();
     let mut fields = BTreeMap::new();
     fields.insert("x".to_owned(), x_field());
-    fields.insert("y".to_owned(), meta(FieldType::Quantitative));
+    fields.insert("y".to_owned(), y_field());
     bundle("estimated", &rows, fields)
 }
 
