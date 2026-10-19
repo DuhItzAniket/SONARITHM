@@ -19,9 +19,13 @@
     reason = "buffer indices and frame counts become f32 or f64 sample positions (coding-standards §2.2)"
 )]
 
+pub mod env;
 pub mod osc;
 
 #[cfg(test)]
+mod conformance;
+#[cfg(test)]
 mod testing;
 
+pub use env::{Adsr, AdsrParams, Stage, note_ramp};
 pub use osc::{Oscillator, Waveform, sine_turns};
