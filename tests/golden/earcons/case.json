@@ -1,0 +1,29 @@
+{
+  "description": "Every compiled earcon kind, including the seeded noise of E-BOUNDARY (provisional sounds, B03).",
+  "source": {
+    "kind": "score"
+  },
+  "sampleRate": 48000,
+  "blockSize": 256,
+  "tolerances": {
+    "nullResidualDbfs": -90.0,
+    "lufsDelta": 0.1,
+    "centroidRelative": 0.01
+  },
+  "reference": {
+    "platform": "windows-x86_64",
+    "sha256": "sha256:7c79229fbb29c0ae335923ffcb3ed78f74c2131394212c8233a97d9be4905542",
+    "frames": 192000,
+    "integratedLufs": -19.23,
+    "truePeakDbtp": -9.276,
+    "peakDbfs": -9.306,
+    "rmsDbfs": -25.46,
+    "centroidHz": [
+      2490.2,
+      1300.0,
+      1410.8,
+      1108.4
+    ]
+  },
+  "reason": "First references (A05-T11)."
+}

@@ -1,0 +1,31 @@
+{
+  "description": "A saw glide over three octaves with pan and brightness moving, and a mallet glide (control-rate interpolation).",
+  "source": {
+    "kind": "score"
+  },
+  "sampleRate": 48000,
+  "blockSize": 256,
+  "tolerances": {
+    "nullResidualDbfs": -90.0,
+    "lufsDelta": 0.1,
+    "centroidRelative": 0.01
+  },
+  "reference": {
+    "platform": "windows-x86_64",
+    "sha256": "sha256:fcadd379a3737f18ed9ff9b0381aada86bf69ad2123459e50f2d7f685c683362",
+    "frames": 288000,
+    "integratedLufs": -20.066,
+    "truePeakDbtp": -12.427,
+    "peakDbfs": -12.44,
+    "rmsDbfs": -23.199,
+    "centroidHz": [
+      670.8,
+      1714.6,
+      3109.7,
+      2453.2,
+      1585.2,
+      1119.8
+    ]
+  },
+  "reason": "First references (A05-T11)."
+}

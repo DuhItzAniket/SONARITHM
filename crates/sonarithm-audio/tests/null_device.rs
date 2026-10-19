@@ -248,3 +248,48 @@ fn wasapi_silent(mode: sonarithm_audio::WasapiMode) {
     assert!(state.blocks > 0, "the callback ran");
     assert!(state.graph.peak.iter().all(|p| *p == 0.0), "silence");
 }
+
+/// testing-strategy §5.2, real-time path equivalence: the graph driven by a device thread
+/// (the null device, through the command ring and the callback adapter) produces exactly
+/// the samples of the offline driver, after the limiter's look-ahead delay.
+#[test]
+fn the_real_time_path_matches_the_offline_render() {
+    use sonarithm_render::fixtures::{BENCHMARK_SEED, benchmark_score};
+    use sonarithm_render::{Graph, GraphConfig, OfflineRender, RenderPlan};
+
+    let score = benchmark_score(2.0, BENCHMARK_SEED);
+    let plan = RenderPlan::build(
+        &score,
+        &PlanConfig::new(sonarithm_core::SampleRate::HZ_48000),
+    )
+    .unwrap()
+    .plan;
+    let offline = OfflineRender::new(plan.clone(), 256).render_all();
+    // An offline-style graph (no start-up ramp) on the device path.
+    let graph = Graph::new(plan, GraphConfig::offline(256));
+    let latency = graph.latency();
+    let (mut control, processor) = realtime(graph);
+    control.send(Command::Play);
+    let mut config = NullConfig::new(48_000, 480);
+    config.paced = false;
+    config.capture = 2 * (96_000 + latency + 480);
+    let mut backend = NullBackend::new(config);
+    let stream = backend.open(&StreamConfig::default(), processor).unwrap();
+    let deadline = Instant::now() + Duration::from_secs(20);
+    while stream.status().callbacks() * 480 < (96_000 + latency) as u64 + 480
+        && Instant::now() < deadline
+    {
+        std::thread::sleep(Duration::from_millis(5));
+    }
+    drop(stream);
+    let captured = backend.take_captured();
+    let device = &captured[2 * latency..2 * (latency + 96_000)];
+    let first = device
+        .iter()
+        .zip(&offline)
+        .position(|(a, b)| a.to_bits() != b.to_bits());
+    assert_eq!(
+        first, None,
+        "the device path diverges from the offline render"
+    );
+}

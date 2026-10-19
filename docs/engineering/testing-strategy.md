@@ -133,8 +133,8 @@ Additional golden checks:
 | Rule | Detail |
 |---|---|
 | Location | `tests/golden/`, one directory per case with its manifest. |
-| Manifest | Spec reference, data reference (file or generator + seed), engine versions, `ir_version`, sample rate, block size, seed, tolerances, reference SHA-256, origin platform, and the reason for the last update. |
-| Storage | [02 §1](../architecture/02-repository-and-crate-layout.md#1-repository-tree-target) anticipates Git LFS for reference audio. The decision (size budget, LFS bandwidth for forks and CI) is confirmed in A05. No reference audio is committed before that decision. |
+| Manifest | `case.json`: the Score source (`score.json` in the case directory, or a generator and seed), sample rate, block size, tolerances, the reference fingerprint with its origin platform, and the reason for the last update. Engine versions and `ir_version` are inside the Score. |
+| Storage | **Decided in A05 (OD-08): no reference audio in git.** Renders are bit-identical across OSes (F-039), so each manifest records the reference render's SHA-256 and metrics (length, integrated loudness, true and sample peak, RMS, per-second spectral centroid). CI renders every case on the three OSes, checks each against its manifest, compares Windows and macOS with Linux (PB-06), and keeps the renders as workflow artifacts for listening. |
 | Size | References are short (seconds, not minutes). Coverage comes from many small cases. |
 | Updates | Only through `cargo xtask golden --update` (after A05), optionally limited to named cases. The command re-renders on the reference platform, rewrites manifests and prints metric deltas. Never edit or replace reference files by hand. |
 | Review | The PR states why the output changed and includes the metric deltas. A reviewer listens to every changed case (headphones, low gain) before approving. |

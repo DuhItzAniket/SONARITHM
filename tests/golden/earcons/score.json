@@ -1,0 +1,62 @@
+{
+  "header": {
+    "ir_version": 1,
+    "spec_version": "0.1",
+    "spec_hash": "0000000000000000000000000000000000000000000000000000000000000000",
+    "data_fingerprint": "0000000000000000000000000000000000000000000000000000000000000000",
+    "seed": 12,
+    "mode": "analysis",
+    "duration": 4.0,
+    "engines": {},
+    "shapers": []
+  },
+  "tracks": [
+    {
+      "id": "earcons",
+      "role": "earcon",
+      "engine": "numisona",
+      "instrument": "sine",
+      "gain": 0.0,
+      "pan": 0.0,
+      "pitch_range": null,
+      "events": [
+        {
+          "type": "earcon",
+          "t": 0.1,
+          "kind": "boundary",
+          "gain": 0.0,
+          "src": null
+        },
+        {
+          "type": "earcon",
+          "t": 0.7999999999999999,
+          "kind": "landmark",
+          "gain": 0.0,
+          "src": null
+        },
+        {
+          "type": "earcon",
+          "t": 1.5,
+          "kind": "threshold",
+          "gain": 0.0,
+          "src": null
+        },
+        {
+          "type": "earcon",
+          "t": 2.1999999999999997,
+          "kind": "stream",
+          "gain": 0.0,
+          "src": null
+        },
+        {
+          "type": "earcon",
+          "t": 2.9,
+          "kind": "alarm",
+          "gain": 0.0,
+          "src": null
+        }
+      ]
+    }
+  ],
+  "markers": []
+}

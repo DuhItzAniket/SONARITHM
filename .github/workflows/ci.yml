@@ -154,6 +154,58 @@ jobs:
       # The crate list lives in xtask/src/ci.rs (WASM_CRATES).
       - run: cargo xtask wasm-check
 
+  # Golden audio (testing-strategy §5, A05-T11): each OS checks every case against its
+  # manifest and at other block sizes, then uploads its renders for the cross-OS comparison.
+  golden:
+    name: golden (${{ matrix.os }})
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    permissions:
+      contents: read
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - run: rustup toolchain install
+      - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
+        with:
+          save-if: ${{ github.ref == 'refs/heads/main' }}
+      - run: cargo run --release --locked -p xtask -- golden
+      - run: cargo run --release --locked -p xtask -- golden --render-set renders/${{ matrix.os }}
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: golden-${{ matrix.os }}
+          path: renders/${{ matrix.os }}
+          retention-days: 14
+
+  # PB-06: the Windows and macOS renders against the Linux renders (null residual ≤ −90 dBFS,
+  # ΔLUFS ≤ 0.1).
+  golden-compare:
+    needs: golden
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - run: rustup toolchain install
+      - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
+        with:
+          save-if: ${{ github.ref == 'refs/heads/main' }}
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          path: renders
+      # `shell: bash` adds pipefail, so a failed comparison fails the job despite `tee`.
+      - shell: bash
+        run: |
+          cargo run --release --locked -p xtask -- golden --compare renders/golden-ubuntu-latest renders/golden-windows-latest renders/golden-macos-latest | tee -a "$GITHUB_STEP_SUMMARY"
+
   frontend:
     runs-on: ubuntu-latest
     permissions:
@@ -208,7 +260,7 @@ jobs:
 
   all-checks-pass:
     if: always()
-    needs: [fmt, clippy-test, doc, deny, check-deps, msrv, wasm32, frontend, gallery]
+    needs: [fmt, clippy-test, doc, deny, check-deps, msrv, wasm32, golden, golden-compare, frontend, gallery]
     runs-on: ubuntu-latest
     permissions: {}
     timeout-minutes: 5
