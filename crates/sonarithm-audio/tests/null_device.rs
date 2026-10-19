@@ -8,6 +8,7 @@
 #![allow(
     clippy::unwrap_used,
     clippy::panic,
+    clippy::print_stdout,
     reason = "integration tests; clippy treats their helpers as non-test code"
 )]
 
@@ -186,6 +187,59 @@ fn cpal_opens_the_default_device_silently() {
         stream.sample_rate(),
         stream.channels(),
         stream.latency().buffer_frames,
+        stream.latency().reported,
+        stream.status().callbacks(),
+        stream.status().late_callbacks(),
+        stream.status().xruns()
+    );
+    assert!(state.blocks > 0, "the callback ran");
+    assert!(state.graph.peak.iter().all(|p| *p == 0.0), "silence");
+}
+
+/// ADR-0016: the WASAPI backend opens the default device in RAW shared mode, silently.
+/// Run by hand: `cargo test -p sonarithm-audio -- --ignored`.
+#[cfg(windows)]
+#[test]
+#[ignore = "needs an audio output device"]
+fn wasapi_opens_the_default_device_raw_and_silently() {
+    wasapi_silent(sonarithm_audio::WasapiMode::SharedRaw);
+}
+
+/// ADR-0016: exclusive mode opens too (silently; it briefly takes the device from other
+/// applications).
+#[cfg(windows)]
+#[test]
+#[ignore = "needs an audio output device and takes it exclusively"]
+fn wasapi_opens_the_default_device_exclusively_and_silently() {
+    wasapi_silent(sonarithm_audio::WasapiMode::Exclusive);
+}
+
+#[cfg(windows)]
+fn wasapi_silent(mode: sonarithm_audio::WasapiMode) {
+    use sonarithm_audio::WasapiBackend;
+    let mut header = ScoreHeader::new(SpecVersion::V0_1, Mode::Analysis, 0);
+    header.duration = Seconds(1.0);
+    let backend = WasapiBackend::new(mode);
+    let rate = backend.sample_rate(None).unwrap();
+    let mut player = Player::open(
+        backend,
+        Score::new(header),
+        PlanConfig::new(sonarithm_core::SampleRate::new(rate).unwrap()),
+        StreamConfig::default(),
+        256,
+    )
+    .unwrap();
+    player.send(Command::Play);
+    std::thread::sleep(Duration::from_millis(1_000));
+    player.tick().unwrap();
+    let state = player.state();
+    let info = player.backend_mut().last_stream().unwrap();
+    let stream = player.stream().unwrap();
+    println!(
+        "device {}, {} Hz, {} channels, {info:?}, reported latency {:?}, callbacks {}, late {}, xruns {}",
+        stream.device(),
+        stream.sample_rate(),
+        stream.channels(),
         stream.latency().reported,
         stream.status().callbacks(),
         stream.status().late_callbacks(),

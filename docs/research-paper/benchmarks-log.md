@@ -45,6 +45,7 @@ No reference-class machine is available yet (risk R-22). Rows on HW-01 apply the
 | A02 spike (Windows, RAW stream) | 2026-10-19 | [#9](https://github.com/DuhItzAniket/SONARITHM/pull/9) `705dc67` | HW-01 | 480-frame period @ 48 kHz, direct WASAPI with `AUDCLNT_STREAMOPTIONS_RAW` | 79.2 | 83.7 | — | — | — | — | — | Bypasses the OEM enhancement APO; not available through cpal 0.18 (F-032) |
 | A02 spike (macOS) | 2026-10-19 | [#104](https://github.com/DuhItzAniket/SONARITHM/pull/104) | CI-MAC | — | pending | pending | — | — | −∞ against CI-LNX (bit-identical) | 0.0000 | yes | Latency needs a loopback device and a port of the harness (R-22); determinism F-039 |
 | A02 spike (Linux) | 2026-10-19 | [#104](https://github.com/DuhItzAniket/SONARITHM/pull/104) | CI-LNX | — | pending | pending | — | — | reference | reference | yes | Latency harness not ported; determinism F-039 |
+| A05 (Windows, WASAPI loopback) | 2026-10-19 | A05-T13 PR | HW-01 | 480-frame period, 1056-frame buffer @ 48 kHz, `WasapiBackend` RAW shared | 99.2 | 104.0 | 0 xruns (200 cues, about 95 s) | — | — | — | — | Loopback self-test through `Command::Cue`; non-RAW shared: p50 138.5, p95 145.6. Calibration offset 82.6 ms (RAW). Software path only (F-052); cable run pending (`docs/engineering/manual-tests/a05-cable-latency.md`) |
 | A05 | | | | | | | | | | | | |
 | A07 `v0.1.0-alpha` | | | | | | | | | | | | |
 | A08 `v0.2.0-alpha` | | | | | | | | | | | | |

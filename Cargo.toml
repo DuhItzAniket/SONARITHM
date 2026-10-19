@@ -70,7 +70,16 @@ encoding_rs = "0.8.42"
 # Civil date-time parsing only: no time-zone database, no system clock.
 jiff = { version = "0.2.38", default-features = false, features = ["std"] }
 # Audio output (ADR-0004), behind sonarithm-audio's AudioBackend; only that crate may use it.
-cpal = "0.18.2" 
+# `realtime` promotes the device thread (audio_thread_priority, MPL-2.0; no D-Bus).
+cpal = { version = "0.18.2", features = ["realtime"] }
+# Real-time thread priority for SONARITHM's own device threads (the WASAPI backend), the
+# version cpal's `realtime` feature uses.
+audio_thread_priority = { version = "0.35", default-features = false }
+# The Windows WASAPI backend of ADR-0016 (RAW and exclusive mode); only sonarithm-audio.
+wasapi = "0.26.0"
+# The performance counter for latency measurement (the clock WASAPI timestamps use); the
+# version cpal and wasapi already use.
+windows = { version = "0.62.2", default-features = false, features = ["Win32_Foundation", "Win32_System_Performance"] }
 # EBU R128 / ITU-R BS.1770 loudness and true-peak metering (SDR-24 meter, golden ΔLUFS).
 ebur128 = "0.1.10"
 # Export writers (06 §7): WAV and pure-Rust FLAC. flacenc without its default features: no

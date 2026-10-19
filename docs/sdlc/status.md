@@ -136,6 +136,7 @@ Work runs in a separate agent session through small PRs into `crates/sonarithm-d
 | A05-T10 Allocation check in debug; 10-min soak; xrun counting | Not started | `assert_no_alloc` is BSD-1-Clause (F-038); licence question raised with the coordinator |
 | A05-T11 Golden-audio harness; cross-OS CI job (OD-08) | Not started | |
 | A05-T12 Benchmarks (PB-03) | Not started | |
+| A05-T13 `WasapiBackend` (ADR-0016) | In review | RAW shared mode by default (RAW confirmed on HW-01), exclusive opt-in, latency tool and per-device calibration table. Loopback self-test: p95 104.0 ms RAW, 145.6 ms default (F-052); exclusive mode quirk on the Realtek driver (F-051). **Owner step:** cable test and NVDA check (`manual-tests/a05-cable-latency.md`), issue #123 stays open |
 
 ### A06 tasks
 

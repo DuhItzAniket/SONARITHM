@@ -17,14 +17,22 @@
 #![deny(missing_docs)]
 
 mod backend;
+pub mod calibration;
 mod callback;
 pub mod cpal_backend;
+#[cfg(windows)]
+pub mod latency;
 pub mod null;
 pub mod player;
+#[cfg(windows)]
+pub mod wasapi_backend;
 
 pub use backend::{
     AudioBackend, AudioError, DeviceInfo, LatencyInfo, Stream, StreamConfig, StreamStatus,
 };
+pub use calibration::LatencyCalibration;
 pub use cpal_backend::CpalBackend;
 pub use null::{NullBackend, NullConfig};
 pub use player::{Player, PlayerError, PlayerEvent};
+#[cfg(windows)]
+pub use wasapi_backend::{WasapiBackend, WasapiMode, WasapiStreamInfo};
