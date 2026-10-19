@@ -115,7 +115,7 @@ Every table may carry two reserved columns:
 
 | Column | Arrow type | Meaning |
 |---|---|---|
-| `__snr_prov` | `Dictionary<UInt8, Utf8>` (or UInt8 enum) | `exact`, `vector`, `cv_estimate`, `ml_estimate`, `cloud_estimate`, `user_edited`, `derived`, `synthetic` |
+| `__snr_prov` | `Dictionary<UInt8, Utf8>` (or UInt8 enum) | `exact`, `vector`, `cv_estimate`, `ml_estimate`, `cloud_estimate`, `user_edited`, `derived`, `synthetic`. A UInt8 column stores the position in this list (0 = `exact`). Sources also accept text; all forms are rewritten to the canonical dictionary over the eight names in this order, so a key equals the UInt8 code |
 | `__snr_conf` | `Float32`, nullable | Confidence in [0, 1]. Null means not applicable (exact) |
 
 Rules:
@@ -124,6 +124,19 @@ Rules:
 2. **Transforms propagate provenance.** A derived value takes the *weakest* input class and the *minimum* confidence. Aggregates record `derived`, plus a flag when any input was estimated.
 3. **Descriptions state numbers plainly only for `exact`, `vector` and `user_edited` values.** Other classes are announced with an estimate qualifier whose wording depends on verbosity ([keyboard-and-navigation](../design/keyboard-and-navigation.md)) ([research report §PLOTSONA](../research/research-report.md#plotsona-must-prefer-exact-data-and-label-every-estimate)).
 4. **Low confidence may also be rendered in sound.** The renderer can give low-confidence values a distinct timbre (experimental, H-06), and the table view always shows provenance.
+
+Propagation by transform (A04, `sonarithm_data::provenance` and the transforms in §6). Provenance is per row, so a row's class and confidence describe every value in it:
+
+| Transform | Output provenance |
+|---|---|
+| `filter`, `sort` | Rows move with their provenance |
+| `derive`, `bin`, `normalize` | Unchanged: a row's new value comes from that row; column statistics (`normalize`) are parameters, not inputs |
+| `smooth` | The combination over the rows the value depends on (the window for `sma`, all earlier rows for `ema`) |
+| `aggregate`, `resample` (`mean`) | `derived` combined with every input row of the group: an estimated input makes the result an estimate of that class, which is the flag rule 2 asks for |
+| `resample` (`last`) | The chosen row's provenance |
+| `resample` (`interpolate`) | `derived` combined with the two neighbouring rows; a grid point that is an input row keeps that row's provenance |
+
+An invalid class, code or confidence stops loading with `SNR-DATA-041`.
 
 ## 5. Missing values and special numbers
 

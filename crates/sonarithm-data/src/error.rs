@@ -100,6 +100,12 @@ pub enum DataError {
         /// How many sheets the workbook has.
         available: usize,
     },
+    /// A provenance column has an unsupported type or an invalid value.
+    #[error("invalid provenance: {reason}")]
+    InvalidProvenance {
+        /// What is wrong.
+        reason: String,
+    },
     /// A source option has a value that cannot be used.
     #[error("the `{option}` option is invalid: {reason}")]
     InvalidOption {
@@ -192,6 +198,13 @@ impl DataError {
                 format!(
                     "The workbook has no sheet `{sheet}`; it has {available} sheet(s). Check \
                      `sheet` (a name, or a position counted from 0)."
+                ),
+            ),
+            Self::InvalidProvenance { reason } => (
+                &codes::INVALID_PROVENANCE,
+                format!(
+                    "The provenance columns are invalid: {reason}. Use the class names of \
+                     03 §4 and confidences from 0 to 1."
                 ),
             ),
             Self::InvalidOption { option, reason } => (

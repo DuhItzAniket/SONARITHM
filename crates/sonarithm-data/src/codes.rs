@@ -233,6 +233,14 @@ code!(
 );
 
 code!(
+    /// A provenance column has an unsupported type or an invalid value.
+    INVALID_PROVENANCE, "SNR-DATA-041", Error,
+    "The provenance columns are invalid",
+    "Write `__snr_prov` as class names (exact, vector, cv_estimate, ml_estimate, cloud_estimate, user_edited, derived, synthetic) and `__snr_conf` as numbers from 0 to 1 (03 §4).",
+    []
+);
+
+code!(
     /// A field name the table does not have.
     UNKNOWN_FIELD, "SNR-DATA-050", Error,
     "Unknown field",
@@ -271,6 +279,7 @@ pub const CODES: CodeTable = CodeTable {
         AMBIGUOUS_DATES,
         UNIT_FROM_TEXT,
         INVALID_METADATA,
+        INVALID_PROVENANCE,
         UNKNOWN_FIELD,
     ],
 };

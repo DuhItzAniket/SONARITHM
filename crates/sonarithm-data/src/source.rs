@@ -291,8 +291,9 @@ fn table_name(locator: &str) -> String {
     }
 }
 
-/// Common post-processing: reports metadata values that were ignored, infers missing
-/// field semantics (03 §3), then wraps the table in a bundle.
+/// Common post-processing: reports metadata values that were ignored, rewrites provenance
+/// columns in their canonical form (03 §4), infers missing field semantics (03 §3), then
+/// wraps the table in a bundle.
 fn finish(
     table: &Table,
     mut diagnostics: Diagnostics,
@@ -304,10 +305,11 @@ fn finish(
         let (_, invalid) = FieldMeta::read(field);
         diagnostics.extend(invalid.iter().map(InvalidMetadata::to_diagnostic));
     }
+    let table = crate::provenance::normalize(table)?;
     let table = if options.inference {
-        crate::infer::semantic::infer_table(table, &options.fields, &mut diagnostics)?
+        crate::infer::semantic::infer_table(&table, &options.fields, &mut diagnostics)?
     } else {
-        table.clone()
+        table
     };
     let source = SourceDescriptor::new(SourceKind::File(format), locator, format.as_str());
     Ok(Loaded {

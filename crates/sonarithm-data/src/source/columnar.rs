@@ -149,14 +149,14 @@ pub fn write_parquet(table: &Table) -> Result<Vec<u8>, DataError> {
 
 #[cfg(test)]
 mod tests {
-    use arrow_array::types::UInt8Type;
-    use arrow_array::{DictionaryArray, Float32Array, Float64Array, StringArray};
+    use arrow_array::{Float64Array, StringArray};
     use arrow_schema::{DataType, Field, Schema};
     use proptest::prelude::*;
-    use sonarithm_core::TableId;
+    use sonarithm_core::{Confidence, Provenance, ProvenanceClass, TableId};
 
     use super::*;
     use crate::meta::{Concept, FieldMeta, FieldType, Role, Unit};
+    use crate::provenance::{RowProvenance, with_provenance};
     use crate::source::{Limits, read_bytes};
 
     fn temperature_meta() -> FieldMeta {
@@ -177,35 +177,36 @@ mod tests {
                     .with_type(FieldType::Nominal)
                     .with_role(Role::Category)
                     .apply(Field::new("site", DataType::Utf8, true)),
-                Field::new(
-                    "__snr_prov",
-                    DataType::Dictionary(Box::new(DataType::UInt8), Box::new(DataType::Utf8)),
-                    true,
-                ),
-                Field::new("__snr_conf", DataType::Float32, true),
             ])
             .with_metadata(arrow_schema::Metadata::from([("pandas", "{}")])),
         );
-        let prov: DictionaryArray<UInt8Type> = vec!["exact", "cv_estimate", "user_edited"]
-            .into_iter()
-            .collect();
         let batch = RecordBatch::try_new(
             Arc::clone(&schema),
             vec![
                 Arc::new(Float64Array::from(vec![Some(21.5), None, Some(-3.0)])),
                 Arc::new(StringArray::from(vec!["a", "b", "a"])),
-                Arc::new(prov),
-                Arc::new(Float32Array::from(vec![None, Some(0.8), Some(1.0)])),
             ],
         )
         .unwrap();
-        Table::new(
+        let data = Table::new(
             TableId(0),
             "t",
             schema,
             vec![batch.slice(0, 2), batch.slice(2, 1)],
         )
-        .unwrap()
+        .unwrap();
+        let provenance = RowProvenance::from_rows(vec![
+            Provenance::EXACT,
+            Provenance {
+                class: ProvenanceClass::CvEstimate,
+                confidence: Confidence::new(0.8),
+            },
+            Provenance {
+                class: ProvenanceClass::UserEdited,
+                confidence: Confidence::new(1.0),
+            },
+        ]);
+        with_provenance(&data, &provenance, true).unwrap()
     }
 
     fn reread(bytes: &[u8], format: Format) -> Table {
