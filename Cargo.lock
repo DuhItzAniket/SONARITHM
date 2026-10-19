@@ -9,6 +9,12 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "330a5ed07fa54e4702c9d6c4174f74427fc0ef6e214bbd677ae50a5099946470"
 
 [[package]]
+name = "arrow-schema"
+version = "60.0.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "f85a9a58cd03560526b0066487574aacb9008e413504fa0ee23d61141e96c338"
+
+[[package]]
 name = "autocfg"
 version = "1.5.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -535,6 +541,14 @@ dependencies = [
 [[package]]
 name = "sonarithm-data"
 version = "0.0.0"
+dependencies = [
+ "arrow-schema",
+ "proptest",
+ "serde",
+ "serde_json",
+ "sonarithm-core",
+ "thiserror",
+]
 
 [[package]]
 name = "sonarithm-dsp"
@@ -693,6 +707,7 @@ dependencies = [
  "anyhow",
  "cargo_metadata",
  "sonarithm-core",
+ "sonarithm-data",
  "sonarithm-spec",
 ]
 
