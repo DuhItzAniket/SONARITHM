@@ -1,0 +1,47 @@
+---
+source: crates/sonarithm/tests/facade.rs
+expression: compiled.summary()
+---
+{
+  "spec": "temps.spec.json",
+  "spec_version": "0.1",
+  "ir_version": 1,
+  "mode": "analysis",
+  "seed": 0,
+  "duration_s": 0.916667,
+  "spec_hash": "27445d2a080a766fc84459d73ad8014a2f7459e6da28395752fe5fbe80e74dba",
+  "data_fingerprint": "cddbb4e459a43e41bf5422e3e499456524b3a2a80a7307a20dbf38b43be13fa3",
+  "score_hash": "[score hash]",
+  "engines": {
+    "numisona": "[version]",
+    "platform": "[version]"
+  },
+  "tracks": [
+    {
+      "id": "temps",
+      "role": "data",
+      "engine": "numisona",
+      "instrument": "mallet",
+      "events": 3,
+      "notes": 3,
+      "glides": 0,
+      "earcons": 0,
+      "speech": 0,
+      "estimated": 0,
+      "start_s": 0.0,
+      "end_s": 0.916667,
+      "pitch_range_hz": [
+        400.0,
+        1400.0
+      ],
+      "gain_db": 0.0,
+      "pan": 0.0
+    }
+  ],
+  "markers": 0,
+  "diagnostics": {
+    "errors": 0,
+    "warnings": 1,
+    "info": 38
+  }
+}

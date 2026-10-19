@@ -115,6 +115,14 @@ code!(
     "Check the transform's parameters against RFC-0001 §4."
 );
 
+code!(
+    /// A `dataset` source names an ID the host did not provide.
+    UNKNOWN_DATASET,
+    "SNR-COMP-026",
+    "Dataset not provided",
+    "Provide the data under this ID (in Python, `data={\"main\": df}`), or use a `file` or `inline` source."
+);
+
 const fn code_info(code: &'static str, summary: &'static str, help: &'static str) -> CodeInfo {
     CodeInfo {
         code,
@@ -143,6 +151,7 @@ pub const CODES: CodeTable = CodeTable {
         CONTEXT_UNAVAILABLE,
         DATA_UNREADABLE,
         TRANSFORM_UNREADABLE,
+        UNKNOWN_DATASET,
     ],
 };
 

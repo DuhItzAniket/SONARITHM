@@ -8,5 +8,31 @@ repository.workspace = true
 license.workspace = true
 publish.workspace = true
 
+[features]
+# File reading, spreadsheets and Zstandard-compressed columnar files, as in the data layer.
+# wasm32 builds use `--no-default-features` (xtask WASM_NO_DEFAULT_FEATURES, 02 §2).
+default = ["fs", "xlsx", "zstd"]
+# Read specs and data files from paths.
+fs = ["sonarithm-data/fs"]
+# XLSX and ODS sources (calamine).
+xlsx = ["sonarithm-data/xlsx"]
+# Zstandard-compressed Parquet and Arrow IPC; builds C code.
+zstd = ["sonarithm-data/zstd"]
+# Everything non-copyleft (02 §4).
+full = ["fs", "xlsx", "zstd"]
+
+[dependencies]
+serde.workspace = true
+serde_json.workspace = true
+sonarithm-compiler.workspace = true
+sonarithm-core.workspace = true
+sonarithm-data.workspace = true
+sonarithm-numisona.workspace = true
+sonarithm-spec.workspace = true
+thiserror.workspace = true
+
+[dev-dependencies]
+insta = { workspace = true, features = ["json"] }
+
 [lints]
 workspace = true

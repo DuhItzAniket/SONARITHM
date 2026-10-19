@@ -11,9 +11,10 @@ The facade is the **stable public API**. Internal crates may change freely betwe
 use sonarithm::{Sonarithm, Spec, RenderOptions};
 
 let snr = Sonarithm::builder().with_default_engines().build()?;
-let spec = Spec::from_json_str(include_str!("temps.spec.json"))?;
-let compiled = snr.compile(&spec)?;                        // Score + NavTree + diagnostics
+let spec = Spec::from_file("temps.spec.json")?;            // file sources resolve next to it
+let compiled = snr.compile(&spec)?;                        // Score + diagnostics
 for d in compiled.diagnostics() { eprintln!("{d}"); }
+println!("{}", compiled.describe());                       // L1/L2 text, deterministic
 snr.render_to_file(&compiled, "temps.flac", RenderOptions::default())?; // + temps.render.json
 ```
 
@@ -21,10 +22,12 @@ A quick-start builder covers the common case:
 
 ```rust
 let compiled = snr.quick()
-    .data_csv("temps.csv")?
+    .data_file("temps.csv")?                               // any supported format
     .x("year").y("anomaly")
     .compile()?;
 ```
+
+**As built (A07-T01).** `Spec` holds the JSON text, a name for messages (a file name, never a path) and the base directory of its `file` sources; `Spec::validate` and `Spec::migrate` back `sonarithm validate` and `sonarithm spec migrate`. `compile_with(&spec, &Datasets)` compiles specs whose `dataset` sources name data the caller holds (the Python package passes DataFrames this way). `Compiled` gives the Score, its diagnostics, the canonical spec and Score hash, a `Summary` for `inspect` and a `Description`: L1 encoding facts and L2 facts about the Score (where the extremes are, how many notes are estimates). Data statistics and trends join the description with ECHOMETRIC (C05), and the NavTree with AUDAXIS (B03). `quick` applies NUMISONA's `line-overview` template and accepts a data file or a `DataBundle`; `--mark`, `--range` and a concept for polarity are builder options. `render_to_file` lands with A05's export crate.
 
 ## 2. CLI (`sonarithm`)
 

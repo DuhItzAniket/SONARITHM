@@ -26,7 +26,7 @@ Status values: `Not started` · `In progress` · `In review` · `Done` · `Block
 | A | A04 | Data layer | **Done** | 100% | 2026-10-19; [phase review](reviews/A04-phase-review.md), [retro](retrospectives/A04-retro.md). See [A04 tasks](#a04-tasks) |
 | A | A05 | Render engine, audio backend, export | **In progress** | ≈30% | T01, T03 and T04 merged; the rest land in three bundles (#160 first). See [A05 tasks](#a05-tasks) |
 | A | A06 | NUMISONA v1 | **Done** | 100% | 2026-10-19; [phase review](reviews/A06-phase-review.md). See [A06 tasks](#a06-tasks) |
-| A | A07 | CLI, Python, v0.1.0-alpha | **In progress** | ≈5% | #156 fixed first. See [A07 tasks](#a07-tasks) |
+| A | A07 | CLI, Python, v0.1.0-alpha | **In progress** | ≈15% | #156 fixed (#159); the facade in review. See [A07 tasks](#a07-tasks) |
 | A | A08 | Research instrumentation v0, ICAD 2027 | **In progress** | ≈25% | P01 without participant studies (OD-04). See [A08 tasks](#a08-tasks) |
 | B | B01 | Desktop shell, IPC, app core | Not started | 0% | |
 | B | B02 | Design system and application frame | Not started | 0% | |
@@ -159,8 +159,8 @@ Work runs in a separate agent session through one PR per task, based on `main`. 
 
 | Task | Status | Notes |
 |---|---|---|
-| A07 prerequisite #156 `without_inference()` keeps declared fields | In review | Declared `fields` are written into the schema without inference; NUMISONA's example datasets declare their roles and read without inference (data unchanged, same fingerprints) |
-| A07-T01 Facade crate API, rustdoc examples | Not started | |
+| A07 prerequisite #156 `without_inference()` keeps declared fields | **Done** | Merged in #159. Declared `fields` are written into the schema without inference; NUMISONA's example datasets declare their roles and read without inference (data unchanged, same fingerprints) |
+| A07-T01 Facade crate API, rustdoc examples | In review | `Sonarithm` (platform + NUMISONA), `Spec`, `compile`/`compile_with` (host datasets through `Platform::with_dataset`, `SNR-COMP-026`), `quick`, summary and L1/L2 description; doc examples run as tests; builds for wasm32 without default features. Rendering joins when A05's export crate lands |
 | A07-T02 CLI commands, `--json`, `--plain` | Not started | |
 | A07-T03 Python package (PyO3/maturin abi3) | Not started | |
 | A07-T04 Examples gallery | Not started | |
@@ -236,3 +236,4 @@ Maturity scale: `Designed` → `Prototype` → `Alpha` → `Beta` → `Stable` �
 | 2026-10-19 | A08 started: `sonarithm-echometric` with stimulus generators GEN-001 to GEN-004 (T01) |
 | 2026-10-19 | A07 started: `without_inference()` keeps declared fields (#156) |
 | 2026-10-21 | A08: T01 merged (#163), engine code blocks (#161); P01 draft v0 in review (T05) |
+| 2026-10-21 | A07: #156 fixed (#159); facade API (T01) in review |

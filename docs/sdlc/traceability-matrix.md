@@ -70,7 +70,7 @@
 | FR-117 | [design/design-language](../design/design-language.md) | B02 | Visual tests, AT (forced colors) | Planned |
 | FR-118 | [06 §10](../architecture/06-audio-engine.md#10-hearing-safety-and-levels) | B01 | E2E | Planned |
 | FR-119 | [08 §8](../architecture/08-interaction-and-accessibility.md#8-input-methods) | B04 | E2E, AT | Planned |
-| FR-120 | [11 §2](../architecture/11-bindings-cli-plugins.md#2-cli-sonarithm) | A07 | ST (CLI snapshots) | Planned |
+| FR-120 | [11 §2](../architecture/11-bindings-cli-plugins.md#2-cli-sonarithm) | A07 | ST (CLI snapshots) | In progress: the facade the CLI uses (A07-T01: compile, quick, validate, migrate, schema, summary and description; `crates/sonarithm/tests/facade.rs`) |
 | FR-121 | [11 §3](../architecture/11-bindings-cli-plugins.md#3-python-package-sonarithm) | A07 | IT (pytest) | Planned |
 | FR-122 | [11 §4](../architecture/11-bindings-cli-plugins.md#4-webassembly-sonarithm-wasm-d05) | D05 | IT (Score parity, H-08) | Planned |
 | FR-123 | [11 §5](../architecture/11-bindings-cli-plugins.md#5-plugin-system-d05) | D05 | IT (sandbox tests) | Planned |

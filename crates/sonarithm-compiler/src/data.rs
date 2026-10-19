@@ -9,9 +9,11 @@
 //!   `sonarithm_data::apply_all` on the primary table (03 §6), so every step lands in the
 //!   bundle's transform log.
 //! - [`Platform`] is the platform data engine: it registers the `inline` source (records in
-//!   the spec, read by the data layer's JSON reader) and, given a base directory, the `file`
-//!   source (paths relative to the spec, P8).
+//!   the spec, read by the data layer's JSON reader); given a base directory, the `file`
+//!   source (paths relative to the spec, P8); and given datasets, the `dataset` source
+//!   (data the host already holds, such as a data frame handed to the Python package).
 
+use std::collections::BTreeMap;
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
 
@@ -103,10 +105,12 @@ fn data_transform(transform: &Transform) -> Result<sonarithm_data::Transform, St
     serde_json::from_value(value).map_err(|err| format!("This transform cannot run: {err}."))
 }
 
-/// The platform data engine: `inline` sources, and `file` sources under a base directory.
+/// The platform data engine: `inline` sources, `file` sources under a base directory, and
+/// `dataset` sources the host provides by ID.
 #[derive(Clone, Debug, Default)]
 pub struct Platform {
     base: Option<PathBuf>,
+    datasets: BTreeMap<String, DataBundle>,
 }
 
 impl Platform {
@@ -121,7 +125,16 @@ impl Platform {
     pub fn with_base_dir(base: impl Into<PathBuf>) -> Self {
         Self {
             base: Some(base.into()),
+            datasets: BTreeMap::new(),
         }
+    }
+
+    /// Also reads the `dataset` source `{"kind": "dataset", "id": id}` as `bundle`: data
+    /// the host already holds. Adding an ID twice keeps the last bundle.
+    #[must_use]
+    pub fn with_dataset(mut self, id: impl Into<String>, bundle: DataBundle) -> Self {
+        self.datasets.insert(id.into(), bundle);
+        self
     }
 }
 
@@ -142,7 +155,46 @@ impl Engine<DataBundle> for Platform {
                 Arc::new(FileSource { base: base.clone() }),
             )?;
         }
+        if !self.datasets.is_empty() {
+            registrar.source(
+                SourceKind::Dataset,
+                Arc::new(DatasetSource {
+                    datasets: self.datasets.clone(),
+                }),
+            )?;
+        }
         Ok(())
+    }
+}
+
+/// Data the host provides by ID.
+struct DatasetSource {
+    datasets: BTreeMap<String, DataBundle>,
+}
+
+impl Source<DataBundle> for DatasetSource {
+    fn ingest(
+        &self,
+        source: &SpecFragment,
+        _cx: &mut CompileContext,
+    ) -> Result<DataBundle, CompileError> {
+        let parsed: sonarithm_spec::Source = source.parse()?;
+        let sonarithm_spec::Source::Dataset { id } = parsed else {
+            return Err(not_this_kind("dataset"));
+        };
+        self.datasets.get(&id).cloned().ok_or_else(|| {
+            let known: Vec<String> = self.datasets.keys().map(|id| format!("`{id}`")).collect();
+            CompileError::from(
+                Diagnostic::new(
+                    &codes::UNKNOWN_DATASET,
+                    format!(
+                        "No dataset `{id}` was provided; the host provided {}.",
+                        known.join(", ")
+                    ),
+                )
+                .at(source.pointer().key("id")),
+            )
+        })
     }
 }
 
