@@ -28,7 +28,11 @@ Owner: `sonarithm-data`.
 
 | Code | Severity | Meaning | How to fix | Rules |
 |---|---|---|---|---|
+| `SNR-DATA-001` | error | The data source cannot be read | Check that the file exists, is complete and is in the format `format` names (or its extension implies). | — |
+| `SNR-DATA-002` | error | The data format is not supported | Set `format` to one of csv, tsv, json, ndjson, parquet, arrow, xlsx or ods, or convert the file. | — |
+| `SNR-DATA-003` | error | The data source exceeds a size limit | Filter or split the data, or raise the source limits for trusted input. | — |
 | `SNR-DATA-004` | error | A table is malformed | Build each table from equal-length columns that match its schema, and give each table in a bundle its own ID. | — |
+| `SNR-DATA-005` | error | A table cannot be written | Report the problem with the table's schema; every table the data layer builds can be written. | — |
 | `SNR-DATA-040` | warning | A field metadata value cannot be read and was ignored | Fix the `snr.*` value in the file (03 §3 lists the allowed values) or declare the field in the spec's `data.fields`. | — |
 | `SNR-DATA-050` | error | Unknown field | Name a field of the table; field names are case-sensitive. | — |
 

@@ -107,7 +107,7 @@ Work runs in a separate agent session, in parallel with A03, through small PRs i
 
 | Task | Status | Notes |
 |---|---|---|
-| A04-T01 `DataBundle`/`Table`/`FieldMeta` on Arrow; `snr.*` metadata | In review | `FieldMeta` and the `SNR-DATA` code table; tables, bundles and the round-trip tests follow |
+| A04-T01 `DataBundle`/`Table`/`FieldMeta` on Arrow; `snr.*` metadata | Done | `FieldMeta` and the `SNR-DATA` code table (#113); tables and bundles (#114); Parquet and Arrow IPC round trips in T03 |
 | A04-T02 CSV/TSV and JSON/NDJSON sources | Not started | |
 | A04-T03 Parquet and Arrow IPC sources | Not started | |
 | A04-T04 XLSX/ODS via calamine | Not started | |

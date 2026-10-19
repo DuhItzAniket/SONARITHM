@@ -15,11 +15,15 @@ pub mod bundle;
 pub mod codes;
 pub mod error;
 pub mod meta;
+pub mod source;
 pub mod table;
 
 pub use bundle::{
     Annotation, AnnotationKind, BundleId, DataBundle, Format, SourceDescriptor, SourceKind,
 };
-pub use error::DataError;
+pub use error::{DataError, Limit};
 pub use meta::{Concept, FieldMeta, FieldType, Role, Unit};
+#[cfg(feature = "fs")]
+pub use source::read_file;
+pub use source::{Limits, Loaded, ReadOptions, read_bytes};
 pub use table::Table;
