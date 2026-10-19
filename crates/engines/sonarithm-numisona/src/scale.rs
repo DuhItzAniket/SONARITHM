@@ -26,6 +26,7 @@
 //! These are mapping rules, not research defaults: the scale type is chosen by the spec,
 //! and its default (`linear`, `domain: "auto"`, `nice: false`) is fixed by RFC-0001 §6.
 
+pub mod psychophysical;
 #[cfg(test)]
 mod tests;
 
@@ -33,6 +34,8 @@ use std::cmp::Ordering;
 use std::collections::BTreeMap;
 
 use sonarithm_core::math;
+
+pub use psychophysical::{GUIDANCE, PsychoPitch, Psychophysical};
 
 /// The constant `c` of the symmetric log transform, in data units: the transform is linear
 /// within about `c` of zero and logarithmic beyond. 1 is d3-scale's default; the spec has
@@ -45,8 +48,8 @@ const NICE_COUNT: f64 = 10.0;
 /// At most this many rounding passes in `nice`; d3-scale stops after the same number.
 const NICE_PASSES: usize = 10;
 
-/// The scale types of 04 §5.3 that map values to positions. `psychophysical` (SDR-11) is a
-/// pitch mapping built on [`Transform::Log`]; it lives with the pitch channel.
+/// The scale types of 04 §5.3 that map values to positions. `psychophysical` (SDR-11) maps
+/// values straight to pitches instead: see [`Psychophysical`].
 #[derive(Clone, Copy, Debug, PartialEq)]
 #[non_exhaustive]
 pub enum ScaleKind {
@@ -174,6 +177,16 @@ pub enum ScaleError {
     /// A band or ordinal scale has no categories.
     #[error("the field has no categories to fit the scale to")]
     NoCategories,
+    /// A psychophysical reference point is unusable.
+    #[error(
+        "a psychophysical scale needs a reference with a non-zero value and a frequency from 20 to 20000 Hz, not ({value}, {hz} Hz)"
+    )]
+    InvalidReference {
+        /// The reference data value `d_ref`.
+        value: f64,
+        /// The reference frequency `f_ref` in hertz.
+        hz: f64,
+    },
 }
 
 /// Where a datum lies relative to its scale's domain.
