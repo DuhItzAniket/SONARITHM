@@ -20,7 +20,10 @@
 )]
 
 pub mod env;
+pub mod filter;
 pub mod osc;
+pub mod pan;
+pub mod smooth;
 
 #[cfg(test)]
 mod conformance;
@@ -28,4 +31,7 @@ mod conformance;
 mod testing;
 
 pub use env::{Adsr, AdsrParams, Stage, note_ramp};
+pub use filter::{Biquad, BiquadKind, OnePole};
 pub use osc::{Oscillator, Waveform, sine_turns};
+pub use pan::PanGains;
+pub use smooth::LinearSmoother;
