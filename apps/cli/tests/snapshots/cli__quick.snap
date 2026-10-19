@@ -1,0 +1,24 @@
+---
+source: apps/cli/tests/cli.rs
+expression: quick.transcript()
+---
+exit code: 0
+--- stdout
+temps.spec.json: spec version 0.1, analysis mode, seed 0.
+Duration: 3.250 seconds.
+Engines: numisona [version], platform [version].
+Track anomaly: data track, 10 events (10 notes), 0.000 to 3.250 seconds, pitch 400.00 to 1400.00 Hz, instrument mallet.
+Score hash: [score hash].
+Diagnostics: 0 errors, 1 warning, 37 applied defaults and choices.
+Description:
+temps: 1 data track, 3.25 seconds, analysis mode.
+A line chart overview: time along x, pitch for y.
+Track anomaly: 10 tones from 0.00 to 3.25 seconds. Pitch follows anomaly, 400 to 1400 Hz; time follows year.
+In anomaly, the highest pitch, 1400 Hz, is at 3.00 seconds (row 9); the lowest, 400 Hz, at 1.00 seconds (row 3).
+--- stderr
+Context cues (ticks, reference tone, legend, earcons) are not available in this build; AUDAXIS arrives in B03.
+    Diagnostic severity: warning
+diagnostic help: Location: /context.
+diagnostic code: SNR-COMP-023
+
+note: --verbose lists the applied defaults and automatic choices.

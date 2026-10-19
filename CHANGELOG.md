@@ -62,6 +62,8 @@ From phase A07, release-plz maintains this file: it generates each release's ent
 - CLI, Python package and first release (phase A07):
   - `sonarithm` facade: `Sonarithm` with the default engines (the data platform and NUMISONA), `Spec` (from text, values or files; validation and migration), `compile` and `compile_with` for data the caller holds, the `quick` builder over the `line-overview` template, and `Compiled` with the Score, its diagnostics, a summary and a deterministic L1/L2 description; rustdoc examples run as tests.
   - `sonarithm-compiler`: `Platform::with_dataset` reads `dataset` sources from bundles the host provides (`SNR-COMP-026` for an unknown ID).
+  - `sonarithm` CLI: `validate`, `inspect` (`--describe`, `--tree`), `lint` (a stub that lists the compiler's warnings until C05), `quick`, `schema` and `spec migrate`, with `--json`, `--plain` for screen readers, `--deny-warnings`, `--verbose`, specs from standard input, and exit codes 0 to 3.
+  - Spec diagnostics that point at a missing top-level key name the location in their help instead of quoting the whole spec.
 - ECHOMETRIC research instrumentation (phase A08):
   - `sonarithm-echometric` stimulus generators, each deterministic from its parameters and a seed, with the published parameters documented next to SONARITHM's: GEN-001 trend reversals × density (Nees & Walker 2008), GEN-002 price series with click and reference-tone columns (Smith & Walker 2005), GEN-003 SNR-controlled transit light curves (Tucker Brown et al. 2022) and GEN-004 correlation triplets (Elmquist et al. 2024). Every stimulus carries its ground truth, a canonical CSV with a SHA-256 digest, a provenance manifest and notes on where it departs from the published design.
 

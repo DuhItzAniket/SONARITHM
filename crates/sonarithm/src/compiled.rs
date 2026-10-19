@@ -175,8 +175,9 @@ fn centi(hz: f64) -> f64 {
     (hz * 100.0).round() / 100.0
 }
 
+/// Seconds to the hundredth, as the summary rounds them.
 fn seconds(value: f64) -> String {
-    format!("{:.1}", micro(value))
+    format!("{:.2}", micro(value))
 }
 
 fn hz(pitch: Cents) -> String {

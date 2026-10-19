@@ -15,5 +15,18 @@ path = "src/main.rs"
 # would collide with it.
 doc = false
 
+[dependencies]
+clap.workspace = true
+# Diagnostic reports: the graphical handler on terminals, the narratable one for `--plain`
+# and pipes (11 §2). `fancy-no-syscall` adds the graphical handler without terminal probing.
+miette = { workspace = true, features = ["fancy-no-syscall"] }
+serde.workspace = true
+serde_json.workspace = true
+sonarithm.workspace = true
+
+[dev-dependencies]
+assert_cmd.workspace = true
+insta = { workspace = true, features = ["filters"] }
+
 [lints]
 workspace = true

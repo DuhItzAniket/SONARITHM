@@ -1,0 +1,13 @@
+{
+  "specVersion": "0.1",
+  "name": "Temperature anomaly",
+  "description": "Ten years of a synthetic temperature anomaly, in kelvin.",
+  "data": {
+    "source": { "kind": "file", "path": "temps.csv" },
+    "fields": { "anomaly": { "unit": "K", "concept": "temperature" } }
+  },
+  "substrate": { "time": { "field": "year", "pace": { "pointsPerSecond": 3 } } },
+  "tracks": [
+    { "id": "anomaly", "mark": "tone", "channels": { "pitch": { "field": "anomaly" } } }
+  ]
+}

@@ -82,6 +82,16 @@ pub use sonarithm_data::{DataBundle, DataError, Format, ReadOptions, read_bytes}
 pub use sonarithm_numisona::polarity::PolarityProfile;
 pub use sonarithm_spec::{Mark, SPEC_VERSION};
 
+/// Diagnostics as `miette` reports, with spans in the spec text and help from the code
+/// registry, for command-line and editor front ends (12 §1). miette's narratable handler
+/// renders them as plain text for screen readers.
+pub use sonarithm_spec::report::{SpecReport, reports};
+
+/// The Score IR types (05 §4): tracks, events, markers and the header.
+pub use sonarithm_core::score;
+/// Unit newtypes used in the Score: `Seconds`, `Cents`, `Hz`, `Db`, `Pan`.
+pub use sonarithm_core::units;
+
 /// The SONARITHM version of this build, such as `0.1.0-alpha`.
 pub const VERSION: &str = env!("CARGO_PKG_VERSION");
 

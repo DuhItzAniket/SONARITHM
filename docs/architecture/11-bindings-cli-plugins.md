@@ -48,6 +48,8 @@ let compiled = snr.quick()
 
 **Conventions.** Exit codes: `0` success, `1` errors, `2` usage, `3` warnings denied. `--json` gives machine-readable output with stable fields. Diagnostics are rendered by `miette` with codes and rule IDs. Output is **screen-reader friendly**: `--plain` disables colours and box drawing, and progress is reported as text lines, not spinners.
 
+**As built (A07-T02).** Results go to standard output as one fact per sentence; diagnostics go to standard error, drawn by miette's graphical handler on a terminal and by its narratable handler with `--plain` or when standard error is not a terminal. Colour follows `NO_COLOR` and never carries meaning alone (severities are words). `--json` prints one object on standard output (`spec`, `ok`, `counts`, `diagnostics`, plus `summary` and `description` for `inspect` and `quick`, the Score for `inspect --tree`) and nothing on standard error. `Info` diagnostics (applied defaults with their rule IDs) are counted and listed with `--verbose`. A spec of `-` is read from standard input. A diagnostic whose pointer names a missing top-level key gets its location in the help instead of a snippet of the whole spec. `lint` is the stub: it compiles and lists the compiler's warnings with their rules until ECHOMETRIC's lint (C05). `quick --spec-out` writes the generated spec with the data path relative to the spec. `render`, `play`, `devices` and `quick`'s playback and `-o` arrive with A05's audio and export crates.
+
 ## 3. Python package (`sonarithm`)
 
 | Aspect | Design |

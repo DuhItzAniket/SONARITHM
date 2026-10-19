@@ -19,7 +19,7 @@
 | FR-020 | [04](../architecture/04-sonification-spec.md), [RFC-0001](../rfcs/0001-spec-v0.1.md) | A03 | UT (`validate/tests.rs`, a failing and a passing case per rule), fuzz (`spec_parse`), doc-example test (`doc_examples.rs`), schema diff (`docs / schema-diff`) | In review (#66, #96, #97) |
 | FR-021 | [04 §2](../architecture/04-sonification-spec.md#2-top-level-structure) | A03 | UT (`sdr_36_sdr_17_mode_and_reference_defaults`, `sdr_10_music_only_in_presentation_mode`, `sdr_10_quantize_runs_only_in_presentation_mode`) | In review (#96, #99, #100) |
 | FR-022 | [05 §3](../architecture/05-compiler-and-score-ir.md#3-engine-registry-and-capability-traits), [ADR-0013](../decisions/0013-determinism-and-provenance.md) | A03 | PT (`canonical_form_round_trips_byte_for_byte`), UT on 3 OSes (`canonical_hash_is_identical_on_every_platform`, `sdr_02_track_streams_are_seeded_and_portable`, `spec_hash_is_pinned_and_ignores_key_order`), IT (`the_same_input_gives_byte_identical_scores`) | In review (#8, #10, #99, #100) |
-| FR-023 | [04 §7](../architecture/04-sonification-spec.md#7-versioning-and-compatibility) | A03, A07 | UT (`migrate.rs` test chain, idempotence), PT (`migrating_a_current_spec_changes_nothing`), fuzz (`spec_migrate`); `sonarithm spec migrate` in A07 | Framework in review (#99) |
+| FR-023 | [04 §7](../architecture/04-sonification-spec.md#7-versioning-and-compatibility) | A03, A07 | UT (`migrate.rs` test chain, idempotence), PT (`migrating_a_current_spec_changes_nothing`), fuzz (`spec_migrate`); ST `spec_migrate_reports_what_it_did` (CLI) | Done: framework (#99); `sonarithm spec migrate` with `--to` and `--in-place` (A07-T02) |
 | FR-024 | [04 §9](../architecture/04-sonification-spec.md#9-importers) | A06 | IT (`the_erie_gallery_subset_imports_as_valid_specs`, `unmapped_constructs_are_reported_at_their_pointer`, `compositions_follow_overlay_and_sequence`; snapshots), UT (`import::erie::tests`); render (`sdr_05_the_erie_gallery_subset_imports_and_renders`) | Done (#150, A06-T09) |
 | FR-025 | [07 NUMISONA](../architecture/07-engines.md) | A06 | ST (`every_template_renders_every_compatible_example_dataset`: compatibility matrix, compile and render; `template_specs_are_reviewed`), IT (`sdr_03_templates_reapply_to_any_compatible_dataset`) | Done (#154) |
 | FR-026 | [05 §7](../architecture/05-compiler-and-score-ir.md#7-diagnostics) | A06 | ST (encoder snapshots list every `SNR-ENG` diagnostic), IT (`every_encoder_default_is_reported`) | Done (#151) |
@@ -51,7 +51,7 @@
 | FR-080 | [07 ECHOMETRIC](../architecture/07-engines.md) | C05 | UT (precision/recall) | Planned |
 | FR-081 | [10 §4](../architecture/10-ingestion-and-extraction.md#4-ai-assistance-policy) | C05 | ST (description snapshots) | Planned |
 | FR-082 | [07 ECHOMETRIC](../architecture/07-engines.md) | C05 | UT | Planned |
-| FR-083 | [07 ECHOMETRIC](../architecture/07-engines.md) | A07, C05 | UT (positive and negative per rule) | Planned |
+| FR-083 | [07 ECHOMETRIC](../architecture/07-engines.md) | A07, C05 | UT (positive and negative per rule) | Stub (A07-T02): `sonarithm lint` lists the compiler's warnings with rule IDs and `--deny-warnings`; the perceptual lint is C05 |
 | FR-084 | [07 ECHOMETRIC](../architecture/07-engines.md) | A08 | UT, PT and ST (`tests/generators.rs`: pinned manifests, rule-named tests for SDR-16, 17, 19, 20, 21, 40); IT (pilot protocol), RV | In progress: stimulus generators GEN-001 to GEN-004 (A08-T01) |
 | FR-090 | [07 TONALENS](../architecture/07-engines.md) | D01 | E2E, AT | Planned |
 | FR-091 | [07 TONALENS](../architecture/07-engines.md) | D01 | UT; EXP for H-04 | Planned |
@@ -70,7 +70,7 @@
 | FR-117 | [design/design-language](../design/design-language.md) | B02 | Visual tests, AT (forced colors) | Planned |
 | FR-118 | [06 §10](../architecture/06-audio-engine.md#10-hearing-safety-and-levels) | B01 | E2E | Planned |
 | FR-119 | [08 §8](../architecture/08-interaction-and-accessibility.md#8-input-methods) | B04 | E2E, AT | Planned |
-| FR-120 | [11 §2](../architecture/11-bindings-cli-plugins.md#2-cli-sonarithm) | A07 | ST (CLI snapshots) | In progress: the facade the CLI uses (A07-T01: compile, quick, validate, migrate, schema, summary and description; `crates/sonarithm/tests/facade.rs`) |
+| FR-120 | [11 §2](../architecture/11-bindings-cli-plugins.md#2-cli-sonarithm) | A07 | ST (CLI snapshots) | In progress: facade (A07-T01); `validate`, `inspect`, `lint` (stub), `quick`, `schema`, `spec migrate` with `--json`, `--plain` and exit codes (`apps/cli/tests/cli.rs`, assert_cmd + insta). `render`, `play`, `devices` wait for A05 |
 | FR-121 | [11 §3](../architecture/11-bindings-cli-plugins.md#3-python-package-sonarithm) | A07 | IT (pytest) | Planned |
 | FR-122 | [11 §4](../architecture/11-bindings-cli-plugins.md#4-webassembly-sonarithm-wasm-d05) | D05 | IT (Score parity, H-08) | Planned |
 | FR-123 | [11 §5](../architecture/11-bindings-cli-plugins.md#5-plugin-system-d05) | D05 | IT (sandbox tests) | Planned |

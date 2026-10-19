@@ -1,0 +1,13 @@
+{
+  "specVersion": "0.1",
+  "name": "Weekly price",
+  "data": {
+    "source": { "kind": "inline", "values": [
+      { "week": 1, "price": 50.5 }, { "week": 2, "price": 52.25 },
+      { "week": 3, "price": 51.0 }, { "week": 4, "price": 48.75 }
+    ] },
+    "fields": { "price": { "unit": "$", "concept": "money" } }
+  },
+  "substrate": { "time": { "field": "week" } },
+  "tracks": [{ "id": "price", "mark": "tone", "channels": { "pitch": { "field": "price" } } }]
+}
