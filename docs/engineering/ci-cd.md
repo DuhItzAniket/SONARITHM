@@ -26,6 +26,7 @@ This document plans the GitHub Actions workflows, the rules that harden them, th
 | `label-sync.yml` | Push to `main` touching `.github/labels.yml` | Apply the [label taxonomy](../../.github/labels.yml) | A01 |
 | `.github/dependabot.yml` (configuration, not a workflow) | Weekly schedule | Version updates for cargo, npm, pip and github-actions, including SHA-pinned actions | A01 |
 | `nightly.yml` | Daily schedule, manual dispatch; pull requests touching `sonarithm-core`, `sonarithm-spec` or `sonarithm-data` (two-minute fuzz smoke run) | Fuzzing (spec from A03, data importers from A04), benchmarks and soak tests (from A05), external link check, cargo-deny advisories on `main`, desktop nightly builds (Stage B) | A03, growing |
+| `cache-prune.yml` | Completed `ci`, `docs` or `nightly` run on `main`; manual dispatch | Keeps only the newest Actions cache of each job on `main` and deletes superseded copies, so the cache stays well under the 10 GB repository limit (on 2026-10-19 it reached 10.7 GB with 3–4 copies per job) | A05 |
 | `release-plz.yml` | Push to `main` | Opens or updates the release PR; on merge, publishes crates, tags and creates the GitHub release | A07 |
 | `wheels.yml` | Release tag `v*`, manual dispatch | Builds abi3 wheels and the sdist with maturin-action, smoke-tests them, publishes to PyPI with Trusted Publishing | A07 |
 | `release-desktop.yml` | Release tag `v*`, manual dispatch | tauri-action builds for three OSes, signing, updater artifacts and `latest.json` | Stage B previews (roadmap: desktop nightly from B03); signed beta B07 if certificates are in place; full signing and updater C06 |
@@ -87,7 +88,7 @@ Each rule maps to an [OpenSSF Scorecard](https://github.com/ossf/scorecard/blob/
 | Protected environments | `release` (crates.io, PyPI, GitHub release) and `desktop-signing` (signing certificates, updater key). Deployments are limited to `main` and release tags; required reviewers are added once a second maintainer exists, following the release-gate pattern in [uv's release workflow](https://github.com/astral-sh/uv/blob/main/.github/workflows/release.yml). | |
 | Provenance | `actions/attest-build-provenance` attests every released binary, wheel, installer and SBOM (`id-token: write`, `attestations: write`). Users verify with `gh attestation verify`. | Signed-Releases (High) |
 | Immutable releases | Enabled for stable releases. The setting is all-or-nothing, so nightly builds are workflow artifacts, not GitHub Releases in this repository. | |
-| Caching | `Swatinem/rust-cache` in PR and `main` workflows. Release workflows build without restoring caches, so a poisoned cache cannot reach a release. | |
+| Caching | `Swatinem/rust-cache` in PR and `main` workflows. Only `main` saves caches (`save-if`), and `cache-prune.yml` deletes superseded ones. Release workflows build without restoring caches, so a poisoned cache cannot reach a release. | |
 | Locked builds | `--locked` (Cargo) and `--frozen-lockfile` (pnpm) everywhere; the toolchain is pinned by `rust-toolchain.toml`. | |
 | Concurrency and timeouts | PR runs cancel superseded runs; every job sets `timeout-minutes`. | |
 | Secrets | Secrets live only in environments. Secret scanning and repository-level push protection are enabled (push protection is not on by default). | |
