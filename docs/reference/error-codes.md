@@ -5,6 +5,19 @@
 
 Every diagnostic carries a stable code `SNR-<AREA>-<NNN>`. A code, once released, is never reused or renumbered; retired codes stay listed. Severity is the default; settings such as `--deny-warnings` can raise it.
 
+## SNR-COMP
+
+Owner: `sonarithm-compiler`.
+
+| Code | Severity | Meaning | How to fix | Rules |
+|---|---|---|---|---|
+| `SNR-COMP-010` | error | Engine not available in this build | Use a SONARITHM build that includes the engine, or remove the spec keys it owns. | — |
+| `SNR-COMP-011` | error | Engine registered twice | Register each engine once when building the compiler. | — |
+| `SNR-COMP-012` | error | Two engines register the same source kind | Each source kind belongs to one engine; remove one of the registrations. | — |
+| `SNR-COMP-013` | error | Two engines register the same analyzer | Each analyzer ID belongs to one engine; remove one of the registrations. | — |
+| `SNR-COMP-014` | error | Conflicting encoder registration | Register one encoder per engine and mark, and let only one engine claim each mark's default. | — |
+| `SNR-COMP-015` | error | Two engines register the same shaper stage | Each shaper stage (quantize, loudness, spatial, lint) belongs to one engine. | — |
+
 ## SNR-DATA
 
 Owner: `sonarithm-data`.

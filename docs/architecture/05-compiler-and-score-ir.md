@@ -88,11 +88,13 @@ pub trait Sink: Send + Sync {                      // MIDI file, OSC, …
 }
 ```
 
+**Implemented in A03** (`sonarithm_core::engine`, A03-T04) with the signatures of [ADR-0014](../decisions/0014-capability-trait-signatures.md): the traits and `Registry<D>` are generic over the compiler's data type `D`, spec input arrives as a `SpecFragment` (compact JSON plus its pointer), analyzer and shaper IDs are given at registration, and `Engine::register` returns a `Result`. `Sink`, `VoiceProvider` and `nav_tree` are added with their first implementations (A05, C04, B03).
+
 **Resolution rules.**
 
 1. A track's `engine` field selects its Encoder. If it is absent, the default is the first Encoder that registered the track's `mark` (NUMISONA for `tone` and `glide`).
 2. A spec key owned by an engine that is not registered gives a validation error: `SNR-COMP-010 engine 'resonum' not available in this build`.
-3. Two engines may not register the same `SourceKind`, `AnalyzerId`, `MarkKind` default or `ShaperStage` slot. Registration fails fast. This is how the "nine engines, one compiler" boundary stays clean ([ADR-0007](../decisions/0007-engines-as-pipeline-capabilities.md)).
+3. Two engines may not register the same `SourceKind`, `AnalyzerId`, `MarkKind` default or `ShaperStage` slot. Registration fails fast with `SNR-COMP-011` … `015`. This is how the "nine engines, one compiler" boundary stays clean ([ADR-0007](../decisions/0007-engines-as-pipeline-capabilities.md)). A mark's default is the engine that claims it explicitly, or else the first engine that registered the mark.
 
 **`CompileContext`** provides:
 - `rng(track_id)`: a deterministic RNG derived as `seed ⊕ hash(track_id)` (SDR-02);
