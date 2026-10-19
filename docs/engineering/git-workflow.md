@@ -14,7 +14,7 @@ This document defines how changes reach `main`: branches, commit messages, sign-
 | Commits | Conventional Commits 1.0.0, DCO sign-off on every commit |
 | PR title | A Conventional Commit header; it becomes the squash commit |
 | Merge | Squash merge only; linear history |
-| Review | One maintainer approval; code-owner approval on core, real-time audio and accessibility-critical paths |
+| Review | One maintainer approval; code-owner approval on core, real-time audio and accessibility-critical paths. Suspended during the [fast-track](#review-rules) |
 | Release branches | None before 1.0; after 1.0 only for patch backports |
 | Tags | `vX.Y.Z[-pre]` for the workspace; per-crate tags after 1.0 |
 | Signing | Commit signing recommended, not required |
@@ -28,7 +28,7 @@ The `main` ruleset (A01):
 - Changes arrive only through pull requests; direct pushes are blocked.
 - Required status checks must pass ([CI/CD](ci-cd.md#required-status-checks)).
 - Linear history is required; force pushes and deletion are blocked.
-- Code-owner review is required for the paths listed in [CODEOWNERS](../../.github/CODEOWNERS).
+- Code-owner review is required for the paths listed in [CODEOWNERS](../../.github/CODEOWNERS) (suspended during the [fast-track](#review-rules)).
 - Merge commits and rebase merges are disabled in repository settings; only squash merging is allowed.
 - Branches are deleted automatically after merge.
 
@@ -171,6 +171,7 @@ Open a draft PR early to get feedback on direction. A sequence of small dependen
 
 ## Review rules
 
+- **Fast-track (owner decision, 2026-10-19).** To finish Stage A's code quickly, the `main` ruleset requires no approving review and no code-owner review. The required status checks, linear history, DCO sign-off and resolved conversations still gate every merge, and PRs merge through GitHub auto-merge (squash). For this push, one PR per task replaces the size guideline above. Only people with write access can merge, so external PRs still need the lead. The rules below apply again when the owner ends the fast-track.
 - **Approvals.** One approval from a maintainer.
 - **Code owners.** Paths that [CODEOWNERS](../../.github/CODEOWNERS) assigns need their owner's approval. The ruleset requires it for:
   - core and compiler crates: `sonarithm-core`, `sonarithm-spec`, `sonarithm-compiler`, `schemas/`;

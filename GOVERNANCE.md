@@ -62,7 +62,7 @@ The default is **lazy consensus**: a proposal in a PR or issue goes ahead if no 
 
 Never add a tenth engine without an ADR ([engine catalogue](docs/product/engines.md#naming-and-usage-rules)); because it is cross-cutting, it also needs an RFC.
 
-**Interim review rule.** GitHub does not let authors approve their own pull requests. While the project lead is the only maintainer, the lead merges their own PRs after all required checks pass, through the repository ruleset's bypass list. External contributions always need the lead's approval. This exception ends when a second maintainer joins.
+**Interim review rule.** GitHub does not let authors approve their own pull requests. While the project lead is the only maintainer, the lead merges their own PRs after all required checks pass, through the repository ruleset's bypass list. External contributions always need the lead's approval. This exception ends when a second maintainer joins. Since 2026-10-19 the owner has also suspended required reviews for a fast-track ([git workflow](docs/engineering/git-workflow.md#review-rules)); external contributions still need the lead, who alone can merge them.
 
 ## Becoming a maintainer
 

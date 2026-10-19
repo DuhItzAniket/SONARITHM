@@ -129,7 +129,7 @@ These are targets, not guarantees. While the project has one maintainer they are
 | Security reports | See [SECURITY.md](SECURITY.md#response-targets) |
 | PR with no author activity | Maintainers may close it after 30 days; you can reopen it |
 
-Review rules: one maintainer approval is required, plus a code-owner approval for paths that [CODEOWNERS](.github/CODEOWNERS) marks, which include the core, real-time audio and accessibility-critical code. Details are in [git workflow](docs/engineering/git-workflow.md#review-rules).
+Review rules: one maintainer approval is required, plus a code-owner approval for paths that [CODEOWNERS](.github/CODEOWNERS) marks, which include the core, real-time audio and accessibility-critical code. Details are in [git workflow](docs/engineering/git-workflow.md#review-rules), which also describes the current fast-track: the maintainer's own PRs merge on green checks without a review.
 
 ## Accessibility expectations for UI changes
 
