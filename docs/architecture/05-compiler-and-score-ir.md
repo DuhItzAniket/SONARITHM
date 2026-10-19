@@ -190,6 +190,8 @@ The renderer never interprets the Score directly on the audio thread. A **plan b
 | Compute the loudness-compensation table for the pitch range (SDR-24) | Static table |
 | Package as `RenderPlan` behind `basedrop::Shared` | Swapped into the audio thread lock-free ([06 §4](06-audio-engine.md#4-real-time-communication)) |
 
+**Implemented in A05** (`sonarithm_render::plan`, A05-T03). Each track gets one voice pool, sized at twice the polyphony of its events, so voices fading out during a seek or loop crossfade never force a steal. A note with `taps > 1` becomes that many tones of equal length. Every tone lasts at least two SDR-22 ramps, so notes shorter than 10 ms are lengthened. Glide breakpoints stay in cents and dB, and the voice interpolates them at a fixed control rate. Unknown instrument names raise `SNR-RENDER-001` and fall back to the default preset.
+
 ## 6. Incremental and live compilation
 
 | Situation | Strategy |

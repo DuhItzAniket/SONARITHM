@@ -1,0 +1,16 @@
+---
+source: crates/sonarithm-render/src/plan/tests.rs
+expression: review(&planned.plan)
+---
+plan 48000 Hz, 99360 frames, 8 events, 8 voices
+track melody on Data: gain 0.5012, mallet, polyphony 2, voices 4, longest 24000
+  #0 0+24000 tone 440.00 Hz gain 1.0000 pan 0.8315/0.5556 bright 0.50 mallet ramp 1920
+  #1 12000+24000 tone 880.00 Hz gain 1.0000 pan 0.8315/0.5556 bright 0.50 mallet ramp 1920
+  #2 24000+480 tone 220.00 Hz gain 1.0000 pan 0.8315/0.5556 bright 0.50 mallet ramp 240
+  #3 48000+4800 tone 659.26 Hz gain 0.5012 pan 0.5556/0.8315 bright 0.50 mallet ramp 1200
+  #3 52800+4800 tone 659.26 Hz gain 0.5012 pan 0.5556/0.8315 bright 0.50 mallet ramp 1200
+  #3 57600+4800 tone 659.26 Hz gain 0.5012 pan 0.5556/0.8315 bright 0.50 mallet ramp 1200
+track contour on Data: gain 1.0000, mallet, polyphony 1, voices 2, longest 72000
+  #0 0+72000 glide mallet ramp 1920 [0:-500.00c/-3.00dB/0.00, 72000:500.00c/0.00dB/0.00]
+track cues on Earcon: gain 1.0000, sine, polyphony 1, voices 2, longest 5760
+  #0 93600+5760 earcon Landmark gain 1.0000

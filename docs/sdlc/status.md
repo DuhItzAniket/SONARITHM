@@ -24,7 +24,7 @@ Status values: `Not started` · `In progress` · `In review` · `Done` · `Block
 | A | A02 | Technical spikes and prototype gate | **In review** | ≈80% | All spikes built and measured on Windows and CI; gate report draft: Conditional go recommended. PB-01 fails on Windows shared mode; screen-reader, macOS and Linux manual steps pending. See [A02 tasks](#a02-tasks) |
 | A | A03 | Core types, Spec v0.1, Score IR | **In progress** | ≈15% | T01 merged (#4); RFC-0001 accepted (T05); T02–T04 in review. See [A03 tasks](#a03-tasks) |
 | A | A04 | Data layer | **In progress** | ≈5% | T01 in review (field metadata). See [A04 tasks](#a04-tasks) |
-| A | A05 | Render engine, audio backend, export | **In progress** | ≈5% | T01 in review (oscillators). See [A05 tasks](#a05-tasks) |
+| A | A05 | Render engine, audio backend, export | **In progress** | ≈5% | T01 and T03 in review. See [A05 tasks](#a05-tasks) |
 | A | A06 | NUMISONA v1 | Not started | 0% | |
 | A | A07 | CLI, Python, v0.1.0-alpha | Not started | 0% | |
 | A | A08 | Research instrumentation v0, ICAD 2027 | Not started | 0% | P01 without participant studies (OD-04) |
@@ -126,7 +126,7 @@ Work runs in a separate agent session through small PRs into `crates/sonarithm-d
 |---|---|---|
 | A05-T01 DSP nodes (oscillators, ADSR, filters, panner) | In review | Oscillators: sine (IEEE-arithmetic polynomial, F-039), triangle, PolyBLEP saw and square, with spectral tests. ADSR with raised-cosine ramps of at least 5 ms and the SDR-22 conformance tests. One-pole and RBJ biquad filters with denormal flushing, constant-power panner, linear parameter smoother |
 | A05-T02 ISO 226:2023 table; EBU R128 meter | Not started | |
-| A05-T03 `RenderPlan` and plan builder | Not started | |
+| A05-T03 `RenderPlan` and plan builder | In review | Score → frames, frequencies, linear gains and pan gains; taps expanded; voice pools at twice the polyphony; `SNR-RENDER` code table; plan snapshot and polyphony property tests |
 | A05-T04 Render graph, voice pool, scheduler, transport | Not started | |
 | A05-T05 RT communication (rtrb, triple_buffer, basedrop) | Not started | |
 | A05-T06 `AudioBackend` + `CpalBackend` | Not started | |
