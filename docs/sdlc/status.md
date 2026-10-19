@@ -22,7 +22,7 @@ Status values: `Not started` · `In progress` · `In review` · `Done` · `Block
 | — | — | Kickoff: research and documentation baseline | **Done** | 100% | 2026-10-18; see [worklog](worklog/2026-10-18-project-kickoff.md) |
 | A | A01 | Repository bootstrap and governance | **Done** | 100% | 2026-10-19; [phase review](reviews/A01-phase-review.md), [retro](retrospectives/A01-retro.md). See [A01 tasks](#a01-tasks) |
 | A | A02 | Technical spikes and prototype gate | **In review** | ≈80% | All spikes built and measured on Windows and CI; gate report draft: Conditional go recommended. PB-01 fails on Windows shared mode; screen-reader, macOS and Linux manual steps pending. See [A02 tasks](#a02-tasks) |
-| A | A03 | Core types, Spec v0.1, Score IR | **In progress** | ≈15% | T01 merged (#4); RFC-0001 accepted (T05); T02–T04 in review. See [A03 tasks](#a03-tasks) |
+| A | A03 | Core types, Spec v0.1, Score IR | **Done** | 100% | 2026-10-19; [phase review](reviews/A03-phase-review.md), [retro](retrospectives/A03-retro.md). See [A03 tasks](#a03-tasks) |
 | A | A04 | Data layer | **In progress** | ≈90% | T01–T09 in review. See [A04 tasks](#a04-tasks) |
 | A | A05 | Render engine, audio backend, export | **In progress** | ≈5% | T01, T03 and T04 in review. See [A05 tasks](#a05-tasks) |
 | A | A06 | NUMISONA v1 | **In progress** | ≈30% | T01, T02, T03 and T05 in review. See [A06 tasks](#a06-tasks) |
@@ -90,16 +90,16 @@ Work runs in a separate agent session in parallel with A02 (spikes). Each task l
 | Task | Status | Notes |
 |---|---|---|
 | A03-T01 Units newtypes | **Done** | Merged in #4: `Hz`, `Cents`, `Midi`, `Db`, `Seconds`, `Frames`, `SampleRate`, `Pan`; `sonarithm_core::math` over `libm`; round-trip property tests |
-| A03-T02 IDs, provenance, diagnostics, error-code registry | In review | #12 (IDs, provenance, diagnostics), #6 (code registry) |
-| A03-T03 Score IR, canonical hash, review snapshots | In review | #7 (Score IR types), #8 (canonical hash and snapshots) |
-| A03-T04 Capability traits, registry | In review | #10; ADR-0014 (trait signatures) needs owner approval |
+| A03-T02 IDs, provenance, diagnostics, error-code registry | **Done** | #12 (IDs, provenance, diagnostics), #6 (code registry and `cargo xtask codes`) |
+| A03-T03 Score IR, canonical hash, review snapshots | **Done** | #106 (Score IR types and invariants), #111 (canonical hash and review snapshots; F-019) |
+| A03-T04 Capability traits, registry | **Done** | #10, with `CompileContext`; [ADR-0014](../decisions/0014-capability-trait-signatures.md) accepted in #117 |
 | A03-T05 RFC-0001 Spec v0.1 | **Done** | [RFC-0001](../rfcs/0001-spec-v0.1.md) accepted by the owner on 2026-10-19 with all 21 proposed resolutions; spec v0.1 frozen ([ADR-0015](../decisions/0015-spec-v0.1-frozen.md)) |
-| A03-T06 Spec types, JSON Schema export | In review | #66: serde + schemars types per RFC-0001; `schemas/sonarithm-spec-0.1.schema.json` from `cargo xtask codegen`, diffed by `docs / schema-diff` |
-| A03-T07 Semantic validation | In review | #96 (parse layers and semantic rules, a failing and a passing test each), #97 (miette reports with spans from JSON pointers) |
-| A03-T08 Canonicalization, spec hash, migrations | In review | RFC 8785 canonical form (Appendix B vectors pass), defaults as `Info` (`SNR-SPEC-080`), spec hash pinned on 3 OSes, migration framework; F-020 |
-| A03-T09 Compiler skeleton, `CompileContext` | In review | `Compiler<D>` runs every stage with no-op test engines; an inline-source spec compiles end to end to an empty Score (snapshot); `CompileContext` landed with T04 (#10) |
-| A03-T10 Spec parser fuzz target, proptest generators | In review | `spec_parse` and `spec_migrate` cargo-fuzz targets with a seed corpus; `nightly.yml` fuzz job; valid-spec proptest generators (`test-support`); 1 h local run passed (7.76 M runs, no crash), see the A03 worklog |
-| A03-T11 Doc-example validation test | In review | #97: every JSON example in 04 validates (4 specs, 9 fragments, the §2 skeleton) |
+| A03-T06 Spec types, JSON Schema export | **Done** | #66: serde + schemars types per RFC-0001; `schemas/sonarithm-spec-0.1.schema.json` from `cargo xtask codegen`, diffed by `docs / schema-diff` |
+| A03-T07 Semantic validation | **Done** | #96 (parse layers and semantic rules, a failing and a passing test each), #97 (miette reports with spans from JSON pointers) |
+| A03-T08 Canonicalization, spec hash, migrations | **Done** | #99: RFC 8785 canonical form (Appendix B vectors pass), defaults as `Info` (`SNR-SPEC-080`), spec hash pinned on 3 OSes, migration framework; F-020 |
+| A03-T09 Compiler skeleton, `CompileContext` | **Done** | #100: `Compiler<D>` runs every stage with no-op test engines; an inline-source spec compiles end to end to an empty Score |
+| A03-T10 Spec parser fuzz target, proptest generators | **Done** | #105: `spec_parse` and `spec_migrate` targets, `nightly.yml`, valid-spec generators; 1 h run without a panic (see the phase review). #128 lets other crates reuse core's strategies |
+| A03-T11 Doc-example validation test | **Done** | #97: every JSON example in 04 validates (4 specs, 9 fragments, the §2 skeleton) |
 
 ### A04 tasks
 
@@ -198,4 +198,5 @@ Maturity scale: `Designed` → `Prototype` → `Alpha` → `Beta` → `Stable` �
 | 2026-10-19 | A02 spikes measured (T01 merged in #9; T02–T07 in review); gate report draft recommends a conditional go; PB-01 fails on Windows shared mode |
 | 2026-10-19 | A04 started: `FieldMeta` with `snr.*` metadata and the `SNR-DATA` code table (T01) |
 | 2026-10-19 | A05 started: oscillators in `sonarithm-dsp` (T01) |
+| 2026-10-19 | A03 done: all eleven tasks merged; phase review and retrospective; ADR-0014 and ADR-0015 accepted |
 | 2026-10-19 | A06 started: `sonarithm-numisona` crate with scales (T01) |
