@@ -76,6 +76,16 @@ thiserror = "2.0.17"
 insta = "1.43.0"
 proptest = "1.9.0"
 
+# Debug info is most of a `target/` directory's size (PDB files on Windows), and every
+# worktree keeps its own `target/`. Line tables keep file:line backtraces for our crates;
+# dependencies get none. To step through code in a debugger, override locally:
+# `CARGO_PROFILE_DEV_DEBUG=full` (dev-environment.md, "Disk usage").
+[profile.dev]
+debug = "line-tables-only"
+
+[profile.dev.package."*"]
+debug = false
+
 [workspace.lints.rust]
 unsafe_code = "deny"                  # backstop; crates on the unsafe register opt in locally (section 5)
 unsafe_op_in_unsafe_fn = "deny"       # warn-by-default in edition 2024; we deny
