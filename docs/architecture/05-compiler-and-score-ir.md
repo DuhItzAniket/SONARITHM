@@ -36,6 +36,8 @@ flowchart TB
   V & R & T & A & E & SH --> D[(Diagnostics)]
 ```
 
+**Skeleton (A03-T09).** `sonarithm_compiler::Compiler<D>` runs these stages over whatever engines are registered: `sonarithm_spec::prepare` (validate, migrate, defaults, spec hash), then source, analyzers, encoders, context, shapers and the header stamp, checking cancellation between stages and the budget on every track. A capability nobody registered gives `SNR-COMP-010` naming the engine that would provide it; transforms give a warning (`SNR-COMP-022`) until the data layer applies them (A04); a missing context provider gives `SNR-COMP-023`; the budget gives `SNR-COMP-021`; and a Score that breaks an invariant after compilation is reported as an engine bug (`SNR-COMP-020`, and a debug assertion). The compiler's data type implements `CompilerData` (its fingerprint for the header).
+
 **Shaper order is fixed and documented.** Quantization runs before loudness compensation, because compensation depends on the final pitch. Spatial placement runs before lint, so lint can see pan. Lint always runs last and never mutates the Score.
 
 ## 3. Engine registry and capability traits

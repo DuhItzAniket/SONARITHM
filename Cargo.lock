@@ -955,7 +955,11 @@ version = "0.0.0"
 name = "sonarithm-compiler"
 version = "0.0.0"
 dependencies = [
+ "insta",
+ "serde",
+ "serde_json",
  "sonarithm-core",
+ "sonarithm-spec",
 ]
 
 [[package]]

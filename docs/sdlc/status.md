@@ -97,7 +97,7 @@ Work runs in a separate agent session in parallel with A02 (spikes). Each task l
 | A03-T06 Spec types, JSON Schema export | In review | #66: serde + schemars types per RFC-0001; `schemas/sonarithm-spec-0.1.schema.json` from `cargo xtask codegen`, diffed by `docs / schema-diff` |
 | A03-T07 Semantic validation | In review | #96 (parse layers and semantic rules, a failing and a passing test each), #97 (miette reports with spans from JSON pointers) |
 | A03-T08 Canonicalization, spec hash, migrations | In review | RFC 8785 canonical form (Appendix B vectors pass), defaults as `Info` (`SNR-SPEC-080`), spec hash pinned on 3 OSes, migration framework; F-020 |
-| A03-T09 Compiler skeleton, `CompileContext` | Not started | |
+| A03-T09 Compiler skeleton, `CompileContext` | In review | `Compiler<D>` runs every stage with no-op test engines; an inline-source spec compiles end to end to an empty Score (snapshot); `CompileContext` landed with T04 (#10) |
 | A03-T10 Spec parser fuzz target, proptest generators | Not started | |
 | A03-T11 Doc-example validation test | In review | #97: every JSON example in 04 validates (4 specs, 9 fragments, the §2 skeleton) |
 

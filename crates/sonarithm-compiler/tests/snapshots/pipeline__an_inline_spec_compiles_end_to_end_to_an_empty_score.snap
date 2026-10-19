@@ -1,0 +1,33 @@
+---
+source: crates/sonarithm-compiler/tests/pipeline.rs
+expression: "score.review_json(&sonarithm_core::score::review::ReviewOptions::default())"
+---
+{
+  "header": {
+    "data_fingerprint": "4bf332dfbd8d2e10a97c631fdc678e9dce8bba0172736987d675b1396a86e1ab",
+    "duration": 0.0,
+    "engines": {
+      "numisona": "0.0.0",
+      "platform": "0.0.0"
+    },
+    "ir_version": 1,
+    "mode": "analysis",
+    "seed": 1729,
+    "shapers": [],
+    "spec_hash": "648f4adbfd03e6af6072147dd25dbe111c8adf8230992668ff192b6c76f912f6",
+    "spec_version": "0.1"
+  },
+  "markers": [],
+  "tracks": [
+    {
+      "engine": "numisona",
+      "events": [],
+      "gain": 0.0,
+      "id": "v",
+      "instrument": "mallet",
+      "pan": 0.0,
+      "pitch_range": null,
+      "role": "data"
+    }
+  ]
+}

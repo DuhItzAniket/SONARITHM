@@ -17,6 +17,10 @@ Owner: `sonarithm-compiler`.
 | `SNR-COMP-013` | error | Two engines register the same analyzer | Each analyzer ID belongs to one engine; remove one of the registrations. | — |
 | `SNR-COMP-014` | error | Conflicting encoder registration | Register one encoder per engine and mark, and let only one engine claim each mark's default. | — |
 | `SNR-COMP-015` | error | Two engines register the same shaper stage | Each shaper stage (quantize, loudness, spatial, lint) belongs to one engine. | — |
+| `SNR-COMP-020` | error | The compiled Score breaks an invariant | This is a bug in an engine; please report it with the spec that triggered it. | — |
+| `SNR-COMP-021` | error | Compile budget exceeded | Use less data, a slower pace or a shorter duration, or raise the budget. | — |
+| `SNR-COMP-022` | warning | Transforms are not applied in this build | Transforms run in the data layer (A04); until then the data is used as loaded. | — |
+| `SNR-COMP-023` | warning | Context cues are not available in this build | Ticks, the reference tone, the spoken legend and earcons come from AUDAXIS (B03). | — |
 
 ## SNR-DATA
 

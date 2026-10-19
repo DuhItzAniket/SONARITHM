@@ -65,6 +65,52 @@ code!(
     "Each shaper stage (quantize, loudness, spatial, lint) belongs to one engine."
 );
 
+code!(
+    /// The compiled Score breaks an invariant of 05 §4.2: an engine bug.
+    INVARIANT_BROKEN,
+    "SNR-COMP-020",
+    "The compiled Score breaks an invariant",
+    "This is a bug in an engine; please report it with the spec that triggered it."
+);
+code!(
+    /// The compile exceeded its event or duration budget.
+    BUDGET_EXCEEDED,
+    "SNR-COMP-021",
+    "Compile budget exceeded",
+    "Use less data, a slower pace or a shorter duration, or raise the budget."
+);
+
+/// `transform` is not applied before the data layer exists (A04).
+pub const TRANSFORMS_NOT_APPLIED: CodeInfo = CodeInfo {
+    severity: Severity::Warning,
+    ..code_info(
+        "SNR-COMP-022",
+        "Transforms are not applied in this build",
+        "Transforms run in the data layer (A04); until then the data is used as loaded.",
+    )
+};
+
+/// No context provider (AUDAXIS) is registered.
+pub const CONTEXT_UNAVAILABLE: CodeInfo = CodeInfo {
+    severity: Severity::Warning,
+    ..code_info(
+        "SNR-COMP-023",
+        "Context cues are not available in this build",
+        "Ticks, the reference tone, the spoken legend and earcons come from AUDAXIS (B03).",
+    )
+};
+
+const fn code_info(code: &'static str, summary: &'static str, help: &'static str) -> CodeInfo {
+    CodeInfo {
+        code,
+        severity: Severity::Error,
+        summary,
+        help,
+        rules: &[],
+        status: CodeStatus::Active,
+    }
+}
+
 /// Every `SNR-COMP` code, in ascending order.
 pub const CODES: CodeTable = CodeTable {
     area: Area::Comp,
@@ -76,6 +122,10 @@ pub const CODES: CodeTable = CodeTable {
         DUPLICATE_ANALYZER,
         CONFLICTING_ENCODER,
         DUPLICATE_SHAPER,
+        INVARIANT_BROKEN,
+        BUDGET_EXCEEDED,
+        TRANSFORMS_NOT_APPLIED,
+        CONTEXT_UNAVAILABLE,
     ],
 };
 
