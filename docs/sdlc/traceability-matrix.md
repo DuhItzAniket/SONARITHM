@@ -40,7 +40,7 @@
 | FR-047 | [08 §6](../architecture/08-interaction-and-accessibility.md#6-modalities-profiles-and-settings) | B03 | E2E, AT | Planned |
 | FR-048 | [06 §3](../architecture/06-audio-engine.md#3-render-graph) | B03, D03 | GT | Planned |
 | FR-049 | [08 §4](../architecture/08-interaction-and-accessibility.md#4-announcement-pipeline) | B03 | AT, CD | Planned |
-| FR-050 | [06 §5](../architecture/06-audio-engine.md#5-scheduler-and-transport) | A05, B01 | UT (sample-accurate dispatch), E2E | Planned |
+| FR-050 | [06 §5](../architecture/06-audio-engine.md#5-scheduler-and-transport) | A05, B01 | UT (sample-accurate dispatch), E2E | In progress: play, pause, stop, seek, loop and speed in `sonarithm_render::Graph`, with unit tests (A05-T04); UI controls in B01 |
 | FR-051 | [08 §4](../architecture/08-interaction-and-accessibility.md#4-announcement-pipeline) | B03 | AT | Planned |
 | FR-052 | [07 SONOTRACE](../architecture/07-engines.md) | B06 | IT, CD; EXP for H-09 | Planned |
 | FR-060 | [07 CURVASONA](../architecture/07-engines.md) | C03 | UT, CD (teacher pilot) | Planned |

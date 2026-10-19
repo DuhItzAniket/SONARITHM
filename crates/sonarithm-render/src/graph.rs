@@ -1,0 +1,607 @@
+// SPDX-FileCopyrightText: 2026 SONARITHM contributors
+// SPDX-License-Identifier: MIT OR Apache-2.0
+
+//! The render graph: voice pools per track, four buses, the master stage, a
+//! sample-accurate scheduler and the transport (06 §3, §5).
+//!
+//! [`Graph::process`] is the one render path for real-time playback and offline export
+//! (P4). It is real-time safe: no allocation, locks, I/O or panics, and every loop is
+//! bounded by the block size, the voice pools, the track count or a fixed cap.
+//!
+//! **Score time and device time.** The transport maps score frames (the plan's frames) to
+//! device frames: one device frame advances the score by `speed` frames. Speed changes only
+//! the mapping, never the pitch (06 §5). The score position is computed from an anchor,
+//! never accumulated, so it does not drift.
+//!
+//! **Sample-accurate dispatch.** Each block is split at every event onset inside it, and
+//! each event starts at its exact sample. The output is therefore the same for any block
+//! size.
+
+use sonarithm_core::{Db, Frames, Hz, Pan, SampleRate, Seconds};
+use sonarithm_dsp::env::{note_ramp, ramp_frames};
+use sonarithm_dsp::smooth::SMOOTHING_TIME;
+use sonarithm_dsp::{LinearSmoother, PanGains};
+
+use crate::earcon::splitmix;
+use crate::plan::{Bus, EventKind, Instrument, PlannedEvent, RenderPlan, Tone, TrackPlan};
+use crate::voice::{Start, VoicePool};
+
+#[cfg(test)]
+mod tests;
+
+/// Seek and loop crossfade: sounding voices fade out within 10 ms (06 §5).
+pub const SEEK_FADE: Seconds = Seconds(0.010);
+/// Pause, stop and "stop all audio" fade out over 20 ms (sound-design §5 proposal).
+pub const PAUSE_FADE: Seconds = Seconds(0.020);
+/// The slowest and fastest playback speeds.
+pub const SPEED_RANGE: (f64, f64) = (0.25, 4.0);
+/// Events examined per track when looking for notes still sounding at a seek target.
+const MAX_RESUME_SCAN: usize = 256;
+/// Voices for live cues (06 §3: "Live cue voices", routed to the data bus).
+const CUE_VOICES: usize = 4;
+
+/// A transport or mixer command from the control thread (06 §4). Fixed size and `Copy`, so
+/// it travels through a wait-free ring.
+#[derive(Clone, Copy, Debug, PartialEq)]
+#[non_exhaustive]
+pub enum Command {
+    /// Start or resume playback at the current position.
+    Play,
+    /// Pause at the current position, fading out sounding voices.
+    Pause,
+    /// Pause and return to the start.
+    Stop,
+    /// Move the playhead to a score frame, crossfading.
+    Seek(Frames),
+    /// Change the playback speed, limited to [`SPEED_RANGE`]; pitch is unchanged.
+    SetSpeed(f64),
+    /// Loop a score range, or stop looping with `None`.
+    SetLoop(Option<LoopRange>),
+    /// Set a bus or the master level, smoothed.
+    SetGain(GainTarget, Db),
+    /// Play a one-shot cue now (the point cue of sound-design §3.2).
+    Cue(Cue),
+    /// Fade out everything, including cues, and pause ("stop all audio", A11Y-15).
+    StopAll,
+}
+
+/// A loop range in score frames, `start < end`.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub struct LoopRange {
+    /// The first frame of the loop.
+    pub start: Frames,
+    /// The frame at which playback wraps to `start`.
+    pub end: Frames,
+}
+
+/// What a [`Command::SetGain`] changes.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum GainTarget {
+    /// One bus.
+    Bus(Bus),
+    /// The master: the sonification volume, independent of the system volume (A11Y-15).
+    Master,
+}
+
+/// A one-shot cue.
+#[derive(Clone, Copy, Debug, PartialEq)]
+pub struct Cue {
+    /// Pitch.
+    pub frequency: Hz,
+    /// Level relative to the data bus.
+    pub gain: Db,
+    /// Stereo position.
+    pub pan: Pan,
+    /// Timbre.
+    pub instrument: Instrument,
+    /// Length including ramps (sound-design §3.2 proposes 120 ms).
+    pub duration: Seconds,
+}
+
+/// The default level of each bus relative to the data bus (sound-design §6.2, proposals):
+/// data 0 dB, context −10 dB, earcons −6 dB, monitoring −12 dB.
+#[must_use]
+pub fn default_bus_level(bus: Bus) -> Db {
+    Db(match bus {
+        Bus::Data => 0.0,
+        Bus::Context => -10.0,
+        Bus::Earcon => -6.0,
+        Bus::Monitor => -12.0,
+    })
+}
+
+/// Counters and levels published after each block.
+#[derive(Clone, Copy, Debug, Default, PartialEq)]
+#[non_exhaustive]
+pub struct GraphStats {
+    /// The score frame of the next frame to play.
+    pub position: Frames,
+    /// Whether the transport is playing.
+    pub playing: bool,
+    /// The playback speed.
+    pub speed: f64,
+    /// Events started since the graph was built.
+    pub dispatched: u64,
+    /// Voices stolen because a pool was full.
+    pub stolen: u64,
+    /// Voices sounding at the end of the block.
+    pub active_voices: u32,
+    /// Peak absolute sample of the last block, left and right.
+    pub peak: [f32; 2],
+    /// Frames rendered since the graph was built.
+    pub rendered: u64,
+}
+
+/// Graph settings fixed at construction.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[non_exhaustive]
+pub struct GraphConfig {
+    /// The largest block, in frames, processed at once; larger blocks are split.
+    pub max_block: usize,
+}
+
+impl GraphConfig {
+    /// Blocks of at most `max_block` frames (at least 1).
+    #[must_use]
+    pub fn new(max_block: usize) -> Self {
+        Self {
+            max_block: max_block.max(1),
+        }
+    }
+}
+
+struct TrackState {
+    /// Index of the next event to dispatch.
+    next: usize,
+    pool: VoicePool,
+}
+
+type Stereo = [Vec<f32>; 2];
+
+/// The render graph for one plan.
+pub struct Graph {
+    plan: RenderPlan,
+    rate: SampleRate,
+    max_block: usize,
+    tracks: Vec<TrackState>,
+    cue_track: TrackPlan,
+    cues: VoicePool,
+    buses: [Stereo; 4],
+    master: Stereo,
+    bus_gains: [LinearSmoother; 4],
+    master_gain: LinearSmoother,
+    playing: bool,
+    /// Score frame at the anchor.
+    anchor: f64,
+    /// Device frames since the anchor.
+    since_anchor: u64,
+    speed: f64,
+    looping: Option<LoopRange>,
+    age: u64,
+    stats: GraphStats,
+}
+
+impl Graph {
+    /// A stopped graph at the start of `plan`. Allocates every voice and buffer: call it
+    /// off the audio thread.
+    #[must_use]
+    pub fn new(plan: RenderPlan, config: GraphConfig) -> Self {
+        let rate = plan.sample_rate;
+        let max_block = config.max_block;
+        let stereo = || [vec![0.0; max_block], vec![0.0; max_block]];
+        let tracks = plan
+            .tracks
+            .iter()
+            .map(|track| TrackState {
+                next: 0,
+                pool: VoicePool::new(track.voices),
+            })
+            .collect();
+        let level = |bus: Bus| {
+            LinearSmoother::new(
+                to_f32(default_bus_level(bus).to_gain()),
+                SMOOTHING_TIME,
+                rate,
+            )
+        };
+        Self {
+            cue_track: TrackPlan {
+                id: sonarithm_core::TrackId::new("cue"),
+                bus: Bus::Data,
+                gain: 1.0,
+                instrument: Instrument::default(),
+                polyphony: CUE_VOICES,
+                voices: CUE_VOICES,
+                longest: 0,
+                noise_seed: 0,
+                events: Vec::new(),
+                breakpoints: Vec::new(),
+            },
+            cues: VoicePool::new(CUE_VOICES),
+            buses: [stereo(), stereo(), stereo(), stereo()],
+            master: stereo(),
+            bus_gains: Bus::ALL.map(level),
+            master_gain: LinearSmoother::new(1.0, SMOOTHING_TIME, rate),
+            plan,
+            rate,
+            max_block,
+            tracks,
+            playing: false,
+            anchor: 0.0,
+            since_anchor: 0,
+            speed: 1.0,
+            looping: None,
+            age: 0,
+            stats: GraphStats {
+                speed: 1.0,
+                ..GraphStats::default()
+            },
+        }
+    }
+
+    /// The plan being played.
+    #[must_use]
+    pub fn plan(&self) -> &RenderPlan {
+        &self.plan
+    }
+
+    /// Counters and levels after the last block.
+    #[must_use]
+    pub fn stats(&self) -> GraphStats {
+        self.stats
+    }
+
+    /// The score position in frames (fractional when the speed is not 1).
+    fn position(&self) -> f64 {
+        #[expect(clippy::cast_precision_loss, reason = "frame counts below 2^53")]
+        let since = self.since_anchor as f64;
+        self.anchor + since * self.speed
+    }
+
+    fn reanchor(&mut self, score_frame: f64) {
+        self.anchor = score_frame;
+        self.since_anchor = 0;
+    }
+
+    /// Applies a command at the next frame. RT-safe.
+    pub fn apply(&mut self, command: Command) {
+        match command {
+            Command::Play => {
+                if !self.playing {
+                    self.playing = true;
+                    self.resume();
+                }
+            }
+            Command::Pause => self.halt(),
+            Command::Stop => {
+                self.halt();
+                self.reanchor(0.0);
+            }
+            Command::StopAll => {
+                self.halt();
+                let frames = ramp_frames(PAUSE_FADE, self.rate);
+                self.cues
+                    .iter_mut()
+                    .for_each(|voice| voice.fade_out(frames));
+            }
+            Command::Seek(frame) => self.seek(frame.0),
+            Command::SetSpeed(speed) => {
+                if speed.is_finite() {
+                    let position = self.position();
+                    self.speed = speed.clamp(SPEED_RANGE.0, SPEED_RANGE.1);
+                    self.reanchor(position);
+                }
+            }
+            Command::SetLoop(range) => {
+                self.looping = range.filter(|r| r.start < r.end);
+            }
+            Command::SetGain(target, level) => {
+                let gain = to_f32(level.to_gain());
+                match target {
+                    GainTarget::Bus(bus) => {
+                        if let Some(smoother) = self.bus_gains.get_mut(bus.index()) {
+                            smoother.set_target(gain);
+                        }
+                    }
+                    GainTarget::Master => self.master_gain.set_target(gain),
+                }
+            }
+            Command::Cue(cue) => self.cue(&cue),
+        }
+    }
+
+    fn halt(&mut self) {
+        let frames = ramp_frames(PAUSE_FADE, self.rate);
+        self.fade_all(frames);
+        self.playing = false;
+    }
+
+    fn fade_all(&mut self, frames: u32) {
+        for track in &mut self.tracks {
+            track
+                .pool
+                .iter_mut()
+                .for_each(|voice| voice.fade_out(frames));
+        }
+    }
+
+    fn seek(&mut self, frame: u64) {
+        let frame = frame.min(self.plan.length.0);
+        self.fade_all(ramp_frames(SEEK_FADE, self.rate));
+        #[expect(clippy::cast_precision_loss, reason = "frame counts below 2^53")]
+        self.reanchor(frame as f64);
+        if self.playing {
+            self.resume();
+        }
+    }
+
+    /// Positions every track's cursor at the playhead and restarts the events still
+    /// sounding there, part-way through, with a short fade-in.
+    fn resume(&mut self) {
+        let position = self.position();
+        #[expect(
+            clippy::cast_possible_truncation,
+            clippy::cast_sign_loss,
+            reason = "the position is a non-negative frame count below 2^53"
+        )]
+        let target = position.ceil() as u64;
+        let speed = self.speed;
+        for (state, track) in self.tracks.iter_mut().zip(&self.plan.tracks) {
+            state.next = track.events.partition_point(|event| event.start < target);
+            let earliest = target.saturating_sub(track.longest);
+            let candidates = track.events.get(..state.next).unwrap_or_default();
+            for (index, event) in candidates.iter().enumerate().rev().take(MAX_RESUME_SCAN) {
+                if event.start < earliest {
+                    break;
+                }
+                if event.end() > target {
+                    #[expect(
+                        clippy::cast_possible_truncation,
+                        clippy::cast_sign_loss,
+                        clippy::cast_precision_loss,
+                        reason = "frame counts below 2^53; speed is positive"
+                    )]
+                    let offset = ((position - event.start as f64) / speed).max(1.0) as u64;
+                    let (voice, stolen) = state.pool.allocate();
+                    voice.start(
+                        event,
+                        track,
+                        self.rate,
+                        Start {
+                            offset,
+                            speed,
+                            age: self.age,
+                            noise_seed: track.noise_seed ^ splitmix(index as u64),
+                        },
+                    );
+                    self.age += 1;
+                    self.stats.dispatched += 1;
+                    self.stats.stolen += u64::from(stolen);
+                }
+            }
+        }
+    }
+
+    fn cue(&mut self, cue: &Cue) {
+        let ramp = ramp_frames(note_ramp(cue.duration), self.rate);
+        let length = cue
+            .duration
+            .to_frames(self.rate)
+            .map_or(0, |f| f.0)
+            .max(2 * u64::from(ramp));
+        let event = PlannedEvent {
+            start: 0,
+            length,
+            source: 0,
+            kind: EventKind::Tone(Tone {
+                frequency: cue.frequency,
+                gain: to_f32(cue.gain.to_gain()),
+                pan: PanGains::constant_power(cue.pan),
+                brightness: 0.5,
+                instrument: cue.instrument,
+                ramp,
+            }),
+        };
+        let (voice, _) = self.cues.allocate();
+        voice.start(
+            &event,
+            &self.cue_track,
+            self.rate,
+            Start {
+                offset: 0,
+                speed: 1.0,
+                age: self.age,
+                noise_seed: 0,
+            },
+        );
+        self.age += 1;
+    }
+
+    /// Renders the next `out.len() / 2` frames into interleaved stereo `out`. Every event
+    /// whose start falls in the block starts at its exact sample.
+    ///
+    /// # Real-time safety
+    ///
+    /// RT-safe: no allocation, locks, I/O or panics. Blocks longer than the configured
+    /// maximum are processed in pieces.
+    pub fn process(&mut self, out: &mut [f32]) {
+        let (frames, rest) = out.as_chunks_mut::<2>();
+        rest.fill(0.0);
+        let mut peak = [0.0_f32; 2];
+        for chunk in frames.chunks_mut(self.max_block) {
+            self.process_block(chunk, &mut peak);
+        }
+        let active: usize =
+            self.tracks.iter().map(|t| t.pool.active()).sum::<usize>() + self.cues.active();
+        self.stats.peak = peak;
+        self.stats.active_voices = u32::try_from(active).unwrap_or(u32::MAX);
+        self.stats.playing = self.playing;
+        self.stats.speed = self.speed;
+        #[expect(
+            clippy::cast_possible_truncation,
+            clippy::cast_sign_loss,
+            reason = "the position is a non-negative frame count below 2^53"
+        )]
+        let position = self.position().floor() as u64;
+        self.stats.position = Frames(position);
+    }
+
+    fn process_block(&mut self, out: &mut [[f32; 2]], peak: &mut [f32; 2]) {
+        let frames = out.len();
+        for [left, right] in &mut self.buses {
+            left.iter_mut().take(frames).for_each(|s| *s = 0.0);
+            right.iter_mut().take(frames).for_each(|s| *s = 0.0);
+        }
+        let mut seg = 0;
+        while seg < frames {
+            if self.playing {
+                self.wrap_loop();
+                self.dispatch();
+            }
+            let end = seg
+                .saturating_add(self.frames_to_boundary())
+                .min(frames)
+                .max(seg + 1);
+            self.render_voices(seg, end);
+            if self.playing {
+                self.since_anchor += (end - seg) as u64;
+                if self.looping.is_none() && self.position() >= self.length() {
+                    self.playing = false;
+                }
+            }
+            seg = end;
+        }
+        self.mix(out, peak);
+        self.stats.rendered += frames as u64;
+    }
+
+    #[expect(clippy::cast_precision_loss, reason = "frame counts below 2^53")]
+    fn length(&self) -> f64 {
+        self.plan.length.0 as f64
+    }
+
+    fn wrap_loop(&mut self) {
+        if let Some(range) = self.looping {
+            #[expect(clippy::cast_precision_loss, reason = "frame counts below 2^53")]
+            if self.position() >= range.end.0 as f64 {
+                self.seek(range.start.0);
+            }
+        }
+    }
+
+    /// Starts every event due at the current position. Bounded: each event is started once.
+    fn dispatch(&mut self) {
+        let position = self.position();
+        for (state, track) in self.tracks.iter_mut().zip(&self.plan.tracks) {
+            while let Some(event) = track.events.get(state.next) {
+                #[expect(clippy::cast_precision_loss, reason = "frame counts below 2^53")]
+                if event.start as f64 > position {
+                    break;
+                }
+                let (voice, stolen) = state.pool.allocate();
+                voice.start(
+                    event,
+                    track,
+                    self.rate,
+                    Start {
+                        offset: 0,
+                        speed: self.speed,
+                        age: self.age,
+                        noise_seed: track.noise_seed ^ splitmix(state.next as u64),
+                    },
+                );
+                self.age += 1;
+                self.stats.dispatched += 1;
+                self.stats.stolen += u64::from(stolen);
+                state.next += 1;
+            }
+        }
+    }
+
+    /// Device frames until the next event onset or loop end (at least 1), when playing.
+    fn frames_to_boundary(&self) -> usize {
+        if !self.playing {
+            return usize::MAX;
+        }
+        let position = self.position();
+        let until = |frame: f64| -> usize {
+            #[expect(
+                clippy::cast_possible_truncation,
+                clippy::cast_sign_loss,
+                reason = "a non-negative, finite frame distance, saturating"
+            )]
+            let frames = ((frame - position) / self.speed).ceil().max(1.0) as usize;
+            frames
+        };
+        let mut nearest = usize::MAX;
+        for (state, track) in self.tracks.iter().zip(&self.plan.tracks) {
+            if let Some(event) = track.events.get(state.next) {
+                #[expect(clippy::cast_precision_loss, reason = "frame counts below 2^53")]
+                let start = event.start as f64;
+                nearest = nearest.min(until(start));
+            }
+        }
+        if let Some(range) = self.looping {
+            #[expect(clippy::cast_precision_loss, reason = "frame counts below 2^53")]
+            let end = range.end.0 as f64;
+            nearest = nearest.min(until(end));
+        }
+        nearest
+    }
+
+    fn render_voices(&mut self, from: usize, to: usize) {
+        for (state, track) in self.tracks.iter_mut().zip(&self.plan.tracks) {
+            let Some([left, right]) = self.buses.get_mut(track.bus.index()) else {
+                continue;
+            };
+            let (Some(left), Some(right)) = (left.get_mut(from..to), right.get_mut(from..to))
+            else {
+                continue;
+            };
+            for voice in state.pool.iter_mut().filter(|voice| voice.is_active()) {
+                voice.render(left, right, track, self.rate);
+            }
+        }
+        // Live cues play on the data bus (06 §3).
+        let [[left, right], ..] = &mut self.buses;
+        if let (Some(left), Some(right)) = (left.get_mut(from..to), right.get_mut(from..to)) {
+            for voice in self.cues.iter_mut().filter(|voice| voice.is_active()) {
+                voice.render(left, right, &self.cue_track, self.rate);
+            }
+        }
+    }
+
+    fn mix(&mut self, out: &mut [[f32; 2]], peak: &mut [f32; 2]) {
+        let [master_left, master_right] = &mut self.master;
+        for (left, right) in master_left.iter_mut().zip(master_right.iter_mut()) {
+            *left = 0.0;
+            *right = 0.0;
+        }
+        for ([left, right], gain) in self.buses.iter().zip(&mut self.bus_gains) {
+            let bus = left.iter().zip(right.iter()).take(out.len());
+            for ((ml, mr), (l, r)) in master_left.iter_mut().zip(master_right.iter_mut()).zip(bus) {
+                let g = gain.next_value();
+                *ml += l * g;
+                *mr += r * g;
+            }
+        }
+        for (frame, (l, r)) in out
+            .iter_mut()
+            .zip(master_left.iter().zip(master_right.iter()))
+        {
+            let g = self.master_gain.next_value();
+            let (l, r) = (l * g, r * g);
+            *frame = [l, r];
+            peak[0] = peak[0].max(l.abs());
+            peak[1] = peak[1].max(r.abs());
+        }
+    }
+}
+
+#[expect(
+    clippy::cast_possible_truncation,
+    reason = "gains are f32 (coding-standards §10)"
+)]
+fn to_f32(x: f64) -> f32 {
+    x as f32
+}

@@ -110,6 +110,8 @@ The contract has two halves (F-036):
 - **Loop.** Loop points are wrapped seamlessly with a short crossfade.
 - **Transport state machine.** The control thread holds the authoritative state: `Stopped → Playing ⇄ Paused`, `Seeking`, `Exporting`. The UI mirrors it with an XState machine and never assumes a transition succeeded until the authoritative state arrives.
 
+**Implemented in A05** (`sonarithm_render::Graph`, A05-T04). The score position is an anchor plus a count of device frames times the speed, so it never accumulates rounding. A seek, loop wrap or resume restarts the events still sounding at the target part-way through, with a 5 ms fade-in, while the outgoing voices fade out over 10 ms. The search for such events is bounded by the track's longest event and by a cap of 256 events per track. Pause and "stop all audio" fade out over 20 ms (sound-design §5). Glides update pitch, gain, pan and brightness every 32 frames of the voice's own clock, so the output is bit-identical for any block size.
+
 ## 6. Backends
 
 ```rust
