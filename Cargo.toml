@@ -98,7 +98,11 @@ toml = { version = "1.1.8", default-features = false, features = ["std", "parse"
 insta = "1.43.0"
 # Builds XLSX and ODS packages in sonarithm-data tests; the version calamine already uses.
 zip = { version = "9.0.5", default-features = false }
-proptest = "1.9.0"
+# Without the default `fork` and `timeout` features, which pull in rusty-fork and tempfile.
+# `test-support` features make proptest an optional normal dependency of library crates,
+# and cargo metadata unifies dev-dependency features, so check-deps would see
+# core -> proptest -> tempfile when another crate enables core/test-support (#121).
+proptest = { version = "1.9.0", default-features = false, features = ["std", "bit-set"] }
 
 # Debug info is most of a `target/` directory's size (PDB files on Windows), and every
 # worktree keeps its own `target/`. Line tables keep file:line backtraces for our crates;

@@ -15,7 +15,10 @@ sonarithm-spec.workspace = true
 
 [dev-dependencies]
 insta.workspace = true
+proptest.workspace = true
 serde_json.workspace = true
+# Core's Score strategies (testing-strategy §3); allowed by check-deps since #121.
+sonarithm-core = { workspace = true, features = ["test-support"] }
 
 [lints]
 workspace = true
