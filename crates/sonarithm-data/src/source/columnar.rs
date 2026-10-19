@@ -226,6 +226,10 @@ fn stream_messages(bytes: &[u8]) -> Result<Vec<Message<'_>>, String> {
 }
 
 /// Reads Parquet. The row count is checked against the limits before any data is decoded.
+///
+/// The footer and every page header are walked first ([`thrift`](super::thrift)): parquet
+/// skips Thrift fields it does not know without bounding their declared sizes, and a few
+/// fuzzed bytes kept it busy for seconds (#146).
 pub(super) fn read_parquet(
     bytes: &[u8],
     name: &str,
@@ -235,9 +239,23 @@ pub(super) fn read_parquet(
         format: Format::Parquet,
         reason: source.to_string(),
     };
+    let malformed = |reason: String| DataError::Unreadable {
+        format: Format::Parquet,
+        reason,
+    };
     let (schema, batches) = super::contained(Format::Parquet, || {
+        super::thrift::check_footer(bytes).map_err(malformed)?;
         let builder = ParquetRecordBatchReaderBuilder::try_new(Bytes::copy_from_slice(bytes))
             .map_err(unreadable)?;
+        for row_group in builder.metadata().row_groups() {
+            for column in row_group.columns() {
+                let start = column
+                    .dictionary_page_offset()
+                    .unwrap_or_else(|| column.data_page_offset());
+                super::thrift::check_column_chunk(bytes, start, column.compressed_size())
+                    .map_err(malformed)?;
+            }
+        }
         let rows = u64::try_from(builder.metadata().file_metadata().num_rows()).unwrap_or(0);
         let schema = Arc::clone(builder.schema());
         options.limits.check_shape(rows, schema.fields().len())?;
@@ -475,6 +493,29 @@ mod tests {
         let bytes = include_bytes!("../../tests/corpus/fuzz/ipc-empty-provenance-dictionary.arrow");
         let loaded = read_bytes(bytes, Format::Arrow, "x", &ReadOptions::default()).unwrap();
         assert!(loaded.bundle.primary().is_some());
+        // A Parquet page header whose statistics hold an unknown field, a list declaring
+        // 268,434,391 UUIDs, in a 1.8 KB file. parquet 60 spent about 12 s skipping it (#146).
+        // The header also runs past its column chunk, where the Thrift walk stops.
+        let bytes = include_bytes!("../../tests/corpus/fuzz/parquet-slow-page-header.parquet");
+        let err = read_bytes(bytes, Format::Parquet, "x", &ReadOptions::default()).unwrap_err();
+        assert_eq!(err.to_diagnostic().code.as_str(), "SNR-DATA-001", "{err}");
+        assert!(
+            err.to_string().contains("page header is malformed"),
+            "{err}"
+        );
+    }
+
+    #[test]
+    fn parquet_written_by_pyarrow_passes_the_thrift_walk() {
+        // The fuzz seeds were written by pyarrow (Snappy and zstd); their first byte selects
+        // the format for the fuzz target.
+        for seed in [
+            include_bytes!("../../fuzz/corpus/columnar_read/seed-parquet-snappy").as_slice(),
+            include_bytes!("../../fuzz/corpus/columnar_read/seed-parquet-zstd").as_slice(),
+        ] {
+            let loaded = read_bytes(&seed[1..], Format::Parquet, "x", &ReadOptions::default());
+            assert!(loaded.is_ok(), "{:?}", loaded.err());
+        }
     }
 
     #[test]
