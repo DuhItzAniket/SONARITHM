@@ -14,6 +14,10 @@
 *.css  diff=css
 *.html diff=html
 
+# Data-layer test corpora keep their exact bytes: BOMs, CRLF line endings and legacy
+# encodings are what the tests exercise.
+crates/sonarithm-data/tests/corpus/** -text
+
 # --- Binary files (no line-ending conversion, no textual diff) -------------
 # Audio
 *.wav     binary

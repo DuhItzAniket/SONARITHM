@@ -8,6 +8,9 @@
 //! `wasm32-unknown-unknown`.
 
 mod columnar;
+mod columns;
+mod csv;
+mod json;
 
 use sonarithm_core::{Diagnostics, TableId};
 
@@ -16,6 +19,8 @@ use crate::error::{DataError, Limit};
 use crate::meta::{FieldMeta, InvalidMetadata};
 use crate::table::Table;
 
+pub use self::csv::CsvOptions;
+pub use self::json::JsonOptions;
 pub use columnar::{write_ipc, write_parquet};
 
 /// Size limits for one source, so that a hostile or mistaken input fails cleanly instead
@@ -95,6 +100,47 @@ pub struct ReadOptions {
     pub bundle: BundleId,
     /// The ID of the first table; further tables (spreadsheet sheets) count up from it.
     pub table: TableId,
+    /// Options for CSV and TSV.
+    pub csv: CsvOptions,
+    /// Options for JSON and NDJSON.
+    pub json: JsonOptions,
+}
+
+impl ReadOptions {
+    /// The default options: default limits, bundle and table ID 0.
+    #[must_use]
+    pub fn new() -> Self {
+        Self::default()
+    }
+
+    /// The same options with other limits.
+    #[must_use]
+    pub fn with_limits(mut self, limits: Limits) -> Self {
+        self.limits = limits;
+        self
+    }
+
+    /// The same options with other IDs for the bundle and its first table.
+    #[must_use]
+    pub fn with_ids(mut self, bundle: BundleId, table: TableId) -> Self {
+        self.bundle = bundle;
+        self.table = table;
+        self
+    }
+
+    /// The same options with other CSV options.
+    #[must_use]
+    pub fn with_csv(mut self, csv: CsvOptions) -> Self {
+        self.csv = csv;
+        self
+    }
+
+    /// The same options with other JSON options.
+    #[must_use]
+    pub fn with_json(mut self, json: JsonOptions) -> Self {
+        self.json = json;
+        self
+    }
 }
 
 /// A source's result: the bundle and what the source assumed or ignored along the way.
@@ -124,12 +170,20 @@ pub fn read_bytes(
 ) -> Result<Loaded, DataError> {
     options.limits.check_bytes(bytes.len())?;
     let name = table_name(locator);
-    let table = match format {
-        Format::Arrow => columnar::read_ipc(bytes, &name, format, options)?,
-        Format::Parquet => columnar::read_parquet(bytes, &name, options)?,
+    let (table, diagnostics) = match format {
+        Format::Csv | Format::Tsv => self::csv::read_csv(bytes, &name, format, options)?,
+        Format::Json | Format::Ndjson => self::json::read_json(bytes, &name, format, options)?,
+        Format::Arrow => (
+            columnar::read_ipc(bytes, &name, format, options)?,
+            Diagnostics::new(),
+        ),
+        Format::Parquet => (
+            columnar::read_parquet(bytes, &name, options)?,
+            Diagnostics::new(),
+        ),
         other => return Err(DataError::UnsupportedFormat { format: other }),
     };
-    Ok(finish(table, format, locator, options))
+    Ok(finish(table, diagnostics, format, locator, options))
 }
 
 /// Reads a file; the format comes from `format` or, if `None`, from the file extension.
@@ -182,8 +236,13 @@ fn table_name(locator: &str) -> String {
 
 /// Common post-processing: reads each field's metadata and reports values that were
 /// ignored, then wraps the table in a bundle.
-fn finish(table: Table, format: Format, locator: &str, options: &ReadOptions) -> Loaded {
-    let mut diagnostics = Diagnostics::new();
+fn finish(
+    table: Table,
+    mut diagnostics: Diagnostics,
+    format: Format,
+    locator: &str,
+    options: &ReadOptions,
+) -> Loaded {
     for field in table.schema().fields() {
         let (_, invalid) = FieldMeta::read(field);
         diagnostics.extend(invalid.iter().map(InvalidMetadata::to_diagnostic));

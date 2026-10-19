@@ -1,0 +1,6 @@
+date,temperature (°C),station
+2024-01-01,3.5,north
+2024-01-02,4.25,north
+2024-01-03,-1.0,south
+2024-01-04,0.0,south
+2024-01-05,2.75,north

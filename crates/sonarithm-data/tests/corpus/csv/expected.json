@@ -1,0 +1,371 @@
+{
+  "01_plain.csv": {
+    "rows": 5,
+    "fields": {
+      "date": {
+        "storage": "date"
+      },
+      "temperature (°C)": {
+        "storage": "float"
+      },
+      "station": {
+        "storage": "text"
+      }
+    },
+    "codes": [
+      "SNR-DATA-010"
+    ]
+  },
+  "02_semicolon_decimal_comma.csv": {
+    "rows": 4,
+    "fields": {
+      "Datum": {
+        "storage": "date"
+      },
+      "Temperatur": {
+        "storage": "float"
+      },
+      "Ort": {
+        "storage": "text"
+      }
+    },
+    "options": {
+      "decimalComma": true
+    },
+    "codes": [
+      "SNR-DATA-010"
+    ]
+  },
+  "03_bom_crlf.csv": {
+    "rows": 3,
+    "fields": {
+      "id": {
+        "storage": "text"
+      },
+      "value": {
+        "storage": "int"
+      }
+    },
+    "codes": [
+      "SNR-DATA-010"
+    ]
+  },
+  "04_windows1252.csv": {
+    "rows": 4,
+    "fields": {
+      "city": {
+        "storage": "text"
+      },
+      "population": {
+        "storage": "int"
+      }
+    },
+    "codes": [
+      "SNR-DATA-010",
+      "SNR-DATA-011"
+    ]
+  },
+  "05_quoted_thousands.csv": {
+    "rows": 3,
+    "fields": {
+      "country": {
+        "storage": "text"
+      },
+      "gdp_musd": {
+        "storage": "int"
+      },
+      "share": {
+        "storage": "float"
+      }
+    },
+    "codes": [
+      "SNR-DATA-010"
+    ]
+  },
+  "06_missing_tokens.csv": {
+    "rows": 7,
+    "fields": {
+      "time": {
+        "storage": "datetime"
+      },
+      "reading": {
+        "storage": "float"
+      },
+      "sensor": {
+        "storage": "text"
+      }
+    },
+    "codes": [
+      "SNR-DATA-010"
+    ]
+  },
+  "07_nan_inf.csv": {
+    "rows": 5,
+    "fields": {
+      "x": {
+        "storage": "int"
+      },
+      "y": {
+        "storage": "float"
+      }
+    },
+    "codes": [
+      "SNR-DATA-010",
+      "SNR-DATA-033",
+      "SNR-DATA-034"
+    ]
+  },
+  "08_preamble.csv": {
+    "rows": 3,
+    "fields": {
+      "month_start": {
+        "storage": "date"
+      },
+      "rainfall (mm)": {
+        "storage": "float"
+      }
+    },
+    "codes": [
+      "SNR-DATA-010",
+      "SNR-DATA-015",
+      "SNR-DATA-037"
+    ]
+  },
+  "09_ragged.csv": {
+    "rows": 4,
+    "fields": {
+      "a": {
+        "storage": "int"
+      },
+      "b": {
+        "storage": "int"
+      },
+      "c": {
+        "storage": "int"
+      }
+    },
+    "codes": [
+      "SNR-DATA-010",
+      "SNR-DATA-012"
+    ]
+  },
+  "10_tabs.csv": {
+    "rows": 3,
+    "fields": {
+      "name": {
+        "storage": "text"
+      },
+      "score": {
+        "storage": "float"
+      },
+      "group": {
+        "storage": "text"
+      }
+    },
+    "codes": [
+      "SNR-DATA-010"
+    ]
+  },
+  "11_pipe.csv": {
+    "rows": 4,
+    "fields": {
+      "year": {
+        "storage": "int"
+      },
+      "sales": {
+        "storage": "int"
+      },
+      "region": {
+        "storage": "text"
+      }
+    },
+    "codes": [
+      "SNR-DATA-010"
+    ]
+  },
+  "12_no_header.csv": {
+    "rows": 4,
+    "fields": {
+      "column_1": {
+        "storage": "float"
+      },
+      "column_2": {
+        "storage": "int"
+      }
+    },
+    "codes": [
+      "SNR-DATA-010"
+    ]
+  },
+  "13_currency_percent.csv": {
+    "rows": 3,
+    "fields": {
+      "product": {
+        "storage": "text"
+      },
+      "price": {
+        "storage": "float"
+      },
+      "discount": {
+        "storage": "int"
+      }
+    },
+    "codes": [
+      "SNR-DATA-010",
+      "SNR-DATA-037"
+    ]
+  },
+  "14_datetime_offsets.csv": {
+    "rows": 3,
+    "fields": {
+      "timestamp": {
+        "storage": "instant"
+      },
+      "level": {
+        "storage": "float"
+      }
+    },
+    "codes": [
+      "SNR-DATA-010"
+    ]
+  },
+  "15_us_dates.csv": {
+    "rows": 3,
+    "fields": {
+      "date": {
+        "storage": "date"
+      },
+      "visitors": {
+        "storage": "int"
+      }
+    },
+    "codes": [
+      "SNR-DATA-010"
+    ]
+  },
+  "16_date_format_option.csv": {
+    "rows": 3,
+    "fields": {
+      "date": {
+        "storage": "date"
+      },
+      "value": {
+        "storage": "int"
+      }
+    },
+    "options": {
+      "dateFormat": "%d %b %Y"
+    },
+    "codes": [
+      "SNR-DATA-010"
+    ]
+  },
+  "17_leading_zero_ids.csv": {
+    "rows": 3,
+    "fields": {
+      "zip": {
+        "storage": "text"
+      },
+      "count": {
+        "storage": "int"
+      }
+    },
+    "codes": [
+      "SNR-DATA-010"
+    ]
+  },
+  "18_booleans.csv": {
+    "rows": 4,
+    "fields": {
+      "step": {
+        "storage": "int"
+      },
+      "active": {
+        "storage": "bool"
+      }
+    },
+    "codes": [
+      "SNR-DATA-010"
+    ]
+  },
+  "19_mixed_junk.csv": {
+    "rows": 40,
+    "fields": {
+      "t": {
+        "storage": "int"
+      },
+      "value": {
+        "storage": "float"
+      }
+    },
+    "codes": [
+      "SNR-DATA-010",
+      "SNR-DATA-035"
+    ]
+  },
+  "20_unicode_header.csv": {
+    "rows": 2,
+    "fields": {
+      "Höhe (m)": {
+        "storage": "float"
+      },
+      "column_2": {
+        "storage": "text"
+      },
+      "Höhe (m)_2": {
+        "storage": "int"
+      },
+      "Name": {
+        "storage": "text"
+      }
+    },
+    "codes": [
+      "SNR-DATA-010",
+      "SNR-DATA-013",
+      "SNR-DATA-037"
+    ]
+  },
+  "21_year_column.csv": {
+    "rows": 5,
+    "fields": {
+      "year": {
+        "storage": "int"
+      },
+      "co2_ppm": {
+        "storage": "float"
+      }
+    },
+    "codes": [
+      "SNR-DATA-010"
+    ]
+  },
+  "22_excel_errors.csv": {
+    "rows": 3,
+    "fields": {
+      "item": {
+        "storage": "text"
+      },
+      "ratio": {
+        "storage": "float"
+      }
+    },
+    "codes": [
+      "SNR-DATA-010",
+      "SNR-DATA-024"
+    ]
+  },
+  "23_many_values.csv": {
+    "rows": 15,
+    "fields": {
+      "reading_id": {
+        "storage": "text"
+      },
+      "wind_speed (m/s)": {
+        "storage": "int"
+      }
+    },
+    "codes": [
+      "SNR-DATA-010"
+    ]
+  }
+}

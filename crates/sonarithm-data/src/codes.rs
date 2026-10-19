@@ -65,6 +65,126 @@ code!(
 );
 
 code!(
+    /// A source option has a value that cannot be used.
+    INVALID_OPTION, "SNR-DATA-006", Error,
+    "A source option is invalid",
+    "Fix the option in `data.source.options`; the message says what a valid value looks like.",
+    []
+);
+
+code!(
+    /// The CSV dialect that was detected.
+    CSV_DIALECT, "SNR-DATA-010", Info,
+    "The delimiter and header row were detected",
+    "Set `delimiter` and `header` in the source options if the guess is wrong.",
+    []
+);
+
+code!(
+    /// Text was converted to UTF-8 from another encoding.
+    ENCODING_CONVERTED, "SNR-DATA-011", Info,
+    "The text encoding was detected and converted",
+    "Set `encoding` (a WHATWG label such as windows-1252) if the letters look wrong.",
+    []
+);
+
+code!(
+    /// Rows have a different number of fields than the header.
+    RAGGED_ROWS, "SNR-DATA-012", Warning,
+    "Some rows have the wrong number of fields",
+    "Check the delimiter and the quoting of values that contain it.",
+    []
+);
+
+code!(
+    /// Blank or repeated field names were replaced.
+    COLUMN_NAMES_CHANGED, "SNR-DATA-013", Info,
+    "Blank or repeated field names were replaced",
+    "Give every column a unique name in the header row.",
+    []
+);
+
+code!(
+    /// Bytes that are not valid in the encoding were replaced.
+    INVALID_BYTES, "SNR-DATA-014", Warning,
+    "Invalid bytes were replaced",
+    "Check the file's encoding and set `encoding` if it was guessed wrong.",
+    []
+);
+
+code!(
+    /// Lines above the header were skipped.
+    PREAMBLE_SKIPPED, "SNR-DATA-015", Info,
+    "Lines above the header were skipped",
+    "Remove title lines above the header, or set `header` explicitly.",
+    []
+);
+
+code!(
+    /// The JSON shape that was read.
+    JSON_SHAPE, "SNR-DATA-020", Info,
+    "The JSON shape was detected",
+    "Set `pointer` in the source options if the wrong part of the document was read.",
+    []
+);
+
+code!(
+    /// The JSON at the pointer is not a table.
+    NOT_TABULAR, "SNR-DATA-021", Error,
+    "The JSON is not a table",
+    "Point `pointer` at an array of records, an array of rows or an object of equal-length arrays.",
+    []
+);
+
+code!(
+    /// Spreadsheet error values became missing values.
+    CELL_ERRORS, "SNR-DATA-024", Warning,
+    "Spreadsheet error values became missing values",
+    "Fix the formulas that produce errors such as #DIV/0! in the source workbook.",
+    []
+);
+
+code!(
+    /// NaN values became missing values.
+    NAN_TO_NULL, "SNR-DATA-033", Info,
+    "NaN values became missing values",
+    "None needed: NaN is treated as missing (03 §5). Missing values are silent by default.",
+    []
+);
+
+code!(
+    /// Infinite values were kept.
+    INFINITE_VALUES, "SNR-DATA-034", Warning,
+    "Infinite values were kept",
+    "Check whether the infinities are real; they sound at the range edge with an off-scale cue (03 §5).",
+    ["A11Y-28"]
+);
+
+code!(
+    /// Values that do not fit the column type became missing values.
+    UNPARSED_VALUES, "SNR-DATA-035", Warning,
+    "Some values do not fit the field type and became missing",
+    "Fix the values the message points to, or declare the field's type in `data.fields`.",
+    []
+);
+
+code!(
+    /// Numeric dates could be day-first or month-first.
+    AMBIGUOUS_DATES, "SNR-DATA-036", Warning,
+    "Dates could be day-first or month-first, so they stayed text",
+    "Set `dateFormat` in the source options, for example `%d/%m/%Y`.",
+    []
+);
+
+code!(
+    /// A unit was read from values or a field name.
+    UNIT_FROM_TEXT, "SNR-DATA-037", Info,
+    "A unit was read from the values or the field name",
+    "Declare the unit in `data.fields` if it is wrong.",
+    []
+);
+
+code!(
     /// A `snr.*` field metadata value cannot be read and was ignored.
     INVALID_METADATA, "SNR-DATA-040", Warning,
     "A field metadata value cannot be read and was ignored",
@@ -90,6 +210,21 @@ pub const CODES: CodeTable = CodeTable {
         LIMIT_EXCEEDED,
         MALFORMED_TABLE,
         WRITE_FAILED,
+        INVALID_OPTION,
+        CSV_DIALECT,
+        ENCODING_CONVERTED,
+        RAGGED_ROWS,
+        COLUMN_NAMES_CHANGED,
+        INVALID_BYTES,
+        PREAMBLE_SKIPPED,
+        JSON_SHAPE,
+        NOT_TABULAR,
+        CELL_ERRORS,
+        NAN_TO_NULL,
+        INFINITE_VALUES,
+        UNPARSED_VALUES,
+        AMBIGUOUS_DATES,
+        UNIT_FROM_TEXT,
         INVALID_METADATA,
         UNKNOWN_FIELD,
     ],
