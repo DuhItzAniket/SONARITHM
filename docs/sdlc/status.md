@@ -25,7 +25,7 @@ Status values: `Not started` · `In progress` · `In review` · `Done` · `Block
 | A | A03 | Core types, Spec v0.1, Score IR | **In progress** | ≈15% | T01 merged (#4); RFC-0001 accepted (T05); T02–T04 in review. See [A03 tasks](#a03-tasks) |
 | A | A04 | Data layer | **In progress** | ≈25% | T01–T03 in review. See [A04 tasks](#a04-tasks) |
 | A | A05 | Render engine, audio backend, export | **In progress** | ≈5% | T01, T03 and T04 in review. See [A05 tasks](#a05-tasks) |
-| A | A06 | NUMISONA v1 | **In progress** | ≈5% | T01 in review (scales). See [A06 tasks](#a06-tasks) |
+| A | A06 | NUMISONA v1 | **In progress** | ≈10% | T01 (scales) and T02 (pitch spaces) in review. See [A06 tasks](#a06-tasks) |
 | A | A07 | CLI, Python, v0.1.0-alpha | Not started | 0% | |
 | A | A08 | Research instrumentation v0, ICAD 2027 | Not started | 0% | P01 without participant studies (OD-04) |
 | B | B01 | Desktop shell, IPC, app core | Not started | 0% | |
@@ -144,7 +144,7 @@ Work runs in a separate agent session through one PR per task into `crates/engin
 | Task | Status | Notes |
 |---|---|---|
 | A06-T01 Scales | In review | `linear`, `log`, `symlog`, `sqrt`, `pow`, `quantile`, `band`, `ordinal`; `domain` auto, zero-based or explicit; `nice`; monotonicity and range property tests |
-| A06-T02 Pitch spaces and range defaults (SDR-08, SDR-09) | Not started | |
+| A06-T02 Pitch spaces and range defaults (SDR-08, SDR-09) | In review | Log-frequency (default), linear, mel, ERB-rate and Bark spaces; 400–1400 Hz default range, 65–1480 Hz expanded; ranges in Hz, MIDI or cents; `sdr_08_*` and `sdr_09_*` tests |
 | A06-T03 `concepts.toml`, polarity resolution, ambiguity diagnostics (SDR-12..15) | Not started | |
 | A06-T04 `tone` and `glide` encoders, redundant duration and taps (A11Y-13), categorical timbre | Not started | |
 | A06-T05 Psychophysical scaling (SDR-11) | Not started | |

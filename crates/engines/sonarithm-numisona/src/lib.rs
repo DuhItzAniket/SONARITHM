@@ -20,4 +20,5 @@
 #![forbid(unsafe_code)]
 #![deny(missing_docs)]
 
+pub mod pitch;
 pub mod scale;
