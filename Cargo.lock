@@ -989,6 +989,10 @@ dependencies = [
 [[package]]
 name = "sonarithm-dsp"
 version = "0.0.0"
+dependencies = [
+ "libm",
+ "sonarithm-core",
+]
 
 [[package]]
 name = "sonarithm-export"

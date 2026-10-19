@@ -46,7 +46,7 @@
 | FR-060 | [07 CURVASONA](../architecture/07-engines.md) | C03 | UT, CD (teacher pilot) | Planned |
 | FR-061 | [07 CURVASONA](../architecture/07-engines.md) | C03 | UT (round trip), GT | Planned |
 | FR-070 | [07 AXONOTE](../architecture/07-engines.md) | C04 | PT (never in analysis mode) | Planned |
-| FR-071 | [06 §3](../architecture/06-audio-engine.md#3-render-graph) | A05, C04 | GT | Planned |
+| FR-071 | [06 §3](../architecture/06-audio-engine.md#3-render-graph) | A05, C04 | UT (spectral), GT | In progress: sine, triangle, PolyBLEP saw and square oscillators (A05-T01, `sonarithm_dsp::osc`) |
 | FR-072 | [07 AXONOTE](../architecture/07-engines.md) | C04 | IT (MIDI round trip) | Planned |
 | FR-080 | [07 ECHOMETRIC](../architecture/07-engines.md) | C05 | UT (precision/recall) | Planned |
 | FR-081 | [10 §4](../architecture/10-ingestion-and-extraction.md#4-ai-assistance-policy) | C05 | ST (description snapshots) | Planned |
