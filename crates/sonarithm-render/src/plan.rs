@@ -132,6 +132,15 @@ impl PlanConfig {
         }
     }
 
+    /// The same configuration at another sample rate.
+    #[must_use]
+    pub fn at_rate(self, sample_rate: SampleRate) -> Self {
+        Self {
+            sample_rate,
+            ..self
+        }
+    }
+
     /// The same configuration without equal-loudness compensation.
     #[must_use]
     pub fn without_compensation(self) -> Self {
