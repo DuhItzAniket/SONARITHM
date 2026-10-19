@@ -53,6 +53,7 @@ anyhow = "1.0.100"          # apps/* and xtask only (coding-standards §4.1)
 # Apache Arrow, the data contract (ADR-0006). The split crates keep the default feature
 # set small (no prettyprint, CSV or JSON readers) and wasm32-clean.
 arrow-array = "60.0.0"
+arrow-data = "60.0.0"
 arrow-ipc = { version = "60.0.0", features = ["lz4"] }
 arrow-ord = "60.0.0"
 arrow-row = "60.0.0"

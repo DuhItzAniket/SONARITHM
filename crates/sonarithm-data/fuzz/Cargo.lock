@@ -1101,6 +1101,7 @@ name = "sonarithm-data"
 version = "0.0.0"
 dependencies = [
  "arrow-array",
+ "arrow-data",
  "arrow-ipc",
  "arrow-ord",
  "arrow-row",

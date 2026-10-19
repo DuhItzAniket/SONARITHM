@@ -10,10 +10,11 @@
 use std::io::Cursor;
 use std::sync::Arc;
 
-use arrow_array::RecordBatch;
+use arrow_array::{RecordBatch, make_array};
+use arrow_data::ArrayData;
 use arrow_ipc::reader::{FileReader, StreamReader};
 use arrow_ipc::writer::FileWriter;
-use arrow_schema::SchemaRef;
+use arrow_schema::{ArrowError, DataType, Field, Fields, Schema, SchemaRef, UnionFields};
 use bytes::Bytes;
 use parquet::arrow::ArrowWriter;
 use parquet::arrow::arrow_reader::ParquetRecordBatchReaderBuilder;
@@ -61,7 +62,116 @@ pub(super) fn read_ipc(
             )
         })
     })?;
+    columnar_table(format, options, name, &schema, batches)
+}
+
+/// Builds the table of an Arrow IPC or Parquet read, with empty time zones removed.
+fn columnar_table(
+    format: Format,
+    options: &ReadOptions,
+    name: &str,
+    schema: &SchemaRef,
+    batches: Vec<RecordBatch>,
+) -> Result<Table, DataError> {
+    let (schema, batches) = super::contained(format, || {
+        without_empty_time_zones(schema, batches).map_err(|source| DataError::Unreadable {
+            format,
+            reason: source.to_string(),
+        })
+    })?;
     Table::new(options.table, name, schema, batches)
+}
+
+/// Rewrites timestamp types whose time zone is an empty string as having none, at any
+/// depth. The Arrow format gives both the same meaning (time-zone naive) and arrow-ipc
+/// writes an empty one as none, so without this a loaded table would not survive its own
+/// IPC round trip (found by fuzzing, F-071).
+fn without_empty_time_zones(
+    schema: &SchemaRef,
+    batches: Vec<RecordBatch>,
+) -> Result<(SchemaRef, Vec<RecordBatch>), ArrowError> {
+    let fields = schema
+        .fields()
+        .iter()
+        .map(|field| naive_field(field))
+        .collect::<Result<Vec<_>, _>>()?;
+    let naive = Schema::new_with_metadata(fields, schema.metadata().clone());
+    if naive == **schema {
+        return Ok((Arc::clone(schema), batches));
+    }
+    let naive = Arc::new(naive);
+    let batches = batches
+        .into_iter()
+        .map(|batch| {
+            let columns = batch
+                .columns()
+                .iter()
+                .map(|column| naive_data(column.to_data()).map(make_array))
+                .collect::<Result<Vec<_>, _>>()?;
+            RecordBatch::try_new(Arc::clone(&naive), columns)
+        })
+        .collect::<Result<Vec<_>, _>>()?;
+    Ok((naive, batches))
+}
+
+fn naive_field(field: &Field) -> Result<Field, ArrowError> {
+    Ok(field.clone().with_data_type(naive_type(field.data_type())?))
+}
+
+fn naive_type(data_type: &DataType) -> Result<DataType, ArrowError> {
+    let field = |field: &Field| naive_field(field).map(Arc::new);
+    Ok(match data_type {
+        DataType::Timestamp(unit, Some(zone)) if zone.is_empty() => {
+            DataType::Timestamp(*unit, None)
+        }
+        DataType::List(item) => DataType::List(field(item)?),
+        DataType::LargeList(item) => DataType::LargeList(field(item)?),
+        DataType::ListView(item) => DataType::ListView(field(item)?),
+        DataType::LargeListView(item) => DataType::LargeListView(field(item)?),
+        DataType::FixedSizeList(item, size) => DataType::FixedSizeList(field(item)?, *size),
+        DataType::Struct(fields) => DataType::Struct(
+            fields
+                .iter()
+                .map(|item| naive_field(item))
+                .collect::<Result<Fields, _>>()?,
+        ),
+        DataType::Union(fields, mode) => DataType::Union(
+            UnionFields::try_new(
+                fields.iter().map(|(id, _)| id),
+                fields
+                    .iter()
+                    .map(|(_, item)| naive_field(item))
+                    .collect::<Result<Vec<_>, _>>()?,
+            )?,
+            *mode,
+        ),
+        DataType::Dictionary(key, value) => {
+            DataType::Dictionary(key.clone(), Box::new(naive_type(value)?))
+        }
+        DataType::Map(entries, sorted) => DataType::Map(field(entries)?, *sorted),
+        DataType::RunEndEncoded(ends, values) => {
+            DataType::RunEndEncoded(Arc::clone(ends), field(values)?)
+        }
+        other => other.clone(),
+    })
+}
+
+/// Rebuilds array data with [`naive_type`], children first; unchanged data is kept as is.
+fn naive_data(data: ArrayData) -> Result<ArrayData, ArrowError> {
+    let data_type = naive_type(data.data_type())?;
+    if data_type == *data.data_type() {
+        return Ok(data);
+    }
+    let children = data
+        .child_data()
+        .iter()
+        .cloned()
+        .map(naive_data)
+        .collect::<Result<Vec<_>, _>>()?;
+    data.into_builder()
+        .data_type(data_type)
+        .child_data(children)
+        .build()
 }
 
 /// Checks the lengths Arrow IPC input declares before arrow-ipc allocates buffers from
@@ -269,7 +379,7 @@ pub(super) fn read_parquet(
         })?;
         Ok((schema, batches))
     })?;
-    Table::new(options.table, name, schema, batches)
+    columnar_table(Format::Parquet, options, name, &schema, batches)
 }
 
 /// Collects batches, checking the limits as rows arrive.
@@ -335,6 +445,7 @@ pub fn write_parquet(table: &Table) -> Result<Vec<u8>, DataError> {
 
 #[cfg(test)]
 mod tests {
+    use arrow_array::cast::AsArray;
     use arrow_array::{Float64Array, StringArray};
     use arrow_schema::{DataType, Field, Schema};
     use proptest::prelude::*;
@@ -503,6 +614,67 @@ mod tests {
             err.to_string().contains("page header is malformed"),
             "{err}"
         );
+        // An Arrow file with a timestamp field whose time zone is an empty string: arrow-ipc
+        // writes it back without one, so the loaded table failed its own IPC round trip.
+        let bytes = include_bytes!("../../tests/corpus/fuzz/ipc-empty-time-zone.arrow");
+        let table = read_bytes(bytes, Format::Arrow, "x", &ReadOptions::default())
+            .unwrap()
+            .bundle
+            .primary()
+            .unwrap()
+            .clone();
+        let written = write_ipc(&table).unwrap();
+        let again = read_bytes(&written, Format::Arrow, "x", &ReadOptions::default()).unwrap();
+        assert_eq!(again.bundle.primary().unwrap().schema(), table.schema());
+    }
+
+    #[test]
+    fn empty_time_zones_are_removed_at_any_depth() {
+        use arrow_array::types::TimestampMicrosecondType;
+        use arrow_array::{Array, ListArray, TimestampMicrosecondArray};
+        use arrow_schema::TimeUnit;
+
+        let empty = DataType::Timestamp(TimeUnit::Microsecond, Some("".into()));
+        let naive = DataType::Timestamp(TimeUnit::Microsecond, None);
+        let flat = TimestampMicrosecondArray::from(vec![Some(1), None]).with_timezone("");
+        let list = ListArray::from_iter_primitive::<TimestampMicrosecondType, _, _>(vec![
+            Some(vec![Some(2), Some(3)]),
+            None,
+        ]);
+        let item = Arc::new(Field::new("item", empty.clone(), true));
+        let values = list
+            .values()
+            .as_primitive::<TimestampMicrosecondType>()
+            .clone()
+            .with_timezone("");
+        let list = ListArray::new(
+            Arc::clone(&item),
+            list.offsets().clone(),
+            Arc::new(values),
+            list.nulls().cloned(),
+        );
+        let schema = Arc::new(Schema::new(vec![
+            Field::new("t", empty, true),
+            Field::new("l", DataType::List(item), true),
+        ]));
+        let batch = RecordBatch::try_new(Arc::clone(&schema), vec![Arc::new(flat), Arc::new(list)])
+            .unwrap();
+
+        let (schema, batches) = without_empty_time_zones(&schema, vec![batch]).unwrap();
+        assert_eq!(schema.field(0).data_type(), &naive);
+        assert_eq!(
+            schema.field(1).data_type(),
+            &DataType::List(Arc::new(Field::new("item", naive.clone(), true)))
+        );
+        let column = batches[0]
+            .column(0)
+            .as_primitive::<TimestampMicrosecondType>();
+        assert_eq!(column.data_type(), &naive);
+        assert_eq!(column.value(0), 1);
+        assert!(column.is_null(1));
+        let list = batches[0].column(1).as_list::<i32>();
+        assert_eq!(list.values().data_type(), &naive);
+        assert!(list.is_null(1));
     }
 
     #[test]
