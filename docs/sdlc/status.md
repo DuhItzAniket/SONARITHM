@@ -25,7 +25,7 @@ Status values: `Not started` · `In progress` · `In review` · `Done` · `Block
 | A | A03 | Core types, Spec v0.1, Score IR | **Done** | 100% | 2026-10-19; [phase review](reviews/A03-phase-review.md), [retro](retrospectives/A03-retro.md). See [A03 tasks](#a03-tasks) |
 | A | A04 | Data layer | **Done** | 100% | 2026-10-19; [phase review](reviews/A04-phase-review.md), [retro](retrospectives/A04-retro.md). See [A04 tasks](#a04-tasks) |
 | A | A05 | Render engine, audio backend, export | **In progress** | ≈5% | T01, T03 and T04 in review. See [A05 tasks](#a05-tasks) |
-| A | A06 | NUMISONA v1 | **In progress** | ≈85% | T01–T06 and T08 done; T07 in review. See [A06 tasks](#a06-tasks) |
+| A | A06 | NUMISONA v1 | **Done** | 100% | 2026-10-19; [phase review](reviews/A06-phase-review.md). See [A06 tasks](#a06-tasks) |
 | A | A07 | CLI, Python, v0.1.0-alpha | Not started | 0% | |
 | A | A08 | Research instrumentation v0, ICAD 2027 | Not started | 0% | P01 without participant studies (OD-04) |
 | B | B01 | Desktop shell, IPC, app core | Not started | 0% | |
@@ -149,9 +149,9 @@ Work runs in a separate agent session through one PR per task into `crates/engin
 | A06-T04 `tone` and `glide` encoders, redundant duration and taps (A11Y-13), categorical timbre | **Done** | Merged in #151. `Numisona` engine and encoders with `RowRef` and confidence; filter, time order and pace; redundant taps and duration; timbre per category; missing values; `TrackRequest` gains substrate, fields, missing and mode; synthetic example datasets; snapshots; F-082 |
 | A06-T05 Psychophysical scaling (SDR-11) | **Done** | Merged in #140. `f = f_ref · (d / d_ref)^(1/m)`, labelled as guidance; reproduces the Smith & Walker (2005) dollar mapping; range from the law or clamped to a given range |
 | A06-T06 `auto` mark with density switching (SDR-20, experimental) | **Done** | Merged in #153. Tones up to 10 events/s, a glide above; every use reported as experimental (`SNR-ENG-011`, H-02); `density` module |
-| A06-T07 Templates | In review | `line-overview`, `bar-discrete`, `scatter-xy`, `histogram`, `box-five-number`, `heatmap-rowscan` with slot binding; each renders every compatible example dataset through the render engine; the compiler compiles `DataBundle` with spec transforms |
+| A06-T07 Templates | **Done** | Merged in #154. `line-overview`, `bar-discrete`, `scatter-xy`, `histogram`, `box-five-number`, `heatmap-rowscan` with slot binding; each renders every compatible example dataset through the render engine; the compiler compiles `DataBundle` with spec transforms |
 | A06-T08 Erie importer (subset) | **Done** | Merged in #150. Written from Erie's documentation; 8-spec gallery subset imports as valid v0.1 specs with a report of 19 approximated or unmapped constructs (`SNR-ENG-080`, `081`); F-081 |
-| A06-T09 Rule-conformance suite and compile benchmarks (PB-04) | Not started |  |
+| A06-T09 Rule-conformance suite and compile benchmarks (PB-04) | **Done** | Merged with the phase review. A named test for every rule NUMISONA owns, checked against the catalogue; the Erie gallery subset renders; SDR-21 volatility advice; PB-04: 35 ms (HW-01) and 54 ms (HW-01e) for 100k rows × 4 tracks; F-083, F-084 |
 
 ## 3. Current iteration
 
@@ -163,7 +163,7 @@ Work runs in a separate agent session through one PR per task into `crates/engin
 
 | Engine | Maturity | Next milestone |
 |---|---|---|
-| NUMISONA | Designed | A06 |
+| NUMISONA | Alpha | A07 (`v0.1.0-alpha`); lint warnings move to ECHOMETRIC in C05 |
 | AUDAXIS | Designed | B03 |
 | SONOTRACE | Designed | B06 |
 | PLOTSONA | Designed | C01 |
@@ -201,5 +201,6 @@ Maturity scale: `Designed` → `Prototype` → `Alpha` → `Beta` → `Stable` �
 | 2026-10-19 | A03 done: all eleven tasks merged; phase review and retrospective; ADR-0014 and ADR-0015 accepted |
 | 2026-10-19 | A06 started: `sonarithm-numisona` crate with scales (T01) |
 | 2026-10-19 | A06: T01–T05 and T08 merged (scales, pitch spaces, concept table, encoders, psychophysical scaling, Erie importer); the compiler compiles `DataBundle` with transforms (#152) |
+| 2026-10-19 | A06 done: templates (T07, #154), the auto mark (T06, #153), the rule-conformance suite and PB-04 (T09); [phase review](reviews/A06-phase-review.md) |
 | 2026-10-19 | A04 built: sources, inference, provenance, transforms, downsampling, fingerprints, PB-05 benchmark and fuzzers (T01–T10 in review) |
 | 2026-10-19 | A04 done: all ten tasks merged (#113, #114, #116, #133, #135, #136, #138, #139, #141, #142, #143); phase review and retro |

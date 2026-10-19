@@ -108,6 +108,12 @@ pub const LINT_POINTS_PER_SECOND: f64 = 8.0;
 /// second) may fuse and stop being countable.
 pub const MIN_TAP_S: f64 = 0.1;
 
+/// SDR-21 (SHOULD): a pitch field with more trend reversals than this is reported as
+/// volatile. Nees & Walker (2008) found that trend reversals hurt point estimation more
+/// than density did; their stimuli had zero to three reversals (research notes 02 §2;
+/// TODO(verify) the exact levels in the paper), so more than three is beyond the evidence.
+pub const STUDIED_REVERSALS: usize = 3;
+
 /// The column that carries original row numbers through a track filter.
 const ROW_COLUMN: &str = "__numisona_row";
 
@@ -354,7 +360,15 @@ impl Run<'_> {
                 .at(self.channel_at(ChannelName::Rate)),
             );
         }
-        let provenance = RowProvenance::read(self.table).ok();
+        // Notes carry the confidence column (03 §4); without it every value is exact.
+        let has_confidence = self
+            .table
+            .schema()
+            .index_of(sonarithm_data::provenance::CONF_COLUMN)
+            .is_ok();
+        let provenance = has_confidence
+            .then(|| RowProvenance::read(self.table).ok())
+            .flatten();
         let source = Sources {
             table: self.table,
             provenance: provenance.as_ref(),
@@ -868,6 +882,7 @@ impl Run<'_> {
             )
         })?;
         let positions = self.positions(ChannelName::Pitch, channel, &field, timeline)?;
+        self.report_volatility(&positions, timeline, &field);
         let values = positions
             .iter()
             .map(|p| p.map(|p| map.pitch(polarity.apply(p.u))))
@@ -877,6 +892,40 @@ impl Run<'_> {
             range: Some(map.range()),
             positions: Some(positions.iter().map(|p| p.map(|p| p.u)).collect()),
         })
+    }
+
+    /// SDR-21 (SHOULD): volatile series are slowed or smoothed. The encoder never changes
+    /// the data itself; it counts the pitch field's trend reversals in play order and,
+    /// beyond [`STUDIED_REVERSALS`], advises smoothing or a slower pace.
+    fn report_volatility(
+        &mut self,
+        positions: &[Option<Position>],
+        timeline: &Timeline,
+        field: &str,
+    ) {
+        let reversals = reversals(positions.iter().filter_map(|p| p.map(|p| p.u)));
+        if reversals <= STUDIED_REVERSALS {
+            return;
+        }
+        let span = timeline.onsets.last().copied().unwrap_or(0.0)
+            - timeline.onsets.first().copied().unwrap_or(0.0);
+        #[expect(
+            clippy::cast_precision_loss,
+            reason = "reversal counts stay far below 2^52"
+        )]
+        let rate = if span > 0.0 {
+            reversals as f64 / span
+        } else {
+            0.0
+        };
+        let message = format!(
+            "field `{field}` reverses direction {reversals} times ({rate:.1} per second), more than the up to {STUDIED_REVERSALS} reversals studied; trend reversals hurt estimates more than density does (SDR-21). Add a `smooth` transform or slow the pace if the trend matters."
+        );
+        self.report(
+            &codes::VOLATILE_SERIES,
+            &message,
+            self.channel_at(ChannelName::Pitch).key("field"),
+        );
     }
 
     /// A psychophysical pitch mapping (SDR-11), clamped to the channel's range.
@@ -985,6 +1034,27 @@ impl Run<'_> {
             positions: Some(positions),
         })
     }
+}
+
+/// The number of trend reversals in a sequence: sign changes between successive non-zero
+/// differences.
+fn reversals(values: impl Iterator<Item = f64>) -> usize {
+    let mut previous: Option<f64> = None;
+    let mut direction = std::cmp::Ordering::Equal;
+    let mut count = 0;
+    for value in values {
+        if let Some(last) = previous {
+            let step = value.total_cmp(&last);
+            if step != std::cmp::Ordering::Equal {
+                if direction != std::cmp::Ordering::Equal && step != direction {
+                    count += 1;
+                }
+                direction = step;
+            }
+        }
+        previous = Some(value);
+    }
+    count
 }
 
 /// The scale type of a channel; `linear` by default (RFC-0001 §6).

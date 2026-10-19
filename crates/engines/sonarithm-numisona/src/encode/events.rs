@@ -28,29 +28,32 @@ impl Run<'_> {
             .unwrap_or_else(|| super::DEFAULT_INSTRUMENT.to_owned());
         let mut events = Vec::with_capacity(timeline.rows.len());
         let mut fused = 0_usize;
+        // A constant timbre is resolved once, not once per note.
+        let constant = match parts.timbre {
+            Values::Constant(name) => Some(preset_of(name, &instrument)),
+            Values::PerRow(_) => None,
+        };
         for (i, (&row, &onset)) in timeline.rows.iter().zip(&timeline.onsets).enumerate() {
             if i % CANCEL_EVERY == 0 {
                 cx.check_cancelled()?;
             }
-            let (
-                Some(pitch),
-                Some(duration),
-                Some(taps),
-                Some(gain),
-                Some(pan),
-                Some(brightness),
-                Some(preset),
-            ) = (
+            let (Some(pitch), Some(duration), Some(taps), Some(gain), Some(pan), Some(brightness)) = (
                 parts.pitch.get(i),
                 parts.duration.get(i),
                 parts.taps.get(i),
                 parts.loudness.get(i),
                 parts.pan.get(i),
                 parts.brightness.get(i),
-                parts.timbre.get(i),
-            )
-            else {
+            ) else {
                 continue;
+            };
+            let preset = match (&constant, parts.timbre) {
+                (Some(preset), _) => preset.clone(),
+                (None, Values::PerRow(names)) => match names.get(i) {
+                    Some(Some(name)) => preset_of(name, &instrument),
+                    _ => continue,
+                },
+                (None, Values::Constant(name)) => preset_of(name, &instrument),
             };
             if taps > 1.0 && duration / taps < MIN_TAP_S {
                 fused += 1;
@@ -58,7 +61,7 @@ impl Run<'_> {
             let mut note = Note::new(Seconds(onset), Seconds(duration), pitch);
             note.gain = Db(gain);
             note.pan = Pan::clamped(pan);
-            note.timbre = timbre(&preset, &instrument, brightness);
+            note.timbre = timbre(preset, brightness);
             #[expect(
                 clippy::cast_possible_truncation,
                 clippy::cast_sign_loss,
@@ -145,9 +148,14 @@ fn breakpoint(t: f64, pitch: Cents, gain: f64, pan: f64, brightness: f64) -> Bre
     point
 }
 
-fn timbre(preset: &str, instrument: &str, brightness: f64) -> Timbre {
+/// The per-note preset: `None` for the track instrument itself.
+fn preset_of(name: &str, instrument: &str) -> Option<InstrumentRef> {
+    (name != instrument).then(|| InstrumentRef(name.to_owned()))
+}
+
+fn timbre(preset: Option<InstrumentRef>, brightness: f64) -> Timbre {
     let mut timbre = Timbre::new();
-    timbre.preset = (preset != instrument).then(|| InstrumentRef(preset.to_owned()));
+    timbre.preset = preset;
     timbre.brightness = brightness.clamp(0.0, 1.0);
     timbre
 }

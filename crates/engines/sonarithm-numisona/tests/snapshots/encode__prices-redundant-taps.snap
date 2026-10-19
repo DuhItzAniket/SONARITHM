@@ -419,6 +419,7 @@ expression: review(&compiled)
 NUMISONA diagnostics:
 - SNR-ENG-001: NUMISONA: track `price`: time follows field `week`, which has role x (RFC-0001 §5).
 - SNR-ENG-002: NUMISONA: track `price`: the instrument is `mallet`, the harmonic mallet-like default (SDR-29).
+- SNR-ENG-012: NUMISONA: track `price`: field `price` reverses direction 8 times (1.3 per second), more than the up to 3 reversals studied; trend reversals hurt estimates more than density does (SDR-21). Add a `smooth` transform or slow the pace if the trend matters.
 - SNR-ENG-004: NUMISONA: track `price`: loudness is constant at -18 dB, so pitch alone carries the data (SDR-23).
 - SNR-ENG-003: NUMISONA: track `price`: notes last 0.25 s, the default duration (RFC-0001 §6).
 - SNR-ENG-007: NUMISONA: track `price`: the tap count also encodes the pitch field, from 1 to 8 taps (A11Y-13).

@@ -118,6 +118,14 @@ code!(
 );
 
 code!(
+    /// The pitch field reverses direction more often than the studied stimuli did.
+    VOLATILE_SERIES, "SNR-ENG-012", Info,
+    "Volatile series",
+    "Smooth the field with a `smooth` transform, or slow the pace, if the listener needs the trend.",
+    ["SDR-21"]
+);
+
+code!(
     /// `polarity: "auto"` was resolved from the field's concept.
     POLARITY_FROM_CONCEPT, "SNR-ENG-020", Info,
     "Polarity taken from the concept table",
@@ -318,6 +326,7 @@ pub const CODES: CodeTable = CodeTable {
         PSYCHOPHYSICAL,
         MISSING_VALUES,
         AUTO_MARK,
+        VOLATILE_SERIES,
         POLARITY_FROM_CONCEPT,
         FLAGGED_CONCEPT,
         UNKNOWN_CONCEPT,

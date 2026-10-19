@@ -58,7 +58,7 @@ No reference-class machine is available yet (risk R-22). Rows on HW-01 apply the
 | Phase / release | Date | Tag or commit | HW ID | Compile 100k × 4 (ms) | Compile 1M rows (ms) | 1M-row CSV load (s) | Evidence |
 |---|---|---|---|---|---|---|---|
 | A04 | 2026-10-19 | A04 PRs (`feat/a04-bench-fuzz`) | HW-01; HW-01e | — | — | 0.506 (HW-01), 0.912 (HW-01e); 0.433 and 0.792 without semantic inference | PB-05 met: 34% of 1.5 s on HW-01, under the 12 §8 headroom threshold; 61% on the 4-E-core stand-in. criterion `pb05_csv_ingest_1m_rows_5_columns`, 46 MB synthetic input, F-070 |
-| A06 | | | | | | | |
+| A06 | 2026-10-19 | A06-T09 PR (`benches/compile.rs`) | HW-01; HW-01e | 35.1 (HW-01); 54.3 (HW-01e) | 1 track: 135 (HW-01), 192 (HW-01e); 4 tracks: 362 (HW-01), 545 (HW-01e) | — | Criterion 0.8.2, release, Rust 1.99.0, 20 samples, medians; data preloaded (PB-05 covers loading); 4 tone tracks, default mappings. F-083 |
 | A07 `v0.1.0-alpha` | | | | | | | |
 | A08 `v0.2.0-alpha` | | | | | | | |
 | Gate B `v0.5.0-beta` | | | | | | | |
