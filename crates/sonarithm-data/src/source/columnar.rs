@@ -42,22 +42,187 @@ pub(super) fn read_ipc(
         format,
         reason: source.to_string(),
     };
-    let (schema, batches) = if bytes.starts_with(IPC_FILE_MAGIC) {
-        let reader = FileReader::try_new(Cursor::new(bytes), None).map_err(unreadable)?;
-        let schema = reader.schema();
-        (
-            schema.clone(),
-            collect(&schema, reader, options, unreadable)?,
-        )
-    } else {
-        let reader = StreamReader::try_new(Cursor::new(bytes), None).map_err(unreadable)?;
-        let schema = reader.schema();
-        (
-            schema.clone(),
-            collect(&schema, reader, options, unreadable)?,
-        )
-    };
+    let file = bytes.starts_with(IPC_FILE_MAGIC);
+    check_ipc_framing(bytes, file, options)?;
+    let (schema, batches) = super::contained(format, || {
+        Ok(if file {
+            let reader = FileReader::try_new(Cursor::new(bytes), None).map_err(unreadable)?;
+            let schema = reader.schema();
+            (
+                schema.clone(),
+                collect(&schema, reader, options, unreadable)?,
+            )
+        } else {
+            let reader = StreamReader::try_new(Cursor::new(bytes), None).map_err(unreadable)?;
+            let schema = reader.schema();
+            (
+                schema.clone(),
+                collect(&schema, reader, options, unreadable)?,
+            )
+        })
+    })?;
     Table::new(options.table, name, schema, batches)
+}
+
+/// Checks the lengths Arrow IPC input declares before arrow-ipc allocates buffers from
+/// them (both problems were found by fuzzing):
+///
+/// - every message and body lies inside the input (the footer and its blocks for the file
+///   format, each message for the stream format), and every buffer inside its body;
+/// - every compressed buffer declares an uncompressed size within the byte limit, and all of
+///   them together stay within what the cell limit allows, since arrow-ipc reserves the
+///   declared size before decompressing.
+fn check_ipc_framing(bytes: &[u8], file: bool, options: &ReadOptions) -> Result<(), DataError> {
+    let unreadable = |reason: &str| DataError::Unreadable {
+        format: Format::Arrow,
+        reason: reason.to_owned(),
+    };
+    let messages = if file {
+        file_messages(bytes)
+    } else {
+        stream_messages(bytes)
+    }
+    .map_err(|r| unreadable(&r))?;
+    // At most 16 bytes per allowed cell in total.
+    let budget = options.limits.max_cells.saturating_mul(16);
+    let mut declared_total = 0_u64;
+    for (meta, body) in messages {
+        let message = arrow_ipc::root_as_message(meta)
+            .map_err(|err| unreadable(&format!("a message is invalid: {err}")))?;
+        let batch = message
+            .header_as_record_batch()
+            .or_else(|| message.header_as_dictionary_batch().and_then(|d| d.data()));
+        let Some(batch) = batch else {
+            continue;
+        };
+        let compressed = batch.compression().is_some();
+        for buffer in batch.buffers().into_iter().flatten() {
+            let start = usize::try_from(buffer.offset())
+                .map_err(|_| unreadable("a buffer offset is negative"))?;
+            let length = usize::try_from(buffer.length())
+                .map_err(|_| unreadable("a buffer length is negative"))?;
+            if start.checked_add(length).is_none_or(|end| end > body.len()) {
+                return Err(unreadable("a buffer lies outside its message body"));
+            }
+            if !compressed || length < 8 {
+                continue;
+            }
+            let Some(prefix) = start.checked_add(8).and_then(|end| body.get(start..end)) else {
+                return Err(unreadable("a buffer lies outside its message body"));
+            };
+            let declared = prefix.try_into().map_or(-1, i64::from_le_bytes);
+            // -1 marks a buffer stored uncompressed.
+            let Ok(declared) = u64::try_from(declared) else {
+                continue;
+            };
+            declared_total = declared_total.saturating_add(declared);
+            for (limit, max, found) in [
+                (
+                    crate::error::Limit::Bytes,
+                    options.limits.max_bytes,
+                    declared,
+                ),
+                (crate::error::Limit::Bytes, budget, declared_total),
+            ] {
+                if found > max {
+                    return Err(DataError::LimitExceeded { limit, max, found });
+                }
+            }
+        }
+    }
+    Ok(())
+}
+
+/// An IPC message: its metadata flatbuffer and its body.
+type Message<'a> = (&'a [u8], &'a [u8]);
+
+/// A little-endian `i32` at `at`.
+fn word(bytes: &[u8], at: usize) -> Option<i32> {
+    bytes
+        .get(at..at.checked_add(4)?)
+        .and_then(|b| <[u8; 4]>::try_from(b).ok())
+        .map(i32::from_le_bytes)
+}
+
+/// The metadata flatbuffer of the message at `at` and the offset just after its length
+/// prefix (with or without the 0xFFFFFFFF continuation marker).
+fn message_at(bytes: &[u8], at: usize) -> Option<(usize, usize)> {
+    let mut at = at;
+    let mut length = word(bytes, at)?;
+    at = at.checked_add(4)?;
+    if length == -1 {
+        length = word(bytes, at)?;
+        at = at.checked_add(4)?;
+    }
+    Some((at, usize::try_from(length).ok()?))
+}
+
+/// The (metadata, body) of every block the file footer lists, checked to lie inside the
+/// file.
+fn file_messages(bytes: &[u8]) -> Result<Vec<Message<'_>>, String> {
+    let tail = bytes.len().checked_sub(10).ok_or("the file is too short")?;
+    let footer_len = usize::try_from(word(bytes, tail).ok_or("the file is too short")?)
+        .map_err(|_| "the footer length is negative")?;
+    let footer_start = tail
+        .checked_sub(footer_len)
+        .ok_or("the footer length points outside the file")?;
+    let footer = arrow_ipc::root_as_footer(bytes.get(footer_start..tail).ok_or("bad footer")?)
+        .map_err(|err| format!("the footer is invalid: {err}"))?;
+    let mut messages = Vec::new();
+    for block in footer
+        .recordBatches()
+        .into_iter()
+        .chain(footer.dictionaries())
+        .flatten()
+    {
+        let outside = || "a block points outside the file".to_owned();
+        let offset = usize::try_from(block.offset()).map_err(|_| outside())?;
+        let meta_total = usize::try_from(block.metaDataLength()).map_err(|_| outside())?;
+        let body_len = usize::try_from(block.bodyLength()).map_err(|_| outside())?;
+        let body_start = offset.checked_add(meta_total).ok_or_else(outside)?;
+        let body = body_start
+            .checked_add(body_len)
+            .and_then(|end| bytes.get(body_start..end))
+            .ok_or_else(outside)?;
+        let (meta_start, meta_len) = message_at(bytes, offset).ok_or_else(outside)?;
+        let meta = meta_start
+            .checked_add(meta_len)
+            .filter(|end| *end <= body_start)
+            .and_then(|end| bytes.get(meta_start..end))
+            .ok_or_else(outside)?;
+        messages.push((meta, body));
+    }
+    Ok(messages)
+}
+
+/// The (metadata, body) of every message of a stream, checked to lie inside the input.
+fn stream_messages(bytes: &[u8]) -> Result<Vec<Message<'_>>, String> {
+    let mut messages = Vec::new();
+    let mut at = 0_usize;
+    while let Some((meta_start, meta_len)) = message_at(bytes, at) {
+        if meta_len == 0 {
+            break;
+        }
+        let meta_end = meta_start
+            .checked_add(meta_len)
+            .ok_or("a message runs past the end")?;
+        let meta = bytes
+            .get(meta_start..meta_end)
+            .ok_or("a message runs past the end")?;
+        let message = arrow_ipc::root_as_message(meta)
+            .map_err(|err| format!("a message is invalid: {err}"))?;
+        let body_len =
+            usize::try_from(message.bodyLength()).map_err(|_| "a negative body length")?;
+        let body_end = meta_end
+            .checked_add(body_len)
+            .ok_or("a message body runs past the end")?;
+        let body = bytes
+            .get(meta_end..body_end)
+            .ok_or("a message body runs past the end")?;
+        messages.push((meta, body));
+        at = body_end;
+    }
+    Ok(messages)
 }
 
 /// Reads Parquet. The row count is checked against the limits before any data is decoded.
@@ -70,18 +235,21 @@ pub(super) fn read_parquet(
         format: Format::Parquet,
         reason: source.to_string(),
     };
-    let builder = ParquetRecordBatchReaderBuilder::try_new(Bytes::copy_from_slice(bytes))
-        .map_err(unreadable)?;
-    let rows = u64::try_from(builder.metadata().file_metadata().num_rows()).unwrap_or(0);
-    let schema = Arc::clone(builder.schema());
-    options.limits.check_shape(rows, schema.fields().len())?;
-    let reader = builder
-        .with_batch_size(PARQUET_BATCH_ROWS)
-        .build()
-        .map_err(unreadable)?;
-    let batches = collect(&schema, reader, options, |source| DataError::Unreadable {
-        format: Format::Parquet,
-        reason: source.to_string(),
+    let (schema, batches) = super::contained(Format::Parquet, || {
+        let builder = ParquetRecordBatchReaderBuilder::try_new(Bytes::copy_from_slice(bytes))
+            .map_err(unreadable)?;
+        let rows = u64::try_from(builder.metadata().file_metadata().num_rows()).unwrap_or(0);
+        let schema = Arc::clone(builder.schema());
+        options.limits.check_shape(rows, schema.fields().len())?;
+        let reader = builder
+            .with_batch_size(PARQUET_BATCH_ROWS)
+            .build()
+            .map_err(unreadable)?;
+        let batches = collect(&schema, reader, options, |source| DataError::Unreadable {
+            format: Format::Parquet,
+            reason: source.to_string(),
+        })?;
+        Ok((schema, batches))
     })?;
     Table::new(options.table, name, schema, batches)
 }
@@ -249,6 +417,75 @@ mod tests {
         writer.finish().unwrap();
         let read = reread(&writer.into_inner().unwrap(), Format::Arrow);
         assert_same(&read, &table);
+    }
+
+    #[test]
+    fn compressed_buffers_must_declare_sizes_within_the_limits() {
+        let table = table_with(&FieldMeta::new());
+        let options = arrow_ipc::writer::IpcWriteOptions::default()
+            .try_with_compression(Some(arrow_ipc::CompressionType::LZ4_FRAME))
+            .unwrap();
+        let mut writer =
+            FileWriter::try_new_with_options(Vec::new(), table.schema(), options).unwrap();
+        for batch in table.batches() {
+            writer.write(batch).unwrap();
+        }
+        writer.finish().unwrap();
+        let bytes = writer.into_inner().unwrap();
+        let read = read_bytes(
+            &bytes,
+            Format::Arrow,
+            "x",
+            &ReadOptions::new().without_inference(),
+        )
+        .unwrap();
+        assert_eq!(
+            read.bundle.primary().unwrap().num_rows(),
+            3,
+            "compressed files read"
+        );
+        let tiny = ReadOptions::new().with_limits(Limits {
+            max_cells: 1,
+            ..Limits::NONE
+        });
+        let err = read_bytes(&bytes, Format::Arrow, "x", &tiny).unwrap_err();
+        assert_eq!(err.to_diagnostic().code.as_str(), "SNR-DATA-003", "{err}");
+    }
+
+    #[test]
+    fn fuzzer_findings_stay_fixed() {
+        // A Feather file whose LZ4 buffer declares an uncompressed size of 2^58 bytes.
+        let bytes = include_bytes!("../../tests/corpus/fuzz/ipc-lz4-declared-size.arrow");
+        let err = read_bytes(bytes, Format::Arrow, "x", &ReadOptions::default()).unwrap_err();
+        assert!(
+            matches!(
+                err.to_diagnostic().code.as_str(),
+                "SNR-DATA-001" | "SNR-DATA-003"
+            ),
+            "{err}"
+        );
+        // A Feather file whose validity bitmap is shorter than its column: arrow-buffer
+        // panics, and the panic is contained as an error.
+        let bytes = include_bytes!("../../tests/corpus/fuzz/ipc-short-validity-bitmap.arrow");
+        let err = read_bytes(bytes, Format::Arrow, "x", &ReadOptions::default()).unwrap_err();
+        assert_eq!(err.to_diagnostic().code.as_str(), "SNR-DATA-001", "{err}");
+    }
+
+    #[test]
+    fn declared_lengths_past_the_end_are_rejected_before_allocation() {
+        let table = table_with(&FieldMeta::new());
+        let mut file = write_ipc(&table).unwrap();
+        // Corrupt the footer length (the 4 bytes before the trailing magic).
+        let at = file.len() - 10;
+        file[at..at + 4].copy_from_slice(&i32::MAX.to_le_bytes());
+        let err = read_bytes(&file, Format::Arrow, "x", &ReadOptions::default()).unwrap_err();
+        assert!(err.to_string().contains("footer"), "{err}");
+        // A stream whose first message claims more bytes than there are.
+        let mut stream = vec![0xff, 0xff, 0xff, 0xff];
+        stream.extend_from_slice(&1_000_000_i32.to_le_bytes());
+        stream.extend_from_slice(&[0; 16]);
+        let err = read_bytes(&stream, Format::Arrow, "x", &ReadOptions::default()).unwrap_err();
+        assert_eq!(err.to_diagnostic().code.as_str(), "SNR-DATA-001");
     }
 
     #[test]

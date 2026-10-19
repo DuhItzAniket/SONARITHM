@@ -104,7 +104,8 @@ pub enum Transform {
     Resample {
         /// The time field: dates, timestamps or numbers.
         field: String,
-        /// The grid step; for a number field, in the field's own units.
+        /// The grid step in seconds; for a number field, in the field's own units. The
+        /// compiler converts the spec's duration objects (`{ "ms": 500 }`, RFC-0001 §3).
         every: Seconds,
         /// How each grid point is filled.
         method: ResampleMethod,

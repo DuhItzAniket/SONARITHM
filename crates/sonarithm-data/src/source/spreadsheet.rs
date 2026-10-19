@@ -11,7 +11,7 @@
 
 use std::io::Cursor;
 
-use calamine::{Data, Range, Reader};
+use calamine::{Data, Reader};
 use serde::Deserialize;
 use sonarithm_core::{Diagnostic, Diagnostics};
 
@@ -88,25 +88,25 @@ pub(super) fn read_sheet(
     options: &ReadOptions,
 ) -> Result<(Table, Diagnostics), DataError> {
     let sheets = &options.sheet;
-    let (sheet, names, range) = select(bytes, format, sheets)?;
-    let (height, width) = range.get_size();
-    options.limits.check_shape(super::to_u64(height), width)?;
-
-    let mut rows = range.rows();
-    let Some(first) = rows.next() else {
+    let window = match &sheets.range {
+        Some(a1) => Some(parse_range(a1).ok_or(DataError::InvalidOption {
+            option: "range",
+            reason: "use A1 notation such as B2:F200",
+        })?),
+        None => None,
+    };
+    let (sheet, names, cells) =
+        super::contained(format, || select(bytes, format, sheets, window, options))?;
+    let (first, columns) = dense(&cells, options)?;
+    let Some(first) = first else {
         let schema = std::sync::Arc::new(arrow_schema::Schema::empty());
         return Ok((
             Table::new(options.table, &sheet, schema, Vec::new())?,
             Diagnostics::new(),
         ));
     };
-    let first: Vec<String> = first.iter().map(cell_text).collect();
-    let mut columns: Vec<RawColumn> = (0..width).map(|_| RawColumn::default()).collect();
-    for row in rows {
-        for (column, cell) in columns.iter_mut().zip(row) {
-            column.push(&cell_text(cell));
-        }
-    }
+    let width = columns.len();
+    let mut columns = columns;
     let text_options = TextOptions {
         decimal_comma: false,
         date_format: sheets.date_format.clone(),
@@ -160,64 +160,160 @@ pub(super) fn read_sheet(
     Ok((table, diagnostics))
 }
 
-/// Opens the workbook and returns the chosen sheet's name, all sheet names and the cells
-/// of the chosen range.
+/// A non-empty cell: zero-based row and column, and its text.
+type Cell = (u32, u32, String);
+
+/// A1 corners, zero-based and inclusive.
+type Window = ((u32, u32), (u32, u32));
+
+/// Opens the workbook and returns the chosen sheet's name, all sheet names and the
+/// non-empty cells of the chosen range.
 fn select(
     bytes: &[u8],
     format: Format,
     sheets: &SheetOptions,
-) -> Result<(String, Vec<String>, Range<Data>), DataError> {
+    window: Option<Window>,
+    options: &ReadOptions,
+) -> Result<(String, Vec<String>, Vec<Cell>), DataError> {
     let unreadable = |reason: String| DataError::Unreadable { format, reason };
     let mut workbook = calamine::open_workbook_auto_from_rs(Cursor::new(bytes))
         .map_err(|err| unreadable(err.to_string()))?;
     let names = workbook.sheet_names();
-    let (sheet, mut range) = match &sheets.sheet {
-        Some(wanted) => {
-            let name = match wanted {
-                SheetRef::Name(name) => names.iter().find(|n| *n == name),
-                SheetRef::Index(index) => names.get(*index),
-            }
-            .cloned()
-            .ok_or_else(|| DataError::SheetNotFound {
-                sheet: match wanted {
-                    SheetRef::Name(name) => name.clone(),
-                    SheetRef::Index(index) => format!("#{index}"),
-                },
-                available: names.len(),
-            })?;
-            let range = workbook
-                .worksheet_range(&name)
-                .map_err(|err| unreadable(err.to_string()))?;
-            (name, range)
+    if let Some(wanted) = &sheets.sheet {
+        let name = match wanted {
+            SheetRef::Name(name) => names.iter().find(|n| *n == name),
+            SheetRef::Index(index) => names.get(*index),
         }
-        None => {
-            first_with_data(&mut workbook, &names).map_err(|err| unreadable(err.to_string()))?
-        }
-    };
-    if let Some(a1) = &sheets.range {
-        let (start, end) = parse_range(a1).ok_or(DataError::InvalidOption {
-            option: "range",
-            reason: "use A1 notation such as B2:F200",
+        .cloned()
+        .ok_or_else(|| DataError::SheetNotFound {
+            sheet: match wanted {
+                SheetRef::Name(name) => name.clone(),
+                SheetRef::Index(index) => format!("#{index}"),
+            },
+            available: names.len(),
         })?;
-        range = range.range(start, end);
+        let cells = sheet_cells(&mut workbook, &name, window, options, format)?;
+        return Ok((name, names, cells));
     }
-    Ok((sheet, names, range))
+    // The first sheet with a non-empty cell, or the first sheet.
+    for name in &names {
+        let cells = sheet_cells(&mut workbook, name, window, options, format)?;
+        if !cells.is_empty() {
+            return Ok((name.clone(), names, cells));
+        }
+    }
+    let first = names.first().cloned().unwrap_or_default();
+    Ok((first, names, Vec::new()))
 }
 
-/// The first sheet with at least one non-empty cell, or the first sheet.
-fn first_with_data<RS: std::io::Read + std::io::Seek>(
+/// The non-empty cells of one sheet inside `window`. XLSX is streamed cell by cell, so a
+/// hostile workbook cannot make the reader allocate its whole bounding box; the cell count
+/// is capped by the limits as cells arrive. Other formats go through calamine's ranges.
+fn sheet_cells<RS: std::io::Read + std::io::Seek>(
     workbook: &mut calamine::Sheets<RS>,
-    names: &[String],
-) -> Result<(String, Range<Data>), calamine::Error> {
-    let mut first = None;
-    for name in names {
-        let range = workbook.worksheet_range(name)?;
-        if !range.is_empty() {
-            return Ok((name.clone(), range));
+    name: &str,
+    window: Option<Window>,
+    options: &ReadOptions,
+    format: Format,
+) -> Result<Vec<Cell>, DataError> {
+    let unreadable = |reason: String| DataError::Unreadable { format, reason };
+    let inside = |row: u32, column: u32| {
+        window.is_none_or(|((r0, c0), (r1, c1))| {
+            (r0..=r1).contains(&row) && (c0..=c1).contains(&column)
+        })
+    };
+    let max_cells = options.limits.max_cells;
+    let mut cells: Vec<Cell> = Vec::new();
+    let mut keep = |row: u32, column: u32, data: &Data| -> Result<(), DataError> {
+        if *data == Data::Empty || !inside(row, column) {
+            return Ok(());
         }
-        first.get_or_insert((name.clone(), range));
+        cells.push((row, column, cell_text(data)));
+        let found = super::to_u64(cells.len());
+        if found > max_cells {
+            return Err(DataError::LimitExceeded {
+                limit: crate::error::Limit::Cells,
+                max: max_cells,
+                found,
+            });
+        }
+        Ok(())
+    };
+    if let calamine::Sheets::Xlsx(xlsx) = workbook {
+        let mut reader = xlsx
+            .worksheet_cells_reader(name)
+            .map_err(|err| unreadable(err.to_string()))?;
+        while let Some(cell) = reader
+            .next_cell()
+            .map_err(|err| unreadable(err.to_string()))?
+        {
+            let (row, column) = cell.get_position();
+            keep(row, column, &Data::from(cell.get_value().clone()))?;
+        }
+    } else {
+        let range = workbook
+            .worksheet_range(name)
+            .map_err(|err| unreadable(err.to_string()))?;
+        let (row0, column0) = range.start().unwrap_or((0, 0));
+        for (row, column, data) in range.used_cells() {
+            let (Ok(row), Ok(column)) = (u32::try_from(row), u32::try_from(column)) else {
+                continue;
+            };
+            keep(
+                row0.saturating_add(row),
+                column0.saturating_add(column),
+                data,
+            )?;
+        }
     }
-    Ok(first.unwrap_or_else(|| (String::new(), Range::empty())))
+    Ok(cells)
+}
+
+/// The cells' bounding box as dense text columns: the first row separately (a header
+/// candidate) and the rest as columns. The box is checked against the limits before it
+/// is allocated.
+fn dense(
+    cells: &[Cell],
+    options: &ReadOptions,
+) -> Result<(Option<Vec<String>>, Vec<RawColumn>), DataError> {
+    let (Some(r0), Some(r1)) = (
+        cells.iter().map(|c| c.0).min(),
+        cells.iter().map(|c| c.0).max(),
+    ) else {
+        return Ok((None, Vec::new()));
+    };
+    let (c0, c1) = (
+        cells.iter().map(|c| c.1).min().unwrap_or(0),
+        cells.iter().map(|c| c.1).max().unwrap_or(0),
+    );
+    let height = u64::from(r1 - r0) + 1;
+    let width = usize::try_from(c1 - c0)
+        .unwrap_or(usize::MAX)
+        .saturating_add(1);
+    options.limits.check_shape(height, width)?;
+    let mut sorted: Vec<&Cell> = cells.iter().collect();
+    sorted.sort_by_key(|c| (c.0, c.1));
+    let mut first = vec![String::new(); width];
+    let mut columns: Vec<RawColumn> = (0..width).map(|_| RawColumn::default()).collect();
+    let mut next = sorted.iter().peekable();
+    for row in r0..=r1 {
+        for (offset, column) in (c0..=c1).enumerate() {
+            let text = match next.peek() {
+                Some(cell) if (cell.0, cell.1) == (row, column) => {
+                    next.next().map_or("", |c| c.2.as_str())
+                }
+                _ => "",
+            };
+            if row == r0 {
+                if let Some(slot) = first.get_mut(offset) {
+                    text.clone_into(slot);
+                }
+            } else if let Some(raw) = columns.get_mut(offset) {
+                raw.push(text);
+            }
+        }
+    }
+    Ok((Some(first), columns))
 }
 
 /// A cell as the text that type inference reads.

@@ -38,8 +38,13 @@ sonarithm-core.workspace = true
 thiserror.workspace = true
 
 [dev-dependencies]
+criterion.workspace = true
 proptest.workspace = true
 zip.workspace = true
+
+[[bench]]
+name = "csv_ingest"
+harness = false
 
 [lints]
 workspace = true

@@ -23,7 +23,7 @@ Status values: `Not started` · `In progress` · `In review` · `Done` · `Block
 | A | A01 | Repository bootstrap and governance | **Done** | 100% | 2026-10-19; [phase review](reviews/A01-phase-review.md), [retro](retrospectives/A01-retro.md). See [A01 tasks](#a01-tasks) |
 | A | A02 | Technical spikes and prototype gate | **In review** | ≈80% | All spikes built and measured on Windows and CI; gate report draft: Conditional go recommended. PB-01 fails on Windows shared mode; screen-reader, macOS and Linux manual steps pending. See [A02 tasks](#a02-tasks) |
 | A | A03 | Core types, Spec v0.1, Score IR | **Done** | 100% | 2026-10-19; [phase review](reviews/A03-phase-review.md), [retro](retrospectives/A03-retro.md). See [A03 tasks](#a03-tasks) |
-| A | A04 | Data layer | **In progress** | ≈90% | T01–T09 in review. See [A04 tasks](#a04-tasks) |
+| A | A04 | Data layer | **In review** | ≈95% | All ten tasks in review as a PR stack; PB-05 met (F-070). See [A04 tasks](#a04-tasks) |
 | A | A05 | Render engine, audio backend, export | **In progress** | ≈5% | T01, T03 and T04 in review. See [A05 tasks](#a05-tasks) |
 | A | A06 | NUMISONA v1 | **In progress** | ≈30% | T01, T02, T03 and T05 in review. See [A06 tasks](#a06-tasks) |
 | A | A07 | CLI, Python, v0.1.0-alpha | Not started | 0% | |
@@ -116,7 +116,7 @@ Work runs in a separate agent session, in parallel with A03, through small PRs i
 | A04-T07 Transforms with a sandboxed rhai subset | In review | All eight transforms with unit and property tests; rhai subset fuel-limited (10 000 operations per row); provenance propagated per 03 §4 |
 | A04-T08 M4 and LTTB downsampling; tile cache | In review | M4 pixel-exact against the full polyline and the paper's reference query (property test); LTTB keeps ends and threshold; LRU tile cache per generation |
 | A04-T09 Data fingerprinting | In review | Canonical IPC (one batch, zeroed null slots); corpus digests pinned and checked on three OSes in CI |
-| A04-T10 Benchmarks (PB-05); CSV and XLSX fuzzers | Not started | |
+| A04-T10 Benchmarks (PB-05); CSV and XLSX fuzzers | In review | PB-05 met: 0.51 s on HW-01 (34%), 0.91 s on HW-01e (F-070); fuzz targets for CSV, JSON, XLSX/ODS and Parquet/IPC in `nightly.yml`; fuzzing found allocation and panic issues in arrow-ipc and calamine, now validated or contained (F-071) |
 
 ### A05 tasks
 
@@ -200,3 +200,4 @@ Maturity scale: `Designed` → `Prototype` → `Alpha` → `Beta` → `Stable` �
 | 2026-10-19 | A05 started: oscillators in `sonarithm-dsp` (T01) |
 | 2026-10-19 | A03 done: all eleven tasks merged; phase review and retrospective; ADR-0014 and ADR-0015 accepted |
 | 2026-10-19 | A06 started: `sonarithm-numisona` crate with scales (T01) |
+| 2026-10-19 | A04 built: sources, inference, provenance, transforms, downsampling, fingerprints, PB-05 benchmark and fuzzers (T01–T10 in review) |

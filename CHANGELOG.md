@@ -33,6 +33,7 @@ From phase A07, release-plz maintains this file: it generates each release's ent
   - `sonarithm-spec`: spec v0.1 as frozen by [RFC-0001](docs/rfcs/0001-spec-v0.1.md), with the generated JSON Schema in `schemas/`, validation with `SNR-SPEC` codes, JSON pointers and miette reports, RFC 8785 canonicalization, the spec hash, defaults reported as `Info`, and a migration framework.
   - `sonarithm-compiler`: the compile pipeline skeleton.
   - `cargo xtask codes` and the generated [error code registry](docs/reference/error-codes.md); fuzz targets for the spec parser and migrations, run nightly by `nightly.yml`.
+- Data layer (phase A04, `sonarithm-data`): Arrow-backed tables and bundles with `snr.*` field metadata; CSV/TSV, JSON/NDJSON, Parquet, Arrow IPC and XLSX/ODS sources with encoding, dialect, header and type sniffing; field type, role and concept inference reported as diagnostics; provenance columns and their propagation; eight transforms with a sandboxed, fuel-limited rhai expression subset; M4 and LTTB downsampling with a tile cache; canonical data fingerprints; a PB-05 benchmark and fuzz targets.
 - Render engine (phase A05):
   - `sonarithm-dsp` oscillators: sine, triangle, and band-limited (PolyBLEP) saw and square, computed with IEEE 754 arithmetic only so renders stay bit-identical across platforms.
   - `sonarithm-dsp` envelopes: ADSR with raised-cosine onset and offset ramps of at least 5 ms, about 40 ms for notes (SDR-22); retriggers and releases never step.

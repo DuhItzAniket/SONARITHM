@@ -176,6 +176,8 @@ Requirements for every target: no panic, no hang (per-input timeout), bounded me
 
 Schedule: 30 minutes per target in `nightly.yml` ([ci-cd](ci-cd.md)), a two-minute smoke run on pull requests that touch `sonarithm-core` or `sonarithm-spec`, and at least 1 hour per parser target before each release (manual dispatch of `nightly.yml` with `seconds: 3600`). Run locally from the owning crate with `cargo +nightly fuzz run <target>`. On Windows, cargo-fuzz needs AddressSanitizer: put the MSVC directory that holds `clang_rt.asan_dynamic-x86_64.dll` (`VC/Tools/MSVC/<version>/bin/Hostx64/x64`) on `PATH`, otherwise the target exits with `STATUS_DLL_NOT_FOUND`; `-s none` does not link with MSVC. Contributors changing a parser or importer run its target locally before opening the PR. Every crash is minimized and committed as a regular regression test in the owning crate.
 
+The `sonarithm-data` targets (`csv_read`, `json_read`, `xlsx_read`, `columnar_read`) also check that every table they load survives an Arrow IPC round trip with the same fingerprint. The data layer turns panics of third-party decoders (arrow-ipc, parquet, calamine) into errors, so `xlsx_read` and `columnar_read` replace libFuzzer's abort-on-panic hook and only panics that escape `read_bytes` count as crashes. On Windows, libFuzzer treats any Rust panic as a crash even when it is caught, so run those two targets on Linux; on Windows the ASan runtime DLL (`clang_rt.asan_dynamic-x86_64.dll`, in the MSVC `bin\Hostx64\x64` folder) must be on `PATH`.
+
 ## 8. Concurrency and unsafe code
 
 | Tool | Scope | When |

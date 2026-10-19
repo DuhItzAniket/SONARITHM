@@ -77,8 +77,9 @@
 | Test runner | cargo-nextest | 0.9.148 | Adopt | A01 |
 | Snapshots | insta | 1.49 | Adopt | A03 |
 | Property tests | proptest | 1.12 | Adopt | A03 |
-| Benchmarks | criterion | 0.8.2 | Adopt (divan Assess) | A05 |
-| Fuzzing | cargo-fuzz | 0.13.2 | Adopt | A03 |
+| Benchmarks | criterion (no default features: no plotting or rayon) | 0.8.2 | Adopt (divan Assess) | A04 (PB-05 data load), A05 |
+| Fuzzing | cargo-fuzz (libfuzzer-sys 0.4 in each crate's `fuzz/` harness) | 0.13.2 | Adopt | A03 (spec), A04 (data importers) |
+| Test fixtures | zip (dev-only, no default features: builds XLSX and ODS packages in the data tests; the version calamine uses) | 9.0 | Adopt | A04 |
 | Concurrency / UB | Miri; shuttle | —; 0.9.7 | Adopt / Trial (loom Assess) | A05 |
 | Coverage | cargo-llvm-cov (candidate) | — | Trial | A05 |
 | Platform-independent maths | libm (pure-Rust) for every value that reaches the Score | — | Adopt | A03 |
