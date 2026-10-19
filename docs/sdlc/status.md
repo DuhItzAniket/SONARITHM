@@ -146,7 +146,7 @@ Work runs in a separate agent session through one PR per task into `crates/engin
 | A06-T01 Scales | In review | `linear`, `log`, `symlog`, `sqrt`, `pow`, `quantile`, `band`, `ordinal`; `domain` auto, zero-based or explicit; `nice`; monotonicity and range property tests |
 | A06-T02 Pitch spaces and range defaults (SDR-08, SDR-09) | In review | Log-frequency (default), linear, mel, ERB-rate and Bark spaces; 400–1400 Hz default range, 65–1480 Hz expanded; ranges in Hz, MIDI or cents; `sdr_08_*` and `sdr_09_*` tests |
 | A06-T03 `concepts.toml`, polarity resolution, ambiguity diagnostics (SDR-12..15) | In review | 16 rows, each citing evidence (Walker 2007 counts where they exist); explicit → profile → concept → generic resolution, one-key flip; `SNR-ENG-020`…`023`; F-080 |
-| A06-T04 `tone` and `glide` encoders, redundant duration and taps (A11Y-13), categorical timbre | Not started | |
+| A06-T04 `tone` and `glide` encoders, redundant duration and taps (A11Y-13), categorical timbre | In review | `Numisona` engine and encoders with `RowRef` and confidence; filter, time order and pace; redundant taps and duration; timbre per category; missing values; `TrackRequest` gains substrate, fields, missing and mode; synthetic example datasets; snapshots; F-082 |
 | A06-T05 Psychophysical scaling (SDR-11) | In review | `f = f_ref · (d / d_ref)^(1/m)`, labelled as guidance; reproduces the Smith & Walker (2005) dollar mapping; range from the law or clamped to a given range |
 | A06-T06 `auto` mark with density switching (SDR-20, experimental) | Not started | |
 | A06-T07 Templates | Not started | |

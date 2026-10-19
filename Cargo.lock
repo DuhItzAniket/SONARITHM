@@ -1646,11 +1646,15 @@ version = "0.0.0"
 name = "sonarithm-numisona"
 version = "0.0.0"
 dependencies = [
+ "arrow-array",
+ "arrow-schema",
  "insta",
  "proptest",
  "serde",
  "serde_json",
+ "sonarithm-compiler",
  "sonarithm-core",
+ "sonarithm-data",
  "sonarithm-spec",
  "thiserror",
  "toml",

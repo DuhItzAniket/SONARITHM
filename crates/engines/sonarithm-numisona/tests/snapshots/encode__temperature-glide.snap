@@ -1,0 +1,903 @@
+---
+source: crates/engines/sonarithm-numisona/tests/encode.rs
+expression: review(&compiled)
+---
+{
+  "header": {
+    "data_fingerprint": "73e1048d32a1b57a55bbbbc42c087f4319cb649a48ca4c32e4ebb4a07338b63d",
+    "duration": 40.0,
+    "engines": {
+      "numisona": "0.0.0",
+      "platform": "0.0.0"
+    },
+    "ir_version": 1,
+    "mode": "analysis",
+    "seed": 0,
+    "shapers": [],
+    "spec_hash": "93d90b44bbd6d65bf661ed29554ee45b0d32274f72dbde65b280a004b814c547",
+    "spec_version": "0.1"
+  },
+  "markers": [],
+  "tracks": [
+    {
+      "engine": "numisona",
+      "events": [
+        {
+          "curve": [
+            {
+              "brightness": 0.5,
+              "gain": -18.0,
+              "pan": 0.0,
+              "pitch": -165.0,
+              "t": 0.0
+            },
+            {
+              "brightness": 0.5,
+              "gain": -18.0,
+              "pan": 0.0,
+              "pitch": 37.27,
+              "t": 0.333333
+            },
+            {
+              "brightness": 0.5,
+              "gain": -18.0,
+              "pan": 0.0,
+              "pitch": 133.59,
+              "t": 0.666667
+            },
+            {
+              "brightness": 0.5,
+              "gain": -18.0,
+              "pan": 0.0,
+              "pitch": 27.64,
+              "t": 1.0
+            },
+            {
+              "brightness": 0.5,
+              "gain": -18.0,
+              "pan": 0.0,
+              "pitch": -134.5,
+              "t": 1.333333
+            },
+            {
+              "brightness": 0.5,
+              "gain": -18.0,
+              "pan": 0.0,
+              "pitch": 13.19,
+              "t": 1.666667
+            },
+            {
+              "brightness": 0.5,
+              "gain": -18.0,
+              "pan": 0.0,
+              "pitch": 93.46,
+              "t": 2.0
+            },
+            {
+              "brightness": 0.5,
+              "gain": -18.0,
+              "pan": 0.0,
+              "pitch": 186.57,
+              "t": 2.333333
+            },
+            {
+              "brightness": 0.5,
+              "gain": -18.0,
+              "pan": 0.0,
+              "pitch": 14.79,
+              "t": 2.666667
+            },
+            {
+              "brightness": 0.5,
+              "gain": -18.0,
+              "pan": 0.0,
+              "pitch": 77.4,
+              "t": 3.0
+            },
+            {
+              "brightness": 0.5,
+              "gain": -18.0,
+              "pan": 0.0,
+              "pitch": -28.55,
+              "t": 3.333333
+            },
+            {
+              "brightness": 0.5,
+              "gain": -18.0,
+              "pan": 0.0,
+              "pitch": 66.17,
+              "t": 3.666667
+            },
+            {
+              "brightness": 0.5,
+              "gain": -18.0,
+              "pan": 0.0,
+              "pitch": 54.93,
+              "t": 4.0
+            },
+            {
+              "brightness": 0.5,
+              "gain": -18.0,
+              "pan": 0.0,
+              "pitch": 61.35,
+              "t": 4.333333
+            },
+            {
+              "brightness": 0.5,
+              "gain": -18.0,
+              "pan": 0.0,
+              "pitch": 483.56,
+              "t": 4.666667
+            },
+            {
+              "brightness": 0.5,
+              "gain": -18.0,
+              "pan": 0.0,
+              "pitch": 358.34,
+              "t": 5.0
+            },
+            {
+              "brightness": 0.5,
+              "gain": -18.0,
+              "pan": 0.0,
+              "pitch": 542.95,
+              "t": 5.333333
+            },
+            {
+              "brightness": 0.5,
+              "gain": -18.0,
+              "pan": 0.0,
+              "pitch": 225.1,
+              "t": 5.666667
+            },
+            {
+              "brightness": 0.5,
+              "gain": -18.0,
+              "pan": 0.0,
+              "pitch": 367.97,
+              "t": 6.0
+            },
+            {
+              "brightness": 0.5,
+              "gain": -18.0,
+              "pan": 0.0,
+              "pitch": 432.19,
+              "t": 6.333333
+            },
+            {
+              "brightness": 0.5,
+              "gain": -18.0,
+              "pan": 0.0,
+              "pitch": 432.19,
+              "t": 6.666667
+            },
+            {
+              "brightness": 0.5,
+              "gain": -18.0,
+              "pan": 0.0,
+              "pitch": 475.53,
+              "t": 7.0
+            },
+            {
+              "brightness": 0.5,
+              "gain": -18.0,
+              "pan": 0.0,
+              "pitch": 380.81,
+              "t": 7.333333
+            },
+            {
+              "brightness": 0.5,
+              "gain": -18.0,
+              "pan": 0.0,
+              "pitch": 817.47,
+              "t": 7.666667
+            },
+            {
+              "brightness": 0.5,
+              "gain": -18.0,
+              "pan": 0.0,
+              "pitch": 611.98,
+              "t": 8.0
+            },
+            {
+              "brightness": 0.5,
+              "gain": -18.0,
+              "pan": 0.0,
+              "pitch": 806.23,
+              "t": 8.333333
+            },
+            {
+              "brightness": 0.5,
+              "gain": -18.0,
+              "pan": 0.0,
+              "pitch": 639.28,
+              "t": 8.666667
+            },
+            {
+              "brightness": 0.5,
+              "gain": -18.0,
+              "pan": 0.0,
+              "pitch": 499.61,
+              "t": 9.0
+            },
+            {
+              "brightness": 0.5,
+              "gain": -18.0,
+              "pan": 0.0,
+              "pitch": 562.22,
+              "t": 9.333333
+            },
+            {
+              "brightness": 0.5,
+              "gain": -18.0,
+              "pan": 0.0,
+              "pitch": 839.94,
+              "t": 9.666667
+            },
+            {
+              "brightness": 0.5,
+              "gain": -18.0,
+              "pan": 0.0,
+              "pitch": 770.91,
+              "t": 10.0
+            },
+            {
+              "brightness": 0.5,
+              "gain": -18.0,
+              "pan": 0.0,
+              "pitch": 857.6,
+              "t": 10.333333
+            },
+            {
+              "brightness": 0.5,
+              "gain": -18.0,
+              "pan": 0.0,
+              "pitch": 867.23,
+              "t": 10.666667
+            },
+            {
+              "brightness": 0.5,
+              "gain": -18.0,
+              "pan": 0.0,
+              "pitch": 953.92,
+              "t": 11.0
+            },
+            {
+              "brightness": 0.5,
+              "gain": -18.0,
+              "pan": 0.0,
+              "pitch": 880.08,
+              "t": 11.333333
+            },
+            {
+              "brightness": 0.5,
+              "gain": -18.0,
+              "pan": 0.0,
+              "pitch": 1111.25,
+              "t": 11.666667
+            },
+            {
+              "brightness": 0.5,
+              "gain": -18.0,
+              "pan": 0.0,
+              "pitch": 1196.33,
+              "t": 12.0
+            },
+            {
+              "brightness": 0.5,
+              "gain": -18.0,
+              "pan": 0.0,
+              "pitch": 1010.11,
+              "t": 12.333333
+            },
+            {
+              "brightness": 0.5,
+              "gain": -18.0,
+              "pan": 0.0,
+              "pitch": 846.37,
+              "t": 12.666667
+            },
+            {
+              "brightness": 0.5,
+              "gain": -18.0,
+              "pan": 0.0,
+              "pitch": 1189.91,
+              "t": 13.0
+            },
+            {
+              "brightness": 0.5,
+              "gain": -18.0,
+              "pan": 0.0,
+              "pitch": 1016.53,
+              "t": 13.333333
+            },
+            {
+              "brightness": 0.5,
+              "gain": -18.0,
+              "pan": 0.0,
+              "pitch": 1003.69,
+              "t": 13.666667
+            },
+            {
+              "brightness": 0.5,
+              "gain": -18.0,
+              "pan": 0.0,
+              "pitch": 1193.12,
+              "t": 14.0
+            },
+            {
+              "brightness": 0.5,
+              "gain": -18.0,
+              "pan": 0.0,
+              "pitch": 945.9,
+              "t": 14.333333
+            },
+            {
+              "brightness": 0.5,
+              "gain": -18.0,
+              "pan": 0.0,
+              "pitch": 1172.25,
+              "t": 14.666667
+            },
+            {
+              "brightness": 0.5,
+              "gain": -18.0,
+              "pan": 0.0,
+              "pitch": 1358.47,
+              "t": 15.0
+            },
+            {
+              "brightness": 0.5,
+              "gain": -18.0,
+              "pan": 0.0,
+              "pitch": 1242.89,
+              "t": 15.333333
+            },
+            {
+              "brightness": 0.5,
+              "gain": -18.0,
+              "pan": 0.0,
+              "pitch": 1398.61,
+              "t": 15.666667
+            },
+            {
+              "brightness": 0.5,
+              "gain": -18.0,
+              "pan": 0.0,
+              "pitch": 1307.1,
+              "t": 16.0
+            },
+            {
+              "brightness": 0.5,
+              "gain": -18.0,
+              "pan": 0.0,
+              "pitch": 1464.42,
+              "t": 16.333333
+            },
+            {
+              "brightness": 0.5,
+              "gain": -18.0,
+              "pan": 0.0,
+              "pitch": 1512.59,
+              "t": 16.666667
+            },
+            {
+              "brightness": 0.5,
+              "gain": -18.0,
+              "pan": 0.0,
+              "pitch": 1151.38,
+              "t": 17.0
+            },
+            {
+              "brightness": 0.5,
+              "gain": -18.0,
+              "pan": 0.0,
+              "pitch": 1424.29,
+              "t": 17.333333
+            },
+            {
+              "brightness": 0.5,
+              "gain": -18.0,
+              "pan": 0.0,
+              "pitch": 1215.6,
+              "t": 17.666667
+            },
+            {
+              "brightness": 0.5,
+              "gain": -18.0,
+              "pan": 0.0,
+              "pitch": 1242.89,
+              "t": 18.0
+            },
+            {
+              "brightness": 0.5,
+              "gain": -18.0,
+              "pan": 0.0,
+              "pitch": 1268.57,
+              "t": 18.333333
+            },
+            {
+              "brightness": 0.5,
+              "gain": -18.0,
+              "pan": 0.0,
+              "pitch": 1618.54,
+              "t": 18.666667
+            },
+            {
+              "brightness": 0.5,
+              "gain": -18.0,
+              "pan": 0.0,
+              "pitch": 1453.19,
+              "t": 19.0
+            },
+            {
+              "brightness": 0.5,
+              "gain": -18.0,
+              "pan": 0.0,
+              "pitch": 1655.46,
+              "t": 19.333333
+            },
+            {
+              "brightness": 0.5,
+              "gain": -18.0,
+              "pan": 0.0,
+              "pitch": 1578.4,
+              "t": 19.666667
+            },
+            {
+              "brightness": 0.5,
+              "gain": -18.0,
+              "pan": 0.0,
+              "pitch": 1547.9,
+              "t": 20.0
+            },
+            {
+              "brightness": 0.5,
+              "gain": -18.0,
+              "pan": 0.0,
+              "pitch": 1480.48,
+              "t": 20.333333
+            },
+            {
+              "brightness": 0.5,
+              "gain": -18.0,
+              "pan": 0.0,
+              "pitch": 1737.33,
+              "t": 20.666667
+            },
+            {
+              "brightness": 0.5,
+              "gain": -18.0,
+              "pan": 0.0,
+              "pitch": 1724.49,
+              "t": 21.0
+            },
+            {
+              "brightness": 0.5,
+              "gain": -18.0,
+              "pan": 0.0,
+              "pitch": 1409.84,
+              "t": 21.333333
+            },
+            {
+              "brightness": 0.5,
+              "gain": -18.0,
+              "pan": 0.0,
+              "pitch": 1591.25,
+              "t": 21.666667
+            },
+            {
+              "brightness": 0.5,
+              "gain": -18.0,
+              "pan": 0.0,
+              "pitch": 1539.88,
+              "t": 22.0
+            },
+            {
+              "brightness": 0.5,
+              "gain": -18.0,
+              "pan": 0.0,
+              "pitch": 1684.36,
+              "t": 22.333333
+            },
+            {
+              "brightness": 0.5,
+              "gain": -18.0,
+              "pan": 0.0,
+              "pitch": 1819.21,
+              "t": 22.666667
+            },
+            {
+              "brightness": 0.5,
+              "gain": -18.0,
+              "pan": 0.0,
+              "pitch": 1427.5,
+              "t": 23.0
+            },
+            {
+              "brightness": 0.5,
+              "gain": -18.0,
+              "pan": 0.0,
+              "pitch": 1841.68,
+              "t": 23.333333
+            },
+            {
+              "brightness": 0.5,
+              "gain": -18.0,
+              "pan": 0.0,
+              "pitch": 1798.34,
+              "t": 23.666667
+            },
+            {
+              "brightness": 0.5,
+              "gain": -18.0,
+              "pan": 0.0,
+              "pitch": 1477.27,
+              "t": 24.0
+            },
+            {
+              "brightness": 0.5,
+              "gain": -18.0,
+              "pan": 0.0,
+              "pitch": 1456.4,
+              "t": 24.333333
+            },
+            {
+              "brightness": 0.5,
+              "gain": -18.0,
+              "pan": 0.0,
+              "pitch": 1827.23,
+              "t": 24.666667
+            },
+            {
+              "brightness": 0.5,
+              "gain": -18.0,
+              "pan": 0.0,
+              "pitch": 1494.93,
+              "t": 25.0
+            },
+            {
+              "brightness": 0.5,
+              "gain": -18.0,
+              "pan": 0.0,
+              "pitch": 1604.09,
+              "t": 25.333333
+            },
+            {
+              "brightness": 0.5,
+              "gain": -18.0,
+              "pan": 0.0,
+              "pitch": 1589.64,
+              "t": 25.666667
+            },
+            {
+              "brightness": 0.5,
+              "gain": -18.0,
+              "pan": 0.0,
+              "pitch": 1512.59,
+              "t": 26.0
+            },
+            {
+              "brightness": 0.5,
+              "gain": -18.0,
+              "pan": 0.0,
+              "pitch": 1793.52,
+              "t": 26.333333
+            },
+            {
+              "brightness": 0.5,
+              "gain": -18.0,
+              "pan": 0.0,
+              "pitch": 1758.2,
+              "t": 26.666667
+            },
+            {
+              "brightness": 0.5,
+              "gain": -18.0,
+              "pan": 0.0,
+              "pitch": 1674.73,
+              "t": 27.0
+            },
+            {
+              "brightness": 0.5,
+              "gain": -18.0,
+              "pan": 0.0,
+              "pitch": 1571.98,
+              "t": 27.333333
+            },
+            {
+              "brightness": 0.5,
+              "gain": -18.0,
+              "pan": 0.0,
+              "pitch": 1774.26,
+              "t": 27.666667
+            },
+            {
+              "brightness": 0.5,
+              "gain": -18.0,
+              "pan": 0.0,
+              "pitch": 1538.27,
+              "t": 28.0
+            },
+            {
+              "brightness": 0.5,
+              "gain": -18.0,
+              "pan": 0.0,
+              "pitch": 1655.46,
+              "t": 28.333333
+            },
+            {
+              "brightness": 0.5,
+              "gain": -18.0,
+              "pan": 0.0,
+              "pitch": 1604.09,
+              "t": 28.666667
+            },
+            {
+              "brightness": 0.5,
+              "gain": -18.0,
+              "pan": 0.0,
+              "pitch": 1706.83,
+              "t": 29.0
+            },
+            {
+              "brightness": 0.5,
+              "gain": -18.0,
+              "pan": 0.0,
+              "pitch": 1604.09,
+              "t": 29.333333
+            },
+            {
+              "brightness": 0.5,
+              "gain": -18.0,
+              "pan": 0.0,
+              "pitch": 1761.41,
+              "t": 29.666667
+            },
+            {
+              "brightness": 0.5,
+              "gain": -18.0,
+              "pan": 0.0,
+              "pitch": 1596.06,
+              "t": 30.0
+            },
+            {
+              "brightness": 0.5,
+              "gain": -18.0,
+              "pan": 0.0,
+              "pitch": 1607.3,
+              "t": 30.333333
+            },
+            {
+              "brightness": 0.5,
+              "gain": -18.0,
+              "pan": 0.0,
+              "pitch": 2003.82,
+              "t": 30.666667
+            },
+            {
+              "brightness": 0.5,
+              "gain": -18.0,
+              "pan": 0.0,
+              "pitch": 1934.79,
+              "t": 31.0
+            },
+            {
+              "brightness": 0.5,
+              "gain": -18.0,
+              "pan": 0.0,
+              "pitch": 1589.64,
+              "t": 31.333333
+            },
+            {
+              "brightness": 0.5,
+              "gain": -18.0,
+              "pan": 0.0,
+              "pitch": 1525.43,
+              "t": 31.666667
+            },
+            {
+              "brightness": 0.5,
+              "gain": -18.0,
+              "pan": 0.0,
+              "pitch": 1525.43,
+              "t": 32.0
+            },
+            {
+              "brightness": 0.5,
+              "gain": -18.0,
+              "pan": 0.0,
+              "pitch": 1644.22,
+              "t": 32.333333
+            },
+            {
+              "brightness": 0.5,
+              "gain": -18.0,
+              "pan": 0.0,
+              "pitch": 1816.0,
+              "t": 32.666667
+            },
+            {
+              "brightness": 0.5,
+              "gain": -18.0,
+              "pan": 0.0,
+              "pitch": 1681.15,
+              "t": 33.0
+            },
+            {
+              "brightness": 0.5,
+              "gain": -18.0,
+              "pan": 0.0,
+              "pitch": 1881.82,
+              "t": 33.333333
+            },
+            {
+              "brightness": 0.5,
+              "gain": -18.0,
+              "pan": 0.0,
+              "pitch": 1716.46,
+              "t": 33.666667
+            },
+            {
+              "brightness": 0.5,
+              "gain": -18.0,
+              "pan": 0.0,
+              "pitch": 1816.0,
+              "t": 34.0
+            },
+            {
+              "brightness": 0.5,
+              "gain": -18.0,
+              "pan": 0.0,
+              "pitch": 1865.76,
+              "t": 34.333333
+            },
+            {
+              "brightness": 0.5,
+              "gain": -18.0,
+              "pan": 0.0,
+              "pitch": 1824.02,
+              "t": 34.666667
+            },
+            {
+              "brightness": 0.5,
+              "gain": -18.0,
+              "pan": 0.0,
+              "pitch": 1541.48,
+              "t": 35.0
+            },
+            {
+              "brightness": 0.5,
+              "gain": -18.0,
+              "pan": 0.0,
+              "pitch": 1710.04,
+              "t": 35.333333
+            },
+            {
+              "brightness": 0.5,
+              "gain": -18.0,
+              "pan": 0.0,
+              "pitch": 1661.88,
+              "t": 35.666667
+            },
+            {
+              "brightness": 0.5,
+              "gain": -18.0,
+              "pan": 0.0,
+              "pitch": 1536.67,
+              "t": 36.0
+            },
+            {
+              "brightness": 0.5,
+              "gain": -18.0,
+              "pan": 0.0,
+              "pitch": 1819.21,
+              "t": 36.333333
+            },
+            {
+              "brightness": 0.5,
+              "gain": -18.0,
+              "pan": 0.0,
+              "pitch": 1469.24,
+              "t": 36.666667
+            },
+            {
+              "brightness": 0.5,
+              "gain": -18.0,
+              "pan": 0.0,
+              "pitch": 1461.21,
+              "t": 37.0
+            },
+            {
+              "brightness": 0.5,
+              "gain": -18.0,
+              "pan": 0.0,
+              "pitch": 1629.78,
+              "t": 37.333333
+            },
+            {
+              "brightness": 0.5,
+              "gain": -18.0,
+              "pan": 0.0,
+              "pitch": 1835.26,
+              "t": 37.666667
+            },
+            {
+              "brightness": 0.5,
+              "gain": -18.0,
+              "pan": 0.0,
+              "pitch": 1859.34,
+              "t": 38.0
+            },
+            {
+              "brightness": 0.5,
+              "gain": -18.0,
+              "pan": 0.0,
+              "pitch": 1730.91,
+              "t": 38.333333
+            },
+            {
+              "brightness": 0.5,
+              "gain": -18.0,
+              "pan": 0.0,
+              "pitch": 1531.85,
+              "t": 38.666667
+            },
+            {
+              "brightness": 0.5,
+              "gain": -18.0,
+              "pan": 0.0,
+              "pitch": 1498.14,
+              "t": 39.0
+            },
+            {
+              "brightness": 0.5,
+              "gain": -18.0,
+              "pan": 0.0,
+              "pitch": 1344.02,
+              "t": 39.333333
+            },
+            {
+              "brightness": 0.5,
+              "gain": -18.0,
+              "pan": 0.0,
+              "pitch": 1668.3,
+              "t": 39.666667
+            },
+            {
+              "brightness": 0.5,
+              "gain": -18.0,
+              "pan": 0.0,
+              "pitch": 1668.3,
+              "t": 40.0
+            }
+          ],
+          "src": {
+            "end": 120,
+            "generation": 0,
+            "start": 0,
+            "table": 0
+          },
+          "t0": 0.0,
+          "t1": 40.0,
+          "type": "glide"
+        }
+      ],
+      "gain": 0.0,
+      "id": "data",
+      "instrument": "mallet",
+      "pan": 0.0,
+      "pitch_range": {
+        "high": 2003.82,
+        "low": -165.0
+      },
+      "role": "data"
+    }
+  ]
+}
+
+NUMISONA diagnostics:
+- SNR-ENG-001: NUMISONA: track `data`: time follows field `day`, which has role x (RFC-0001 §5).
+- SNR-ENG-002: NUMISONA: track `data`: the instrument is `mallet`, the harmonic mallet-like default (SDR-29).
+- SNR-ENG-020: NUMISONA: field `temp` is positive from concept `temperature` (SDR-12). Listener counts: 11 positive, 2 none, 6 negative. Evidence: Walker 2007 Table 1: 11/2/6, majority slope +0.65 (positive by majority; the research report marks it flippable); Walker 2002 Exp. 2: 11 of 16 positive.
+- SNR-ENG-004: NUMISONA: track `data`: loudness is constant at -18 dB, so pitch alone carries the data (SDR-23).

@@ -1,0 +1,5 @@
+---
+source: crates/engines/sonarithm-numisona/tests/encode.rs
+expression: hash.to_string()
+---
+06f16621b2dd2c7495ece4f162b8827f8122464f4c413589b6a2d1d9df65e503

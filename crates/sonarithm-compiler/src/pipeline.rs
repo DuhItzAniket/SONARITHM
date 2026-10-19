@@ -270,8 +270,7 @@ impl<D: CompilerData> Run<'_, D> {
                 unavailable(&format!("Encoding `{mark}` marks"), &owner, at.clone())
             })?;
             self.use_engine(&engine.clone());
-            let request =
-                TrackRequest::new(TrackId::new(track.id.clone()), mark, fragment(at, track)?);
+            let request = track_request(spec, track, mark, at)?;
             let output = encoder
                 .encode(&request, data, annotations, &mut self.cx)
                 .map_err(stop)?;
@@ -349,6 +348,32 @@ impl<D: CompilerData> Run<'_, D> {
         let events = u64::try_from(events).unwrap_or(u64::MAX);
         self.cx.charge_events(events).map_err(stop)
     }
+}
+
+/// The request for one track: the track, the substrate, the declared field semantics,
+/// the missing-value treatment and the mode.
+fn track_request(
+    spec: &Spec,
+    track: &sonarithm_spec::TrackSpec,
+    mark: MarkKind,
+    at: SpecPointer,
+) -> Result<TrackRequest, Stop> {
+    let root = SpecPointer::root();
+    let mode = spec.mode.unwrap_or(sonarithm_spec::Mode::Analysis).into();
+    let mut request = TrackRequest::new(TrackId::new(track.id.clone()), mark, fragment(at, track)?)
+        .with_mode(mode);
+    if let Some(substrate) = &spec.substrate {
+        request = request.with_substrate(fragment(root.key("substrate"), substrate)?);
+    }
+    if !spec.data.fields.is_empty() {
+        let at = root.key("data").key("fields");
+        request = request.with_fields(fragment(at, &spec.data.fields)?);
+    }
+    if let Some(missing) = &spec.data.missing {
+        let at = root.key("data").key("missing");
+        request = request.with_missing(fragment(at, missing)?);
+    }
+    Ok(request)
 }
 
 /// Converts a capability error into a stop reason.

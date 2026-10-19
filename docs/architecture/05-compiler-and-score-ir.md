@@ -106,6 +106,8 @@ pub trait Sink: Send + Sync {                      // MIDI file, OSC, …
 - the concept table;
 - the user profile overrides (polarity flips, ranges; SDR-15, SDR-38).
 
+**A06:** the concept table and the polarity profile are held by NUMISONA, which owns them (`ConceptTable::builtin`, `Numisona::with_profile`), so `sonarithm-core` carries no engine data; every choice they make is reported as a diagnostic. An encoder's `TrackRequest` carries, besides the track, the spec sections every track's encoding depends on: `substrate` (owned by NUMISONA, RFC-0001 §2), `data.fields`, `data.missing` and the mode. These are additive fields in the spirit of ADR-0014 (spec input as fragments).
+
 ## 4. Score IR
 
 The Score is the **canonical artifact** of SONARITHM: tests snapshot it, the renderer consumes it, sinks export it, and navigation indexes it.
