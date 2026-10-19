@@ -245,6 +245,12 @@ impl Graph {
         &self.plan
     }
 
+    /// The largest block processed in one piece, in frames.
+    #[must_use]
+    pub fn max_block(&self) -> usize {
+        self.max_block
+    }
+
     /// Counters and levels after the last block.
     #[must_use]
     pub fn stats(&self) -> GraphStats {
@@ -261,6 +267,23 @@ impl Graph {
     fn reanchor(&mut self, score_frame: f64) {
         self.anchor = score_frame;
         self.since_anchor = 0;
+    }
+
+    /// Takes over the transport and mixer state of `previous`, the graph this one replaces
+    /// in a plan swap: position, speed, loop, play state and levels. If `previous` was
+    /// playing, the events sounding at the position restart with a fade-in. RT-safe.
+    pub fn adopt(&mut self, previous: &Self) {
+        let position = previous.position().min(self.length());
+        self.speed = previous.speed;
+        self.looping = previous.looping;
+        self.bus_gains = previous.bus_gains;
+        self.master_gain = previous.master_gain;
+        self.age = previous.age;
+        self.reanchor(position);
+        self.playing = previous.playing;
+        if self.playing {
+            self.resume();
+        }
     }
 
     /// Applies a command at the next frame. RT-safe.

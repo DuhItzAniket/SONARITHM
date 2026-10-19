@@ -23,6 +23,7 @@ pub mod codes;
 mod earcon;
 pub mod graph;
 pub mod plan;
+pub mod rt;
 mod voice;
 
 pub use graph::{Command, Cue, GainTarget, Graph, GraphConfig, GraphStats, LoopRange};
@@ -30,3 +31,4 @@ pub use plan::{
     Bus, EventKind, GlideRef, Instrument, PlanConfig, PlanError, Planned, PlannedBreakpoint,
     PlannedEvent, RenderPlan, Tone, TrackPlan,
 };
+pub use rt::{Controller, EngineState, Processor, realtime};

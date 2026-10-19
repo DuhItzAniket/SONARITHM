@@ -24,7 +24,7 @@ Status values: `Not started` · `In progress` · `In review` · `Done` · `Block
 | A | A02 | Technical spikes and prototype gate | **In review** | ≈80% | All spikes built and measured on Windows and CI; gate report draft: Conditional go recommended. PB-01 fails on Windows shared mode; screen-reader, macOS and Linux manual steps pending. See [A02 tasks](#a02-tasks) |
 | A | A03 | Core types, Spec v0.1, Score IR | **Done** | 100% | 2026-10-19; [phase review](reviews/A03-phase-review.md), [retro](retrospectives/A03-retro.md). See [A03 tasks](#a03-tasks) |
 | A | A04 | Data layer | **Done** | 100% | 2026-10-19; [phase review](reviews/A04-phase-review.md), [retro](retrospectives/A04-retro.md). See [A04 tasks](#a04-tasks) |
-| A | A05 | Render engine, audio backend, export | **In progress** | ≈5% | T01, T03 and T04 in review. See [A05 tasks](#a05-tasks) |
+| A | A05 | Render engine, audio backend, export | **In progress** | ≈30% | T01, T03 and T04 merged; the rest land as one PR per task. See [A05 tasks](#a05-tasks) |
 | A | A06 | NUMISONA v1 | **Done** | 100% | 2026-10-19; [phase review](reviews/A06-phase-review.md). See [A06 tasks](#a06-tasks) |
 | A | A07 | CLI, Python, v0.1.0-alpha | Not started | 0% | |
 | A | A08 | Research instrumentation v0, ICAD 2027 | **In progress** | ≈10% | P01 without participant studies (OD-04). See [A08 tasks](#a08-tasks) |
@@ -128,7 +128,7 @@ Work runs in a separate agent session through small PRs into `crates/sonarithm-d
 | A05-T02 ISO 226:2023 table; EBU R128 meter | Not started | |
 | A05-T03 `RenderPlan` and plan builder | In review | Score → frames, frequencies, linear gains and pan gains; taps expanded; voice pools at twice the polyphony; `SNR-RENDER` code table; plan snapshot and polyphony property tests |
 | A05-T04 Render graph, voice pool, scheduler, transport | In review | `Graph::process`: voice pools with oldest-first stealing, four buses at the sound-design §6.2 levels, sample-accurate dispatch (bit-identical output at blocks of 1 to 4096 frames), play, pause, stop, seek and loop with crossfades, speed without pitch change, live cues; provisional earcons |
-| A05-T05 RT communication (rtrb, triple_buffer, basedrop) | Not started | |
+| A05-T05 RT communication (rtrb, triple_buffer, basedrop) | In review | `realtime(graph)` splits into `Controller` and `Processor`: rtrb command ring (1024, ≤ 64 per block, coalescing on overflow), plan swap with crossfade through `basedrop::Owned`, `EngineState` through `triple_buffer`; shuttle test of the protocol over 200 random schedules |
 | A05-T06 `AudioBackend` + `CpalBackend` | Not started | |
 | A05-T07 `OfflineBackend`; WAV and FLAC writers | Not started | |
 | A05-T08 Render manifest + WebVTT sidecar | Not started | |
