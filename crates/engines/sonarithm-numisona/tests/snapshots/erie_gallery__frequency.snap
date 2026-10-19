@@ -1,0 +1,105 @@
+---
+source: crates/engines/sonarithm-numisona/tests/erie_gallery.rs
+expression: "review(name, text)"
+---
+composition: Single
+
+spec:
+{
+  "data": {
+    "fields": {
+      "n": {
+        "type": "quantitative"
+      },
+      "species": {
+        "type": "nominal"
+      }
+    },
+    "source": {
+      "kind": "inline",
+      "values": [
+        {
+          "island": "Biscoe",
+          "n": 44,
+          "species": "Adelie"
+        },
+        {
+          "island": "Biscoe",
+          "n": 124,
+          "species": "Gentoo"
+        },
+        {
+          "island": "Dream",
+          "n": 56,
+          "species": "Adelie"
+        },
+        {
+          "island": "Dream",
+          "n": 68,
+          "species": "Chinstrap"
+        },
+        {
+          "island": "Torgersen",
+          "n": 52,
+          "species": "Adelie"
+        }
+      ]
+    }
+  },
+  "name": "Penguins by island",
+  "specVersion": "0.1",
+  "substrate": {
+    "time": {
+      "field": "species",
+      "pace": {
+        "pointsPerSecond": 2.0
+      }
+    }
+  },
+  "tracks": [
+    {
+      "channels": {
+        "duration": {
+          "value": {
+            "s": 0.5
+          }
+        },
+        "pitch": {
+          "field": "n",
+          "polarity": "positive",
+          "range": {
+            "hz": [
+              261.626,
+              1046.502
+            ]
+          }
+        }
+      },
+      "id": "y",
+      "instrument": "piano",
+      "mark": "tone"
+    }
+  ],
+  "transform": [
+    {
+      "expr": "n > 10 && island != \"None\"",
+      "op": "filter"
+    },
+    {
+      "as": "root_n",
+      "expr": "sqrt(n)",
+      "op": "derive"
+    }
+  ]
+}
+
+report:
+- unmapped config.speechRate at /config/speechRate: player configuration (speech, scale announcements, time units) has no v0.1 equivalent; the spoken legend follows SDR-18
+- unmapped tone.filter at /tone/filter: audio filters on tones have no v0.1 equivalent
+- approximated tone.type at /tone/type: instrument `piano` is passed through by name; instruments beyond the oscillators arrive with AXONOTE (C04)
+- unmapped encoding.panAzimuth at /encoding/panAzimuth: 3D spatial positions arrive with spatial audio (D03); v0.1 has stereo pan only
+- unmapped encoding.pitch.roundToNote at /encoding/pitch/roundToNote: Analysis mode keeps pitch continuous (SDR-10); quantization arrives with AXONOTE in Presentation mode (C04)
+- unmapped encoding.repeat at /encoding/repeat: data-driven repetition over categories has no v0.1 equivalent; split the data into one track per category with `filter`
+- approximated transform.filter at /transform/0/filter: the JavaScript expression `datum.n > 10 && datum.island !== 'None'` is translated to `n > 10 && island != "None"`; check it against the SONARITHM expression language
+- approximated transform.calculate at /transform/1/calculate: the JavaScript expression `Math.sqrt(datum.n)` is translated to `sqrt(n)`; check it against the SONARITHM expression language
+- unmapped transform.fold at /transform/2: no v0.1 transform (fold, density, quantile, boxplot and diffing are not in spec v0.1)

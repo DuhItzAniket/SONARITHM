@@ -1,0 +1,46 @@
+{
+  "title": "Penguin body mass",
+  "data": {
+    "url": "data/penguins.json"
+  },
+  "transform": [
+    {
+      "bin": "body_mass",
+      "maxbins": 10
+    },
+    {
+      "aggregate": [
+        {
+          "op": "count",
+          "as": "count"
+        }
+      ],
+      "groupby": [
+        "body_mass__bin"
+      ]
+    }
+  ],
+  "tone": {
+    "type": "square"
+  },
+  "encoding": {
+    "time": {
+      "field": "body_mass__bin",
+      "type": "ordinal",
+      "scale": {
+        "timing": "relative",
+        "band": 0.4
+      }
+    },
+    "pitch": {
+      "field": "count",
+      "type": "quantitative",
+      "scale": {
+        "zero": true
+      }
+    }
+  },
+  "config": {
+    "skipScaleSpeech": true
+  }
+}

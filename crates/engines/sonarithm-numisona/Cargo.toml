@@ -10,11 +10,13 @@ publish.workspace = true
 
 [dependencies]
 serde.workspace = true
+serde_json.workspace = true
 sonarithm-core.workspace = true
 thiserror.workspace = true
 toml.workspace = true
 
 [dev-dependencies]
+insta.workspace = true
 proptest.workspace = true
 sonarithm-spec.workspace = true
 

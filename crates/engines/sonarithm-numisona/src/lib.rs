@@ -21,6 +21,7 @@
 #![deny(missing_docs)]
 
 pub mod codes;
+pub mod import;
 pub mod pitch;
 pub mod polarity;
 pub mod scale;

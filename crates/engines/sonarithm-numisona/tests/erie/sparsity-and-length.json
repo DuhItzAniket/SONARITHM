@@ -1,0 +1,59 @@
+{
+  "data": {
+    "values": [
+      {
+        "category": "A",
+        "sparsity": 0.5,
+        "length": 1.5
+      },
+      {
+        "category": "B",
+        "sparsity": 0.2,
+        "length": 0.8
+      },
+      {
+        "category": "C",
+        "sparsity": 0.9,
+        "length": 2.0
+      }
+    ]
+  },
+  "tone": {
+    "type": "default"
+  },
+  "encoding": {
+    "time": {
+      "field": "category",
+      "type": "nominal",
+      "scale": {
+        "timing": "relative",
+        "band": 2
+      }
+    },
+    "tapSpeed": {
+      "field": "sparsity",
+      "type": "quantitative",
+      "scale": {
+        "domain": [
+          0,
+          1
+        ],
+        "range": [
+          0,
+          4
+        ],
+        "band": 1
+      }
+    },
+    "duration": {
+      "field": "length",
+      "type": "quantitative",
+      "scale": {
+        "range": [
+          0,
+          1.5
+        ]
+      }
+    }
+  }
+}

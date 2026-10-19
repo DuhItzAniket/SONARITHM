@@ -1,0 +1,80 @@
+{
+  "title": "Monthly temperature anomaly",
+  "description": "A continuous tone follows the anomaly over twelve months.",
+  "data": {
+    "values": [
+      {
+        "month": 1,
+        "anomaly": 0.12
+      },
+      {
+        "month": 2,
+        "anomaly": 0.18
+      },
+      {
+        "month": 3,
+        "anomaly": 0.25
+      },
+      {
+        "month": 4,
+        "anomaly": 0.21
+      },
+      {
+        "month": 5,
+        "anomaly": 0.33
+      },
+      {
+        "month": 6,
+        "anomaly": 0.41
+      },
+      {
+        "month": 7,
+        "anomaly": 0.38
+      },
+      {
+        "month": 8,
+        "anomaly": 0.47
+      },
+      {
+        "month": 9,
+        "anomaly": 0.52
+      },
+      {
+        "month": 10,
+        "anomaly": 0.44
+      },
+      {
+        "month": 11,
+        "anomaly": 0.58
+      },
+      {
+        "month": 12,
+        "anomaly": 0.63
+      }
+    ]
+  },
+  "tone": {
+    "type": "default",
+    "continued": true
+  },
+  "encoding": {
+    "time": {
+      "field": "month",
+      "type": "quantitative",
+      "scale": {
+        "length": 6
+      }
+    },
+    "pitch": {
+      "field": "anomaly",
+      "type": "quantitative",
+      "scale": {
+        "range": [
+          "C4",
+          "C6"
+        ],
+        "title": "Anomaly (°C)"
+      }
+    }
+  }
+}

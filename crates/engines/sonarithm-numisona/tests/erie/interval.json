@@ -1,0 +1,69 @@
+{
+  "title": "Yearly range",
+  "data": {
+    "values": [
+      {
+        "year": 2000,
+        "year_end": 2001,
+        "mid": 1.6
+      },
+      {
+        "year": 2001,
+        "year_end": 2002,
+        "mid": 1.9
+      },
+      {
+        "year": 2002,
+        "year_end": 2003,
+        "mid": 1.4
+      },
+      {
+        "year": 2003,
+        "year_end": 2004,
+        "mid": 2.2
+      },
+      {
+        "year": 2004,
+        "year_end": 2005,
+        "mid": 2.8
+      },
+      {
+        "year": 2005,
+        "year_end": 2006,
+        "mid": 2.5
+      }
+    ]
+  },
+  "tone": {
+    "type": "triangle"
+  },
+  "encoding": {
+    "time": {
+      "field": "year",
+      "type": "quantitative",
+      "scale": {
+        "length": 4
+      }
+    },
+    "time2": {
+      "field": "year_end"
+    },
+    "pitch": {
+      "field": "mid",
+      "type": "quantitative",
+      "scale": {
+        "domain": [
+          0,
+          4
+        ],
+        "range": [
+          200,
+          800
+        ]
+      }
+    },
+    "loudness": {
+      "value": 0.5
+    }
+  }
+}

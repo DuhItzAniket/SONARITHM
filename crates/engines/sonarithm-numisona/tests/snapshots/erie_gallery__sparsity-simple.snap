@@ -1,0 +1,77 @@
+---
+source: crates/engines/sonarithm-numisona/tests/erie_gallery.rs
+expression: "review(name, text)"
+---
+composition: Single
+
+spec:
+{
+  "data": {
+    "fields": {
+      "category": {
+        "type": "nominal"
+      },
+      "sparsity": {
+        "type": "quantitative"
+      }
+    },
+    "source": {
+      "kind": "inline",
+      "values": [
+        {
+          "category": "A",
+          "sparsity": 0.5
+        },
+        {
+          "category": "B",
+          "sparsity": 0.2
+        },
+        {
+          "category": "C",
+          "sparsity": 0.9
+        }
+      ]
+    }
+  },
+  "specVersion": "0.1",
+  "substrate": {
+    "time": {
+      "field": "category",
+      "pace": {
+        "pointsPerSecond": 0.8333333333333334
+      }
+    }
+  },
+  "tracks": [
+    {
+      "channels": {
+        "duration": {
+          "value": {
+            "s": 1.2
+          }
+        },
+        "taps": {
+          "field": "sparsity",
+          "range": [
+            1.0,
+            8.0
+          ],
+          "scale": {
+            "domain": [
+              0.0,
+              1.0
+            ]
+          }
+        }
+      },
+      "id": "y",
+      "instrument": "sine",
+      "mark": "tone"
+    }
+  ]
+}
+
+report:
+- unmapped encoding.speechBefore at /encoding/speechBefore: per-tone speech has no v0.1 channel; spoken legends come from `context.legend` (SDR-18)
+- unmapped encoding.tapCount.scale.band at /encoding/tapCount/scale/band: tap length is the renderer's in v0.1
+- approximated encoding.tapCount.scale.range at /encoding/tapCount/scale/range: tap counts are 1 to 8 in v0.1; 0–10 becomes 1–8

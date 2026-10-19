@@ -1,0 +1,168 @@
+---
+source: crates/engines/sonarithm-numisona/tests/erie_gallery.rs
+expression: "review(name, text)"
+---
+composition: Sequence
+
+spec:
+{
+  "data": {
+    "fields": {
+      "residual": {
+        "type": "quantitative"
+      },
+      "x": {
+        "type": "quantitative"
+      }
+    },
+    "source": {
+      "kind": "inline",
+      "values": [
+        {
+          "residual": 0.9,
+          "x": 0
+        },
+        {
+          "residual": -1.4,
+          "x": 1
+        },
+        {
+          "residual": 1.8,
+          "x": 2
+        },
+        {
+          "residual": -1.6,
+          "x": 3
+        },
+        {
+          "residual": 1.2,
+          "x": 4
+        },
+        {
+          "residual": -0.7,
+          "x": 5
+        },
+        {
+          "residual": 1.5,
+          "x": 6
+        },
+        {
+          "residual": -1.9,
+          "x": 7
+        }
+      ]
+    }
+  },
+  "name": "Residuals of the bad model",
+  "specVersion": "0.1",
+  "substrate": {
+    "time": {
+      "field": "x",
+      "pace": {
+        "secondsPerUnit": 0.42857142857142855
+      }
+    }
+  },
+  "tracks": [
+    {
+      "channels": {
+        "pitch": {
+          "field": "residual",
+          "polarity": "positive",
+          "scale": {
+            "domain": [
+              -2.0,
+              2.0
+            ]
+          }
+        }
+      },
+      "id": "bad-model",
+      "instrument": "sine",
+      "mark": "tone"
+    }
+  ]
+}
+
+spec:
+{
+  "data": {
+    "fields": {
+      "residual": {
+        "type": "quantitative"
+      },
+      "x": {
+        "type": "quantitative"
+      }
+    },
+    "source": {
+      "kind": "inline",
+      "values": [
+        {
+          "residual": 0.2,
+          "x": 0
+        },
+        {
+          "residual": -0.1,
+          "x": 1
+        },
+        {
+          "residual": 0.3,
+          "x": 2
+        },
+        {
+          "residual": -0.2,
+          "x": 3
+        },
+        {
+          "residual": 0.1,
+          "x": 4
+        },
+        {
+          "residual": -0.3,
+          "x": 5
+        },
+        {
+          "residual": 0.2,
+          "x": 6
+        },
+        {
+          "residual": -0.1,
+          "x": 7
+        }
+      ]
+    }
+  },
+  "name": "Residuals of the good model",
+  "specVersion": "0.1",
+  "substrate": {
+    "time": {
+      "field": "x",
+      "pace": {
+        "secondsPerUnit": 0.42857142857142855
+      }
+    }
+  },
+  "tracks": [
+    {
+      "channels": {
+        "pitch": {
+          "field": "residual",
+          "polarity": "positive",
+          "scale": {
+            "domain": [
+              -2.0,
+              2.0
+            ]
+          }
+        }
+      },
+      "id": "good-model",
+      "instrument": "sine",
+      "mark": "tone"
+    }
+  ]
+}
+
+report:
+- approximated sequence at /sequence: spec v0.1 has no sequential composition; each stream is imported as its own spec, to be played in order

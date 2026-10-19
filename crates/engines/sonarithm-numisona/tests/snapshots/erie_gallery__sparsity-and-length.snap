@@ -1,0 +1,87 @@
+---
+source: crates/engines/sonarithm-numisona/tests/erie_gallery.rs
+expression: "review(name, text)"
+---
+composition: Single
+
+spec:
+{
+  "data": {
+    "fields": {
+      "category": {
+        "type": "nominal"
+      },
+      "length": {
+        "type": "quantitative"
+      },
+      "sparsity": {
+        "type": "quantitative"
+      }
+    },
+    "source": {
+      "kind": "inline",
+      "values": [
+        {
+          "category": "A",
+          "length": 1.5,
+          "sparsity": 0.5
+        },
+        {
+          "category": "B",
+          "length": 0.8,
+          "sparsity": 0.2
+        },
+        {
+          "category": "C",
+          "length": 2.0,
+          "sparsity": 0.9
+        }
+      ]
+    }
+  },
+  "specVersion": "0.1",
+  "substrate": {
+    "time": {
+      "field": "category",
+      "pace": {
+        "pointsPerSecond": 0.5
+      }
+    }
+  },
+  "tracks": [
+    {
+      "channels": {
+        "duration": {
+          "field": "length",
+          "range": {
+            "s": [
+              0.05,
+              1.5
+            ]
+          }
+        },
+        "taps": {
+          "field": "sparsity",
+          "range": [
+            1.0,
+            4.0
+          ],
+          "scale": {
+            "domain": [
+              0.0,
+              1.0
+            ]
+          }
+        }
+      },
+      "id": "y",
+      "instrument": "sine",
+      "mark": "tone"
+    }
+  ]
+}
+
+report:
+- approximated encoding.duration.scale.range at /encoding/duration/scale/range: durations must be positive; the range starts at 0.05 s instead of 0
+- approximated encoding.tapSpeed at /encoding/tapSpeed: taps per second over 1 s are imported as tap counts (speed × 1)
+- approximated encoding.tapSpeed.scale.range at /encoding/tapSpeed/scale/range: tap counts are 1 to 8 in v0.1; 0–4 becomes 1–4
