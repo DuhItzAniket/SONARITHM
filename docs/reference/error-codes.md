@@ -56,6 +56,12 @@ Owner: `sonarithm-data`.
 | `SNR-DATA-040` | warning | A field metadata value cannot be read and was ignored | Fix the `snr.*` value in the file (03 §3 lists the allowed values) or declare the field in the spec's `data.fields`. | — |
 | `SNR-DATA-041` | error | The provenance columns are invalid | Write `__snr_prov` as class names (exact, vector, cv_estimate, ml_estimate, cloud_estimate, user_edited, derived, synthetic) and `__snr_conf` as numbers from 0 to 1 (03 §4). | — |
 | `SNR-DATA-050` | error | Unknown field | Name a field of the table; field names are case-sensitive. | — |
+| `SNR-DATA-051` | error | The transform needs another kind of field | Pick a field of the kind the message names, or convert one with `derive`. | — |
+| `SNR-DATA-052` | error | The expression is invalid | Write one rhai expression over the row's fields; statements, loops, functions and `**` are not available (03 §6). | — |
+| `SNR-DATA-053` | warning | The expression failed on some rows | Check the rows the message names, for example for division by zero; their values are missing. | — |
+| `SNR-DATA-054` | error | The expression needs too many operations | Simplify the expression; each row may use at most 10 000 operations. | — |
+| `SNR-DATA-055` | error | Invalid transform parameters | Fix the parameters the message names (RFC-0001 §4). | — |
+| `SNR-DATA-056` | info | A transform ran | None needed; the message states the rows in and out. | — |
 
 ## SNR-RENDER
 

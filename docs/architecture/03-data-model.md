@@ -163,6 +163,8 @@ Transforms are declared in the spec ([04-sonification-spec.md §4](04-sonificati
 | `normalize` | z-score, min–max, rank | Used by multivariate presets |
 | `pca` (D01) | Dimensionality reduction for TONALENS | ndarray-based |
 
+The expression language (A04) is one rhai *expression* per row, evaluated by a raw engine: fields are variables (or `col("name")` for any name); missing values are `()`, arithmetic with them gives `()` and comparisons with them are `false`; `is_null` and `coalesce` handle them explicitly; maths functions (`exp`, `ln`, `pow`, `sin`…) go through `sonarithm_core::math`, and `**` is disabled, so results are identical on every platform (ADR-0013). Statements, loops, user functions, closures, modules, `eval` and printing are not available, and each row may use at most 10 000 operations (`SNR-DATA-054`). A row on which the expression fails at run time (for example division by zero) gets a missing value, or is dropped by `filter`, and one warning (`SNR-DATA-053`) reports the count. Every transform reports its rows in and out (`SNR-DATA-056`) and appends itself to the bundle's transform log.
+
 ## 7. Downsampling and views
 
 The UI never receives more points than it can draw. `sonarithm-data` provides:

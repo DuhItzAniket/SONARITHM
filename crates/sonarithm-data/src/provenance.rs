@@ -353,6 +353,23 @@ fn read_confidence(column: &ArrayRef) -> Result<Vec<Option<Confidence>>, DataErr
     }
 }
 
+/// Appends the canonical provenance columns to data fields and columns, unless every row is
+/// exact and `keep` is not set.
+pub(crate) fn append_columns(
+    fields: &mut Vec<Field>,
+    columns: &mut Vec<ArrayRef>,
+    provenance: &RowProvenance,
+    keep: bool,
+) {
+    if keep || !provenance.is_all_exact() {
+        let (classes, confidence) = provenance.columns();
+        fields.push(Field::new(PROV_COLUMN, prov_type(), false));
+        fields.push(Field::new(CONF_COLUMN, DataType::Float32, true));
+        columns.push(classes);
+        columns.push(confidence);
+    }
+}
+
 /// Rewrites a table's provenance columns in the canonical form; a table without them is
 /// returned unchanged.
 ///
@@ -389,13 +406,7 @@ pub fn with_provenance(
             columns.push(Arc::clone(column));
         }
     }
-    if keep || !provenance.is_all_exact() {
-        let (classes, confidence) = provenance.columns();
-        fields.push(Field::new(PROV_COLUMN, prov_type(), false));
-        fields.push(Field::new(CONF_COLUMN, DataType::Float32, true));
-        columns.push(classes);
-        columns.push(confidence);
-    }
+    append_columns(&mut fields, &mut columns, provenance, keep);
     let schema = Arc::new(Schema::new(fields).with_metadata(table.schema().metadata().clone()));
     let options = arrow_array::RecordBatchOptions::new().with_row_count(Some(batch.num_rows()));
     let batch = RecordBatch::try_new_with_options(Arc::clone(&schema), columns, &options).map_err(
