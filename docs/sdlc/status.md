@@ -25,7 +25,7 @@ Status values: `Not started` · `In progress` · `In review` · `Done` · `Block
 | A | A03 | Core types, Spec v0.1, Score IR | **Done** | 100% | 2026-10-19; [phase review](reviews/A03-phase-review.md), [retro](retrospectives/A03-retro.md). See [A03 tasks](#a03-tasks) |
 | A | A04 | Data layer | **Done** | 100% | 2026-10-19; [phase review](reviews/A04-phase-review.md), [retro](retrospectives/A04-retro.md). See [A04 tasks](#a04-tasks) |
 | A | A05 | Render engine, audio backend, export | **In progress** | ≈5% | T01, T03 and T04 in review. See [A05 tasks](#a05-tasks) |
-| A | A06 | NUMISONA v1 | **In progress** | ≈30% | T01, T02, T03 and T05 in review. See [A06 tasks](#a06-tasks) |
+| A | A06 | NUMISONA v1 | **In progress** | ≈70% | T01–T05 and T08 done; T06 in review; T07 in progress. See [A06 tasks](#a06-tasks) |
 | A | A07 | CLI, Python, v0.1.0-alpha | Not started | 0% | |
 | A | A08 | Research instrumentation v0, ICAD 2027 | Not started | 0% | P01 without participant studies (OD-04) |
 | B | B01 | Desktop shell, IPC, app core | Not started | 0% | |
@@ -143,15 +143,15 @@ Work runs in a separate agent session through one PR per task into `crates/engin
 
 | Task | Status | Notes |
 |---|---|---|
-| A06-T01 Scales | In review | `linear`, `log`, `symlog`, `sqrt`, `pow`, `quantile`, `band`, `ordinal`; `domain` auto, zero-based or explicit; `nice`; monotonicity and range property tests |
-| A06-T02 Pitch spaces and range defaults (SDR-08, SDR-09) | In review | Log-frequency (default), linear, mel, ERB-rate and Bark spaces; 400–1400 Hz default range, 65–1480 Hz expanded; ranges in Hz, MIDI or cents; `sdr_08_*` and `sdr_09_*` tests |
-| A06-T03 `concepts.toml`, polarity resolution, ambiguity diagnostics (SDR-12..15) | In review | 16 rows, each citing evidence (Walker 2007 counts where they exist); explicit → profile → concept → generic resolution, one-key flip; `SNR-ENG-020`…`023`; F-080 |
-| A06-T04 `tone` and `glide` encoders, redundant duration and taps (A11Y-13), categorical timbre | In review | `Numisona` engine and encoders with `RowRef` and confidence; filter, time order and pace; redundant taps and duration; timbre per category; missing values; `TrackRequest` gains substrate, fields, missing and mode; synthetic example datasets; snapshots; F-082 |
-| A06-T05 Psychophysical scaling (SDR-11) | In review | `f = f_ref · (d / d_ref)^(1/m)`, labelled as guidance; reproduces the Smith & Walker (2005) dollar mapping; range from the law or clamped to a given range |
-| A06-T06 `auto` mark with density switching (SDR-20, experimental) | Not started | |
+| A06-T01 Scales | **Done** | Merged in #134. `linear`, `log`, `symlog`, `sqrt`, `pow`, `quantile`, `band`, `ordinal`; `domain` auto, zero-based or explicit; `nice`; monotonicity and range property tests |
+| A06-T02 Pitch spaces and range defaults (SDR-08, SDR-09) | **Done** | Merged in #137. Log-frequency (default), linear, mel, ERB-rate and Bark spaces; 400–1400 Hz default range, 65–1480 Hz expanded; ranges in Hz, MIDI or cents; `sdr_08_*` and `sdr_09_*` tests |
+| A06-T03 `concepts.toml`, polarity resolution, ambiguity diagnostics (SDR-12..15) | **Done** | Merged in #144. 16 rows, each citing evidence (Walker 2007 counts where they exist); explicit → profile → concept → generic resolution, one-key flip; `SNR-ENG-020`…`023`; F-080 |
+| A06-T04 `tone` and `glide` encoders, redundant duration and taps (A11Y-13), categorical timbre | **Done** | Merged in #151. `Numisona` engine and encoders with `RowRef` and confidence; filter, time order and pace; redundant taps and duration; timbre per category; missing values; `TrackRequest` gains substrate, fields, missing and mode; synthetic example datasets; snapshots; F-082 |
+| A06-T05 Psychophysical scaling (SDR-11) | **Done** | Merged in #140. `f = f_ref · (d / d_ref)^(1/m)`, labelled as guidance; reproduces the Smith & Walker (2005) dollar mapping; range from the law or clamped to a given range |
+| A06-T06 `auto` mark with density switching (SDR-20, experimental) | In review | Tones up to 10 events/s, a glide above; every use reported as experimental (`SNR-ENG-011`, H-02); `density` module |
 | A06-T07 Templates | In progress | Prerequisite in review: the compiler compiles `DataBundle` with spec transforms and the `Platform` inline/file sources |
-| A06-T08 Erie importer (subset) | In review | Written from Erie's documentation; 8-spec gallery subset imports as valid v0.1 specs with a report of 19 approximated or unmapped constructs (`SNR-ENG-080`, `081`); F-081 |
-| A06-T09 Rule-conformance suite and compile benchmarks (PB-04) | Not started | |
+| A06-T08 Erie importer (subset) | **Done** | Merged in #150. Written from Erie's documentation; 8-spec gallery subset imports as valid v0.1 specs with a report of 19 approximated or unmapped constructs (`SNR-ENG-080`, `081`); F-081 |
+| A06-T09 Rule-conformance suite and compile benchmarks (PB-04) | Not started |  |
 
 ## 3. Current iteration
 
@@ -200,5 +200,6 @@ Maturity scale: `Designed` → `Prototype` → `Alpha` → `Beta` → `Stable` �
 | 2026-10-19 | A05 started: oscillators in `sonarithm-dsp` (T01) |
 | 2026-10-19 | A03 done: all eleven tasks merged; phase review and retrospective; ADR-0014 and ADR-0015 accepted |
 | 2026-10-19 | A06 started: `sonarithm-numisona` crate with scales (T01) |
+| 2026-10-19 | A06: T01–T05 and T08 merged (scales, pitch spaces, concept table, encoders, psychophysical scaling, Erie importer); the compiler compiles `DataBundle` with transforms (#152) |
 | 2026-10-19 | A04 built: sources, inference, provenance, transforms, downsampling, fingerprints, PB-05 benchmark and fuzzers (T01–T10 in review) |
 | 2026-10-19 | A04 done: all ten tasks merged (#113, #114, #116, #133, #135, #136, #138, #139, #141, #142, #143); phase review and retro |

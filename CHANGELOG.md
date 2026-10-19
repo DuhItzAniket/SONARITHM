@@ -46,6 +46,7 @@ From phase A07, release-plz maintains this file: it generates each release's ent
   - `sonarithm-numisona` psychophysical pitch scale, `f = f_ref · (d / d_ref)^(1/m)` (SDR-11), with exponents labelled as guidance.
   - `sonarithm-numisona` concept table (`data/concepts.toml`) with evidence on every row, polarity resolution (explicit, profile, concept, generic; SDR-12..14), the profile's one-key flip (SDR-15), and `SNR-ENG` diagnostics that explain every automatic choice.
   - `sonarithm-numisona` `tone` and `glide` encoders (the `Numisona` engine): every note keeps its row and confidence; track filters, time order and the three paces; redundant tap-count and duration encodings (A11Y-13); one timbre per category (SDR-25); missing values silenced or interpolated; warnings for loudness on data (SDR-23), pan as the only carrier (A11Y-14) and fast tones (SDR-19); synthetic example datasets.
+  - `sonarithm-numisona` `auto` mark (experimental, SDR-20): tones up to about 10 events per second, a glide above, reported as experimental every time.
   - Encoders receive the spec's substrate, field semantics, missing-value treatment and mode alongside the track (`TrackRequest`).
   - `sonarithm-numisona` Erie importer (subset, SDR-05): Erie specs become spec v0.1 documents, with a report of every construct that is approximated or has no equivalent.
   - `sonarithm-compiler` compiles the data layer's `DataBundle`: spec transforms run in `sonarithm-data`, and the `Platform` engine reads `inline` records and `file` sources relative to a base directory.
