@@ -43,7 +43,7 @@ fn commands_reach_the_audio_thread_and_state_comes_back() {
     assert_eq!(state.graph.position, Frames(48_256));
     assert_eq!(state.host_time, Some(Duration::from_millis(7)));
     assert_eq!(state.blocks, 1);
-    audio.report_xrun();
+    audio.report_xruns(1);
     audio.process(&mut out, None);
     assert_eq!(control.state().xruns, 1);
 }

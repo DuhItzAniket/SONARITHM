@@ -8,7 +8,14 @@ repository.workspace = true
 license.workspace = true
 publish.workspace = true
 
+[features]
+# Counts allocations and frees in every audio callback (debug soak and the CI no-alloc job,
+# coding-standards §11.5). It installs a counting global allocator: never in release builds
+# of applications.
+count-allocations = ["dep:allocation-counter"]
+
 [dependencies]
+allocation-counter = { workspace = true, optional = true }
 cpal.workspace = true
 rtrb.workspace = true
 sonarithm-core.workspace = true

@@ -148,7 +148,7 @@ The full screen-reader matrix (NVDA, JAWS, Narrator, VoiceOver, Orca on X11 and 
 
 ## Real-time audio and determinism
 
-- **The audio thread is sacred** ([principle P3](docs/architecture/01-overview.md#2-architectural-principles)): no allocation, locks, I/O, logging or unbounded work in the real-time callback. Debug builds enforce this with `assert_no_alloc` (A05).
+- **The audio thread is sacred** ([principle P3](docs/architecture/01-overview.md#2-architectural-principles)): no allocation, locks, I/O, logging or unbounded work in the real-time callback. Debug builds and the `no-alloc` CI job enforce the allocation rule with `allocation-counter` (A05).
 - **Renders are deterministic** ([SDR-01, SDR-02](docs/research/design-rules.md)): no wall-clock time, unseeded randomness or thread-order-dependent mixing in the compiler or offline renderer. See [testing strategy](docs/engineering/testing-strategy.md).
 
 ## Research contributions

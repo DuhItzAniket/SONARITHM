@@ -317,7 +317,7 @@ A05 (render engine, audio backends, export) uses F-050 to F-069.
 
 ### F-038 · assert_no_alloc is BSD-1-Clause, which deny.toml does not allow
 
-- **Date:** 2026-10-19 · **Phase:** A02 · **Type:** engineering · **Status:** new
+- **Date:** 2026-10-19 · **Phase:** A02 · **Type:** engineering · **Status:** triaged (2026-10-19: the coordinator, under the owner's delegation, approved `allocation-counter` 0.8.1 in place of `assert_no_alloc` for A05-T10, F-054. No licence or allow-list change; allowing BSD-1-Clause later stays the owner's choice)
 - **Statement:** `assert_no_alloc` 1.1.2, which the coding standards name for the real-time allocation check, is licensed BSD-1-Clause. `cargo deny check licenses` with the repository's `deny.toml` rejects it. Every other spike dependency, including Firewheel's 43 crates, passes.
 - **Evidence:** [#98](https://github.com/DuhItzAniket/SONARITHM/pull/98) (DoD notes); `cargo deny check licenses` run on `spikes/render-graph` with the root `deny.toml`
 - **Evidence level / confidence:** EV-C / Strong
@@ -598,4 +598,45 @@ A05 (render engine, audio backends, export) uses F-050 to F-069.
 - **Evidence:** A05-T12 PR; `cargo bench -p sonarithm-render --bench render`; `cargo run -p sonarithm-render --example render_speed --release`, plain and under `start /affinity F0000`
 - **Evidence level / confidence:** EV-C / Strong (repeated runs, one machine)
 - **Affects:** PB-03 (not declared met until a reference-class machine or further optimization, for example SIMD across voices, shows ≥ 50×); 12 §8; P07
+- **Papers:** P07
+
+### F-054 · allocation-counter replaces assert_no_alloc for the audio-thread allocation check without a licence change
+
+- **Date:** 2026-10-19 · **Phase:** A05 · **Type:** engineering · **Status:** new
+- **Statement:** `allocation-counter` 0.8.1 (MIT OR Apache-2.0, allowed by `deny.toml`) counts the allocations and frees made by the current thread inside `allocation_counter::measure`. A05-T10 uses it where the coding standards named `assert_no_alloc` (BSD-1-Clause, rejected by `deny.toml`, F-038). It reports a count instead of aborting, so a test can say which step allocated. Linking the crate installs its counting global allocator, so it is a dev-dependency of `sonarithm-render` and an optional dependency behind the `count-allocations` feature of `sonarithm-audio`, never in a library's normal dependencies or a release application; `cargo xtask check-deps` enforces this (02 §3 rule 5). Control tests show that the check fails on an allocation or a free inside the measured block, and that another thread allocating throughout a measurement is not counted. Results on HW-01 (debug builds):
+  - the scripted session (play, seek, loop wraps, bus and master gain, speed, cues, a plan swap, pause and resume, stop, a 300-command flood, an 8,192-frame block) makes no allocation or free in any `Processor::process` call;
+  - through the null device, 3 s of commands at 2 ms intervals: no device callback allocated;
+  - the `soak` example (release build with the feature): no allocating callback in 769,982 device and null-device callbacks over five 10-minute runs (F-055).
+
+  Limit: the device check measures the engine's part of each callback (`Callback::fill`), not the backend's own code around it (cpal's or the `wasapi` crate's buffer calls).
+- **Evidence:** A05-T10 PR; `cargo test -p sonarithm-render --test no_alloc`; `cargo test -p sonarithm-audio --features count-allocations --test no_alloc_device`; `cargo deny check`
+- **Evidence level / confidence:** EV-C / Strong
+- **Affects:** coding-standards §11.5; testing-strategy §8 and §9.3; ci-cd `no-alloc` job; 02 §3 rule 5; F-038 (resolved without an allow-list change; coordinator approval 2026-10-19)
+- **Papers:** none yet
+
+### F-055 · Ten-minute device soaks on HW-01 show no underrun and no allocating callback; HW-01 cannot run 128-frame device buffers, and the render takes at most 14% of a 128-frame block
+
+- **Date:** 2026-10-19 · **Phase:** A05 · **Type:** benchmark · **Status:** new
+- **Statement:** The `soak` example (release build with `count-allocations`) looped the DS-006 benchmark Score for 10 minutes per configuration on HW-01 at 48 kHz. The master was at −120 dB, so the runs were silent; the render does the same work at any level.
+
+  | Configuration | Callbacks | Underruns | Late callbacks | Allocating callbacks |
+  |---|---|---|---|---|
+  | WASAPI RAW shared, 480-frame period, 1056-frame buffer | 60,002 | 0 | 0 | 0 |
+  | cpal 0.18.2, 128 frames requested, 480 granted | 60,001 | not reported (see below) | 0 | 0 |
+  | WASAPI exclusive, the device's minimum period of 144 frames | 200,031 | 0 | 20,396 | 0 |
+  | Null device, 128 frames, real-time priority (HW-01) | 224,971 | 194 missed deadlines (0.09%) | — | 0 |
+  | Null device, 128 frames, real-time priority (HW-01e) | 224,977 | 153 missed deadlines (0.07%) | — | 0 |
+
+  Per-block render time (`block_times` example, playback graph, 128-frame blocks, 22,500 blocks per run, three runs):
+  - HW-01: p50 30 µs, p99 50–52 µs, p99.9 106–120 µs, max 229–382 µs, which is at most 14% of the block's 2,667 µs;
+  - HW-01e (four E-cores, normal priority): p50 54 µs, p99 98–103 µs, p99.9 214–291 µs; single blocks reached 1.9, 2.2 and 9.0 ms.
+
+  What the evidence does not show:
+  - **No 128-frame device buffer on HW-01.** Shared mode runs at the engine's 480-frame period whatever is requested. Exclusive mode's minimum period is 144 frames, but the Realtek driver queues about 100 ms there (F-051), so that run does not test a 3 ms deadline either.
+  - **cpal reports no output underruns on Windows.** cpal 0.18.2's WASAPI host raises `Xrun` only for input streams (the data-discontinuity flag in `process_input`), so its late-callback count is the only evidence for that run. The WASAPI backend counts underruns itself: in shared mode, an empty buffer when the engine asks for more; in exclusive mode, the device clock passing the frames written.
+  - **Exclusive mode's late callbacks are the event clustering of F-051.** The driver signals two or three events per hardware period, so some gaps between fills exceed 1.5 periods while the queue never runs dry.
+  - **The null device's misses are mostly its timer.** It counts an underrun when a block is ready more than one period after the device asked for it. The same paced loop with no rendering at all, at the same priority, missed 23 of 44,997 deadlines in 120 s (0.05%), and its worst wake-up was 3.4 ms late. The render's worst block on HW-01 is 382 µs. So most misses come from the OS timer's wake-up latency, and a few from the render shrinking the slack. Hardware devices wake their thread by interrupt, not by a sleep timer.
+- **Evidence:** A05-T10 PR; `cargo run -p sonarithm-audio --example soak --release --features count-allocations -- --backend <backend> --seconds 600`; `cargo run -p sonarithm-render --example block_times --release`; HW-01e runs pinned with `ProcessorAffinity = 0xF0000`; the timer-only loop was a throwaway program (the null device's loop without `fill`), not committed
+- **Evidence level / confidence:** EV-C / Moderate (one run per configuration, one machine, no 128-frame device buffer)
+- **Affects:** PB-02 (not declared met at 128 frames: HW-01's driver offers no 128-frame period, F-030; 0 underruns at the periods it offers; TODO(verify) on a device with 128-frame periods); testing-strategy §9.3; 06 §12; the null device's underrun model
 - **Papers:** P07

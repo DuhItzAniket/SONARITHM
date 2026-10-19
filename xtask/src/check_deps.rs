@@ -209,6 +209,14 @@ const RESTRICTED: &[Restricted] = &[
         optional: true,
         rule: Rule::Five,
     },
+    // Installs a counting global allocator wherever it is linked (A05-T10, F-054): a
+    // dev-dependency (exempt here) or the opt-in `count-allocations` feature, never shipped.
+    Restricted {
+        name: "allocation-counter",
+        owners: &["sonarithm-audio"],
+        optional: true,
+        rule: Rule::Five,
+    },
 ];
 
 /// The part of 02 §3 a violation breaks.
@@ -807,6 +815,23 @@ mod tests {
             rules_broken(&crates),
             vec![broken("sonarithm-export", "mp3lame-encoder", Rule::Five)]
         );
+    }
+
+    #[test]
+    fn the_allocation_counter_never_ships() {
+        let crates = [
+            krate("sonarithm-render").external("allocation-counter", false),
+            krate("sonarithm-audio").external("allocation-counter", false),
+        ];
+        assert_eq!(
+            rules_broken(&crates),
+            vec![
+                broken("sonarithm-audio", "allocation-counter", Rule::Five),
+                broken("sonarithm-render", "allocation-counter", Rule::Five),
+            ]
+        );
+        let opt_in = [krate("sonarithm-audio").external("allocation-counter", true)];
+        assert_eq!(rules_broken(&opt_in), Vec::new());
     }
 
     #[test]

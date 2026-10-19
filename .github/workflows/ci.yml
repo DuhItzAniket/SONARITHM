@@ -206,6 +206,33 @@ jobs:
         run: |
           cargo run --release --locked -p xtask -- golden --compare renders/golden-ubuntu-latest renders/golden-windows-latest renders/golden-macos-latest | tee -a "$GITHUB_STEP_SUMMARY"
 
+  # No allocation on the audio thread (coding-standards §11.5, A05-T10), in debug builds:
+  # the scripted render session, the whole callback on the null device, then a 60 s soak on
+  # the timer-driven null device. The 10-minute soak is the alloc-soak job of nightly.yml.
+  no-alloc:
+    name: no-alloc (${{ matrix.os }})
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    permissions:
+      contents: read
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - run: rustup toolchain install
+      - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
+        with:
+          save-if: ${{ github.ref == 'refs/heads/main' }}
+      - if: runner.os == 'Linux'
+        run: sudo apt-get update && sudo apt-get install --yes --no-install-recommends libasound2-dev
+      - run: cargo test --locked -p sonarithm-render --test no_alloc
+      - run: cargo test --locked -p sonarithm-audio --features count-allocations --test no_alloc_device
+      - run: cargo run --locked -p sonarithm-audio --features count-allocations --example soak -- --backend null --seconds 60 --strict
+
   frontend:
     runs-on: ubuntu-latest
     permissions:
@@ -260,7 +287,7 @@ jobs:
 
   all-checks-pass:
     if: always()
-    needs: [fmt, clippy-test, doc, deny, check-deps, msrv, wasm32, golden, golden-compare, frontend, gallery]
+    needs: [fmt, clippy-test, doc, deny, check-deps, msrv, wasm32, golden, golden-compare, no-alloc, frontend, gallery]
     runs-on: ubuntu-latest
     permissions: {}
     timeout-minutes: 5

@@ -204,13 +204,13 @@ impl Processor {
         self.graph.plan().sample_rate
     }
 
-    /// Counts an underrun reported by the backend.
+    /// Counts `count` underruns reported by the backend.
     ///
     /// # Real-time safety
     ///
     /// RT-safe.
-    pub fn report_xrun(&mut self) {
-        self.published.xruns += 1;
+    pub fn report_xruns(&mut self, count: u64) {
+        self.published.xruns = self.published.xruns.saturating_add(count);
     }
 
     /// Applies pending commands and plan swaps, renders the next `out.len() / 2` frames of

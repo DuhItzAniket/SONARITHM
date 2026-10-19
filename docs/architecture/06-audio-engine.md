@@ -209,4 +209,4 @@ The **Score IR is the strict artifact** (byte-identical). Audio is compared with
 
 ## 12. Real-time rules (summary)
 
-The audio thread must never allocate or free memory, take a lock, perform I/O or syscalls (including logging), panic or block on a channel, or run a loop not bounded by the block size and polyphony. Debug builds wrap the callback in `assert_no_alloc`, and CI runs a debug soak test that fails on any allocation. The full rules and review checklist are in [coding-standards.md](../engineering/coding-standards.md).
+The audio thread must never allocate or free memory, take a lock, perform I/O or syscalls (including logging), panic or block on a channel, or run a loop not bounded by the block size and polyphony. Debug builds count the callback's allocations with `allocation-counter` (`assert_no_alloc`'s licence is not allowed, F-038), and CI runs a debug soak test that fails on any allocation. The full rules and review checklist are in [coding-standards.md](../engineering/coding-standards.md).

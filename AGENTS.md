@@ -53,7 +53,7 @@ Full layout and dependency rules: [docs/architecture/02-repository-and-crate-lay
 ## Non-negotiable rules
 
 1. **Spec in, Score out.** All sound comes from a spec compiled to a Score IR. Do not add code paths that synthesize sound from data without going through the compiler. The Score IR is the canonical artifact, and tests snapshot it ([ADR-0005](docs/decisions/0005-declarative-spec-and-score-ir.md)).
-2. **The audio thread is sacred.** In the audio callback and everything it calls: no allocation or deallocation, no locks, no I/O or syscalls, no logging, no panics, no unbounded loops. Use `rtrb`, `triple_buffer` and `basedrop`; preallocate voices. Debug builds run under `assert_no_alloc` ([06-audio-engine](docs/architecture/06-audio-engine.md#12-real-time-rules-summary)).
+2. **The audio thread is sacred.** In the audio callback and everything it calls: no allocation or deallocation, no locks, no I/O or syscalls, no logging, no panics, no unbounded loops. Use `rtrb`, `triple_buffer` and `basedrop`; preallocate voices. Debug builds run under `allocation-counter` ([06-audio-engine](docs/architecture/06-audio-engine.md#12-real-time-rules-summary)).
 3. **Determinism.** No `HashMap` iteration in outputs (use `BTreeMap` or sorted `Vec`). No wall-clock reads in compile or render paths. Every random source is seeded from the spec seed. f64 for time, f32 for samples ([ADR-0013](docs/decisions/0013-determinism-and-provenance.md)).
 4. **Engines never depend on each other.** They communicate through `sonarithm-core` types only. `cargo xtask check-deps` enforces this and the other dependency rules. Only `sonarithm-audio` may depend on cpal; core crates must build for `wasm32-unknown-unknown`.
 5. **Research-backed defaults carry rule IDs.** When you implement or change a default (pitch range, polarity, rate, ticks, reference tone, loudness), cite the rule (`SDR-xx` / `A11Y-xx`) in a doc comment and in the test name. **Never change a default without evidence.** Follow the change control in [design-rules.md](docs/research/design-rules.md). Rules marked `INFER` must stay flagged as experimental.
@@ -77,7 +77,7 @@ Full layout and dependency rules: [docs/architecture/02-repository-and-crate-lay
 |---|---|
 | Spec or compiler logic | Unit tests + Score snapshot (insta) + property tests for invariants |
 | A research default | A conformance test named after the rule (`sdr_17_dynamic_reference_tone`) |
-| DSP or render | Golden-audio test (tolerance) and, for RT code, a check under `assert_no_alloc` |
+| DSP or render | Golden-audio test (tolerance) and, for RT code, a check under `allocation-counter` |
 | Parser or importer | Unit tests + a fuzz target |
 | UI component | Storybook story + axe check + keyboard test; a manual screen-reader note in the PR |
 | Performance-sensitive code | A criterion benchmark against its PB budget |

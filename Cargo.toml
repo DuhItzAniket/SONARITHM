@@ -133,6 +133,10 @@ thiserror = "2.0.17"
 # TOML for engine data tables (NUMISONA's concepts.toml, 03 §3.3); parsing only, no writer.
 toml = { version = "1.1.8", default-features = false, features = ["std", "parse", "serde"] }
 
+# Counts allocations per thread; replaces the global allocator wherever it is linked, so it
+# is only a dev-dependency or behind the `count-allocations` feature (A05-T10; used instead of
+# assert_no_alloc, whose BSD-1-Clause licence deny.toml does not allow, F-038).
+allocation-counter = "0.8.1"
 # Test-only crates (dev-dependencies).
 # Benchmarks (testing-strategy §9.1); no plotting or rayon.
 criterion = { version = "0.8.2", default-features = false, features = ["cargo_bench_support"] }

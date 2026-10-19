@@ -2,7 +2,8 @@
 # §7), 30 minutes per target each night: the spec parser and migrations (from A03) and the
 # data-layer importers (from A04: CSV/TSV, JSON/NDJSON, XLSX/ODS, Parquet/Arrow IPC).
 # Manual dispatch takes the seconds per target; use 3600 for an exit run. Pull requests that
-# touch a fuzzed crate run a two-minute smoke fuzz of every target. Not a required check.
+# touch a fuzzed crate run a two-minute smoke fuzz of every target. From A05: the 10-minute
+# allocation soak on the null device (testing-strategy §9.3). Not a required check.
 name: nightly
 
 on:
@@ -78,3 +79,32 @@ jobs:
           name: fuzz-artifacts-${{ matrix.target }}
           path: crates/${{ matrix.crate }}/fuzz/artifacts
           if-no-files-found: ignore
+
+  # No allocation on the audio thread over 10 minutes of the benchmark Score on the
+  # timer-driven null device, in a debug build (A05-T10, coding-standards §11.5). The
+  # `no-alloc` job in ci.yml runs the same soak for 60 s on every PR; here a PR that edits
+  # this workflow runs 60 s too.
+  alloc-soak:
+    name: alloc-soak (${{ matrix.os }})
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    permissions:
+      contents: read
+    timeout-minutes: 45
+    env:
+      SOAK_SECONDS: ${{ github.event_name == 'pull_request' && '60' || '600' }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - run: rustup toolchain install
+      - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
+        with:
+          save-if: ${{ github.ref == 'refs/heads/main' }}
+      - if: runner.os == 'Linux'
+        run: sudo apt-get update && sudo apt-get install --yes --no-install-recommends libasound2-dev
+      - shell: bash
+        run: cargo run --locked -p sonarithm-audio --features count-allocations --example soak -- --backend null --seconds "$SOAK_SECONDS" --strict
