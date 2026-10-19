@@ -44,6 +44,14 @@ precedence = "closest"
 SPDX-FileCopyrightText = "2026 SONARITHM contributors"
 SPDX-License-Identifier = "MIT OR Apache-2.0"
 
+# cargo-fuzz harnesses (`fuzz/` in library crates, testing-strategy §7): lockfile and ignore
+# list; seed corpora are JSON and covered above.
+[[annotations]]
+path = ["crates/*/fuzz/Cargo.lock", "crates/*/fuzz/.gitignore"]
+precedence = "closest"
+SPDX-FileCopyrightText = "2026 SONARITHM contributors"
+SPDX-License-Identifier = "MIT OR Apache-2.0"
+
 # A02 spikes (spikes/, throwaway; roadmap A02). Source files carry SPDX headers. These cover
 # lockfiles and binary assets (code licence) and measurement results (data licence, ADR-0010).
 [[annotations]]

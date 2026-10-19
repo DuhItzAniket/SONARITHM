@@ -1,0 +1,37 @@
+# cargo-fuzz harness for sonarithm-spec (testing-strategy §7). Not part of the main
+# workspace: it needs the nightly toolchain. Run from this directory's parent crate with
+#   cargo +nightly fuzz run spec_parse -- -max_total_time=3600
+# CI runs it in .github/workflows/nightly.yml.
+
+[package]
+name = "sonarithm-spec-fuzz"
+version = "0.0.0"
+edition = "2024"
+license = "MIT OR Apache-2.0"
+publish = false
+
+[package.metadata]
+cargo-fuzz = true
+
+[dependencies]
+libfuzzer-sys = "0.4.13"
+serde_json = "1.0.145"
+sonarithm-spec = { path = ".." }
+
+# A workspace of its own, so the main workspace (stable toolchain) never builds it.
+[workspace]
+members = ["."]
+
+[[bin]]
+name = "spec_parse"
+path = "fuzz_targets/spec_parse.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "spec_migrate"
+path = "fuzz_targets/spec_migrate.rs"
+test = false
+doc = false
+bench = false

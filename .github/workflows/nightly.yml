@@ -1,0 +1,72 @@
+# Long-running checks (docs/engineering/ci-cd.md#workflow-inventory). From A03: fuzzing of
+# the spec parser and migrations (testing-strategy §7), 30 minutes per target each night.
+# Manual dispatch takes the seconds per target; use 3600 for the A03 exit run. Pull requests
+# that touch the spec or core crates run a two-minute smoke fuzz. Not a required check.
+name: nightly
+
+on:
+  schedule:
+    - cron: "41 2 * * *"
+  workflow_dispatch:
+    inputs:
+      seconds:
+        description: Seconds of fuzzing per target (at most 4800)
+        required: false
+        default: "1800"
+  pull_request:
+    paths:
+      - "crates/sonarithm-core/**"
+      - "crates/sonarithm-spec/**"
+      - ".github/workflows/nightly.yml"
+
+permissions: {}
+
+concurrency:
+  group: nightly-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  fuzz:
+    name: fuzz (${{ matrix.target }})
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    timeout-minutes: 100
+    strategy:
+      fail-fast: false
+      matrix:
+        target: [spec_parse, spec_migrate]
+    env:
+      FUZZ_SECONDS: ${{ github.event_name == 'pull_request' && '120' || inputs.seconds || '1800' }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Check the duration input
+        run: |
+          if ! [[ "$FUZZ_SECONDS" =~ ^[0-9]+$ ]] || [ "$FUZZ_SECONDS" -gt 4800 ]; then
+            echo "::error::seconds must be a whole number of at most 4800"
+            exit 1
+          fi
+      - run: rustup toolchain install nightly --profile minimal
+      - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
+        with:
+          workspaces: crates/sonarithm-spec/fuzz -> target
+          save-if: ${{ github.ref == 'refs/heads/main' }}
+      - run: cargo install --locked cargo-fuzz@0.13.2
+      - name: Fuzz ${{ matrix.target }}
+        working-directory: crates/sonarithm-spec
+        run: >-
+          cargo +nightly fuzz run ${{ matrix.target }} --
+          -max_total_time="$FUZZ_SECONDS"
+          -rss_limit_mb=2048
+          -timeout=10
+          -print_final_stats=1
+      # A crash leaves its input under fuzz/artifacts; minimize it and commit it as a
+      # regression test in sonarithm-spec (testing-strategy §7).
+      - if: failure()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: fuzz-artifacts-${{ matrix.target }}
+          path: crates/sonarithm-spec/fuzz/artifacts
+          if-no-files-found: ignore

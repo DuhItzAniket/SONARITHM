@@ -21,6 +21,8 @@ pub mod report;
 pub mod schema;
 pub mod sections;
 pub mod spec;
+#[cfg(any(test, feature = "test-support"))]
+pub mod testing;
 pub mod track;
 pub mod validate;
 pub mod values;

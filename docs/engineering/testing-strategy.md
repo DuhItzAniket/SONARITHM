@@ -174,7 +174,7 @@ cargo-fuzz (libFuzzer, nightly toolchain) on Linux CI runners. Harnesses live in
 
 Requirements for every target: no panic, no hang (per-input timeout), bounded memory (`-rss_limit_mb`), and a round-trip assertion where one exists (parse → serialize → parse).
 
-Schedule: 30 minutes per target in `nightly.yml` ([ci-cd](ci-cd.md)), and at least 1 hour per parser target before each release. Contributors changing a parser or importer run its target locally before opening the PR. Every crash is minimized and committed as a regular regression test in the owning crate.
+Schedule: 30 minutes per target in `nightly.yml` ([ci-cd](ci-cd.md)), a two-minute smoke run on pull requests that touch `sonarithm-core` or `sonarithm-spec`, and at least 1 hour per parser target before each release (manual dispatch of `nightly.yml` with `seconds: 3600`). Run locally from the owning crate with `cargo +nightly fuzz run <target>`. On Windows, cargo-fuzz needs AddressSanitizer: put the MSVC directory that holds `clang_rt.asan_dynamic-x86_64.dll` (`VC/Tools/MSVC/<version>/bin/Hostx64/x64`) on `PATH`, otherwise the target exits with `STATUS_DLL_NOT_FOUND`; `-s none` does not link with MSVC. Contributors changing a parser or importer run its target locally before opening the PR. Every crash is minimized and committed as a regular regression test in the owning crate.
 
 ## 8. Concurrency and unsafe code
 

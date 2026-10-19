@@ -126,6 +126,7 @@ pub fn locate(source: &str, pointer: &SpecPointer) -> Option<(usize, usize)> {
     let mut scanner = Scanner {
         text: source.as_bytes(),
         pos: 0,
+        depth: 0,
     };
     scanner.skip_ws();
     let mut span = scanner.value_span()?;
@@ -144,10 +145,14 @@ pub fn locate(source: &str, pointer: &SpecPointer) -> Option<(usize, usize)> {
     Some(span)
 }
 
+/// Nesting levels the scanner follows: twice `serde_json`'s parse limit.
+const MAX_DEPTH: usize = 256;
+
 /// A minimal JSON scanner: enough to walk objects and arrays and measure values.
 struct Scanner<'a> {
     text: &'a [u8],
     pos: usize,
+    depth: usize,
 }
 
 impl Scanner<'_> {
@@ -175,6 +180,12 @@ impl Scanner<'_> {
                 self.string()?;
             }
             open @ (b'{' | b'[') => {
+                // The parser stops at 128 levels, so deeper text never resolves; the cap
+                // bounds this recursion on any input.
+                if self.depth >= MAX_DEPTH {
+                    return None;
+                }
+                self.depth += 1;
                 let close = if open == b'{' { b'}' } else { b']' };
                 self.pos += 1;
                 if self.eat(close).is_none() {
@@ -191,6 +202,7 @@ impl Scanner<'_> {
                         }
                     }
                 }
+                self.depth -= 1;
             }
             _ => {
                 while self
@@ -302,6 +314,14 @@ mod tests {
             r#"{ "kind": "file", "path": "a.csv" }"#
         );
         assert_eq!(locate("{", &SpecPointer::root()), None);
+    }
+
+    #[test]
+    fn deep_nesting_stops_without_exhausting_the_stack() {
+        let deep = "[".repeat(100_000);
+        assert_eq!(locate(&deep, &SpecPointer::root()), None);
+        let nested = format!("{}{}", "[".repeat(200), "]".repeat(200));
+        assert_eq!(locate(&nested, &SpecPointer::root()), Some((0, 400)));
     }
 
     #[test]
