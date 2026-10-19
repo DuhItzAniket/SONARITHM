@@ -53,7 +53,7 @@ The PR template (`.github/PULL_REQUEST_TEMPLATE.md`) mirrors this list. A review
 - [ ] The PR title follows Conventional Commits with a crate or engine scope, commits are signed off (DCO), and the branch follows [git-workflow](../engineering/git-workflow.md).
 - [ ] The PR links its issue and states the phase ID.
 - [ ] Findings (`F-###`) are logged in the [findings log](../research-paper/findings-log.md) if the work produced one; measurements go to the [benchmarks log](../research-paper/benchmarks-log.md).
-- [ ] At least one approving review, including a code owner where CODEOWNERS requires one. PRs authored by an AI agent are reviewed by a human maintainer.
+- [ ] At least one approving review, including a code owner where CODEOWNERS requires one. PRs authored by an AI agent are reviewed by a human maintainer. During the [fast-track](../engineering/git-workflow.md#review-rules) (owner decision, 2026-10-19), this item becomes: all required checks are green and auto-merge is enabled.
 
 ## 3. Additional Done criteria by change type
 
