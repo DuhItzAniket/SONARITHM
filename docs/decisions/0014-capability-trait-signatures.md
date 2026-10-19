@@ -1,8 +1,8 @@
 ---
-status: proposed
+status: accepted
 date: 2026-10-19
 decision-makers: ["@DuhItzAniket"]
-consulted: []
+consulted: ["coordinator agent (Claude Code), under the owner's delegation of ADR approvals"]
 informed: []
 ---
 
@@ -37,6 +37,8 @@ Chosen option: **A**, because it keeps every dependency rule, commits to nothing
 * Bad: engines parse their fragment again (cheap: fragments are small, and the spec is already validated).
 * Bad: generic traits mean `dyn Encoder<D>` objects are tied to one `D`; a second data type would need a second registry. None is planned.
 
+**Acceptance (2026-10-19).** Accepted by the coordinator agent under the owner's standing delegation of ADR and spec approvals. The owner reviews it with the morning report. Rationale: option A keeps every dependency rule in 02 §3 and doesn't pre-empt A04's data design; A04 has since built `DataBundle` independently. Native engines and Stage D plugins also receive the same JSON spec fragments.
+
 ### Confirmation
 
 A03-T04 tests register fake engines in a `Registry<()>`; A03-T09 compiles a spec end to end through the generic registry; A04 instantiates it with `DataBundle`. Revisit if A04 finds that analyzers and encoders need a data view that cannot be expressed through `D`.
@@ -61,4 +63,4 @@ A03-T04 tests register fake engines in a `Registry<()>`; A03-T09 compiles a spec
 
 ## More information
 
-Implemented in `sonarithm_core::engine` (A03-T04); 05 §3 links here. Related: [ADR-0007](0007-engines-as-pipeline-capabilities.md), [ADR-0009](0009-wasm-plugins-compile-time.md), RFC-0001 (spec v0.1, in discussion).
+Implemented in `sonarithm_core::engine` (A03-T04); 05 §3 links here. Related: [ADR-0007](0007-engines-as-pipeline-capabilities.md), [ADR-0009](0009-wasm-plugins-compile-time.md), [RFC-0001](../rfcs/0001-spec-v0.1.md) (spec v0.1, accepted 2026-10-19; [ADR-0015](0015-spec-v0.1-frozen.md)).
