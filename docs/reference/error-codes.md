@@ -68,7 +68,7 @@ Owner: `sonarithm-data`.
 
 ## SNR-ENG
 
-Owner: `sonarithm-numisona`.
+Owner: `sonarithm-numisona`. Numbers SNR-ENG-001 to SNR-ENG-099.
 
 | Code | Severity | Meaning | How to fix | Rules |
 |---|---|---|---|---|

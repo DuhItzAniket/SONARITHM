@@ -129,6 +129,16 @@ Format: `SNR-<AREA>-<NNN>`, for example `SNR-SPEC-012`. Lint diagnostics also ca
 | `LINT` | ECHOMETRIC lint | `APP` | `sonarithm-app` |
 | `ENG` | engine crates (message names the engine) | `CLI`, `PY` | `sonarithm-cli`, `sonarithm-py` |
 
+- Every area has one owner crate, except `ENG`, which the engine crates share. Each engine owns a block of 100 numbers, in the order of the engine catalogue (the table below), and an engine's crates (`sonarithm-<engine>`, `sonarithm-<engine>-<part>`) share its block. `cargo xtask codes` rejects a code outside its owner's block and a code declared twice (#157).
+
+| Engine | `SNR-ENG` numbers | Engine | `SNR-ENG` numbers |
+|---|---|---|---|
+| NUMISONA | 001–099 | AXONOTE | 500–599 |
+| AUDAXIS | 100–199 | ECHOMETRIC | 600–699 |
+| SONOTRACE | 200–299 | TONALENS | 700–799 |
+| PLOTSONA | 300–399 | RESONUM | 800–899 |
+| CURVASONA | 400–499 | (unassigned) | 900–999 |
+
 ## 5. Unsafe code
 
 `unsafe` is **forbidden by default**. Every crate not listed in the register below starts `lib.rs` (or `main.rs`) with `#![forbid(unsafe_code)]`. The workspace `unsafe_code = "deny"` is the backstop.
