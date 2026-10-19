@@ -103,7 +103,7 @@ A **concept** names what a field measures in perceptual terms (for example `temp
 | `generic` (default) | positive | — | — | SDR-12 |
 | `graph.degree`, `graph.centrality`, `graph.edge_weight`, `graph.path_length` | **unknown**; requires study before becoming defaults | **flagged** | — | SDR-41, H-05 |
 
-The concept table is **data, not code**. It lives in `crates/engines/sonarithm-numisona/data/concepts.toml`, and each row cites its evidence. Changing a row follows the [design-rules change control](../research/design-rules.md#how-to-read-and-use-this-catalogue).
+The concept table is **data, not code**. It lives in `crates/engines/sonarithm-numisona/data/concepts.toml`, and each row cites its evidence, with the listener counts of Walker 2007 (Exp. 1, frequency set) where they exist. A `graph.*` concept without its own row uses the `graph` family row (unknown polarity, flagged, SDR-41). Concepts marked "avoid pitch" or "unknown" resolve to the generic positive default for `polarity: "auto"`, with a diagnostic that says so. Changing a row follows the [design-rules change control](../research/design-rules.md#how-to-read-and-use-this-catalogue).
 
 ### 3.4 Roles
 

@@ -169,7 +169,7 @@ pub enum ScoreEvent {
 1. Events in a track are sorted by start time, and `t ≥ 0`.
 2. `t + dur ≤ header.duration` for notes. Glides are monotonic in time.
 3. Every pitch lies within the resolved channel range after polarity is applied.
-4. Flipping polarity mirrors pitches within the range (`f(lo + hi − x)`), and every other field is unchanged.
+4. Flipping polarity mirrors pitches within the range (`f(lo + hi − x)`), and every other field is unchanged. The mirror is taken in the pitch space's coordinate: in the default log-frequency space it is the cents mirror `low + high − pitch` (`PitchRange::mirror`); in linear-frequency, mel, ERB-rate and Bark spaces it is the mirror in hertz, mel, ERB-number or Bark ([F-080](../research-paper/findings-log.md#f-080--a-polarity-flip-mirrors-pitches-in-the-pitch-spaces-own-coordinate-which-equals-the-cents-mirror-only-in-log-frequency)).
 5. `mode = Analysis` ⇒ no quantization shaper ran (SDR-10).
 6. The same (spec, data, seed, engine versions) produce a byte-identical **full-precision** serialized Score on every platform (H-08). This requires platform-independent maths (`libm`) for every Score-affecting computation ([ADR-0013](../decisions/0013-determinism-and-provenance.md)).
 
