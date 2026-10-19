@@ -25,7 +25,7 @@ Status values: `Not started` · `In progress` · `In review` · `Done` · `Block
 | A | A03 | Core types, Spec v0.1, Score IR | **In progress** | ≈15% | T01 merged (#4); RFC-0001 accepted (T05); T02–T04 in review. See [A03 tasks](#a03-tasks) |
 | A | A04 | Data layer | **In progress** | ≈90% | T01–T09 in review. See [A04 tasks](#a04-tasks) |
 | A | A05 | Render engine, audio backend, export | **In progress** | ≈5% | T01, T03 and T04 in review. See [A05 tasks](#a05-tasks) |
-| A | A06 | NUMISONA v1 | **In progress** | ≈10% | T01 (scales) and T02 (pitch spaces) in review. See [A06 tasks](#a06-tasks) |
+| A | A06 | NUMISONA v1 | **In progress** | ≈30% | T01, T02, T03 and T05 in review. See [A06 tasks](#a06-tasks) |
 | A | A07 | CLI, Python, v0.1.0-alpha | Not started | 0% | |
 | A | A08 | Research instrumentation v0, ICAD 2027 | Not started | 0% | P01 without participant studies (OD-04) |
 | B | B01 | Desktop shell, IPC, app core | Not started | 0% | |
@@ -145,7 +145,7 @@ Work runs in a separate agent session through one PR per task into `crates/engin
 |---|---|---|
 | A06-T01 Scales | In review | `linear`, `log`, `symlog`, `sqrt`, `pow`, `quantile`, `band`, `ordinal`; `domain` auto, zero-based or explicit; `nice`; monotonicity and range property tests |
 | A06-T02 Pitch spaces and range defaults (SDR-08, SDR-09) | In review | Log-frequency (default), linear, mel, ERB-rate and Bark spaces; 400–1400 Hz default range, 65–1480 Hz expanded; ranges in Hz, MIDI or cents; `sdr_08_*` and `sdr_09_*` tests |
-| A06-T03 `concepts.toml`, polarity resolution, ambiguity diagnostics (SDR-12..15) | Not started | |
+| A06-T03 `concepts.toml`, polarity resolution, ambiguity diagnostics (SDR-12..15) | In review | 16 rows, each citing evidence (Walker 2007 counts where they exist); explicit → profile → concept → generic resolution, one-key flip; `SNR-ENG-020`…`023`; F-080 |
 | A06-T04 `tone` and `glide` encoders, redundant duration and taps (A11Y-13), categorical timbre | Not started | |
 | A06-T05 Psychophysical scaling (SDR-11) | In review | `f = f_ref · (d / d_ref)^(1/m)`, labelled as guidance; reproduces the Smith & Walker (2005) dollar mapping; range from the law or clamped to a given range |
 | A06-T06 `auto` mark with density switching (SDR-20, experimental) | Not started | |

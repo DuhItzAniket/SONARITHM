@@ -413,3 +413,12 @@ A06 (NUMISONA) uses F-080 to F-089.
 - **Evidence level / confidence:** EV-D / Moderate (one machine, one run per configuration)
 - **Affects:** dev-environment.md "Disk usage"; root `Cargo.toml` profiles
 - **Papers:** none yet
+
+### F-080 · A polarity flip mirrors pitches in the pitch space's own coordinate, which equals the cents mirror only in log-frequency
+
+- **Date:** 2026-10-19 · **Phase:** A06 · **Type:** engineering · **Status:** new
+- **Statement:** NUMISONA applies negative polarity to the scale position (`u → 1 − u`) before the pitch space, so equal data steps stay equal steps in the chosen space for both polarities. A flip therefore mirrors pitches in that space's coordinate. In the default log-frequency space (SDR-09) this is exactly the cents mirror `low + high − pitch` of 05 §4.2 invariant 4; in linear-frequency, mel, ERB-rate and Bark it is not. For 400–1400 Hz in linear frequency, a pitch at a quarter of the range (650 Hz) flips to 1150 Hz, while the cents mirror would give about 860 Hz.
+- **Evidence:** A06-T03 PR (`crates/engines/sonarithm-numisona/src/polarity.rs`), property test `sdr_15_polarity_flip_symmetry` (mirror in every space's coordinate; cents mirror within 1e-9 cents in log-frequency)
+- **Evidence level / confidence:** EV-C / Strong
+- **Affects:** 05 §4.2 invariant 4 (clarified to "mirrors within the range in the pitch space"), SDR-09, SDR-15
+- **Papers:** none yet

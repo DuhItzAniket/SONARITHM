@@ -20,5 +20,7 @@
 #![forbid(unsafe_code)]
 #![deny(missing_docs)]
 
+pub mod codes;
 pub mod pitch;
+pub mod polarity;
 pub mod scale;

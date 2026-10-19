@@ -64,6 +64,17 @@ Owner: `sonarithm-data`.
 | `SNR-DATA-056` | info | A transform ran | None needed; the message states the rows in and out. | — |
 | `SNR-DATA-060` | error | The view cannot be drawn | Ask for a finite, increasing x range and a width of at least one pixel. | — |
 
+## SNR-ENG
+
+Owner: `sonarithm-numisona`.
+
+| Code | Severity | Meaning | How to fix | Rules |
+|---|---|---|---|---|
+| `SNR-ENG-020` | info | Polarity taken from the concept table | Set `polarity` to `positive` or `negative` to choose the direction yourself. | SDR-12, SDR-13, SDR-14 |
+| `SNR-ENG-021` | warning | Flagged concept with automatic polarity | Listeners disagree on the pitch direction for this concept; set `polarity` explicitly, or flip it in your profile. | SDR-13, SDR-14, SDR-41 |
+| `SNR-ENG-022` | info | Concept not in the concept table | The generic default (positive) applies; check the concept's spelling or set `polarity`. | SDR-12 |
+| `SNR-ENG-023` | info | Polarity set by the listener's profile | Change or clear the polarity setting in the profile to restore the spec's polarity. | SDR-15 |
+
 ## SNR-RENDER
 
 Owner: `sonarithm-render`.

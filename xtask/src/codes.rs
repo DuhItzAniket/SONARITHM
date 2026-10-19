@@ -25,6 +25,7 @@ fn tables() -> Vec<CodeTable> {
         sonarithm_data::codes::CODES,
         sonarithm_compiler::codes::CODES,
         sonarithm_render::codes::CODES,
+        sonarithm_numisona::codes::CODES,
     ]
 }
 

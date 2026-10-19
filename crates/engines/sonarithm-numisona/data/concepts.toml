@@ -1,0 +1,159 @@
+# SPDX-FileCopyrightText: 2026 SONARITHM contributors
+# SPDX-License-Identifier: MIT OR Apache-2.0
+#
+# NUMISONA concept table (docs/architecture/03-data-model.md §3.3).
+#
+# A concept names what a field measures in perceptual terms. For a pitch channel with
+# `"polarity": "auto"`, the field's concept picks the default direction (SDR-12..14), and
+# its `exponent` is the magnitude-estimation exponent m offered as guidance for the
+# psychophysical scale (SDR-11). The table is data, not code: every row cites its evidence
+# (`evidence`, `rules`, and `votes` where a study counted listeners). Change a row only
+# through the design-rules change control (docs/research/design-rules.md, rule 1): state
+# the old and the new value and link a finding or experiment.
+#
+# Fields:
+#   name      concept name: dot-separated lowercase words (03 §3.3)
+#   polarity  positive | negative | avoid (no consistent direction; avoid pitch) |
+#             unknown (no study yet; SDR-41)
+#   flagged   listeners disagree or no study exists: a warning names the evidence
+#   exponent  magnitude-estimation exponent m (absolute value of the majority slope), guidance
+#   votes     listeners with a positive, no, or negative polarity
+#   rules     design rules the row implements
+#   evidence  the source, as cited in docs/research/notes/02-theory-perception.md §2b
+#
+# Walker 2007 counts are from Exp. 1, frequency (pitch) set, n = 19 per block, read from its
+# Table 1 (Walker 2007, Applied Cognitive Psychology 21(5):579-599, doi:10.1002/acp.1291).
+
+schema = 1
+
+[[concept]]
+name = "generic"
+polarity = "positive"
+flagged = false
+rules = ["SDR-12"]
+evidence = "SDR-12 default for generic quantities (Walker 2002, doi:10.1037/1076-898X.8.4.211, and Walker 2007): perceptual pitch judgments showed no negative polarities, and listeners use a 'higher means more' model for abstract magnitudes."
+
+[[concept]]
+name = "velocity"
+polarity = "positive"
+flagged = false
+exponent = 0.77
+votes = { positive = 18, none = 1, negative = 0 }
+rules = ["SDR-12"]
+evidence = "Walker 2007 Table 1: 18/1/0, majority slope +0.77 (strong positive); Walker 2002 Exp. 2: 14 of 16 positive."
+
+[[concept]]
+name = "pressure"
+polarity = "positive"
+flagged = false
+exponent = 0.77
+votes = { positive = 13, none = 3, negative = 3 }
+rules = ["SDR-12"]
+evidence = "Walker 2007 Table 1: 13/3/3, majority slope +0.77 (positive)."
+
+[[concept]]
+name = "urgency"
+polarity = "positive"
+flagged = false
+exponent = 0.70
+votes = { positive = 14, none = 3, negative = 2 }
+rules = ["SDR-12"]
+evidence = "Walker 2007 Table 1: 14/3/2, majority slope +0.70 (positive)."
+
+[[concept]]
+name = "temperature"
+polarity = "positive"
+flagged = false
+exponent = 0.65
+votes = { positive = 11, none = 2, negative = 6 }
+rules = ["SDR-12"]
+evidence = "Walker 2007 Table 1: 11/2/6, majority slope +0.65 (positive by majority; the research report marks it flippable); Walker 2002 Exp. 2: 11 of 16 positive."
+
+[[concept]]
+name = "danger"
+polarity = "positive"
+flagged = false
+exponent = 0.69
+votes = { positive = 10, none = 8, negative = 1 }
+rules = ["SDR-12"]
+evidence = "Walker 2007 Table 1: 10/8/1, majority slope +0.69 (positive)."
+
+[[concept]]
+name = "proximity"
+polarity = "positive"
+flagged = false
+exponent = 0.78
+votes = { positive = 10, none = 6, negative = 3 }
+rules = ["SDR-12"]
+evidence = "Walker 2007 Table 1: 10/6/3, majority slope +0.78 (positive, weak)."
+
+[[concept]]
+name = "mass"
+polarity = "negative"
+flagged = false
+exponent = 0.91
+votes = { positive = 2, none = 0, negative = 17 }
+rules = ["SDR-13"]
+evidence = "Walker 2007 Table 1: 2/0/17, majority slope -0.91 (strong negative); Walker & Kramer 2005 (doi:10.1145/1101530.1101534): 'increasing mass is generally best represented by decreasing pitch'."
+
+[[concept]]
+name = "size"
+polarity = "negative"
+flagged = true
+exponent = 0.87
+votes = { positive = 9, none = 0, negative = 10 }
+rules = ["SDR-13"]
+evidence = "Walker 2007 Table 1: 9/0/10, slopes -0.87 (negative) and +0.66 (positive): split, with a slight negative majority. The unanimous negative size:tempo result of Walker 2002 was not replicated in 2007."
+
+[[concept]]
+name = "money"
+polarity = "positive"
+flagged = true
+exponent = 0.93
+votes = { positive = 9, none = 2, negative = 8 }
+rules = ["SDR-14", "SDR-11"]
+evidence = "Walker 2007 Table 1 (number of dollars): 9/2/8, slopes +1.36 / -1.09 (split). Sighted listeners use 'higher means more'; blind and low-vision listeners lean negative (Walker 2002; Walker & Mauney 2010, doi:10.1145/1714458.1714459). Exponent 0.93: the 0.9256 sighted-listener slope Smith & Walker 2005 (doi:10.1002/acp.1146) used for dollars."
+
+[[concept]]
+name = "attractiveness"
+polarity = "avoid"
+flagged = true
+votes = { positive = 3, none = 8, negative = 8 }
+rules = ["SDR-14"]
+evidence = "Walker 2007 Table 1: 3/8/8, majority slope -0.58: ambiguous, avoid pitch for this concept."
+
+[[concept]]
+name = "graph.degree"
+polarity = "unknown"
+flagged = true
+rules = ["SDR-41"]
+evidence = "No magnitude-estimation study yet; SDR-41 requires one before a default ships (hypothesis H-05)."
+
+[[concept]]
+name = "graph.centrality"
+polarity = "unknown"
+flagged = true
+rules = ["SDR-41"]
+evidence = "No magnitude-estimation study yet; SDR-41 requires one before a default ships (hypothesis H-05)."
+
+[[concept]]
+name = "graph.edge_weight"
+polarity = "unknown"
+flagged = true
+rules = ["SDR-41"]
+evidence = "No magnitude-estimation study yet; SDR-41 requires one before a default ships (hypothesis H-05)."
+
+[[concept]]
+name = "graph.path_length"
+polarity = "unknown"
+flagged = true
+rules = ["SDR-41"]
+evidence = "No magnitude-estimation study yet; SDR-41 requires one before a default ships (hypothesis H-05)."
+
+# The family row: every `graph.*` concept without a row of its own.
+[[concept]]
+name = "graph"
+polarity = "unknown"
+flagged = true
+rules = ["SDR-41"]
+evidence = "No magnitude-estimation study of any graph concept yet; SDR-41 requires one before a default ships (hypothesis H-05)."
