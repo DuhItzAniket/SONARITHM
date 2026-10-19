@@ -25,7 +25,7 @@
 | FR-026 | [05 §7](../architecture/05-compiler-and-score-ir.md#7-diagnostics) | A06 | ST (diagnostics) | Planned |
 | FR-027 | [04 §9](../architecture/04-sonification-spec.md#9-importers) | C01 | IT | Planned |
 | FR-030 | [04 §5.3](../architecture/04-sonification-spec.md#53-marks-and-channels) | A06 | UT, PT (scales: `continuous_scales_are_monotonic_and_bounded`, `log_scales_are_monotonic_and_bounded`, `quantile_scales_are_monotonic_and_bounded`, `discrete_positions_rise_in_scale_order`), ST (encoders, A06-T04) | In progress (scales in review, A06-T01) |
-| FR-031 | [07 NUMISONA](../architecture/07-engines.md) | A06 | UT (`sdr_08_*`, `sdr_09_*`) | Planned |
+| FR-031 | [07 NUMISONA](../architecture/07-engines.md) | A06 | UT (`sdr_08_default_range_is_400_to_1400_hz`, `sdr_08_ranges_accept_every_pitch_unit`, `sdr_09_default_space_is_log_frequency`, `sdr_09_mel_erb_and_bark_follow_their_published_formulas`, `sdr_09_every_space_spaces_steps_evenly_in_its_own_coordinate`), PT (`sdr_08_pitches_stay_in_range_and_rise`, `coordinates_rise_and_invert`) | In review (A06-T02) |
 | FR-032 | [03 §3.3](../architecture/03-data-model.md#33-concepts-and-the-concept-table) | A06, B03 | UT (`sdr_12..15_*`), PT (flip symmetry) | Planned |
 | FR-033 | [04 §5.3](../architecture/04-sonification-spec.md#53-marks-and-channels) | A06 | UT (`sdr_11_*`) | Planned |
 | FR-034 | [04 §5.2](../architecture/04-sonification-spec.md#52-tracks) | A06 | UT (A11Y-13) | Planned |
