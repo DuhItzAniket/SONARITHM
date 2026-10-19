@@ -1005,6 +1005,13 @@ version = "0.0.0"
 [[package]]
 name = "sonarithm-render"
 version = "0.0.0"
+dependencies = [
+ "insta",
+ "proptest",
+ "sonarithm-core",
+ "sonarithm-dsp",
+ "thiserror",
+]
 
 [[package]]
 name = "sonarithm-spec"
@@ -1306,6 +1313,7 @@ dependencies = [
  "sonarithm-compiler",
  "sonarithm-core",
  "sonarithm-data",
+ "sonarithm-render",
  "sonarithm-spec",
 ]
 

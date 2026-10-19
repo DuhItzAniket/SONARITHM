@@ -32,6 +32,14 @@ Owner: `sonarithm-data`.
 | `SNR-DATA-040` | warning | A field metadata value cannot be read and was ignored | Fix the `snr.*` value in the file (03 §3 lists the allowed values) or declare the field in the spec's `data.fields`. | — |
 | `SNR-DATA-050` | error | Unknown field | Name a field of the table; field names are case-sensitive. | — |
 
+## SNR-RENDER
+
+Owner: `sonarithm-render`.
+
+| Code | Severity | Meaning | How to fix | Rules |
+|---|---|---|---|---|
+| `SNR-RENDER-001` | warning | Unknown instrument preset | Use one of the presets mallet, sine, square, triangle or saw. Until then the mallet preset, the default timbre, plays instead. | SDR-29 |
+
 ## SNR-SPEC
 
 Owner: `sonarithm-spec`.

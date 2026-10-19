@@ -32,5 +32,6 @@ From phase A07, release-plz maintains this file: it generates each release's ent
   - `sonarithm-dsp` oscillators: sine, triangle, and band-limited (PolyBLEP) saw and square, computed with IEEE 754 arithmetic only so renders stay bit-identical across platforms.
   - `sonarithm-dsp` envelopes: ADSR with raised-cosine onset and offset ramps of at least 5 ms, about 40 ms for notes (SDR-22); retriggers and releases never step.
   - `sonarithm-dsp` filters (one-pole low-pass; RBJ low-, high- and band-pass), a constant-power panner and a linear parameter smoother (10 ms).
+  - `sonarithm-render` plan builder: a Score becomes a `RenderPlan` in frames, with resolved frequencies, gains, pan gains, instruments and voice-pool sizes; unknown instruments raise `SNR-RENDER-001` and fall back to the mallet preset.
 
 [Unreleased]: https://github.com/DuhItzAniket/SONARITHM/commits/main
