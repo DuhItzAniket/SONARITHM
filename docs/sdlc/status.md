@@ -24,7 +24,7 @@ Status values: `Not started` · `In progress` · `In review` · `Done` · `Block
 | A | A02 | Technical spikes and prototype gate | **In review** | ≈80% | All spikes built and measured on Windows and CI; gate report draft: Conditional go recommended. PB-01 fails on Windows shared mode; screen-reader, macOS and Linux manual steps pending. See [A02 tasks](#a02-tasks) |
 | A | A03 | Core types, Spec v0.1, Score IR | **In progress** | ≈15% | T01 merged (#4); RFC-0001 accepted (T05); T02–T04 in review. See [A03 tasks](#a03-tasks) |
 | A | A04 | Data layer | **In progress** | ≈5% | T01 in review (field metadata). See [A04 tasks](#a04-tasks) |
-| A | A05 | Render engine, audio backend, export | Not started | 0% | |
+| A | A05 | Render engine, audio backend, export | **In progress** | ≈5% | T01 in review (oscillators). See [A05 tasks](#a05-tasks) |
 | A | A06 | NUMISONA v1 | Not started | 0% | |
 | A | A07 | CLI, Python, v0.1.0-alpha | Not started | 0% | |
 | A | A08 | Research instrumentation v0, ICAD 2027 | Not started | 0% | P01 without participant studies (OD-04) |
@@ -118,6 +118,25 @@ Work runs in a separate agent session, in parallel with A03, through small PRs i
 | A04-T09 Data fingerprinting | Not started | |
 | A04-T10 Benchmarks (PB-05); CSV and XLSX fuzzers | Not started | |
 
+### A05 tasks
+
+Work runs in a separate agent session through small PRs into `crates/sonarithm-dsp`, `-render`, `-audio` and `-export`, following [ADR-0004](../decisions/0004-audio-backend-and-render-graph.md) and [ADR-0016](../decisions/0016-windows-low-latency-backend.md). A task is Done when its PRs are merged with CI green.
+
+| Task | Status | Notes |
+|---|---|---|
+| A05-T01 DSP nodes (oscillators, ADSR, filters, panner) | In review | Oscillators: sine (IEEE-arithmetic polynomial, F-039), triangle, PolyBLEP saw and square, with spectral tests |
+| A05-T02 ISO 226:2023 table; EBU R128 meter | Not started | |
+| A05-T03 `RenderPlan` and plan builder | Not started | |
+| A05-T04 Render graph, voice pool, scheduler, transport | Not started | |
+| A05-T05 RT communication (rtrb, triple_buffer, basedrop) | Not started | |
+| A05-T06 `AudioBackend` + `CpalBackend` | Not started | |
+| A05-T07 `OfflineBackend`; WAV and FLAC writers | Not started | |
+| A05-T08 Render manifest + WebVTT sidecar | Not started | |
+| A05-T09 Master limiter + start-up gain ramp | Not started | |
+| A05-T10 Allocation check in debug; 10-min soak; xrun counting | Not started | `assert_no_alloc` is BSD-1-Clause (F-038); licence question raised with the coordinator |
+| A05-T11 Golden-audio harness; cross-OS CI job (OD-08) | Not started | |
+| A05-T12 Benchmarks (PB-03) | Not started | |
+
 ## 3. Current iteration
 
 | Iteration | Dates | Goal | Tasks |
@@ -162,3 +181,4 @@ Maturity scale: `Designed` → `Prototype` → `Alpha` → `Beta` → `Stable` �
 | 2026-10-18 | A01 PR #1 merged as `02a44f3` with all checks green; owner context recorded (RV University, Windows-only hardware) |
 | 2026-10-19 | A02 spikes measured (T01 merged in #9; T02–T07 in review); gate report draft recommends a conditional go; PB-01 fails on Windows shared mode |
 | 2026-10-19 | A04 started: `FieldMeta` with `snr.*` metadata and the `SNR-DATA` code table (T01) |
+| 2026-10-19 | A05 started: oscillators in `sonarithm-dsp` (T01) |
