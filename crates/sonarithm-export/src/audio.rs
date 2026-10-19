@@ -134,16 +134,26 @@ pub fn to_pcm24(sample: f32) -> i32 {
     quantized
 }
 
-#[derive(Default)]
-struct Meter {
+/// Peak and clip counts, and the observer, over every scaled sample.
+struct Meter<'a> {
+    observe: &'a mut dyn FnMut(&[f32]),
+    scaled: Vec<f32>,
     peak: f32,
     clipped: u64,
 }
 
-impl Meter {
-    fn sample(&mut self, sample: f32) {
-        self.peak = self.peak.max(sample.abs());
-        self.clipped += u64::from(sample.abs() > 1.0);
+impl Meter<'_> {
+    /// Scales a rendered block by `gain`, counts it and shows it to the observer; returns
+    /// the scaled samples.
+    fn block(&mut self, samples: &[f32], gain: f32) -> &[f32] {
+        self.scaled.clear();
+        self.scaled.extend(samples.iter().map(|s| s * gain));
+        for sample in &self.scaled {
+            self.peak = self.peak.max(sample.abs());
+            self.clipped += u64::from(sample.abs() > 1.0);
+        }
+        (self.observe)(&self.scaled);
+        &self.scaled
     }
 }
 
@@ -159,9 +169,30 @@ pub fn write_audio<W: Write + Seek>(
     gain: f32,
     writer: W,
 ) -> Result<AudioReport, ExportError> {
+    write_audio_observed(render, format, gain, writer, &mut |_| {})
+}
+
+/// As [`write_audio`], and hands every block of scaled samples (interleaved stereo, before
+/// quantization) to `observe`, for example a loudness meter.
+///
+/// # Errors
+///
+/// [`ExportError`] if encoding or writing fails.
+pub fn write_audio_observed<W: Write + Seek>(
+    render: &mut OfflineRender,
+    format: AudioFormat,
+    gain: f32,
+    writer: W,
+    observe: &mut dyn FnMut(&[f32]),
+) -> Result<AudioReport, ExportError> {
     let sample_rate = render.sample_rate();
     let frames = render.remaining();
-    let mut meter = Meter::default();
+    let mut meter = Meter {
+        observe,
+        scaled: Vec::with_capacity(2 * render.block_size()),
+        peak: 0.0,
+        clipped: 0,
+    };
     match format {
         AudioFormat::Wav(encoding) => write_wav(render, encoding, gain, writer, &mut meter)?,
         AudioFormat::Flac => write_flac(render, gain, writer, &mut meter)?,
@@ -185,7 +216,7 @@ fn write_wav<W: Write + Seek>(
     encoding: WavEncoding,
     gain: f32,
     writer: W,
-    meter: &mut Meter,
+    meter: &mut Meter<'_>,
 ) -> Result<(), ExportError> {
     let float = encoding == WavEncoding::Float32;
     let spec = hound::WavSpec {
@@ -205,9 +236,7 @@ fn write_wav<W: Write + Seek>(
         if samples.is_empty() {
             break;
         }
-        for &sample in samples {
-            let sample = sample * gain;
-            meter.sample(sample);
+        for &sample in meter.block(samples, gain) {
             if float {
                 wav.write_sample(sample)?;
             } else {
@@ -221,17 +250,17 @@ fn write_wav<W: Write + Seek>(
 
 /// Feeds the encoder from the renderer. A render block can cross an encoder block
 /// boundary; the samples past it wait in `carry` for the next encoder block.
-struct RenderSource<'a> {
+struct RenderSource<'a, 'b> {
     render: &'a mut OfflineRender,
     gain: f32,
     block: Vec<f32>,
     pcm: Vec<i32>,
     carry: Vec<i32>,
-    meter: &'a mut Meter,
+    meter: &'a mut Meter<'b>,
     total: usize,
 }
 
-impl Source for RenderSource<'_> {
+impl Source for RenderSource<'_, '_> {
     fn channels(&self) -> usize {
         usize::from(CHANNELS)
     }
@@ -257,11 +286,8 @@ impl Source for RenderSource<'_> {
             if samples.is_empty() {
                 break;
             }
-            for &sample in samples {
-                let sample = sample * self.gain;
-                self.meter.sample(sample);
-                self.pcm.push(to_pcm24(sample));
-            }
+            let scaled = self.meter.block(samples, self.gain);
+            self.pcm.extend(scaled.iter().map(|s| to_pcm24(*s)));
         }
         if self.pcm.len() > wanted {
             self.carry.extend_from_slice(&self.pcm[wanted..]);
@@ -280,7 +306,7 @@ fn write_flac<W: Write>(
     render: &mut OfflineRender,
     gain: f32,
     mut writer: W,
-    meter: &mut Meter,
+    meter: &mut Meter<'_>,
 ) -> Result<(), ExportError> {
     let config = flacenc::config::Encoder::default()
         .into_verified()

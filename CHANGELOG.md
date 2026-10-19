@@ -44,6 +44,7 @@ From phase A07, release-plz maintains this file: it generates each release's ent
   - Offline rendering and audio export: `OfflineRender` plays a plan through the same render path in fixed blocks, and `sonarithm-export` writes 24-bit PCM or 32-bit float WAV and 24-bit FLAC.
   - Hearing safety on the master: a look-ahead true-peak limiter at −1 dBTP, and a start-up ramp from −20 dB over 500 ms whenever a playback stream opens.
   - ISO 226:2023 equal-loudness compensation, on by default when a plan is built (SDR-24), and an EBU R128 loudness and true-peak meter for exports.
+  - Exports write a render manifest (`*.render.json`, with a generated JSON Schema) and a WebVTT cue sidecar (`*.cues.vtt`) next to the audio, and normalize loudness with one static gain.
 - NUMISONA, the parameter-mapping engine (phase A06):
   - `sonarithm-numisona` scales: `linear`, `log`, `symlog`, `sqrt`, `pow`, `quantile`, `band` and `ordinal`, with `auto`, `zero-based` and explicit domains, `nice` rounding, and off-scale reporting for clamped values.
   - `sonarithm-numisona` pitch spaces and ranges: log-frequency (the default, SDR-09), linear frequency, mel, ERB-rate and Bark; the 400–1400 Hz default range and the 65–1480 Hz expanded range (SDR-08); ranges in hertz, MIDI notes or cents.

@@ -160,6 +160,8 @@ pub trait AudioBackend {
 
 Paths are written **relative or redacted**, never as absolute user paths (privacy).
 
+**Manifest as built in A05** (A05-T08, `sonarithm_export::manifest`). The fields above are written in camelCase, with these additions: `manifestVersion` (1); `score` (IR version and canonical Score hash); `render.loudnessCompensationPhon`; and `output.format`, `bitsPerSample`, `channels`, `frames`, `gainDb` (the static normalization gain) and `limitedFrames`. The `cues` object names the sidecar. The schema is generated into `schemas/sonarithm-render-manifest-1.schema.json`. Names keep only their last path component. The git commit, the embedded spec and the data source come from the caller, because the Score does not carry them. Cues last 3 s or until the Score ends (provisional, B03).
+
 **Implemented in A05** (A05-T07). `sonarithm_render::OfflineRender` is the `OfflineBackend`: it plays the plan from its start in fixed blocks (256 frames by default). `sonarithm_export::write_audio` encodes the render block by block, so an export never holds the whole render as PCM. FLAC frames stay in memory, compressed, until the stream is written. Integer samples are scaled by 2^23 − 1, rounded half to even and clamped, without dither.
 
 ## 8. Determinism
