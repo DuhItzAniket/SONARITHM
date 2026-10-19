@@ -1,0 +1,174 @@
+---
+source: crates/engines/sonarithm-echometric/tests/generators.rs
+expression: "manifest_json(&params, 7)"
+---
+{
+  "generator": "GEN-001",
+  "generator_version": 1,
+  "basis": "nees2008density",
+  "seed": 7,
+  "params": {
+    "generator": "GEN-001",
+    "rate": 4.0,
+    "reversals": 5,
+    "hours": 10,
+    "range": [
+      6.0,
+      106.0
+    ],
+    "shape": "random",
+    "start": "random",
+    "min-segment": 2,
+    "noise": 1.5,
+    "queries": 11,
+    "trend-queries": 10
+  },
+  "rows": 41,
+  "columns": [
+    "t",
+    "hour",
+    "price"
+  ],
+  "table_sha256": "510d6bf63d986e66afa9935e4e511b9c52980a0e107b8fc1c1a2629efb75967b",
+  "truth": {
+    "kind": "reversals",
+    "reversals": 5,
+    "segments": [
+      "up",
+      "down",
+      "up",
+      "down",
+      "up",
+      "down"
+    ],
+    "turning-rows": [
+      3,
+      7,
+      19,
+      29,
+      34
+    ],
+    "queries": [
+      {
+        "row": 32,
+        "x": 16.0,
+        "value": 60.7
+      },
+      {
+        "row": 28,
+        "x": 15.0,
+        "value": 44.13
+      },
+      {
+        "row": 20,
+        "x": 13.0,
+        "value": 64.36
+      },
+      {
+        "row": 40,
+        "x": 18.0,
+        "value": 28.18
+      },
+      {
+        "row": 0,
+        "x": 8.0,
+        "value": 7.7
+      },
+      {
+        "row": 8,
+        "x": 10.0,
+        "value": 9.92
+      },
+      {
+        "row": 24,
+        "x": 14.0,
+        "value": 56.46
+      },
+      {
+        "row": 16,
+        "x": 12.0,
+        "value": 52.64
+      },
+      {
+        "row": 36,
+        "x": 17.0,
+        "value": 57.54
+      },
+      {
+        "row": 4,
+        "x": 9.0,
+        "value": 80.72
+      },
+      {
+        "row": 12,
+        "x": 11.0,
+        "value": 31.31
+      }
+    ],
+    "trend-queries": [
+      {
+        "from": 8.0,
+        "to": 9.0,
+        "answer": "increased"
+      },
+      {
+        "from": 11.0,
+        "to": 12.0,
+        "answer": "increased"
+      },
+      {
+        "from": 10.0,
+        "to": 11.0,
+        "answer": "increased"
+      },
+      {
+        "from": 16.0,
+        "to": 17.0,
+        "answer": "decreased"
+      },
+      {
+        "from": 13.0,
+        "to": 14.0,
+        "answer": "decreased"
+      },
+      {
+        "from": 9.0,
+        "to": 10.0,
+        "answer": "decreased"
+      },
+      {
+        "from": 15.0,
+        "to": 16.0,
+        "answer": "increased"
+      },
+      {
+        "from": 12.0,
+        "to": 13.0,
+        "answer": "increased"
+      },
+      {
+        "from": 17.0,
+        "to": 18.0,
+        "answer": "decreased"
+      },
+      {
+        "from": 14.0,
+        "to": 15.0,
+        "answer": "decreased"
+      }
+    ]
+  },
+  "notes": [
+    {
+      "experimental": {
+        "rule": "SDR-21 / H-02",
+        "detail": "5 reversals is above the 3 Nees & Walker (2008) tested"
+      }
+    },
+    {
+      "deviation": {
+        "detail": "noise was not part of the published stimuli and can add local reversals"
+      }
+    }
+  ]
+}

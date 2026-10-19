@@ -52,5 +52,7 @@ From phase A07, release-plz maintains this file: it generates each release's ent
   - `sonarithm-numisona` Erie importer (subset, SDR-05): Erie specs become spec v0.1 documents, with a report of every construct that is approximated or has no equivalent.
   - `sonarithm-compiler` compiles the data layer's `DataBundle`: spec transforms run in `sonarithm-data`, and the `Platform` engine reads `inline` records and `file` sources relative to a base directory.
   - `sonarithm-numisona` rule-conformance suite: one named test for every design rule NUMISONA owns, checked against the design-rules catalogue; the Erie gallery subset renders; volatility advice for series with many trend reversals (SDR-21); the PB-04 compile benchmark (35 ms for 100k rows × 4 tracks on the development laptop).
+- ECHOMETRIC research instrumentation (phase A08):
+  - `sonarithm-echometric` stimulus generators, each deterministic from its parameters and a seed, with the published parameters documented next to SONARITHM's: GEN-001 trend reversals × density (Nees & Walker 2008), GEN-002 price series with click and reference-tone columns (Smith & Walker 2005), GEN-003 SNR-controlled transit light curves (Tucker Brown et al. 2022) and GEN-004 correlation triplets (Elmquist et al. 2024). Every stimulus carries its ground truth, a canonical CSV with a SHA-256 digest, a provenance manifest and notes on where it departs from the published design.
 
 [Unreleased]: https://github.com/DuhItzAniket/SONARITHM/commits/main

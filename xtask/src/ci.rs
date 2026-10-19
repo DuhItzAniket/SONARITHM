@@ -29,6 +29,7 @@ pub(crate) const WASM_CRATES: &[&str] = &[
     "sonarithm-render",
     "sonarithm-export",
     "sonarithm-numisona",
+    "sonarithm-echometric",
 ];
 
 /// Crates in [`WASM_CRATES`] that build for wasm32 without their default features, because
