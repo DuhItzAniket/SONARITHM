@@ -175,6 +175,8 @@ The UI never receives more points than it can draw. `sonarithm-data` provides:
 
 Downsampling affects **only the visual view**. Sonification always reads the full-resolution data, unless the spec explicitly asks for a transform.
 
+Implementation notes (A04, `sonarithm_data::downsample`): both algorithms return row indices, so every drawn point keeps its `RowRef`. M4 maps x to pixel columns with `floor(w · (x − start) / (end − start))` (the right edge in the last column), keeps the first and last x and the minimum and maximum y of each column, and is tested to give exactly the pixels of the full polyline (Bresenham rasterization, rows sorted by x) and a subset of the paper's reference query. The tile cache keys on (table, generation, fields, x range, width) and evicts the least recently used tile by a counter, not a clock.
+
 ## 8. Streaming tables (SONOTRACE)
 
 A `StreamTable` is an append-only, ring-buffered sequence of record batches with a monotonically increasing sequence number:

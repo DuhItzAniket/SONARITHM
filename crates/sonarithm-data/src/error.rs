@@ -179,6 +179,12 @@ pub enum DataError {
         /// The budget.
         fuel: u64,
     },
+    /// A downsampled view that cannot be drawn.
+    #[error("invalid view: {reason}")]
+    InvalidView {
+        /// What is wrong.
+        reason: String,
+    },
     /// A field name that the table does not have.
     #[error("table `{table}` has no field `{field}`")]
     UnknownField {
@@ -302,6 +308,10 @@ impl DataError {
                     "The expression `{expr}` needs more than {fuel} operations on a row. \
                      Simplify it."
                 ),
+            ),
+            Self::InvalidView { reason } => (
+                &codes::INVALID_VIEW,
+                format!("The view cannot be drawn: {reason}."),
             ),
             Self::UnknownField { table, field } => (
                 &codes::UNKNOWN_FIELD,

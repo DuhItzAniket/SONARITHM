@@ -62,6 +62,7 @@ Owner: `sonarithm-data`.
 | `SNR-DATA-054` | error | The expression needs too many operations | Simplify the expression; each row may use at most 10 000 operations. | — |
 | `SNR-DATA-055` | error | Invalid transform parameters | Fix the parameters the message names (RFC-0001 §4). | — |
 | `SNR-DATA-056` | info | A transform ran | None needed; the message states the rows in and out. | — |
+| `SNR-DATA-060` | error | The view cannot be drawn | Ask for a finite, increasing x range and a width of at least one pixel. | — |
 
 ## SNR-RENDER
 
