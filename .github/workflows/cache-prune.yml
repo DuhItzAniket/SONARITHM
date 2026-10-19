@@ -1,0 +1,43 @@
+# Keeps the Actions cache under the repository's 10 GB limit (docs/engineering/ci-cd.md).
+# Swatinem/rust-cache saves a new cache on `main` whenever Cargo.lock or the toolchain changes,
+# and the superseded copies stay until GitHub evicts them. After each completed `ci`, `docs` or
+# `nightly` run on `main`, this keeps only the newest cache of each job and deletes the rest.
+# It checks out no code and runs no PR code: it only lists and deletes caches on `main`.
+name: cache-prune
+
+on:
+  workflow_run:
+    workflows: [ci, docs, nightly]
+    types: [completed]
+    branches: [main]
+  workflow_dispatch:
+
+permissions: {}
+
+concurrency:
+  group: cache-prune
+  cancel-in-progress: false
+
+jobs:
+  prune:
+    runs-on: ubuntu-latest
+    permissions:
+      actions: write
+    timeout-minutes: 5
+    steps:
+      - name: Keep only the newest cache of each job on main
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        # A cache's job is its key without the trailing hash segments
+        # (for example `v0-rust-clippy-test-Linux-x64`).
+        run: |
+          gh cache list --ref refs/heads/main --limit 1000 --json id,key,createdAt \
+            --jq 'map(. + {job: (.key | sub("-[0-9a-f]{8,}.*$"; ""))})
+                  | group_by(.job)[]
+                  | sort_by(.createdAt) | reverse | .[1:][]
+                  | "\(.id) \(.key)"' |
+          while read -r id key; do
+            echo "deleting superseded cache $key"
+            gh cache delete "$id"
+          done
