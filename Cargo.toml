@@ -79,7 +79,7 @@ rhai = { version = "1.26.1", default-features = false, features = ["std", "no_ti
 # a sonarithm-data feature because it builds C code.
 parquet = { version = "60.0.0", default-features = false, features = ["arrow", "snap", "brotli", "flate2-zlib-rs", "lz4", "simdutf8"] }
 # Seeded, portable random streams per track (SDR-02, coding-standards §10).
-rand_chacha = { version = "0.9.0", default-features = false }
+rand_chacha = { version = "0.10.0", default-features = false }
 # JSON Schema generation for the spec (04 §1); `derive` only, no optional integrations.
 schemars = { version = "1.0.4", default-features = false, features = ["derive", "std"] }
 # Shortest round-trip float digits with ties to even, for RFC 8785 numbers (F-020).

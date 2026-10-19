@@ -9,7 +9,7 @@ use std::sync::Arc;
 use std::sync::atomic::{AtomicBool, Ordering};
 
 use rand_chacha::ChaCha8Rng;
-use rand_chacha::rand_core::{RngCore, SeedableRng};
+use rand_chacha::rand_core::{Rng, SeedableRng};
 
 use super::CompileError;
 use crate::diagnostic::{Diagnostic, Diagnostics};
