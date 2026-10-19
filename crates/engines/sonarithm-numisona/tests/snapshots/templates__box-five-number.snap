@@ -1,0 +1,69 @@
+---
+source: crates/engines/sonarithm-numisona/tests/templates.rs
+expression: "serde_json::to_string_pretty(&spec).unwrap()"
+---
+{
+  "data": {
+    "source": {
+      "kind": "inline",
+      "values": [
+        {
+          "__snr_prov": "derived",
+          "group": "easy",
+          "rank": 0,
+          "statistic": "minimum",
+          "value": 390.0
+        },
+        {
+          "__snr_prov": "derived",
+          "group": "easy",
+          "rank": 1,
+          "statistic": "lower quartile",
+          "value": 414.25
+        },
+        {
+          "__snr_prov": "derived",
+          "group": "easy",
+          "rank": 2,
+          "statistic": "median",
+          "value": 437.5
+        },
+        {
+          "__snr_prov": "derived",
+          "group": "easy",
+          "rank": 3,
+          "statistic": "upper quartile",
+          "value": 446.75
+        },
+        {
+          "__snr_prov": "derived",
+          "group": "easy",
+          "rank": 4,
+          "statistic": "maximum",
+          "value": 457.0
+        }
+      ]
+    }
+  },
+  "description": "Box plots: for each group, the minimum, quartiles, median and maximum, low to high.",
+  "name": "box-five-number",
+  "specVersion": "0.1",
+  "substrate": {
+    "time": {
+      "pace": {
+        "pointsPerSecond": 3
+      }
+    }
+  },
+  "tracks": [
+    {
+      "channels": {
+        "pitch": {
+          "field": "value"
+        }
+      },
+      "id": "boxes",
+      "mark": "tone"
+    }
+  ]
+}

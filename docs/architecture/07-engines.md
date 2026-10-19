@@ -32,7 +32,7 @@ Each engine is one crate under `crates/engines/` and implements `Engine`. This p
 | `polarity` | Concept lookup (SDR-12..14); profile overrides (SDR-15); ambiguity diagnostics |
 | `encode` | Data rows → `Note`/`Glide` events with `RowRef`; redundant `duration` and `taps` (A11Y-13); categorical → timbre (SDR-25) |
 | `density` | Events-per-second estimate. `auto` mark switching above about 10 events/s (SDR-20, flagged experimental) |
-| `templates` | Reusable designs ("sonecules", SDR-03): `line-overview`, `bar-discrete`, `scatter-xy`, `histogram`, `box-five-number`, `heatmap-rowscan` |
+| `templates` | Reusable designs ("sonecules", SDR-03): `line-overview`, `bar-discrete`, `scatter-xy`, `histogram`, `box-five-number`, `heatmap-rowscan`. Spec v0.1 reserves `template`, so templates are spec builders with named slots bound to a dataset's fields; `box-five-number` computes its quartiles itself (no v0.1 aggregate has them) and marks them `derived` |
 | `import::erie` | Erie spec subset → SONARITHM spec (A06), broader in C05 |
 
 **Tests:** one named conformance test per owned rule (`sdr_08_default_range`, `sdr_15_polarity_flip_symmetry`, …); property tests on scale monotonicity and range bounds; snapshots of each template on the example datasets.

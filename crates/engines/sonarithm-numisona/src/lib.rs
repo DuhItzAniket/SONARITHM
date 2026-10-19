@@ -28,5 +28,6 @@ pub mod import;
 pub mod pitch;
 pub mod polarity;
 pub mod scale;
+pub mod templates;
 
 pub use encode::{Numisona, encode};
