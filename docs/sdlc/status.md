@@ -124,7 +124,7 @@ Work runs in a separate agent session through small PRs into `crates/sonarithm-d
 
 | Task | Status | Notes |
 |---|---|---|
-| A05-T01 DSP nodes (oscillators, ADSR, filters, panner) | In review | Oscillators: sine (IEEE-arithmetic polynomial, F-039), triangle, PolyBLEP saw and square, with spectral tests |
+| A05-T01 DSP nodes (oscillators, ADSR, filters, panner) | In review | Oscillators: sine (IEEE-arithmetic polynomial, F-039), triangle, PolyBLEP saw and square, with spectral tests. ADSR with raised-cosine ramps of at least 5 ms and the SDR-22 conformance tests |
 | A05-T02 ISO 226:2023 table; EBU R128 meter | Not started | |
 | A05-T03 `RenderPlan` and plan builder | Not started | |
 | A05-T04 Render graph, voice pool, scheduler, transport | Not started | |
