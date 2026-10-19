@@ -101,4 +101,5 @@ Waivers: none.
 | Make `docs / schema-diff` a required check | Coordinator | Ruleset |
 | Switch A05's render tests to `sonarithm_core::testing::valid_score` | A05 | #121 note in #128 |
 | Implement `CompilerData` for `DataBundle`, apply transforms, add the file source | A04 | A04 issues |
-| Merge the Dependabot bumps of `sha2` (#124, safe as is) and `rand_chacha` (#125, safe with the import fix pushed to its branch); both need a lower-case PR title to pass `pr-title` | Coordinator | #124, #125 |
+| Land the Dependabot bumps of `sha2` (#124, safe as is) and `rand_chacha` (#125, safe with the import fix pushed to its branch); both retitled and set to auto-merge | A03 session | #124, #125 |
+| `pr-title` now accepts Dependabot's capitalised "Bump", so its PRs no longer need retitling | A03 session | This PR (`pr-title.yml`) |
