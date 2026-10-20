@@ -133,6 +133,10 @@ pub trait AudioBackend {
 | `WasapiBackend` | A05 (accepted, [ADR-0016](../decisions/0016-windows-low-latency-backend.md)) | Windows: shared mode with the RAW stream option by default (no OEM enhancement APOs), exclusive mode as an opt-in low-latency setting. A02 measured cpal's shared mode at 123 ms p95 key-to-onset on the development laptop, against PB-01's 50 ms ([risk R-03](../planning/risk-register.md)) |
 | CoreAudio exclusive (hog mode) | Later | Only if macOS measurements (pending, R-22) miss PB-01 |
 
+**Implemented in A05** (A05-T06, `sonarithm_audio`). The trait differs from the sketch above in three ways. `open` takes the `Processor` half of `realtime(graph)`. `sample_rate(device)` lets the caller plan at the device's rate first. Latency is reported by the open `Stream`, not by the backend. Every backend wraps its callback in the same adapter: stereo is spread over the device's channels, late callbacks (more than 1.5 periods apart, from the device's own timestamps) are counted, and a panic is caught, after which the stream outputs silence and raises a fault flag. `Player` is the control-thread side of 06 §11. It rebuilds the stream on the default device after a loss or a fault, keeps the position, speed, loop and levels, and stays paused (sound-design §12 HS-05). A timer-driven `NullBackend` runs the same callback without hardware, for CI.
+
+`WasapiBackend` (A05-T13, Windows only) opens shared mode with the RAW option by default and reports whether RAW is in effect. It falls back to default processing when the driver refuses RAW. Exclusive mode is opt-in. The device thread runs event-driven at real-time priority and counts underruns from the device clock. A stream on the default device rebuilds when the default changes. `sonarithm_audio::latency` (Windows) measures key-to-onset latency through `Command::Cue`, by loopback or by cable, and reports the calibration offset that `LatencyCalibration` stores per device (§9).
+
 ## 7. Export
 
 | Artifact | Writer | Default | Notes |

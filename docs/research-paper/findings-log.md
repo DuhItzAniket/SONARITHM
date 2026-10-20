@@ -528,3 +528,25 @@ A05 (render engine, audio backends, export) uses F-050 to F-069.
 - **Evidence level / confidence:** EV-C / Moderate (two synthetic stress cases, one meter)
 - **Affects:** NFR-10; 06 §10; sound-design §12 HS-02; the export loudness targets (sound-design §6.3)
 - **Papers:** P07
+
+### F-051 · In WASAPI exclusive mode, HW-01's Realtek driver signals two or three events per hardware period and queues about 100 ms
+
+- **Date:** 2026-10-19 · **Phase:** A05 · **Type:** engineering · **Status:** new
+- **Statement:** On HW-01 (Realtek(R) Audio speakers, 48 kHz), the A05 `WasapiBackend` in event-driven exclusive mode got a 144-frame buffer (3 ms minimum period), but events arrived in clusters: one gap of about 6.5 ms, then two or three events within 0.3 ms. Every event accepted a full 144-frame buffer. By the device clock (`IAudioClock`), frames written ran about 5000 frames (about 104 ms) ahead of frames played, with 0 underruns, in a 1 s silent run. When the backend skipped the extra events to keep two buffers queued, the device clock stopped and the stream stalled. So on this driver, exclusive mode may not reduce output latency at all. Only the cable test can show the real figure (ADR-0016 confirmation).
+- **Evidence:** A05-T13 PR, silent test `wasapi_opens_the_default_device_exclusively_and_silently` (`buffer_frames: 144`, reported latency 104.2 ms, 0 xruns) and a temporary trace of event times and clock positions
+- **Evidence level / confidence:** EV-C / Moderate (one device, one driver, a 1 s run)
+- **Affects:** ADR-0016 (exclusive mode as the low-latency option); PB-01; R-03
+- **Papers:** P07
+
+### F-052 · Through the engine's command path, RAW shared mode measures 104 ms p95 key-to-onset in the loopback self-test, and the engine's prediction is 83 ms early
+
+- **Date:** 2026-10-19 · **Phase:** A05 · **Type:** benchmark · **Status:** new
+- **Statement:** The A05 latency tool sends 200 cues through `Command::Cue`, spaced 300–600 ms apart (seeded), and captures the output's WASAPI loopback. On HW-01 with `WasapiBackend`:
+  - RAW shared mode (RAW in effect, 1056-frame buffer, 10 ms period, cues at −36 dBFS): 200 of 200 detected; p50 99.2 ms, p95 104.0 ms, p99 104.4 ms, max 104.6 ms; 0 xruns. A second run gave p50 98.8 ms and p95 103.7 ms.
+  - Default (non-RAW) shared mode: p50 138.5 ms, p95 145.6 ms. That is about 40 ms more, consistent with the OEM APO's 38 ms (F-032).
+
+  The calibration offset (median onset minus the host time the engine published for the block that started the cue) is 82.6 ms in RAW mode and 120.9 ms in default mode. The engine's own prediction counts only the queued buffer (about 12 ms), so playhead anchors need the calibrated offset (ADR-0016, 06 §9). These numbers include the command path (up to one 10 ms period before the next callback) and the shared buffer, so they are 15–20 ms above A02's direct RAW renderer (83.7 ms p95, F-032), which timed the tone from inside the callback. The loopback measures the software path only. PB-01 (50 ms) is not met in shared mode.
+- **Evidence:** A05-T13 PR; `cargo run -p sonarithm-audio --example latency --release -- --trials 200 --level -36` (and `--mode shared`); benchmarks-log row "A05 (Windows, WASAPI loopback)"
+- **Evidence level / confidence:** EV-C / Moderate (software loopback, one machine)
+- **Affects:** PB-01; ADR-0016; F-033; 06 §9; R-03
+- **Papers:** P07

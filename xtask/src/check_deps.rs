@@ -8,7 +8,7 @@
 //! |---|---|
 //! | `sonarithm-core` depends on no workspace crate and reaches no async runtime, audio device, file-system or network crate | §3 rule 1 |
 //! | Engine crates never depend on another engine's crates | §3 rule 2 |
-//! | Only `sonarithm-audio` may reach `cpal`; only stream, app and app or binding crates may reach `tokio` | §3 rule 3 |
+//! | Only `sonarithm-audio` may reach `cpal` or `wasapi`; only stream, app and app or binding crates may reach `tokio` | §3 rule 3 |
 //! | Heavy or copyleft dependencies live in their leaf crate, as optional dependencies where 02 §4 makes them features | §3 rule 5 |
 //! | Every internal dependency follows the layering graph | §3 diagram |
 //!
@@ -155,6 +155,12 @@ const RESTRICTED: &[Restricted] = &[
         rule: Rule::Three,
     },
     Restricted {
+        name: "wasapi",
+        owners: &["sonarithm-audio"],
+        optional: false,
+        rule: Rule::Three,
+    },
+    Restricted {
         name: "tokio",
         owners: &[
             "sonarithm-stream",
@@ -212,7 +218,7 @@ pub(crate) enum Rule {
     One,
     /// Rule 2: engines never depend on each other.
     Two,
-    /// Rule 3: `cpal` and `tokio` stay in their crates.
+    /// Rule 3: `cpal`, `wasapi` and `tokio` stay in their crates.
     Three,
     /// Rule 5: heavy dependencies live in leaf crates behind features.
     Five,

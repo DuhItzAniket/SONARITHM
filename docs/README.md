@@ -50,6 +50,7 @@
 - [release-process.md](engineering/release-process.md): versioning, channels, checklists
 - [supply-chain-and-licensing.md](engineering/supply-chain-and-licensing.md): licence policy, SBOM, security baseline
 - [dev-environment.md](engineering/dev-environment.md): setting up a development machine
+- [manual-tests/](engineering/manual-tests/README.md): scripts for checks that need hardware or a listener (device hot-plug, cable latency)
 
 ### Design
 - [design-language.md](design/design-language.md): visual system, principles and anti-patterns

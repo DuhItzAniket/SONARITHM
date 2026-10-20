@@ -122,7 +122,7 @@ flowchart BT
 
 1. **`sonarithm-core` depends on nothing project-internal**, and on no async runtime, audio device, file system or network crate.
 2. **Engines never depend on each other.** They communicate only through core types (`DataBundle`, `Annotations`, `Score`). Where one engine consumes another's output (for example SONOTRACE running ECHOMETRIC detectors), the compiler wires them through the registry. Enforced by `cargo xtask check-deps` (A01).
-3. **Only `sonarithm-audio` may depend on `cpal`.** Only `sonarithm-stream`, `sonarithm-app` and app or binding crates may depend on `tokio`.
+3. **Only `sonarithm-audio` may depend on `cpal` or `wasapi`** (the Windows backend of [ADR-0016](../decisions/0016-windows-low-latency-backend.md)). Only `sonarithm-stream`, `sonarithm-app` and app or binding crates may depend on `tokio`.
 4. **The compiler, engines, render and DSP crates must build for `wasm32-unknown-unknown`.** CI builds them (A01 onward).
 5. **Heavy or exotic dependencies live in leaf crates behind features:** ML runtimes, wasmtime, MQTT, SQL, LGPL codecs. Default features stay permissively licensed (see [supply chain policy](../engineering/supply-chain-and-licensing.md)).
 6. **Apps contain no business logic.** If the CLI and the desktop app both need it, it goes in `sonarithm-app` or below.

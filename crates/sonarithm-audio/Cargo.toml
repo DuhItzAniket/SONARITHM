@@ -8,5 +8,21 @@ repository.workspace = true
 license.workspace = true
 publish.workspace = true
 
+[dependencies]
+cpal.workspace = true
+rtrb.workspace = true
+sonarithm-core.workspace = true
+sonarithm-render.workspace = true
+thiserror.workspace = true
+
+# ADR-0016: the WASAPI backend (RAW shared mode, exclusive mode).
+[target.'cfg(windows)'.dependencies]
+audio_thread_priority.workspace = true
+wasapi.workspace = true
+windows.workspace = true
+
+[target.'cfg(windows)'.dev-dependencies]
+wasapi.workspace = true
+
 [lints]
 workspace = true

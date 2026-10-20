@@ -1,0 +1,8 @@
+# Clippy configuration for sonarithm-audio. Clippy uses the nearest clippy.toml and does not
+# merge it with the root one, so this repeats the workspace settings (/clippy.toml). Keep the
+# copies in sync.
+allow-unwrap-in-tests = true
+allow-expect-in-tests = true
+allow-dbg-in-tests = true
+allow-print-in-tests = true
+doc-valid-idents = ["CoreAudio", "PipeWire", "PulseAudio", ".."]
