@@ -19,6 +19,11 @@ updates:
       cargo:
         patterns: ["*"]
         update-types: [minor, patch]
+    ignore:
+      # Must follow cpal's pin. cpal 0.18 depends on audio_thread_priority 0.35, and two
+      # versions export the same C symbols, so the Windows link fails (LNK1169). Remove this
+      # entry when cpal requires a newer version (#173).
+      - dependency-name: audio_thread_priority
 
   - package-ecosystem: npm
     directory: /

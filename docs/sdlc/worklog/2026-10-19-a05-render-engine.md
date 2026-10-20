@@ -96,3 +96,9 @@ These are the owner's manual steps for the A05 gate.
 - [ ] Compare the ISO 226 implementation with the standard's Annex B, TODO(verify) (anyone with the full standard).
 - [ ] Record the cross-OS golden result from the T11 PR's CI run in the benchmarks log (agent).
 - [ ] Draft the A05 phase review once these steps are done (agent).
+
+## Addendum 2026-10-21
+
+- Bundle 3 ([#178](https://github.com/DuhItzAniket/SONARITHM/pull/178)) merged, so every A05 task is on main. Its `golden-compare` job found all six golden cases bit-identical on Windows and macOS against Linux: PB-06 met (F-056, benchmarks log).
+- The phase review is [A05-phase-review.md](../reviews/A05-phase-review.md). It repeats the gate summary above, with "owner decision pending" on each budget.
+- Dependabot #173 (`audio_thread_priority` 0.38) cannot land while cpal pins 0.35: two versions export the same C symbols and fail to link on Windows. `dependabot.yml` now ignores that crate until cpal moves.
