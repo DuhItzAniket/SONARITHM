@@ -27,6 +27,10 @@ miette = { workspace = true, features = ["fancy-no-syscall"] }
 serde.workspace = true
 serde_json.workspace = true
 sonarithm.workspace = true
+# The study runner (A08-T03): the library decides and logs; this crate plays and asks.
+sonarithm-audio.workspace = true
+sonarithm-echometric.workspace = true
+sonarithm-render.workspace = true
 
 [dev-dependencies]
 assert_cmd.workspace = true

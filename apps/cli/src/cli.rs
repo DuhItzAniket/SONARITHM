@@ -48,6 +48,12 @@ pub(crate) enum Command {
     /// Work on spec files.
     #[command(subcommand)]
     Spec(SpecCommand),
+    /// Run listening studies from a protocol file.
+    ///
+    /// ECHOMETRIC's study runner. Not for research with participants until the project has
+    /// an ethics review route (OD-04).
+    #[command(subcommand)]
+    Study(StudyCommand),
 }
 
 /// A spec to check, with the warning policy.
@@ -245,4 +251,71 @@ mod tests {
         use clap::CommandFactory as _;
         Cli::command().debug_assert();
     }
+}
+
+#[derive(Debug, Subcommand)]
+pub(crate) enum StudyCommand {
+    /// Check a study protocol: its rules, its condition specs and its trial schedule.
+    Check(StudyCheck),
+    /// Run a session: present the trials, take typed answers and write the JSONL log. Every
+    /// prompt is one line; type r to listen again, p to pause, q to save and quit, h for help.
+    Run(Box<StudyRun>),
+}
+
+#[derive(Debug, Args)]
+pub(crate) struct StudyCheck {
+    /// The protocol file (TOML, format `sonarithm-study/0`).
+    pub(crate) protocol: PathBuf,
+    /// The order seed to show the schedule for; by default the protocol's seed.
+    #[arg(long, value_name = "N")]
+    pub(crate) order_seed: Option<u64>,
+}
+
+#[derive(Debug, Args)]
+pub(crate) struct StudyRun {
+    /// The protocol file (TOML, format `sonarithm-study/0`).
+    pub(crate) protocol: PathBuf,
+    /// The participant's pseudonymous code, such as P001; never a name.
+    #[arg(long, value_name = "CODE")]
+    pub(crate) participant: String,
+    /// The session ID; by default `<participant>-s1`.
+    #[arg(long, value_name = "ID")]
+    pub(crate) session: Option<String>,
+    /// The order seed, which counterbalances the trial order; by default the protocol's.
+    #[arg(long, value_name = "N")]
+    pub(crate) order_seed: Option<u64>,
+    /// The log file; by default `<exp-id>-<session>.jsonl` in the current folder.
+    #[arg(long, value_name = "FILE")]
+    pub(crate) log: Option<PathBuf>,
+    /// Continue the session from its log after a pause or a stop.
+    #[arg(long)]
+    pub(crate) resume: bool,
+    /// Where the sound plays.
+    #[arg(long, value_enum, default_value_t = StudyAudio::Device)]
+    pub(crate) audio: StudyAudio,
+    /// The output device, by name or ID; by default the system's default device.
+    #[arg(long, value_name = "NAME")]
+    pub(crate) device: Option<String>,
+    /// The playback level, as set or calibrated (logged as entered), such as `60 dB SPL`.
+    #[arg(long, value_name = "TEXT")]
+    pub(crate) playback_level: Option<String>,
+    /// The kind of output device (logged as entered), such as `USB interface`.
+    #[arg(long, value_name = "TEXT")]
+    pub(crate) output_device: Option<String>,
+    /// The headphone model (logged as entered).
+    #[arg(long, value_name = "TEXT")]
+    pub(crate) headphones: Option<String>,
+    /// Assistive technology as the participant reports it (logged as entered).
+    #[arg(long, value_name = "TEXT")]
+    pub(crate) assistive_tech: Option<String>,
+}
+
+/// Where `study run` plays its sounds.
+#[derive(Clone, Copy, Debug, Default, ValueEnum)]
+pub(crate) enum StudyAudio {
+    /// The audio device.
+    #[default]
+    Device,
+    /// No sound: a silent output that runs as fast as it can, for scripted pilots and tests.
+    Null,
 }

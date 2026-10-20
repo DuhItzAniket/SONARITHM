@@ -8,3 +8,4 @@ Some acceptance checks need hardware, a person or both: a device that is unplugg
 |---|---|---|
 | [a05-device-hotplug.md](a05-device-hotplug.md) | A05-T06: unplugging and replugging keeps the transport position | A second output device (USB or Bluetooth headset, or a USB audio interface) |
 | [a05-cable-latency.md](a05-cable-latency.md) | A05-T13: key-to-onset latency by cable; ADR-0016 confirmation | A USB audio interface, one cable, NVDA |
+| [a08-study-run-screen-reader.md](a08-study-run-screen-reader.md) | A08-T03: `sonarithm study run` with a screen reader and the keyboard alone | NVDA (or another screen reader) |

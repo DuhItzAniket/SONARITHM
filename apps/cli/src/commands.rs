@@ -18,7 +18,7 @@ use sonarithm::{
 
 use crate::cli::{
     Checked, Command, FormatArg, Inspect, MarkArg, Migrate, Output, Quick, Render, Schema,
-    SpecCommand,
+    SpecCommand, StudyCommand,
 };
 use crate::output::{Counts, Exit, Out, counts, error, json_value, line, raw, shown};
 
@@ -32,6 +32,8 @@ pub(crate) fn run(command: &Command, out: Out) -> Exit {
         Command::Quick(args) => quick(args, out),
         Command::Schema(args) => schema(args),
         Command::Spec(SpecCommand::Migrate(args)) => migrate(args, out),
+        Command::Study(StudyCommand::Check(args)) => crate::study::check(args, out),
+        Command::Study(StudyCommand::Run(args)) => crate::study::run(args, out),
     }
 }
 

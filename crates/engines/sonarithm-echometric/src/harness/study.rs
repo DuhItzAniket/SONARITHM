@@ -13,11 +13,13 @@
 //! not collect data from participants as research until one exists. Its pilot runs with
 //! scripted responses.
 
+pub mod bind;
 pub mod log;
 pub mod protocol;
 pub mod schedule;
 pub mod session;
 
+pub use bind::{BindError, STIMULUS, bind_spec, digest};
 pub use log::{Event, LOG_SCHEMA, LogRecord, parse_log};
 pub use protocol::{
     Block, Condition, FORMAT, Order, Protocol, ResponseSpec, Task, TaskKind, is_code,

@@ -33,7 +33,7 @@ repository = "https://github.com/DuhItzAniket/SONARITHM"
 license = "MIT OR Apache-2.0"   # ADR-0010
 homepage = "https://github.com/DuhItzAniket/SONARITHM"
 # Published to crates.io from v0.1.0-alpha: the facade, the crates it depends on and the CLI
-# (release-process.md). xtask, the Python crate and A08's ECHOMETRIC set `publish = false`.
+# (release-process.md). xtask and the Python crate set `publish = false`.
 publish = true
 keywords = ["sonification", "accessibility", "audio", "data", "auditory-display"]
 categories = ["multimedia::audio", "accessibility", "visualization", "science"]

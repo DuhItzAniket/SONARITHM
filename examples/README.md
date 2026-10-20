@@ -24,6 +24,10 @@ sonarithm play examples/specs/ds-003-regions.spec.json
 
 Context cues (axis ticks, the reference tone, the spoken legend) arrive with AUDAXIS in phase B03; until then each compile reports their absence as warning `SNR-COMP-023`.
 
+## Study protocols
+
+[studies/pilot-001](studies/pilot-001/README.md) is the pilot protocol of `sonarithm study run`, ECHOMETRIC's study runner: two conditions after Smith & Walker (2005), point estimation, a practice and a main block. It is a software pilot, not a study: no participant data is collected as research until the project has an ethics review route (OD-04).
+
 ## Licence
 
-The datasets (`data/`), specs (`specs/`) and the notebook are licensed CC BY 4.0 (ADR-0010). Credit "SONARITHM contributors". The code that generates the data (`cargo xtask gallery`, `sonarithm_numisona::examples`) is MIT OR Apache-2.0.
+The datasets (`data/`), specs (`specs/`), the study protocols (`studies/`) and the notebook are licensed CC BY 4.0 (ADR-0010). Credit "SONARITHM contributors". The code that generates the data (`cargo xtask gallery`, `sonarithm_numisona::examples`) is MIT OR Apache-2.0.

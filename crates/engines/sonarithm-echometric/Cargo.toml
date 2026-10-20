@@ -6,7 +6,7 @@ edition.workspace = true
 rust-version.workspace = true
 repository.workspace = true
 license.workspace = true
-publish = false   # published when a released crate needs it (the CLI's `study` command, A08)
+publish.workspace = true   # the CLI's `study` command needs it (A08-T03)
 
 [dependencies]
 serde.workspace = true
