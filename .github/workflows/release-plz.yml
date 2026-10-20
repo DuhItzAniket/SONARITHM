@@ -32,6 +32,14 @@ concurrency:
   group: release-plz-${{ github.ref }}
   cancel-in-progress: false
 
+# Every job installs the same release-plz: the glibc build of this version, checked against
+# the digest GitHub records for the release asset. Not release-plz/action, which installs it
+# with cargo-binstall (GPL-3.0; OD-14), and not install-action, which installs the musl
+# build: that build fails every changelog with "stack limit reached" (F-103).
+env:
+  RELEASE_PLZ_VERSION: 0.3.172
+  RELEASE_PLZ_SHA256: 84b7013d164e1fc780b31dc9ef190977830599d6cb5ce81c993f6fcbd3cdc1aa
+
 jobs:
   dry-run:
     if: github.event_name != 'push'
@@ -47,15 +55,7 @@ jobs:
       - run: rustup toolchain install
       # cpal (sonarithm-audio) links ALSA on Linux.
       - run: sudo apt-get update && sudo apt-get install --yes --no-install-recommends libasound2-dev
-      # The glibc build of the version release-plz/action v0.5.142 runs in the jobs below.
-      # Not install-action: it installs the musl build, which fails every changelog with
-      # "stack limit reached" (its template parser checks the free stack, and the musl
-      # build reports too little).
       - name: Install release-plz
-        env:
-          RELEASE_PLZ_VERSION: 0.3.172
-          # The digest GitHub records for the release asset.
-          RELEASE_PLZ_SHA256: 84b7013d164e1fc780b31dc9ef190977830599d6cb5ce81c993f6fcbd3cdc1aa
         run: |
           curl --proto '=https' --tlsv1.2 -sSfL -o "$RUNNER_TEMP/release-plz.tar.gz" \
             "https://github.com/release-plz/release-plz/releases/download/release-plz-v${RELEASE_PLZ_VERSION}/release-plz-x86_64-unknown-linux-gnu.tar.gz"
@@ -96,13 +96,35 @@ jobs:
           persist-credentials: false
       - if: steps.app.outputs.token != ''
         run: rustup toolchain install
+      # cargo-semver-checks builds the libraries' rustdoc, and sonarithm-audio links ALSA.
       - if: steps.app.outputs.token != ''
-        uses: release-plz/action@8921286633dfa0c4020f7f30bd1c14fe19cbb10e # v0.5.142
+        run: sudo apt-get update && sudo apt-get install --yes --no-install-recommends libasound2-dev
+      - if: steps.app.outputs.token != ''
+        name: Install release-plz
+        run: |
+          curl --proto '=https' --tlsv1.2 -sSfL -o "$RUNNER_TEMP/release-plz.tar.gz" \
+            "https://github.com/release-plz/release-plz/releases/download/release-plz-v${RELEASE_PLZ_VERSION}/release-plz-x86_64-unknown-linux-gnu.tar.gz"
+          echo "${RELEASE_PLZ_SHA256}  $RUNNER_TEMP/release-plz.tar.gz" | sha256sum --check --strict
+          tar -xzf "$RUNNER_TEMP/release-plz.tar.gz" -C "$HOME/.cargo/bin" release-plz
+          release-plz --version
+      # release-plz runs cargo-semver-checks (`semver_check` in release-plz.toml); the same
+      # tool and version release-plz/action v0.5.142 installed.
+      - if: steps.app.outputs.token != ''
+        uses: taiki-e/install-action@8cca0918f8471c33515202b73f56ab27f2bed283 # v2.87.29
         with:
-          command: release-pr
-          config: release-plz.toml
+          tool: cargo-semver-checks@0.51
+      # The release PR's commits are authored by the token's identity (the app's bot user).
+      - if: steps.app.outputs.token != ''
+        uses: release-plz/git-config@59144859caf016f8b817a2ac9b051578729173c4 # v0.1.2
         env:
           GITHUB_TOKEN: ${{ steps.app.outputs.token }}
+      - if: steps.app.outputs.token != ''
+        name: Open or update the release PR
+        env:
+          GITHUB_TOKEN: ${{ steps.app.outputs.token }}
+        run: >-
+          release-plz release-pr --config release-plz.toml --forge github
+          --git-token "$GITHUB_TOKEN" --repo-url "$GITHUB_SERVER_URL/$GITHUB_REPOSITORY"
 
   # Only a merged release PR (its squash commit keeps the title from `pr_name`) releases.
   release:
@@ -122,15 +144,23 @@ jobs:
           persist-credentials: false
       - run: rustup toolchain install
       - run: sudo apt-get update && sudo apt-get install --yes --no-install-recommends libasound2-dev
+      - name: Install release-plz
+        run: |
+          curl --proto '=https' --tlsv1.2 -sSfL -o "$RUNNER_TEMP/release-plz.tar.gz" \
+            "https://github.com/release-plz/release-plz/releases/download/release-plz-v${RELEASE_PLZ_VERSION}/release-plz-x86_64-unknown-linux-gnu.tar.gz"
+          echo "${RELEASE_PLZ_SHA256}  $RUNNER_TEMP/release-plz.tar.gz" | sha256sum --check --strict
+          tar -xzf "$RUNNER_TEMP/release-plz.tar.gz" -C "$HOME/.cargo/bin" release-plz
+          release-plz --version
+      - uses: release-plz/git-config@59144859caf016f8b817a2ac9b051578729173c4 # v0.1.2
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
       # crates.io trusted publishing: a short-lived token from this workflow's OIDC identity,
       # no registry token in secrets. Configure it on crates.io for each crate after the
       # first, manual, publish.
       - id: crates-io
         uses: rust-lang/crates-io-auth-action@c6f97d42243bad5fab37ca0427f495c86d5b1a18 # v1.0.5
-      - uses: release-plz/action@8921286633dfa0c4020f7f30bd1c14fe19cbb10e # v0.5.142
-        with:
-          command: release
-          config: release-plz.toml
+      - name: Publish, tag and create the GitHub release
         env:
           GITHUB_TOKEN: ${{ github.token }}
           CARGO_REGISTRY_TOKEN: ${{ steps.crates-io.outputs.token }}
+        run: release-plz release --config release-plz.toml --forge github --git-token "$GITHUB_TOKEN"

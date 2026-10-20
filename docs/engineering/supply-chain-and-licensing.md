@@ -188,10 +188,10 @@ The release workflows run these tools as CI binaries; none is a dependency of a 
 
 | Tool | Version | Licence | Used in |
 |---|---|---|---|
-| release-plz (embeds git-cliff for the changelog) | 0.3.172, the glibc build (action v0.5.142, and a checksum-verified download in the dry run) | MIT OR Apache-2.0 | `release-plz.yml` |
-| cargo-binstall (inside release-plz/action, which installs release-plz with it) | 1.25.3 | GPL-3.0 | `release-plz.yml` `release-pr` and `release` jobs; under review ([OD-14](../planning/open-decisions.md)) |
+| release-plz (embeds git-cliff for the changelog) | 0.3.172, the glibc build, downloaded and checked against its SHA-256 in every job (not `release-plz/action`, whose cargo-binstall is GPL-3.0: [OD-14](../planning/open-decisions.md)) | MIT OR Apache-2.0 | `release-plz.yml` |
+| release-plz/git-config (GitHub Action) | v0.1.2 | Apache-2.0 | `release-plz.yml` `release-pr` and `release` jobs: sets the git user from the token |
 | git-cliff | 2.14 (through release-plz) | MIT OR Apache-2.0 (relicensed from GPL-3.0 in 2023, so the GPL caution that applied earlier no longer does) | `release-plz.yml` |
-| cargo-semver-checks | 0.51 (through release-plz) | Apache-2.0 OR MIT | `release-plz.yml` |
+| cargo-semver-checks | 0.51 (install-action; run by release-plz) | Apache-2.0 OR MIT | `release-plz.yml` `release-pr` job |
 | maturin | 1.15 | MIT OR Apache-2.0 | `wheels.yml`, build backend in `bindings/python/pyproject.toml` |
 | cargo-auditable | 0.7 | MIT OR Apache-2.0 | `release-binaries.yml` |
 | cargo-cyclonedx | 0.5 | Apache-2.0 | `release-binaries.yml` |
