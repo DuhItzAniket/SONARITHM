@@ -172,7 +172,7 @@ The experiment-runner CLI from A08 reads a study definition (conditions, blocks,
 
 ### Logging schema (proposed v0)
 
-One NDJSON record per event, plus one session manifest. This is a proposal for A08; the normative schema will live with the harness in [architecture/07-engines.md](../architecture/07-engines.md).
+One NDJSON record per event, plus one session manifest. This was the proposal for A08. It is implemented as `sonarithm-study-log/0`, whose normative description is in [07, ECHOMETRIC, study runner](../architecture/07-engines.md); there the session manifest is the `session_start` record, and each record also carries the run number, response time, play count and, for practice trials, a flag.
 
 | Field | Content |
 |---|---|

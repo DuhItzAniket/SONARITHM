@@ -178,7 +178,7 @@ Work runs in a separate agent session through one PR per task into `crates/engin
 |---|---|---|
 | A08-T01 Stimulus generators | **Done** | Merged in #163. GEN-001 to GEN-004 with published parameters verified against the papers (F-110 to F-113); pinned manifests on three OSes |
 | A08-T02 Replication gallery v0 | Not started | Needs A05's export (WAV and manifest) on main |
-| A08-T03 Study runner, `sonarithm study run` | Not started | Library first; the subcommand needs A07's CLI. Shared `SNR-ENG` blocks merged (#161, closes #157) |
+| A08-T03 Study runner, `sonarithm study run` | In review (library) | `harness::study`: protocol files (`sonarithm-study/0`), seeded trial order, scoring against the stimulus's ground truth, the JSONL log (`sonarithm-study-log/0`), pause and resume from the log; `SNR-ENG-600`–`621`. The subcommand follows A07's CLI |
 | A08-T04 Technical benchmark report | Not started | Needs A05 and A07 on main |
 | A08-T05 P01 draft | In review | Draft v0 in `papers/P01-icad-2027-toolkit/src/paper.md` with authorship, artifact, AI-usage and submission records; every citation checked against its source. Submission is the owner's act; the ICAD 2027 call is not published yet |
 | A08-T06 Release v0.2.0-alpha | Not started | Release PR and checklist only; the owner tags |

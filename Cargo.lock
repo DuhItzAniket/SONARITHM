@@ -2764,6 +2764,7 @@ dependencies = [
  "sonarithm-core",
  "sonarithm-data",
  "thiserror 2.0.21",
+ "toml",
 ]
 
 [[package]]
@@ -3556,6 +3557,7 @@ dependencies = [
  "sonarithm-compiler",
  "sonarithm-core",
  "sonarithm-data",
+ "sonarithm-echometric",
  "sonarithm-export",
  "sonarithm-numisona",
  "sonarithm-render",

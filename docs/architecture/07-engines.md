@@ -122,7 +122,16 @@ Each engine is one crate under `crates/engines/` and implements `Engine`. This p
 | `lint` | Rules: SDR-14 (flagged concept), SDR-17 (static reference), SDR-19 (rate), SDR-23 (loudness carrying data), SDR-26 (stream count), SDR-27 (redundant spatial), SDR-28 (critical-band clash), SDR-39 (comfort), A11Y-14 (pan-only information) |
 | `harness` | Stimulus generators (Nees & Walker reversals × density; Smith & Walker price series; SNR transits; correlation triplets; `harness::generators`, A08); the replication gallery; the trial runner; the log schema. A generator returns a `Stimulus`: a numeric table, its ground truth, notes on departures from the published design, and a manifest with the table's SHA-256 |
 
-**Tests:** detector precision/recall on labelled synthetic sets; positive and negative tests for each lint rule; generators are deterministic given a seed.
+**Study runner (A08).** `harness::study` is the runner as a library; the `sonarithm study run` subcommand is its front end. The library does no I/O and reads no clock: the front end passes the monotonic time of each action, renders and plays each trial's stimulus, and appends each returned record to the log at once, so the log is complete up to the last action.
+
+- **Protocol** (`sonarithm-study/0`, TOML): `exp-id`, `protocol-version`, `seed`, instructions, a task (`point-estimation`, `trend-identification`, `count` or `choice`) with its response format, conditions (a spec each, relative to the protocol file, data-agnostic: the trial's stimulus replaces its `data`), and blocks (conditions, `repeats`, `order`, practice and feedback flags, generator parameters). Problems are diagnostics `SNR-ENG-600`–`607`.
+- **Schedule:** each block draws from a stream keyed by the protocol seed, the session's order seed and the block ID; first the shuffle, then one stimulus seed per trial. The order seed is logged, so a session can be rebuilt exactly.
+- **Log** (`sonarithm-study-log/0`, one JSON object per line): every record has `event`, `t_mono_ms` (monotonic, since the start of the run), `run`, `exp_id`, `session_id` and `participant_code`. `session_start` adds `log_schema`, `protocol_version`, `protocol_sha256`, `engine_version`, `order_seed`, `trials` and any audio context the researcher entered; trial records add `trial`, `block`, `condition` and `practice`; `trial_start` adds the stimulus provenance (`stimulus_id`, `generator_version`, `seed`, `stimulus_sha256`, `spec_hash`, `data_fingerprint`, `manifest_ref`); `response` adds `response`, `correct`, `true_value`, `true_answer`, `error`, `rt_ms` and `plays`. Events: `session_start`, `trial_start`, `play`, `replay`, `pause`, `resume`, `trial_abort`, `response`, `trial_end`, `note`, `session_end`. This is the normative form of the evaluation plan's proposed schema.
+- **Resume:** trials with a `trial_end` are done; a run that stopped mid-trial repeats that trial. A changed protocol file (another SHA-256) cannot resume a session (`SNR-ENG-621`).
+- **Privacy (ADR-0012):** session IDs and participant codes must be short codes, never names; specs are named relative to the protocol; audio context is recorded only as entered.
+- **Research use (OD-04):** no participant data is collected as research until an ethics route exists; the pilot runs with scripted responses.
+
+**Tests:** detector precision/recall on labelled synthetic sets; positive and negative tests for each lint rule; generators are deterministic given a seed; scripted study sessions with a pinned log.
 
 ## TONALENS (`sonarithm-tonalens`), D01
 

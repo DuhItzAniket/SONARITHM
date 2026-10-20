@@ -109,6 +109,21 @@ Owner: `sonarithm-numisona`. Numbers SNR-ENG-001 to SNR-ENG-099.
 | `SNR-ENG-080` | warning | Erie construct not imported | Spec v0.1 has no equivalent; the note says what the import does instead. Adjust the imported spec by hand if the construct matters. | SDR-05 |
 | `SNR-ENG-081` | info | Erie construct imported approximately | Check the imported spec against the note; the construct maps onto spec v0.1 with the stated difference. | SDR-05 |
 
+Owner: `sonarithm-echometric`. Numbers SNR-ENG-600 to SNR-ENG-699.
+
+| Code | Severity | Meaning | How to fix | Rules |
+|---|---|---|---|---|
+| `SNR-ENG-600` | error | The study protocol cannot be read | Check the TOML syntax and the field names against the `sonarithm-study/0` format; the message names the line. | — |
+| `SNR-ENG-601` | error | Unknown study protocol format | Set `format = "sonarithm-study/0"`. | — |
+| `SNR-ENG-602` | error | Invalid or repeated ID in the study protocol | Use 1 to 32 letters, digits and hyphens, unique within their kind. | — |
+| `SNR-ENG-603` | error | Spec path outside the protocol folder | Give spec paths relative to the protocol file, without `..`, so logs never record user paths (ADR-0012). | — |
+| `SNR-ENG-604` | error | The study protocol has no runnable trials, or too many | Add conditions and blocks with `repeats` of at least 1, and keep a protocol at or under 2000 trials. | — |
+| `SNR-ENG-605` | error | Unknown condition in a block | Define the condition in a `[[conditions]]` table or remove it from the block. | — |
+| `SNR-ENG-606` | error | The block's stimulus cannot be generated or scored | Fix the generator parameters, or pick a generator whose ground truth answers the task (point estimation: GEN-001 or GEN-002; trend: GEN-001; count: GEN-003; choice: GEN-004). | SDR-40 |
+| `SNR-ENG-607` | error | The response does not fit the task | Point estimation and counting take a number range; trend identification takes three choices (increased, decreased, stayed the same); choice tasks take one option per answer. | SDR-40 |
+| `SNR-ENG-620` | error | The study log cannot be read | Resume from the log file the session wrote; the message names the first bad line. | — |
+| `SNR-ENG-621` | error | The study log does not match the protocol or the session | Resume with the protocol file and session ID the log was started with; start a new session for a changed protocol. | — |
+
 ## SNR-RENDER
 
 Owner: `sonarithm-render`.
