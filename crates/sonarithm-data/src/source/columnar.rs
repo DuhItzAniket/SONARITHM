@@ -74,12 +74,32 @@ fn columnar_table(
     batches: Vec<RecordBatch>,
 ) -> Result<Table, DataError> {
     let (schema, batches) = super::contained(format, || {
-        without_empty_time_zones(schema, batches).map_err(|source| DataError::Unreadable {
-            format,
-            reason: source.to_string(),
-        })
+        let (schema, batches) =
+            without_empty_time_zones(schema, batches).map_err(|source| DataError::Unreadable {
+                format,
+                reason: source.to_string(),
+            })?;
+        check_empty_columns(&schema).map_err(|reason| DataError::Unreadable { format, reason })?;
+        Ok((schema, batches))
     })?;
     Table::new(options.table, name, schema, batches)
+}
+
+/// Checks that Arrow can build an empty column of every field's type: a table without
+/// rows hands out empty columns ([`Table::column`]), and arrow-data panics on some types a
+/// file can declare, such as a union without members (found by fuzzing, F-071).
+fn check_empty_columns(schema: &Schema) -> Result<(), String> {
+    for field in schema.fields() {
+        let data_type = field.data_type();
+        let built = std::panic::catch_unwind(|| arrow_array::new_empty_array(data_type));
+        if built.is_err() {
+            return Err(format!(
+                "field `{}` has a type Arrow cannot hold: {data_type}",
+                field.name()
+            ));
+        }
+    }
+    Ok(())
 }
 
 /// Rewrites timestamp types whose time zone is an empty string as having none, at any
@@ -626,6 +646,35 @@ mod tests {
         let written = write_ipc(&table).unwrap();
         let again = read_bytes(&written, Format::Arrow, "x", &ReadOptions::default()).unwrap();
         assert_eq!(again.bundle.primary().unwrap().schema(), table.schema());
+        // An Arrow file without record batches whose provenance column is a dictionary of a
+        // union without members: arrow-data panicked building its empty column after
+        // decoding (nightly run on 2026-10-20).
+        let bytes = include_bytes!("../../tests/corpus/fuzz/ipc-empty-union.arrow");
+        let err = read_bytes(bytes, Format::Arrow, "x", &ReadOptions::default()).unwrap_err();
+        assert_eq!(err.to_diagnostic().code.as_str(), "SNR-DATA-001", "{err}");
+        assert!(err.to_string().contains("cannot hold"), "{err}");
+    }
+
+    #[test]
+    fn types_without_an_empty_column_are_rejected() {
+        use arrow_schema::UnionMode;
+
+        let fine = Schema::new(vec![
+            Field::new("v", DataType::Float64, true),
+            Field::new(
+                "d",
+                DataType::Dictionary(Box::new(DataType::UInt8), Box::new(DataType::Utf8)),
+                true,
+            ),
+        ]);
+        assert_eq!(check_empty_columns(&fine), Ok(()));
+        let empty_union = DataType::Union(UnionFields::empty(), UnionMode::Sparse);
+        let broken = Schema::new(vec![Field::new("u", empty_union, true)]);
+        let err = check_empty_columns(&broken).unwrap_err();
+        assert!(
+            err.starts_with("field `u` has a type Arrow cannot hold"),
+            "{err}"
+        );
     }
 
     #[test]
