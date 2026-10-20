@@ -167,7 +167,7 @@ Work runs in a separate agent session through one PR per task, based on `main`. 
 | A07-T04 Examples gallery | **Done** | Merged in #175. DS-001 to DS-005 as CSV from seeded generators (`cargo xtask gallery`, checked in CI), a spec each, README and notebook; the `ci / gallery` job renders every spec to FLAC (artifact `gallery-renders`); facade and notebook tests; licences recorded in datasets.md (CC BY 4.0) |
 | A07-T05 release-plz, git-cliff, wheels workflow | In review | `release-plz.toml` (one version group, facade tag `vX.Y.Z`, Keep a Changelog via embedded git-cliff), `release-plz.yml` (release PR, release on merge, dry run), `wheels.yml` publish (Trusted Publishing, TestPyPI rehearsal), `release-binaries.yml` (auditable CLI, SBOM, notices, attestations). Dry run: `cargo publish --workspace --dry-run` packaged and verify-built all 11 crates. Owner steps: release-process.md |
 | A07-T06 Zenodo, `CITATION.cff` | In review | `.zenodo.json` (software, description, keywords, related repository) and `CITATION.cff` in step; `cargo xtask citation` checks both in CI and `--release DATE` sets version and date. Author names and ORCID: owner (#129) |
-| A07-T07 Quickstart tutorial | Not started | Three-person timing test: owner (#129) |
+| A07-T07 Quickstart tutorial | In review | `docs/tutorials/quickstart.md`: install (Python or CLI), CSV to FLAC, read the description and the applied defaults; every command checked. The three-person timing test (NFR-12) is the owner's; its protocol is in the tutorial (#129) |
 | A07-T08 Release v0.1.0-alpha | Not started | Publishing needs the owner's go |
 
 ### A08 tasks

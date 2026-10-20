@@ -71,6 +71,7 @@ From phase A07, release-plz maintains this file: it generates each release's ent
   - `sonarithm-compiler`: the compile result carries the data's provenance mix for render manifests.
   - Examples gallery (`examples/`): five synthetic datasets (DS-001 to DS-005, CC BY 4.0) with a spec each, a README and a notebook; CI regenerates the data and renders every spec.
   - Release automation: release-plz (one version for every crate, changelog from Conventional Commits), PyPI Trusted Publishing for the wheels, and CLI archives with an SBOM, third-party notices and build-provenance attestations.
+  - Quickstart tutorial (`docs/tutorials/quickstart.md`): from install to a first FLAC in about five minutes, in Python or on the command line.
   - `sonarithm` Python package (abi3 wheels for CPython 3.10 and later): `quick`, `compile`, `Spec` as dicts or JSON, `dataset`, diagnostics as dicts, `render` to WAV or FLAC with the manifest, `wav()` and notebook `play()`, a text-first notebook display with an `<audio>` element, and typed stubs; data from pyarrow, pandas, polars, dicts, records, arrays or files, with the GIL released while compiling.
   - `sonarithm-data`: `read_batches` reads Arrow handed over in memory like a file, with one layout for text and without library metadata, so the same values give the same fingerprint from any library.
   - Citation metadata for Zenodo (`.zenodo.json`) alongside `CITATION.cff`, kept in step with the release version by `cargo xtask citation`.

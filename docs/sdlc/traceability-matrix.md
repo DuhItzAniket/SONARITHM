@@ -88,6 +88,6 @@
 | NFR-09 | [12 §5](../architecture/12-cross-cutting-concerns.md#5-internationalization-and-localization) | B02 | Pseudo-locale CI | Planned |
 | NFR-10 | [06 §10](../architecture/06-audio-engine.md#10-hearing-safety-and-levels) | A05 | UT, GT | In progress: true-peak limiter and start-up ramp with acceptance tests against ebur128 (A05-T09, F-050) |
 | NFR-11 | [09 §5](../architecture/09-desktop-app.md#5-persistence) | B05 | IT (fault injection) | Planned |
-| NFR-12 | [vision §8](../product/vision.md#8-success-measures) | A07, B07 | CD (observed sessions) | Planned |
+| NFR-12 | [vision §8](../product/vision.md#8-success-measures) | A07, B07 | CD (observed sessions) | In progress: quickstart tutorial and its five-minute test protocol (A07-T07); the three-person test is the owner's (#129) |
 | NFR-13 | [research-paper/README](../research-paper/README.md) | A08 → | RV (findings log, preregistrations) | Planned |
 | NFR-14 | [GOVERNANCE](../../GOVERNANCE.md) | Gate C | RV | Planned |

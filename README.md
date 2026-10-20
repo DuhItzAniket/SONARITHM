@@ -6,7 +6,9 @@
 
 SONARITHM turns charts, spreadsheets, mathematical functions and live data streams into **structured, navigable sound**. A declarative spec describes how data becomes sound, and the engine compiles it into a reproducible score. That score plays in real time, can be explored point by point from the keyboard, and exports to audio and MIDI with a full provenance record. It is designed from the start for blind and low-vision screen-reader users, as well as for analysts, scientists, educators and researchers.
 
-> **Project status: planning complete, implementation starting.** The repository currently holds the research, architecture, roadmap and process documentation. Code begins with Stage A (see the [roadmap](docs/planning/roadmap.md) and [status](docs/sdlc/status.md)). Nothing is installable yet.
+> **Project status: alpha (Stage A).** The Rust core, the `sonarithm` command line tool and the `sonarithm` Python package compile specs to Scores, render them to WAV and FLAC with a provenance manifest, and play them; the desktop app follows in Stage B. The first release, v0.1.0-alpha, is being prepared ([status](docs/sdlc/status.md), [roadmap](docs/planning/roadmap.md)).
+
+**Try it:** the [quickstart](docs/tutorials/quickstart.md) takes you from install to your first FLAC in about five minutes, and the [examples gallery](examples/README.md) has five datasets to listen to.
 
 ---
 
