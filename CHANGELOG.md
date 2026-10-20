@@ -68,6 +68,7 @@ From phase A07, release-plz maintains this file: it generates each release's ent
   - `sonarithm-compiler`: the compile result carries the data's provenance mix for render manifests.
   - `sonarithm` Python package (abi3 wheels for CPython 3.10 and later): `quick`, `compile`, `Spec` as dicts or JSON, `dataset`, diagnostics as dicts, `render` to WAV or FLAC with the manifest, `wav()` and notebook `play()`, a text-first notebook display with an `<audio>` element, and typed stubs; data from pyarrow, pandas, polars, dicts, records, arrays or files, with the GIL released while compiling.
   - `sonarithm-data`: `read_batches` reads Arrow handed over in memory like a file, with one layout for text and without library metadata, so the same values give the same fingerprint from any library.
+  - Citation metadata for Zenodo (`.zenodo.json`) alongside `CITATION.cff`, kept in step with the release version by `cargo xtask citation`.
 - ECHOMETRIC research instrumentation (phase A08):
   - `sonarithm-echometric` stimulus generators, each deterministic from its parameters and a seed, with the published parameters documented next to SONARITHM's: GEN-001 trend reversals × density (Nees & Walker 2008), GEN-002 price series with click and reference-tone columns (Smith & Walker 2005), GEN-003 SNR-controlled transit light curves (Tucker Brown et al. 2022) and GEN-004 correlation triplets (Elmquist et al. 2024). Every stimulus carries its ground truth, a canonical CSV with a SHA-256 digest, a provenance manifest and notes on where it departs from the published design.
 

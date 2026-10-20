@@ -112,6 +112,8 @@ jobs:
         with:
           save-if: ${{ github.ref == 'refs/heads/main' }}
       - run: cargo xtask check-deps
+      # CITATION.cff and .zenodo.json must name the workspace version (release-process.md).
+      - run: cargo xtask citation --check
 
   msrv:
     runs-on: ubuntu-latest

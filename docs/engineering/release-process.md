@@ -55,7 +55,7 @@ Configuration notes for A07:
 
 - `publish = false` for `sonarithm-desktop`, `xtask` and anything under `spikes/`.
 - Before 1.0, one tag per release (`vX.Y.Z[-pre]`). Configure release-plz so that only one package creates that tag and the others create none; verify the configuration keys against the release-plz documentation at the time.
-- release-plz does not update `CITATION.cff`. The release PR also updates `version` and `date-released` there, by hand or through a `cargo xtask` helper.
+- release-plz does not update `CITATION.cff` or `.zenodo.json`. The release PR runs `cargo xtask citation --release YYYY-MM-DD`, and CI's `cargo xtask citation` check fails until it has.
 
 ## Python wheel release
 
@@ -82,7 +82,9 @@ Configuration notes for A07:
 ## Zenodo DOI
 
 - Enable the Zenodo–GitHub integration before the first tagged release (A07 exit criterion: a DOI is minted).
-- Zenodo reads `CITATION.cff` for the record's metadata, so keep it accurate in every release PR.
+- Zenodo reads `.zenodo.json` for the record's metadata in preference to `CITATION.cff` (which GitHub shows as "Cite this repository"), so the repository keeps both and they must agree. `.zenodo.json` adds what CFF cannot say: `upload_type: software`, the HTML description, and the repository as a related identifier. Zenodo records one licence identifier, so it names `MIT` and its notes state the `MIT OR Apache-2.0` choice and the CC BY 4.0 documentation and data.
+- `cargo xtask citation` (run in CI) fails when either file names another version than `[workspace.package]` or the keyword lists differ, and notes the placeholders still to fill. The release PR runs `cargo xtask citation --release YYYY-MM-DD`, which writes the version into both files, `date-released` into `CITATION.cff` and `publication_date` into `.zenodo.json`.
+- Author names and ORCID are the owner's to add (they are personal data): `given-names`, `family-names` and `orcid` in `CITATION.cff`, and `"name": "Family, Given"` with `"orcid"` in `.zenodo.json` creators, before the first tag.
 - Each GitHub release gets a **version DOI**, and the record also has a **concept DOI** that resolves to the latest version. Add the concept DOI to `CITATION.cff` and the README after the first release.
 - Papers cite the version DOI of the release they used, and each paper ships a reproducibility package (scripts, stimuli, golden renders) ([notes 07 §6](../research/notes/07-engineering-publication.md)).
 - Nightly builds are not GitHub Releases, so they do not mint DOIs.

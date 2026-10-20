@@ -16,6 +16,7 @@
 
 mod check_deps;
 mod ci;
+mod citation;
 mod codegen;
 mod codes;
 
@@ -32,6 +33,8 @@ Tasks:
   check-deps         Check the crate dependency rules (02-repository-and-crate-layout.md §3)
                      Options: --manifest-path <path>  check another workspace
   codegen            Regenerate every generated file (code registry; JSON Schemas from A03-T06)
+  citation           Check that CITATION.cff and .zenodo.json name the workspace version
+                     Options: --release YYYY-MM-DD  write the version and release date
   codes              Check the diagnostic code tables and write docs/reference/error-codes.md
   wasm-check         Build the wasm32-compatible crates for wasm32-unknown-unknown
   help               Show this message";
@@ -64,6 +67,7 @@ fn run() -> Result<()> {
             no_options(&rest)?;
             codegen::run(&root)
         }
+        Some("citation") => citation::run(&root, &rest),
         Some("codes") => {
             no_options(&rest)?;
             codes::run(&root)

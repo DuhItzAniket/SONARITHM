@@ -1,7 +1,10 @@
 # Citation metadata for SONARITHM.
 # Format: Citation File Format 1.2.0 (https://citation-file-format.github.io/).
 # GitHub renders this file as "Cite this repository"; Zenodo reads it when archiving releases.
-# Completed in roadmap phase A07 (first release and Zenodo DOI). See docs/engineering/release-process.md.
+# Zenodo reads .zenodo.json in preference to this file, so the two must agree: `cargo xtask citation`
+# checks that both name the workspace version and the same keywords (CI), and the release PR runs
+# `cargo xtask citation --release YYYY-MM-DD` to set version and date-released in both.
+# See docs/engineering/release-process.md ("Zenodo DOI").
 cff-version: 1.2.0
 message: "If you use SONARITHM in your work, please cite it using the metadata from this file."
 type: software
@@ -18,8 +21,10 @@ abstract: >-
   Renders carry provenance (engine version, spec hash and data fingerprint) so
   that results can be reproduced.
 authors:
-  # TODO: add given-names, family-names, ORCID
+  # TODO(owner): add given-names, family-names and orcid (https://orcid.org/...) here, and the
+  # same person as "Family, Given" with "orcid" in .zenodo.json creators, before the first tag.
   - alias: "DuhItzAniket"
+url: "https://github.com/DuhItzAniket/SONARITHM"
 repository-code: "https://github.com/DuhItzAniket/SONARITHM"
 keywords:
   - sonification
@@ -39,5 +44,5 @@ license:
   - MIT
   - Apache-2.0
 version: "0.0.0"
-# date-released: omitted until the first tagged release (v0.1.0-alpha, phase A07).
+# date-released: set by `cargo xtask citation --release YYYY-MM-DD` in the release PR.
 # doi: add the Zenodo concept DOI after the first release is archived (phase A07).
