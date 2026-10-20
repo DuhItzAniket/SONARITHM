@@ -9,7 +9,7 @@ Each paper `P##` gets a folder here once its outline starts. The [publication pl
 
 | ID | Paper | Venue | Folder | Stage |
 |---|---|---|---|---|
-| P01 | Toolkit/system paper | ICAD 2027 | [P01-icad-2027-toolkit](P01-icad-2027-toolkit/outline.md) | outline |
+| P01 | Toolkit/system paper | ICAD 2027 | [P01-icad-2027-toolkit](P01-icad-2027-toolkit/outline.md) | draft v0 ([src/paper.md](P01-icad-2027-toolkit/src/paper.md)) |
 | P02 | Software paper | JOSS | [P02-joss](P02-joss/outline.md) | outline |
 | P03 | Open evaluation benchmark and harness | ICAD 2027 or IEEE VIS 2027 short | — | planned |
 | P04 | Graph-concept polarity | ICAD 2028 | — | planned |

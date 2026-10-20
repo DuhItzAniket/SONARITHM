@@ -1,6 +1,6 @@
 # P01 · ICAD 2027 toolkit paper: outline
 
-> **Status:** Baseline v1 (2026-10-18). **Owner:** Research lead (paper lead to be named). **Stage:** outline.
+> **Status:** Baseline v1 (2026-10-18); draft v0 in [src/paper.md](src/paper.md) (2026-10-19). **Owner:** Research lead (paper lead to be named). **Stage:** draft.
 > **Related:** [publication plan](../../publication-plan.md) · [contributions](../../contributions.md) · [evaluation plan](../../evaluation-plan.md) · [related work](../../related-work.md) · [roadmap A08](../../../planning/roadmap.md#a08--research-instrumentation-v0-first-paper) · [benchmarks log](../../benchmarks-log.md)
 
 | Field | Value |
@@ -68,7 +68,7 @@ At the ICAD 2027 deadline only Stage A exists: the core, NUMISONA, the CLI, the 
 
 ## Evaluation plan (Ledo et al.)
 
-Following `ledo2018evaluation`, the evaluation matches the claims instead of defaulting to a usability study. The strategy names below follow the summary in [notes/07 §7](../../../research/notes/07-engineering-publication.md), which records them from prior knowledge; verify against the paper before submission.
+Following `ledo2018evaluation`, the evaluation matches the claims instead of defaulting to a usability study. The strategy names below were checked against the paper on 2026-10-19: its four types are Demonstration, Usage, Technical Performance and Heuristics (68 toolkit papers analysed).
 
 | Strategy | What P01 does | Supports |
 |---|---|---|

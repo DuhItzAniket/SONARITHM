@@ -1993,3 +1993,9 @@ The rules below turn the evidence into defaults. Each is traced to sources. "(In
 Dated corrections. The text above is kept as the kickoff snapshot ([research README](../README.md)).
 
 - **2026-10-18, link check.** `http://sonification.de/publications/Hermann2002-SFE`, cited in §1 for Hermann's 2002 Bielefeld PhD thesis *Sonification for Exploratory Data Analysis*, returned HTTP 404 in CI, and sonification.de refused connections during the kickoff research. No replacement URL has been verified yet: Bielefeld University's PUB repository blocks automated requests. Re-check by hand before citing the thesis in a paper.
+- **2026-10-19, citation check for P01 (A08).** Every record cited by the P01 draft was checked against Crossref or the publisher's record; no DOI, title, year, volume or page was wrong. Four §8 records were incomplete and are completed in `references.bib`:
+  - `kramer1999sonification`: the ICAD report page lists 20 authors (Kramer, Walker, Bonebright, Cook, Flowers, Miner, Neuhoff, Bargar, Barrass, Berger, Evreinov, Fitch, Gröhn, Handel, Kaper, Levkowitz, Lodha, Shinn-Cunningham, Simoni, Tipei), and the report was published in March 1999. No primary source gives "Santa Fe, NM", so the address is dropped.
+  - `enge2024star`: the full list adds Lenzi, Lan, Höldrich and Aigner after Iber; the article number is e15114.
+  - `elmquist2024parallel`: the full list adds Bock, Ynnerman, Aigner and Rönnberg after Iber.
+  - `dombois2001using`: pages 227–230 (ICAD01-227 to ICAD01-230).
+- **2026-10-19, Nees & Walker (2008) stimulus levels (A08).** §2's summary "particularly with one or three reversals" describes a result. The study crossed four reversal levels, 0, 1, 2 and 3, with four densities (findings log F-110).
