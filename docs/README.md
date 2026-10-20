@@ -6,6 +6,7 @@
 
 | If you want to… | Read |
 |---|---|
+| Make your first sonification | [tutorials/quickstart.md](tutorials/quickstart.md) (five minutes) → [../examples/README.md](../examples/README.md) |
 | Understand what SONARITHM is and why | [product/vision.md](product/vision.md) → [product/engines.md](product/engines.md) |
 | See what the research found | [research/research-report.md](research/research-report.md) → [research/design-rules.md](research/design-rules.md) |
 | Understand the system design | [architecture/README.md](architecture/README.md) (12 documents) → [decisions/README.md](decisions/README.md) (ADRs) |
