@@ -1,0 +1,65 @@
+{
+  "data": {
+    "fields": {
+      "category": {
+        "type": "nominal"
+      },
+      "sparsity": {
+        "type": "quantitative"
+      }
+    },
+    "source": {
+      "kind": "inline",
+      "values": [
+        {
+          "category": "A",
+          "sparsity": 0.5
+        },
+        {
+          "category": "B",
+          "sparsity": 0.2
+        },
+        {
+          "category": "C",
+          "sparsity": 0.9
+        }
+      ]
+    }
+  },
+  "specVersion": "0.1",
+  "substrate": {
+    "time": {
+      "field": "category",
+      "pace": {
+        "pointsPerSecond": 0.8333333333333334
+      }
+    }
+  },
+  "tracks": [
+    {
+      "channels": {
+        "duration": {
+          "value": {
+            "s": 1.2
+          }
+        },
+        "taps": {
+          "field": "sparsity",
+          "range": [
+            1.0,
+            8.0
+          ],
+          "scale": {
+            "domain": [
+              0.0,
+              1.0
+            ]
+          }
+        }
+      },
+      "id": "y",
+      "instrument": "sine",
+      "mark": "tone"
+    }
+  ]
+}

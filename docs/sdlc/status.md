@@ -177,10 +177,10 @@ Work runs in a separate agent session through one PR per task into `crates/engin
 | Task | Status | Notes |
 |---|---|---|
 | A08-T01 Stimulus generators | **Done** | Merged in #163. GEN-001 to GEN-004 with published parameters verified against the papers (F-110 to F-113); pinned manifests on three OSes |
-| A08-T02 Replication gallery v0 | Not started | Needs A05's export (WAV and manifest) on main |
-| A08-T03 Study runner, `sonarithm study run` | In review (subcommand; library merged in #166) | `sonarithm study check` and `study run` with the pilot protocol `examples/studies/pilot-001` run end to end with scripted answers; screen-reader walkthrough is an owner step (`docs/engineering/manual-tests/a08-study-run-screen-reader.md`). Library `harness::study`: protocol files (`sonarithm-study/0`), seeded trial order, scoring against the stimulus's ground truth, the JSONL log (`sonarithm-study-log/0`), pause and resume from the log; `SNR-ENG-600`–`621` |
+| A08-T02 Replication gallery v0 | In review | `replication/`: Smith & Walker context cues (6 specs), Nees & Walker density × reversals (16), Tucker Brown transits (18), Erie subset (9); every render's record committed and checked on three OSes by `cargo xtask replication`; deviations documented per group (F-114) |
+| A08-T03 Study runner, `sonarithm study run` | **Done** | Merged in #166 (library) and #179 (the subcommands). `sonarithm study check` and `study run` with the pilot protocol `examples/studies/pilot-001` run end to end with scripted answers; screen-reader walkthrough is an owner step (`docs/engineering/manual-tests/a08-study-run-screen-reader.md`). Library `harness::study`: protocol files (`sonarithm-study/0`), seeded trial order, scoring against the stimulus's ground truth, the JSONL log (`sonarithm-study-log/0`), pause and resume from the log; `SNR-ENG-600`–`621` |
 | A08-T04 Technical benchmark report | Not started | Needs A05 and A07 on main |
-| A08-T05 P01 draft | In review | Draft v0 in `papers/P01-icad-2027-toolkit/src/paper.md` with authorship, artifact, AI-usage and submission records; every citation checked against its source. Submission is the owner's act; the ICAD 2027 call is not published yet |
+| A08-T05 P01 draft | **Done** (draft) | Merged in #165. Draft v0 in `papers/P01-icad-2027-toolkit/src/paper.md` with authorship, artifact, AI-usage and submission records; every citation checked against its source. Submission is the owner's act; the ICAD 2027 call is not published yet |
 | A08-T06 Release v0.2.0-alpha | Not started | Release PR and checklist only; the owner tags |
 
 ## 3. Current iteration

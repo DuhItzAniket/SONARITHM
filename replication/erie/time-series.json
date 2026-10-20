@@ -1,0 +1,95 @@
+{
+  "data": {
+    "fields": {
+      "anomaly": {
+        "label": "Anomaly (°C)",
+        "type": "quantitative"
+      },
+      "month": {
+        "type": "quantitative"
+      }
+    },
+    "source": {
+      "kind": "inline",
+      "values": [
+        {
+          "anomaly": 0.12,
+          "month": 1
+        },
+        {
+          "anomaly": 0.18,
+          "month": 2
+        },
+        {
+          "anomaly": 0.25,
+          "month": 3
+        },
+        {
+          "anomaly": 0.21,
+          "month": 4
+        },
+        {
+          "anomaly": 0.33,
+          "month": 5
+        },
+        {
+          "anomaly": 0.41,
+          "month": 6
+        },
+        {
+          "anomaly": 0.38,
+          "month": 7
+        },
+        {
+          "anomaly": 0.47,
+          "month": 8
+        },
+        {
+          "anomaly": 0.52,
+          "month": 9
+        },
+        {
+          "anomaly": 0.44,
+          "month": 10
+        },
+        {
+          "anomaly": 0.58,
+          "month": 11
+        },
+        {
+          "anomaly": 0.63,
+          "month": 12
+        }
+      ]
+    }
+  },
+  "description": "A continuous tone follows the anomaly over twelve months.",
+  "name": "Monthly temperature anomaly",
+  "specVersion": "0.1",
+  "substrate": {
+    "time": {
+      "field": "month",
+      "pace": {
+        "secondsPerUnit": 0.5454545454545454
+      }
+    }
+  },
+  "tracks": [
+    {
+      "channels": {
+        "pitch": {
+          "field": "anomaly",
+          "range": {
+            "hz": [
+              261.626,
+              1046.502
+            ]
+          }
+        }
+      },
+      "id": "y",
+      "instrument": "sine",
+      "mark": "glide"
+    }
+  ]
+}

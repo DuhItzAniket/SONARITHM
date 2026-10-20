@@ -1,0 +1,67 @@
+{
+  "data": {
+    "fields": {
+      "body_mass__bin": {
+        "type": "ordinal"
+      },
+      "count": {
+        "type": "quantitative"
+      }
+    },
+    "source": {
+      "kind": "file",
+      "path": "data/penguins.json"
+    }
+  },
+  "name": "Penguin body mass",
+  "specVersion": "0.1",
+  "substrate": {
+    "time": {
+      "field": "body_mass__bin",
+      "pace": {
+        "pointsPerSecond": 2.5
+      }
+    }
+  },
+  "tracks": [
+    {
+      "channels": {
+        "duration": {
+          "value": {
+            "s": 0.4
+          }
+        },
+        "pitch": {
+          "field": "count",
+          "scale": {
+            "domain": "zero-based"
+          }
+        }
+      },
+      "id": "y",
+      "instrument": "square",
+      "mark": "tone"
+    }
+  ],
+  "transform": [
+    {
+      "as": "body_mass__bin",
+      "count": 10,
+      "field": "body_mass",
+      "op": "bin"
+    },
+    {
+      "groupby": [
+        "body_mass__bin"
+      ],
+      "op": "aggregate",
+      "ops": [
+        {
+          "as": "count",
+          "field": "body_mass__bin",
+          "op": "count"
+        }
+      ]
+    }
+  ]
+}

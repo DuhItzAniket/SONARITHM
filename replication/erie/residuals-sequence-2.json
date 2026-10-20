@@ -1,0 +1,78 @@
+{
+  "data": {
+    "fields": {
+      "residual": {
+        "type": "quantitative"
+      },
+      "x": {
+        "type": "quantitative"
+      }
+    },
+    "source": {
+      "kind": "inline",
+      "values": [
+        {
+          "residual": 0.2,
+          "x": 0
+        },
+        {
+          "residual": -0.1,
+          "x": 1
+        },
+        {
+          "residual": 0.3,
+          "x": 2
+        },
+        {
+          "residual": -0.2,
+          "x": 3
+        },
+        {
+          "residual": 0.1,
+          "x": 4
+        },
+        {
+          "residual": -0.3,
+          "x": 5
+        },
+        {
+          "residual": 0.2,
+          "x": 6
+        },
+        {
+          "residual": -0.1,
+          "x": 7
+        }
+      ]
+    }
+  },
+  "name": "Residuals of the good model",
+  "specVersion": "0.1",
+  "substrate": {
+    "time": {
+      "field": "x",
+      "pace": {
+        "secondsPerUnit": 0.42857142857142855
+      }
+    }
+  },
+  "tracks": [
+    {
+      "channels": {
+        "pitch": {
+          "field": "residual",
+          "polarity": "positive",
+          "scale": {
+            "domain": [
+              -2.0,
+              2.0
+            ]
+          }
+        }
+      },
+      "id": "good-model",
+      "instrument": "sine",
+      "mark": "tone"
+    }
+  ]
+}

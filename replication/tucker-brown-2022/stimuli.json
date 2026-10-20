@@ -1,0 +1,716 @@
+{
+  "snr10-n0": {
+    "generator": "GEN-003",
+    "generator_version": 1,
+    "basis": "tuckerbrown2022evaluating",
+    "seed": 20261028,
+    "params": {
+      "generator": "GEN-003",
+      "snr": 10.0,
+      "transits": 0,
+      "points": 1000,
+      "width": 0.1,
+      "depth": 25.0,
+      "baseline": 100.0
+    },
+    "rows": 1000,
+    "columns": [
+      "t",
+      "flux"
+    ],
+    "table_sha256": "6dc0e36fde9598362ef3bc8eaf99538551a98c80429779f90332483a10b768ed",
+    "truth": {
+      "kind": "transits",
+      "transits": 0,
+      "starts": [],
+      "width-points": 100,
+      "depth-flux": 25.0,
+      "sigma": 25.0,
+      "snr": 10.0,
+      "snr-achieved": 9.8343
+    },
+    "notes": [
+      {
+        "deviation": {
+          "detail": "Tucker Brown et al. (2022) do not publish transit positions; they are drawn from the seed"
+        }
+      }
+    ]
+  },
+  "snr10-n1": {
+    "generator": "GEN-003",
+    "generator_version": 1,
+    "basis": "tuckerbrown2022evaluating",
+    "seed": 20261029,
+    "params": {
+      "generator": "GEN-003",
+      "snr": 10.0,
+      "transits": 1,
+      "points": 1000,
+      "width": 0.1,
+      "depth": 25.0,
+      "baseline": 100.0
+    },
+    "rows": 1000,
+    "columns": [
+      "t",
+      "flux"
+    ],
+    "table_sha256": "c2bfa1d0b5755fbe43b1c8e5948b4d9926221965df58d010402d996b4b6b5282",
+    "truth": {
+      "kind": "transits",
+      "transits": 1,
+      "starts": [
+        497
+      ],
+      "width-points": 100,
+      "depth-flux": 25.0,
+      "sigma": 25.0,
+      "snr": 10.0,
+      "snr-achieved": 10.2705
+    },
+    "notes": [
+      {
+        "deviation": {
+          "detail": "Tucker Brown et al. (2022) do not publish transit positions; they are drawn from the seed"
+        }
+      }
+    ]
+  },
+  "snr10-n2": {
+    "generator": "GEN-003",
+    "generator_version": 1,
+    "basis": "tuckerbrown2022evaluating",
+    "seed": 20261030,
+    "params": {
+      "generator": "GEN-003",
+      "snr": 10.0,
+      "transits": 2,
+      "points": 1000,
+      "width": 0.1,
+      "depth": 25.0,
+      "baseline": 100.0
+    },
+    "rows": 1000,
+    "columns": [
+      "t",
+      "flux"
+    ],
+    "table_sha256": "8e8ac7080c5ede5d2074496fc54af238b9fdbe0c934b13790643c30bb551105b",
+    "truth": {
+      "kind": "transits",
+      "transits": 2,
+      "starts": [
+        482,
+        733
+      ],
+      "width-points": 100,
+      "depth-flux": 25.0,
+      "sigma": 25.0,
+      "snr": 10.0,
+      "snr-achieved": 9.8035
+    },
+    "notes": [
+      {
+        "deviation": {
+          "detail": "Tucker Brown et al. (2022) do not publish transit positions; they are drawn from the seed"
+        }
+      }
+    ]
+  },
+  "snr100-n0": {
+    "generator": "GEN-003",
+    "generator_version": 1,
+    "basis": "tuckerbrown2022evaluating",
+    "seed": 20261034,
+    "params": {
+      "generator": "GEN-003",
+      "snr": 100.0,
+      "transits": 0,
+      "points": 1000,
+      "width": 0.1,
+      "depth": 25.0,
+      "baseline": 100.0
+    },
+    "rows": 1000,
+    "columns": [
+      "t",
+      "flux"
+    ],
+    "table_sha256": "c28911fcb8136074da13317d4355a96fe58cc65225963a72370ad4b9e04d1f32",
+    "truth": {
+      "kind": "transits",
+      "transits": 0,
+      "starts": [],
+      "width-points": 100,
+      "depth-flux": 25.0,
+      "sigma": 2.5,
+      "snr": 100.0,
+      "snr-achieved": 99.0131
+    },
+    "notes": [
+      {
+        "deviation": {
+          "detail": "Tucker Brown et al. (2022) do not publish transit positions; they are drawn from the seed"
+        }
+      }
+    ]
+  },
+  "snr100-n1": {
+    "generator": "GEN-003",
+    "generator_version": 1,
+    "basis": "tuckerbrown2022evaluating",
+    "seed": 20261035,
+    "params": {
+      "generator": "GEN-003",
+      "snr": 100.0,
+      "transits": 1,
+      "points": 1000,
+      "width": 0.1,
+      "depth": 25.0,
+      "baseline": 100.0
+    },
+    "rows": 1000,
+    "columns": [
+      "t",
+      "flux"
+    ],
+    "table_sha256": "c4cefc11f1ce24450516026946fc065950b6ab5999b21707e9d1fcf73e482611",
+    "truth": {
+      "kind": "transits",
+      "transits": 1,
+      "starts": [
+        482
+      ],
+      "width-points": 100,
+      "depth-flux": 25.0,
+      "sigma": 2.5,
+      "snr": 100.0,
+      "snr-achieved": 98.8354
+    },
+    "notes": [
+      {
+        "deviation": {
+          "detail": "Tucker Brown et al. (2022) do not publish transit positions; they are drawn from the seed"
+        }
+      }
+    ]
+  },
+  "snr100-n2": {
+    "generator": "GEN-003",
+    "generator_version": 1,
+    "basis": "tuckerbrown2022evaluating",
+    "seed": 20261036,
+    "params": {
+      "generator": "GEN-003",
+      "snr": 100.0,
+      "transits": 2,
+      "points": 1000,
+      "width": 0.1,
+      "depth": 25.0,
+      "baseline": 100.0
+    },
+    "rows": 1000,
+    "columns": [
+      "t",
+      "flux"
+    ],
+    "table_sha256": "4e073968add71ae174e7a14846cdcc5b7c3e10c48df5aeae38196beacf6ac208",
+    "truth": {
+      "kind": "transits",
+      "transits": 2,
+      "starts": [
+        310,
+        753
+      ],
+      "width-points": 100,
+      "depth-flux": 25.0,
+      "sigma": 2.5,
+      "snr": 100.0,
+      "snr-achieved": 97.064
+    },
+    "notes": [
+      {
+        "deviation": {
+          "detail": "Tucker Brown et al. (2022) do not publish transit positions; they are drawn from the seed"
+        }
+      }
+    ]
+  },
+  "snr3-n0": {
+    "generator": "GEN-003",
+    "generator_version": 1,
+    "basis": "tuckerbrown2022evaluating",
+    "seed": 20261019,
+    "params": {
+      "generator": "GEN-003",
+      "snr": 3.0,
+      "transits": 0,
+      "points": 1000,
+      "width": 0.1,
+      "depth": 25.0,
+      "baseline": 100.0
+    },
+    "rows": 1000,
+    "columns": [
+      "t",
+      "flux"
+    ],
+    "table_sha256": "33827e3a93292132122c3ed49ec536d2c9cc7469791ec6f575c670f227a96aac",
+    "truth": {
+      "kind": "transits",
+      "transits": 0,
+      "starts": [],
+      "width-points": 100,
+      "depth-flux": 25.0,
+      "sigma": 83.33333333333333,
+      "snr": 3.0,
+      "snr-achieved": 3.049
+    },
+    "notes": [
+      {
+        "deviation": {
+          "detail": "Tucker Brown et al. (2022) do not publish transit positions; they are drawn from the seed"
+        }
+      }
+    ]
+  },
+  "snr3-n1": {
+    "generator": "GEN-003",
+    "generator_version": 1,
+    "basis": "tuckerbrown2022evaluating",
+    "seed": 20261020,
+    "params": {
+      "generator": "GEN-003",
+      "snr": 3.0,
+      "transits": 1,
+      "points": 1000,
+      "width": 0.1,
+      "depth": 25.0,
+      "baseline": 100.0
+    },
+    "rows": 1000,
+    "columns": [
+      "t",
+      "flux"
+    ],
+    "table_sha256": "a7c1bbb3bb6a9b3f073b2585f2f516800f5866dfdfc0ad02b8330b09f630ef36",
+    "truth": {
+      "kind": "transits",
+      "transits": 1,
+      "starts": [
+        803
+      ],
+      "width-points": 100,
+      "depth-flux": 25.0,
+      "sigma": 83.33333333333333,
+      "snr": 3.0,
+      "snr-achieved": 2.9486
+    },
+    "notes": [
+      {
+        "deviation": {
+          "detail": "Tucker Brown et al. (2022) do not publish transit positions; they are drawn from the seed"
+        }
+      }
+    ]
+  },
+  "snr3-n2": {
+    "generator": "GEN-003",
+    "generator_version": 1,
+    "basis": "tuckerbrown2022evaluating",
+    "seed": 20261021,
+    "params": {
+      "generator": "GEN-003",
+      "snr": 3.0,
+      "transits": 2,
+      "points": 1000,
+      "width": 0.1,
+      "depth": 25.0,
+      "baseline": 100.0
+    },
+    "rows": 1000,
+    "columns": [
+      "t",
+      "flux"
+    ],
+    "table_sha256": "0a3397e0e4ab720e36184b01bd35a568d97067eebe6f5520184ee73e6bc112b8",
+    "truth": {
+      "kind": "transits",
+      "transits": 2,
+      "starts": [
+        138,
+        537
+      ],
+      "width-points": 100,
+      "depth-flux": 25.0,
+      "sigma": 83.33333333333333,
+      "snr": 3.0,
+      "snr-achieved": 2.9689
+    },
+    "notes": [
+      {
+        "deviation": {
+          "detail": "Tucker Brown et al. (2022) do not publish transit positions; they are drawn from the seed"
+        }
+      }
+    ]
+  },
+  "snr30-n0": {
+    "generator": "GEN-003",
+    "generator_version": 1,
+    "basis": "tuckerbrown2022evaluating",
+    "seed": 20261031,
+    "params": {
+      "generator": "GEN-003",
+      "snr": 30.0,
+      "transits": 0,
+      "points": 1000,
+      "width": 0.1,
+      "depth": 25.0,
+      "baseline": 100.0
+    },
+    "rows": 1000,
+    "columns": [
+      "t",
+      "flux"
+    ],
+    "table_sha256": "d1d2f68125e71679366f87d6299a9f1f8d7d9600907050027c7510db2c970d76",
+    "truth": {
+      "kind": "transits",
+      "transits": 0,
+      "starts": [],
+      "width-points": 100,
+      "depth-flux": 25.0,
+      "sigma": 8.333333333333334,
+      "snr": 30.0,
+      "snr-achieved": 28.801
+    },
+    "notes": [
+      {
+        "deviation": {
+          "detail": "Tucker Brown et al. (2022) do not publish transit positions; they are drawn from the seed"
+        }
+      }
+    ]
+  },
+  "snr30-n1": {
+    "generator": "GEN-003",
+    "generator_version": 1,
+    "basis": "tuckerbrown2022evaluating",
+    "seed": 20261032,
+    "params": {
+      "generator": "GEN-003",
+      "snr": 30.0,
+      "transits": 1,
+      "points": 1000,
+      "width": 0.1,
+      "depth": 25.0,
+      "baseline": 100.0
+    },
+    "rows": 1000,
+    "columns": [
+      "t",
+      "flux"
+    ],
+    "table_sha256": "95ce98d2016a592ed7e1b8467c6ea16c3578cfe88a016d3a9bc418b60fd5b620",
+    "truth": {
+      "kind": "transits",
+      "transits": 1,
+      "starts": [
+        516
+      ],
+      "width-points": 100,
+      "depth-flux": 25.0,
+      "sigma": 8.333333333333334,
+      "snr": 30.0,
+      "snr-achieved": 30.2848
+    },
+    "notes": [
+      {
+        "deviation": {
+          "detail": "Tucker Brown et al. (2022) do not publish transit positions; they are drawn from the seed"
+        }
+      }
+    ]
+  },
+  "snr30-n2": {
+    "generator": "GEN-003",
+    "generator_version": 1,
+    "basis": "tuckerbrown2022evaluating",
+    "seed": 20261033,
+    "params": {
+      "generator": "GEN-003",
+      "snr": 30.0,
+      "transits": 2,
+      "points": 1000,
+      "width": 0.1,
+      "depth": 25.0,
+      "baseline": 100.0
+    },
+    "rows": 1000,
+    "columns": [
+      "t",
+      "flux"
+    ],
+    "table_sha256": "be00a48439ae2553fbeda811dc1929fac12395169ec20e1157aa7f582db68bbb",
+    "truth": {
+      "kind": "transits",
+      "transits": 2,
+      "starts": [
+        351,
+        556
+      ],
+      "width-points": 100,
+      "depth-flux": 25.0,
+      "sigma": 8.333333333333334,
+      "snr": 30.0,
+      "snr-achieved": 29.2772
+    },
+    "notes": [
+      {
+        "deviation": {
+          "detail": "Tucker Brown et al. (2022) do not publish transit positions; they are drawn from the seed"
+        }
+      }
+    ]
+  },
+  "snr5-n0": {
+    "generator": "GEN-003",
+    "generator_version": 1,
+    "basis": "tuckerbrown2022evaluating",
+    "seed": 20261022,
+    "params": {
+      "generator": "GEN-003",
+      "snr": 5.0,
+      "transits": 0,
+      "points": 1000,
+      "width": 0.1,
+      "depth": 25.0,
+      "baseline": 100.0
+    },
+    "rows": 1000,
+    "columns": [
+      "t",
+      "flux"
+    ],
+    "table_sha256": "92128806c91f2d7f10cc51f465de57efaa4140960f03b3e6d7ced01bfea0e16c",
+    "truth": {
+      "kind": "transits",
+      "transits": 0,
+      "starts": [],
+      "width-points": 100,
+      "depth-flux": 25.0,
+      "sigma": 50.0,
+      "snr": 5.0,
+      "snr-achieved": 4.9535
+    },
+    "notes": [
+      {
+        "deviation": {
+          "detail": "Tucker Brown et al. (2022) do not publish transit positions; they are drawn from the seed"
+        }
+      }
+    ]
+  },
+  "snr5-n1": {
+    "generator": "GEN-003",
+    "generator_version": 1,
+    "basis": "tuckerbrown2022evaluating",
+    "seed": 20261023,
+    "params": {
+      "generator": "GEN-003",
+      "snr": 5.0,
+      "transits": 1,
+      "points": 1000,
+      "width": 0.1,
+      "depth": 25.0,
+      "baseline": 100.0
+    },
+    "rows": 1000,
+    "columns": [
+      "t",
+      "flux"
+    ],
+    "table_sha256": "93582fdf05304191e71d51c737da4d337da022b703b2f2eb43274faf0922e56f",
+    "truth": {
+      "kind": "transits",
+      "transits": 1,
+      "starts": [
+        126
+      ],
+      "width-points": 100,
+      "depth-flux": 25.0,
+      "sigma": 50.0,
+      "snr": 5.0,
+      "snr-achieved": 4.8823
+    },
+    "notes": [
+      {
+        "deviation": {
+          "detail": "Tucker Brown et al. (2022) do not publish transit positions; they are drawn from the seed"
+        }
+      }
+    ]
+  },
+  "snr5-n2": {
+    "generator": "GEN-003",
+    "generator_version": 1,
+    "basis": "tuckerbrown2022evaluating",
+    "seed": 20261024,
+    "params": {
+      "generator": "GEN-003",
+      "snr": 5.0,
+      "transits": 2,
+      "points": 1000,
+      "width": 0.1,
+      "depth": 25.0,
+      "baseline": 100.0
+    },
+    "rows": 1000,
+    "columns": [
+      "t",
+      "flux"
+    ],
+    "table_sha256": "8d1cf7db746bdbe4deab24ab288260a9c3ccc81abd2f2ffcc33292224547b0fc",
+    "truth": {
+      "kind": "transits",
+      "transits": 2,
+      "starts": [
+        306,
+        627
+      ],
+      "width-points": 100,
+      "depth-flux": 25.0,
+      "sigma": 50.0,
+      "snr": 5.0,
+      "snr-achieved": 5.1294
+    },
+    "notes": [
+      {
+        "deviation": {
+          "detail": "Tucker Brown et al. (2022) do not publish transit positions; they are drawn from the seed"
+        }
+      }
+    ]
+  },
+  "snr7-n0": {
+    "generator": "GEN-003",
+    "generator_version": 1,
+    "basis": "tuckerbrown2022evaluating",
+    "seed": 20261025,
+    "params": {
+      "generator": "GEN-003",
+      "snr": 7.0,
+      "transits": 0,
+      "points": 1000,
+      "width": 0.1,
+      "depth": 25.0,
+      "baseline": 100.0
+    },
+    "rows": 1000,
+    "columns": [
+      "t",
+      "flux"
+    ],
+    "table_sha256": "dad3e2e554a9218c6b7177fb58a58c531f5a15a6c725becfd7a443960ae188f9",
+    "truth": {
+      "kind": "transits",
+      "transits": 0,
+      "starts": [],
+      "width-points": 100,
+      "depth-flux": 25.0,
+      "sigma": 35.714285714285715,
+      "snr": 7.0,
+      "snr-achieved": 7.3947
+    },
+    "notes": [
+      {
+        "deviation": {
+          "detail": "Tucker Brown et al. (2022) do not publish transit positions; they are drawn from the seed"
+        }
+      }
+    ]
+  },
+  "snr7-n1": {
+    "generator": "GEN-003",
+    "generator_version": 1,
+    "basis": "tuckerbrown2022evaluating",
+    "seed": 20261026,
+    "params": {
+      "generator": "GEN-003",
+      "snr": 7.0,
+      "transits": 1,
+      "points": 1000,
+      "width": 0.1,
+      "depth": 25.0,
+      "baseline": 100.0
+    },
+    "rows": 1000,
+    "columns": [
+      "t",
+      "flux"
+    ],
+    "table_sha256": "b9ef62b0ebfc7b6cd99a286126eed6d4857f1c7cceba1689309da7da8a0d97d4",
+    "truth": {
+      "kind": "transits",
+      "transits": 1,
+      "starts": [
+        213
+      ],
+      "width-points": 100,
+      "depth-flux": 25.0,
+      "sigma": 35.714285714285715,
+      "snr": 7.0,
+      "snr-achieved": 7.0484
+    },
+    "notes": [
+      {
+        "deviation": {
+          "detail": "Tucker Brown et al. (2022) do not publish transit positions; they are drawn from the seed"
+        }
+      }
+    ]
+  },
+  "snr7-n2": {
+    "generator": "GEN-003",
+    "generator_version": 1,
+    "basis": "tuckerbrown2022evaluating",
+    "seed": 20261027,
+    "params": {
+      "generator": "GEN-003",
+      "snr": 7.0,
+      "transits": 2,
+      "points": 1000,
+      "width": 0.1,
+      "depth": 25.0,
+      "baseline": 100.0
+    },
+    "rows": 1000,
+    "columns": [
+      "t",
+      "flux"
+    ],
+    "table_sha256": "246e9dd54937e76f6de5f121e7470128d9c10a6908a865020e24ee3900be3d04",
+    "truth": {
+      "kind": "transits",
+      "transits": 2,
+      "starts": [
+        375,
+        719
+      ],
+      "width-points": 100,
+      "depth-flux": 25.0,
+      "sigma": 35.714285714285715,
+      "snr": 7.0,
+      "snr-achieved": 7.1408
+    },
+    "notes": [
+      {
+        "deviation": {
+          "detail": "Tucker Brown et al. (2022) do not publish transit positions; they are drawn from the seed"
+        }
+      }
+    ]
+  }
+}

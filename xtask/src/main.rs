@@ -21,6 +21,7 @@ mod codegen;
 mod codes;
 mod gallery;
 mod golden;
+mod replication;
 
 use std::path::{Path, PathBuf};
 use std::process::ExitCode;
@@ -44,6 +45,10 @@ Tasks:
                      --update --reason '<why>' [case...]   rewrite the references
                      --render-set <dir>                     write WAVs and summary.json
                      --compare <reference> <set>...         null residual and ΔLUFS (PB-06)
+  replication        Render the replication gallery (replication/) and check it against the
+                     committed files
+                     Options: --update   rewrite the generated files and manifests
+                              --timings  time each compile and export (use a release build)
   wasm-check         Build the wasm32-compatible crates for wasm32-unknown-unknown
   help               Show this message";
 
@@ -82,6 +87,15 @@ fn run() -> Result<()> {
             codes::run(&root)
         }
         Some("golden") => golden::run(&root, &rest),
+        Some("replication") => {
+            let mode = match rest.as_slice() {
+                [] => replication::Mode::Check,
+                [flag] if flag == "--update" => replication::Mode::Update,
+                [flag] if flag == "--timings" => replication::Mode::Timings,
+                [other, ..] => bail!("unexpected option `{other}`\n\n{HELP}"),
+            };
+            replication::run(&root, &root.join("target").join("replication"), mode)
+        }
         Some("wasm-check") => {
             no_options(&rest)?;
             ci::wasm_check(&root)

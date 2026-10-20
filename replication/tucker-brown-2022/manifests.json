@@ -1,0 +1,1046 @@
+{
+  "snr10-n0": {
+    "cues": null,
+    "data": {
+      "fingerprint": "sha256:2064befb55ebf97c7e426bfa3b0dbd3fb1e5a4fc8e4c9dd92c0616cfeca65afe",
+      "provenance": {},
+      "source": {
+        "kind": "file",
+        "name": "snr10-n0.csv"
+      }
+    },
+    "manifestVersion": 1,
+    "output": {
+      "bitsPerSample": 24,
+      "channels": 2,
+      "file": "snr10-n0.wav",
+      "format": "wav",
+      "frames": 489120,
+      "gainDb": 0.0,
+      "integratedLufs": -18.1,
+      "limitedFrames": 0,
+      "sha256": "sha256:ddb887d46648465372cdfca80f06405308d6b8810510cc0e6854202182a558d6",
+      "truePeakDbtp": -8.57
+    },
+    "render": {
+      "blockSize": 256,
+      "durationS": 10.19,
+      "loudnessCompensationPhon": 60.0,
+      "mode": "analysis",
+      "sampleRate": 48000,
+      "seed": 20261028
+    },
+    "score": {
+      "irVersion": 1,
+      "releaseIndependentHash": "sha256:af1043b9d7e226e8ca7402e25db5de84cc40a0679a692b93d47cf53f87973882"
+    },
+    "spec": {
+      "embedded": null,
+      "hash": "sha256:6a5590ae0d8ba2aaae15faa8bf2c0bf14c8deea6cea891933e07b9e15b278e21",
+      "version": "0.1"
+    },
+    "tracks": [
+      {
+        "events": 1000,
+        "firstOnsetS": 0.0,
+        "id": "flux",
+        "instrument": "sine",
+        "lastOnsetS": 9.99,
+        "noteDurationsS": [
+          "0.2"
+        ],
+        "notes": 1000,
+        "pitchHz": [
+          440.0,
+          880.0
+        ]
+      }
+    ]
+  },
+  "snr10-n1": {
+    "cues": null,
+    "data": {
+      "fingerprint": "sha256:719f94c2d4cb7d76bd202c54ed9914274b05d7aec5fc68c5aea5ea1f1f9c5e22",
+      "provenance": {},
+      "source": {
+        "kind": "file",
+        "name": "snr10-n1.csv"
+      }
+    },
+    "manifestVersion": 1,
+    "output": {
+      "bitsPerSample": 24,
+      "channels": 2,
+      "file": "snr10-n1.wav",
+      "format": "wav",
+      "frames": 489120,
+      "gainDb": 0.0,
+      "integratedLufs": -18.19,
+      "limitedFrames": 0,
+      "sha256": "sha256:36cf0cf042bce2e04aa871bef8e019796a0a6744d1538035a2b5b9d7ffe3da34",
+      "truePeakDbtp": -8.43
+    },
+    "render": {
+      "blockSize": 256,
+      "durationS": 10.19,
+      "loudnessCompensationPhon": 60.0,
+      "mode": "analysis",
+      "sampleRate": 48000,
+      "seed": 20261029
+    },
+    "score": {
+      "irVersion": 1,
+      "releaseIndependentHash": "sha256:fac4690f3efff624b43bd56c4c4cd50126fab535f0a0ae4471d6c6d47b31bf72"
+    },
+    "spec": {
+      "embedded": null,
+      "hash": "sha256:0c1dac35c593f95e1e5f984b30d90693eb3a0aace62bda90b290b284db248c9d",
+      "version": "0.1"
+    },
+    "tracks": [
+      {
+        "events": 1000,
+        "firstOnsetS": 0.0,
+        "id": "flux",
+        "instrument": "sine",
+        "lastOnsetS": 9.99,
+        "noteDurationsS": [
+          "0.2"
+        ],
+        "notes": 1000,
+        "pitchHz": [
+          440.0,
+          880.0
+        ]
+      }
+    ]
+  },
+  "snr10-n2": {
+    "cues": null,
+    "data": {
+      "fingerprint": "sha256:f5ee0a716ca5a26f6620590bd4cf7c3ce9b4cf68cd07c81ce2d966e85d896c7d",
+      "provenance": {},
+      "source": {
+        "kind": "file",
+        "name": "snr10-n2.csv"
+      }
+    },
+    "manifestVersion": 1,
+    "output": {
+      "bitsPerSample": 24,
+      "channels": 2,
+      "file": "snr10-n2.wav",
+      "format": "wav",
+      "frames": 489120,
+      "gainDb": 0.0,
+      "integratedLufs": -18.19,
+      "limitedFrames": 0,
+      "sha256": "sha256:88d1c37b27294e6a58a4aa3363e59eb2530089aa324fcf33168b52dd7ded26bf",
+      "truePeakDbtp": -8.94
+    },
+    "render": {
+      "blockSize": 256,
+      "durationS": 10.19,
+      "loudnessCompensationPhon": 60.0,
+      "mode": "analysis",
+      "sampleRate": 48000,
+      "seed": 20261030
+    },
+    "score": {
+      "irVersion": 1,
+      "releaseIndependentHash": "sha256:c6432294f9b6995f93d00dee41bd5fabe46309d39a74d7b160db2ec9c7449b81"
+    },
+    "spec": {
+      "embedded": null,
+      "hash": "sha256:01614713faa22cad567a34cb463b80e1d7a5f47f9fa4bd9e183d52be61fc8625",
+      "version": "0.1"
+    },
+    "tracks": [
+      {
+        "events": 1000,
+        "firstOnsetS": 0.0,
+        "id": "flux",
+        "instrument": "sine",
+        "lastOnsetS": 9.99,
+        "noteDurationsS": [
+          "0.2"
+        ],
+        "notes": 1000,
+        "pitchHz": [
+          440.0,
+          880.0
+        ]
+      }
+    ]
+  },
+  "snr100-n0": {
+    "cues": null,
+    "data": {
+      "fingerprint": "sha256:8684ab9ca13059805b8e847c4b923ab7d5e45531b06ffa769b9a6833d07ae565",
+      "provenance": {},
+      "source": {
+        "kind": "file",
+        "name": "snr100-n0.csv"
+      }
+    },
+    "manifestVersion": 1,
+    "output": {
+      "bitsPerSample": 24,
+      "channels": 2,
+      "file": "snr100-n0.wav",
+      "format": "wav",
+      "frames": 489120,
+      "gainDb": 0.0,
+      "integratedLufs": -17.85,
+      "limitedFrames": 0,
+      "sha256": "sha256:bbc4a6cb087ffbdd8265ec4cf880b0eb4f500fdb23f3855ba002d8904a4626e7",
+      "truePeakDbtp": -8.01
+    },
+    "render": {
+      "blockSize": 256,
+      "durationS": 10.19,
+      "loudnessCompensationPhon": 60.0,
+      "mode": "analysis",
+      "sampleRate": 48000,
+      "seed": 20261034
+    },
+    "score": {
+      "irVersion": 1,
+      "releaseIndependentHash": "sha256:473f171229e89da998b0f3c60d6e24ca1ca06d4d84d45a1eede737228ecbf567"
+    },
+    "spec": {
+      "embedded": null,
+      "hash": "sha256:d4d3ec758eb7f1b83aa1cf7047cef3f024c28f9c539480e42f6b77a6aea08bcf",
+      "version": "0.1"
+    },
+    "tracks": [
+      {
+        "events": 1000,
+        "firstOnsetS": 0.0,
+        "id": "flux",
+        "instrument": "sine",
+        "lastOnsetS": 9.99,
+        "noteDurationsS": [
+          "0.2"
+        ],
+        "notes": 1000,
+        "pitchHz": [
+          440.0,
+          880.0
+        ]
+      }
+    ]
+  },
+  "snr100-n1": {
+    "cues": null,
+    "data": {
+      "fingerprint": "sha256:406ee6733109a5cf688268ccb17e849b033dc51effd6a95c12931dc6f93d2dcb",
+      "provenance": {},
+      "source": {
+        "kind": "file",
+        "name": "snr100-n1.csv"
+      }
+    },
+    "manifestVersion": 1,
+    "output": {
+      "bitsPerSample": 24,
+      "channels": 2,
+      "file": "snr100-n1.wav",
+      "format": "wav",
+      "frames": 489120,
+      "gainDb": 0.0,
+      "integratedLufs": -18.28,
+      "limitedFrames": 0,
+      "sha256": "sha256:d14749e36a202a6095fee8b030dd7b25d9b13e6e2cc15f740357bf0a7d3cacb6",
+      "truePeakDbtp": -8.35
+    },
+    "render": {
+      "blockSize": 256,
+      "durationS": 10.19,
+      "loudnessCompensationPhon": 60.0,
+      "mode": "analysis",
+      "sampleRate": 48000,
+      "seed": 20261035
+    },
+    "score": {
+      "irVersion": 1,
+      "releaseIndependentHash": "sha256:2bfa950b31d4ee6071b67da9a2cc14c793eebde686c6db0b22ec18742a13aaf8"
+    },
+    "spec": {
+      "embedded": null,
+      "hash": "sha256:496a629a11908054deee7dc8027229fe513c850335e735ff6e04fedfd463e0ec",
+      "version": "0.1"
+    },
+    "tracks": [
+      {
+        "events": 1000,
+        "firstOnsetS": 0.0,
+        "id": "flux",
+        "instrument": "sine",
+        "lastOnsetS": 9.99,
+        "noteDurationsS": [
+          "0.2"
+        ],
+        "notes": 1000,
+        "pitchHz": [
+          440.0,
+          880.0
+        ]
+      }
+    ]
+  },
+  "snr100-n2": {
+    "cues": null,
+    "data": {
+      "fingerprint": "sha256:66e0d8697c06c6258c415a3c00f066f610493c93b79f2c13f9cd41657a18ff43",
+      "provenance": {},
+      "source": {
+        "kind": "file",
+        "name": "snr100-n2.csv"
+      }
+    },
+    "manifestVersion": 1,
+    "output": {
+      "bitsPerSample": 24,
+      "channels": 2,
+      "file": "snr100-n2.wav",
+      "format": "wav",
+      "frames": 489120,
+      "gainDb": 0.0,
+      "integratedLufs": -18.02,
+      "limitedFrames": 0,
+      "sha256": "sha256:2a00f80473b7a77e914cd8a08b8a005ed38500e16a26d3c20346623df5550354",
+      "truePeakDbtp": -7.93
+    },
+    "render": {
+      "blockSize": 256,
+      "durationS": 10.19,
+      "loudnessCompensationPhon": 60.0,
+      "mode": "analysis",
+      "sampleRate": 48000,
+      "seed": 20261036
+    },
+    "score": {
+      "irVersion": 1,
+      "releaseIndependentHash": "sha256:45821cfc4cd96c12382f89dbd3608d9a6c55768581cc5afd97f697818d574d99"
+    },
+    "spec": {
+      "embedded": null,
+      "hash": "sha256:781b7c3a7e8ffb02e068ccc693720993dec821975d66a913dc91b44ff9791c07",
+      "version": "0.1"
+    },
+    "tracks": [
+      {
+        "events": 1000,
+        "firstOnsetS": 0.0,
+        "id": "flux",
+        "instrument": "sine",
+        "lastOnsetS": 9.99,
+        "noteDurationsS": [
+          "0.2"
+        ],
+        "notes": 1000,
+        "pitchHz": [
+          440.0,
+          880.0
+        ]
+      }
+    ]
+  },
+  "snr3-n0": {
+    "cues": null,
+    "data": {
+      "fingerprint": "sha256:9551b322f5c44eeb4e98f3885c594139ec03c1d05993629f4367178c51eec5dc",
+      "provenance": {},
+      "source": {
+        "kind": "file",
+        "name": "snr3-n0.csv"
+      }
+    },
+    "manifestVersion": 1,
+    "output": {
+      "bitsPerSample": 24,
+      "channels": 2,
+      "file": "snr3-n0.wav",
+      "format": "wav",
+      "frames": 489120,
+      "gainDb": 0.0,
+      "integratedLufs": -18.18,
+      "limitedFrames": 0,
+      "sha256": "sha256:d6a747bcda93629701aae9d528e894b8d5126c4f8650bceca79a875f17044696",
+      "truePeakDbtp": -8.27
+    },
+    "render": {
+      "blockSize": 256,
+      "durationS": 10.19,
+      "loudnessCompensationPhon": 60.0,
+      "mode": "analysis",
+      "sampleRate": 48000,
+      "seed": 20261019
+    },
+    "score": {
+      "irVersion": 1,
+      "releaseIndependentHash": "sha256:266db1099b00ec0473c48a4026ffa761b661f03bfe32277d5dc82d072a6b44d7"
+    },
+    "spec": {
+      "embedded": null,
+      "hash": "sha256:d037c2c90ed68352ad4e32d1b26f5950a29342b0c76305de63613632a5a77466",
+      "version": "0.1"
+    },
+    "tracks": [
+      {
+        "events": 1000,
+        "firstOnsetS": 0.0,
+        "id": "flux",
+        "instrument": "sine",
+        "lastOnsetS": 9.99,
+        "noteDurationsS": [
+          "0.2"
+        ],
+        "notes": 1000,
+        "pitchHz": [
+          440.0,
+          880.0
+        ]
+      }
+    ]
+  },
+  "snr3-n1": {
+    "cues": null,
+    "data": {
+      "fingerprint": "sha256:dfc516fca43060d87f50ed84653f0c0e1815fa8eec15d0fce0b7f51adc4f03e6",
+      "provenance": {},
+      "source": {
+        "kind": "file",
+        "name": "snr3-n1.csv"
+      }
+    },
+    "manifestVersion": 1,
+    "output": {
+      "bitsPerSample": 24,
+      "channels": 2,
+      "file": "snr3-n1.wav",
+      "format": "wav",
+      "frames": 489120,
+      "gainDb": 0.0,
+      "integratedLufs": -18.22,
+      "limitedFrames": 0,
+      "sha256": "sha256:9081df8e3f1fa784f990e93005b01fc15bb05fcd6b9385c42178d9f0d6ea2340",
+      "truePeakDbtp": -9.12
+    },
+    "render": {
+      "blockSize": 256,
+      "durationS": 10.19,
+      "loudnessCompensationPhon": 60.0,
+      "mode": "analysis",
+      "sampleRate": 48000,
+      "seed": 20261020
+    },
+    "score": {
+      "irVersion": 1,
+      "releaseIndependentHash": "sha256:ba00966351e430e4f2db7816400030afd78636c56c7c6aa965c3986ef9130728"
+    },
+    "spec": {
+      "embedded": null,
+      "hash": "sha256:733c1cf1eb16c1679517d496f74c58099027430a9a52c01c72cdb609ceb5c77c",
+      "version": "0.1"
+    },
+    "tracks": [
+      {
+        "events": 1000,
+        "firstOnsetS": 0.0,
+        "id": "flux",
+        "instrument": "sine",
+        "lastOnsetS": 9.99,
+        "noteDurationsS": [
+          "0.2"
+        ],
+        "notes": 1000,
+        "pitchHz": [
+          440.0,
+          880.0
+        ]
+      }
+    ]
+  },
+  "snr3-n2": {
+    "cues": null,
+    "data": {
+      "fingerprint": "sha256:aea59ccbca10682e9d7f47eb55dac068bf9b0fa8a6e2363c56a1b266afce6606",
+      "provenance": {},
+      "source": {
+        "kind": "file",
+        "name": "snr3-n2.csv"
+      }
+    },
+    "manifestVersion": 1,
+    "output": {
+      "bitsPerSample": 24,
+      "channels": 2,
+      "file": "snr3-n2.wav",
+      "format": "wav",
+      "frames": 489120,
+      "gainDb": 0.0,
+      "integratedLufs": -17.95,
+      "limitedFrames": 0,
+      "sha256": "sha256:3c76dfe6a4503adeb2ec8c7b5899fd8057b05375170549d29ced59d4026256fa",
+      "truePeakDbtp": -8.01
+    },
+    "render": {
+      "blockSize": 256,
+      "durationS": 10.19,
+      "loudnessCompensationPhon": 60.0,
+      "mode": "analysis",
+      "sampleRate": 48000,
+      "seed": 20261021
+    },
+    "score": {
+      "irVersion": 1,
+      "releaseIndependentHash": "sha256:dd46e5ee75656df2c6625d2a9bc1a2378af7b8b5c29355be14e29b251c0b5c3d"
+    },
+    "spec": {
+      "embedded": null,
+      "hash": "sha256:1a5f8648054ec130428d0e38a60f88f450e3138e198e272240b94ba52e89f0a7",
+      "version": "0.1"
+    },
+    "tracks": [
+      {
+        "events": 1000,
+        "firstOnsetS": 0.0,
+        "id": "flux",
+        "instrument": "sine",
+        "lastOnsetS": 9.99,
+        "noteDurationsS": [
+          "0.2"
+        ],
+        "notes": 1000,
+        "pitchHz": [
+          440.0,
+          880.0
+        ]
+      }
+    ]
+  },
+  "snr30-n0": {
+    "cues": null,
+    "data": {
+      "fingerprint": "sha256:5794cb3eea9ad1ab945ba66529ec3810bd04f46b18394fbc283d1242d5a8a9b4",
+      "provenance": {},
+      "source": {
+        "kind": "file",
+        "name": "snr30-n0.csv"
+      }
+    },
+    "manifestVersion": 1,
+    "output": {
+      "bitsPerSample": 24,
+      "channels": 2,
+      "file": "snr30-n0.wav",
+      "format": "wav",
+      "frames": 489120,
+      "gainDb": 0.0,
+      "integratedLufs": -17.94,
+      "limitedFrames": 0,
+      "sha256": "sha256:3b0769e683c788f7369294cf310c28078d1c8594693457dbb8ab8bd238c5db41",
+      "truePeakDbtp": -7.63
+    },
+    "render": {
+      "blockSize": 256,
+      "durationS": 10.19,
+      "loudnessCompensationPhon": 60.0,
+      "mode": "analysis",
+      "sampleRate": 48000,
+      "seed": 20261031
+    },
+    "score": {
+      "irVersion": 1,
+      "releaseIndependentHash": "sha256:aea1751b54abdd6e1b0e21a7def9a8ccea271bcfa2c6eab5b23ebd420fd2b6bb"
+    },
+    "spec": {
+      "embedded": null,
+      "hash": "sha256:44409d5f4f90e8a580cd574f49b2ae10b715b14f3b40d217e25041ecc78fef9b",
+      "version": "0.1"
+    },
+    "tracks": [
+      {
+        "events": 1000,
+        "firstOnsetS": 0.0,
+        "id": "flux",
+        "instrument": "sine",
+        "lastOnsetS": 9.99,
+        "noteDurationsS": [
+          "0.2"
+        ],
+        "notes": 1000,
+        "pitchHz": [
+          440.0,
+          880.0
+        ]
+      }
+    ]
+  },
+  "snr30-n1": {
+    "cues": null,
+    "data": {
+      "fingerprint": "sha256:694fe0fe8fd533cfb5eefdb90c5f5f8e2059db9841e58697f1ed739cb2275eb0",
+      "provenance": {},
+      "source": {
+        "kind": "file",
+        "name": "snr30-n1.csv"
+      }
+    },
+    "manifestVersion": 1,
+    "output": {
+      "bitsPerSample": 24,
+      "channels": 2,
+      "file": "snr30-n1.wav",
+      "format": "wav",
+      "frames": 489120,
+      "gainDb": 0.0,
+      "integratedLufs": -18.32,
+      "limitedFrames": 0,
+      "sha256": "sha256:61651d17f99a1547f5a65bd7360687df872da1f59e075593dd66d89fc4d59658",
+      "truePeakDbtp": -8.7
+    },
+    "render": {
+      "blockSize": 256,
+      "durationS": 10.19,
+      "loudnessCompensationPhon": 60.0,
+      "mode": "analysis",
+      "sampleRate": 48000,
+      "seed": 20261032
+    },
+    "score": {
+      "irVersion": 1,
+      "releaseIndependentHash": "sha256:bb51e0216c1b7fbf3839ee5ebbb017d2acdbac1f9392b3b5a674003e26ac11ac"
+    },
+    "spec": {
+      "embedded": null,
+      "hash": "sha256:ec7bda3ea8518eade09f653b93fe27a05b5685d212b91996bbe24611e80dc5ed",
+      "version": "0.1"
+    },
+    "tracks": [
+      {
+        "events": 1000,
+        "firstOnsetS": 0.0,
+        "id": "flux",
+        "instrument": "sine",
+        "lastOnsetS": 9.99,
+        "noteDurationsS": [
+          "0.2"
+        ],
+        "notes": 1000,
+        "pitchHz": [
+          440.0,
+          880.0
+        ]
+      }
+    ]
+  },
+  "snr30-n2": {
+    "cues": null,
+    "data": {
+      "fingerprint": "sha256:67cffbf7d706684415548d528e80c4f6c132eed131cdedd97ece04320a26b4a6",
+      "provenance": {},
+      "source": {
+        "kind": "file",
+        "name": "snr30-n2.csv"
+      }
+    },
+    "manifestVersion": 1,
+    "output": {
+      "bitsPerSample": 24,
+      "channels": 2,
+      "file": "snr30-n2.wav",
+      "format": "wav",
+      "frames": 489120,
+      "gainDb": 0.0,
+      "integratedLufs": -18.18,
+      "limitedFrames": 0,
+      "sha256": "sha256:8349382b92ab487086727b0e3998301a8f64e56e382f47e2f6377f8eca181666",
+      "truePeakDbtp": -6.84
+    },
+    "render": {
+      "blockSize": 256,
+      "durationS": 10.19,
+      "loudnessCompensationPhon": 60.0,
+      "mode": "analysis",
+      "sampleRate": 48000,
+      "seed": 20261033
+    },
+    "score": {
+      "irVersion": 1,
+      "releaseIndependentHash": "sha256:cc698b9988bb79755a1ef86fb26dfff9585797630473b9bff76dd9a57387c39a"
+    },
+    "spec": {
+      "embedded": null,
+      "hash": "sha256:75790ca1ae1ecda3364fd73635f015e1852415d04e4a0eea4eced9b72d61d9d4",
+      "version": "0.1"
+    },
+    "tracks": [
+      {
+        "events": 1000,
+        "firstOnsetS": 0.0,
+        "id": "flux",
+        "instrument": "sine",
+        "lastOnsetS": 9.99,
+        "noteDurationsS": [
+          "0.2"
+        ],
+        "notes": 1000,
+        "pitchHz": [
+          440.0,
+          880.0
+        ]
+      }
+    ]
+  },
+  "snr5-n0": {
+    "cues": null,
+    "data": {
+      "fingerprint": "sha256:046f5e9b26718c3847a40fedf88954f10ccc246d881a781d241cf8590d2836c2",
+      "provenance": {},
+      "source": {
+        "kind": "file",
+        "name": "snr5-n0.csv"
+      }
+    },
+    "manifestVersion": 1,
+    "output": {
+      "bitsPerSample": 24,
+      "channels": 2,
+      "file": "snr5-n0.wav",
+      "format": "wav",
+      "frames": 489120,
+      "gainDb": 0.0,
+      "integratedLufs": -18.01,
+      "limitedFrames": 0,
+      "sha256": "sha256:dcb1fedbb07716c240a476ec3b61278ea5b6174feb20d2187d78ff4fa2308f5b",
+      "truePeakDbtp": -9.1
+    },
+    "render": {
+      "blockSize": 256,
+      "durationS": 10.19,
+      "loudnessCompensationPhon": 60.0,
+      "mode": "analysis",
+      "sampleRate": 48000,
+      "seed": 20261022
+    },
+    "score": {
+      "irVersion": 1,
+      "releaseIndependentHash": "sha256:0ce62675c3dd3d39fa29c96d64a65b5c229cab2eb417af3066c1b92d5b0d1857"
+    },
+    "spec": {
+      "embedded": null,
+      "hash": "sha256:f455fa11945604866f1d5bbd63f2bc52d1f846897854467157012e2da50b3451",
+      "version": "0.1"
+    },
+    "tracks": [
+      {
+        "events": 1000,
+        "firstOnsetS": 0.0,
+        "id": "flux",
+        "instrument": "sine",
+        "lastOnsetS": 9.99,
+        "noteDurationsS": [
+          "0.2"
+        ],
+        "notes": 1000,
+        "pitchHz": [
+          440.0,
+          880.0
+        ]
+      }
+    ]
+  },
+  "snr5-n1": {
+    "cues": null,
+    "data": {
+      "fingerprint": "sha256:75c5194cb6d7b3a39ce8fbebd8d0d72ef583d08baaaa5f22aa72e24de5bfb928",
+      "provenance": {},
+      "source": {
+        "kind": "file",
+        "name": "snr5-n1.csv"
+      }
+    },
+    "manifestVersion": 1,
+    "output": {
+      "bitsPerSample": 24,
+      "channels": 2,
+      "file": "snr5-n1.wav",
+      "format": "wav",
+      "frames": 489120,
+      "gainDb": 0.0,
+      "integratedLufs": -17.85,
+      "limitedFrames": 0,
+      "sha256": "sha256:cb9fcd40a7d60fd18ad98403663261d23c4b024a5debc29111d126f0e1fa8af9",
+      "truePeakDbtp": -7.51
+    },
+    "render": {
+      "blockSize": 256,
+      "durationS": 10.19,
+      "loudnessCompensationPhon": 60.0,
+      "mode": "analysis",
+      "sampleRate": 48000,
+      "seed": 20261023
+    },
+    "score": {
+      "irVersion": 1,
+      "releaseIndependentHash": "sha256:9e358b62882ea04afa6d314ae082d32d38ac9dedaf5c67f89cb6a9e3334faa22"
+    },
+    "spec": {
+      "embedded": null,
+      "hash": "sha256:91975c740ccb14bc18716d8d2b41d20b770759af7a4043a00b2ed27993297a14",
+      "version": "0.1"
+    },
+    "tracks": [
+      {
+        "events": 1000,
+        "firstOnsetS": 0.0,
+        "id": "flux",
+        "instrument": "sine",
+        "lastOnsetS": 9.99,
+        "noteDurationsS": [
+          "0.2"
+        ],
+        "notes": 1000,
+        "pitchHz": [
+          440.0,
+          880.0
+        ]
+      }
+    ]
+  },
+  "snr5-n2": {
+    "cues": null,
+    "data": {
+      "fingerprint": "sha256:1d3ab84b13e820b183ce0f74b11a333fe927a08428d5666b232f9644855c01df",
+      "provenance": {},
+      "source": {
+        "kind": "file",
+        "name": "snr5-n2.csv"
+      }
+    },
+    "manifestVersion": 1,
+    "output": {
+      "bitsPerSample": 24,
+      "channels": 2,
+      "file": "snr5-n2.wav",
+      "format": "wav",
+      "frames": 489120,
+      "gainDb": 0.0,
+      "integratedLufs": -18.05,
+      "limitedFrames": 0,
+      "sha256": "sha256:97ded253ad0f771f7a0eb3682322804cd769f13f992a731e03db5413e07f0073",
+      "truePeakDbtp": -7.57
+    },
+    "render": {
+      "blockSize": 256,
+      "durationS": 10.19,
+      "loudnessCompensationPhon": 60.0,
+      "mode": "analysis",
+      "sampleRate": 48000,
+      "seed": 20261024
+    },
+    "score": {
+      "irVersion": 1,
+      "releaseIndependentHash": "sha256:bf09097e00df56ea941ec61450d7d2a42a6d5f94bf4f64a8cd83d8ab4e3c9c2c"
+    },
+    "spec": {
+      "embedded": null,
+      "hash": "sha256:785c0bb612dd16db10f4049e9e13c2f1198f929111e0163a9081e25b8bbf0a8d",
+      "version": "0.1"
+    },
+    "tracks": [
+      {
+        "events": 1000,
+        "firstOnsetS": 0.0,
+        "id": "flux",
+        "instrument": "sine",
+        "lastOnsetS": 9.99,
+        "noteDurationsS": [
+          "0.2"
+        ],
+        "notes": 1000,
+        "pitchHz": [
+          440.0,
+          880.0
+        ]
+      }
+    ]
+  },
+  "snr7-n0": {
+    "cues": null,
+    "data": {
+      "fingerprint": "sha256:2a708d6e3c84e6d6fb4ff68b255a5b098eda8d2bd2f601a197f7c334047e2145",
+      "provenance": {},
+      "source": {
+        "kind": "file",
+        "name": "snr7-n0.csv"
+      }
+    },
+    "manifestVersion": 1,
+    "output": {
+      "bitsPerSample": 24,
+      "channels": 2,
+      "file": "snr7-n0.wav",
+      "format": "wav",
+      "frames": 489120,
+      "gainDb": 0.0,
+      "integratedLufs": -18.04,
+      "limitedFrames": 0,
+      "sha256": "sha256:12884c0a2a04d828d5ec1d7683f59331784eaaea2e8f53decdd2c5c2563390e0",
+      "truePeakDbtp": -8.22
+    },
+    "render": {
+      "blockSize": 256,
+      "durationS": 10.19,
+      "loudnessCompensationPhon": 60.0,
+      "mode": "analysis",
+      "sampleRate": 48000,
+      "seed": 20261025
+    },
+    "score": {
+      "irVersion": 1,
+      "releaseIndependentHash": "sha256:5fcff9893cad12011db200dda324989630959db3385d704cdfa0e7491a831fad"
+    },
+    "spec": {
+      "embedded": null,
+      "hash": "sha256:3b00e7f81841357ae7c6bf13244245cec6b6c0efcd29480a217e51690928f71e",
+      "version": "0.1"
+    },
+    "tracks": [
+      {
+        "events": 1000,
+        "firstOnsetS": 0.0,
+        "id": "flux",
+        "instrument": "sine",
+        "lastOnsetS": 9.99,
+        "noteDurationsS": [
+          "0.2"
+        ],
+        "notes": 1000,
+        "pitchHz": [
+          440.0,
+          880.0
+        ]
+      }
+    ]
+  },
+  "snr7-n1": {
+    "cues": null,
+    "data": {
+      "fingerprint": "sha256:86627049d7e6ee602af23292910dff234440961d037588edf2df3a16604597ce",
+      "provenance": {},
+      "source": {
+        "kind": "file",
+        "name": "snr7-n1.csv"
+      }
+    },
+    "manifestVersion": 1,
+    "output": {
+      "bitsPerSample": 24,
+      "channels": 2,
+      "file": "snr7-n1.wav",
+      "format": "wav",
+      "frames": 489120,
+      "gainDb": 0.0,
+      "integratedLufs": -18.06,
+      "limitedFrames": 0,
+      "sha256": "sha256:bc84074fca77cc3235b2c6fcd1c67773ac4ffcf23cd3688e2b82925ba1387500",
+      "truePeakDbtp": -8.76
+    },
+    "render": {
+      "blockSize": 256,
+      "durationS": 10.19,
+      "loudnessCompensationPhon": 60.0,
+      "mode": "analysis",
+      "sampleRate": 48000,
+      "seed": 20261026
+    },
+    "score": {
+      "irVersion": 1,
+      "releaseIndependentHash": "sha256:ed05d321a962cbd4041fff0b3aac72b58881d34c43d0692007b2a72945a43d8c"
+    },
+    "spec": {
+      "embedded": null,
+      "hash": "sha256:5010fd37edf1da2b7ab18ca4ddcf13973c7088bb823e82925b1d2cea2392c0db",
+      "version": "0.1"
+    },
+    "tracks": [
+      {
+        "events": 1000,
+        "firstOnsetS": 0.0,
+        "id": "flux",
+        "instrument": "sine",
+        "lastOnsetS": 9.99,
+        "noteDurationsS": [
+          "0.2"
+        ],
+        "notes": 1000,
+        "pitchHz": [
+          440.0,
+          880.0
+        ]
+      }
+    ]
+  },
+  "snr7-n2": {
+    "cues": null,
+    "data": {
+      "fingerprint": "sha256:e99021221ff4256da5d73af9a1dc7a9f7e3cd9fe8f0aa9cf741afffc8e877191",
+      "provenance": {},
+      "source": {
+        "kind": "file",
+        "name": "snr7-n2.csv"
+      }
+    },
+    "manifestVersion": 1,
+    "output": {
+      "bitsPerSample": 24,
+      "channels": 2,
+      "file": "snr7-n2.wav",
+      "format": "wav",
+      "frames": 489120,
+      "gainDb": 0.0,
+      "integratedLufs": -18.29,
+      "limitedFrames": 0,
+      "sha256": "sha256:6c4532542cab511d640b91a95cf091636fe2de4c214b3bfdd9b80b9cebb8563f",
+      "truePeakDbtp": -8.63
+    },
+    "render": {
+      "blockSize": 256,
+      "durationS": 10.19,
+      "loudnessCompensationPhon": 60.0,
+      "mode": "analysis",
+      "sampleRate": 48000,
+      "seed": 20261027
+    },
+    "score": {
+      "irVersion": 1,
+      "releaseIndependentHash": "sha256:5a080d0cbc5d13b93050501b8fd655f4b83c2cf0db773858da26ee5834b32cea"
+    },
+    "spec": {
+      "embedded": null,
+      "hash": "sha256:a78fe05f4f9bb16713f5ab80bf6215a32fb67ea963ccd7ce77bb966373f65e0b",
+      "version": "0.1"
+    },
+    "tracks": [
+      {
+        "events": 1000,
+        "firstOnsetS": 0.0,
+        "id": "flux",
+        "instrument": "sine",
+        "lastOnsetS": 9.99,
+        "noteDurationsS": [
+          "0.2"
+        ],
+        "notes": 1000,
+        "pitchHz": [
+          440.0,
+          880.0
+        ]
+      }
+    ]
+  }
+}
