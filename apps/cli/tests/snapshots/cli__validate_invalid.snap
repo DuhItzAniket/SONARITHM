@@ -1,0 +1,18 @@
+---
+source: apps/cli/tests/cli.rs
+expression: invalid.transcript()
+---
+exit code: 1
+--- stdout
+invalid.spec.json is not valid: 1 error, 0 warnings, 0 applied defaults and choices.
+--- stderr
+Pitch range [1400, 400] Hz is reversed. Use "polarity": "negative" to invert the mapping instead.
+    Diagnostic severity: error
+Begin snippet for invalid.spec.json starting at line 4, column 1
+
+snippet line 4:   "tracks": [
+snippet line 5:     { "id": "anomaly", "mark": "tone", "channels": { "pitch": { "field": "anomaly", "range": { "hz": [1400, 400] } } } }
+    label at line 5, columns 94 to 114: /tracks/0/channels/pitch/range
+snippet line 6:   ]
+diagnostic help: Write the range low to high and use `"polarity": "negative"` to invert the mapping. Design rules: SDR-15.
+diagnostic code: SNR-SPEC-031

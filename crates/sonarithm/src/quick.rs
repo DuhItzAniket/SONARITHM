@@ -203,6 +203,10 @@ impl Quick {
             .or(stem)
             .unwrap_or_else(|| "quick".to_owned());
         value["name"] = json!(name);
+        // The track is named after what it plays, so descriptions read "In anomaly, …".
+        if let Some(y) = bindings.get("y") {
+            value["tracks"][0]["id"] = json!(y);
+        }
         if let Some(mark) = self.mark {
             value["tracks"][0]["mark"] = serde_json::to_value(mark).unwrap_or(Value::Null);
         }

@@ -1,0 +1,35 @@
+---
+source: apps/cli/tests/cli.rs
+expression: "run(&[\"--help\"]).transcript()"
+---
+exit code: 0
+--- stdout
+Turn data into structured, navigable sound.
+
+Exit codes: 0 success, 1 errors, 2 usage, 3 warnings denied. Every command accepts --json for machine-readable output and --plain for linear text without colour or box drawing (screen readers).
+
+Usage: sonarithm [OPTIONS] <COMMAND>
+
+Commands:
+  render    Render a spec offline to WAV or FLAC, with its render manifest and cue sidecar
+  validate  Check a spec: syntax, shape, meaning, and the defaults it will get
+  inspect   Compile a spec; print the Score summary, a description and the diagnostics
+  lint      Compile a spec and report its warnings with rule IDs (a stub until the perceptual lint arrives in C05)
+  quick     Sonify one data file with the default design: x along time, y as pitch
+  schema    Print a JSON Schema
+  spec      Work on spec files
+  help      Print this message or the help of the given subcommand(s)
+
+Options:
+      --json
+          Print machine-readable JSON on standard output, with stable field names
+
+      --plain
+          Print linear text: no colour, no box drawing, progress as text lines
+
+  -h, --help
+          Print help (see a summary with '-h')
+
+  -V, --version
+          Print version
+--- stderr

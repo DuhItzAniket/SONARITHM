@@ -48,6 +48,13 @@ pub trait CompilerData {
         let _ = (transforms, at);
         None
     }
+
+    /// The share of rows in each provenance class (03 §4), such as `{"exact": 0.7,
+    /// "cv_estimate": 0.3}`, for render manifests. Empty when this data type does not track
+    /// provenance.
+    fn provenance_mix(&self) -> BTreeMap<String, f64> {
+        BTreeMap::new()
+    }
 }
 
 /// A successful compile.
@@ -60,6 +67,9 @@ pub struct Compiled {
     pub canonical_spec: String,
     /// Warnings and `Info` diagnostics, in pipeline order.
     pub diagnostics: Diagnostics,
+    /// The share of data rows in each provenance class after transforms
+    /// ([`CompilerData::provenance_mix`]), for the render manifest.
+    pub provenance: BTreeMap<String, f64>,
 }
 
 /// Why a compile produced no Score.
@@ -133,7 +143,7 @@ impl<D: CompilerData> Compiler<D> {
             diagnostics: prepared.diagnostics.clone(),
         };
         match run.stages(spec, prepared.hash) {
-            Ok(score) => {
+            Ok((score, provenance)) => {
                 let mut diagnostics = run.diagnostics;
                 diagnostics.extend(run.cx.take_diagnostics());
                 if diagnostics.has_errors() {
@@ -143,6 +153,7 @@ impl<D: CompilerData> Compiler<D> {
                     score,
                     canonical_spec: prepared.canonical,
                     diagnostics,
+                    provenance,
                 })
             }
             Err(Stop::Cancelled) => Err(Failure::Cancelled),
@@ -172,7 +183,11 @@ struct Run<'a, D> {
 }
 
 impl<D: CompilerData> Run<'_, D> {
-    fn stages(&mut self, spec: &Spec, spec_hash: Sha256Digest) -> Result<Score, Stop> {
+    fn stages(
+        &mut self,
+        spec: &Spec,
+        spec_hash: Sha256Digest,
+    ) -> Result<(Score, BTreeMap<String, f64>), Stop> {
         let mut data = self.resolve_source(spec)?;
         if !spec.transform.is_empty() {
             let at = SpecPointer::root().key("transform");
@@ -217,7 +232,7 @@ impl<D: CompilerData> Run<'_, D> {
                 ),
             ))));
         }
-        Ok(score)
+        Ok((score, data.provenance_mix()))
     }
 
     /// Resolves `data.source` through the registered source for its kind.

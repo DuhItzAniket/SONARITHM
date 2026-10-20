@@ -1,0 +1,12 @@
+---
+source: apps/cli/tests/cli.rs
+expression: unversioned.transcript()
+---
+exit code: 1
+--- stdout
+unversioned.spec.json cannot be migrated.
+--- stderr
+The spec has no `specVersion`.
+    Diagnostic severity: error
+diagnostic help: Add the key; RFC-0001 lists the required keys of each object.
+diagnostic code: SNR-SPEC-003

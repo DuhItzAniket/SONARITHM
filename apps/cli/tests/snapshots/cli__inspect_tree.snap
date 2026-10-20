@@ -1,0 +1,24 @@
+---
+source: apps/cli/tests/cli.rs
+expression: tree.transcript()
+---
+exit code: 0
+--- stdout
+estimated.spec.json: spec version 0.1, analysis mode, seed 0.
+Duration: 0.917 seconds.
+Engines: numisona [version], platform [version].
+Track y: data track, 3 events (3 notes), 0.000 to 0.917 seconds, pitch 400.00 to 1400.00 Hz, 1 from estimated data, instrument mallet.
+Score hash: [score hash].
+Diagnostics: 0 errors, 1 warning, 37 applied defaults and choices.
+Score
+  Track y (3 events)
+    note at 0.000 s for 0.250 s, 400.00 Hz, row 0
+    note at 0.333 s for 0.250 s, 1400.00 Hz, row 1, confidence 0.75
+    note at 0.667 s for 0.250 s, 607.32 Hz, row 2
+--- stderr
+Context cues (ticks, reference tone, legend, earcons) are not available in this build; AUDAXIS arrives in B03.
+    Diagnostic severity: warning
+diagnostic help: Location: /context.
+diagnostic code: SNR-COMP-023
+
+note: --verbose lists the applied defaults and automatic choices.

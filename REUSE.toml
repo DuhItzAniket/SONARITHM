@@ -64,6 +64,14 @@ precedence = "closest"
 SPDX-FileCopyrightText = "2026 SONARITHM contributors"
 SPDX-License-Identifier = "MIT OR Apache-2.0"
 
+# Test fixtures and golden data (synthetic, no personal data): same licence as the code.
+# CSV files cannot carry SPDX headers.
+[[annotations]]
+path = ["**/tests/fixtures/**", "tests/golden/**"]
+precedence = "closest"
+SPDX-FileCopyrightText = "2026 SONARITHM contributors"
+SPDX-License-Identifier = "MIT OR Apache-2.0"
+
 # A02 spikes (spikes/, throwaway; roadmap A02). Source files carry SPDX headers. These cover
 # lockfiles and binary assets (code licence) and measurement results (data licence, ADR-0010).
 [[annotations]]

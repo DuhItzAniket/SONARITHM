@@ -108,6 +108,20 @@ fn inline_records_compile_and_are_fingerprinted() {
 }
 
 #[test]
+fn the_provenance_mix_reaches_the_compile_result() {
+    let exact = compile(&Platform::new(), &spec(VALUES, "[]")).unwrap();
+    assert_eq!(exact.provenance, [("exact".to_owned(), 1.0)].into());
+    let estimated = r#"{ "kind": "inline", "values": [
+        { "x": 1, "y": 3.0, "__snr_prov": "exact" }, { "x": 2, "y": 5.0, "__snr_prov": "cv_estimate", "__snr_conf": 0.5 },
+        { "x": 3, "y": 4.0, "__snr_prov": "exact" }, { "x": 4, "y": 9.0, "__snr_prov": "exact" } ] }"#;
+    let mixed = compile(&Platform::new(), &spec(estimated, "[]")).unwrap();
+    assert_eq!(
+        mixed.provenance,
+        [("cv_estimate".to_owned(), 0.25), ("exact".to_owned(), 0.75)].into()
+    );
+}
+
+#[test]
 fn transforms_run_in_the_data_layer() {
     let filtered = compile(
         &Platform::new(),

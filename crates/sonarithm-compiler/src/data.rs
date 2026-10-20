@@ -69,6 +69,32 @@ impl CompilerData for DataBundle {
                 .map_err(|err| Box::new(err.to_diagnostic().at(at.clone()))),
         )
     }
+
+    /// Shares of the primary table's rows per class (03 §4). A table without provenance
+    /// columns is all `exact`; one that cannot be read reports nothing rather than guess.
+    fn provenance_mix(&self) -> BTreeMap<String, f64> {
+        let Some(table) = self.primary() else {
+            return BTreeMap::new();
+        };
+        let Ok(rows) = sonarithm_data::RowProvenance::read(table) else {
+            return BTreeMap::new();
+        };
+        let mix = rows.mix();
+        let total: u64 = mix.counts.values().sum();
+        if total == 0 {
+            return BTreeMap::new();
+        }
+        #[expect(clippy::cast_precision_loss, reason = "row counts far below 2^52")]
+        mix.counts
+            .iter()
+            .map(|(class, count)| {
+                (
+                    sonarithm_data::provenance::class_name(*class).to_owned(),
+                    *count as f64 / total as f64,
+                )
+            })
+            .collect()
+    }
 }
 
 /// A spec transform as the data layer's transform. The two share their JSON shape

@@ -1,0 +1,9 @@
+---
+source: apps/cli/tests/cli.rs
+expression: valid.transcript()
+---
+exit code: 0
+--- stdout
+temps.spec.json is valid: 0 errors, 0 warnings, 27 applied defaults and choices.
+--- stderr
+note: --verbose lists the applied defaults and automatic choices.

@@ -45,16 +45,37 @@ pub fn reports(name: &str, source: &str, diagnostics: &Diagnostics) -> Vec<SpecR
     diagnostics
         .iter()
         .map(|diagnostic| {
-            let span = diagnostic
+            let located = diagnostic
                 .location
                 .as_ref()
-                .and_then(|pointer| locate(source, pointer))
+                .and_then(|pointer| locate(source, pointer));
+            // A span over the whole document (a missing top-level key) shows nothing the
+            // pointer does not, and reads the entire spec aloud to a screen reader: drop it
+            // and name the pointer in the help instead.
+            let whole = located.is_some_and(|(offset, len)| {
+                source
+                    .get(..offset)
+                    .is_some_and(|before| before.trim().is_empty())
+                    && source
+                        .get(offset + len..)
+                        .is_some_and(|after| after.trim().is_empty())
+            });
+            let span = located
+                .filter(|_| !whole)
                 .map(|(offset, len)| SourceSpan::from((offset, len)));
             let info = CODES
                 .codes
                 .iter()
                 .find(|info| info.code == diagnostic.code.as_str());
             let mut help = info.map(|info| info.help.to_owned());
+            if let Some(pointer) = diagnostic
+                .location
+                .as_ref()
+                .filter(|pointer| whole && **pointer != SpecPointer::root())
+            {
+                let line = format!("Location: {pointer}.");
+                help = Some(help.map_or(line.clone(), |help| format!("{line} {help}")));
+            }
             if !diagnostic.rules.is_empty() {
                 let rules: Vec<&str> = diagnostic
                     .rules
@@ -277,7 +298,7 @@ mod tests {
     use miette::NarratableReportHandler;
 
     use super::*;
-    use crate::{parse, validate};
+    use crate::{codes, parse, validate};
 
     const SPEC: &str = r#"{
   "specVersion": "0.1",
@@ -342,5 +363,22 @@ mod tests {
         assert!(text.contains("Design rules: SDR-15."), "{text}");
         assert!(text.contains("demo.json"), "{text}");
         assert_eq!(reports[0].span().map(|(_, len)| len), Some(21));
+    }
+
+    #[test]
+    fn a_span_over_the_whole_spec_becomes_a_location_in_the_help() {
+        let mut diagnostics = Diagnostics::new();
+        diagnostics.push(
+            Diagnostic::new(&codes::MISSING_KEY, "The spec has no `context`.")
+                .at(SpecPointer::root().key("context")),
+        );
+        let reports = reports("demo.json", SPEC, &diagnostics);
+        assert_eq!(reports[0].span(), None);
+        let mut text = String::new();
+        NarratableReportHandler::new()
+            .render_report(&mut text, &reports[0])
+            .unwrap();
+        assert!(text.contains("Location: /context."), "{text}");
+        assert!(!text.contains("snippet"), "{text}");
     }
 }

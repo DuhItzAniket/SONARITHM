@@ -1,0 +1,28 @@
+---
+source: apps/cli/tests/cli.rs
+expression: json.transcript()
+---
+exit code: 1
+--- stdout
+{
+  "spec": "invalid.spec.json",
+  "ok": false,
+  "counts": {
+    "errors": 1,
+    "warnings": 0,
+    "info": 0
+  },
+  "diagnostics": [
+    {
+      "severity": "error",
+      "code": "SNR-SPEC-031",
+      "rules": [
+        "SDR-15"
+      ],
+      "message": "Pitch range [1400, 400] Hz is reversed. Use \"polarity\": \"negative\" to invert the mapping instead.",
+      "location": "/tracks/0/channels/pitch/range",
+      "data": null
+    }
+  ]
+}
+--- stderr
