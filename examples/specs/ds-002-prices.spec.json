@@ -1,0 +1,47 @@
+{
+  "specVersion": "0.1",
+  "name": "Weekly price",
+  "description": "20 weeks of a synthetic price that rises for ten weeks and then falls. Money is a concept on which listeners disagree, so the polarity is set explicitly: higher prices sound higher and last longer.",
+  "data": {
+    "source": {
+      "kind": "file",
+      "path": "../data/ds-002-prices.csv"
+    },
+    "fields": {
+      "week": {
+        "type": "quantitative",
+        "role": "x",
+        "label": "Week"
+      },
+      "price": {
+        "type": "quantitative",
+        "unit": "$",
+        "concept": "money",
+        "label": "Price"
+      }
+    }
+  },
+  "substrate": {
+    "time": {
+      "field": "week",
+      "pace": {
+        "pointsPerSecond": 2
+      }
+    }
+  },
+  "tracks": [
+    {
+      "id": "price",
+      "mark": "tone",
+      "channels": {
+        "pitch": {
+          "field": "price",
+          "polarity": "positive"
+        }
+      },
+      "redundant": [
+        "duration"
+      ]
+    }
+  ]
+}

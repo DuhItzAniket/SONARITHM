@@ -19,6 +19,7 @@ mod ci;
 mod citation;
 mod codegen;
 mod codes;
+mod gallery;
 
 use std::path::{Path, PathBuf};
 use std::process::ExitCode;
@@ -36,6 +37,8 @@ Tasks:
   citation           Check that CITATION.cff and .zenodo.json name the workspace version
                      Options: --release YYYY-MM-DD  write the version and release date
   codes              Check the diagnostic code tables and write docs/reference/error-codes.md
+  gallery            Write the example datasets DS-001 to DS-005 to examples/data
+                     Options: --check  compare instead of writing (CI)
   wasm-check         Build the wasm32-compatible crates for wasm32-unknown-unknown
   help               Show this message";
 
@@ -68,6 +71,7 @@ fn run() -> Result<()> {
             codegen::run(&root)
         }
         Some("citation") => citation::run(&root, &rest),
+        Some("gallery") => gallery::run(&root, &rest),
         Some("codes") => {
             no_options(&rest)?;
             codes::run(&root)

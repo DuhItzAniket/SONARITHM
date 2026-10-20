@@ -1,0 +1,86 @@
+{
+  "specVersion": "0.1",
+  "name": "Monthly rainfall in three regions",
+  "description": "A year of synthetic rainfall for three regions whose wet seasons fall at different times. Each region is its own track, separated by timbre and position: north on the left, south in the centre, east on the right.",
+  "data": {
+    "source": {
+      "kind": "file",
+      "path": "../data/ds-003-regions.csv"
+    },
+    "fields": {
+      "month": {
+        "type": "quantitative",
+        "role": "x",
+        "label": "Month"
+      },
+      "region": {
+        "type": "nominal",
+        "role": "series",
+        "label": "Region"
+      },
+      "rain": {
+        "type": "quantitative",
+        "unit": "mm",
+        "label": "Rainfall"
+      }
+    }
+  },
+  "substrate": {
+    "time": {
+      "field": "month",
+      "pace": {
+        "pointsPerSecond": 2
+      }
+    }
+  },
+  "tracks": [
+    {
+      "id": "north",
+      "mark": "tone",
+      "instrument": "mallet",
+      "filter": {
+        "expr": "region == \"north\""
+      },
+      "channels": {
+        "pitch": {
+          "field": "rain"
+        },
+        "pan": {
+          "value": -0.6
+        }
+      }
+    },
+    {
+      "id": "south",
+      "mark": "tone",
+      "instrument": "triangle",
+      "filter": {
+        "expr": "region == \"south\""
+      },
+      "channels": {
+        "pitch": {
+          "field": "rain"
+        },
+        "pan": {
+          "value": 0
+        }
+      }
+    },
+    {
+      "id": "east",
+      "mark": "tone",
+      "instrument": "square",
+      "filter": {
+        "expr": "region == \"east\""
+      },
+      "channels": {
+        "pitch": {
+          "field": "rain"
+        },
+        "pan": {
+          "value": 0.6
+        }
+      }
+    }
+  ]
+}

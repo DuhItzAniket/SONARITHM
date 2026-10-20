@@ -1,0 +1,49 @@
+{
+  "specVersion": "0.1",
+  "name": "Fruit sold",
+  "description": "Units sold of five fruits, as a bar chart: one tone per bar in data order, each fruit with its own timbre. Pitch starts from zero, so a bar twice as tall sounds clearly higher, and taller bars last longer.",
+  "data": {
+    "source": {
+      "kind": "file",
+      "path": "../data/ds-004-fruit.csv"
+    },
+    "fields": {
+      "fruit": {
+        "type": "nominal",
+        "role": "category",
+        "label": "Fruit"
+      },
+      "sold": {
+        "type": "quantitative",
+        "label": "Units sold"
+      }
+    }
+  },
+  "substrate": {
+    "time": {
+      "pace": {
+        "pointsPerSecond": 2
+      }
+    }
+  },
+  "tracks": [
+    {
+      "id": "bars",
+      "mark": "tone",
+      "channels": {
+        "pitch": {
+          "field": "sold",
+          "scale": {
+            "domain": "zero-based"
+          }
+        },
+        "timbre": {
+          "field": "fruit"
+        }
+      },
+      "redundant": [
+        "duration"
+      ]
+    }
+  ]
+}
