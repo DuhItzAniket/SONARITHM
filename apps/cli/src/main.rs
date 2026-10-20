@@ -14,6 +14,7 @@
 mod cli;
 mod commands;
 mod output;
+mod play;
 mod study;
 
 use std::process::ExitCode;

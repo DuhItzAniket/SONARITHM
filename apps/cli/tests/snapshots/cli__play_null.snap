@@ -1,0 +1,15 @@
+---
+source: apps/cli/tests/cli.rs
+expression: played.transcript()
+---
+exit code: 0
+--- stdout
+Playing temps.spec.json, 3.25 seconds, on null.
+Finished at 3.25 seconds.
+--- stderr
+Context cues (ticks, reference tone, legend, earcons) are not available in this build; AUDAXIS arrives in B03.
+    Diagnostic severity: warning
+diagnostic help: Location: /context.
+diagnostic code: SNR-COMP-023
+
+note: --verbose lists the applied defaults and automatic choices.

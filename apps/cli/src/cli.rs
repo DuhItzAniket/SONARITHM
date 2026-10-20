@@ -34,6 +34,10 @@ pub(crate) struct Cli {
 pub(crate) enum Command {
     /// Render a spec offline to WAV or FLAC, with its render manifest and cue sidecar.
     Render(Render),
+    /// Play a spec in real time: space pauses, arrows step, q stops.
+    Play(Play),
+    /// List the audio output devices.
+    Devices(Devices),
     /// Check a spec: syntax, shape, meaning, and the defaults it will get.
     Validate(Checked),
     /// Compile a spec; print the Score summary, a description and the diagnostics.
@@ -41,7 +45,8 @@ pub(crate) enum Command {
     /// Compile a spec and report its warnings with rule IDs (a stub until the perceptual
     /// lint arrives in C05).
     Lint(Checked),
-    /// Sonify one data file with the default design: x along time, y as pitch.
+    /// Sonify one data file with the default design (x along time, y as pitch) and play it,
+    /// or render it with -o.
     Quick(Quick),
     /// Print a JSON Schema.
     Schema(Schema),
@@ -109,6 +114,50 @@ pub(crate) struct Render {
     pub(crate) verbose: bool,
 }
 
+#[derive(Debug, Args)]
+pub(crate) struct Play {
+    /// The spec file, or `-` for standard input.
+    pub(crate) spec: PathBuf,
+    /// Read the data from this file instead of the spec's source.
+    #[arg(long, value_name = "FILE")]
+    pub(crate) data: Option<PathBuf>,
+    /// The seed of every random stream, instead of the spec's.
+    #[arg(long)]
+    pub(crate) seed: Option<u64>,
+    /// The output device, by name or ID (`sonarithm devices` lists them); by default the
+    /// system's.
+    #[arg(long)]
+    pub(crate) device: Option<String>,
+    /// Playback speed, 0.25 to 4; pitch is unchanged.
+    #[arg(long, value_parser = parse_speed)]
+    pub(crate) speed: Option<f64>,
+    /// The audio backend: the system's devices, or `null`, a silent device for testing.
+    #[arg(long, value_enum, env = "SONARITHM_BACKEND", default_value_t = BackendArg::Default)]
+    pub(crate) backend: BackendArg,
+    /// Exit with code 3, playing nothing, when the compile has warnings.
+    #[arg(long)]
+    pub(crate) deny_warnings: bool,
+    /// Also list the applied defaults and automatic choices.
+    #[arg(long, short)]
+    pub(crate) verbose: bool,
+}
+
+#[derive(Debug, Args)]
+pub(crate) struct Devices {
+    /// The audio backend whose devices to list.
+    #[arg(long, value_enum, env = "SONARITHM_BACKEND", default_value_t = BackendArg::Default)]
+    pub(crate) backend: BackendArg,
+}
+
+/// Audio backends.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, ValueEnum)]
+pub(crate) enum BackendArg {
+    /// The system's output devices (cpal).
+    Default,
+    /// A silent device driven by a timer, for testing.
+    Null,
+}
+
 /// Audio formats.
 #[derive(Clone, Copy, Debug, ValueEnum)]
 pub(crate) enum FormatArg {
@@ -155,9 +204,16 @@ pub(crate) struct Quick {
     /// Write the generated spec to this file, to edit and reuse it.
     #[arg(long, value_name = "FILE")]
     pub(crate) spec_out: Option<PathBuf>,
-    /// Render to this audio file (.wav or .flac), with its manifest and cues.
+    /// Render to this audio file (.wav or .flac), with its manifest and cues, instead of
+    /// playing.
     #[arg(short, long, value_name = "FILE")]
     pub(crate) output: Option<PathBuf>,
+    /// The output device for playback, by name or ID; by default the system's.
+    #[arg(long)]
+    pub(crate) device: Option<String>,
+    /// The audio backend for playback: the system's devices, or `null`, a silent device.
+    #[arg(long, value_enum, env = "SONARITHM_BACKEND", default_value_t = BackendArg::Default)]
+    pub(crate) backend: BackendArg,
     #[command(flatten)]
     pub(crate) audio: Output,
     /// Exit with code 3 when there are warnings.
@@ -209,6 +265,19 @@ pub(crate) struct Migrate {
     /// Rewrite the file instead of printing the result.
     #[arg(long)]
     pub(crate) in_place: bool,
+}
+
+/// Parses a playback speed within the render graph's range.
+fn parse_speed(text: &str) -> Result<f64, String> {
+    let speed: f64 = text
+        .trim()
+        .parse()
+        .map_err(|_| format!("`{text}` is not a number"))?;
+    if (0.25..=4.0).contains(&speed) {
+        Ok(speed)
+    } else {
+        Err(format!("the speed must be between 0.25 and 4, not {speed}"))
+    }
 }
 
 /// Parses `LOW,HIGH`.

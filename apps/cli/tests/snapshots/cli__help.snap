@@ -12,10 +12,12 @@ Usage: sonarithm [OPTIONS] <COMMAND>
 
 Commands:
   render    Render a spec offline to WAV or FLAC, with its render manifest and cue sidecar
+  play      Play a spec in real time: space pauses, arrows step, q stops
+  devices   List the audio output devices
   validate  Check a spec: syntax, shape, meaning, and the defaults it will get
   inspect   Compile a spec; print the Score summary, a description and the diagnostics
   lint      Compile a spec and report its warnings with rule IDs (a stub until the perceptual lint arrives in C05)
-  quick     Sonify one data file with the default design: x along time, y as pitch
+  quick     Sonify one data file with the default design (x along time, y as pitch) and play it, or render it with -o
   schema    Print a JSON Schema
   spec      Work on spec files
   study     Run listening studies from a protocol file
