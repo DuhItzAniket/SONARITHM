@@ -110,9 +110,20 @@ pub(crate) fn has_code(compiled: &Compiled, code: &str) -> bool {
     compiled.diagnostics.iter().any(|d| d.code.as_str() == code)
 }
 
+/// The Score with every engine version written as `*`. The header records the crate
+/// versions (ADR-0013), so snapshots and pinned hashes of the raw Score would change with
+/// every release; this keeps them about the encoding.
+pub(crate) fn release_independent(score: &Score) -> Score {
+    let mut score = score.clone();
+    for version in score.header.engines.values_mut() {
+        *version = sonarithm_core::score::EngineVersion("*".to_owned());
+    }
+    score
+}
+
 /// The review form plus the engine diagnostics, for snapshots.
 pub(crate) fn review(compiled: &Compiled) -> String {
-    let mut text = compiled.score.review_json(&ReviewOptions::default());
+    let mut text = release_independent(&compiled.score).review_json(&ReviewOptions::default());
     text.push_str("\nNUMISONA diagnostics:\n");
     for line in engine_diagnostics(compiled) {
         text.push_str("- ");
