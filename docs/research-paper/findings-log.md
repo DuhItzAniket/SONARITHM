@@ -640,3 +640,12 @@ A05 (render engine, audio backends, export) uses F-050 to F-069.
 - **Evidence level / confidence:** EV-C / Moderate (one run per configuration, one machine, no 128-frame device buffer)
 - **Affects:** PB-02 (not declared met at 128 frames: HW-01's driver offers no 128-frame period, F-030; 0 underruns at the periods it offers; TODO(verify) on a device with 128-frame periods); testing-strategy §9.3; 06 §12; the null device's underrun model
 - **Papers:** P07
+
+### F-056 · The A05 render engine's golden cases are bit-identical on Linux, Windows and macOS CI runners, including AArch64
+
+- **Date:** 2026-10-21 · **Phase:** A05 · **Type:** benchmark · **Status:** new
+- **Statement:** `cargo xtask golden --compare` compared the Windows (CI-WIN, x86-64) and macOS (CI-MAC, AArch64) renders of the six golden cases with the Linux (CI-LNX) renders. Every case was identical: peak and RMS residual at the comparison's −240 dBFS floor, ΔLUFS 0.0000. The cases are the DS-006 benchmark Score (10 s), glide sweeps, every earcon kind, taps and short notes, a limiter stress chord and an ISO 226 compensation sweep. They exercise every A05 voice, the master limiter and seeded noise. This extends F-039 from the A02 spike to the shipped render path: the polynomial sine, plan-time `libm` and basic IEEE 754 arithmetic keep renders portable.
+- **Evidence:** [#178](https://github.com/DuhItzAniket/SONARITHM/pull/178), `golden-compare` job of CI run 39509526921 (step summary table); `golden` jobs on ubuntu, windows and macos in the same run
+- **Evidence level / confidence:** EV-C / Strong (three OSes, two architectures, six cases)
+- **Affects:** PB-06 (met); NFR-03; ADR-0013; OD-08 (hashes are enough as references)
+- **Papers:** P07

@@ -57,7 +57,7 @@
 | FR-091 | [07 TONALENS](../architecture/07-engines.md) | D01 | UT; EXP for H-04 | Planned |
 | FR-092 | [07 TONALENS](../architecture/07-engines.md) | D01 | GT | Planned |
 | FR-093 | [07 RESONUM](../architecture/07-engines.md) | D02 | GT, CD (pilot) | Planned |
-| FR-100 | [06 §7](../architecture/06-audio-engine.md#7-export) | A05 | GT, schema test (manifest), IT (decode round trip) | In progress: WAV and FLAC writers with lossless decode tests (A05-T07); render manifest validated against its generated schema, no absolute paths (A05-T08) |
+| FR-100 | [06 §7](../architecture/06-audio-engine.md#7-export) | A05 | GT, schema test (manifest), IT (decode round trip) | Done (A05): WAV and FLAC writers with lossless decode tests (A05-T07); render manifest validated against its generated schema, no absolute paths (A05-T08) |
 | FR-101 | [06 §7](../architecture/06-audio-engine.md#7-export) | A05, B03 | UT (VTT validity) | In progress: WebVTT sidecar of speech events and markers with a validity test; ffmpeg reads it (A05-T08); cue timing with AUDAXIS (B03) |
 | FR-102 | [06 §7](../architecture/06-audio-engine.md#7-export) | C04 | GT | Planned |
 | FR-110 | [12 §4](../architecture/12-cross-cutting-concerns.md#4-project-file-format) | B05 | IT (round trip, crash injection) | Planned |
@@ -79,14 +79,14 @@
 | FR-132 | [10 §4](../architecture/10-ingestion-and-extraction.md#4-ai-assistance-policy) | C05, D04 | UT; EXP for H-07 | Planned |
 | NFR-01 | [12 §8](../architecture/12-cross-cutting-concerns.md#8-performance-budgets) | A02 → C06 | BM | In progress: A02 spikes measured PB-01 (fails on Windows shared mode), PB-06, PB-08 and PB-09 (pass where measured); [A02 gate report](reviews/A02-prototype-gate.md#performance-budgets); A06 met PB-04 (35 ms for 100k rows × 4 tracks on HW-01, 54 ms on HW-01e; F-083). A05: PB-03 91–96× on HW-01 but 43–46× on HW-01e (F-053); PB-01 RAW shared loopback p95 104 ms (F-052); PB-02 0 underruns in 10-minute soaks at HW-01's 480- and 144-frame periods, not measurable at 128 frames on its driver (F-055) |
 | NFR-02 | [design/accessibility-conformance-plan](../design/accessibility-conformance-plan.md) | B02 → | AT, ACR, CD | Planned |
-| NFR-03 | [ADR-0013](../decisions/0013-determinism-and-provenance.md) | A05 | GT, PT | In progress: golden-audio harness and cross-OS CI jobs (A05-T11); block-size invariance and the real-time path checked bit for bit |
+| NFR-03 | [ADR-0013](../decisions/0013-determinism-and-provenance.md) | A05 | GT, PT | Done for the render path: six golden cases bit-identical on Linux, Windows and macOS (PB-06, F-056); block-size invariance and the real-time path checked bit for bit |
 | NFR-04 | [ADR-0012](../decisions/0012-privacy-and-telemetry.md) | B01 | IT (network-deny) | Planned |
 | NFR-05 | [12 §6](../architecture/12-cross-cutting-concerns.md#6-security-and-threat-model) | A01 → C06 | Fuzz, Scorecard, RV | Planned |
 | NFR-06 | [09 §6](../architecture/09-desktop-app.md#6-packaging) | A01 → C06 | CI matrix | Planned |
 | NFR-07 | [supply chain](../engineering/supply-chain-and-licensing.md) | A01 | cargo-deny, RV | Planned |
 | NFR-08 | [testing-strategy](../engineering/testing-strategy.md) | A03 → | CI | Planned |
 | NFR-09 | [12 §5](../architecture/12-cross-cutting-concerns.md#5-internationalization-and-localization) | B02 | Pseudo-locale CI | Planned |
-| NFR-10 | [06 §10](../architecture/06-audio-engine.md#10-hearing-safety-and-levels) | A05 | UT, GT | In progress: true-peak limiter and start-up ramp with acceptance tests against ebur128 (A05-T09, F-050) |
+| NFR-10 | [06 §10](../architecture/06-audio-engine.md#10-hearing-safety-and-levels) | A05 | UT, GT | Done (A05): true-peak limiter and start-up ramp with acceptance tests against ebur128 (A05-T09, F-050) |
 | NFR-11 | [09 §5](../architecture/09-desktop-app.md#5-persistence) | B05 | IT (fault injection) | Planned |
 | NFR-12 | [vision §8](../product/vision.md#8-success-measures) | A07, B07 | CD (observed sessions) | Planned |
 | NFR-13 | [research-paper/README](../research-paper/README.md) | A08 → | RV (findings log, preregistrations) | Planned |
