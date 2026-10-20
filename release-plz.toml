@@ -1,0 +1,134 @@
+# Release automation (docs/engineering/release-process.md, "Library release flow").
+# Keys checked against https://release-plz.dev/docs/config on 2026-10-21.
+#
+# On every push to `main`, release-plz opens or updates one release PR: the next version
+# from the Conventional Commits since the last tag (one version for every crate before
+# 1.0), the changelog entries (rendered by git-cliff, which release-plz embeds) and the
+# cargo-semver-checks findings. Merging that PR publishes the crates to crates.io with
+# trusted publishing, then creates the tag `vX.Y.Z[-pre]` and the GitHub release; the tag
+# starts `wheels.yml` (PyPI) and `release-binaries.yml` (CLI archives).
+#
+# The first release, v0.1.0-alpha, is prepared by hand: crates.io trusted publishing can
+# only be configured for a crate that exists, so the owner publishes each crate once
+# (release-process.md). release-plz takes over from the next release. Pre-release
+# identifiers (`-alpha`, `-beta`, `-rc.N`) are set by editing the version in the release
+# PR; release-plz keeps them for GitHub (`git_release_type = "auto"`).
+
+[workspace]
+# Release when the release PR merges, never on every push.
+release_always = false
+semver_check = true
+# Only workspace packages; Dependabot updates the other dependencies.
+dependencies_update = false
+pr_labels = ["release"]
+pr_branch_prefix = "release-plz-"
+# A Conventional Commit title with an allowed scope (pr-title.yml); the squash commit keeps
+# it, which is how the release job recognises a merged release PR.
+pr_name = "chore(release): {% if version %}v{{ version }}{% else %}the next version{% endif %}"
+# One tag and one GitHub release per version, made by the facade below; no per-crate tags.
+git_tag_enable = false
+git_release_enable = false
+# One changelog for the workspace (CHANGELOG.md), written through the facade below.
+changelog_update = false
+
+[changelog]
+# Keep a Changelog 1.1.0 sections, as CHANGELOG.md uses; entries read as user-facing
+# sentences because commit subjects do (git-workflow.md).
+body = """
+## [{{ version | trim_start_matches(pat="v") }}]\
+{%- if release_link %}({{ release_link }}){% endif %} - {{ timestamp | date(format="%Y-%m-%d") }}
+{% for group, commits in commits | group_by(attribute="group") %}
+### {{ group | striptags | trim | upper_first }}
+{% for commit in commits %}
+- {% if commit.scope %}{{ commit.scope }}: {% endif %}\
+{% if commit.breaking %}**Breaking:** {% endif %}\
+{{ commit.message | upper_first }}\
+{% endfor %}
+{% endfor %}
+"""
+trim = true
+protect_breaking_commits = true
+sort_commits = "oldest"
+tag_pattern = "^v[0-9]"
+commit_preprocessors = [
+  # Drop the "(#123)" squash suffix; the release notes link the PRs.
+  { pattern = '\s*\(#[0-9]+\)$', replace = "" },
+]
+commit_parsers = [
+  { message = "^feat", group = "<!-- 0 -->Added" },
+  { message = "^fix", group = "<!-- 4 -->Fixed" },
+  { message = "^perf", group = "<!-- 1 -->Changed" },
+  { message = "^refactor", group = "<!-- 1 -->Changed" },
+  { message = "^revert", group = "<!-- 1 -->Changed" },
+  { message = "^build\\(deps\\)", group = "<!-- 1 -->Changed" },
+  { body = "(?i)security", group = "<!-- 5 -->Security" },
+  { message = "^(docs|test|build|ci|chore|style|spike)", skip = true },
+]
+
+# The facade carries the tag, the GitHub release and the workspace changelog.
+[[package]]
+name = "sonarithm"
+version_group = "sonarithm"
+changelog_update = true
+changelog_path = "CHANGELOG.md"
+changelog_include = [
+  "sonarithm-core",
+  "sonarithm-spec",
+  "sonarithm-data",
+  "sonarithm-compiler",
+  "sonarithm-dsp",
+  "sonarithm-render",
+  "sonarithm-audio",
+  "sonarithm-export",
+  "sonarithm-numisona",
+  "sonarithm-echometric",
+  "sonarithm-cli",
+  "sonarithm-py",
+]
+git_tag_enable = true
+git_tag_name = "v{{ version }}"
+git_release_enable = true
+git_release_type = "auto"
+
+# Every other published crate shares the facade's version.
+[[package]]
+name = "sonarithm-core"
+version_group = "sonarithm"
+
+[[package]]
+name = "sonarithm-spec"
+version_group = "sonarithm"
+
+[[package]]
+name = "sonarithm-data"
+version_group = "sonarithm"
+
+[[package]]
+name = "sonarithm-compiler"
+version_group = "sonarithm"
+
+[[package]]
+name = "sonarithm-dsp"
+version_group = "sonarithm"
+
+[[package]]
+name = "sonarithm-render"
+version_group = "sonarithm"
+
+[[package]]
+name = "sonarithm-audio"
+version_group = "sonarithm"
+
+[[package]]
+name = "sonarithm-export"
+version_group = "sonarithm"
+
+[[package]]
+name = "sonarithm-numisona"
+version_group = "sonarithm"
+
+[[package]]
+name = "sonarithm-cli"
+version_group = "sonarithm"
+# A binary: no semver checks, which apply to libraries.
+semver_check = false

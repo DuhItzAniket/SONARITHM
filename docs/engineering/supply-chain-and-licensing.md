@@ -182,6 +182,20 @@ Adopted in A01-T13, following the [REUSE specification](https://reuse.software/s
 - **Fonts and icons:** the OFL texts and the Lucide ISC and Feather MIT notices.
 - The combined notices ship in the desktop app (About → Licenses), in Python wheels and with CLI binaries, and are attached to each release. They are regenerated in every release (see the [release checklist](release-process.md#release-checklist)).
 
+## Release tools
+
+The release workflows run these tools as CI binaries; none is a dependency of a SONARITHM crate or of the Python package. Licences checked on crates.io on 2026-10-21.
+
+| Tool | Version | Licence | Used in |
+|---|---|---|---|
+| release-plz (embeds git-cliff for the changelog) | 0.3.173, action v0.5.142 | MIT OR Apache-2.0 | `release-plz.yml` |
+| git-cliff | 2.14 (through release-plz) | MIT OR Apache-2.0 (relicensed from GPL-3.0 in 2023, so the GPL caution that applied earlier no longer does) | `release-plz.yml` |
+| cargo-semver-checks | 0.51 (through release-plz) | Apache-2.0 OR MIT | `release-plz.yml` |
+| maturin | 1.15 | MIT OR Apache-2.0 | `wheels.yml`, build backend in `bindings/python/pyproject.toml` |
+| cargo-auditable | 0.7 | MIT OR Apache-2.0 | `release-binaries.yml` |
+| cargo-cyclonedx | 0.5 | Apache-2.0 | `release-binaries.yml` |
+| cargo-about | latest through install-action | MIT OR Apache-2.0 | `release-binaries.yml` (`about.toml`, `about.hbs`) |
+
 ## SBOM, auditable binaries and provenance
 
 | Control | Tool | Applies to | From |

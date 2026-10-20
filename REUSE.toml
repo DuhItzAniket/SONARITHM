@@ -40,6 +40,7 @@ path = [
     ".editorconfig",
     ".github/CODEOWNERS",
     "bindings/python/python/sonarithm/py.typed",
+    "about.hbs",
 ]
 precedence = "closest"
 SPDX-FileCopyrightText = "2026 SONARITHM contributors"
