@@ -1,0 +1,16 @@
+---
+source: apps/cli/tests/cli.rs
+expression: rendered.transcript()
+---
+exit code: 0
+--- stdout
+Rendering temps.wav ...
+Wrote temps.wav: 3.25 seconds at 48000 Hz, -16.0 LUFS integrated, true peak -7.9 dBTP.
+Also wrote temps.render.json and temps.cues.vtt.
+--- stderr
+Context cues (ticks, reference tone, legend, earcons) are not available in this build; AUDAXIS arrives in B03.
+    Diagnostic severity: warning
+diagnostic help: Location: /context.
+diagnostic code: SNR-COMP-023
+
+note: --verbose lists the applied defaults and automatic choices.

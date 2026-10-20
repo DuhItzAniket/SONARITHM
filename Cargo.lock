@@ -2579,9 +2579,12 @@ dependencies = [
  "sonarithm-compiler",
  "sonarithm-core",
  "sonarithm-data",
+ "sonarithm-dsp",
+ "sonarithm-export",
  "sonarithm-numisona",
+ "sonarithm-render",
  "sonarithm-spec",
- "thiserror",
+ "thiserror 2.0.21",
 ]
 
 [[package]]

@@ -65,12 +65,16 @@ mod api;
 mod compiled;
 mod error;
 mod quick;
+mod render;
 mod spec;
 
 pub use api::{Builder, Datasets, Sonarithm};
 pub use compiled::{Compiled, Description, DiagnosticCounts, Summary, TrackSummary};
 pub use error::Error;
 pub use quick::{QUICK_DATASET, Quick};
+pub use render::{
+    AudioFormat, Normalization, RenderManifest, RenderOptions, Rendered, WavEncoding,
+};
 pub use spec::{Migration, Spec};
 
 pub use sonarithm_core::engine::{CancelToken, EngineManifest};

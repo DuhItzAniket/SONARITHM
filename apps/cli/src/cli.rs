@@ -32,6 +32,8 @@ pub(crate) struct Cli {
 
 #[derive(Debug, Subcommand)]
 pub(crate) enum Command {
+    /// Render a spec offline to WAV or FLAC, with its render manifest and cue sidecar.
+    Render(Render),
     /// Check a spec: syntax, shape, meaning, and the defaults it will get.
     Validate(Checked),
     /// Compile a spec; print the Score summary, a description and the diagnostics.
@@ -59,6 +61,55 @@ pub(crate) struct Checked {
     /// Also list the applied defaults and automatic choices (Info diagnostics).
     #[arg(long, short)]
     pub(crate) verbose: bool,
+}
+
+/// Output settings shared by `render` and `quick -o`.
+#[derive(Debug, Args)]
+pub(crate) struct Output {
+    /// The audio format; by default from the output file's extension (.wav or .flac).
+    #[arg(long, value_enum)]
+    pub(crate) format: Option<FormatArg>,
+    /// The sample rate in hertz; by default the spec's (48000).
+    #[arg(long, value_name = "HZ")]
+    pub(crate) sample_rate: Option<u32>,
+    /// Keep the rendered level instead of normalizing to the spec's loudness target.
+    #[arg(long)]
+    pub(crate) preserve_level: bool,
+    /// Do not write the cue sidecar (.cues.vtt).
+    #[arg(long)]
+    pub(crate) no_cues: bool,
+}
+
+#[derive(Debug, Args)]
+pub(crate) struct Render {
+    /// The spec file, or `-` for standard input.
+    pub(crate) spec: PathBuf,
+    /// The audio file to write; the manifest and cues go next to it.
+    #[arg(short, long, value_name = "FILE")]
+    pub(crate) output: PathBuf,
+    /// Read the data from this file instead of the spec's source.
+    #[arg(long, value_name = "FILE")]
+    pub(crate) data: Option<PathBuf>,
+    /// The seed of every random stream, instead of the spec's.
+    #[arg(long)]
+    pub(crate) seed: Option<u64>,
+    #[command(flatten)]
+    pub(crate) audio: Output,
+    /// Exit with code 3, writing nothing, when the compile has warnings.
+    #[arg(long)]
+    pub(crate) deny_warnings: bool,
+    /// Also list the applied defaults and automatic choices.
+    #[arg(long, short)]
+    pub(crate) verbose: bool,
+}
+
+/// Audio formats.
+#[derive(Clone, Copy, Debug, ValueEnum)]
+pub(crate) enum FormatArg {
+    /// RIFF WAVE, 24-bit PCM.
+    Wav,
+    /// FLAC, 24-bit.
+    Flac,
 }
 
 #[derive(Debug, Args)]
@@ -98,6 +149,11 @@ pub(crate) struct Quick {
     /// Write the generated spec to this file, to edit and reuse it.
     #[arg(long, value_name = "FILE")]
     pub(crate) spec_out: Option<PathBuf>,
+    /// Render to this audio file (.wav or .flac), with its manifest and cues.
+    #[arg(short, long, value_name = "FILE")]
+    pub(crate) output: Option<PathBuf>,
+    #[command(flatten)]
+    pub(crate) audio: Output,
     /// Exit with code 3 when there are warnings.
     #[arg(long)]
     pub(crate) deny_warnings: bool,

@@ -56,6 +56,13 @@ impl Compiled {
         &self.inner.canonical_spec
     }
 
+    /// The share of data rows in each provenance class (03 §4), as the render manifest
+    /// records it, such as `{"exact": 1.0}`.
+    #[must_use]
+    pub fn provenance(&self) -> &BTreeMap<String, f64> {
+        &self.inner.provenance
+    }
+
     /// The spec's name in messages, such as `temps.spec.json`.
     #[must_use]
     pub fn spec_name(&self) -> &str {

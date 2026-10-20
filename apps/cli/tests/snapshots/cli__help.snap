@@ -11,6 +11,7 @@ Exit codes: 0 success, 1 errors, 2 usage, 3 warnings denied. Every command accep
 Usage: sonarithm [OPTIONS] <COMMAND>
 
 Commands:
+  render    Render a spec offline to WAV or FLAC, with its render manifest and cue sidecar
   validate  Check a spec: syntax, shape, meaning, and the defaults it will get
   inspect   Compile a spec; print the Score summary, a description and the diagnostics
   lint      Compile a spec and report its warnings with rule IDs (a stub until the perceptual lint arrives in C05)

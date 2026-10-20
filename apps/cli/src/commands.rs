@@ -11,14 +11,21 @@ use std::path::{Component, Path, PathBuf};
 use serde::Serialize;
 use serde_json::{Value, json};
 use sonarithm::score::{Score, ScoreEvent};
-use sonarithm::{Compiled, Diagnostics, Mark, SchemaKind, Severity, Sonarithm, Spec};
+use sonarithm::{
+    AudioFormat, Compiled, Diagnostics, Mark, Normalization, RenderManifest, RenderOptions,
+    Rendered, SchemaKind, Severity, Sonarithm, Spec, WavEncoding,
+};
 
-use crate::cli::{Checked, Command, Inspect, MarkArg, Migrate, Quick, Schema, SpecCommand};
+use crate::cli::{
+    Checked, Command, FormatArg, Inspect, MarkArg, Migrate, Output, Quick, Render, Schema,
+    SpecCommand,
+};
 use crate::output::{Counts, Exit, Out, counts, error, json_value, line, raw, shown};
 
 /// Runs the parsed command line.
 pub(crate) fn run(command: &Command, out: Out) -> Exit {
     match command {
+        Command::Render(args) => render(args, out),
         Command::Validate(args) => validate(args, out),
         Command::Inspect(args) => inspect(args, out),
         Command::Lint(args) => lint(args, out),
@@ -58,8 +65,10 @@ fn read_source(path: &Path) -> Result<Source, String> {
     let name = file_name(path);
     let text =
         std::fs::read_to_string(path).map_err(|err| format!("`{name}` cannot be read: {err}"))?;
+    // A bare file name has the empty path as its parent: the current directory.
     let base = path
         .parent()
+        .filter(|dir| !dir.as_os_str().is_empty())
         .map_or_else(|| PathBuf::from("."), Path::to_path_buf);
     Ok(Source { name, text, base })
 }
@@ -373,6 +382,187 @@ fn event_line(event: &ScoreEvent) -> String {
     }
 }
 
+/// The render options a command line asks for.
+fn render_options(audio: &Output) -> RenderOptions {
+    let mut options = RenderOptions::new();
+    if let Some(format) = audio.format {
+        options = options.with_format(match format {
+            FormatArg::Wav => AudioFormat::Wav(WavEncoding::Pcm24),
+            FormatArg::Flac => AudioFormat::Flac,
+        });
+    }
+    if let Some(hz) = audio.sample_rate {
+        options = options.with_sample_rate(hz);
+    }
+    if audio.preserve_level {
+        options = options.with_normalization(Normalization::Preserve);
+    }
+    if audio.no_cues {
+        options = options.without_cues();
+    }
+    options
+}
+
+/// What `render` and `quick -o` print in JSON.
+#[derive(Serialize)]
+struct RenderedJson<'a> {
+    audio: &'a str,
+    manifest_file: String,
+    cues: Option<String>,
+    manifest: &'a RenderManifest,
+}
+
+impl<'a> RenderedJson<'a> {
+    fn of(rendered: &'a Rendered) -> Self {
+        Self {
+            audio: &rendered.manifest.output.file,
+            manifest_file: file_name(&rendered.manifest_path),
+            cues: rendered.cues.as_deref().map(file_name),
+            manifest: &rendered.manifest,
+        }
+    }
+}
+
+/// Renders `compiled` to `path`, announcing it as a text line first (11 §2: progress as
+/// text lines, never a spinner).
+fn write_audio_files(
+    out: Out,
+    compiled: &Compiled,
+    path: &Path,
+    audio: &Output,
+) -> Result<Rendered, String> {
+    if !out.json() {
+        line(format!("Rendering {} ...", file_name(path)));
+    }
+    Sonarithm::new()
+        .render_to_file(compiled, path, &render_options(audio))
+        .map_err(|err| err.to_string())
+}
+
+/// "Wrote temps.flac: 3.25 seconds at 48000 Hz, -16.0 LUFS, true peak -9.1 dBTP. Also
+/// wrote temps.render.json and temps.cues.vtt."
+fn print_rendered(rendered: &Rendered) {
+    let manifest = &rendered.manifest;
+    let output = &manifest.output;
+    let loudness = output.integrated_lufs.map_or_else(
+        || "silent".to_owned(),
+        |lufs| format!("{lufs:.1} LUFS integrated"),
+    );
+    line(format!(
+        "Wrote {}: {:.2} seconds at {} Hz, {loudness}, true peak {:.1} dBTP.",
+        output.file, manifest.render.duration_s, manifest.render.sample_rate, output.true_peak_dbtp
+    ));
+    let mut also = vec![file_name(&rendered.manifest_path)];
+    if let Some(cues) = &rendered.cues {
+        also.push(file_name(cues));
+    }
+    line(format!("Also wrote {}.", also.join(" and ")));
+    if output.limited_frames > 0 {
+        line(format!(
+            "The master limiter reduced the level in {} frames.",
+            output.limited_frames
+        ));
+    }
+}
+
+#[derive(Serialize)]
+struct RenderJson<'a> {
+    spec: &'a str,
+    ok: bool,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    rendered: Option<RenderedJson<'a>>,
+    counts: Counts,
+    diagnostics: &'a Diagnostics,
+}
+
+/// The spec with the command line's data file and seed applied.
+fn overridden(source: &Source, data: Option<&Path>, seed: Option<u64>) -> Result<Spec, Failed> {
+    let spec = source.spec().map_err(Failed::Diagnostics)?;
+    if data.is_none() && seed.is_none() {
+        return Ok(spec);
+    }
+    let mut value: Value = serde_json::from_str(spec.text())
+        .map_err(|err| Failed::Message(format!("{} is not JSON: {err}", source.name)))?;
+    if let Some(seed) = seed {
+        value["seed"] = json!(seed);
+    }
+    if let Some(data) = data {
+        let relative = relative_path(&source.base, data).ok_or_else(|| {
+            Failed::Message(format!(
+                "`{}` cannot be read, or cannot be named relative to the spec (on another drive)",
+                file_name(data)
+            ))
+        })?;
+        value["data"]["source"] = json!({ "kind": "file", "path": relative });
+    }
+    Ok(Spec::from_value(&value)
+        .with_name(&source.name)
+        .with_base_dir(&source.base))
+}
+
+fn render(args: &Render, out: Out) -> Exit {
+    let source = match read_source(&args.spec) {
+        Ok(source) => source,
+        Err(message) => return unreadable(out, &file_name(&args.spec), &message),
+    };
+    let compiled = overridden(&source, args.data.as_deref(), args.seed)
+        .and_then(|spec| Ok(Sonarithm::new().compile(&spec)?));
+    let (compiled, mut diagnostics) = match compiled {
+        Ok(compiled) => {
+            let diagnostics = compiled.diagnostics().clone();
+            (Some(compiled), diagnostics)
+        }
+        Err(Failed::Diagnostics(diagnostics)) => (None, diagnostics),
+        Err(Failed::Message(message)) => return unreadable(out, &source.name, &message),
+    };
+    let mut exit = Exit::of(&diagnostics, args.deny_warnings);
+    let mut rendered = None;
+    if let (Some(compiled), Exit::Success) = (&compiled, exit) {
+        match write_audio_files(out, compiled, &args.output, &args.audio) {
+            Ok(done) => {
+                diagnostics.extend(done.diagnostics.clone());
+                rendered = Some(done);
+            }
+            Err(message) => {
+                if out.json() {
+                    json_value(
+                        &json!({ "spec": source.name, "ok": false, "error": message, "diagnostics": diagnostics }),
+                    );
+                } else {
+                    error(&message);
+                }
+                return Exit::Errors;
+            }
+        }
+        exit = Exit::of(&diagnostics, args.deny_warnings);
+    }
+    if out.json() {
+        json_value(&RenderJson {
+            spec: &source.name,
+            ok: rendered.is_some(),
+            rendered: rendered.as_ref().map(RenderedJson::of),
+            counts: Counts::of(&diagnostics),
+            diagnostics: &diagnostics,
+        });
+        return exit;
+    }
+    match &rendered {
+        Some(rendered) => print_rendered(rendered),
+        None if compiled.is_some() => line(format!(
+            "{} has warnings and --deny-warnings is set; nothing was written.",
+            source.name
+        )),
+        None => line(format!(
+            "{} did not compile: {}.",
+            source.name,
+            counts(&diagnostics)
+        )),
+    }
+    out.diagnostics(&source.name, &source.text, &diagnostics, args.verbose);
+    hint_verbose(out, &diagnostics, args.verbose);
+    exit
+}
+
 #[derive(Serialize)]
 struct Linted<'a> {
     spec: &'a str,
@@ -418,6 +608,8 @@ struct Quicked<'a> {
     data: &'a str,
     spec: &'a str,
     spec_written: Option<&'a str>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    rendered: Option<RenderedJson<'a>>,
     ok: bool,
     summary: Option<sonarithm::Summary>,
     description: Option<sonarithm::Description>,
@@ -473,13 +665,26 @@ fn quick(args: &Quick, out: Out) -> Exit {
         Ok(compiled) => compiled.diagnostics().clone(),
         Err(diagnostics) => diagnostics.clone(),
     };
-    let exit = Exit::of(&diagnostics, args.deny_warnings);
+    let mut diagnostics = diagnostics;
+    let mut exit = Exit::of(&diagnostics, args.deny_warnings);
+    let mut rendered = None;
+    if let (Some(path), Ok(compiled), Exit::Success) = (&args.output, &compiled, exit) {
+        match write_audio_files(out, compiled, path, &args.audio) {
+            Ok(done) => {
+                diagnostics.extend(done.diagnostics.clone());
+                rendered = Some(done);
+            }
+            Err(message) => return unreadable(out, &data_name, &message),
+        }
+        exit = Exit::of(&diagnostics, args.deny_warnings);
+    }
     if out.json() {
         let compiled = compiled.as_ref().ok();
         json_value(&Quicked {
             data: &data_name,
             spec: spec.name(),
             spec_written: written.as_deref(),
+            rendered: rendered.as_ref().map(RenderedJson::of),
             ok: compiled.is_some(),
             summary: compiled.map(Compiled::summary),
             description: compiled.map(Compiled::describe),
@@ -496,6 +701,13 @@ fn quick(args: &Quick, out: Out) -> Exit {
             print_summary(compiled);
             line("Description:");
             raw(&compiled.describe().to_string());
+            match &rendered {
+                Some(rendered) => print_rendered(rendered),
+                None if args.output.is_none() => out.note(
+                    "playback arrives with the audio backend (A05); use -o FILE.flac to render a file.",
+                ),
+                None => {}
+            }
         }
         Err(_) => line(format!(
             "{} did not compile: {}.",

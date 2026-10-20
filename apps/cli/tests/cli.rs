@@ -331,3 +331,165 @@ fn spec_migrate_reports_what_it_did() {
     );
     assert_eq!(run(&["spec", "migrate", "--in-place", "-"]).code, 2);
 }
+
+fn render_dir(name: &str) -> PathBuf {
+    let dir = PathBuf::from(env!("CARGO_TARGET_TMPDIR"))
+        .join("cli-render")
+        .join(name);
+    let _ = std::fs::remove_dir_all(&dir);
+    std::fs::create_dir_all(&dir).unwrap();
+    dir
+}
+
+#[test]
+fn render_writes_audio_manifest_and_cues() {
+    let dir = render_dir("plain");
+    let wav = dir.join("temps.wav");
+    let rendered = run(&[
+        "--plain",
+        "render",
+        "temps.spec.json",
+        "-o",
+        wav.to_str().unwrap(),
+    ]);
+    assert_eq!(rendered.code, 0, "{}", rendered.transcript());
+    assert_linear(&rendered);
+    for file in ["temps.wav", "temps.render.json", "temps.cues.vtt"] {
+        assert!(dir.join(file).is_file(), "{file}");
+    }
+    assert!(!rendered.stdout.contains("cli-render"), "file names only");
+    snapshot!("render_plain", rendered);
+    let manifest = std::fs::read_to_string(dir.join("temps.render.json")).unwrap();
+    assert!(
+        !manifest.contains("cli-render") && !manifest.contains("fixtures"),
+        "no user paths"
+    );
+}
+
+#[test]
+fn render_json_carries_the_manifest_and_the_bytes_match_the_facade() {
+    let dir = render_dir("json");
+    let flac = dir.join("temps.flac");
+    let json = run(&[
+        "--json",
+        "render",
+        "temps.spec.json",
+        "-o",
+        flac.to_str().unwrap(),
+    ]);
+    assert_eq!(json.code, 0, "{}", json.transcript());
+    assert!(json.stderr.is_empty(), "{}", json.stderr);
+    let value = json.json();
+    assert_eq!(value["ok"], true);
+    assert_eq!(value["rendered"]["audio"], "temps.flac");
+    assert_eq!(value["rendered"]["manifest_file"], "temps.render.json");
+    assert_eq!(value["rendered"]["manifest"]["output"]["format"], "flac");
+
+    let wav = dir.join("t.wav");
+    assert_eq!(
+        run(&["render", "temps.spec.json", "-o", wav.to_str().unwrap()]).code,
+        0
+    );
+    let spec = sonarithm::Spec::from_file(fixtures().join("temps.spec.json")).unwrap();
+    let snr = sonarithm::Sonarithm::new();
+    let compiled = snr.compile(&spec).unwrap();
+    let (bytes, _) = snr
+        .render_wav(&compiled, &sonarithm::RenderOptions::default())
+        .unwrap();
+    assert_eq!(
+        std::fs::read(&wav).unwrap(),
+        bytes,
+        "the CLI writes the facade's bytes"
+    );
+}
+
+#[test]
+fn render_options_reach_the_manifest() {
+    let dir = render_dir("options");
+    std::fs::copy(fixtures().join("temps.csv"), dir.join("other.csv")).unwrap();
+    let wav = dir.join("t.wav");
+    let other = dir.join("other.csv");
+    let json = run(&[
+        "--json",
+        "render",
+        "temps.spec.json",
+        "-o",
+        wav.to_str().unwrap(),
+        "--seed",
+        "7",
+        "--sample-rate",
+        "44100",
+        "--data",
+        other.to_str().unwrap(),
+        "--no-cues",
+        "--preserve-level",
+    ]);
+    assert_eq!(json.code, 0, "{}", json.transcript());
+    let manifest = &json.json()["rendered"]["manifest"];
+    assert_eq!(manifest["render"]["seed"], 7);
+    assert_eq!(manifest["render"]["sampleRate"], 44_100);
+    assert_eq!(manifest["data"]["source"]["name"], "other.csv");
+    assert_eq!(manifest["output"]["gainDb"], 0.0, "the level is kept");
+    assert!(manifest["cues"].is_null());
+    assert!(!dir.join("t.cues.vtt").exists());
+}
+
+#[test]
+fn render_with_denied_warnings_writes_nothing() {
+    let dir = render_dir("denied");
+    let wav = dir.join("t.wav");
+    let denied = run(&[
+        "--plain",
+        "render",
+        "--deny-warnings",
+        "temps.spec.json",
+        "-o",
+        wav.to_str().unwrap(),
+    ]);
+    assert_eq!(denied.code, 3, "{}", denied.transcript());
+    assert!(
+        denied.stdout.contains("nothing was written"),
+        "{}",
+        denied.stdout
+    );
+    assert!(!wav.exists());
+    let mp3 = run(&[
+        "--plain",
+        "render",
+        "temps.spec.json",
+        "-o",
+        dir.join("t.mp3").to_str().unwrap(),
+    ]);
+    assert_eq!(mp3.code, 1);
+    assert!(mp3.stderr.contains(".wav or .flac"), "{}", mp3.stderr);
+    let invalid = run(&[
+        "--plain",
+        "render",
+        "invalid.spec.json",
+        "-o",
+        wav.to_str().unwrap(),
+    ]);
+    assert_eq!(invalid.code, 1);
+}
+
+#[test]
+fn quick_renders_with_output() {
+    let dir = render_dir("quick");
+    let flac = dir.join("anomaly.flac");
+    let quick = run(&[
+        "--plain",
+        "quick",
+        "temps.csv",
+        "-o",
+        flac.to_str().unwrap(),
+    ]);
+    assert_eq!(quick.code, 0, "{}", quick.transcript());
+    assert!(
+        quick.stdout.contains("Wrote anomaly.flac"),
+        "{}",
+        quick.stdout
+    );
+    assert!(dir.join("anomaly.render.json").is_file());
+    let json = run(&["--json", "quick", "temps.csv", "-o", flac.to_str().unwrap()]);
+    assert_eq!(json.json()["rendered"]["audio"], "anomaly.flac");
+}

@@ -42,6 +42,9 @@ pub enum Error {
     /// `quick` was asked to compile without data.
     #[error("quick needs data: call `data_file` or `data` first")]
     NoData,
+    /// Rendering failed: an unsupported output path, or a file that cannot be written.
+    #[error("the render failed: {0}")]
+    Render(String),
     /// The Score could not be written in its canonical form (a non-finite number).
     #[error("the Score has no canonical form: {0}")]
     Canonical(String),
