@@ -66,11 +66,11 @@ The gallery re-creates classic designs from committed specs (roadmap A08). It is
 
 | Item | Source design | What must match | Phase |
 |---|---|---|---|
-| Context cues | Smith & Walker (2005): 20 tones of 0.5 s, 40 ms ramps, sine data tones 200–1900 Hz, triangle-wave dynamic reference, 10 ms clicks | Timing, pitch mapping, reference behaviour | A08 |
-| Density and reversals | Nees & Walker (2008): 1, 2, 4 and 8 points/s with varying trend reversals | Rates and reversal structure | A08 |
-| Transit signals | Tucker Brown et al. (2022): SNR-controlled transit-like light curves, SNR 3–100 | SNR definition and levels | A08 |
+| Context cues | Smith & Walker (2005): 20 tones of 0.5 s, 40 ms ramps, sine data tones 200–1900 Hz, triangle-wave dynamic reference, 10 ms clicks | Timing, pitch mapping, reference behaviour | A08 ([replication/smith-walker-2005](../../replication/smith-walker-2005/README.md)) |
+| Density and reversals | Nees & Walker (2008): 1, 2, 4 and 8 points/s with 0, 1, 2 and 3 trend reversals | Rates and reversal structure | A08 ([replication/nees-walker-2008](../../replication/nees-walker-2008/README.md)) |
+| Transit signals | Tucker Brown et al. (2022): SNR-controlled transit-like light curves, SNR 3–100 | SNR definition and levels | A08 ([replication/tucker-brown-2022](../../replication/tucker-brown-2022/README.md)) |
 | Audification | Dombois (2001): resampling seismograms at 2,200×, no pitch shift | Speed-up factor, resulting band, duration T/k | A08 (CURVASONA voice in C03) |
-| Erie examples | Erie gallery subset (Kim, Kim & Hullman 2024) | Encodings imported and rendered from the Erie spec | A06–A08 |
+| Erie examples | Erie gallery subset (Kim, Kim & Hullman 2024) | Encodings imported and rendered from the Erie spec | A06–A08 ([replication/erie](../../replication/erie/README.md)) |
 | Polarity presets | Walker (2007) concept table | Concept-table defaults and flip | A06 |
 | Granular uncertainty | Williamson & Murray-Smith (2005): 80–300 ms grains, 100–1,000 active | Grain parameters | D01 |
 | Crystallization | Hermann & Ritter (2002) | Model behaviour on a reference dataset | D02 |

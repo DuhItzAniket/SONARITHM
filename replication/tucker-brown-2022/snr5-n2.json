@@ -1,0 +1,67 @@
+{
+  "data": {
+    "fields": {
+      "flux": {
+        "label": "Brightness",
+        "type": "quantitative"
+      },
+      "t": {
+        "label": "Time",
+        "role": "x",
+        "type": "quantitative"
+      }
+    },
+    "source": {
+      "format": "csv",
+      "kind": "file",
+      "path": "data/snr5-n2.csv"
+    }
+  },
+  "description": "A 1000-point light curve with box-shaped transits in Gaussian noise, one tone per point every 0.01 s, flux mapped linearly onto 440-880 Hz. Replication gallery, A08.",
+  "mode": "analysis",
+  "name": "Tucker Brown et al. (2022): SNR 5, 2 transits",
+  "seed": 20261024,
+  "specVersion": "0.1",
+  "substrate": {
+    "time": {
+      "field": "t",
+      "pace": {
+        "secondsPerUnit": 0.01
+      }
+    }
+  },
+  "tracks": [
+    {
+      "channels": {
+        "duration": {
+          "value": {
+            "s": 0.2
+          }
+        },
+        "loudness": {
+          "value": {
+            "db": -24
+          }
+        },
+        "pitch": {
+          "field": "flux",
+          "polarity": "positive",
+          "range": {
+            "hz": [
+              440,
+              880
+            ]
+          },
+          "scale": {
+            "domain": "auto",
+            "type": "linear"
+          },
+          "space": "linear-frequency"
+        }
+      },
+      "id": "flux",
+      "instrument": "sine",
+      "mark": "tone"
+    }
+  ]
+}

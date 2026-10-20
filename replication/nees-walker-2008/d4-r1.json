@@ -1,0 +1,77 @@
+{
+  "data": {
+    "fields": {
+      "hour": {
+        "label": "Hour of the day",
+        "type": "quantitative",
+        "unit": "h"
+      },
+      "price": {
+        "concept": "money",
+        "label": "Price",
+        "type": "quantitative",
+        "unit": "$"
+      },
+      "t": {
+        "label": "Time",
+        "role": "x",
+        "type": "quantitative",
+        "unit": "s"
+      }
+    },
+    "source": {
+      "format": "csv",
+      "kind": "file",
+      "path": "data/d4-r1.csv"
+    }
+  },
+  "description": "A stock price over a ten-hour day at one second per hour, as 125 ms tones from $6 (G2) to $106 (B6). Replication gallery, A08.",
+  "mode": "analysis",
+  "name": "Nees & Walker (2008): 4 points/s, 1 reversal",
+  "seed": 20261019,
+  "specVersion": "0.1",
+  "substrate": {
+    "time": {
+      "field": "t",
+      "pace": {
+        "secondsPerUnit": 1
+      }
+    }
+  },
+  "tracks": [
+    {
+      "channels": {
+        "duration": {
+          "value": {
+            "s": 0.125
+          }
+        },
+        "loudness": {
+          "value": {
+            "db": -18
+          }
+        },
+        "pitch": {
+          "field": "price",
+          "polarity": "positive",
+          "range": {
+            "midi": [
+              43,
+              95
+            ]
+          },
+          "scale": {
+            "domain": [
+              6,
+              106
+            ],
+            "type": "linear"
+          },
+          "space": "log-frequency"
+        }
+      },
+      "id": "price",
+      "mark": "tone"
+    }
+  ]
+}

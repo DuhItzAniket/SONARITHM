@@ -1,0 +1,106 @@
+{
+  "specVersion": "0.1",
+  "name": "Smith & Walker (2005), Study 1: x-axis clicks",
+  "description": "One stock over a ten-hour trading day, two prices per hour, as 20 sine tones of 0.5 s; dollars map to pitch by $ = 0.0765 f^0.9256. Replication gallery, A08.",
+  "mode": "analysis",
+  "seed": 20261019,
+  "data": {
+    "source": {
+      "kind": "file",
+      "path": "data.csv",
+      "format": "csv"
+    },
+    "fields": {
+      "t": {
+        "type": "quantitative",
+        "role": "x",
+        "unit": "s",
+        "label": "Time"
+      },
+      "hour": {
+        "type": "quantitative",
+        "unit": "h",
+        "label": "Hour of the day"
+      },
+      "price": {
+        "type": "quantitative",
+        "unit": "$",
+        "concept": "money",
+        "label": "Price"
+      }
+    }
+  },
+  "substrate": {
+    "time": {
+      "field": "t",
+      "pace": {
+        "secondsPerUnit": 1
+      }
+    }
+  },
+  "tracks": [
+    {
+      "id": "price",
+      "mark": "tone",
+      "instrument": "sine",
+      "filter": {
+        "expr": "hour < 18.0"
+      },
+      "channels": {
+        "pitch": {
+          "field": "price",
+          "scale": {
+            "type": "psychophysical",
+            "exponent": 0.9256,
+            "reference": {
+              "value": 50,
+              "hz": 1100.535
+            }
+          },
+          "range": {
+            "hz": [
+              190,
+              1930
+            ]
+          },
+          "polarity": "positive"
+        },
+        "duration": {
+          "value": {
+            "s": 0.5
+          }
+        },
+        "loudness": {
+          "value": {
+            "db": -18
+          }
+        }
+      }
+    },
+    {
+      "id": "clicks",
+      "mark": "tone",
+      "instrument": "square",
+      "filter": {
+        "expr": "click == 1 && hour < 18.0"
+      },
+      "channels": {
+        "pitch": {
+          "value": {
+            "hz": 3000
+          }
+        },
+        "duration": {
+          "value": {
+            "s": 0.01
+          }
+        },
+        "loudness": {
+          "value": {
+            "db": -24
+          }
+        }
+      }
+    }
+  ]
+}

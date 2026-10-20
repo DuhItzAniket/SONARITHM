@@ -658,3 +658,12 @@ A05 (render engine, audio backends, export) uses F-050 to F-069.
 - **Evidence level / confidence:** EV-C / Strong (three OSes, two architectures, six cases)
 - **Affects:** PB-06 (met); NFR-03; ADR-0013; OD-08 (hashes are enough as references)
 - **Papers:** P07
+
+### F-114 · The replication gallery reproduces every stated pitch, timing and count of four published designs, except short ramps and broadband clicks
+
+- **Date:** 2026-10-21 · **Phase:** A08 · **Type:** engineering · **Status:** new
+- **Statement:** From committed specs, SONARITHM renders 49 replication-gallery items whose stated parameters match the published designs: Smith & Walker (2005) as 20 sine tones of 0.5 s at 193.40–1927.63 Hz (the exact image of $10–$84 under $ = 0.0765·f^0.9256), 10 hour clicks and static or dynamic triangle references; Nees & Walker (2008) as 11, 21, 41 and 81 tones of 125 ms at 98.00–1975.53 Hz over 10.125 s; Tucker Brown et al. (2022) as 1000 tones of 0.2 s every 0.01 s at 440–880 Hz over 10.19 s, at SNRs within 3% of nominal; and nine imported Erie specs. Two published details cannot be reproduced with spec v0.1 and the A05 renderer: note ramps are min(40 ms, 25% of the note) and at least 5 ms (SDR-22), so Nees & Walker's 10 ms ramps become 31.25 ms; and there is no noise source, so Smith & Walker's 10 ms broadband clicks become 10 ms square-wave notes at 3 kHz. Their piano is a mallet timbre.
+- **Evidence:** A08-T02 PR; `replication/*/manifests.json` (track summaries from the Score) and each group's README; `cargo xtask replication`; `sonarithm_dsp::env::note_ramp`
+- **Evidence level / confidence:** EV-C / Strong for the reproduced values; the published values are EV-L (F-110 to F-112)
+- **Affects:** CL-04; SDR-16, SDR-22, SDR-29; candidate spec minor version (envelope settings) and a noise or click source in the DSP; P01 §6.1
+- **Papers:** P01

@@ -1,0 +1,2510 @@
+{
+  "d1-r0": {
+    "generator": "GEN-001",
+    "generator_version": 1,
+    "basis": "nees2008density",
+    "seed": 20261019,
+    "params": {
+      "generator": "GEN-001",
+      "rate": 1.0,
+      "reversals": 0,
+      "hours": 10,
+      "range": [
+        6.0,
+        106.0
+      ],
+      "shape": "schematic",
+      "start": "up",
+      "min-segment": 2,
+      "noise": 0.0,
+      "queries": 11,
+      "trend-queries": 10
+    },
+    "rows": 11,
+    "columns": [
+      "t",
+      "hour",
+      "price"
+    ],
+    "table_sha256": "a7c7de234a4f7df830d85ce24ed0a8d6e850ae85c84f04d827a2c984181cc899",
+    "truth": {
+      "kind": "reversals",
+      "reversals": 0,
+      "segments": [
+        "up"
+      ],
+      "turning-rows": [],
+      "queries": [
+        {
+          "row": 1,
+          "x": 9.0,
+          "value": 16.0
+        },
+        {
+          "row": 6,
+          "x": 14.0,
+          "value": 66.0
+        },
+        {
+          "row": 3,
+          "x": 11.0,
+          "value": 36.0
+        },
+        {
+          "row": 0,
+          "x": 8.0,
+          "value": 6.0
+        },
+        {
+          "row": 8,
+          "x": 16.0,
+          "value": 86.0
+        },
+        {
+          "row": 10,
+          "x": 18.0,
+          "value": 106.0
+        },
+        {
+          "row": 2,
+          "x": 10.0,
+          "value": 26.0
+        },
+        {
+          "row": 5,
+          "x": 13.0,
+          "value": 56.0
+        },
+        {
+          "row": 9,
+          "x": 17.0,
+          "value": 96.0
+        },
+        {
+          "row": 4,
+          "x": 12.0,
+          "value": 46.0
+        },
+        {
+          "row": 7,
+          "x": 15.0,
+          "value": 76.0
+        }
+      ],
+      "trend-queries": [
+        {
+          "from": 9.0,
+          "to": 10.0,
+          "answer": "increased"
+        },
+        {
+          "from": 15.0,
+          "to": 16.0,
+          "answer": "increased"
+        },
+        {
+          "from": 11.0,
+          "to": 12.0,
+          "answer": "increased"
+        },
+        {
+          "from": 12.0,
+          "to": 13.0,
+          "answer": "increased"
+        },
+        {
+          "from": 13.0,
+          "to": 14.0,
+          "answer": "increased"
+        },
+        {
+          "from": 8.0,
+          "to": 9.0,
+          "answer": "increased"
+        },
+        {
+          "from": 10.0,
+          "to": 11.0,
+          "answer": "increased"
+        },
+        {
+          "from": 17.0,
+          "to": 18.0,
+          "answer": "increased"
+        },
+        {
+          "from": 16.0,
+          "to": 17.0,
+          "answer": "increased"
+        },
+        {
+          "from": 14.0,
+          "to": 15.0,
+          "answer": "increased"
+        }
+      ]
+    },
+    "notes": [
+      {
+        "deviation": {
+          "detail": "Nees & Walker (2008) publish no generating function; the shape is read from their schematic Fig. 1"
+        }
+      }
+    ]
+  },
+  "d1-r1": {
+    "generator": "GEN-001",
+    "generator_version": 1,
+    "basis": "nees2008density",
+    "seed": 20261019,
+    "params": {
+      "generator": "GEN-001",
+      "rate": 1.0,
+      "reversals": 1,
+      "hours": 10,
+      "range": [
+        6.0,
+        106.0
+      ],
+      "shape": "schematic",
+      "start": "up",
+      "min-segment": 2,
+      "noise": 0.0,
+      "queries": 11,
+      "trend-queries": 10
+    },
+    "rows": 11,
+    "columns": [
+      "t",
+      "hour",
+      "price"
+    ],
+    "table_sha256": "2c792ef9ed130f4135313ae4f70d327d1121deed7d10946b6ecd4c4a7771dc83",
+    "truth": {
+      "kind": "reversals",
+      "reversals": 1,
+      "segments": [
+        "up",
+        "down"
+      ],
+      "turning-rows": [
+        5
+      ],
+      "queries": [
+        {
+          "row": 1,
+          "x": 9.0,
+          "value": 15.55
+        },
+        {
+          "row": 6,
+          "x": 14.0,
+          "value": 96.45
+        },
+        {
+          "row": 3,
+          "x": 11.0,
+          "value": 71.45
+        },
+        {
+          "row": 0,
+          "x": 8.0,
+          "value": 6.0
+        },
+        {
+          "row": 8,
+          "x": 16.0,
+          "value": 40.55
+        },
+        {
+          "row": 10,
+          "x": 18.0,
+          "value": 6.0
+        },
+        {
+          "row": 2,
+          "x": 10.0,
+          "value": 40.55
+        },
+        {
+          "row": 5,
+          "x": 13.0,
+          "value": 106.0
+        },
+        {
+          "row": 9,
+          "x": 17.0,
+          "value": 15.55
+        },
+        {
+          "row": 4,
+          "x": 12.0,
+          "value": 96.45
+        },
+        {
+          "row": 7,
+          "x": 15.0,
+          "value": 71.45
+        }
+      ],
+      "trend-queries": [
+        {
+          "from": 9.0,
+          "to": 10.0,
+          "answer": "increased"
+        },
+        {
+          "from": 15.0,
+          "to": 16.0,
+          "answer": "decreased"
+        },
+        {
+          "from": 11.0,
+          "to": 12.0,
+          "answer": "increased"
+        },
+        {
+          "from": 12.0,
+          "to": 13.0,
+          "answer": "increased"
+        },
+        {
+          "from": 13.0,
+          "to": 14.0,
+          "answer": "decreased"
+        },
+        {
+          "from": 8.0,
+          "to": 9.0,
+          "answer": "increased"
+        },
+        {
+          "from": 10.0,
+          "to": 11.0,
+          "answer": "increased"
+        },
+        {
+          "from": 17.0,
+          "to": 18.0,
+          "answer": "decreased"
+        },
+        {
+          "from": 16.0,
+          "to": 17.0,
+          "answer": "decreased"
+        },
+        {
+          "from": 14.0,
+          "to": 15.0,
+          "answer": "decreased"
+        }
+      ]
+    },
+    "notes": [
+      {
+        "deviation": {
+          "detail": "Nees & Walker (2008) publish no generating function; the shape is read from their schematic Fig. 1"
+        }
+      }
+    ]
+  },
+  "d1-r2": {
+    "generator": "GEN-001",
+    "generator_version": 1,
+    "basis": "nees2008density",
+    "seed": 20261019,
+    "params": {
+      "generator": "GEN-001",
+      "rate": 1.0,
+      "reversals": 2,
+      "hours": 10,
+      "range": [
+        6.0,
+        106.0
+      ],
+      "shape": "schematic",
+      "start": "up",
+      "min-segment": 2,
+      "noise": 0.0,
+      "queries": 11,
+      "trend-queries": 10
+    },
+    "rows": 11,
+    "columns": [
+      "t",
+      "hour",
+      "price"
+    ],
+    "table_sha256": "ccdca77b846dd188320ce8bb1da093576806a8173f2e09db4f84f02824a51e58",
+    "truth": {
+      "kind": "reversals",
+      "reversals": 2,
+      "segments": [
+        "up",
+        "down",
+        "up"
+      ],
+      "turning-rows": [
+        3,
+        8
+      ],
+      "queries": [
+        {
+          "row": 1,
+          "x": 9.0,
+          "value": 86.9
+        },
+        {
+          "row": 6,
+          "x": 14.0,
+          "value": 25.1
+        },
+        {
+          "row": 3,
+          "x": 11.0,
+          "value": 106.0
+        },
+        {
+          "row": 0,
+          "x": 8.0,
+          "value": 56.0
+        },
+        {
+          "row": 8,
+          "x": 16.0,
+          "value": 6.0
+        },
+        {
+          "row": 10,
+          "x": 18.0,
+          "value": 56.0
+        },
+        {
+          "row": 2,
+          "x": 10.0,
+          "value": 106.0
+        },
+        {
+          "row": 5,
+          "x": 13.0,
+          "value": 56.0
+        },
+        {
+          "row": 9,
+          "x": 17.0,
+          "value": 25.1
+        },
+        {
+          "row": 4,
+          "x": 12.0,
+          "value": 86.9
+        },
+        {
+          "row": 7,
+          "x": 15.0,
+          "value": 6.0
+        }
+      ],
+      "trend-queries": [
+        {
+          "from": 9.0,
+          "to": 10.0,
+          "answer": "increased"
+        },
+        {
+          "from": 15.0,
+          "to": 16.0,
+          "answer": "same"
+        },
+        {
+          "from": 11.0,
+          "to": 12.0,
+          "answer": "decreased"
+        },
+        {
+          "from": 12.0,
+          "to": 13.0,
+          "answer": "decreased"
+        },
+        {
+          "from": 13.0,
+          "to": 14.0,
+          "answer": "decreased"
+        },
+        {
+          "from": 8.0,
+          "to": 9.0,
+          "answer": "increased"
+        },
+        {
+          "from": 10.0,
+          "to": 11.0,
+          "answer": "same"
+        },
+        {
+          "from": 17.0,
+          "to": 18.0,
+          "answer": "increased"
+        },
+        {
+          "from": 16.0,
+          "to": 17.0,
+          "answer": "increased"
+        },
+        {
+          "from": 14.0,
+          "to": 15.0,
+          "answer": "decreased"
+        }
+      ]
+    },
+    "notes": [
+      {
+        "deviation": {
+          "detail": "Nees & Walker (2008) publish no generating function; the shape is read from their schematic Fig. 1"
+        }
+      }
+    ]
+  },
+  "d1-r3": {
+    "generator": "GEN-001",
+    "generator_version": 1,
+    "basis": "nees2008density",
+    "seed": 20261019,
+    "params": {
+      "generator": "GEN-001",
+      "rate": 1.0,
+      "reversals": 3,
+      "hours": 10,
+      "range": [
+        6.0,
+        106.0
+      ],
+      "shape": "schematic",
+      "start": "up",
+      "min-segment": 2,
+      "noise": 0.0,
+      "queries": 11,
+      "trend-queries": 10
+    },
+    "rows": 11,
+    "columns": [
+      "t",
+      "hour",
+      "price"
+    ],
+    "table_sha256": "7cf32be33f376c98ec72d8a9cd334146f464cc00325dfaf9490c7e7ca06a9e79",
+    "truth": {
+      "kind": "reversals",
+      "reversals": 3,
+      "segments": [
+        "up",
+        "down",
+        "up",
+        "down"
+      ],
+      "turning-rows": [
+        2,
+        5,
+        8
+      ],
+      "queries": [
+        {
+          "row": 1,
+          "x": 9.0,
+          "value": 98.72
+        },
+        {
+          "row": 6,
+          "x": 14.0,
+          "value": 27.13
+        },
+        {
+          "row": 3,
+          "x": 11.0,
+          "value": 73.09
+        },
+        {
+          "row": 0,
+          "x": 8.0,
+          "value": 57.25
+        },
+        {
+          "row": 8,
+          "x": 16.0,
+          "value": 106.0
+        },
+        {
+          "row": 10,
+          "x": 18.0,
+          "value": 57.25
+        },
+        {
+          "row": 2,
+          "x": 10.0,
+          "value": 106.0
+        },
+        {
+          "row": 5,
+          "x": 13.0,
+          "value": 6.0
+        },
+        {
+          "row": 9,
+          "x": 17.0,
+          "value": 98.72
+        },
+        {
+          "row": 4,
+          "x": 12.0,
+          "value": 27.13
+        },
+        {
+          "row": 7,
+          "x": 15.0,
+          "value": 73.09
+        }
+      ],
+      "trend-queries": [
+        {
+          "from": 9.0,
+          "to": 10.0,
+          "answer": "increased"
+        },
+        {
+          "from": 15.0,
+          "to": 16.0,
+          "answer": "increased"
+        },
+        {
+          "from": 11.0,
+          "to": 12.0,
+          "answer": "decreased"
+        },
+        {
+          "from": 12.0,
+          "to": 13.0,
+          "answer": "decreased"
+        },
+        {
+          "from": 13.0,
+          "to": 14.0,
+          "answer": "increased"
+        },
+        {
+          "from": 8.0,
+          "to": 9.0,
+          "answer": "increased"
+        },
+        {
+          "from": 10.0,
+          "to": 11.0,
+          "answer": "decreased"
+        },
+        {
+          "from": 17.0,
+          "to": 18.0,
+          "answer": "decreased"
+        },
+        {
+          "from": 16.0,
+          "to": 17.0,
+          "answer": "decreased"
+        },
+        {
+          "from": 14.0,
+          "to": 15.0,
+          "answer": "increased"
+        }
+      ]
+    },
+    "notes": [
+      {
+        "deviation": {
+          "detail": "Nees & Walker (2008) publish no generating function; the shape is read from their schematic Fig. 1"
+        }
+      }
+    ]
+  },
+  "d2-r0": {
+    "generator": "GEN-001",
+    "generator_version": 1,
+    "basis": "nees2008density",
+    "seed": 20261019,
+    "params": {
+      "generator": "GEN-001",
+      "rate": 2.0,
+      "reversals": 0,
+      "hours": 10,
+      "range": [
+        6.0,
+        106.0
+      ],
+      "shape": "schematic",
+      "start": "up",
+      "min-segment": 2,
+      "noise": 0.0,
+      "queries": 11,
+      "trend-queries": 10
+    },
+    "rows": 21,
+    "columns": [
+      "t",
+      "hour",
+      "price"
+    ],
+    "table_sha256": "ba1adb315cd5736de63ad45f06fcf5cdc246c1d1526b6121d5d907d2e0ffa81e",
+    "truth": {
+      "kind": "reversals",
+      "reversals": 0,
+      "segments": [
+        "up"
+      ],
+      "turning-rows": [],
+      "queries": [
+        {
+          "row": 2,
+          "x": 9.0,
+          "value": 16.0
+        },
+        {
+          "row": 12,
+          "x": 14.0,
+          "value": 66.0
+        },
+        {
+          "row": 6,
+          "x": 11.0,
+          "value": 36.0
+        },
+        {
+          "row": 0,
+          "x": 8.0,
+          "value": 6.0
+        },
+        {
+          "row": 16,
+          "x": 16.0,
+          "value": 86.0
+        },
+        {
+          "row": 20,
+          "x": 18.0,
+          "value": 106.0
+        },
+        {
+          "row": 4,
+          "x": 10.0,
+          "value": 26.0
+        },
+        {
+          "row": 10,
+          "x": 13.0,
+          "value": 56.0
+        },
+        {
+          "row": 18,
+          "x": 17.0,
+          "value": 96.0
+        },
+        {
+          "row": 8,
+          "x": 12.0,
+          "value": 46.0
+        },
+        {
+          "row": 14,
+          "x": 15.0,
+          "value": 76.0
+        }
+      ],
+      "trend-queries": [
+        {
+          "from": 9.0,
+          "to": 10.0,
+          "answer": "increased"
+        },
+        {
+          "from": 15.0,
+          "to": 16.0,
+          "answer": "increased"
+        },
+        {
+          "from": 11.0,
+          "to": 12.0,
+          "answer": "increased"
+        },
+        {
+          "from": 12.0,
+          "to": 13.0,
+          "answer": "increased"
+        },
+        {
+          "from": 13.0,
+          "to": 14.0,
+          "answer": "increased"
+        },
+        {
+          "from": 8.0,
+          "to": 9.0,
+          "answer": "increased"
+        },
+        {
+          "from": 10.0,
+          "to": 11.0,
+          "answer": "increased"
+        },
+        {
+          "from": 17.0,
+          "to": 18.0,
+          "answer": "increased"
+        },
+        {
+          "from": 16.0,
+          "to": 17.0,
+          "answer": "increased"
+        },
+        {
+          "from": 14.0,
+          "to": 15.0,
+          "answer": "increased"
+        }
+      ]
+    },
+    "notes": [
+      {
+        "deviation": {
+          "detail": "Nees & Walker (2008) publish no generating function; the shape is read from their schematic Fig. 1"
+        }
+      }
+    ]
+  },
+  "d2-r1": {
+    "generator": "GEN-001",
+    "generator_version": 1,
+    "basis": "nees2008density",
+    "seed": 20261019,
+    "params": {
+      "generator": "GEN-001",
+      "rate": 2.0,
+      "reversals": 1,
+      "hours": 10,
+      "range": [
+        6.0,
+        106.0
+      ],
+      "shape": "schematic",
+      "start": "up",
+      "min-segment": 2,
+      "noise": 0.0,
+      "queries": 11,
+      "trend-queries": 10
+    },
+    "rows": 21,
+    "columns": [
+      "t",
+      "hour",
+      "price"
+    ],
+    "table_sha256": "cbe681aa41f39b08218f074f4f806de6ad61d75f1eee03495847df00f60439fa",
+    "truth": {
+      "kind": "reversals",
+      "reversals": 1,
+      "segments": [
+        "up",
+        "down"
+      ],
+      "turning-rows": [
+        10
+      ],
+      "queries": [
+        {
+          "row": 2,
+          "x": 9.0,
+          "value": 15.55
+        },
+        {
+          "row": 12,
+          "x": 14.0,
+          "value": 96.45
+        },
+        {
+          "row": 6,
+          "x": 11.0,
+          "value": 71.45
+        },
+        {
+          "row": 0,
+          "x": 8.0,
+          "value": 6.0
+        },
+        {
+          "row": 16,
+          "x": 16.0,
+          "value": 40.55
+        },
+        {
+          "row": 20,
+          "x": 18.0,
+          "value": 6.0
+        },
+        {
+          "row": 4,
+          "x": 10.0,
+          "value": 40.55
+        },
+        {
+          "row": 10,
+          "x": 13.0,
+          "value": 106.0
+        },
+        {
+          "row": 18,
+          "x": 17.0,
+          "value": 15.55
+        },
+        {
+          "row": 8,
+          "x": 12.0,
+          "value": 96.45
+        },
+        {
+          "row": 14,
+          "x": 15.0,
+          "value": 71.45
+        }
+      ],
+      "trend-queries": [
+        {
+          "from": 9.0,
+          "to": 10.0,
+          "answer": "increased"
+        },
+        {
+          "from": 15.0,
+          "to": 16.0,
+          "answer": "decreased"
+        },
+        {
+          "from": 11.0,
+          "to": 12.0,
+          "answer": "increased"
+        },
+        {
+          "from": 12.0,
+          "to": 13.0,
+          "answer": "increased"
+        },
+        {
+          "from": 13.0,
+          "to": 14.0,
+          "answer": "decreased"
+        },
+        {
+          "from": 8.0,
+          "to": 9.0,
+          "answer": "increased"
+        },
+        {
+          "from": 10.0,
+          "to": 11.0,
+          "answer": "increased"
+        },
+        {
+          "from": 17.0,
+          "to": 18.0,
+          "answer": "decreased"
+        },
+        {
+          "from": 16.0,
+          "to": 17.0,
+          "answer": "decreased"
+        },
+        {
+          "from": 14.0,
+          "to": 15.0,
+          "answer": "decreased"
+        }
+      ]
+    },
+    "notes": [
+      {
+        "deviation": {
+          "detail": "Nees & Walker (2008) publish no generating function; the shape is read from their schematic Fig. 1"
+        }
+      }
+    ]
+  },
+  "d2-r2": {
+    "generator": "GEN-001",
+    "generator_version": 1,
+    "basis": "nees2008density",
+    "seed": 20261019,
+    "params": {
+      "generator": "GEN-001",
+      "rate": 2.0,
+      "reversals": 2,
+      "hours": 10,
+      "range": [
+        6.0,
+        106.0
+      ],
+      "shape": "schematic",
+      "start": "up",
+      "min-segment": 2,
+      "noise": 0.0,
+      "queries": 11,
+      "trend-queries": 10
+    },
+    "rows": 21,
+    "columns": [
+      "t",
+      "hour",
+      "price"
+    ],
+    "table_sha256": "11e14e913bd04752a03ba1594160382118226549e46e2252ba8e376c2206c054",
+    "truth": {
+      "kind": "reversals",
+      "reversals": 2,
+      "segments": [
+        "up",
+        "down",
+        "up"
+      ],
+      "turning-rows": [
+        5,
+        15
+      ],
+      "queries": [
+        {
+          "row": 2,
+          "x": 9.0,
+          "value": 85.39
+        },
+        {
+          "row": 12,
+          "x": 14.0,
+          "value": 26.61
+        },
+        {
+          "row": 6,
+          "x": 11.0,
+          "value": 103.55
+        },
+        {
+          "row": 0,
+          "x": 8.0,
+          "value": 56.0
+        },
+        {
+          "row": 16,
+          "x": 16.0,
+          "value": 8.45
+        },
+        {
+          "row": 20,
+          "x": 18.0,
+          "value": 56.0
+        },
+        {
+          "row": 4,
+          "x": 10.0,
+          "value": 103.55
+        },
+        {
+          "row": 10,
+          "x": 13.0,
+          "value": 56.0
+        },
+        {
+          "row": 18,
+          "x": 17.0,
+          "value": 26.61
+        },
+        {
+          "row": 8,
+          "x": 12.0,
+          "value": 85.39
+        },
+        {
+          "row": 14,
+          "x": 15.0,
+          "value": 8.45
+        }
+      ],
+      "trend-queries": [
+        {
+          "from": 9.0,
+          "to": 10.0,
+          "answer": "increased"
+        },
+        {
+          "from": 15.0,
+          "to": 16.0,
+          "answer": "same"
+        },
+        {
+          "from": 11.0,
+          "to": 12.0,
+          "answer": "decreased"
+        },
+        {
+          "from": 12.0,
+          "to": 13.0,
+          "answer": "decreased"
+        },
+        {
+          "from": 13.0,
+          "to": 14.0,
+          "answer": "decreased"
+        },
+        {
+          "from": 8.0,
+          "to": 9.0,
+          "answer": "increased"
+        },
+        {
+          "from": 10.0,
+          "to": 11.0,
+          "answer": "same"
+        },
+        {
+          "from": 17.0,
+          "to": 18.0,
+          "answer": "increased"
+        },
+        {
+          "from": 16.0,
+          "to": 17.0,
+          "answer": "increased"
+        },
+        {
+          "from": 14.0,
+          "to": 15.0,
+          "answer": "decreased"
+        }
+      ]
+    },
+    "notes": [
+      {
+        "deviation": {
+          "detail": "Nees & Walker (2008) publish no generating function; the shape is read from their schematic Fig. 1"
+        }
+      }
+    ]
+  },
+  "d2-r3": {
+    "generator": "GEN-001",
+    "generator_version": 1,
+    "basis": "nees2008density",
+    "seed": 20261019,
+    "params": {
+      "generator": "GEN-001",
+      "rate": 2.0,
+      "reversals": 3,
+      "hours": 10,
+      "range": [
+        6.0,
+        106.0
+      ],
+      "shape": "schematic",
+      "start": "up",
+      "min-segment": 2,
+      "noise": 0.0,
+      "queries": 11,
+      "trend-queries": 10
+    },
+    "rows": 21,
+    "columns": [
+      "t",
+      "hour",
+      "price"
+    ],
+    "table_sha256": "4b4ffed780e5a8fb20713334c50881822990e25ab040d1fee9bd4c64f0c26d12",
+    "truth": {
+      "kind": "reversals",
+      "reversals": 3,
+      "segments": [
+        "up",
+        "down",
+        "up",
+        "down"
+      ],
+      "turning-rows": [
+        3,
+        10,
+        17
+      ],
+      "queries": [
+        {
+          "row": 2,
+          "x": 9.0,
+          "value": 97.01
+        },
+        {
+          "row": 12,
+          "x": 14.0,
+          "value": 26.74
+        },
+        {
+          "row": 6,
+          "x": 11.0,
+          "value": 71.86
+        },
+        {
+          "row": 0,
+          "x": 8.0,
+          "value": 56.31
+        },
+        {
+          "row": 16,
+          "x": 16.0,
+          "value": 104.16
+        },
+        {
+          "row": 20,
+          "x": 18.0,
+          "value": 56.31
+        },
+        {
+          "row": 4,
+          "x": 10.0,
+          "value": 104.16
+        },
+        {
+          "row": 10,
+          "x": 13.0,
+          "value": 6.0
+        },
+        {
+          "row": 18,
+          "x": 17.0,
+          "value": 97.01
+        },
+        {
+          "row": 8,
+          "x": 12.0,
+          "value": 26.74
+        },
+        {
+          "row": 14,
+          "x": 15.0,
+          "value": 71.86
+        }
+      ],
+      "trend-queries": [
+        {
+          "from": 9.0,
+          "to": 10.0,
+          "answer": "increased"
+        },
+        {
+          "from": 15.0,
+          "to": 16.0,
+          "answer": "increased"
+        },
+        {
+          "from": 11.0,
+          "to": 12.0,
+          "answer": "decreased"
+        },
+        {
+          "from": 12.0,
+          "to": 13.0,
+          "answer": "decreased"
+        },
+        {
+          "from": 13.0,
+          "to": 14.0,
+          "answer": "increased"
+        },
+        {
+          "from": 8.0,
+          "to": 9.0,
+          "answer": "increased"
+        },
+        {
+          "from": 10.0,
+          "to": 11.0,
+          "answer": "decreased"
+        },
+        {
+          "from": 17.0,
+          "to": 18.0,
+          "answer": "decreased"
+        },
+        {
+          "from": 16.0,
+          "to": 17.0,
+          "answer": "decreased"
+        },
+        {
+          "from": 14.0,
+          "to": 15.0,
+          "answer": "increased"
+        }
+      ]
+    },
+    "notes": [
+      {
+        "deviation": {
+          "detail": "Nees & Walker (2008) publish no generating function; the shape is read from their schematic Fig. 1"
+        }
+      }
+    ]
+  },
+  "d4-r0": {
+    "generator": "GEN-001",
+    "generator_version": 1,
+    "basis": "nees2008density",
+    "seed": 20261019,
+    "params": {
+      "generator": "GEN-001",
+      "rate": 4.0,
+      "reversals": 0,
+      "hours": 10,
+      "range": [
+        6.0,
+        106.0
+      ],
+      "shape": "schematic",
+      "start": "up",
+      "min-segment": 2,
+      "noise": 0.0,
+      "queries": 11,
+      "trend-queries": 10
+    },
+    "rows": 41,
+    "columns": [
+      "t",
+      "hour",
+      "price"
+    ],
+    "table_sha256": "caedb2a6567440e9ed07262bc31d1a15e516c4c27115351f5144788b84c6c1ba",
+    "truth": {
+      "kind": "reversals",
+      "reversals": 0,
+      "segments": [
+        "up"
+      ],
+      "turning-rows": [],
+      "queries": [
+        {
+          "row": 4,
+          "x": 9.0,
+          "value": 16.0
+        },
+        {
+          "row": 24,
+          "x": 14.0,
+          "value": 66.0
+        },
+        {
+          "row": 12,
+          "x": 11.0,
+          "value": 36.0
+        },
+        {
+          "row": 0,
+          "x": 8.0,
+          "value": 6.0
+        },
+        {
+          "row": 32,
+          "x": 16.0,
+          "value": 86.0
+        },
+        {
+          "row": 40,
+          "x": 18.0,
+          "value": 106.0
+        },
+        {
+          "row": 8,
+          "x": 10.0,
+          "value": 26.0
+        },
+        {
+          "row": 20,
+          "x": 13.0,
+          "value": 56.0
+        },
+        {
+          "row": 36,
+          "x": 17.0,
+          "value": 96.0
+        },
+        {
+          "row": 16,
+          "x": 12.0,
+          "value": 46.0
+        },
+        {
+          "row": 28,
+          "x": 15.0,
+          "value": 76.0
+        }
+      ],
+      "trend-queries": [
+        {
+          "from": 9.0,
+          "to": 10.0,
+          "answer": "increased"
+        },
+        {
+          "from": 15.0,
+          "to": 16.0,
+          "answer": "increased"
+        },
+        {
+          "from": 11.0,
+          "to": 12.0,
+          "answer": "increased"
+        },
+        {
+          "from": 12.0,
+          "to": 13.0,
+          "answer": "increased"
+        },
+        {
+          "from": 13.0,
+          "to": 14.0,
+          "answer": "increased"
+        },
+        {
+          "from": 8.0,
+          "to": 9.0,
+          "answer": "increased"
+        },
+        {
+          "from": 10.0,
+          "to": 11.0,
+          "answer": "increased"
+        },
+        {
+          "from": 17.0,
+          "to": 18.0,
+          "answer": "increased"
+        },
+        {
+          "from": 16.0,
+          "to": 17.0,
+          "answer": "increased"
+        },
+        {
+          "from": 14.0,
+          "to": 15.0,
+          "answer": "increased"
+        }
+      ]
+    },
+    "notes": [
+      {
+        "deviation": {
+          "detail": "Nees & Walker (2008) publish no generating function; the shape is read from their schematic Fig. 1"
+        }
+      }
+    ]
+  },
+  "d4-r1": {
+    "generator": "GEN-001",
+    "generator_version": 1,
+    "basis": "nees2008density",
+    "seed": 20261019,
+    "params": {
+      "generator": "GEN-001",
+      "rate": 4.0,
+      "reversals": 1,
+      "hours": 10,
+      "range": [
+        6.0,
+        106.0
+      ],
+      "shape": "schematic",
+      "start": "up",
+      "min-segment": 2,
+      "noise": 0.0,
+      "queries": 11,
+      "trend-queries": 10
+    },
+    "rows": 41,
+    "columns": [
+      "t",
+      "hour",
+      "price"
+    ],
+    "table_sha256": "310dbd4c0099bd6638b74210392a505c1ef037d82d9dab78a97e7a27f267c044",
+    "truth": {
+      "kind": "reversals",
+      "reversals": 1,
+      "segments": [
+        "up",
+        "down"
+      ],
+      "turning-rows": [
+        20
+      ],
+      "queries": [
+        {
+          "row": 4,
+          "x": 9.0,
+          "value": 15.55
+        },
+        {
+          "row": 24,
+          "x": 14.0,
+          "value": 96.45
+        },
+        {
+          "row": 12,
+          "x": 11.0,
+          "value": 71.45
+        },
+        {
+          "row": 0,
+          "x": 8.0,
+          "value": 6.0
+        },
+        {
+          "row": 32,
+          "x": 16.0,
+          "value": 40.55
+        },
+        {
+          "row": 40,
+          "x": 18.0,
+          "value": 6.0
+        },
+        {
+          "row": 8,
+          "x": 10.0,
+          "value": 40.55
+        },
+        {
+          "row": 20,
+          "x": 13.0,
+          "value": 106.0
+        },
+        {
+          "row": 36,
+          "x": 17.0,
+          "value": 15.55
+        },
+        {
+          "row": 16,
+          "x": 12.0,
+          "value": 96.45
+        },
+        {
+          "row": 28,
+          "x": 15.0,
+          "value": 71.45
+        }
+      ],
+      "trend-queries": [
+        {
+          "from": 9.0,
+          "to": 10.0,
+          "answer": "increased"
+        },
+        {
+          "from": 15.0,
+          "to": 16.0,
+          "answer": "decreased"
+        },
+        {
+          "from": 11.0,
+          "to": 12.0,
+          "answer": "increased"
+        },
+        {
+          "from": 12.0,
+          "to": 13.0,
+          "answer": "increased"
+        },
+        {
+          "from": 13.0,
+          "to": 14.0,
+          "answer": "decreased"
+        },
+        {
+          "from": 8.0,
+          "to": 9.0,
+          "answer": "increased"
+        },
+        {
+          "from": 10.0,
+          "to": 11.0,
+          "answer": "increased"
+        },
+        {
+          "from": 17.0,
+          "to": 18.0,
+          "answer": "decreased"
+        },
+        {
+          "from": 16.0,
+          "to": 17.0,
+          "answer": "decreased"
+        },
+        {
+          "from": 14.0,
+          "to": 15.0,
+          "answer": "decreased"
+        }
+      ]
+    },
+    "notes": [
+      {
+        "deviation": {
+          "detail": "Nees & Walker (2008) publish no generating function; the shape is read from their schematic Fig. 1"
+        }
+      }
+    ]
+  },
+  "d4-r2": {
+    "generator": "GEN-001",
+    "generator_version": 1,
+    "basis": "nees2008density",
+    "seed": 20261019,
+    "params": {
+      "generator": "GEN-001",
+      "rate": 4.0,
+      "reversals": 2,
+      "hours": 10,
+      "range": [
+        6.0,
+        106.0
+      ],
+      "shape": "schematic",
+      "start": "up",
+      "min-segment": 2,
+      "noise": 0.0,
+      "queries": 11,
+      "trend-queries": 10
+    },
+    "rows": 41,
+    "columns": [
+      "t",
+      "hour",
+      "price"
+    ],
+    "table_sha256": "f12991027b25f0bd25b457f491cc0e9c48f3e77e3c4abcee02d28afb4b2f98ce",
+    "truth": {
+      "kind": "reversals",
+      "reversals": 2,
+      "segments": [
+        "up",
+        "down",
+        "up"
+      ],
+      "turning-rows": [
+        10,
+        30
+      ],
+      "queries": [
+        {
+          "row": 4,
+          "x": 9.0,
+          "value": 85.39
+        },
+        {
+          "row": 24,
+          "x": 14.0,
+          "value": 26.61
+        },
+        {
+          "row": 12,
+          "x": 11.0,
+          "value": 103.55
+        },
+        {
+          "row": 0,
+          "x": 8.0,
+          "value": 56.0
+        },
+        {
+          "row": 32,
+          "x": 16.0,
+          "value": 8.45
+        },
+        {
+          "row": 40,
+          "x": 18.0,
+          "value": 56.0
+        },
+        {
+          "row": 8,
+          "x": 10.0,
+          "value": 103.55
+        },
+        {
+          "row": 20,
+          "x": 13.0,
+          "value": 56.0
+        },
+        {
+          "row": 36,
+          "x": 17.0,
+          "value": 26.61
+        },
+        {
+          "row": 16,
+          "x": 12.0,
+          "value": 85.39
+        },
+        {
+          "row": 28,
+          "x": 15.0,
+          "value": 8.45
+        }
+      ],
+      "trend-queries": [
+        {
+          "from": 9.0,
+          "to": 10.0,
+          "answer": "increased"
+        },
+        {
+          "from": 15.0,
+          "to": 16.0,
+          "answer": "same"
+        },
+        {
+          "from": 11.0,
+          "to": 12.0,
+          "answer": "decreased"
+        },
+        {
+          "from": 12.0,
+          "to": 13.0,
+          "answer": "decreased"
+        },
+        {
+          "from": 13.0,
+          "to": 14.0,
+          "answer": "decreased"
+        },
+        {
+          "from": 8.0,
+          "to": 9.0,
+          "answer": "increased"
+        },
+        {
+          "from": 10.0,
+          "to": 11.0,
+          "answer": "same"
+        },
+        {
+          "from": 17.0,
+          "to": 18.0,
+          "answer": "increased"
+        },
+        {
+          "from": 16.0,
+          "to": 17.0,
+          "answer": "increased"
+        },
+        {
+          "from": 14.0,
+          "to": 15.0,
+          "answer": "decreased"
+        }
+      ]
+    },
+    "notes": [
+      {
+        "deviation": {
+          "detail": "Nees & Walker (2008) publish no generating function; the shape is read from their schematic Fig. 1"
+        }
+      }
+    ]
+  },
+  "d4-r3": {
+    "generator": "GEN-001",
+    "generator_version": 1,
+    "basis": "nees2008density",
+    "seed": 20261019,
+    "params": {
+      "generator": "GEN-001",
+      "rate": 4.0,
+      "reversals": 3,
+      "hours": 10,
+      "range": [
+        6.0,
+        106.0
+      ],
+      "shape": "schematic",
+      "start": "up",
+      "min-segment": 2,
+      "noise": 0.0,
+      "queries": 11,
+      "trend-queries": 10
+    },
+    "rows": 41,
+    "columns": [
+      "t",
+      "hour",
+      "price"
+    ],
+    "table_sha256": "3eba9b83e05af8b5f03bf3bd29e3b7e2fc8e67d000d32a8ae17bcdd7193b9307",
+    "truth": {
+      "kind": "reversals",
+      "reversals": 3,
+      "segments": [
+        "up",
+        "down",
+        "up",
+        "down"
+      ],
+      "turning-rows": [
+        7,
+        20,
+        33
+      ],
+      "queries": [
+        {
+          "row": 4,
+          "x": 9.0,
+          "value": 96.59
+        },
+        {
+          "row": 24,
+          "x": 14.0,
+          "value": 26.64
+        },
+        {
+          "row": 12,
+          "x": 11.0,
+          "value": 71.55
+        },
+        {
+          "row": 0,
+          "x": 8.0,
+          "value": 56.08
+        },
+        {
+          "row": 32,
+          "x": 16.0,
+          "value": 103.7
+        },
+        {
+          "row": 40,
+          "x": 18.0,
+          "value": 56.08
+        },
+        {
+          "row": 8,
+          "x": 10.0,
+          "value": 103.7
+        },
+        {
+          "row": 20,
+          "x": 13.0,
+          "value": 6.0
+        },
+        {
+          "row": 36,
+          "x": 17.0,
+          "value": 96.59
+        },
+        {
+          "row": 16,
+          "x": 12.0,
+          "value": 26.64
+        },
+        {
+          "row": 28,
+          "x": 15.0,
+          "value": 71.55
+        }
+      ],
+      "trend-queries": [
+        {
+          "from": 9.0,
+          "to": 10.0,
+          "answer": "increased"
+        },
+        {
+          "from": 15.0,
+          "to": 16.0,
+          "answer": "increased"
+        },
+        {
+          "from": 11.0,
+          "to": 12.0,
+          "answer": "decreased"
+        },
+        {
+          "from": 12.0,
+          "to": 13.0,
+          "answer": "decreased"
+        },
+        {
+          "from": 13.0,
+          "to": 14.0,
+          "answer": "increased"
+        },
+        {
+          "from": 8.0,
+          "to": 9.0,
+          "answer": "increased"
+        },
+        {
+          "from": 10.0,
+          "to": 11.0,
+          "answer": "decreased"
+        },
+        {
+          "from": 17.0,
+          "to": 18.0,
+          "answer": "decreased"
+        },
+        {
+          "from": 16.0,
+          "to": 17.0,
+          "answer": "decreased"
+        },
+        {
+          "from": 14.0,
+          "to": 15.0,
+          "answer": "increased"
+        }
+      ]
+    },
+    "notes": [
+      {
+        "deviation": {
+          "detail": "Nees & Walker (2008) publish no generating function; the shape is read from their schematic Fig. 1"
+        }
+      }
+    ]
+  },
+  "d8-r0": {
+    "generator": "GEN-001",
+    "generator_version": 1,
+    "basis": "nees2008density",
+    "seed": 20261019,
+    "params": {
+      "generator": "GEN-001",
+      "rate": 8.0,
+      "reversals": 0,
+      "hours": 10,
+      "range": [
+        6.0,
+        106.0
+      ],
+      "shape": "schematic",
+      "start": "up",
+      "min-segment": 2,
+      "noise": 0.0,
+      "queries": 11,
+      "trend-queries": 10
+    },
+    "rows": 81,
+    "columns": [
+      "t",
+      "hour",
+      "price"
+    ],
+    "table_sha256": "8f55cd224847c94a33722d9bd7c0d9ce8f8e1cd1506e06e4091189fdef7e1121",
+    "truth": {
+      "kind": "reversals",
+      "reversals": 0,
+      "segments": [
+        "up"
+      ],
+      "turning-rows": [],
+      "queries": [
+        {
+          "row": 8,
+          "x": 9.0,
+          "value": 16.0
+        },
+        {
+          "row": 48,
+          "x": 14.0,
+          "value": 66.0
+        },
+        {
+          "row": 24,
+          "x": 11.0,
+          "value": 36.0
+        },
+        {
+          "row": 0,
+          "x": 8.0,
+          "value": 6.0
+        },
+        {
+          "row": 64,
+          "x": 16.0,
+          "value": 86.0
+        },
+        {
+          "row": 80,
+          "x": 18.0,
+          "value": 106.0
+        },
+        {
+          "row": 16,
+          "x": 10.0,
+          "value": 26.0
+        },
+        {
+          "row": 40,
+          "x": 13.0,
+          "value": 56.0
+        },
+        {
+          "row": 72,
+          "x": 17.0,
+          "value": 96.0
+        },
+        {
+          "row": 32,
+          "x": 12.0,
+          "value": 46.0
+        },
+        {
+          "row": 56,
+          "x": 15.0,
+          "value": 76.0
+        }
+      ],
+      "trend-queries": [
+        {
+          "from": 9.0,
+          "to": 10.0,
+          "answer": "increased"
+        },
+        {
+          "from": 15.0,
+          "to": 16.0,
+          "answer": "increased"
+        },
+        {
+          "from": 11.0,
+          "to": 12.0,
+          "answer": "increased"
+        },
+        {
+          "from": 12.0,
+          "to": 13.0,
+          "answer": "increased"
+        },
+        {
+          "from": 13.0,
+          "to": 14.0,
+          "answer": "increased"
+        },
+        {
+          "from": 8.0,
+          "to": 9.0,
+          "answer": "increased"
+        },
+        {
+          "from": 10.0,
+          "to": 11.0,
+          "answer": "increased"
+        },
+        {
+          "from": 17.0,
+          "to": 18.0,
+          "answer": "increased"
+        },
+        {
+          "from": 16.0,
+          "to": 17.0,
+          "answer": "increased"
+        },
+        {
+          "from": 14.0,
+          "to": 15.0,
+          "answer": "increased"
+        }
+      ]
+    },
+    "notes": [
+      {
+        "deviation": {
+          "detail": "Nees & Walker (2008) publish no generating function; the shape is read from their schematic Fig. 1"
+        }
+      }
+    ]
+  },
+  "d8-r1": {
+    "generator": "GEN-001",
+    "generator_version": 1,
+    "basis": "nees2008density",
+    "seed": 20261019,
+    "params": {
+      "generator": "GEN-001",
+      "rate": 8.0,
+      "reversals": 1,
+      "hours": 10,
+      "range": [
+        6.0,
+        106.0
+      ],
+      "shape": "schematic",
+      "start": "up",
+      "min-segment": 2,
+      "noise": 0.0,
+      "queries": 11,
+      "trend-queries": 10
+    },
+    "rows": 81,
+    "columns": [
+      "t",
+      "hour",
+      "price"
+    ],
+    "table_sha256": "153c12b0b0fe49070b2285fac55debd4eda0c3dbce00cae7a88589224227e086",
+    "truth": {
+      "kind": "reversals",
+      "reversals": 1,
+      "segments": [
+        "up",
+        "down"
+      ],
+      "turning-rows": [
+        40
+      ],
+      "queries": [
+        {
+          "row": 8,
+          "x": 9.0,
+          "value": 15.55
+        },
+        {
+          "row": 48,
+          "x": 14.0,
+          "value": 96.45
+        },
+        {
+          "row": 24,
+          "x": 11.0,
+          "value": 71.45
+        },
+        {
+          "row": 0,
+          "x": 8.0,
+          "value": 6.0
+        },
+        {
+          "row": 64,
+          "x": 16.0,
+          "value": 40.55
+        },
+        {
+          "row": 80,
+          "x": 18.0,
+          "value": 6.0
+        },
+        {
+          "row": 16,
+          "x": 10.0,
+          "value": 40.55
+        },
+        {
+          "row": 40,
+          "x": 13.0,
+          "value": 106.0
+        },
+        {
+          "row": 72,
+          "x": 17.0,
+          "value": 15.55
+        },
+        {
+          "row": 32,
+          "x": 12.0,
+          "value": 96.45
+        },
+        {
+          "row": 56,
+          "x": 15.0,
+          "value": 71.45
+        }
+      ],
+      "trend-queries": [
+        {
+          "from": 9.0,
+          "to": 10.0,
+          "answer": "increased"
+        },
+        {
+          "from": 15.0,
+          "to": 16.0,
+          "answer": "decreased"
+        },
+        {
+          "from": 11.0,
+          "to": 12.0,
+          "answer": "increased"
+        },
+        {
+          "from": 12.0,
+          "to": 13.0,
+          "answer": "increased"
+        },
+        {
+          "from": 13.0,
+          "to": 14.0,
+          "answer": "decreased"
+        },
+        {
+          "from": 8.0,
+          "to": 9.0,
+          "answer": "increased"
+        },
+        {
+          "from": 10.0,
+          "to": 11.0,
+          "answer": "increased"
+        },
+        {
+          "from": 17.0,
+          "to": 18.0,
+          "answer": "decreased"
+        },
+        {
+          "from": 16.0,
+          "to": 17.0,
+          "answer": "decreased"
+        },
+        {
+          "from": 14.0,
+          "to": 15.0,
+          "answer": "decreased"
+        }
+      ]
+    },
+    "notes": [
+      {
+        "deviation": {
+          "detail": "Nees & Walker (2008) publish no generating function; the shape is read from their schematic Fig. 1"
+        }
+      }
+    ]
+  },
+  "d8-r2": {
+    "generator": "GEN-001",
+    "generator_version": 1,
+    "basis": "nees2008density",
+    "seed": 20261019,
+    "params": {
+      "generator": "GEN-001",
+      "rate": 8.0,
+      "reversals": 2,
+      "hours": 10,
+      "range": [
+        6.0,
+        106.0
+      ],
+      "shape": "schematic",
+      "start": "up",
+      "min-segment": 2,
+      "noise": 0.0,
+      "queries": 11,
+      "trend-queries": 10
+    },
+    "rows": 81,
+    "columns": [
+      "t",
+      "hour",
+      "price"
+    ],
+    "table_sha256": "9c37cbb30903e900ecc2fda3c07725d3ae2288ac965512e4de710b4e0d5a75c8",
+    "truth": {
+      "kind": "reversals",
+      "reversals": 2,
+      "segments": [
+        "up",
+        "down",
+        "up"
+      ],
+      "turning-rows": [
+        20,
+        60
+      ],
+      "queries": [
+        {
+          "row": 8,
+          "x": 9.0,
+          "value": 85.39
+        },
+        {
+          "row": 48,
+          "x": 14.0,
+          "value": 26.61
+        },
+        {
+          "row": 24,
+          "x": 11.0,
+          "value": 103.55
+        },
+        {
+          "row": 0,
+          "x": 8.0,
+          "value": 56.0
+        },
+        {
+          "row": 64,
+          "x": 16.0,
+          "value": 8.45
+        },
+        {
+          "row": 80,
+          "x": 18.0,
+          "value": 56.0
+        },
+        {
+          "row": 16,
+          "x": 10.0,
+          "value": 103.55
+        },
+        {
+          "row": 40,
+          "x": 13.0,
+          "value": 56.0
+        },
+        {
+          "row": 72,
+          "x": 17.0,
+          "value": 26.61
+        },
+        {
+          "row": 32,
+          "x": 12.0,
+          "value": 85.39
+        },
+        {
+          "row": 56,
+          "x": 15.0,
+          "value": 8.45
+        }
+      ],
+      "trend-queries": [
+        {
+          "from": 9.0,
+          "to": 10.0,
+          "answer": "increased"
+        },
+        {
+          "from": 15.0,
+          "to": 16.0,
+          "answer": "same"
+        },
+        {
+          "from": 11.0,
+          "to": 12.0,
+          "answer": "decreased"
+        },
+        {
+          "from": 12.0,
+          "to": 13.0,
+          "answer": "decreased"
+        },
+        {
+          "from": 13.0,
+          "to": 14.0,
+          "answer": "decreased"
+        },
+        {
+          "from": 8.0,
+          "to": 9.0,
+          "answer": "increased"
+        },
+        {
+          "from": 10.0,
+          "to": 11.0,
+          "answer": "same"
+        },
+        {
+          "from": 17.0,
+          "to": 18.0,
+          "answer": "increased"
+        },
+        {
+          "from": 16.0,
+          "to": 17.0,
+          "answer": "increased"
+        },
+        {
+          "from": 14.0,
+          "to": 15.0,
+          "answer": "decreased"
+        }
+      ]
+    },
+    "notes": [
+      {
+        "deviation": {
+          "detail": "Nees & Walker (2008) publish no generating function; the shape is read from their schematic Fig. 1"
+        }
+      }
+    ]
+  },
+  "d8-r3": {
+    "generator": "GEN-001",
+    "generator_version": 1,
+    "basis": "nees2008density",
+    "seed": 20261019,
+    "params": {
+      "generator": "GEN-001",
+      "rate": 8.0,
+      "reversals": 3,
+      "hours": 10,
+      "range": [
+        6.0,
+        106.0
+      ],
+      "shape": "schematic",
+      "start": "up",
+      "min-segment": 2,
+      "noise": 0.0,
+      "queries": 11,
+      "trend-queries": 10
+    },
+    "rows": 81,
+    "columns": [
+      "t",
+      "hour",
+      "price"
+    ],
+    "table_sha256": "b37490545004c6607e3876c88742bfa555a851d5df7889b29dae19047d7a4cdf",
+    "truth": {
+      "kind": "reversals",
+      "reversals": 3,
+      "segments": [
+        "up",
+        "down",
+        "up",
+        "down"
+      ],
+      "turning-rows": [
+        13,
+        40,
+        67
+      ],
+      "queries": [
+        {
+          "row": 8,
+          "x": 9.0,
+          "value": 96.49
+        },
+        {
+          "row": 48,
+          "x": 14.0,
+          "value": 26.62
+        },
+        {
+          "row": 24,
+          "x": 11.0,
+          "value": 71.48
+        },
+        {
+          "row": 0,
+          "x": 8.0,
+          "value": 56.02
+        },
+        {
+          "row": 64,
+          "x": 16.0,
+          "value": 103.59
+        },
+        {
+          "row": 80,
+          "x": 18.0,
+          "value": 56.02
+        },
+        {
+          "row": 16,
+          "x": 10.0,
+          "value": 103.59
+        },
+        {
+          "row": 40,
+          "x": 13.0,
+          "value": 6.0
+        },
+        {
+          "row": 72,
+          "x": 17.0,
+          "value": 96.49
+        },
+        {
+          "row": 32,
+          "x": 12.0,
+          "value": 26.62
+        },
+        {
+          "row": 56,
+          "x": 15.0,
+          "value": 71.48
+        }
+      ],
+      "trend-queries": [
+        {
+          "from": 9.0,
+          "to": 10.0,
+          "answer": "increased"
+        },
+        {
+          "from": 15.0,
+          "to": 16.0,
+          "answer": "increased"
+        },
+        {
+          "from": 11.0,
+          "to": 12.0,
+          "answer": "decreased"
+        },
+        {
+          "from": 12.0,
+          "to": 13.0,
+          "answer": "decreased"
+        },
+        {
+          "from": 13.0,
+          "to": 14.0,
+          "answer": "increased"
+        },
+        {
+          "from": 8.0,
+          "to": 9.0,
+          "answer": "increased"
+        },
+        {
+          "from": 10.0,
+          "to": 11.0,
+          "answer": "decreased"
+        },
+        {
+          "from": 17.0,
+          "to": 18.0,
+          "answer": "decreased"
+        },
+        {
+          "from": 16.0,
+          "to": 17.0,
+          "answer": "decreased"
+        },
+        {
+          "from": 14.0,
+          "to": 15.0,
+          "answer": "increased"
+        }
+      ]
+    },
+    "notes": [
+      {
+        "deviation": {
+          "detail": "Nees & Walker (2008) publish no generating function; the shape is read from their schematic Fig. 1"
+        }
+      }
+    ]
+  }
+}

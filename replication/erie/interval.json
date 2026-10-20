@@ -1,0 +1,86 @@
+{
+  "data": {
+    "fields": {
+      "mid": {
+        "type": "quantitative"
+      },
+      "year": {
+        "type": "quantitative"
+      }
+    },
+    "source": {
+      "kind": "inline",
+      "values": [
+        {
+          "mid": 1.6,
+          "year": 2000,
+          "year_end": 2001
+        },
+        {
+          "mid": 1.9,
+          "year": 2001,
+          "year_end": 2002
+        },
+        {
+          "mid": 1.4,
+          "year": 2002,
+          "year_end": 2003
+        },
+        {
+          "mid": 2.2,
+          "year": 2003,
+          "year_end": 2004
+        },
+        {
+          "mid": 2.8,
+          "year": 2004,
+          "year_end": 2005
+        },
+        {
+          "mid": 2.5,
+          "year": 2005,
+          "year_end": 2006
+        }
+      ]
+    }
+  },
+  "name": "Yearly range",
+  "specVersion": "0.1",
+  "substrate": {
+    "time": {
+      "field": "year",
+      "pace": {
+        "secondsPerUnit": 0.8
+      }
+    }
+  },
+  "tracks": [
+    {
+      "channels": {
+        "loudness": {
+          "value": {
+            "db": -6.02
+          }
+        },
+        "pitch": {
+          "field": "mid",
+          "range": {
+            "hz": [
+              200.0,
+              800.0
+            ]
+          },
+          "scale": {
+            "domain": [
+              0.0,
+              4.0
+            ]
+          }
+        }
+      },
+      "id": "y",
+      "instrument": "triangle",
+      "mark": "tone"
+    }
+  ]
+}

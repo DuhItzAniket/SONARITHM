@@ -65,6 +65,7 @@ SONARITHM/
 ├── wit/                              # WIT worlds for plugins (Stage D)
 ├── assets/                           # Earcons, instrument samples, fonts (with licences)
 ├── examples/                         # Example datasets (CC BY 4.0) + specs + notebooks
+├── replication/                      # Replication gallery (A08): published designs as specs, stimuli and render records, checked by `cargo xtask replication`
 ├── benches/                          # Cross-crate benchmarks and soak tests
 ├── tests/                            # Workspace-level integration and golden tests
 │   └── golden/                       # Golden Score snapshots and reference audio (storage decided in A05, OD-08)

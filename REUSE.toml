@@ -95,3 +95,11 @@ path = ["examples/**"]
 precedence = "closest"
 SPDX-FileCopyrightText = "2026 SONARITHM contributors"
 SPDX-License-Identifier = "CC-BY-4.0"
+
+# Replication gallery (A08-T02): specs, generated stimuli and render records are data and
+# stimuli, CC BY 4.0 (ADR-0010). Listed last so it wins over the JSON rule above.
+[[annotations]]
+path = ["replication/**"]
+precedence = "closest"
+SPDX-FileCopyrightText = "2026 SONARITHM contributors"
+SPDX-License-Identifier = "CC-BY-4.0"

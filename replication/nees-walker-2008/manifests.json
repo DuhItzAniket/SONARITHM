@@ -1,0 +1,930 @@
+{
+  "d1-r0": {
+    "cues": null,
+    "data": {
+      "fingerprint": "sha256:60d0f6e9a2db79bd26df8276630954876f71599bb0ce8f14eb772d9a23be4d1d",
+      "provenance": {},
+      "source": {
+        "kind": "file",
+        "name": "d1-r0.csv"
+      }
+    },
+    "manifestVersion": 1,
+    "output": {
+      "bitsPerSample": 24,
+      "channels": 2,
+      "file": "d1-r0.wav",
+      "format": "wav",
+      "frames": 486000,
+      "gainDb": 0.0,
+      "integratedLufs": -43.95,
+      "limitedFrames": 0,
+      "sha256": "sha256:6ea53d0f0ae9c2874045725481a531731d93c37e1206154fbe4d8c8aa272a02e",
+      "truePeakDbtp": -23.59
+    },
+    "render": {
+      "blockSize": 256,
+      "durationS": 10.125,
+      "loudnessCompensationPhon": 60.0,
+      "mode": "analysis",
+      "sampleRate": 48000,
+      "seed": 20261019
+    },
+    "score": {
+      "irVersion": 1,
+      "releaseIndependentHash": "sha256:c5520347c2d245ef45e34afbc366f976b8468646c8b791f9bfc31cfb050491c3"
+    },
+    "spec": {
+      "embedded": null,
+      "hash": "sha256:41e42065b88633c415a2d2db724d91d861f980ae735f565f0139c28ccf30f3f5",
+      "version": "0.1"
+    },
+    "tracks": [
+      {
+        "events": 11,
+        "firstOnsetS": 0.0,
+        "id": "price",
+        "instrument": "mallet",
+        "lastOnsetS": 10.0,
+        "noteDurationsS": [
+          "0.125"
+        ],
+        "notes": 11,
+        "pitchHz": [
+          98.0,
+          1975.53
+        ]
+      }
+    ]
+  },
+  "d1-r1": {
+    "cues": null,
+    "data": {
+      "fingerprint": "sha256:c3fba6b7e1b93227b5e57b80f8001ac589ac42c09595e859f704b8a2d0149eca",
+      "provenance": {},
+      "source": {
+        "kind": "file",
+        "name": "d1-r1.csv"
+      }
+    },
+    "manifestVersion": 1,
+    "output": {
+      "bitsPerSample": 24,
+      "channels": 2,
+      "file": "d1-r1.wav",
+      "format": "wav",
+      "frames": 486000,
+      "gainDb": 0.0,
+      "integratedLufs": -42.41,
+      "limitedFrames": 0,
+      "sha256": "sha256:fdc5ac61558a65da4407f33a09d980fefa6a8024c9b6dc0b0a8a269ecdb5ce14",
+      "truePeakDbtp": -23.59
+    },
+    "render": {
+      "blockSize": 256,
+      "durationS": 10.125,
+      "loudnessCompensationPhon": 60.0,
+      "mode": "analysis",
+      "sampleRate": 48000,
+      "seed": 20261019
+    },
+    "score": {
+      "irVersion": 1,
+      "releaseIndependentHash": "sha256:7a6026747f2b264633ac04126ea5b2b69635e27ce288c8c819418f236127ab20"
+    },
+    "spec": {
+      "embedded": null,
+      "hash": "sha256:4dcbb4b2efd6f57cec204bb961bdc9c2244796f2e2abab8544e9a4eb33e7ea92",
+      "version": "0.1"
+    },
+    "tracks": [
+      {
+        "events": 11,
+        "firstOnsetS": 0.0,
+        "id": "price",
+        "instrument": "mallet",
+        "lastOnsetS": 10.0,
+        "noteDurationsS": [
+          "0.125"
+        ],
+        "notes": 11,
+        "pitchHz": [
+          98.0,
+          1975.53
+        ]
+      }
+    ]
+  },
+  "d1-r2": {
+    "cues": null,
+    "data": {
+      "fingerprint": "sha256:99bde7dc1422dc3d5b9d9916dc2339bca08e961d5dc0a752e3470aa472554c3f",
+      "provenance": {},
+      "source": {
+        "kind": "file",
+        "name": "d1-r2.csv"
+      }
+    },
+    "manifestVersion": 1,
+    "output": {
+      "bitsPerSample": 24,
+      "channels": 2,
+      "file": "d1-r2.wav",
+      "format": "wav",
+      "frames": 486000,
+      "gainDb": 0.0,
+      "integratedLufs": -40.51,
+      "limitedFrames": 0,
+      "sha256": "sha256:742ddb25447e9f2e16f8a2e238fb8b27767383cdbcc336df9a565f8f292b9f42",
+      "truePeakDbtp": -23.59
+    },
+    "render": {
+      "blockSize": 256,
+      "durationS": 10.125,
+      "loudnessCompensationPhon": 60.0,
+      "mode": "analysis",
+      "sampleRate": 48000,
+      "seed": 20261019
+    },
+    "score": {
+      "irVersion": 1,
+      "releaseIndependentHash": "sha256:aa3dab83810816d02984c40b81252a314496a7c086b48be896a40084dc60b8a7"
+    },
+    "spec": {
+      "embedded": null,
+      "hash": "sha256:8d98b35b7fc91a9480fc187442ac95dd98e7c7240c29ca45f643e9bf6acd761d",
+      "version": "0.1"
+    },
+    "tracks": [
+      {
+        "events": 11,
+        "firstOnsetS": 0.0,
+        "id": "price",
+        "instrument": "mallet",
+        "lastOnsetS": 10.0,
+        "noteDurationsS": [
+          "0.125"
+        ],
+        "notes": 11,
+        "pitchHz": [
+          98.0,
+          1975.53
+        ]
+      }
+    ]
+  },
+  "d1-r3": {
+    "cues": null,
+    "data": {
+      "fingerprint": "sha256:c6ecda9807307ca877590037a5aac78eef0917adc4cc9b5b63f219dc96271c6e",
+      "provenance": {},
+      "source": {
+        "kind": "file",
+        "name": "d1-r3.csv"
+      }
+    },
+    "manifestVersion": 1,
+    "output": {
+      "bitsPerSample": 24,
+      "channels": 2,
+      "file": "d1-r3.wav",
+      "format": "wav",
+      "frames": 486000,
+      "gainDb": 0.0,
+      "integratedLufs": -42.48,
+      "limitedFrames": 0,
+      "sha256": "sha256:f85b21042e8d6436ad5e5c9401005ed18c37dfdd636bfbb00c625c7374304c40",
+      "truePeakDbtp": -23.59
+    },
+    "render": {
+      "blockSize": 256,
+      "durationS": 10.125,
+      "loudnessCompensationPhon": 60.0,
+      "mode": "analysis",
+      "sampleRate": 48000,
+      "seed": 20261019
+    },
+    "score": {
+      "irVersion": 1,
+      "releaseIndependentHash": "sha256:e9504f1bfbd4123a2dca8331cb220ed201513144a558c559da9ca9b9bf83e8b3"
+    },
+    "spec": {
+      "embedded": null,
+      "hash": "sha256:91422923ee33dd74673e73698edb5af14545e4721f71fd6b3b0ac6cc337f646c",
+      "version": "0.1"
+    },
+    "tracks": [
+      {
+        "events": 11,
+        "firstOnsetS": 0.0,
+        "id": "price",
+        "instrument": "mallet",
+        "lastOnsetS": 10.0,
+        "noteDurationsS": [
+          "0.125"
+        ],
+        "notes": 11,
+        "pitchHz": [
+          98.0,
+          1975.53
+        ]
+      }
+    ]
+  },
+  "d2-r0": {
+    "cues": null,
+    "data": {
+      "fingerprint": "sha256:50b63414b168129106446b0137417310140c4e4f906be604443de988aa6e669e",
+      "provenance": {},
+      "source": {
+        "kind": "file",
+        "name": "d2-r0.csv"
+      }
+    },
+    "manifestVersion": 1,
+    "output": {
+      "bitsPerSample": 24,
+      "channels": 2,
+      "file": "d2-r0.wav",
+      "format": "wav",
+      "frames": 486000,
+      "gainDb": 0.0,
+      "integratedLufs": -43.75,
+      "limitedFrames": 0,
+      "sha256": "sha256:215fe38bc42e4c2e00048d0c811af7bf20171aaa0757975a26d841171a313814",
+      "truePeakDbtp": -23.59
+    },
+    "render": {
+      "blockSize": 256,
+      "durationS": 10.125,
+      "loudnessCompensationPhon": 60.0,
+      "mode": "analysis",
+      "sampleRate": 48000,
+      "seed": 20261019
+    },
+    "score": {
+      "irVersion": 1,
+      "releaseIndependentHash": "sha256:b5d9420f8479f90b6049272dacf7280a352b0b409e31a50ff3b8574a5ad75da3"
+    },
+    "spec": {
+      "embedded": null,
+      "hash": "sha256:66080c3c8355ff99068297d9b1a0844f30f88958223e18b808fcfa08e20bd4a7",
+      "version": "0.1"
+    },
+    "tracks": [
+      {
+        "events": 21,
+        "firstOnsetS": 0.0,
+        "id": "price",
+        "instrument": "mallet",
+        "lastOnsetS": 10.0,
+        "noteDurationsS": [
+          "0.125"
+        ],
+        "notes": 21,
+        "pitchHz": [
+          98.0,
+          1975.53
+        ]
+      }
+    ]
+  },
+  "d2-r1": {
+    "cues": null,
+    "data": {
+      "fingerprint": "sha256:deba62bf91bf36e6d820d674ef31217a6f2d9341f698cb0b69bd2eea41411cd9",
+      "provenance": {},
+      "source": {
+        "kind": "file",
+        "name": "d2-r1.csv"
+      }
+    },
+    "manifestVersion": 1,
+    "output": {
+      "bitsPerSample": 24,
+      "channels": 2,
+      "file": "d2-r1.wav",
+      "format": "wav",
+      "frames": 486000,
+      "gainDb": 0.0,
+      "integratedLufs": -41.9,
+      "limitedFrames": 0,
+      "sha256": "sha256:4d8892e19b78b3b2d7cd5753b0ebcb3f70c4aecd4fb420361a3aba63d6fec43d",
+      "truePeakDbtp": -23.59
+    },
+    "render": {
+      "blockSize": 256,
+      "durationS": 10.125,
+      "loudnessCompensationPhon": 60.0,
+      "mode": "analysis",
+      "sampleRate": 48000,
+      "seed": 20261019
+    },
+    "score": {
+      "irVersion": 1,
+      "releaseIndependentHash": "sha256:aeb3dc43618bff447225f6632b91a4b2a34ff819b3f098fe887fbe9850e4a345"
+    },
+    "spec": {
+      "embedded": null,
+      "hash": "sha256:dcc4feb97a285a4d68e3524fd988beaaffce36c1e2360cb511abf1633762ba0c",
+      "version": "0.1"
+    },
+    "tracks": [
+      {
+        "events": 21,
+        "firstOnsetS": 0.0,
+        "id": "price",
+        "instrument": "mallet",
+        "lastOnsetS": 10.0,
+        "noteDurationsS": [
+          "0.125"
+        ],
+        "notes": 21,
+        "pitchHz": [
+          98.0,
+          1975.53
+        ]
+      }
+    ]
+  },
+  "d2-r2": {
+    "cues": null,
+    "data": {
+      "fingerprint": "sha256:b6b8b66c27d2bd47d460b80f37b820e30eebbcda58cec35ea70b92071b19d5c1",
+      "provenance": {},
+      "source": {
+        "kind": "file",
+        "name": "d2-r2.csv"
+      }
+    },
+    "manifestVersion": 1,
+    "output": {
+      "bitsPerSample": 24,
+      "channels": 2,
+      "file": "d2-r2.wav",
+      "format": "wav",
+      "frames": 486000,
+      "gainDb": 0.0,
+      "integratedLufs": -41.39,
+      "limitedFrames": 0,
+      "sha256": "sha256:faa9feed1eb4856c97d0ed08f6ae43388decac532ca6e2dee7e670741967f4f2",
+      "truePeakDbtp": -23.59
+    },
+    "render": {
+      "blockSize": 256,
+      "durationS": 10.125,
+      "loudnessCompensationPhon": 60.0,
+      "mode": "analysis",
+      "sampleRate": 48000,
+      "seed": 20261019
+    },
+    "score": {
+      "irVersion": 1,
+      "releaseIndependentHash": "sha256:c7048d862a5cf763b94741a27294b9d2d7cd8d4437761f1698653749ed6068d7"
+    },
+    "spec": {
+      "embedded": null,
+      "hash": "sha256:e71ce6f279de106b0bb587f6b948b47c0d1a9e22aa4d2d7a29dcb0c835a42ecb",
+      "version": "0.1"
+    },
+    "tracks": [
+      {
+        "events": 21,
+        "firstOnsetS": 0.0,
+        "id": "price",
+        "instrument": "mallet",
+        "lastOnsetS": 10.0,
+        "noteDurationsS": [
+          "0.125"
+        ],
+        "notes": 21,
+        "pitchHz": [
+          98.0,
+          1975.53
+        ]
+      }
+    ]
+  },
+  "d2-r3": {
+    "cues": null,
+    "data": {
+      "fingerprint": "sha256:d08f08c600162dc078b719fe31c629055b1d77f86e9c3f5b0625ead83a291f44",
+      "provenance": {},
+      "source": {
+        "kind": "file",
+        "name": "d2-r3.csv"
+      }
+    },
+    "manifestVersion": 1,
+    "output": {
+      "bitsPerSample": 24,
+      "channels": 2,
+      "file": "d2-r3.wav",
+      "format": "wav",
+      "frames": 486000,
+      "gainDb": 0.0,
+      "integratedLufs": -42.72,
+      "limitedFrames": 0,
+      "sha256": "sha256:d5f6b61ef40380c8e85e5715fbd2d43be6a1bd216d0c6d802053345561c3919e",
+      "truePeakDbtp": -23.59
+    },
+    "render": {
+      "blockSize": 256,
+      "durationS": 10.125,
+      "loudnessCompensationPhon": 60.0,
+      "mode": "analysis",
+      "sampleRate": 48000,
+      "seed": 20261019
+    },
+    "score": {
+      "irVersion": 1,
+      "releaseIndependentHash": "sha256:89ec45f364877e04b4ef96640f278ccda47c63ca0339cc78552cb0b73654502a"
+    },
+    "spec": {
+      "embedded": null,
+      "hash": "sha256:c7c641785c0622dcbff17468c60d20fe087c07c2da66962abc6d2841601cea86",
+      "version": "0.1"
+    },
+    "tracks": [
+      {
+        "events": 21,
+        "firstOnsetS": 0.0,
+        "id": "price",
+        "instrument": "mallet",
+        "lastOnsetS": 10.0,
+        "noteDurationsS": [
+          "0.125"
+        ],
+        "notes": 21,
+        "pitchHz": [
+          98.0,
+          1975.53
+        ]
+      }
+    ]
+  },
+  "d4-r0": {
+    "cues": null,
+    "data": {
+      "fingerprint": "sha256:84332c7e1b60680916467edf1a24bb632d893ee03693a75c0aa2c6e024509052",
+      "provenance": {},
+      "source": {
+        "kind": "file",
+        "name": "d4-r0.csv"
+      }
+    },
+    "manifestVersion": 1,
+    "output": {
+      "bitsPerSample": 24,
+      "channels": 2,
+      "file": "d4-r0.wav",
+      "format": "wav",
+      "frames": 486000,
+      "gainDb": 0.0,
+      "integratedLufs": -41.37,
+      "limitedFrames": 0,
+      "sha256": "sha256:c9599364037204cec6301bd93b58cc8fa7b9bed9dbeecb48d07cf38c745f6601",
+      "truePeakDbtp": -23.59
+    },
+    "render": {
+      "blockSize": 256,
+      "durationS": 10.125,
+      "loudnessCompensationPhon": 60.0,
+      "mode": "analysis",
+      "sampleRate": 48000,
+      "seed": 20261019
+    },
+    "score": {
+      "irVersion": 1,
+      "releaseIndependentHash": "sha256:c225f21c3e9590bd5d7a25eb6f44dbc2e39e8a559608133e655ae292597f3752"
+    },
+    "spec": {
+      "embedded": null,
+      "hash": "sha256:6d697a76027d29ecab5e63f285db9589e32d616933280596c2a80800f058c1d7",
+      "version": "0.1"
+    },
+    "tracks": [
+      {
+        "events": 41,
+        "firstOnsetS": 0.0,
+        "id": "price",
+        "instrument": "mallet",
+        "lastOnsetS": 10.0,
+        "noteDurationsS": [
+          "0.125"
+        ],
+        "notes": 41,
+        "pitchHz": [
+          98.0,
+          1975.53
+        ]
+      }
+    ]
+  },
+  "d4-r1": {
+    "cues": null,
+    "data": {
+      "fingerprint": "sha256:c6812b8d13c150add159b0f350cfd8fb204093a7879a3108f1e31717fc795cac",
+      "provenance": {},
+      "source": {
+        "kind": "file",
+        "name": "d4-r1.csv"
+      }
+    },
+    "manifestVersion": 1,
+    "output": {
+      "bitsPerSample": 24,
+      "channels": 2,
+      "file": "d4-r1.wav",
+      "format": "wav",
+      "frames": 486000,
+      "gainDb": 0.0,
+      "integratedLufs": -39.16,
+      "limitedFrames": 0,
+      "sha256": "sha256:8087130e24795870037ef35631bee6132c680ef3f7b56f2dc22738ed9ce4ade1",
+      "truePeakDbtp": -23.59
+    },
+    "render": {
+      "blockSize": 256,
+      "durationS": 10.125,
+      "loudnessCompensationPhon": 60.0,
+      "mode": "analysis",
+      "sampleRate": 48000,
+      "seed": 20261019
+    },
+    "score": {
+      "irVersion": 1,
+      "releaseIndependentHash": "sha256:ea5c10d5ef22ecc47d9ed97d06cb84bbb9417b3a3f06974c4ddc39e216553718"
+    },
+    "spec": {
+      "embedded": null,
+      "hash": "sha256:a46347ec0dba8c9ec9ed3149a6a0b3313d136a3c0419061d414cb59baae98fbe",
+      "version": "0.1"
+    },
+    "tracks": [
+      {
+        "events": 41,
+        "firstOnsetS": 0.0,
+        "id": "price",
+        "instrument": "mallet",
+        "lastOnsetS": 10.0,
+        "noteDurationsS": [
+          "0.125"
+        ],
+        "notes": 41,
+        "pitchHz": [
+          98.0,
+          1975.53
+        ]
+      }
+    ]
+  },
+  "d4-r2": {
+    "cues": null,
+    "data": {
+      "fingerprint": "sha256:1eb36912090dabc2d7ca6c1dfc78b51a50a7c51cd2a57283fc78d3ba9da4a4c3",
+      "provenance": {},
+      "source": {
+        "kind": "file",
+        "name": "d4-r2.csv"
+      }
+    },
+    "manifestVersion": 1,
+    "output": {
+      "bitsPerSample": 24,
+      "channels": 2,
+      "file": "d4-r2.wav",
+      "format": "wav",
+      "frames": 486000,
+      "gainDb": 0.0,
+      "integratedLufs": -38.75,
+      "limitedFrames": 0,
+      "sha256": "sha256:d5ed72aa7b14f01ad56e2dc58cc1574980a500cabb4fd6f526eb5243cb6dc923",
+      "truePeakDbtp": -23.59
+    },
+    "render": {
+      "blockSize": 256,
+      "durationS": 10.125,
+      "loudnessCompensationPhon": 60.0,
+      "mode": "analysis",
+      "sampleRate": 48000,
+      "seed": 20261019
+    },
+    "score": {
+      "irVersion": 1,
+      "releaseIndependentHash": "sha256:2bca97b9505dc9cd377c65f71fafab9f0fd89df0f4d379943fdeed74dccecebd"
+    },
+    "spec": {
+      "embedded": null,
+      "hash": "sha256:16b479eed4ff3585beec089827cd5bb212b5e1d8e16b2daefb98322b6630ff60",
+      "version": "0.1"
+    },
+    "tracks": [
+      {
+        "events": 41,
+        "firstOnsetS": 0.0,
+        "id": "price",
+        "instrument": "mallet",
+        "lastOnsetS": 10.0,
+        "noteDurationsS": [
+          "0.125"
+        ],
+        "notes": 41,
+        "pitchHz": [
+          98.0,
+          1975.53
+        ]
+      }
+    ]
+  },
+  "d4-r3": {
+    "cues": null,
+    "data": {
+      "fingerprint": "sha256:1ede2a5e99db4a5e9e84ca9878a08505bd56de42f39fc3dc6e89c1bf6ac14dc5",
+      "provenance": {},
+      "source": {
+        "kind": "file",
+        "name": "d4-r3.csv"
+      }
+    },
+    "manifestVersion": 1,
+    "output": {
+      "bitsPerSample": 24,
+      "channels": 2,
+      "file": "d4-r3.wav",
+      "format": "wav",
+      "frames": 486000,
+      "gainDb": 0.0,
+      "integratedLufs": -40.34,
+      "limitedFrames": 0,
+      "sha256": "sha256:635cc5bbaae67c741403d0c1aa7634e2ae93ad2880cd03303163044a70eaf3b9",
+      "truePeakDbtp": -23.59
+    },
+    "render": {
+      "blockSize": 256,
+      "durationS": 10.125,
+      "loudnessCompensationPhon": 60.0,
+      "mode": "analysis",
+      "sampleRate": 48000,
+      "seed": 20261019
+    },
+    "score": {
+      "irVersion": 1,
+      "releaseIndependentHash": "sha256:fc7af5721a947e890a632f0acd3dbea9beb99f67e643d8e34a7f49cccb058baa"
+    },
+    "spec": {
+      "embedded": null,
+      "hash": "sha256:08238d66b06219835d693a071a98b5d2d339889e7c25492daa3706d510d0a6b9",
+      "version": "0.1"
+    },
+    "tracks": [
+      {
+        "events": 41,
+        "firstOnsetS": 0.0,
+        "id": "price",
+        "instrument": "mallet",
+        "lastOnsetS": 10.0,
+        "noteDurationsS": [
+          "0.125"
+        ],
+        "notes": 41,
+        "pitchHz": [
+          98.0,
+          1975.53
+        ]
+      }
+    ]
+  },
+  "d8-r0": {
+    "cues": null,
+    "data": {
+      "fingerprint": "sha256:b96be4259d23d71098029227b45199ff872e7969ebecc465c23db13ac426d8ed",
+      "provenance": {},
+      "source": {
+        "kind": "file",
+        "name": "d8-r0.csv"
+      }
+    },
+    "manifestVersion": 1,
+    "output": {
+      "bitsPerSample": 24,
+      "channels": 2,
+      "file": "d8-r0.wav",
+      "format": "wav",
+      "frames": 486000,
+      "gainDb": 0.0,
+      "integratedLufs": -38.4,
+      "limitedFrames": 0,
+      "sha256": "sha256:4088d73725489e7e3298a5a0255cf9ffa78f662d3f3f1e94f9a37da8427250e8",
+      "truePeakDbtp": -23.59
+    },
+    "render": {
+      "blockSize": 256,
+      "durationS": 10.125,
+      "loudnessCompensationPhon": 60.0,
+      "mode": "analysis",
+      "sampleRate": 48000,
+      "seed": 20261019
+    },
+    "score": {
+      "irVersion": 1,
+      "releaseIndependentHash": "sha256:bd6510a91cf6db5e87ebbce6d844f60c45e4f0c2af4b866f95fd44dcaab7fd79"
+    },
+    "spec": {
+      "embedded": null,
+      "hash": "sha256:5c30eed4aa435f2f8fb45460e33d5e99ebe3711b5fa5862b7c599f4de72e4792",
+      "version": "0.1"
+    },
+    "tracks": [
+      {
+        "events": 81,
+        "firstOnsetS": 0.0,
+        "id": "price",
+        "instrument": "mallet",
+        "lastOnsetS": 10.0,
+        "noteDurationsS": [
+          "0.125"
+        ],
+        "notes": 81,
+        "pitchHz": [
+          98.0,
+          1975.53
+        ]
+      }
+    ]
+  },
+  "d8-r1": {
+    "cues": null,
+    "data": {
+      "fingerprint": "sha256:659e60d868857e938da3f88ea5f887f5ac569522cff8474676dd90013db5d150",
+      "provenance": {},
+      "source": {
+        "kind": "file",
+        "name": "d8-r1.csv"
+      }
+    },
+    "manifestVersion": 1,
+    "output": {
+      "bitsPerSample": 24,
+      "channels": 2,
+      "file": "d8-r1.wav",
+      "format": "wav",
+      "frames": 486000,
+      "gainDb": 0.0,
+      "integratedLufs": -36.36,
+      "limitedFrames": 0,
+      "sha256": "sha256:1c401282af9a59bddd01d0b02b786f798c34bd69558d773ecc7247d38a26338a",
+      "truePeakDbtp": -23.59
+    },
+    "render": {
+      "blockSize": 256,
+      "durationS": 10.125,
+      "loudnessCompensationPhon": 60.0,
+      "mode": "analysis",
+      "sampleRate": 48000,
+      "seed": 20261019
+    },
+    "score": {
+      "irVersion": 1,
+      "releaseIndependentHash": "sha256:90d7e31bc147bf48a746cb2dad95f746e30753911c78430a8f9accb57d837c88"
+    },
+    "spec": {
+      "embedded": null,
+      "hash": "sha256:6bfd91abf609b60d5e5dd30f27b7ef50ef2649ae9819f0b9885d4eab706fc326",
+      "version": "0.1"
+    },
+    "tracks": [
+      {
+        "events": 81,
+        "firstOnsetS": 0.0,
+        "id": "price",
+        "instrument": "mallet",
+        "lastOnsetS": 10.0,
+        "noteDurationsS": [
+          "0.125"
+        ],
+        "notes": 81,
+        "pitchHz": [
+          98.0,
+          1975.53
+        ]
+      }
+    ]
+  },
+  "d8-r2": {
+    "cues": null,
+    "data": {
+      "fingerprint": "sha256:53d468a1e5065af7c473919927707de8028173448fc05c3b3f5dcb8656256811",
+      "provenance": {},
+      "source": {
+        "kind": "file",
+        "name": "d8-r2.csv"
+      }
+    },
+    "manifestVersion": 1,
+    "output": {
+      "bitsPerSample": 24,
+      "channels": 2,
+      "file": "d8-r2.wav",
+      "format": "wav",
+      "frames": 486000,
+      "gainDb": 0.0,
+      "integratedLufs": -35.74,
+      "limitedFrames": 0,
+      "sha256": "sha256:a40298af55cc524a14ed124199ba0ae0d285304f32da2ae9634202682d0e9476",
+      "truePeakDbtp": -23.59
+    },
+    "render": {
+      "blockSize": 256,
+      "durationS": 10.125,
+      "loudnessCompensationPhon": 60.0,
+      "mode": "analysis",
+      "sampleRate": 48000,
+      "seed": 20261019
+    },
+    "score": {
+      "irVersion": 1,
+      "releaseIndependentHash": "sha256:774d043c6af7fe809d943ed8455979193ce507e71f237713923b8904662583ef"
+    },
+    "spec": {
+      "embedded": null,
+      "hash": "sha256:7ac3ddaac846b9c81e137a21e08c68af9edcfb370eff7b8694c43d4a2b7d5c05",
+      "version": "0.1"
+    },
+    "tracks": [
+      {
+        "events": 81,
+        "firstOnsetS": 0.0,
+        "id": "price",
+        "instrument": "mallet",
+        "lastOnsetS": 10.0,
+        "noteDurationsS": [
+          "0.125"
+        ],
+        "notes": 81,
+        "pitchHz": [
+          98.0,
+          1975.53
+        ]
+      }
+    ]
+  },
+  "d8-r3": {
+    "cues": null,
+    "data": {
+      "fingerprint": "sha256:cc8f63db628384c2957521352c1bb3e9f000ca345f72c728ed164029171b77e5",
+      "provenance": {},
+      "source": {
+        "kind": "file",
+        "name": "d8-r3.csv"
+      }
+    },
+    "manifestVersion": 1,
+    "output": {
+      "bitsPerSample": 24,
+      "channels": 2,
+      "file": "d8-r3.wav",
+      "format": "wav",
+      "frames": 486000,
+      "gainDb": 0.0,
+      "integratedLufs": -37.5,
+      "limitedFrames": 0,
+      "sha256": "sha256:63336dfbdb591417651620694bfd013b3fbce32d4a6db6c085a2ba70014ecba0",
+      "truePeakDbtp": -23.59
+    },
+    "render": {
+      "blockSize": 256,
+      "durationS": 10.125,
+      "loudnessCompensationPhon": 60.0,
+      "mode": "analysis",
+      "sampleRate": 48000,
+      "seed": 20261019
+    },
+    "score": {
+      "irVersion": 1,
+      "releaseIndependentHash": "sha256:7cb2d8f4fbe84acd7e0af171a837b766afd662fda709c5173e712a5b23c751c0"
+    },
+    "spec": {
+      "embedded": null,
+      "hash": "sha256:09dedfd564360db9c3953e44ac98bf95c7fb5354ac4eaf5adc2c2f1fc2b4d4c0",
+      "version": "0.1"
+    },
+    "tracks": [
+      {
+        "events": 81,
+        "firstOnsetS": 0.0,
+        "id": "price",
+        "instrument": "mallet",
+        "lastOnsetS": 10.0,
+        "noteDurationsS": [
+          "0.125"
+        ],
+        "notes": 81,
+        "pitchHz": [
+          98.0,
+          1975.53
+        ]
+      }
+    ]
+  }
+}

@@ -1,0 +1,455 @@
+{
+  "clicks": {
+    "cues": null,
+    "data": {
+      "fingerprint": "sha256:2790e9b6787853b7dc0107af5eabc6e7fa1dd8aa41465dbee9d64af99480630d",
+      "provenance": {},
+      "source": {
+        "kind": "file",
+        "name": "data.csv"
+      }
+    },
+    "manifestVersion": 1,
+    "output": {
+      "bitsPerSample": 24,
+      "channels": 2,
+      "file": "clicks.wav",
+      "format": "wav",
+      "frames": 480000,
+      "gainDb": 0.0,
+      "integratedLufs": -28.44,
+      "limitedFrames": 0,
+      "sha256": "sha256:e4e60a38cd9165d1dce1536161b3b7ebe828f2067521dd467920bedf3c760f16",
+      "truePeakDbtp": -21.22
+    },
+    "render": {
+      "blockSize": 256,
+      "durationS": 10.0,
+      "loudnessCompensationPhon": 60.0,
+      "mode": "analysis",
+      "sampleRate": 48000,
+      "seed": 20261019
+    },
+    "score": {
+      "irVersion": 1,
+      "releaseIndependentHash": "sha256:060638506786a03324c942fbe4dbabfee8b527156390f9eb81eae35393809bae"
+    },
+    "spec": {
+      "embedded": null,
+      "hash": "sha256:52da95e3ed0a2a534af9b3542897fc9774bd02b36ab107867c1fbcb47a433fdd",
+      "version": "0.1"
+    },
+    "tracks": [
+      {
+        "events": 20,
+        "firstOnsetS": 0.0,
+        "id": "price",
+        "instrument": "sine",
+        "lastOnsetS": 9.5,
+        "noteDurationsS": [
+          "0.5"
+        ],
+        "notes": 20,
+        "pitchHz": [
+          193.4,
+          1927.63
+        ]
+      },
+      {
+        "events": 10,
+        "firstOnsetS": 0.0,
+        "id": "clicks",
+        "instrument": "square",
+        "lastOnsetS": 9.0,
+        "noteDurationsS": [
+          "0.01"
+        ],
+        "notes": 10,
+        "pitchHz": [
+          3000.0,
+          3000.0
+        ]
+      }
+    ]
+  },
+  "clicks-dynamic": {
+    "cues": null,
+    "data": {
+      "fingerprint": "sha256:2790e9b6787853b7dc0107af5eabc6e7fa1dd8aa41465dbee9d64af99480630d",
+      "provenance": {},
+      "source": {
+        "kind": "file",
+        "name": "data.csv"
+      }
+    },
+    "manifestVersion": 1,
+    "output": {
+      "bitsPerSample": 24,
+      "channels": 2,
+      "file": "clicks-dynamic.wav",
+      "format": "wav",
+      "frames": 480000,
+      "gainDb": 0.0,
+      "integratedLufs": -27.46,
+      "limitedFrames": 0,
+      "sha256": "sha256:f4cfafd3a65574fb48c37fef994fd0a9dc7418b2083b832408e8fcdefd5504b3",
+      "truePeakDbtp": -17.88
+    },
+    "render": {
+      "blockSize": 256,
+      "durationS": 10.0,
+      "loudnessCompensationPhon": 60.0,
+      "mode": "analysis",
+      "sampleRate": 48000,
+      "seed": 20261019
+    },
+    "score": {
+      "irVersion": 1,
+      "releaseIndependentHash": "sha256:78eb16ee2bd6e85a45ef451f80d1922e3a956bd4b6ea99d99ee71f46df2b9e76"
+    },
+    "spec": {
+      "embedded": null,
+      "hash": "sha256:dc45b360210ef5e6f4309ee0ba429db1af3d6664376fde2696dcdafe65877a65",
+      "version": "0.1"
+    },
+    "tracks": [
+      {
+        "events": 20,
+        "firstOnsetS": 0.0,
+        "id": "price",
+        "instrument": "sine",
+        "lastOnsetS": 9.5,
+        "noteDurationsS": [
+          "0.5"
+        ],
+        "notes": 20,
+        "pitchHz": [
+          193.4,
+          1927.63
+        ]
+      },
+      {
+        "events": 10,
+        "firstOnsetS": 0.0,
+        "id": "clicks",
+        "instrument": "square",
+        "lastOnsetS": 9.0,
+        "noteDurationsS": [
+          "0.01"
+        ],
+        "notes": 10,
+        "pitchHz": [
+          3000.0,
+          3000.0
+        ]
+      },
+      {
+        "events": 20,
+        "firstOnsetS": 0.0,
+        "id": "reference",
+        "instrument": "triangle",
+        "lastOnsetS": 9.5,
+        "noteDurationsS": [
+          "0.25"
+        ],
+        "notes": 20,
+        "pitchHz": [
+          193.4,
+          1927.63
+        ]
+      }
+    ]
+  },
+  "clicks-static": {
+    "cues": null,
+    "data": {
+      "fingerprint": "sha256:2790e9b6787853b7dc0107af5eabc6e7fa1dd8aa41465dbee9d64af99480630d",
+      "provenance": {},
+      "source": {
+        "kind": "file",
+        "name": "data.csv"
+      }
+    },
+    "manifestVersion": 1,
+    "output": {
+      "bitsPerSample": 24,
+      "channels": 2,
+      "file": "clicks-static.wav",
+      "format": "wav",
+      "frames": 480000,
+      "gainDb": 0.0,
+      "integratedLufs": -28.23,
+      "limitedFrames": 0,
+      "sha256": "sha256:771256b073c1952fed5c979e80cfd4be04b90f14ac8ca815d786409943099640",
+      "truePeakDbtp": -19.89
+    },
+    "render": {
+      "blockSize": 256,
+      "durationS": 10.0,
+      "loudnessCompensationPhon": 60.0,
+      "mode": "analysis",
+      "sampleRate": 48000,
+      "seed": 20261019
+    },
+    "score": {
+      "irVersion": 1,
+      "releaseIndependentHash": "sha256:2cd25af8af6c031d7c705c78edb9c0991af2e65389b0aee41241ea62a4ab3f6f"
+    },
+    "spec": {
+      "embedded": null,
+      "hash": "sha256:9ff2e93d404fde48e44b6491200128cf9a2e82306aa65e9a4a2a713c3c47c180",
+      "version": "0.1"
+    },
+    "tracks": [
+      {
+        "events": 20,
+        "firstOnsetS": 0.0,
+        "id": "price",
+        "instrument": "sine",
+        "lastOnsetS": 9.5,
+        "noteDurationsS": [
+          "0.5"
+        ],
+        "notes": 20,
+        "pitchHz": [
+          193.4,
+          1927.63
+        ]
+      },
+      {
+        "events": 10,
+        "firstOnsetS": 0.0,
+        "id": "clicks",
+        "instrument": "square",
+        "lastOnsetS": 9.0,
+        "noteDurationsS": [
+          "0.01"
+        ],
+        "notes": 10,
+        "pitchHz": [
+          3000.0,
+          3000.0
+        ]
+      },
+      {
+        "events": 20,
+        "firstOnsetS": 0.0,
+        "id": "reference",
+        "instrument": "triangle",
+        "lastOnsetS": 9.5,
+        "noteDurationsS": [
+          "0.25"
+        ],
+        "notes": 20,
+        "pitchHz": [
+          1100.54,
+          1100.54
+        ]
+      }
+    ]
+  },
+  "dynamic": {
+    "cues": null,
+    "data": {
+      "fingerprint": "sha256:2790e9b6787853b7dc0107af5eabc6e7fa1dd8aa41465dbee9d64af99480630d",
+      "provenance": {},
+      "source": {
+        "kind": "file",
+        "name": "data.csv"
+      }
+    },
+    "manifestVersion": 1,
+    "output": {
+      "bitsPerSample": 24,
+      "channels": 2,
+      "file": "dynamic.wav",
+      "format": "wav",
+      "frames": 480000,
+      "gainDb": 0.0,
+      "integratedLufs": -27.52,
+      "limitedFrames": 0,
+      "sha256": "sha256:cd231e531feac067a15dfe38ff0678d79358c0c625dab2d16e7439704e58131f",
+      "truePeakDbtp": -17.88
+    },
+    "render": {
+      "blockSize": 256,
+      "durationS": 10.0,
+      "loudnessCompensationPhon": 60.0,
+      "mode": "analysis",
+      "sampleRate": 48000,
+      "seed": 20261019
+    },
+    "score": {
+      "irVersion": 1,
+      "releaseIndependentHash": "sha256:47ae386de535d2c28c46390516a310959bc51c6c0f5f8627601ca326c729ed4e"
+    },
+    "spec": {
+      "embedded": null,
+      "hash": "sha256:615448c1071ddc6bca9ac643f82e7f13759d6eb166d2ee767e964ac32bb7bf4a",
+      "version": "0.1"
+    },
+    "tracks": [
+      {
+        "events": 20,
+        "firstOnsetS": 0.0,
+        "id": "price",
+        "instrument": "sine",
+        "lastOnsetS": 9.5,
+        "noteDurationsS": [
+          "0.5"
+        ],
+        "notes": 20,
+        "pitchHz": [
+          193.4,
+          1927.63
+        ]
+      },
+      {
+        "events": 20,
+        "firstOnsetS": 0.0,
+        "id": "reference",
+        "instrument": "triangle",
+        "lastOnsetS": 9.5,
+        "noteDurationsS": [
+          "0.25"
+        ],
+        "notes": 20,
+        "pitchHz": [
+          193.4,
+          1927.63
+        ]
+      }
+    ]
+  },
+  "none": {
+    "cues": null,
+    "data": {
+      "fingerprint": "sha256:2790e9b6787853b7dc0107af5eabc6e7fa1dd8aa41465dbee9d64af99480630d",
+      "provenance": {},
+      "source": {
+        "kind": "file",
+        "name": "data.csv"
+      }
+    },
+    "manifestVersion": 1,
+    "output": {
+      "bitsPerSample": 24,
+      "channels": 2,
+      "file": "none.wav",
+      "format": "wav",
+      "frames": 480000,
+      "gainDb": 0.0,
+      "integratedLufs": -28.51,
+      "limitedFrames": 0,
+      "sha256": "sha256:7d5cb839c5ebc7fc23e127e22d1e68d9cc5fc28cd56880b2ffa282f7225d3687",
+      "truePeakDbtp": -21.22
+    },
+    "render": {
+      "blockSize": 256,
+      "durationS": 10.0,
+      "loudnessCompensationPhon": 60.0,
+      "mode": "analysis",
+      "sampleRate": 48000,
+      "seed": 20261019
+    },
+    "score": {
+      "irVersion": 1,
+      "releaseIndependentHash": "sha256:66f75d32fe38af96d6f77ef37eaa2429a2b3e08f4b4c4b1a070de52199001c2f"
+    },
+    "spec": {
+      "embedded": null,
+      "hash": "sha256:ff3f2676956cc781828da2bdeaec9ecb304995a44928d48f1531112fa3e13269",
+      "version": "0.1"
+    },
+    "tracks": [
+      {
+        "events": 20,
+        "firstOnsetS": 0.0,
+        "id": "price",
+        "instrument": "sine",
+        "lastOnsetS": 9.5,
+        "noteDurationsS": [
+          "0.5"
+        ],
+        "notes": 20,
+        "pitchHz": [
+          193.4,
+          1927.63
+        ]
+      }
+    ]
+  },
+  "static": {
+    "cues": null,
+    "data": {
+      "fingerprint": "sha256:2790e9b6787853b7dc0107af5eabc6e7fa1dd8aa41465dbee9d64af99480630d",
+      "provenance": {},
+      "source": {
+        "kind": "file",
+        "name": "data.csv"
+      }
+    },
+    "manifestVersion": 1,
+    "output": {
+      "bitsPerSample": 24,
+      "channels": 2,
+      "file": "static.wav",
+      "format": "wav",
+      "frames": 480000,
+      "gainDb": 0.0,
+      "integratedLufs": -28.3,
+      "limitedFrames": 0,
+      "sha256": "sha256:ddf3b9d01dc240cb4777d22be90590ffe927b6072ca740d14a3a0c3b8b955bb4",
+      "truePeakDbtp": -19.89
+    },
+    "render": {
+      "blockSize": 256,
+      "durationS": 10.0,
+      "loudnessCompensationPhon": 60.0,
+      "mode": "analysis",
+      "sampleRate": 48000,
+      "seed": 20261019
+    },
+    "score": {
+      "irVersion": 1,
+      "releaseIndependentHash": "sha256:433e00291c12bb7af2f9808813f1fb8f90df71dfc178b6053393d272cb39b7e3"
+    },
+    "spec": {
+      "embedded": null,
+      "hash": "sha256:aaa4a4ba0c65325ee15dcb690962486fc6e68d35b11bd9f121a52f616141e1c0",
+      "version": "0.1"
+    },
+    "tracks": [
+      {
+        "events": 20,
+        "firstOnsetS": 0.0,
+        "id": "price",
+        "instrument": "sine",
+        "lastOnsetS": 9.5,
+        "noteDurationsS": [
+          "0.5"
+        ],
+        "notes": 20,
+        "pitchHz": [
+          193.4,
+          1927.63
+        ]
+      },
+      {
+        "events": 20,
+        "firstOnsetS": 0.0,
+        "id": "reference",
+        "instrument": "triangle",
+        "lastOnsetS": 9.5,
+        "noteDurationsS": [
+          "0.25"
+        ],
+        "notes": 20,
+        "pitchHz": [
+          1100.54,
+          1100.54
+        ]
+      }
+    ]
+  }
+}

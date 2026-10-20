@@ -1,0 +1,87 @@
+{
+  "data": {
+    "fields": {
+      "n": {
+        "type": "quantitative"
+      },
+      "species": {
+        "type": "nominal"
+      }
+    },
+    "source": {
+      "kind": "inline",
+      "values": [
+        {
+          "island": "Biscoe",
+          "n": 44,
+          "species": "Adelie"
+        },
+        {
+          "island": "Biscoe",
+          "n": 124,
+          "species": "Gentoo"
+        },
+        {
+          "island": "Dream",
+          "n": 56,
+          "species": "Adelie"
+        },
+        {
+          "island": "Dream",
+          "n": 68,
+          "species": "Chinstrap"
+        },
+        {
+          "island": "Torgersen",
+          "n": 52,
+          "species": "Adelie"
+        }
+      ]
+    }
+  },
+  "name": "Penguins by island",
+  "specVersion": "0.1",
+  "substrate": {
+    "time": {
+      "field": "species",
+      "pace": {
+        "pointsPerSecond": 2.0
+      }
+    }
+  },
+  "tracks": [
+    {
+      "channels": {
+        "duration": {
+          "value": {
+            "s": 0.5
+          }
+        },
+        "pitch": {
+          "field": "n",
+          "polarity": "positive",
+          "range": {
+            "hz": [
+              261.626,
+              1046.502
+            ]
+          }
+        }
+      },
+      "id": "y",
+      "instrument": "piano",
+      "mark": "tone"
+    }
+  ],
+  "transform": [
+    {
+      "expr": "n > 10 && island != \"None\"",
+      "op": "filter"
+    },
+    {
+      "as": "root_n",
+      "expr": "sqrt(n)",
+      "op": "derive"
+    }
+  ]
+}
