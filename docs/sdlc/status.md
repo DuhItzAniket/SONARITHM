@@ -26,7 +26,7 @@ Status values: `Not started` · `In progress` · `In review` · `Done` · `Block
 | A | A04 | Data layer | **Done** | 100% | 2026-10-19; [phase review](reviews/A04-phase-review.md), [retro](retrospectives/A04-retro.md). See [A04 tasks](#a04-tasks) |
 | A | A05 | Render engine, audio backend, export | **In progress** | ≈5% | T01, T03 and T04 in review. See [A05 tasks](#a05-tasks) |
 | A | A06 | NUMISONA v1 | **Done** | 100% | 2026-10-19; [phase review](reviews/A06-phase-review.md). See [A06 tasks](#a06-tasks) |
-| A | A07 | CLI, Python, v0.1.0-alpha | Not started | 0% | |
+| A | A07 | CLI, Python, v0.1.0-alpha | **In progress** | ≈5% | #156 fixed first. See [A07 tasks](#a07-tasks) |
 | A | A08 | Research instrumentation v0, ICAD 2027 | **In progress** | ≈10% | P01 without participant studies (OD-04). See [A08 tasks](#a08-tasks) |
 | B | B01 | Desktop shell, IPC, app core | Not started | 0% | |
 | B | B02 | Design system and application frame | Not started | 0% | |
@@ -153,6 +153,22 @@ Work runs in a separate agent session through one PR per task into `crates/engin
 | A06-T08 Erie importer (subset) | **Done** | Merged in #150. Written from Erie's documentation; 8-spec gallery subset imports as valid v0.1 specs with a report of 19 approximated or unmapped constructs (`SNR-ENG-080`, `081`); F-081 |
 | A06-T09 Rule-conformance suite and compile benchmarks (PB-04) | **Done** | Merged with the phase review. A named test for every rule NUMISONA owns, checked against the catalogue; the Erie gallery subset renders; SDR-21 volatility advice; PB-04: 35 ms (HW-01) and 54 ms (HW-01e) for 100k rows × 4 tracks; F-083, F-084 |
 
+### A07 tasks
+
+Work runs in a separate agent session through one PR per task, based on `main`. `render`, `quick` and `play` wait for A05-T06 to T08. A task is Done when its PR is merged with CI green.
+
+| Task | Status | Notes |
+|---|---|---|
+| A07 prerequisite #156 `without_inference()` keeps declared fields | In review | Declared `fields` are written into the schema without inference; NUMISONA's example datasets declare their roles and read without inference (data unchanged, same fingerprints) |
+| A07-T01 Facade crate API, rustdoc examples | Not started | |
+| A07-T02 CLI commands, `--json`, `--plain` | Not started | |
+| A07-T03 Python package (PyO3/maturin abi3) | Not started | |
+| A07-T04 Examples gallery | Not started | |
+| A07-T05 release-plz, git-cliff, wheels workflow | Not started | |
+| A07-T06 Zenodo, `CITATION.cff` | Not started | |
+| A07-T07 Quickstart tutorial | Not started | Three-person timing test: owner (#129) |
+| A07-T08 Release v0.1.0-alpha | Not started | Publishing needs the owner's go |
+
 ### A08 tasks
 
 Work runs in a separate agent session through one PR per task into `crates/engines/sonarithm-echometric`, in parallel with A05 and A07. No participant data is collected (OD-04). A task is Done when its PR is merged with CI green.
@@ -218,3 +234,4 @@ Maturity scale: `Designed` → `Prototype` → `Alpha` → `Beta` → `Stable` �
 | 2026-10-19 | A04 built: sources, inference, provenance, transforms, downsampling, fingerprints, PB-05 benchmark and fuzzers (T01–T10 in review) |
 | 2026-10-19 | A04 done: all ten tasks merged (#113, #114, #116, #133, #135, #136, #138, #139, #141, #142, #143); phase review and retro |
 | 2026-10-19 | A08 started: `sonarithm-echometric` with stimulus generators GEN-001 to GEN-004 (T01) |
+| 2026-10-19 | A07 started: `without_inference()` keeps declared fields (#156) |

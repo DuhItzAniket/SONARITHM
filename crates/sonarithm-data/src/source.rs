@@ -328,7 +328,7 @@ fn finish(
     let table = if options.inference {
         crate::infer::semantic::infer_table(&table, &options.fields, &mut diagnostics)?
     } else {
-        table
+        crate::infer::semantic::apply_declared(&table, &options.fields)?
     };
     let source = SourceDescriptor::new(SourceKind::File(format), locator, format.as_str());
     Ok(Loaded {
@@ -407,6 +407,69 @@ mod tests {
         };
         assert!(cells.check_shape(50, 2).is_ok());
         assert!(cells.check_shape(51, 2).is_err());
+    }
+
+    /// Regression test for #156: `without_inference()` dropped the spec's declared fields,
+    /// because they were applied only through inference.
+    #[test]
+    fn declared_fields_survive_without_inference() {
+        use crate::meta::{Concept, FieldType, Role, Unit};
+
+        let declared_temp = FieldMeta::new()
+            .with_type(FieldType::Quantitative)
+            .with_unit(Unit::new("°C").unwrap())
+            .with_concept(Concept::new("temperature").unwrap())
+            .with_role(Role::Y)
+            .with_label("Temperature");
+        let fields = BTreeMap::from([("temp".to_owned(), declared_temp.clone())]);
+        let options = ReadOptions::new()
+            .with_fields(fields.clone())
+            .without_inference();
+
+        let csv = read_bytes(b"day,temp\n1,8.5\n2,9.25\n", Format::Csv, "t.csv", &options).unwrap();
+        let table = csv.bundle.primary().unwrap();
+        assert_eq!(table.field_meta("temp").unwrap(), declared_temp);
+        assert_eq!(
+            table.field_meta("day").unwrap(),
+            FieldMeta::new(),
+            "nothing is inferred for undeclared fields"
+        );
+        assert!(
+            csv.diagnostics
+                .iter()
+                .all(|d| !d.code.as_str().starts_with("SNR-DATA-03")),
+            "no inference diagnostics: {:?}",
+            csv.diagnostics
+        );
+
+        // Declared parts win over the file's metadata; undeclared parts of the file stay.
+        let file_meta = FieldMeta::new()
+            .with_unit(Unit::new("K").unwrap())
+            .with_description("Air temperature at 2 m");
+        let ipc = read_bytes(&csv_as_ipc(&file_meta), Format::Arrow, "t.arrow", &options)
+            .unwrap()
+            .bundle;
+        assert_eq!(
+            ipc.primary().unwrap().field_meta("temp").unwrap(),
+            declared_temp.with_description("Air temperature at 2 m")
+        );
+    }
+
+    /// The day/temp table as Arrow IPC, with `meta` on `temp`.
+    fn csv_as_ipc(meta: &FieldMeta) -> Vec<u8> {
+        let loaded = read_bytes(
+            b"day,temp\n1,8.5\n2,9.25\n",
+            Format::Csv,
+            "t.csv",
+            &ReadOptions::new().without_inference(),
+        )
+        .unwrap();
+        let table = loaded
+            .bundle
+            .primary()
+            .unwrap()
+            .with_field_meta("temp", meta);
+        write_ipc(&table.unwrap()).unwrap()
     }
 
     #[test]
