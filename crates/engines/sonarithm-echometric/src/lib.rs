@@ -4,7 +4,7 @@
 //! ECHOMETRIC, SONARITHM's evaluation engine (docs/architecture/07-engines.md, ECHOMETRIC).
 //!
 //! Version 0 (roadmap A08) is the research instrument: the [`harness`] with stimulus
-//! generators that re-create published study designs from a seed. The analytics half
+//! generators that re-create published study designs from a seed, and the study runner. The analytics half
 //! (detectors, descriptions, queries and the perceptual lint) arrives in C05.
 //!
 //! Generated values reach the Score through gallery and study specs, so they are computed
@@ -19,4 +19,5 @@
     reason = "row counts and indices become f64 positions; all stay below 2^53 (coding-standards §2.2)"
 )]
 
+pub mod codes;
 pub mod harness;

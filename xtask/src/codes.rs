@@ -30,6 +30,7 @@ fn tables() -> Vec<CodeTable> {
         sonarithm_compiler::codes::CODES,
         sonarithm_render::codes::CODES,
         sonarithm_numisona::codes::CODES,
+        sonarithm_echometric::codes::CODES,
     ]
 }
 

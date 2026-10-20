@@ -73,6 +73,7 @@ From phase A07, release-plz maintains this file: it generates each release's ent
   - Citation metadata for Zenodo (`.zenodo.json`) alongside `CITATION.cff`, kept in step with the release version by `cargo xtask citation`.
 - ECHOMETRIC research instrumentation (phase A08):
   - `sonarithm-echometric` stimulus generators, each deterministic from its parameters and a seed, with the published parameters documented next to SONARITHM's: GEN-001 trend reversals × density (Nees & Walker 2008), GEN-002 price series with click and reference-tone columns (Smith & Walker 2005), GEN-003 SNR-controlled transit light curves (Tucker Brown et al. 2022) and GEN-004 correlation triplets (Elmquist et al. 2024). Every stimulus carries its ground truth, a canonical CSV with a SHA-256 digest, a provenance manifest and notes on where it departs from the published design.
+  - `sonarithm-echometric` study runner library: TOML protocol files (`sonarithm-study/0`) with conditions, blocks and generator parameters, checked with `SNR-ENG-600`–`607` diagnostics; a seeded trial order with counterbalancing; responses scored against each stimulus's ground truth (point estimation, trend identification, counting, choice); a JSONL log (`sonarithm-study-log/0`) with pseudonymous codes and no paths; pause, and resumption from the log in a new run.
 
 ### Fixed
 
