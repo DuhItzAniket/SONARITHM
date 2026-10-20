@@ -1,0 +1,34 @@
+[package]
+name = "sonarithm-py"
+description = "Python bindings for SONARITHM (the `sonarithm._core` module of the `sonarithm` package)."
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+repository.workspace = true
+license.workspace = true
+publish = false   # released to PyPI as wheels, never to crates.io
+
+[lib]
+name = "_core"
+crate-type = ["cdylib"]
+# Tested through pytest on the built wheel (bindings/python/tests); a Rust test binary would
+# have to link libpython.
+test = false
+doctest = false
+
+[features]
+# Set by maturin (pyproject.toml): do not link libpython, as Python extension modules must
+# not.
+extension-module = ["pyo3/extension-module"]
+
+[dependencies]
+arrow-array.workspace = true
+arrow-pyarrow.workspace = true
+arrow-schema.workspace = true
+pyo3.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+sonarithm.workspace = true
+
+[lints]
+workspace = true

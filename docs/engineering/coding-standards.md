@@ -375,7 +375,7 @@ Scope: `bindings/python` (crate `sonarithm-py`, Python package `sonarithm`, nati
 | Topic | Rule |
 |---|---|
 | Layering | The Rust crate is thin: it converts types and calls the facade. No business logic in the binding ([02 §3 rule 6](../architecture/02-repository-and-crate-layout.md#3-dependency-rules-enforced)). PyO3 types never leak into other crates. The public API is re-exported from a pure-Python `sonarithm/__init__.py`; `_core` is private. |
-| Wheels | abi3 wheels built with maturin. The minimum CPython version is decided in A07 ([release-process](release-process.md)); code and docs assume Python 3.10 or newer until then. |
+| Wheels | abi3 wheels built with maturin for CPython 3.10 and later (decided in A07-T03; [release-process](release-process.md)). |
 | Typing | The package ships `py.typed` and a `.pyi` stub for `_core` covering every public symbol. CI checks stubs against the built module with `python -m mypy.stubtest sonarithm` and type-checks the pure-Python layer with mypy in strict mode. |
 | Data interop | Accept pandas, Polars and pyarrow inputs through the Arrow C Data Interface (zero-copy where possible) and NumPy arrays through rust-numpy. Return audio as `numpy.ndarray` of `float32` with shape `(frames, channels)`. Do not require pandas or Polars at import time. |
 | Naming and signatures | PEP 8 names. Required arguments positional; optional arguments keyword-only. Units in parameter names where ambiguous (`duration_s`, `gain_db`). |

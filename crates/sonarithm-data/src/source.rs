@@ -241,7 +241,173 @@ pub fn read_bytes(
         #[cfg(not(feature = "xlsx"))]
         Format::Xlsx | Format::Ods => return Err(DataError::UnsupportedFormat { format }),
     };
-    finish(&table, diagnostics, format, locator, options)
+    let source = SourceDescriptor::new(SourceKind::File(format), locator, format.as_str());
+    finish(&table, diagnostics, source, options)
+}
+
+/// Reads Arrow data handed over in memory, such as a data frame from Python through the
+/// Arrow `PyCapsule` interface (11 §3). It gets the same treatment as a file: limits,
+/// provenance columns in their canonical form (03 §4) and inference (03 §3). Column
+/// buffers are shared, not copied, except text and bytes in view or large layouts, which
+/// become plain arrays, so every reader in the platform can use them and the same values
+/// give the same fingerprint from any library. Schema-level
+/// metadata other than `snr.*` is dropped: libraries write their own there (pandas records
+/// its version and index), and it would make the fingerprint, and so the Score hash,
+/// depend on which library handed the data over (ADR-0013). `label` names the data in
+/// diagnostics and in the bundle's descriptor (P8: a label, never a path).
+///
+/// # Errors
+///
+/// [`DataError::LimitExceeded`] if the data breaks a limit, and
+/// [`DataError::MalformedTable`] if a batch does not match `schema`.
+pub fn read_batches(
+    schema: &arrow_schema::SchemaRef,
+    batches: Vec<arrow_array::RecordBatch>,
+    label: &str,
+    options: &ReadOptions,
+) -> Result<Loaded, DataError> {
+    let rows = batches
+        .iter()
+        .map(|batch| to_u64(batch.num_rows()))
+        .fold(0_u64, u64::saturating_add);
+    options.limits.check_shape(rows, schema.fields().len())?;
+    let name = table_name(label);
+    let (schema, batches) = plain_layout(schema, batches, &name)?;
+    let table = Table::new(options.table, name, schema, batches)?;
+    let source = SourceDescriptor::new(SourceKind::Memory, label, "arrow");
+    finish(&table, Diagnostics::new(), source, options)
+}
+
+/// The most bytes a plain (32-bit offset) string or binary array can hold.
+const PLAIN_BYTES: usize = 2_147_483_647;
+
+/// `schema` and `batches` with one layout for text and bytes, so the same values give the
+/// same fingerprint whichever library handed them over: string and binary views and their
+/// large (64-bit offset) forms become plain arrays, unless a batch holds more than 2 GiB of
+/// them, which stays large. Only `snr.*` schema metadata is kept. Other columns are shared,
+/// not copied.
+fn plain_layout(
+    schema: &arrow_schema::SchemaRef,
+    batches: Vec<arrow_array::RecordBatch>,
+    table: &str,
+) -> Result<(arrow_schema::SchemaRef, Vec<arrow_array::RecordBatch>), DataError> {
+    use std::sync::Arc;
+
+    use arrow_array::cast::AsArray as _;
+    use arrow_array::{
+        ArrayRef, BinaryArray, LargeBinaryArray, LargeStringArray, RecordBatch, RecordBatchOptions,
+        StringArray,
+    };
+    use arrow_schema::{DataType, Field, Schema};
+
+    let foreign = |key: &String| !key.starts_with("snr.");
+    let targets: Vec<Option<DataType>> = schema
+        .fields()
+        .iter()
+        .enumerate()
+        .map(|(index, field)| {
+            let fits = || {
+                batches
+                    .iter()
+                    .all(|batch| value_bytes(batch.column(index)) <= PLAIN_BYTES)
+            };
+            let target = match field.data_type() {
+                DataType::Utf8View | DataType::LargeUtf8 if fits() => DataType::Utf8,
+                DataType::Utf8View => DataType::LargeUtf8,
+                DataType::BinaryView | DataType::LargeBinary if fits() => DataType::Binary,
+                DataType::BinaryView => DataType::LargeBinary,
+                _ => return None,
+            };
+            (&target != field.data_type()).then_some(target)
+        })
+        .collect();
+    if targets.iter().all(Option::is_none) && !schema.metadata().keys().any(foreign) {
+        return Ok((Arc::clone(schema), batches));
+    }
+    let metadata: arrow_schema::Metadata = schema
+        .metadata()
+        .iter()
+        .filter(|(key, _)| !foreign(key))
+        .map(|(key, value)| (key.clone(), value.clone()))
+        .collect();
+    let fields: Vec<Field> = schema
+        .fields()
+        .iter()
+        .zip(&targets)
+        .map(|(field, target)| match target {
+            Some(target) => field.as_ref().clone().with_data_type(target.clone()),
+            None => field.as_ref().clone(),
+        })
+        .collect();
+    let plain = Arc::new(Schema::new(fields).with_metadata(metadata));
+    let mut converted = Vec::with_capacity(batches.len());
+    for batch in batches {
+        let columns: Vec<ArrayRef> = batch
+            .columns()
+            .iter()
+            .zip(&targets)
+            .map(|(column, target)| -> ArrayRef {
+                match (column.data_type(), target) {
+                    (DataType::Utf8View, Some(DataType::Utf8)) => {
+                        Arc::new(column.as_string_view().iter().collect::<StringArray>())
+                    }
+                    (DataType::Utf8View, Some(DataType::LargeUtf8)) => {
+                        Arc::new(column.as_string_view().iter().collect::<LargeStringArray>())
+                    }
+                    (DataType::LargeUtf8, Some(DataType::Utf8)) => {
+                        Arc::new(column.as_string::<i64>().iter().collect::<StringArray>())
+                    }
+                    (DataType::BinaryView, Some(DataType::Binary)) => {
+                        Arc::new(column.as_binary_view().iter().collect::<BinaryArray>())
+                    }
+                    (DataType::BinaryView, Some(DataType::LargeBinary)) => {
+                        Arc::new(column.as_binary_view().iter().collect::<LargeBinaryArray>())
+                    }
+                    (DataType::LargeBinary, Some(DataType::Binary)) => {
+                        Arc::new(column.as_binary::<i64>().iter().collect::<BinaryArray>())
+                    }
+                    _ => Arc::clone(column),
+                }
+            })
+            .collect();
+        let options = RecordBatchOptions::new().with_row_count(Some(batch.num_rows()));
+        let batch = RecordBatch::try_new_with_options(Arc::clone(&plain), columns, &options)
+            .map_err(|source| DataError::MalformedTable {
+                table: table.to_owned(),
+                source,
+            })?;
+        converted.push(batch);
+    }
+    Ok((plain, converted))
+}
+
+/// The bytes of text or binary values in a column (0 for other types).
+fn value_bytes(column: &arrow_array::ArrayRef) -> usize {
+    use arrow_array::cast::AsArray as _;
+    use arrow_schema::DataType;
+
+    match column.data_type() {
+        DataType::Utf8View => column.as_string_view().iter().flatten().map(str::len).sum(),
+        DataType::LargeUtf8 => column
+            .as_string::<i64>()
+            .iter()
+            .flatten()
+            .map(str::len)
+            .sum(),
+        DataType::BinaryView => column
+            .as_binary_view()
+            .iter()
+            .flatten()
+            .map(<[u8]>::len)
+            .sum(),
+        DataType::LargeBinary => column
+            .as_binary::<i64>()
+            .iter()
+            .flatten()
+            .map(<[u8]>::len)
+            .sum(),
+        _ => 0,
+    }
 }
 
 /// Reads a file; the format comes from `format` or, if `None`, from the file extension.
@@ -316,8 +482,7 @@ fn table_name(locator: &str) -> String {
 fn finish(
     table: &Table,
     mut diagnostics: Diagnostics,
-    format: Format,
-    locator: &str,
+    source: SourceDescriptor,
     options: &ReadOptions,
 ) -> Result<Loaded, DataError> {
     for field in table.schema().fields() {
@@ -330,7 +495,6 @@ fn finish(
     } else {
         crate::infer::semantic::apply_declared(&table, &options.fields)?
     };
-    let source = SourceDescriptor::new(SourceKind::File(format), locator, format.as_str());
     Ok(Loaded {
         bundle: DataBundle::single(options.bundle, source, table),
         diagnostics,
@@ -470,6 +634,111 @@ mod tests {
             .unwrap()
             .with_field_meta("temp", meta);
         write_ipc(&table.unwrap()).unwrap()
+    }
+
+    #[test]
+    fn arrow_in_memory_is_read_like_a_file() {
+        use std::sync::Arc;
+
+        use arrow_array::{Float64Array, RecordBatch, StringViewArray};
+        use arrow_schema::{DataType, Field, Schema};
+
+        use crate::meta::{FieldType, Role};
+
+        let schema = Arc::new(Schema::new(vec![
+            Field::new("x", DataType::Float64, false),
+            Field::new("group", DataType::Utf8View, true),
+            Field::new("__snr_conf", DataType::Float64, true),
+        ]));
+        let batch = |x: Vec<f64>, group: Vec<Option<&str>>, conf: Vec<Option<f64>>| {
+            RecordBatch::try_new(
+                Arc::clone(&schema),
+                vec![
+                    Arc::new(Float64Array::from(x)),
+                    Arc::new(StringViewArray::from(group)),
+                    Arc::new(Float64Array::from(conf)),
+                ],
+            )
+            .unwrap()
+        };
+        let batches = vec![
+            batch(
+                vec![1.0, 2.0],
+                vec![Some("a"), Some("b")],
+                vec![None, Some(0.5)],
+            ),
+            batch(vec![3.0], vec![None], vec![None]),
+        ];
+        let loaded = read_batches(
+            &schema,
+            batches,
+            r"C:\Users\someone\frame",
+            &ReadOptions::new(),
+        )
+        .unwrap();
+        let table = loaded.bundle.primary().unwrap();
+        assert_eq!((table.name(), table.num_rows()), ("frame", 3));
+        assert_eq!(
+            loaded.bundle.source().locator,
+            "frame",
+            "no directories (P8)"
+        );
+        assert_eq!(loaded.bundle.source().kind, SourceKind::Memory);
+        assert_eq!(table.column("group").unwrap().data_type(), &DataType::Utf8);
+        assert_eq!(
+            table.field_meta("group").unwrap().ftype,
+            Some(FieldType::Nominal)
+        );
+        assert_eq!(table.field_meta("x").unwrap().role, Some(Role::X));
+        // Provenance columns are rewritten in their canonical form (03 §4).
+        assert!(table.schema().field_with_name("__snr_prov").is_ok());
+
+        let small = ReadOptions::new().with_limits(Limits {
+            max_rows: 2,
+            ..Limits::NONE
+        });
+        let rows = vec![batch(vec![1.0, 2.0, 3.0], vec![None; 3], vec![None; 3])];
+        let err = read_batches(&schema, rows, "frame", &small).unwrap_err();
+        assert_eq!(err.to_diagnostic().code.as_str(), "SNR-DATA-003");
+    }
+
+    #[test]
+    fn the_same_values_fingerprint_alike_from_any_library() {
+        use std::sync::Arc;
+
+        use arrow_array::{LargeStringArray, RecordBatch, StringArray, StringViewArray};
+        use arrow_schema::{DataType, Field, Schema};
+
+        let fingerprint = |schema: Arc<Schema>, column: arrow_array::ArrayRef| {
+            let batch = RecordBatch::try_new(Arc::clone(&schema), vec![column]).unwrap();
+            let loaded = read_batches(&schema, vec![batch], "t", &ReadOptions::new()).unwrap();
+            let table = loaded.bundle.primary().unwrap();
+            assert_eq!(table.column("s").unwrap().data_type(), &DataType::Utf8);
+            crate::bundle_fingerprint(&loaded.bundle).unwrap()
+        };
+        let schema = |data_type| Arc::new(Schema::new(vec![Field::new("s", data_type, true)]));
+        let values = vec![Some("a"), None, Some("b")];
+        let plain = fingerprint(
+            schema(DataType::Utf8),
+            Arc::new(StringArray::from(values.clone())),
+        );
+        // pandas and pyarrow write large strings, polars string views.
+        let large = fingerprint(
+            schema(DataType::LargeUtf8),
+            Arc::new(LargeStringArray::from(values.clone())),
+        );
+        let view = fingerprint(
+            schema(DataType::Utf8View),
+            Arc::new(StringViewArray::from(values.clone())),
+        );
+        // pandas also records its version and index in the schema metadata.
+        let tagged = fingerprint(
+            Arc::new(schema(DataType::Utf8).as_ref().clone().with_metadata(
+                arrow_schema::Metadata::from([("pandas", r#"{"pandas_version": "3.0.6"}"#)]),
+            )),
+            Arc::new(StringArray::from(values)),
+        );
+        assert_eq!([large, view, tagged], [plain; 3]);
     }
 
     #[test]

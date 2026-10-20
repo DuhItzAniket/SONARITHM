@@ -212,7 +212,7 @@ The full rationale is in [engineering/tech-stack.md](../engineering/tech-stack.m
 | Desktop shell | Tauri 2.12 (Electron fallback per ADR-0002) |
 | Frontend | React 19.2 + TypeScript + Vite; React Aria Components; Zustand + XState v5; CSS Modules + OKLCH tokens; uPlot + custom WebGL2; CodeMirror 6 |
 | Typed IPC | ts-rs-generated TypeScript + schemars JSON Schema |
-| Python | PyO3 0.30 + maturin (abi3) |
+| Python | PyO3 0.29 + maturin (abi3, CPython 3.10 and later; F-101) |
 | WASM | wasm-bindgen (Stage D) |
 | Plugins | wasmtime + WIT, compile-time only (Stage D) |
 | ML (optional) | tract (default), ort (opt-in), llama.cpp sidecar for local VLMs (Stage D) |

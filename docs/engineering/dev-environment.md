@@ -24,7 +24,7 @@ This page lists what to install to build, test and debug SONARITHM on Windows, m
 | Nightly Rust | Any recent nightly | Only for Miri and cargo-fuzz: `rustup toolchain install nightly --component miri`. Never used for shipped builds. |
 | Node.js | Range in the root `package.json` `engines` field (A01) | The baseline development machine runs Node 25, a Current line. Odd-numbered Node lines never become LTS; CI should use an Active LTS line within the accepted range ([tech-stack](tech-stack.md)). |
 | pnpm | Version pinned by the root `package.json` `packageManager` field (A01) | Install with the official standalone installer or `npm install -g pnpm`. |
-| Python | 3.10 or newer | The development floor. The abi3 minimum for released wheels is decided in A07 ([release-process](release-process.md), [coding-standards §13](coding-standards.md#13-python-bindings)). |
+| Python | 3.10 or newer | The development floor and the abi3 minimum of released wheels (A07-T03). Build locally with `maturin develop --uv` in `bindings/python` inside a virtual environment, then `pytest bindings/python/tests` ([coding-standards §13](coding-standards.md#13-python-bindings)). |
 | uv | Recent | Creates virtual environments and installs Python tools: `uv venv`, `uv tool install maturin`. |
 | maturin | Version pinned in `bindings/python/pyproject.toml` (A07) | Builds the Python extension. `maturin develop` requires an activated virtual environment. |
 

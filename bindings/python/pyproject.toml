@@ -1,0 +1,59 @@
+# SPDX-FileCopyrightText: 2026 SONARITHM contributors
+# SPDX-License-Identifier: MIT OR Apache-2.0
+#
+# The `sonarithm` Python package (docs/architecture/11-bindings-cli-plugins.md §3): the
+# native module `sonarithm._core` (bindings/python/src, PyO3) plus a thin pure-Python layer
+# (python/sonarithm). Built with maturin into abi3 wheels, one per platform for every
+# CPython from 3.10.
+
+[build-system]
+requires = ["maturin>=1.9,<2"]
+build-backend = "maturin"
+
+[project]
+name = "sonarithm"
+description = "Turn graphs, charts and numerical data into structured, navigable sound."
+readme = "README.md"
+requires-python = ">=3.10"
+license = "MIT OR Apache-2.0"
+authors = [{ name = "SONARITHM contributors" }]
+keywords = ["sonification", "accessibility", "auditory display", "data", "audio"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Science/Research",
+    "Intended Audience :: Developers",
+    "Operating System :: Microsoft :: Windows",
+    "Operating System :: MacOS",
+    "Operating System :: POSIX :: Linux",
+    "Programming Language :: Python :: 3 :: Only",
+    "Programming Language :: Rust",
+    "Topic :: Multimedia :: Sound/Audio",
+    "Topic :: Scientific/Engineering :: Visualization",
+    "Typing :: Typed",
+]
+dynamic = ["version"]
+# No required dependencies: pyarrow, pandas and polars are used when installed.
+dependencies = []
+
+[project.optional-dependencies]
+pyarrow = ["pyarrow>=14"]
+pandas = ["pandas>=2.2", "pyarrow>=14"]
+polars = ["polars>=1.0"]
+notebook = ["ipython>=8"]
+test = ["pytest>=8", "pyarrow>=14", "pandas>=2.2", "polars>=1.0", "numpy>=1.26"]
+
+[project.urls]
+Homepage = "https://github.com/DuhItzAniket/SONARITHM"
+Documentation = "https://github.com/DuhItzAniket/SONARITHM/tree/main/docs"
+Changelog = "https://github.com/DuhItzAniket/SONARITHM/blob/main/CHANGELOG.md"
+Issues = "https://github.com/DuhItzAniket/SONARITHM/issues"
+
+[tool.maturin]
+manifest-path = "Cargo.toml"
+module-name = "sonarithm._core"
+python-source = "python"
+# Extension modules must not link libpython.
+features = ["extension-module"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
