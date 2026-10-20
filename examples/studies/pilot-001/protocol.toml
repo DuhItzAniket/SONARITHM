@@ -1,0 +1,45 @@
+# PILOT-001: a pilot of the study runner (A08-T03). It is a software pilot, not a study:
+# no participant data is collected as research until the project has an ethics route
+# (OD-04). Conditions follow Smith & Walker (2005), Study 1 (replication/smith-walker-2005).
+format = "sonarithm-study/0"
+exp-id = "PILOT-001"
+protocol-version = "1"
+title = "Pilot: point estimation with no context and with a dynamic reference tone"
+seed = 20261019
+break-every = 4
+instructions = [
+    "You will hear the price of one stock over a trading day, from 8:00 to 18:00, as 20 tones of half a second. Higher tones mean higher prices.",
+    "The opening price at 8:00 is 50 dollars.",
+    "In some trials a second, buzzier tone plays along. It sits at the day's highest price while the price rises and at the day's lowest price while it falls.",
+    "After each sound you are asked for the price at one hour. Type a number of dollars and press Enter. You can listen again as often as you like.",
+]
+
+[task]
+kind = "point-estimation"
+prompt = "What was the price at {x}:00?"
+response = { kind = "number", min = 0, max = 120, unit = "dollars" }
+
+[[conditions]]
+id = "none"
+label = "No context (Smith & Walker 2005, Study 1)"
+spec = "none.json"
+
+[[conditions]]
+id = "dynamic"
+label = "Dynamic reference tone (Smith & Walker 2005, Study 1)"
+spec = "dynamic.json"
+
+[[blocks]]
+id = "practice"
+practice = true
+feedback = true
+conditions = ["none", "dynamic"]
+repeats = 1
+order = "fixed"
+stimulus = { generator = "GEN-002" }
+
+[[blocks]]
+id = "main"
+conditions = ["none", "dynamic"]
+repeats = 3
+stimulus = { generator = "GEN-002" }

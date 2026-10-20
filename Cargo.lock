@@ -2693,6 +2693,9 @@ dependencies = [
  "serde",
  "serde_json",
  "sonarithm",
+ "sonarithm-audio",
+ "sonarithm-echometric",
+ "sonarithm-render",
 ]
 
 [[package]]

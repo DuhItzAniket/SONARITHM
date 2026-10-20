@@ -41,8 +41,9 @@ let compiled = snr.quick()
 | `sonarithm inspect <spec>` | Print the Score summary, NavTree and diagnostics; `--describe` prints the L1/L2 text | `--json`, `--tree` | A07 |
 | `sonarithm schema` | Emit the JSON Schema (spec, manifest, profile) | `--kind` | A03 |
 | `sonarithm spec migrate <spec>` | Explicit spec version migration | `--to`, `--in-place` | A07 |
-| `sonarithm study run <protocol>` | Run an evaluation protocol (ECHOMETRIC harness) | `--participant`, `--out` | A08 |
-| `sonarithm gallery render` | Render the replication gallery | `--out` | A08 |
+| `sonarithm study check <protocol>` | Check a study protocol, compile its conditions with their stimuli, summarize the schedule | `--order-seed`, `--json` | A08 |
+| `sonarithm study run <protocol>` | Run a session of an evaluation protocol (ECHOMETRIC harness): one plain line per prompt, typed answers, a JSONL log | `--participant`, `--session`, `--order-seed`, `--log`, `--resume`, `--audio`, `--device` | A08 |
+| ~~`sonarithm gallery render`~~ | Not built: the replication gallery is checked with `cargo xtask replication` (a developer task), and any of its specs renders with `sonarithm render` | — | A08 |
 | `sonarithm devices` | List audio devices | — | A07 |
 | `sonarithm extract <chart>` | Chart → data with provenance (PLOTSONA) | `--tier`, `--json` | C01 |
 

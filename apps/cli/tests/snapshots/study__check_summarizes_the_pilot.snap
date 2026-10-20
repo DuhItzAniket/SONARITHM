@@ -1,0 +1,8 @@
+---
+source: apps/cli/tests/study.rs
+expression: run.stdout
+---
+protocol.toml: PILOT-001 (Pilot: point estimation with no context and with a dynamic reference tone), 8 trials, 2 of them practice, order seed 20261019.
+Block practice: 2 trials over none and dynamic, stimuli from GEN-002.
+Block main: 6 trials over none and dynamic, stimuli from GEN-002.
+Every condition compiles with its block's stimuli.
