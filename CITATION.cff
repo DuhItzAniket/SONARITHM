@@ -43,6 +43,6 @@ keywords:
 license:
   - MIT
   - Apache-2.0
-version: "0.0.0"
-# date-released: set by `cargo xtask citation --release YYYY-MM-DD` in the release PR.
+version: "0.1.0-alpha"
+date-released: "2026-10-30"
 # doi: add the Zenodo concept DOI after the first release is archived (phase A07).

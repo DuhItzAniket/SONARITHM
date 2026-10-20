@@ -68,7 +68,7 @@ Configuration notes for A07:
 
 ### First release: owner steps
 
-The first publish of each crate is manual, and trusted publishers can only be added to projects that exist. Before tagging v0.1.0-alpha, the owner:
+The first publish of each crate is manual, and trusted publishers can only be added to projects that exist. The v0.1.0-alpha release PR is an ordinary PR prepared by hand. Its title starts with `build(release):`, not `chore(release):`, so merging it does not start the `release` job, which is for release-plz's own release PRs. The release commit is that PR's merge commit. Before tagging v0.1.0-alpha, the owner:
 
 1. Creates the `release` environment (deployments from `main` and tags `v*`).
 2. Publishes the crates once, in dependency order, from the release commit: `cargo publish --workspace --locked` with a short-lived crates.io token, then adds the trusted publisher (repository `DuhItzAniket/SONARITHM`, workflow `release-plz.yml`, environment `release`) to each crate on crates.io and deletes the token.

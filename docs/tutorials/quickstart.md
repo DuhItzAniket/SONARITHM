@@ -21,7 +21,7 @@ Check that it works:
 python -c "import sonarithm; print(sonarithm.__version__)"
 ```
 
-You should see `0.1.0a0`. Go to step 2.
+You should see `0.1.0-alpha`, the version of the Rust core inside the package. pip lists the same release as `0.1.0a0`. Go to step 2.
 
 ## 1b. Install the command line tool
 

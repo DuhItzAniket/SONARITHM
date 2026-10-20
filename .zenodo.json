@@ -1,16 +1,11 @@
 {
-  "title": "SONARITHM",
-  "upload_type": "software",
-  "description": "<p>SONARITHM is an open-source application and framework that turns graphs, charts and numerical data into structured, navigable sound. A declarative sonification specification is compiled into a canonical intermediate representation (the Score) and rendered by one deterministic Rust core, shared by a command-line tool, Python bindings and, later, a desktop application. Its design defaults are traced to published auditory-display and accessibility research, and every render carries a provenance manifest (software and engine versions, spec hash, data fingerprint) so that results can be reproduced.</p><p>Code is licensed MIT OR Apache-2.0; documentation and example datasets are licensed CC BY 4.0.</p>",
+  "access_right": "open",
   "creators": [
     {
       "name": "DuhItzAniket"
     }
   ],
-  "license": "MIT",
-  "access_right": "open",
-  "language": "eng",
-  "version": "0.0.0",
+  "description": "<p>SONARITHM is an open-source application and framework that turns graphs, charts and numerical data into structured, navigable sound. A declarative sonification specification is compiled into a canonical intermediate representation (the Score) and rendered by one deterministic Rust core, shared by a command-line tool, Python bindings and, later, a desktop application. Its design defaults are traced to published auditory-display and accessibility research, and every render carries a provenance manifest (software and engine versions, spec hash, data fingerprint) so that results can be reproduced.</p><p>Code is licensed MIT OR Apache-2.0; documentation and example datasets are licensed CC BY 4.0.</p>",
   "keywords": [
     "sonification",
     "auditory display",
@@ -24,6 +19,10 @@
     "research software",
     "Rust"
   ],
+  "language": "eng",
+  "license": "MIT",
+  "notes": "Licensed under MIT OR Apache-2.0 at the user's option (Zenodo records one licence identifier). Documentation, example datasets and study stimuli are licensed CC BY 4.0. Cite the version DOI of the release you used.",
+  "publication_date": "2026-10-30",
   "related_identifiers": [
     {
       "identifier": "https://github.com/DuhItzAniket/SONARITHM",
@@ -32,5 +31,7 @@
       "scheme": "url"
     }
   ],
-  "notes": "Licensed under MIT OR Apache-2.0 at the user's option (Zenodo records one licence identifier). Documentation, example datasets and study stimuli are licensed CC BY 4.0. Cite the version DOI of the release you used."
+  "title": "SONARITHM",
+  "upload_type": "software",
+  "version": "0.1.0-alpha"
 }
