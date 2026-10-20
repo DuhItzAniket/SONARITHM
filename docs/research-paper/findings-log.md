@@ -213,6 +213,7 @@ A04 (data layer) uses F-070 to F-079.
 Cross-phase build and repository infrastructure (the coordinator) uses F-090 to F-099.
 A06 (NUMISONA) uses F-080 to F-089.
 A08 (research instrumentation) uses F-110 to F-119.
+A07 (CLI, Python package, first release) uses F-100 to F-109.
 A05 (render engine, audio backends, export) uses F-050 to F-069.
 -->
 
@@ -550,3 +551,12 @@ A05 (render engine, audio backends, export) uses F-050 to F-069.
 - **Evidence level / confidence:** EV-C / Moderate (software loopback, one machine)
 - **Affects:** PB-01; ADR-0016; F-033; 06 §9; R-03
 - **Papers:** P07
+
+### F-102 · Every Score hash changes with every release, because the header records the crate versions
+
+- **Date:** 2026-10-21 · **Phase:** A07 · **Type:** engineering · **Status:** new
+- **Statement:** The Score header lists each contributing engine with its crate version (ADR-0013), and the canonical Score hash covers the header, so bumping the workspace version from 0.0.0 to 0.1.0-alpha changed the pinned Score hash and all six review snapshots of NUMISONA's encoder tests while no sound changed. Test snapshots and pinned hashes now write engine versions as `*` before hashing; render manifests and the provenance a paper cites keep the real versions, so two releases that sound the same still have different Score hashes.
+- **Evidence:** A07 PR "make Score snapshots independent of the release version": a full workspace test run at version 0.1.0-alpha failed only `encoded_scores_hash_identically_on_every_platform` and `the_example_datasets_encode_as_reviewed`; both pass at both versions after the change
+- **Evidence level / confidence:** EV-C / Strong
+- **Affects:** ADR-0013, testing-strategy §4, release-process (release PRs), papers that compare Score hashes across releases
+- **Papers:** none yet

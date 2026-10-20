@@ -7,8 +7,8 @@ expression: review(&compiled)
     "data_fingerprint": "306260530120c4cba3891ba5bd4fa2493d19b5869454f2bdfeb0a0c35dc7e464",
     "duration": 5.75,
     "engines": {
-      "numisona": "0.0.0",
-      "platform": "0.0.0"
+      "numisona": "*",
+      "platform": "*"
     },
     "ir_version": 1,
     "mode": "analysis",

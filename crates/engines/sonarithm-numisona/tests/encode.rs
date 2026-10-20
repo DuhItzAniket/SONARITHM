@@ -22,7 +22,7 @@ use sonarithm_data::DataBundle;
 use sonarithm_numisona::Numisona;
 use sonarithm_numisona::examples;
 use sonarithm_numisona::polarity::PolarityProfile;
-use support::{compile, compile_with, has_code, notes, review};
+use support::{compile, compile_with, has_code, notes, release_independent, review};
 
 fn spec(tracks: &serde_json::Value) -> String {
     json!({
@@ -522,7 +522,11 @@ fn encoded_scores_hash_identically_on_every_platform() {
     );
     let first = compile(&spec, Some(examples::prices().unwrap()));
     let second = compile(&spec, Some(examples::prices().unwrap()));
-    let hash = first.score.canonical_hash().unwrap();
-    assert_eq!(hash, second.score.canonical_hash().unwrap());
+    assert_eq!(
+        first.score.canonical_hash().unwrap(),
+        second.score.canonical_hash().unwrap()
+    );
+    // Pinned without the engine versions, which change with every release.
+    let hash = release_independent(&first.score).canonical_hash().unwrap();
     insta::assert_snapshot!("prices-erb-hash", hash.to_string());
 }
