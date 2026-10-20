@@ -1,0 +1,28 @@
+{
+  "description": "Sixteen loud band-limited square waves at +12 dB: the master limiter holds the true peak at -1 dBTP.",
+  "source": {
+    "kind": "score"
+  },
+  "sampleRate": 48000,
+  "blockSize": 256,
+  "tolerances": {
+    "nullResidualDbfs": -90.0,
+    "lufsDelta": 0.1,
+    "centroidRelative": 0.01
+  },
+  "reference": {
+    "platform": "windows-x86_64",
+    "sha256": "sha256:b433bbbfe54e105214afe24dbb52ec39892dca224ee525118bec0808a910c3c0",
+    "frames": 144000,
+    "integratedLufs": -6.301,
+    "truePeakDbtp": -1.188,
+    "peakDbfs": -1.2,
+    "rmsDbfs": -11.417,
+    "centroidHz": [
+      3232.5,
+      3232.1,
+      3233.3
+    ]
+  },
+  "reason": "First references (A05-T11)."
+}

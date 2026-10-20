@@ -33,6 +33,8 @@ pub(crate) struct Callback {
     rate_hz: u64,
     last: Option<(Duration, usize)>,
     faulted: bool,
+    /// Underruns already forwarded to the engine state.
+    xruns: u64,
 }
 
 impl Callback {
@@ -48,6 +50,7 @@ impl Callback {
             rate_hz: u64::from(processor_rate),
             last: None,
             faulted: false,
+            xruns: 0,
         }
     }
 
@@ -80,10 +83,29 @@ impl Callback {
                 self.status.report_latency(heard.saturating_sub(now));
             }
         }
+        // Forward underruns the device reported to the engine state (06 §4).
+        let xruns = self.status.xruns();
+        if xruns > self.xruns {
+            self.processor.report_xruns(xruns - self.xruns);
+            self.xruns = xruns;
+        }
         if self.faulted {
             out.fill(0.0);
             return;
         }
+        #[cfg(feature = "count-allocations")]
+        let result = {
+            let mut result = Ok(());
+            if allocated(|| {
+                result = catch_unwind(AssertUnwindSafe(|| {
+                    self.render(out, channels, playback_time);
+                }));
+            }) {
+                self.status.allocation();
+            }
+            result
+        };
+        #[cfg(not(feature = "count-allocations"))]
         let result = catch_unwind(AssertUnwindSafe(|| {
             self.render(out, channels, playback_time);
         }));
@@ -134,9 +156,58 @@ fn spread(stereo: &[f32], out: &mut [f32], channels: usize) {
     }
 }
 
+/// Runs `f` and says whether this thread allocated or freed memory meanwhile (a free of
+/// memory allocated elsewhere shows as a non-zero net count). Coding-standards §11.5.
+#[cfg(feature = "count-allocations")]
+fn allocated(f: impl FnOnce()) -> bool {
+    let info = allocation_counter::measure(f);
+    info.count_total > 0 || info.count_current != 0
+}
+
 #[cfg(test)]
 mod tests {
+    use sonarithm_core::SampleRate;
+    use sonarithm_render::fixtures::{BENCHMARK_SEED, benchmark_score};
+    use sonarithm_render::{Graph, GraphConfig, PlanConfig, RenderPlan, realtime};
+
     use super::*;
+
+    /// A05-T10 control: the device check flags a callback that allocates or frees, and only
+    /// that.
+    #[cfg(feature = "count-allocations")]
+    #[test]
+    fn an_allocating_or_freeing_callback_is_flagged() {
+        assert!(allocated(|| {
+            std::hint::black_box(vec![0_u8; 16]);
+        }));
+        let elsewhere = std::hint::black_box(vec![0_u8; 16]);
+        assert!(allocated(move || drop(elsewhere)));
+        let mut scratch = [0.0_f32; 64];
+        assert!(!allocated(|| scratch.fill(0.5)));
+    }
+
+    /// A05-T10: underruns the device reports reach the engine state, once each.
+    #[test]
+    fn device_xruns_reach_the_engine_state() {
+        let plan = RenderPlan::build(
+            &benchmark_score(1.0, BENCHMARK_SEED),
+            &PlanConfig::new(SampleRate::HZ_48000),
+        )
+        .unwrap()
+        .plan;
+        let (mut control, processor) = realtime(Graph::new(plan, GraphConfig::new(256)));
+        let status = Arc::new(StreamStatus::default());
+        let mut callback = Callback::new(processor, Arc::clone(&status));
+        let mut out = vec![0.0; 2 * 128];
+        status.xrun();
+        status.xrun();
+        callback.fill(&mut out, 2, None, None);
+        callback.fill(&mut out, 2, None, None);
+        assert_eq!(control.state().xruns, 2);
+        status.xrun();
+        callback.fill(&mut out, 2, None, None);
+        assert_eq!(control.state().xruns, 3);
+    }
 
     #[test]
     fn stereo_spreads_over_any_channel_count() {

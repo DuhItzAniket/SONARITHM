@@ -20,6 +20,7 @@ mod citation;
 mod codegen;
 mod codes;
 mod gallery;
+mod golden;
 
 use std::path::{Path, PathBuf};
 use std::process::ExitCode;
@@ -39,6 +40,10 @@ Tasks:
   codes              Check the diagnostic code tables and write docs/reference/error-codes.md
   gallery            Write the example datasets DS-001 to DS-005 to examples/data
                      Options: --check  compare instead of writing (CI)
+  golden             Check the golden-audio cases (tests/golden/); options:
+                     --update --reason '<why>' [case...]   rewrite the references
+                     --render-set <dir>                     write WAVs and summary.json
+                     --compare <reference> <set>...         null residual and ΔLUFS (PB-06)
   wasm-check         Build the wasm32-compatible crates for wasm32-unknown-unknown
   help               Show this message";
 
@@ -76,6 +81,7 @@ fn run() -> Result<()> {
             no_options(&rest)?;
             codes::run(&root)
         }
+        Some("golden") => golden::run(&root, &rest),
         Some("wasm-check") => {
             no_options(&rest)?;
             ci::wasm_check(&root)

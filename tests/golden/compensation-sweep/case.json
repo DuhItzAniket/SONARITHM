@@ -1,0 +1,30 @@
+{
+  "description": "Sine notes from 65 Hz to 1480 Hz with ISO 226:2023 compensation (SDR-24) across the expanded SDR-08 range.",
+  "source": {
+    "kind": "score"
+  },
+  "sampleRate": 48000,
+  "blockSize": 256,
+  "tolerances": {
+    "nullResidualDbfs": -90.0,
+    "lufsDelta": 0.1,
+    "centroidRelative": 0.01
+  },
+  "reference": {
+    "platform": "windows-x86_64",
+    "sha256": "sha256:25d9e09745d55185f7a87c467150147b90b0382363ac25ea36d362a3c014545b",
+    "frames": 240000,
+    "integratedLufs": -26.875,
+    "truePeakDbtp": -15.002,
+    "peakDbfs": -15.01,
+    "rmsDbfs": -28.951,
+    "centroidHz": [
+      84.3,
+      163.0,
+      331.4,
+      670.1,
+      1282.2
+    ]
+  },
+  "reason": "First references (A05-T11)."
+}

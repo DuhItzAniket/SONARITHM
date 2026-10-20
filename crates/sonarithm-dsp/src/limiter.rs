@@ -44,8 +44,13 @@ pub struct TruePeakLimiter {
     release: f32,
     /// Polyphase interpolator coefficients, `[phase][tap]`.
     coefficients: [[f32; TAPS]; PHASES],
-    /// The last `TAPS` input samples per channel, newest first.
-    history: [[f32; TAPS]; 2],
+    /// The largest sum of absolute coefficients over the phases: no interpolated value
+    /// exceeds this times the largest input sample in the window.
+    overshoot: f32,
+    /// The input history per channel, written twice (at `head` and `head + TAPS`) so the
+    /// last `TAPS` samples are always one contiguous slice, newest first.
+    history: [[f32; 2 * TAPS]; 2],
+    head: usize,
     /// Delay lines per channel, `latency + 1` long, written circularly.
     delay: [Vec<f32>; 2],
     /// Monotonic queue of (sample index, required gain) for the window minimum.
@@ -81,7 +86,12 @@ impl TruePeakLimiter {
             window,
             release,
             coefficients: interpolator(),
-            history: [[0.0; TAPS]; 2],
+            overshoot: interpolator()
+                .iter()
+                .map(|phase| phase.iter().map(|h| h.abs()).sum::<f32>())
+                .fold(1.0, f32::max),
+            history: [[0.0; 2 * TAPS]; 2],
+            head: 0,
             delay: [vec![0.0; latency + 1], vec![0.0; latency + 1]],
             queue: vec![(0, 1.0); window + 1],
             queue_head: 0,
@@ -164,15 +174,31 @@ impl TruePeakLimiter {
     /// Pushes one frame into the interpolator and returns the stereo true peak of the
     /// interval between the two samples `INTERPOLATOR_DELAY` frames back.
     fn true_peak(&mut self, input: [f32; 2]) -> f32 {
+        // Move the head back one place; the newest sample goes at `head` and `head + TAPS`.
+        self.head = (self.head + TAPS - 1) % TAPS;
+        let head = self.head;
         let mut peak = 0.0_f32;
         for (history, sample) in self.history.iter_mut().zip(input) {
-            history.rotate_right(1);
-            history[0] = sample;
+            if let Some(slot) = history.get_mut(head) {
+                *slot = sample;
+            }
+            if let Some(slot) = history.get_mut(head + TAPS) {
+                *slot = sample;
+            }
+            let Some(window) = history.get(head..head + TAPS) else {
+                continue;
+            };
             peak = peak
-                .max(history[INTERPOLATOR_DELAY].abs())
-                .max(history[INTERPOLATOR_DELAY - 1].abs());
+                .max(window.get(INTERPOLATOR_DELAY).map_or(0.0, |x| x.abs()))
+                .max(window.get(INTERPOLATOR_DELAY - 1).map_or(0.0, |x| x.abs()));
+            // When even the worst-case overshoot stays under the target, the interpolated
+            // values cannot matter: skip them. The gain is the same either way.
+            let largest = window.iter().fold(0.0_f32, |m, x| m.max(x.abs()));
+            if largest * self.overshoot <= self.target {
+                continue;
+            }
             for phase in &self.coefficients {
-                let value: f32 = phase.iter().zip(history.iter()).map(|(h, x)| h * x).sum();
+                let value: f32 = phase.iter().zip(window).map(|(h, x)| h * x).sum();
                 peak = peak.max(value.abs());
             }
         }

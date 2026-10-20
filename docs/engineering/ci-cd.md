@@ -47,8 +47,8 @@ This table lists CI jobs. The authoritative list of test types per phase is [tes
 | `check-deps` | ubuntu | `cargo xtask check-deps` (crate dependency rules in [crate layout §3](../architecture/02-repository-and-crate-layout.md#3-dependency-rules-enforced)) | A01 |
 | `msrv` | ubuntu | Each crate built with its declared `rust-version`: 1.88 for core crates, 1.90 for `sonarithm-desktop`, 1.96 for `sonarithm-plugin-host` ([crate catalogue](../architecture/02-repository-and-crate-layout.md#2-crate-catalogue)); for example with cargo-hack's `--rust-version` option (tool chosen in A01) | A01 |
 | `wasm32` | ubuntu | `cargo build --locked --target wasm32-unknown-unknown` for the compiler, engine, render and DSP crates (crate layout rule 4) | A01, as crates appear |
-| `golden` | ubuntu, windows, macos | Golden Score snapshots must match exactly; golden audio must match within tolerance (null-test residual at or below −90 dBFS, LUFS difference at most 0.1, per [overview §7](../architecture/01-overview.md#7-quality-attributes-and-budgets)) | A05 |
-| `no-alloc` | ubuntu, windows, macos | Debug-build render tests with `assert_no_alloc` around the audio callback | A05 |
+| `golden` | ubuntu, windows, macos | `cargo xtask golden` (each case against its manifest and at block sizes 64 and 1024), then `--render-set`, uploaded as an artifact. `golden-compare` (ubuntu) compares the Windows and macOS renders with the Linux ones: null-test residual at or below −90 dBFS, LUFS difference at most 0.1 ([overview §7](../architecture/01-overview.md#7-quality-attributes-and-budgets)). Golden Score snapshots run in the `test` job (insta) | A05 |
+| `no-alloc` | ubuntu, windows, macos | Debug builds with `allocation-counter` around the audio callback: the scripted render session (`sonarithm-render` test `no_alloc`), the whole callback on the null device (`sonarithm-audio --features count-allocations`, test `no_alloc_device`), then the `soak` example on the timer-driven null device for 60 s with `--strict`. The 10-minute run is the `alloc-soak` job of `nightly.yml` | A05 |
 | `semver` | ubuntu | `cargo semver-checks` on published library crates (needs a published baseline) | A07 |
 | `python` | ubuntu, windows, macos | Build the wheel with maturin, install it, run the pytest smoke suite | A07 |
 | `frontend` | ubuntu, windows, macos | `pnpm install --frozen-lockfile`, lint, typecheck, Vitest browser-mode tests, Storybook axe checks and Playwright with Tauri IPC mocking (both from B02) | B01 |
@@ -56,7 +56,7 @@ This table lists CI jobs. The authoritative list of test types per phase is [tes
 | `reuse` | ubuntu | `reuse lint` ([supply chain](supply-chain-and-licensing.md#reuse-and-spdx-headers)); runs in `docs.yml` | A01 |
 | `all-checks-pass` | ubuntu | Fails if any job above failed or was cancelled | A01 |
 
-Golden-audio and soak tests on GitHub-hosted runners have no audio device; they exercise the offline renderer. Real-device soak tests (the A05 "0 xruns in a 10-min soak" criterion) run on reference hardware, started manually by a maintainer on a trusted ref. Self-hosted runners are never used for untrusted PR code.
+Golden-audio and soak tests on GitHub-hosted runners have no audio device; they exercise the offline renderer and the timer-driven null device. Real-device soak tests (the A05 "0 xruns in a 10-min soak" criterion) run on reference hardware, started manually by a maintainer on a trusted ref. Self-hosted runners are never used for untrusted PR code.
 
 ## Required status checks
 

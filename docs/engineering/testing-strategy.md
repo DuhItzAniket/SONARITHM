@@ -51,7 +51,7 @@ From the base (many, fast, every PR) to the top (few, slow, scheduled or manual)
 | Golden audio | Rendered audio matches reference within tolerance | harness (A05), ebur128 | Every PR, 3 OSes |
 | Design-rule conformance | Defaults and behaviours match SDR/A11Y rules | unit, snapshot, frontend tests named by rule ID | Every PR |
 | Fuzzing | Parsers and importers never panic, hang or explode in memory | cargo-fuzz | Nightly; longer runs before releases |
-| Concurrency and unsafe | Lock-free protocols and unsafe code are sound | Miri, shuttle (loom optional), `assert_no_alloc` | `assert_no_alloc` every PR; Miri and shuttle on PRs touching the crates and nightly |
+| Concurrency and unsafe | Lock-free protocols and unsafe code are sound | Miri, shuttle (loom optional), `allocation-counter` | Allocation check every PR; Miri and shuttle on PRs touching the crates and nightly |
 | Integration | App behaviour end to end without a webview | headless app core (B01), facade before that | Every PR |
 | CLI and Python | Public interfaces behave and stay stable | assert_cmd + insta; pytest on wheels | Every PR |
 | Frontend | Components, flows and visuals in every webview engine | Vitest 4, Storybook 10, Playwright, WebdriverIO | Every PR (real-app E2E nightly) |
@@ -133,8 +133,8 @@ Additional golden checks:
 | Rule | Detail |
 |---|---|
 | Location | `tests/golden/`, one directory per case with its manifest. |
-| Manifest | Spec reference, data reference (file or generator + seed), engine versions, `ir_version`, sample rate, block size, seed, tolerances, reference SHA-256, origin platform, and the reason for the last update. |
-| Storage | [02 §1](../architecture/02-repository-and-crate-layout.md#1-repository-tree-target) anticipates Git LFS for reference audio. The decision (size budget, LFS bandwidth for forks and CI) is confirmed in A05. No reference audio is committed before that decision. |
+| Manifest | `case.json`: the Score source (`score.json` in the case directory, or a generator and seed), sample rate, block size, tolerances, the reference fingerprint with its origin platform, and the reason for the last update. Engine versions and `ir_version` are inside the Score. |
+| Storage | **Decided in A05 (OD-08): no reference audio in git.** Renders are bit-identical across OSes (F-039), so each manifest records the reference render's SHA-256 and metrics (length, integrated loudness, true and sample peak, RMS, per-second spectral centroid). CI renders every case on the three OSes, checks each against its manifest, compares Windows and macOS with Linux (PB-06), and keeps the renders as workflow artifacts for listening. |
 | Size | References are short (seconds, not minutes). Coverage comes from many small cases. |
 | Updates | Only through `cargo xtask golden --update` (after A05), optionally limited to named cases. The command re-renders on the reference platform, rewrites manifests and prints metric deltas. Never edit or replace reference files by hand. |
 | Review | The PR states why the output changed and includes the metric deltas. A reviewer listens to every changed case (headphones, low gain) before approving. |
@@ -185,7 +185,7 @@ The `sonarithm-data` targets (`csv_read`, `json_read`, `xlsx_read`, `columnar_re
 |---|---|---|
 | Miri (`cargo +nightly miri test -p <crate>`) | Pure-Rust `unsafe` in the crates on the [unsafe register](coding-standards.md#5-unsafe-code), and our use of lock-free crates in `sonarithm-render` | PRs touching those crates (a `miri` job joins `ci.yml` when the first registered unsafe code or RT protocol lands, A05); nightly |
 | shuttle (default) or loom (small primitives) | Command-queue overflow and coalescing; plan swap with the basedrop collector (no use-after-free, no free on the RT thread); telemetry writes and reads; live-event ordering; compiler cancellation | PRs touching those modules; nightly with more iterations |
-| `assert_no_alloc` (debug build) | The render callback driven through a scripted session: play, seek, loop, plan swap, cue triggers, gain changes, stop | Every PR from A05 (`no-alloc` job in [ci-cd](ci-cd.md)) |
+| `allocation-counter` (debug build; replaces `assert_no_alloc`, F-038) | The render callback driven through a scripted session: play, seek, loop, plan swap, cue triggers, gain changes, stop | Every PR from A05 (`no-alloc` job in [ci-cd](ci-cd.md)) |
 
 Production code reaches atomics and thread primitives through a small `sync` shim module that switches to shuttle or loom types under a `cfg`, so model tests exercise the real code.
 
@@ -220,7 +220,7 @@ criterion benchmarks live in crate `benches/` directories and, for cross-crate s
 | Soak | Condition | Pass | Runs |
 |---|---|---|---|
 | Device soak (A05) | 10 min at 128-frame buffers on reference hardware, representative Score | 0 xruns | Started by a maintainer on a trusted ref: before every release, and after merges that change the scheduler, voice pool, plan swap or backend |
-| Allocation soak (A05) | Debug build, `assert_no_alloc`, scripted session on a timer-driven null device | No allocation in the callback | Short session on every PR (`no-alloc` job); full 10 minutes nightly ([06 §12](../architecture/06-audio-engine.md#12-real-time-rules-summary)) |
+| Allocation soak (A05) | Debug build, `allocation-counter`, scripted session on a timer-driven null device | No allocation in the callback | Short session on every PR (`no-alloc` job); full 10 minutes nightly ([06 §12](../architecture/06-audio-engine.md#12-real-time-rules-summary)) |
 | Stream soak (B06) | 1 kHz input stream sonified for 1 h | No xruns, bounded memory (RSS sampled) | Memory and throughput nightly on hosted runners; xrun check on reference hardware before releases |
 
 ## 10. Integration tests through the headless app core
@@ -361,7 +361,7 @@ A flaky test passes and fails on the same commit and environment.
 | A02 | Spike measurements: loopback latency harness v0, cross-OS determinism check, Miri on the graph spike, IPC throughput benchmark, WebGL2 fps, manual screen-reader walkthrough |
 | A03 | Unit and property tests on core and spec; Score IR snapshots (insta); cross-OS Score hash job; schema regeneration diff; spec parser fuzzing; doc coverage (`missing_docs`) |
 | A04 | Transform property tests; importer fuzzing; M4 reference test; fingerprint stability across OSes; CSV load benchmark |
-| A05 | Golden-audio harness and policy; block-size invariance; `assert_no_alloc` run; device and allocation soaks; Miri and shuttle on RT protocols; render benchmark; regression policy calibration; coverage tool |
+| A05 | Golden-audio harness and policy; block-size invariance; allocation check (`allocation-counter`); device and allocation soaks; Miri and shuttle on RT protocols; render benchmark; regression policy calibration; coverage tool |
 | A06 | Design-rule conformance tests (SDR, NUMISONA); Erie import tests and fuzzing; compile benchmark; coverage gates for core, spec and compiler |
 | A07 | CLI tests (assert_cmd + insta); Python tests on wheels; stubtest; notebook execution; quickstart test with 3 people (manual) |
 | A08 | Replication gallery regression tests; stimulus generator determinism and statistics |

@@ -39,6 +39,26 @@ pub struct StreamConfig {
     pub buffer_frames: Option<u32>,
 }
 
+impl StreamConfig {
+    /// The same configuration on the device `id`.
+    #[must_use]
+    pub fn on_device(self, id: impl Into<String>) -> Self {
+        Self {
+            device: Some(id.into()),
+            ..self
+        }
+    }
+
+    /// The same configuration requesting `frames` per callback.
+    #[must_use]
+    pub fn with_buffer(self, frames: u32) -> Self {
+        Self {
+            buffer_frames: Some(frames),
+            ..self
+        }
+    }
+}
+
 /// Output latency of an open stream.
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
 #[non_exhaustive]
@@ -87,6 +107,7 @@ pub struct StreamStatus {
     fault: AtomicBool,
     /// The backend's latest `playback − callback` estimate, in nanoseconds.
     reported_ns: AtomicU64,
+    allocations: AtomicU64,
 }
 
 impl StreamStatus {
@@ -114,6 +135,14 @@ impl StreamStatus {
         self.fault.store(true, Ordering::Release);
     }
 
+    #[cfg_attr(
+        not(feature = "count-allocations"),
+        expect(dead_code, reason = "only the count-allocations feature counts")
+    )]
+    pub(crate) fn allocation(&self) {
+        self.allocations.fetch_add(1, Ordering::Relaxed);
+    }
+
     pub(crate) fn report_latency(&self, latency: Duration) {
         let nanos = u64::try_from(latency.as_nanos()).unwrap_or(u64::MAX);
         self.reported_ns.store(nanos, Ordering::Relaxed);
@@ -136,6 +165,13 @@ impl StreamStatus {
     #[must_use]
     pub fn xruns(&self) -> u64 {
         self.xruns.load(Ordering::Relaxed)
+    }
+
+    /// Callbacks that allocated or freed memory. Counted only with the `count-allocations`
+    /// feature (coding-standards §11.5); always 0 without it.
+    #[must_use]
+    pub fn allocations(&self) -> u64 {
+        self.allocations.load(Ordering::Relaxed)
     }
 
     /// Whether the device went away; the stream must be rebuilt (06 §11).

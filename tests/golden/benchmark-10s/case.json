@@ -1,0 +1,37 @@
+{
+  "description": "The DS-006 benchmark Score shortened to 10 s: mallet and square data tracks, sine ticks, triangle monitoring; 1,667 notes.",
+  "source": {
+    "kind": "benchmark",
+    "seconds": 10.0,
+    "seed": 1729
+  },
+  "sampleRate": 48000,
+  "blockSize": 256,
+  "tolerances": {
+    "nullResidualDbfs": -90.0,
+    "lufsDelta": 0.1,
+    "centroidRelative": 0.01
+  },
+  "reference": {
+    "platform": "windows-x86_64",
+    "sha256": "sha256:09576f817404050c214ce1363d2b365d2007a714d052872388d81b38703cc37d",
+    "frames": 480000,
+    "integratedLufs": -8.048,
+    "truePeakDbtp": -1.191,
+    "peakDbfs": -1.2,
+    "rmsDbfs": -10.981,
+    "centroidHz": [
+      1599.1,
+      1605.3,
+      1632.7,
+      1578.6,
+      1613.9,
+      1612.0,
+      1619.2,
+      1593.9,
+      1621.2,
+      1626.3
+    ]
+  },
+  "reason": "First references (A05-T11)."
+}

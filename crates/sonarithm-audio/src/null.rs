@@ -31,6 +31,10 @@ pub struct NullConfig {
     /// Channels per frame.
     pub channels: u16,
     /// Sleep between callbacks to match real time; otherwise run as fast as possible.
+    ///
+    /// A paced device counts an underrun (an xrun) whenever a block is ready after its
+    /// deadline, one period after the device asked for it. That is a device holding two
+    /// periods, the one playing and the one being rendered: stricter than most real devices.
     pub paced: bool,
     /// Interleaved samples to keep for inspection, at most.
     pub capture: usize,
@@ -182,13 +186,23 @@ fn run(
     mut capture: Producer<f32>,
     control: &NullControl,
 ) {
+    // Real-time priority, as real device threads have it, so missed deadlines measure the
+    // render and not the scheduler's treatment of a normal thread.
+    #[cfg(windows)]
+    let _priority = audio_thread_priority::promote_current_thread_to_real_time(
+        u32::try_from(device.block).unwrap_or(u32::MAX),
+        device.sample_rate,
+    );
     let channels = usize::from(device.channels);
     let mut buffer = vec![0.0; device.block * channels];
     let period = Duration::from_nanos(
         u64::try_from(device.block).unwrap_or(u64::MAX) * 1_000_000_000
             / u64::from(device.sample_rate.max(1)),
     );
-    let start = Instant::now();
+    // Deadlines run from an anchor that moves to the present after a missed one, so one
+    // late block counts once.
+    let mut anchor = Instant::now();
+    let mut anchored_at = 0_u32;
     let mut blocks = 0_u32;
     while !control.stop.load(Ordering::Acquire) {
         // The device's clock: block n starts at n periods.
@@ -201,9 +215,14 @@ fn run(
         }
         blocks = blocks.saturating_add(1);
         if device.paced {
-            let due = start + period * blocks;
-            if let Some(wait) = due.checked_duration_since(Instant::now()) {
+            let due = anchor + period * (blocks - anchored_at);
+            let now = Instant::now();
+            if let Some(wait) = due.checked_duration_since(now) {
                 std::thread::sleep(wait);
+            } else {
+                control.status.xrun();
+                anchor = now;
+                anchored_at = blocks;
             }
         }
     }

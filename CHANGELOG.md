@@ -47,6 +47,9 @@ From phase A07, release-plz maintains this file: it generates each release's ent
   - Exports write a render manifest (`*.render.json`, with a generated JSON Schema) and a WebVTT cue sidecar (`*.cues.vtt`) next to the audio, and normalize loudness with one static gain.
   - `sonarithm-audio`: the `AudioBackend` trait, a cpal backend, a timer-driven null device for tests, and a `Player` that recovers from device loss at the same transport position, paused until the user resumes.
   - A Windows WASAPI backend (ADR-0016): RAW shared mode by default, so OEM enhancement processing no longer adds latency and gain after the limiter, with exclusive mode as an opt-in; a latency measurement tool and per-device latency calibration.
+  - Render benchmarks (PB-03) on a reference benchmark Score; faster voices and limiter. The mallet preset's brightness now tilts its partials instead of filtering them.
+  - A golden-audio harness (`cargo xtask golden`, six cases in `tests/golden/`) and CI jobs that render on Windows, Linux and macOS and compare the results (PB-06).
+  - An audio-thread allocation check in debug builds and CI (`no-alloc` job), xrun counting from the device to the engine state, and a `soak` program that plays the benchmark Score on a device, silently by default, and reports xruns, late callbacks and allocating callbacks.
 - NUMISONA, the parameter-mapping engine (phase A06):
   - `sonarithm-numisona` scales: `linear`, `log`, `symlog`, `sqrt`, `pow`, `quantile`, `band` and `ordinal`, with `auto`, `zero-based` and explicit domains, `nice` rounding, and off-scale reporting for clamped values.
   - `sonarithm-numisona` pitch spaces and ranges: log-frequency (the default, SDR-09), linear frequency, mel, ERB-rate and Bark; the 400–1400 Hz default range and the 65–1480 Hz expanded range (SDR-08); ranges in hertz, MIDI notes or cents.

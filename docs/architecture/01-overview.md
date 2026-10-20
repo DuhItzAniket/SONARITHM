@@ -204,7 +204,7 @@ The full rationale is in [engineering/tech-stack.md](../engineering/tech-stack.m
 | Audio I/O | cpal 0.18 behind `AudioBackend` trait |
 | Render graph | SONARITHM-owned graph; Firewheel 0.14 evaluated behind the same trait (A02) |
 | DSP | fundsp 0.23 + custom nodes (granular, wavetable, modal); rubato; rustfft/realfft; ebur128 |
-| Real-time comms | rtrb, triple_buffer, basedrop, atomic_float, assert_no_alloc (debug) |
+| Real-time comms | rtrb, triple_buffer, basedrop, atomic_float, allocation-counter (debug and CI) |
 | Data | Apache Arrow 60 (+ parquet), csv, calamine, jiff; Polars optional adapter |
 | Export | hound (WAV), flacenc (FLAC), midly (SMF); symphonia for decoding |
 | Expressions/scripts | exmex (behind a facade), rhai |

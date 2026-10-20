@@ -1,0 +1,210 @@
+{
+  "header": {
+    "ir_version": 1,
+    "spec_version": "0.1",
+    "spec_hash": "0000000000000000000000000000000000000000000000000000000000000000",
+    "data_fingerprint": "0000000000000000000000000000000000000000000000000000000000000000",
+    "seed": 15,
+    "mode": "analysis",
+    "duration": 5.0,
+    "engines": {},
+    "shapers": []
+  },
+  "tracks": [
+    {
+      "id": "sweep",
+      "role": "data",
+      "engine": "numisona",
+      "instrument": "sine",
+      "gain": -12.0,
+      "pan": 0.0,
+      "pitch_range": {
+        "low": -3310.7902805954463,
+        "high": 2100.026096389983
+      },
+      "events": [
+        {
+          "type": "note",
+          "t": 0.1,
+          "dur": 0.3,
+          "pitch": -3310.7902805954463,
+          "gain": 0.0,
+          "pan": 0.0,
+          "timbre": {
+            "preset": null,
+            "brightness": 0.5
+          },
+          "taps": 1,
+          "src": null,
+          "conf": null
+        },
+        {
+          "type": "note",
+          "t": 0.5,
+          "dur": 0.3,
+          "pitch": -2818.89788268768,
+          "gain": 0.0,
+          "pan": 0.0,
+          "timbre": {
+            "preset": null,
+            "brightness": 0.5
+          },
+          "taps": 1,
+          "src": null,
+          "conf": null
+        },
+        {
+          "type": "note",
+          "t": 0.9,
+          "dur": 0.3,
+          "pitch": -2327.005484779914,
+          "gain": 0.0,
+          "pan": 0.0,
+          "timbre": {
+            "preset": null,
+            "brightness": 0.5
+          },
+          "taps": 1,
+          "src": null,
+          "conf": null
+        },
+        {
+          "type": "note",
+          "t": 1.3000000000000003,
+          "dur": 0.3,
+          "pitch": -1835.1130868721475,
+          "gain": 0.0,
+          "pan": 0.0,
+          "timbre": {
+            "preset": null,
+            "brightness": 0.5
+          },
+          "taps": 1,
+          "src": null,
+          "conf": null
+        },
+        {
+          "type": "note",
+          "t": 1.7000000000000002,
+          "dur": 0.3,
+          "pitch": -1343.2206889643812,
+          "gain": 0.0,
+          "pan": 0.0,
+          "timbre": {
+            "preset": null,
+            "brightness": 0.5
+          },
+          "taps": 1,
+          "src": null,
+          "conf": null
+        },
+        {
+          "type": "note",
+          "t": 2.1,
+          "dur": 0.3,
+          "pitch": -851.328291056615,
+          "gain": 0.0,
+          "pan": 0.0,
+          "timbre": {
+            "preset": null,
+            "brightness": 0.5
+          },
+          "taps": 1,
+          "src": null,
+          "conf": null
+        },
+        {
+          "type": "note",
+          "t": 2.5000000000000004,
+          "dur": 0.3,
+          "pitch": -359.43589314884866,
+          "gain": 0.0,
+          "pan": 0.0,
+          "timbre": {
+            "preset": null,
+            "brightness": 0.5
+          },
+          "taps": 1,
+          "src": null,
+          "conf": null
+        },
+        {
+          "type": "note",
+          "t": 2.9000000000000004,
+          "dur": 0.3,
+          "pitch": 132.45650475891762,
+          "gain": 0.0,
+          "pan": 0.0,
+          "timbre": {
+            "preset": null,
+            "brightness": 0.5
+          },
+          "taps": 1,
+          "src": null,
+          "conf": null
+        },
+        {
+          "type": "note",
+          "t": 3.3000000000000003,
+          "dur": 0.3,
+          "pitch": 624.3489026666839,
+          "gain": 0.0,
+          "pan": 0.0,
+          "timbre": {
+            "preset": null,
+            "brightness": 0.5
+          },
+          "taps": 1,
+          "src": null,
+          "conf": null
+        },
+        {
+          "type": "note",
+          "t": 3.7,
+          "dur": 0.3,
+          "pitch": 1116.2413005744502,
+          "gain": 0.0,
+          "pan": 0.0,
+          "timbre": {
+            "preset": null,
+            "brightness": 0.5
+          },
+          "taps": 1,
+          "src": null,
+          "conf": null
+        },
+        {
+          "type": "note",
+          "t": 4.1,
+          "dur": 0.3,
+          "pitch": 1608.1336984822165,
+          "gain": 0.0,
+          "pan": 0.0,
+          "timbre": {
+            "preset": null,
+            "brightness": 0.5
+          },
+          "taps": 1,
+          "src": null,
+          "conf": null
+        },
+        {
+          "type": "note",
+          "t": 4.5,
+          "dur": 0.3,
+          "pitch": 2100.0260963899827,
+          "gain": 0.0,
+          "pan": 0.0,
+          "timbre": {
+            "preset": null,
+            "brightness": 0.5
+          },
+          "taps": 1,
+          "src": null,
+          "conf": null
+        }
+      ]
+    }
+  ],
+  "markers": []
+}

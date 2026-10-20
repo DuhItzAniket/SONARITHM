@@ -1,0 +1,29 @@
+{
+  "description": "Square notes with 1 to 8 taps (A11Y-13) and notes from 2 ms to 40 ms (SDR-22 ramps and floors).",
+  "source": {
+    "kind": "score"
+  },
+  "sampleRate": 48000,
+  "blockSize": 256,
+  "tolerances": {
+    "nullResidualDbfs": -90.0,
+    "lufsDelta": 0.1,
+    "centroidRelative": 0.01
+  },
+  "reference": {
+    "platform": "windows-x86_64",
+    "sha256": "sha256:94627df2cd11e94d9cff4fb541df9366777041341b3b614b9ff338aca131f101",
+    "frames": 192000,
+    "integratedLufs": -17.5,
+    "truePeakDbtp": -14.24,
+    "peakDbfs": -14.243,
+    "rmsDbfs": -21.779,
+    "centroidHz": [
+      1672.4,
+      2013.1,
+      2583.8,
+      2579.4
+    ]
+  },
+  "reason": "First references (A05-T11)."
+}

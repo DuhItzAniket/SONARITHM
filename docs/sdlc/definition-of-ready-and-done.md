@@ -64,7 +64,7 @@ These lists add to section 2. A PR that falls into several categories meets all 
 Applies to `sonarithm-dsp`, `sonarithm-render`, `sonarithm-audio`, `sonarithm-export`, and any function marked RT-safe.
 
 - [ ] The real-time review checklist ([coding-standards §11.6](../engineering/coding-standards.md#116-reviewing-rt-code)) is completed in the PR.
-- [ ] The `assert_no_alloc` CI run passes and exercises the changed path.
+- [ ] The `no-alloc` CI run passes and exercises the changed path.
 - [ ] Golden-audio tests pass, or references are updated through `cargo xtask golden --update` with a reason.
 - [ ] Render and DSP benchmarks are within the regression threshold; hot-path PRs include before and after numbers ([testing-strategy §9](../engineering/testing-strategy.md#9-performance-and-soak-tests)).
 - [ ] Changes to the scheduler, voice pool, plan swap or backend attach a local soak result (10 min, 128-frame buffers, 0 xruns), and are listed for the next device soak on reference hardware ([testing-strategy §9.3](../engineering/testing-strategy.md#93-soak-tests)).

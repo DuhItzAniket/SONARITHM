@@ -26,7 +26,7 @@
 | Resampling / FFT | rubato; rustfft; realfft | 5.0.1; 6.4.1; 3.5.0 | Adopt | MIT | A05/C03 | |
 | Loudness | ebur128 | 0.1.10 | Adopt | MIT | A05 | Metering and golden tolerance (ΔLUFS) |
 | Spatial | sofar (SOFA HRTF) | 0.4.0 | Trial | MIT/Apache | D03 | hrtf 0.9 Assess; audionimbus (Steam Audio) Assess |
-| RT communication | rtrb; triple_buffer; basedrop; atomic_float; no_denormals; assert_no_alloc (debug) | 0.4.0; 9.0.0; 0.1.3; 1.1; 0.3; 1.1.2 | Adopt (basedrop Trial) | MIT/Apache (triple_buffer MPL-2.0) | A05 | crossbeam-channel only off the RT path |
+| RT communication | rtrb; triple_buffer; basedrop; atomic_float; no_denormals; allocation-counter (debug and CI; replaces assert_no_alloc, F-038) | 0.4.0; 9.0.0; 0.1.3; 1.1; 0.3; 0.8.1 | Adopt (basedrop Trial) | MIT/Apache (triple_buffer MPL-2.0) | A05 | crossbeam-channel only off the RT path |
 | Decode | symphonia | 0.6.1 | Adopt | MPL-2.0 | C01 | Audio input for samples and audification sources |
 | Export | hound (WAV); flacenc (FLAC); midly (SMF) | 3.5.1; 0.5.1; 0.5.3 | Adopt (flacenc Trial) | Apache/MIT | A05/C04 | MP3 via mp3lame-encoder is **LGPL**, optional feature only |
 | Live MIDI / OSC | midir; rosc | 0.11.1; 0.11.4 | Adopt | MIT/Apache | C04 | |

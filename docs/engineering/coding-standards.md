@@ -284,7 +284,7 @@ The audio thread is sacred (P3). These rules apply to everything reachable from 
 
 ### 11.5 Enforcement
 
-1. **`assert_no_alloc` in debug builds.** The callback body runs inside an `assert_no_alloc` scope. The `AllocDisabler` global allocator is installed in the test and app binaries (a library cannot set the global allocator). CI runs a debug-build soak that fails on any allocation in the callback ([testing-strategy §9](testing-strategy.md#9-performance-and-soak-tests)).
+1. **Allocation check in debug builds.** The callback body runs inside `allocation_counter::measure`, which counts every allocation and free made by the measuring thread. The `sonarithm-render` tests measure each `process` call. The `count-allocations` feature of `sonarithm-audio` measures every device callback and adds the count to `StreamStatus::allocations`. The crate installs a counting global allocator, so the feature is for tests, CI and the soak program, never for release builds of applications; `cargo xtask check-deps` rejects it as a normal dependency anywhere else (02 §3 rule 5). Control tests show that the check fails on an allocation or a free inside the measured block and does not count other threads. It replaces `assert_no_alloc`, whose BSD-1-Clause licence `deny.toml` does not allow (F-038, F-054). CI runs a debug-build soak that fails on any allocation in the callback ([testing-strategy §9](testing-strategy.md#9-performance-and-soak-tests)).
 2. **Marking.** Functions callable from the audio thread carry a `# Real-time safety` rustdoc section saying "RT-safe". Code that is only RT-safe under conditions (for example "after `prepare()`") says so. Modules that contain only RT code are named `rt` or documented as RT-only.
 3. **No RT-only output branches.** There is no `if realtime { … }` that changes rendered samples. Real-time and offline differ only in the driver (P4).
 4. **Soak and xrun tracking.** The device soak on reference hardware ([testing-strategy §9.3](testing-strategy.md#93-soak-tests)) must report zero xruns at the budgeted buffer size.
@@ -299,7 +299,7 @@ A PR that touches `sonarithm-render`, `sonarithm-dsp`, `sonarithm-audio` or any 
 - [ ] Every loop has a stated bound.
 - [ ] No panicking operations; indices and divisors are validated at plan-build time.
 - [ ] External parameters are smoothed; envelopes have non-zero ramps (SDR-22).
-- [ ] The `assert_no_alloc` CI run exercises the changed path (add a test case if it does not).
+- [ ] The `no-alloc` CI run exercises the changed path (add a test case if it does not).
 - [ ] Golden audio is unchanged, or the change is intentional and justified ([testing-strategy §5](testing-strategy.md#5-golden-audio-tests)).
 - [ ] Render benchmarks are within the regression threshold ([testing-strategy §9](testing-strategy.md#9-performance-and-soak-tests)).
 - [ ] For changes to the scheduler, voice pool, plan swap or backend: a local soak result at 128-frame buffers is attached to the PR.
