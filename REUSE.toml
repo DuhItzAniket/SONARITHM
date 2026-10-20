@@ -86,3 +86,11 @@ path = "spikes/**/results/**"
 precedence = "closest"
 SPDX-FileCopyrightText = "2026 SONARITHM contributors"
 SPDX-License-Identifier = "CC-BY-4.0"
+
+# The examples gallery (examples/): datasets, specs and the notebook are CC BY 4.0, like the
+# documentation (ADR-0010). Last, so it wins over the JSON annotation above.
+[[annotations]]
+path = ["examples/**"]
+precedence = "closest"
+SPDX-FileCopyrightText = "2026 SONARITHM contributors"
+SPDX-License-Identifier = "CC-BY-4.0"

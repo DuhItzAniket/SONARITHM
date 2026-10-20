@@ -17,15 +17,15 @@ Status vocabulary: `planned` → `available` (committed or archived, with finger
 
 ## Example datasets (A07 gallery, CC BY 4.0)
 
-The roadmap's A07 examples gallery ships five datasets under CC BY 4.0. These are the proposed five.
+The roadmap's A07 examples gallery ships five datasets under CC BY 4.0, in [`examples/`](../../examples/README.md) with a spec each and a notebook. All five are synthetic: `cargo xtask gallery` writes them as CSV from NUMISONA's seeded generators (`sonarithm_numisona::examples`, generator version: the crate's, seeds as listed), and CI checks that they regenerate byte for byte. The fingerprint is the data fingerprint (03 §2) of the CSV as the `file` source reads it, as recorded in the Score header and render manifests (2026-10-21, data layer at A07).
 
 | ID | Dataset | Purpose | Shows | Provenance | Status |
 |---|---|---|---|---|---|
-| DS-001 | Daily temperature series | First-run example; a concept with positive polarity | Pitch mapping, concept table (SDR-12), tick track | Synthetic (seasonal curve plus noise), seeded | planned |
-| DS-002 | Price series | Flagged-polarity concept; link to the Smith & Walker replication | Polarity flag and flip (SDR-14, SDR-15), dynamic reference tone (SDR-17) | Synthetic, from GEN-002 | planned |
-| DS-003 | Multi-series line chart (3–4 series) | Concurrent series | Timbre, pan and onset separation (SDR-26), mono-safe design (A11Y-14) | Synthetic, seeded | planned |
-| DS-004 | Categorical bar data | Categorical channel | Timbre for categories (SDR-25), bar template | Synthetic | planned |
-| DS-005 | Dense signal with transient events | Density switch and audification | Mark switching (SDR-20), audification calculator (SDR-31) | Synthetic seismogram-like signal (noise plus transients), seeded | planned |
+| DS-001 | Daily temperature series | First-run example; a concept with positive polarity | Pitch mapping, concept table (SDR-12), tick track (from B03) | Synthetic (seasonal curve plus noise), `examples::temperature`, seed 1; 120 rows, `examples/data/ds-001-temperature.csv`; fingerprint `09c7ab6d…3691fd0`; CC BY 4.0 | available |
+| DS-002 | Price series | Flagged-polarity concept; link to the Smith & Walker replication | Polarity flag and explicit polarity (SDR-14, SDR-15), redundant duration (A11Y-13); the dynamic reference tone (SDR-17) joins with AUDAXIS (B03) | Synthetic, `examples::prices` (a rise then a fall), seed 2; 20 rows, `examples/data/ds-002-prices.csv`; fingerprint `dc816b64…850aa69`; CC BY 4.0. Not GEN-002: the replication's series lives in the A08 gallery | available |
+| DS-003 | Multi-series line chart (3 series) | Concurrent series | Timbre and pan separation (SDR-26), timbre as well as pan (A11Y-14) | Synthetic, `examples::regions`, seed 3; 36 rows (12 months × 3 regions), `examples/data/ds-003-regions.csv`; fingerprint `889a68d8…0080110`; CC BY 4.0 | available |
+| DS-004 | Categorical bar data | Categorical channel | Timbre for categories (SDR-25), bar design (zero-based pitch, redundant duration) | Synthetic, `examples::fruit` (fixed values); 5 rows, `examples/data/ds-004-fruit.csv`; fingerprint `912499bf…2fcca81`; CC BY 4.0 | available |
+| DS-005 | Dense signal with transient events | Density switch and audification | Mark switching (SDR-20, experimental); audification (SDR-31) joins with CURVASONA (C03) | Synthetic seismogram-like signal (noise plus three transients), `examples::signal`, seed 5; 2000 rows, `examples/data/ds-005-signal.csv`; fingerprint `40aa848e…dc5e40aa1`; CC BY 4.0 | available |
 
 ## Engineering and test corpora
 

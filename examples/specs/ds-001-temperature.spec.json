@@ -1,0 +1,43 @@
+{
+  "specVersion": "0.1",
+  "name": "Daily temperature",
+  "description": "120 days of a synthetic noon temperature: a slow seasonal rise with day-to-day noise. Higher temperatures sound higher.",
+  "data": {
+    "source": {
+      "kind": "file",
+      "path": "../data/ds-001-temperature.csv"
+    },
+    "fields": {
+      "day": {
+        "type": "quantitative",
+        "role": "x",
+        "label": "Day"
+      },
+      "temp": {
+        "type": "quantitative",
+        "unit": "°C",
+        "concept": "temperature",
+        "label": "Temperature"
+      }
+    }
+  },
+  "substrate": {
+    "time": {
+      "field": "day",
+      "pace": {
+        "pointsPerSecond": 4
+      }
+    }
+  },
+  "tracks": [
+    {
+      "id": "temperature",
+      "mark": "tone",
+      "channels": {
+        "pitch": {
+          "field": "temp"
+        }
+      }
+    }
+  ]
+}

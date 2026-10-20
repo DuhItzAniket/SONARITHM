@@ -1,0 +1,41 @@
+{
+  "specVersion": "0.1",
+  "name": "Dense signal with three transients",
+  "description": "2000 samples of low noise with three sharp transients, played in ten seconds. At 200 points per second single tones would blur, so the experimental auto mark plays a continuous contour; listen for the three bursts.",
+  "data": {
+    "source": {
+      "kind": "file",
+      "path": "../data/ds-005-signal.csv"
+    },
+    "fields": {
+      "t": {
+        "type": "quantitative",
+        "role": "x",
+        "label": "Sample"
+      },
+      "amplitude": {
+        "type": "quantitative",
+        "label": "Amplitude"
+      }
+    }
+  },
+  "substrate": {
+    "time": {
+      "field": "t",
+      "pace": {
+        "pointsPerSecond": 200
+      }
+    }
+  },
+  "tracks": [
+    {
+      "id": "signal",
+      "mark": "auto",
+      "channels": {
+        "pitch": {
+          "field": "amplitude"
+        }
+      }
+    }
+  ]
+}
