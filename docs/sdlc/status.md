@@ -166,7 +166,7 @@ Work runs in a separate agent session through one PR per task, based on `main`. 
 | A07-T03 Python package (PyO3/maturin abi3) | In progress | `sonarithm._core` + Python layer, abi3 ≥ 3.10; pyarrow, pandas, polars, dict, records, arrays and paths; `render`, `wav`, notebook `play` and `<audio>`; 19 pytest tests incl. Score and WAV parity with the facade; `wheels.yml` builds and tests wheels on 3 OSes.  |
 | A07-T04 Examples gallery | Not started | |
 | A07-T05 release-plz, git-cliff, wheels workflow | Not started | |
-| A07-T06 Zenodo, `CITATION.cff` | Not started | |
+| A07-T06 Zenodo, `CITATION.cff` | In review | `.zenodo.json` (software, description, keywords, related repository) and `CITATION.cff` in step; `cargo xtask citation` checks both in CI and `--release DATE` sets version and date. Author names and ORCID: owner (#129) |
 | A07-T07 Quickstart tutorial | Not started | Three-person timing test: owner (#129) |
 | A07-T08 Release v0.1.0-alpha | Not started | Publishing needs the owner's go |
 
