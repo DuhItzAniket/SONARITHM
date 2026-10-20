@@ -163,7 +163,7 @@ Work runs in a separate agent session through one PR per task, based on `main`. 
 | A07 prerequisite #156 `without_inference()` keeps declared fields | **Done** | Merged in #159. Declared `fields` are written into the schema without inference; NUMISONA's example datasets declare their roles and read without inference (data unchanged, same fingerprints) |
 | A07-T01 Facade crate API, rustdoc examples | In review | `Sonarithm` (platform + NUMISONA), `Spec`, `compile`/`compile_with` (host datasets through `Platform::with_dataset`, `SNR-COMP-026`), `quick`, summary and L1/L2 description; doc examples run as tests; builds for wasm32 without default features. Rendering joins when A05's export crate lands |
 | A07-T02 CLI commands, `--json`, `--plain` | In progress | `render`, `validate`, `inspect`, `lint` (stub), `quick` (with `-o`), `schema`, `spec migrate`; exit codes 0–3; assert_cmd + insta snapshots; CLI render bytes equal the facade's. `play` and `devices` wait for A05's audio backend |
-| A07-T03 Python package (PyO3/maturin abi3) | Not started | |
+| A07-T03 Python package (PyO3/maturin abi3) | In progress | `sonarithm._core` + Python layer, abi3 ≥ 3.10; pyarrow, pandas, polars, dict, records, arrays and paths; `render`, `wav`, notebook `play` and `<audio>`; 19 pytest tests incl. Score and WAV parity with the facade; `wheels.yml` builds and tests wheels on 3 OSes.  |
 | A07-T04 Examples gallery | Not started | |
 | A07-T05 release-plz, git-cliff, wheels workflow | Not started | |
 | A07-T06 Zenodo, `CITATION.cff` | Not started | |

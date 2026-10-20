@@ -63,6 +63,8 @@ wheelhouse/
 /bindings/python/**/*.so
 /bindings/python/**/*.pyd
 /bindings/python/**/*.dylib
+# and its debug symbols on Windows
+/bindings/python/**/*.pdb
 .pytest_cache/
 .mypy_cache/
 .ruff_cache/

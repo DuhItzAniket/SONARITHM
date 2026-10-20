@@ -9,7 +9,7 @@
 | FR-001 | [03](../architecture/03-data-model.md), [10 §2](../architecture/10-ingestion-and-extraction.md#2-source-adapters) | A04 | UT, IT (file corpus), fuzz | Done (#116, #133, #135, #143): CSV/TSV, JSON/NDJSON, Parquet, Arrow IPC, XLSX/ODS sources; `csv_corpus` (23+ messy files), `spreadsheets`, metadata round trips; fuzz targets in `crates/sonarithm-data/fuzz` |
 | FR-002 | [03 §3](../architecture/03-data-model.md#3-field-semantics) | A04 | UT (inference corpus ≥ 95%) | Done (#136): `inference_reaches_95_percent_precision_on_the_corpus` (27 files, 74 fields: 100% type, 98.5% role, 100% concept) |
 | FR-003 | [03 §6](../architecture/03-data-model.md#6-transforms) | A04 | UT, PT | Done (#139): unit and property tests for all eight transforms; fuel-limited rhai subset |
-| FR-004 | [11 §3](../architecture/11-bindings-cli-plugins.md#3-python-package-sonarithm) | A07 | IT (pytest on wheels) | Planned |
+| FR-004 | [11 §3](../architecture/11-bindings-cli-plugins.md#3-python-package-sonarithm) | A07 | IT (pytest on wheels) | In progress (A07-T03): PyCapsule input from pyarrow, pandas and polars with one fingerprint for the same values (`test_the_same_values_compile_alike_from_every_library`, F-100); wheels tested on 3 OSes by `wheels.yml` |
 | FR-005 | [07 SONOTRACE](../architecture/07-engines.md), [03 §8](../architecture/03-data-model.md#8-streaming-tables-sonotrace) | B06 | IT, soak (PB-11), AT | Planned |
 | FR-006 | [10 §3](../architecture/10-ingestion-and-extraction.md#3-the-bring-any-chart-pipeline-plotsona) | C01 | IT (50-chart corpus) | Planned |
 | FR-007 | [10 §3](../architecture/10-ingestion-and-extraction.md#3-the-bring-any-chart-pipeline-plotsona) | C02 | IT (raster corpus), AT (correction flow) | Planned |
@@ -71,7 +71,7 @@
 | FR-118 | [06 §10](../architecture/06-audio-engine.md#10-hearing-safety-and-levels) | B01 | E2E | Planned |
 | FR-119 | [08 §8](../architecture/08-interaction-and-accessibility.md#8-input-methods) | B04 | E2E, AT | Planned |
 | FR-120 | [11 §2](../architecture/11-bindings-cli-plugins.md#2-cli-sonarithm) | A07 | ST (CLI snapshots) | In progress: facade (A07-T01); `render`, `validate`, `inspect`, `lint` (stub), `quick`, `schema`, `spec migrate` with `--json`, `--plain` and exit codes (`apps/cli/tests/cli.rs`, assert_cmd + insta; render bytes equal the facade's). `play` and `devices` wait for A05's audio backend |
-| FR-121 | [11 §3](../architecture/11-bindings-cli-plugins.md#3-python-package-sonarithm) | A07 | IT (pytest) | Planned |
+| FR-121 | [11 §3](../architecture/11-bindings-cli-plugins.md#3-python-package-sonarithm) | A07 | IT (pytest) | In progress (A07-T03): package, `.pyi` stubs and `py.typed`, notebook `play()` and a text-first display with `<audio>`, `render`, Score and WAV parity with the facade (`test_parity.py`) |
 | FR-122 | [11 §4](../architecture/11-bindings-cli-plugins.md#4-webassembly-sonarithm-wasm-d05) | D05 | IT (Score parity, H-08) | Planned |
 | FR-123 | [11 §5](../architecture/11-bindings-cli-plugins.md#5-plugin-system-d05) | D05 | IT (sandbox tests) | Planned |
 | FR-130 | [10 §4](../architecture/10-ingestion-and-extraction.md#4-ai-assistance-policy) | D04 | UT (numeric verification) | Planned |

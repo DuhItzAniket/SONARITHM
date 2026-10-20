@@ -1,0 +1,71 @@
+# SPDX-FileCopyrightText: 2026 SONARITHM contributors
+# SPDX-License-Identifier: MIT OR Apache-2.0
+"""Type stubs for ``sonarithm._core``, the native module. Use the ``sonarithm`` package."""
+
+from os import PathLike
+from typing import Any, final
+
+__version__: str
+SPEC_VERSION: str
+
+class SonarithmError(Exception):
+    """A spec, data or compile problem."""
+
+    diagnostics: list[dict[str, Any]]
+
+@final
+class Dataset:
+    """Data read into SONARITHM's data layer, with inferred field types and roles."""
+
+    def __new__(cls, data: object, label: str = "data") -> Dataset: ...
+    @property
+    def rows(self) -> int: ...
+    @property
+    def fields(self) -> list[str]: ...
+
+@final
+class Spec:
+    @staticmethod
+    def from_json(text: str, name: str | None = None) -> Spec: ...
+    @staticmethod
+    def from_file(path: str | PathLike[str]) -> Spec: ...
+    def to_json(self) -> str: ...
+    @property
+    def name(self) -> str: ...
+    def validate(self) -> list[dict[str, Any]]: ...
+
+@final
+class Compiled:
+    @property
+    def diagnostics(self) -> list[dict[str, Any]]: ...
+    def summary(self) -> dict[str, Any]: ...
+    def describe(self) -> str: ...
+    def description(self) -> dict[str, list[str]]: ...
+    @property
+    def score_hash(self) -> str: ...
+    @property
+    def canonical_spec(self) -> str: ...
+    def score(self) -> dict[str, Any]: ...
+    def render(
+        self,
+        path: str | PathLike[str],
+        *,
+        sample_rate: int | None = None,
+        preserve_level: bool = False,
+        cues: bool = True,
+    ) -> dict[str, Any]: ...
+    def wav(self, *, sample_rate: int | None = None, preserve_level: bool = False) -> tuple[bytes, int]: ...
+
+def compile(spec: Spec, data: dict[str, object] | None = None) -> Compiled: ...
+def quick(
+    data: object,
+    *,
+    x: str | None = None,
+    y: str | None = None,
+    mark: str | None = None,
+    range_hz: tuple[float, float] | None = None,
+    concept: str | None = None,
+    name: str | None = None,
+) -> tuple[Spec, Compiled]: ...
+def schema(kind: str = "spec") -> str: ...
+def _records(records: str, label: str = "records") -> Dataset: ...

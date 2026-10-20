@@ -1,0 +1,123 @@
+# Python wheels (docs/engineering/release-process.md, "Python wheel release"; 11 §3).
+# Builds the abi3 wheel of `sonarithm` for Linux (manylinux_2_28), Windows and macOS, plus the
+# sdist; installs each wheel into a clean Python 3.10 and 3.14 and runs the pytest suite
+# against it. Publishing to PyPI (Trusted Publishing, release tags only) is added by A07-T05.
+# Release builds never restore caches (ci-cd.md, hardening rules), so this workflow has none.
+name: wheels
+
+on:
+  pull_request:
+    paths:
+      - "bindings/python/**"
+      - "crates/**"
+      - "Cargo.toml"
+      - "Cargo.lock"
+      - "rust-toolchain.toml"
+      - "schemas/**"
+      - "tests/golden/**"
+      - ".github/workflows/wheels.yml"
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions: {}
+
+concurrency:
+  group: wheels-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  build:
+    name: build (${{ matrix.platform.name }})
+    strategy:
+      fail-fast: false
+      matrix:
+        platform:
+          - { name: linux-x86_64, runner: ubuntu-latest, target: x86_64, manylinux: "2_28" }
+          - { name: windows-x86_64, runner: windows-latest, target: x64, manylinux: "auto" }
+          - { name: macos-arm64, runner: macos-latest, target: aarch64, manylinux: "auto" }
+    runs-on: ${{ matrix.platform.runner }}
+    permissions:
+      contents: read
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "3.10"
+      # Installs the toolchain pinned in rust-toolchain.toml (the Linux build installs it
+      # inside the manylinux container instead).
+      - if: runner.os != 'Linux'
+        run: rustup toolchain install
+      - uses: PyO3/maturin-action@e83996d129638aa358a18fbd1dfb82f0b0fb5d3b # v1.51.0
+        with:
+          working-directory: bindings/python
+          target: ${{ matrix.platform.target }}
+          manylinux: ${{ matrix.platform.manylinux }}
+          before-script-linux: rustup toolchain install
+          args: --release --locked --out dist
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: wheel-${{ matrix.platform.name }}
+          path: bindings/python/dist/*.whl
+          if-no-files-found: error
+
+  sdist:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: PyO3/maturin-action@e83996d129638aa358a18fbd1dfb82f0b0fb5d3b # v1.51.0
+        with:
+          working-directory: bindings/python
+          command: sdist
+          args: --out dist
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: sdist
+          path: bindings/python/dist/*.tar.gz
+          if-no-files-found: error
+
+  test:
+    name: test (${{ matrix.platform.name }}, Python ${{ matrix.python }})
+    needs: build
+    strategy:
+      fail-fast: false
+      matrix:
+        platform:
+          - { name: linux-x86_64, runner: ubuntu-latest }
+          - { name: windows-x86_64, runner: windows-latest }
+          - { name: macos-arm64, runner: macos-latest }
+        python: ["3.10", "3.14"]
+    runs-on: ${{ matrix.platform.runner }}
+    permissions:
+      contents: read
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: ${{ matrix.python }}
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: wheel-${{ matrix.platform.name }}
+          path: dist
+      # The wheel alone first: it has no required dependencies, so `pip install sonarithm`
+      # works without pyarrow, pandas or polars.
+      - name: Install the wheel into a clean environment
+        shell: bash
+        run: |
+          python -m venv .venv-wheel
+          if [ "$RUNNER_OS" = "Windows" ]; then py=.venv-wheel/Scripts/python; else py=.venv-wheel/bin/python; fi
+          "$py" -m pip install --no-index --find-links dist sonarithm
+          "$py" -c "import sonarithm, sys; print(sonarithm.__version__, sonarithm.__file__); sys.exit(0 if sonarithm.quick({'x': [1.0, 2.0], 'y': [3.0, 4.0]}).summary()['tracks'][0]['notes'] == 2 else 1)"
+          "$py" -m pip install pytest pyarrow pandas polars numpy
+          "$py" -m pytest -q bindings/python/tests

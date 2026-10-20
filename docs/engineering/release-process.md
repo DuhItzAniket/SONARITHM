@@ -59,7 +59,7 @@ Configuration notes for A07:
 
 ## Python wheel release
 
-- `wheels.yml` builds with `PyO3/maturin-action`: abi3 wheels for Windows, macOS and Linux (manylinux), plus an sdist. The minimum CPython version for abi3 and the exact platform matrix are decided in A07.
+- `wheels.yml` builds with `PyO3/maturin-action`: abi3 wheels for CPython 3.10 and later on Windows x86_64, macOS arm64 and Linux x86_64 (manylinux_2_28), plus an sdist (decided in A07-T03). It runs on pull requests that touch the Rust crates or the package, so every change is tested on installed wheels; publishing runs only on release tags.
 - Each wheel is installed into a clean environment and the pytest smoke suite runs before publishing.
 - Publishing uses PyPI Trusted Publishing from the `release` environment. For the first release, rehearse on TestPyPI.
 - Wheels and the sdist get build-provenance attestations.

@@ -239,7 +239,7 @@ The headless app core (`sonarithm-app`, B01) holds all non-UI desktop behaviour,
 
 **Python** (A07):
 
-- pytest runs against **built wheels** installed into a fresh virtual environment on each OS, for the minimum and the newest supported Python (the abi3 floor is decided in A07, see [release-process](release-process.md); development assumes 3.10 or newer). Editable installs (`maturin develop`) are for local work only.
+- pytest runs against **built wheels** installed into a fresh virtual environment on each OS, for the minimum and the newest supported Python (3.10 and 3.14 in `wheels.yml`; the abi3 floor is 3.10, see [release-process](release-process.md)). Editable installs (`maturin develop`) are for local work only.
 - A job without optional dependencies proves `import sonarithm` works without pandas or Polars; a second job installs pandas, Polars and pyarrow and tests zero-copy input.
 - Tests cover output dtype and shape (`float32`, `(frames, channels)`), exception classes and their `code` attributes, GIL release (a threaded smoke test), docstring doctests, and stub accuracy with `python -m mypy.stubtest sonarithm`.
 - Example notebooks execute headless in CI.

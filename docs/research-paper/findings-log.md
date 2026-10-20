@@ -560,3 +560,21 @@ A05 (render engine, audio backends, export) uses F-050 to F-069.
 - **Evidence level / confidence:** EV-C / Strong
 - **Affects:** ADR-0013, testing-strategy §4, release-process (release PRs), papers that compare Score hashes across releases
 - **Papers:** none yet
+
+### F-100 · The same rows from pyarrow, pandas and polars reach Rust with different layouts and metadata, which changed the Score hash
+
+- **Date:** 2026-10-21 · **Phase:** A07 · **Type:** engineering · **Status:** new
+- **Statement:** Four rows of two float columns and a text column handed to the Python package gave two different Score hashes: pandas 3.0.6 (through pyarrow 26) exports text as `large_string` and adds a `pandas` schema-metadata entry that records the pandas version and index, while polars 2.0.0 exports `string_view` and no metadata. The data fingerprint covers types and schema metadata (03 §2), so a pandas upgrade alone would have changed every fingerprint. `read_batches` now gives in-memory Arrow one layout for text and bytes (plain arrays up to 2 GiB per batch) and keeps only `snr.*` schema metadata; a dict, a pyarrow table and record batch, a pandas and a polars DataFrame then give one Score hash.
+- **Evidence:** A07-T03 PR: `the_same_values_fingerprint_alike_from_any_library` (sonarithm-data), `test_the_same_values_compile_alike_from_every_library` (pytest, five input routes)
+- **Evidence level / confidence:** EV-C / Strong (measured with the library versions named; other versions may add other metadata, which is dropped the same way)
+- **Affects:** ADR-0013 (determinism), 03 §2 (fingerprints), FR-004, 11 §3
+- **Papers:** none yet
+
+### F-101 · arrow-pyarrow 60 is built on PyO3 0.29, not the 0.30 that 11 §3 names
+
+- **Date:** 2026-10-21 · **Phase:** A07 · **Type:** engineering · **Status:** new
+- **Statement:** The Arrow PyCapsule import maintained with arrow-rs (`arrow-pyarrow` 60.0.0, Apache-2.0) depends on PyO3 0.29, and `pyo3-arrow` 0.20 (PyO3 0.30) is built on arrow 59, so no published crate pairs arrow 60 with PyO3 0.30. The Python package uses PyO3 0.29.3 with `arrow-pyarrow` 60, which reads any `__arrow_c_stream__` or `__arrow_c_array__` object without `unsafe` code in SONARITHM; it moves to PyO3 0.30 when arrow-pyarrow does.
+- **Evidence:** crate manifests of arrow-pyarrow 60.0.0 and pyo3-arrow 0.20.0 (crates.io, 2026-10-19); `bindings/python/Cargo.toml`
+- **Evidence level / confidence:** EV-C / Strong
+- **Affects:** 11 §3, tech stack
+- **Papers:** none yet

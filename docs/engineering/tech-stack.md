@@ -39,7 +39,7 @@
 | Scripting | rhai | 1.26.1 | Adopt | MIT/Apache | A04 | Sandboxed spec expressions (`filter`, `derive`): a raw engine without default features (no runtime RNG, no time package), user functions, modules, closures and custom syntax compiled out, fuel-limited per row. Its dependency `smartstring` is unmaintained (RUSTSEC-2026-0249, ignored in `deny.toml`, tracked in #115) |
 | Analytics | statrs; ndarray; augurs | 0.19.1; 0.17.2; 0.10.2 | Adopt / Trial (augurs) | MIT/Apache | C05 | linfa 0.8, changepoint Assess |
 | Chart ML | tract-onnx (default); ort (opt-in) | 0.23.9; 2.0.0-rc.14 | Trial | MIT/Apache | D04 | ort is still RC; use `load-dynamic` |
-| Python | pyo3 + maturin + numpy | 0.30.1; 1.15; 0.30 | Adopt | MIT/Apache | A07 | abi3 wheels; Arrow PyCapsule interop |
+| Python | pyo3 + arrow-pyarrow + maturin | 0.29.3; 60.0.0; 1.15 | Adopt | MIT/Apache; Apache-2.0; MIT/Apache | A07 | abi3 wheels (CPython 3.10+); Arrow PyCapsule interop through arrow-pyarrow, which fixes PyO3 at 0.29 (F-101); numpy is not needed |
 | WebAssembly | wasm-bindgen (+ cli) | 0.2.129 | Adopt | MIT/Apache | A01 (build check), D05 | wasm-pack 0.15 Assess (maintainer churn) |
 | C ABI | cbindgen | 0.29.4 | Assess | MPL-2.0 (tool) | post-1.0 | uniffi 0.32 for mobile later |
 | Plugins | wasmtime (+ WIT, WASI 0.3) | 49 | Trial | Apache-2.0 | D05 | MSRV 1.96, leaf crate only. extism Assess |
