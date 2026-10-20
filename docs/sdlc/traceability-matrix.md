@@ -57,8 +57,8 @@
 | FR-091 | [07 TONALENS](../architecture/07-engines.md) | D01 | UT; EXP for H-04 | Planned |
 | FR-092 | [07 TONALENS](../architecture/07-engines.md) | D01 | GT | Planned |
 | FR-093 | [07 RESONUM](../architecture/07-engines.md) | D02 | GT, CD (pilot) | Planned |
-| FR-100 | [06 §7](../architecture/06-audio-engine.md#7-export) | A05 | GT, schema test (manifest) | Planned |
-| FR-101 | [06 §7](../architecture/06-audio-engine.md#7-export) | A05, B03 | UT (VTT validity) | Planned |
+| FR-100 | [06 §7](../architecture/06-audio-engine.md#7-export) | A05 | GT, schema test (manifest), IT (decode round trip) | In progress: WAV and FLAC writers with lossless decode tests (A05-T07); render manifest validated against its generated schema, no absolute paths (A05-T08) |
+| FR-101 | [06 §7](../architecture/06-audio-engine.md#7-export) | A05, B03 | UT (VTT validity) | In progress: WebVTT sidecar of speech events and markers with a validity test; ffmpeg reads it (A05-T08); cue timing with AUDAXIS (B03) |
 | FR-102 | [06 §7](../architecture/06-audio-engine.md#7-export) | C04 | GT | Planned |
 | FR-110 | [12 §4](../architecture/12-cross-cutting-concerns.md#4-project-file-format) | B05 | IT (round trip, crash injection) | Planned |
 | FR-111 | [09 §2.1](../architecture/09-desktop-app.md#21-command-surface-initial) | B05 | IT | Planned |
@@ -86,7 +86,7 @@
 | NFR-07 | [supply chain](../engineering/supply-chain-and-licensing.md) | A01 | cargo-deny, RV | Planned |
 | NFR-08 | [testing-strategy](../engineering/testing-strategy.md) | A03 → | CI | Planned |
 | NFR-09 | [12 §5](../architecture/12-cross-cutting-concerns.md#5-internationalization-and-localization) | B02 | Pseudo-locale CI | Planned |
-| NFR-10 | [06 §10](../architecture/06-audio-engine.md#10-hearing-safety-and-levels) | A05 | UT, GT | Planned |
+| NFR-10 | [06 §10](../architecture/06-audio-engine.md#10-hearing-safety-and-levels) | A05 | UT, GT | In progress: true-peak limiter and start-up ramp with acceptance tests against ebur128 (A05-T09, F-050) |
 | NFR-11 | [09 §5](../architecture/09-desktop-app.md#5-persistence) | B05 | IT (fault injection) | Planned |
 | NFR-12 | [vision §8](../product/vision.md#8-success-measures) | A07, B07 | CD (observed sessions) | Planned |
 | NFR-13 | [research-paper/README](../research-paper/README.md) | A08 → | RV (findings log, preregistrations) | Planned |

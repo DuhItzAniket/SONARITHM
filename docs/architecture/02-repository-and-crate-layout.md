@@ -126,7 +126,7 @@ flowchart BT
 4. **The compiler, engines, render and DSP crates must build for `wasm32-unknown-unknown`.** CI builds them (A01 onward).
 5. **Heavy or exotic dependencies live in leaf crates behind features:** ML runtimes, wasmtime, MQTT, SQL, LGPL codecs. Default features stay permissively licensed (see [supply chain policy](../engineering/supply-chain-and-licensing.md)).
 6. **Apps contain no business logic.** If the CLI and the desktop app both need it, it goes in `sonarithm-app` or below.
-7. **`xtask` never ships.** It may depend on the compiler, `sonarithm-render` and the crates below them, to read code tables and generate schemas (A03, A05); no crate depends on it.
+7. **`xtask` never ships.** It may depend on the compiler, `sonarithm-export` and the crates below them (`sonarithm-render`, `sonarithm-dsp`), to read code tables and generate schemas (A03, A05); no crate depends on it.
 
 ## 4. Feature flags (planned)
 

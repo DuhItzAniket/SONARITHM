@@ -110,18 +110,35 @@ impl Instrument {
 }
 
 /// Settings fixed for the life of a plan.
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[derive(Clone, Copy, Debug, PartialEq)]
 #[non_exhaustive]
 pub struct PlanConfig {
     /// The device or export sample rate.
     pub sample_rate: SampleRate,
+    /// ISO 226:2023 equal-loudness compensation at this loudness level in phon, or `None`
+    /// for none. On by default (SDR-24) at
+    /// [`REFERENCE_PHON`](sonarithm_dsp::loudness::REFERENCE_PHON). Skipped when the
+    /// Score's header shows that a loudness shaper already ran.
+    pub loudness_compensation: Option<f64>,
 }
 
 impl PlanConfig {
-    /// A configuration for `sample_rate`.
+    /// A configuration for `sample_rate`, with equal-loudness compensation (SDR-24).
     #[must_use]
     pub fn new(sample_rate: SampleRate) -> Self {
-        Self { sample_rate }
+        Self {
+            sample_rate,
+            loudness_compensation: Some(sonarithm_dsp::loudness::REFERENCE_PHON),
+        }
+    }
+
+    /// The same configuration without equal-loudness compensation.
+    #[must_use]
+    pub fn without_compensation(self) -> Self {
+        Self {
+            loudness_compensation: None,
+            ..self
+        }
     }
 }
 

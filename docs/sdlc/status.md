@@ -24,7 +24,7 @@ Status values: `Not started` · `In progress` · `In review` · `Done` · `Block
 | A | A02 | Technical spikes and prototype gate | **In review** | ≈80% | All spikes built and measured on Windows and CI; gate report draft: Conditional go recommended. PB-01 fails on Windows shared mode; screen-reader, macOS and Linux manual steps pending. See [A02 tasks](#a02-tasks) |
 | A | A03 | Core types, Spec v0.1, Score IR | **Done** | 100% | 2026-10-19; [phase review](reviews/A03-phase-review.md), [retro](retrospectives/A03-retro.md). See [A03 tasks](#a03-tasks) |
 | A | A04 | Data layer | **Done** | 100% | 2026-10-19; [phase review](reviews/A04-phase-review.md), [retro](retrospectives/A04-retro.md). See [A04 tasks](#a04-tasks) |
-| A | A05 | Render engine, audio backend, export | **In progress** | ≈5% | T01, T03 and T04 in review. See [A05 tasks](#a05-tasks) |
+| A | A05 | Render engine, audio backend, export | **In progress** | ≈30% | T01, T03 and T04 merged; the rest land in three bundles (#160 first). See [A05 tasks](#a05-tasks) |
 | A | A06 | NUMISONA v1 | **Done** | 100% | 2026-10-19; [phase review](reviews/A06-phase-review.md). See [A06 tasks](#a06-tasks) |
 | A | A07 | CLI, Python, v0.1.0-alpha | **In progress** | ≈5% | #156 fixed first. See [A07 tasks](#a07-tasks) |
 | A | A08 | Research instrumentation v0, ICAD 2027 | **In progress** | ≈10% | P01 without participant studies (OD-04). See [A08 tasks](#a08-tasks) |
@@ -125,14 +125,14 @@ Work runs in a separate agent session through small PRs into `crates/sonarithm-d
 | Task | Status | Notes |
 |---|---|---|
 | A05-T01 DSP nodes (oscillators, ADSR, filters, panner) | In review | Oscillators: sine (IEEE-arithmetic polynomial, F-039), triangle, PolyBLEP saw and square, with spectral tests. ADSR with raised-cosine ramps of at least 5 ms and the SDR-22 conformance tests. One-pole and RBJ biquad filters with denormal flushing, constant-power panner, linear parameter smoother |
-| A05-T02 ISO 226:2023 table; EBU R128 meter | Not started | |
+| A05-T02 ISO 226:2023 table; EBU R128 meter | In review | ISO 226:2023 Formulas (1) and (2) with Table 1 (checked against the standard's official preview); compensation on by default in the plan (SDR-24, 60 phon provisional), never boosting; `LoudnessMeter` over ebur128 passes EBU Tech 3341 cases 1–5 within 0.1 LU. Annex B comparison TODO(verify) |
 | A05-T03 `RenderPlan` and plan builder | In review | Score → frames, frequencies, linear gains and pan gains; taps expanded; voice pools at twice the polyphony; `SNR-RENDER` code table; plan snapshot and polyphony property tests |
 | A05-T04 Render graph, voice pool, scheduler, transport | In review | `Graph::process`: voice pools with oldest-first stealing, four buses at the sound-design §6.2 levels, sample-accurate dispatch (bit-identical output at blocks of 1 to 4096 frames), play, pause, stop, seek and loop with crossfades, speed without pitch change, live cues; provisional earcons |
-| A05-T05 RT communication (rtrb, triple_buffer, basedrop) | Not started | |
+| A05-T05 RT communication (rtrb, triple_buffer, basedrop) | In review | `realtime(graph)` splits into `Controller` and `Processor`: rtrb command ring (1024, ≤ 64 per block, coalescing on overflow), plan swap with crossfade through `basedrop::Owned`, `EngineState` through `triple_buffer`; shuttle test of the protocol over 200 random schedules |
 | A05-T06 `AudioBackend` + `CpalBackend` | Not started | |
-| A05-T07 `OfflineBackend`; WAV and FLAC writers | Not started | |
-| A05-T08 Render manifest + WebVTT sidecar | Not started | |
-| A05-T09 Master limiter + start-up gain ramp | Not started | |
+| A05-T07 `OfflineBackend`; WAV and FLAC writers | In review | `OfflineRender` drives `Graph::process` in fixed blocks; `write_audio` streams 24-bit or float WAV (hound) and 24-bit FLAC (flacenc). Files decode losslessly in hound, claxon and ffmpeg 9.0.1 |
+| A05-T08 Render manifest + WebVTT sidecar | In review | `export()` writes audio, `<stem>.render.json` and `<stem>.cues.vtt`, with one static normalization gain (−16 LUFS within −1 dBTP by default, sound-design §6.3). The manifest validates against its generated schema, keeps no directories, and is byte-identical across runs; ffmpeg 9.0.1 reads the sidecar |
+| A05-T09 Master limiter + start-up gain ramp | In review | Look-ahead true-peak limiter (−1 dBTP ceiling, 2 ms look-ahead, latency compensated offline); start-up ramp from −20 dB over 500 ms for playback. Stress Scores measure −1.19 and −1.16 dBTP with ebur128 (F-050) |
 | A05-T10 Allocation check in debug; 10-min soak; xrun counting | Not started | `assert_no_alloc` is BSD-1-Clause (F-038); licence question raised with the coordinator |
 | A05-T11 Golden-audio harness; cross-OS CI job (OD-08) | Not started | |
 | A05-T12 Benchmarks (PB-03) | Not started | |

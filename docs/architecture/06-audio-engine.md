@@ -75,7 +75,7 @@ flowchart LR
 | Granular | Custom node: grain pool, density-driven scheduler, Hann windows | SDR-32; D01 |
 | Audifier | Custom node: resampling playback of `Arc<[f32]>` with rubato | SDR-31; C03 |
 | Modal | Custom resonator bank (excitation → damped sinusoids) | SDR-33; D02 |
-| Loudness compensation | Per-voice gain from an ISO 226:2023-derived table indexed by pitch | SDR-24; precomputed in the plan |
+| Loudness compensation | Per-voice gain from an ISO 226:2023-derived table indexed by pitch | SDR-24; precomputed in the plan. A05: ISO 226:2023 Formula (1) with Table 1 at 60 phon (provisional), normalized so the least sensitive pitch of the track's range plays at 0 dB and nothing is boosted; skipped if the Score's header lists a loudness shaper |
 | Spatializer | Constant-power pan; ITD/ILD; SOFA HRTF convolution via sofar (D03) | SDR-30 |
 | Limiter | Look-ahead true-peak limiter on master | Hearing safety |
 
@@ -101,6 +101,8 @@ The contract has two halves (F-036):
 | Retired resources | RT → collector | basedrop handles | Old plans, buffers |
 
 **Capacity overflow policy.** If the command ring is full, the control thread coalesces commands (latest seek wins). It never blocks the RT thread. Overflows are counted and logged off-thread.
+
+**Implemented in A05** (`sonarithm_render::rt`, A05-T05). `realtime(graph)` returns the two halves: a `Controller` (control thread) and a `Processor` (audio thread). The audio thread applies at most 64 commands per block. A plan swap travels as a `basedrop::Owned<Graph>`, not a `Shared<RenderPlan>`: the new graph arrives with its voice pools already allocated, adopts the transport and levels of the old one, and the old graph fades out over 20 ms before the audio thread hands it to the collector. Live events and the retired-resource ring are not needed yet; they arrive with the first live sources (B03, B06).
 
 ## 5. Scheduler and transport
 
@@ -158,6 +160,10 @@ pub trait AudioBackend {
 
 Paths are written **relative or redacted**, never as absolute user paths (privacy).
 
+**Manifest as built in A05** (A05-T08, `sonarithm_export::manifest`). The fields above are written in camelCase, with these additions: `manifestVersion` (1); `score` (IR version and canonical Score hash); `render.loudnessCompensationPhon`; and `output.format`, `bitsPerSample`, `channels`, `frames`, `gainDb` (the static normalization gain) and `limitedFrames`. The `cues` object names the sidecar. The schema is generated into `schemas/sonarithm-render-manifest-1.schema.json`. Names keep only their last path component. The git commit, the embedded spec and the data source come from the caller, because the Score does not carry them. Cues last 3 s or until the Score ends (provisional, B03).
+
+**Implemented in A05** (A05-T07). `sonarithm_render::OfflineRender` is the `OfflineBackend`: it plays the plan from its start in fixed blocks (256 frames by default). `sonarithm_export::write_audio` encodes the render block by block, so an export never holds the whole render as PCM. FLAC frames stay in memory, compressed, until the stream is written. Integer samples are scaled by 2^23 − 1, rounded half to even and clamped, without dither.
+
 ## 8. Determinism
 
 | Source of variance | Control |
@@ -185,6 +191,8 @@ The **Score IR is the strict artifact** (byte-identical). Audio is compared with
 - **Limiter.** A look-ahead true-peak limiter at −1 dBTP on the master. Limiter activity is metered and warned about in lint when it is sustained.
 - **Independent sonification volume** (A11Y-15), separate from the system volume. A **Stop all audio** command is always available (global shortcut).
 - **Session comfort.** An optional reminder after long sessions (SDR-39, experimental).
+
+**Implemented in A05** (A05-T09). `sonarithm_dsp::TruePeakLimiter` is stereo-linked. It estimates inter-sample peaks with a 4× polyphase interpolator and aims 0.2 dB under the ceiling. The required gain is the minimum over a 2 ms window, smoothed by a moving average over the same window, and recovers with a 100 ms release. The look-ahead and release values are provisional. The limiter delays the output by 101 frames at 48 kHz; the offline driver compensates, so frame 0 of an export is score frame 0. The start-up ramp is a property of playback graphs (`GraphConfig::new`). Offline renders (`GraphConfig::offline`) start as the Score does.
 
 ## 11. Failure handling
 

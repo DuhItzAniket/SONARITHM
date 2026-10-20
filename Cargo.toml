@@ -69,6 +69,12 @@ csv = "1.4.0"
 encoding_rs = "0.8.42"
 # Civil date-time parsing only: no time-zone database, no system clock.
 jiff = { version = "0.2.38", default-features = false, features = ["std"] }
+# EBU R128 / ITU-R BS.1770 loudness and true-peak metering (SDR-24 meter, golden ΔLUFS).
+ebur128 = "0.1.10"
+# Export writers (06 §7): WAV and pure-Rust FLAC. flacenc without its default features: no
+# worker threads (`par`), logging or serde.
+flacenc = { version = "0.5.1", default-features = false }
+hound = "3.5.1"
 # Pure-Rust maths for every Score-affecting transcendental function (ADR-0013). The default
 # `arch` feature only swaps in IEEE-exact instructions (sqrt, rounding), so results stay
 # identical on every platform.
@@ -81,6 +87,11 @@ rhai = { version = "1.26.1", default-features = false, features = ["std", "no_ti
 # Parquet through Arrow, without the async (tokio) default. Pure-Rust codecs only; zstd is
 # a sonarithm-data feature because it builds C code.
 parquet = { version = "60.0.0", default-features = false, features = ["arrow", "snap", "brotli", "flate2-zlib-rs", "lz4", "simdutf8"] }
+# Real-time communication (06 §4): wait-free SPSC rings, latest-value telemetry and
+# deferred frees off the audio thread. triple_buffer is MPL-2.0 (allowed, unmodified).
+basedrop = "0.1.3"
+rtrb = "0.4.0"
+triple_buffer = "9.0.0"
 # Seeded, portable random streams per track (SDR-02, coding-standards §10).
 rand_chacha = { version = "0.10.0", default-features = false }
 # JSON Schema generation for the spec (04 §1); `derive` only, no optional integrations.
@@ -100,6 +111,8 @@ toml = { version = "1.1.8", default-features = false, features = ["std", "parse"
 # Test-only crates (dev-dependencies).
 # Benchmarks (testing-strategy §9.1); no plotting or rayon.
 criterion = { version = "0.8.2", default-features = false, features = ["cargo_bench_support"] }
+boon = "0.6.1"              # JSON Schema (draft 2020-12) validator for the render manifest test
+claxon = "0.4.3"            # an independent FLAC decoder, to validate flacenc output
 insta = "1.43.0"
 # Builds XLSX and ODS packages in sonarithm-data tests; the version calamine already uses.
 zip = { version = "9.0.5", default-features = false }
@@ -108,6 +121,7 @@ zip = { version = "9.0.5", default-features = false }
 # and cargo metadata unifies dev-dependency features, so check-deps would see
 # core -> proptest -> tempfile when another crate enables core/test-support (#121).
 proptest = { version = "1.9.0", default-features = false, features = ["std", "bit-set"] }
+shuttle = "0.9.7"           # randomized concurrency testing of the RT protocol (testing-strategy §8)
 
 # Debug info is most of a `target/` directory's size (PDB files on Windows), and every
 # worktree keeps its own `target/`. Line tables keep file:line backtraces for our crates;

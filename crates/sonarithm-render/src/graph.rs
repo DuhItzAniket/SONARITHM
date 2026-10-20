@@ -20,7 +20,7 @@
 use sonarithm_core::{Db, Frames, Hz, Pan, SampleRate, Seconds};
 use sonarithm_dsp::env::{note_ramp, ramp_frames};
 use sonarithm_dsp::smooth::SMOOTHING_TIME;
-use sonarithm_dsp::{LinearSmoother, PanGains};
+use sonarithm_dsp::{LinearSmoother, PanGains, TruePeakLimiter};
 
 use crate::earcon::splitmix;
 use crate::plan::{Bus, EventKind, Instrument, PlannedEvent, RenderPlan, Tone, TrackPlan};
@@ -132,21 +132,80 @@ pub struct GraphStats {
     pub rendered: u64,
 }
 
+/// The start-up ramp of the master: it starts 20 dB down (06 §10; NFR-10).
+pub const STARTUP_LEVEL: Db = Db(-20.0);
+/// The start-up ramp's length: 500 ms (06 §10).
+pub const STARTUP_TIME: Seconds = Seconds(0.5);
+
 /// Graph settings fixed at construction.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 #[non_exhaustive]
 pub struct GraphConfig {
     /// The largest block, in frames, processed at once; larger blocks are split.
     pub max_block: usize,
+    /// Whether the master starts at [`STARTUP_LEVEL`] and rises to its level over
+    /// [`STARTUP_TIME`], so a stream never opens at full scale (06 §10, NFR-10).
+    pub startup_ramp: bool,
 }
 
 impl GraphConfig {
-    /// Blocks of at most `max_block` frames (at least 1).
+    /// Playback through a device: blocks of at most `max_block` frames (at least 1), with
+    /// the start-up ramp.
     #[must_use]
     pub fn new(max_block: usize) -> Self {
         Self {
             max_block: max_block.max(1),
+            startup_ramp: true,
         }
+    }
+
+    /// An offline render: as [`GraphConfig::new`] but without the start-up ramp, so a file
+    /// starts exactly as the Score does.
+    #[must_use]
+    pub fn offline(max_block: usize) -> Self {
+        Self {
+            startup_ramp: false,
+            ..Self::new(max_block)
+        }
+    }
+}
+
+/// A rise in level by a constant factor per frame, from [`STARTUP_LEVEL`] to unity over
+/// [`STARTUP_TIME`]: linear in dB. Multiplication only, so it is deterministic.
+#[derive(Clone, Copy, Debug)]
+struct StartupRamp {
+    gain: f32,
+    factor: f32,
+    remaining: u64,
+}
+
+impl StartupRamp {
+    fn new(rate: SampleRate) -> Self {
+        let frames = STARTUP_TIME.to_frames(rate).map_or(1, |f| f.0.max(1));
+        #[expect(clippy::cast_possible_truncation, reason = "gains are f32")]
+        let (gain, factor) = (
+            STARTUP_LEVEL.to_gain() as f32,
+            Db(-STARTUP_LEVEL.0 / frames as f64).to_gain() as f32,
+        );
+        Self {
+            gain,
+            factor,
+            remaining: frames,
+        }
+    }
+
+    #[inline]
+    fn next_gain(&mut self) -> f32 {
+        if self.remaining == 0 {
+            return 1.0;
+        }
+        self.remaining -= 1;
+        self.gain = if self.remaining == 0 {
+            1.0
+        } else {
+            (self.gain * self.factor).min(1.0)
+        };
+        self.gain
     }
 }
 
@@ -170,6 +229,8 @@ pub struct Graph {
     master: Stereo,
     bus_gains: [LinearSmoother; 4],
     master_gain: LinearSmoother,
+    startup: Option<StartupRamp>,
+    limiter: TruePeakLimiter,
     playing: bool,
     /// Score frame at the anchor.
     anchor: f64,
@@ -222,6 +283,8 @@ impl Graph {
             master: stereo(),
             bus_gains: Bus::ALL.map(level),
             master_gain: LinearSmoother::new(1.0, SMOOTHING_TIME, rate),
+            startup: config.startup_ramp.then(|| StartupRamp::new(rate)),
+            limiter: TruePeakLimiter::new(rate),
             plan,
             rate,
             max_block,
@@ -245,6 +308,26 @@ impl Graph {
         &self.plan
     }
 
+    /// The delay the master limiter adds, in frames: an event at score frame `f` is heard
+    /// at output frame `f + latency`.
+    #[must_use]
+    pub fn latency(&self) -> usize {
+        self.limiter.latency()
+    }
+
+    /// Frames processed with the master limiter engaged, since construction. Sustained
+    /// limiting breaks loudness constancy (SDR-23), so the lint warns about it.
+    #[must_use]
+    pub fn limited_frames(&self) -> u64 {
+        self.limiter.engaged_frames()
+    }
+
+    /// The largest block processed in one piece, in frames.
+    #[must_use]
+    pub fn max_block(&self) -> usize {
+        self.max_block
+    }
+
     /// Counters and levels after the last block.
     #[must_use]
     pub fn stats(&self) -> GraphStats {
@@ -261,6 +344,23 @@ impl Graph {
     fn reanchor(&mut self, score_frame: f64) {
         self.anchor = score_frame;
         self.since_anchor = 0;
+    }
+
+    /// Takes over the transport and mixer state of `previous`, the graph this one replaces
+    /// in a plan swap: position, speed, loop, play state and levels. If `previous` was
+    /// playing, the events sounding at the position restart with a fade-in. RT-safe.
+    pub fn adopt(&mut self, previous: &Self) {
+        let position = previous.position().min(self.length());
+        self.speed = previous.speed;
+        self.looping = previous.looping;
+        self.bus_gains = previous.bus_gains;
+        self.master_gain = previous.master_gain;
+        self.age = previous.age;
+        self.reanchor(position);
+        self.playing = previous.playing;
+        if self.playing {
+            self.resume();
+        }
     }
 
     /// Applies a command at the next frame. RT-safe.
@@ -585,13 +685,25 @@ impl Graph {
                 *mr += r * g;
             }
         }
-        for (frame, (l, r)) in out
-            .iter_mut()
-            .zip(master_left.iter().zip(master_right.iter()))
-        {
-            let g = self.master_gain.next_value();
-            let (l, r) = (l * g, r * g);
-            *frame = [l, r];
+        let frames = out.len();
+        let (Some(left), Some(right)) = (
+            master_left.get_mut(..frames),
+            master_right.get_mut(..frames),
+        ) else {
+            return;
+        };
+        for (l, r) in left.iter_mut().zip(right.iter_mut()) {
+            let mut g = self.master_gain.next_value();
+            if let Some(ramp) = &mut self.startup {
+                g *= ramp.next_gain();
+            }
+            *l *= g;
+            *r *= g;
+        }
+        // Hearing safety: a true-peak limiter at −1 dBTP on the master (06 §10).
+        self.limiter.process(left, right);
+        for (frame, (l, r)) in out.iter_mut().zip(left.iter().zip(right.iter())) {
+            *frame = [*l, *r];
             peak[0] = peak[0].max(l.abs());
             peak[1] = peak[1].max(r.abs());
         }

@@ -7,6 +7,7 @@
 //! |---|---|
 //! | `docs/reference/error-codes.md` | [`crate::codes`] (A03-T02) |
 //! | `schemas/sonarithm-spec-0.1.schema.json` | `sonarithm_spec::json_schema` (A03-T06) |
+//! | `schemas/sonarithm-render-manifest-1.schema.json` | `sonarithm_export::manifest::json_schema` (A05-T08) |
 //!
 //! The TypeScript IPC types in `packages/ipc/src/generated/` join in B01
 //! (docs/engineering/dev-environment.md#common-commands). The `docs / schema-diff` CI job
@@ -24,6 +25,11 @@ pub(crate) fn run(root: &Path) -> Result<()> {
         root,
         sonarithm_spec::schema::SCHEMA_PATH,
         &sonarithm_spec::json_schema(),
+    )?;
+    write(
+        root,
+        sonarithm_export::manifest::MANIFEST_SCHEMA_PATH,
+        &sonarithm_export::manifest::json_schema(),
     )
 }
 

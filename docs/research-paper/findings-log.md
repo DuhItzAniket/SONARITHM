@@ -213,6 +213,7 @@ A04 (data layer) uses F-070 to F-079.
 Cross-phase build and repository infrastructure (the coordinator) uses F-090 to F-099.
 A06 (NUMISONA) uses F-080 to F-089.
 A08 (research instrumentation) uses F-110 to F-119.
+A05 (render engine, audio backends, export) uses F-050 to F-069.
 -->
 
 ### F-019 · serde_json's default float parser can be one ULP off, which breaks full-precision round trips
@@ -514,3 +515,16 @@ A08 (research instrumentation) uses F-110 to F-119.
 - **Evidence level / confidence:** EV-L / Strong for the equations; the unit of Δσ is an interpretation (Moderate)
 - **Affects:** SDR-40; GEN-004; P03 benchmark task
 - **Papers:** P01, P03
+
+### F-050 · The master limiter keeps stress Scores at −1.16 dBTP or below, measured by an independent BS.1770 meter
+
+- **Date:** 2026-10-19 · **Phase:** A05 · **Type:** engineering · **Status:** new
+- **Statement:** The A05 true-peak limiter estimates inter-sample peaks with a 4× polyphase interpolator (48-tap Blackman-windowed sinc), aims 0.2 dB under the −1 dBTP ceiling, and adds 2 ms of look-ahead (101 frames of latency at 48 kHz). Two stress Scores, rendered offline at 48 kHz, were measured with `ebur128` 0.1.10 in true-peak mode:
+  - 16 simultaneous band-limited square waves (A5 up to A6 + 1100 cents) at +12 dB track gain: −1.186 dBTP;
+  - saw sweeps over six octaves, 8-tap notes and earcons at +12 to +18 dB: −1.162 dBTP.
+
+  Both stay below −1 dBTP, and in both the limiter was engaged (sample peaks above 0.8). Signals below the ceiling pass bit for bit after the delay.
+- **Evidence:** A05-T09 PR, `crates/sonarithm-render/tests/hearing_safety.rs` (`the_true_peak_never_exceeds_minus_1_dbtp`, printed values)
+- **Evidence level / confidence:** EV-C / Moderate (two synthetic stress cases, one meter)
+- **Affects:** NFR-10; 06 §10; sound-design §12 HS-02; the export loudness targets (sound-design §6.3)
+- **Papers:** P07

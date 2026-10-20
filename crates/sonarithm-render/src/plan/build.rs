@@ -9,11 +9,11 @@ use std::collections::BinaryHeap;
 use sonarithm_core::engine::TrackRng;
 use sonarithm_core::score::InvariantViolation;
 use sonarithm_core::{
-    Diagnostic, Diagnostics, EarconKind, Frames, InstrumentRef, Note, Pan, SampleRate, Score,
-    ScoreEvent, ScoreTrack, Seconds, TrackId,
+    Cents, Db, Diagnostic, Diagnostics, EarconKind, Frames, InstrumentRef, Note, Pan, SampleRate,
+    Score, ScoreEvent, ScoreTrack, Seconds, ShaperStage, TrackId,
 };
-use sonarithm_dsp::PanGains;
 use sonarithm_dsp::env::{note_ramp, ramp_frames};
+use sonarithm_dsp::{Compensation, PanGains};
 
 use super::{
     Bus, EventKind, GlideRef, Instrument, PlanConfig, PlannedBreakpoint, PlannedEvent, RenderPlan,
@@ -86,11 +86,23 @@ impl RenderPlan {
         let mut diagnostics = Diagnostics::default();
         let mut length = frame(score.header.duration, rate)?;
         let mut tracks = Vec::new();
+        // SDR-24: compensate here unless the compiler's loudness shaper already did.
+        let phon = config
+            .loudness_compensation
+            .filter(|_| !score.header.shapers.contains(&ShaperStage::Loudness));
         for track in &score.tracks {
             let Some(bus) = Bus::for_role(track.role) else {
                 continue;
             };
-            let plan = plan_track(track, bus, score.header.seed, rate, &mut diagnostics)?;
+            let compensation = phon.and_then(|phon| compensation(track, phon));
+            let plan = plan_track(
+                track,
+                bus,
+                score.header.seed,
+                rate,
+                compensation,
+                &mut diagnostics,
+            )?;
             let end = plan.events.iter().map(PlannedEvent::end).max().unwrap_or(0);
             length = length.max(end);
             tracks.push(plan);
@@ -133,11 +145,34 @@ fn resolve(name: &InstrumentRef, track: &TrackId, diagnostics: &mut Diagnostics)
     })
 }
 
+/// The equal-loudness compensation for a track's pitch range: its resolved
+/// `pitch_range`, or else the span of its note and glide pitches. `None` for a track with
+/// no pitched events.
+fn compensation(track: &ScoreTrack, phon: f64) -> Option<Compensation> {
+    let (low, high) = if let Some(range) = track.pitch_range {
+        (range.low, range.high)
+    } else {
+        let pitches = track.events.iter().flat_map(|event| -> Vec<Cents> {
+            match event {
+                ScoreEvent::Note(note) => vec![note.pitch],
+                ScoreEvent::Glide(glide) => glide.curve.iter().map(|p| p.pitch).collect(),
+                _ => Vec::new(),
+            }
+        });
+        pitches.fold(None, |span: Option<(Cents, Cents)>, pitch| match span {
+            None => Some((pitch, pitch)),
+            Some((low, high)) => Some((Cents(low.0.min(pitch.0)), Cents(high.0.max(pitch.0)))),
+        })?
+    };
+    Some(Compensation::for_range(low.to_hz(), high.to_hz(), phon))
+}
+
 fn plan_track(
     track: &ScoreTrack,
     bus: Bus,
     seed: u64,
     rate: SampleRate,
+    compensation: Option<Compensation>,
     diagnostics: &mut Diagnostics,
 ) -> Result<TrackPlan, PlanError> {
     let instrument = resolve(&track.instrument, &track.id, diagnostics);
@@ -154,7 +189,16 @@ fn plan_track(
                     Some(preset) => resolve(preset, &track.id, diagnostics),
                     None => instrument,
                 };
-                plan_note(note, track.pan, instrument, source, rate, &mut events)?;
+                let level = compensation.map_or(Db::ZERO, |c| c.gain(note.pitch.to_hz()));
+                plan_note(
+                    note,
+                    track.pan,
+                    instrument,
+                    level,
+                    source,
+                    rate,
+                    &mut events,
+                )?;
             }
             ScoreEvent::Glide(glide) => {
                 if glide.curve.is_empty() {
@@ -168,7 +212,8 @@ fn plan_track(
                     breakpoints.push(PlannedBreakpoint {
                         frame: frame(point.t, rate)?,
                         cents: point.pitch.0,
-                        gain_db: point.gain.0,
+                        gain_db: point.gain.0
+                            + compensation.map_or(0.0, |c| c.gain(point.pitch.to_hz()).0),
                         pan: Pan::clamped(track.pan.0 + point.pan.0).0,
                         brightness: point.brightness.clamp(0.0, 1.0),
                     });
@@ -225,6 +270,7 @@ fn plan_note(
     note: &Note,
     track_pan: Pan,
     instrument: Instrument,
+    compensation: Db,
     source: u32,
     rate: SampleRate,
     events: &mut Vec<PlannedEvent>,
@@ -234,7 +280,7 @@ fn plan_note(
     let ramp = ramp_frames(note_ramp(tap), rate);
     let tone = Tone {
         frequency: note.pitch.to_hz(),
-        gain: to_f32(note.gain.to_gain()),
+        gain: to_f32((note.gain + compensation).to_gain()),
         pan: PanGains::constant_power(Pan::clamped(track_pan.0 + note.pan.0)),
         brightness: to_f32(note.timbre.brightness.clamp(0.0, 1.0)),
         instrument,

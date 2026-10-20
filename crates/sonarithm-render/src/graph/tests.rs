@@ -96,13 +96,18 @@ fn graph(score: &Score, block: usize) -> Graph {
     let plan = RenderPlan::build(score, &PlanConfig::new(RATE))
         .unwrap()
         .plan;
-    Graph::new(plan, GraphConfig::new(block))
+    Graph::new(plan, GraphConfig::offline(block))
+}
+
+/// The master limiter's look-ahead delay in frames.
+fn latency() -> usize {
+    graph(&drone(), 256).latency()
 }
 
 /// Plays the whole plan in blocks of `block` frames; returns interleaved stereo.
 fn render(score: &Score, block: usize) -> Vec<f32> {
     let mut graph = graph(score, block);
-    let frames = graph.plan().length.0 as usize;
+    let frames = graph.plan().length.0 as usize + graph.latency();
     graph.apply(Command::Play);
     let mut out = vec![0.0; frames.div_ceil(block) * block * 2];
     for chunk in out.chunks_mut(block * 2) {
@@ -127,7 +132,7 @@ fn worst_step(samples: &[f32]) -> f32 {
 /// A05-T04 acceptance: an event starts at its exact sample, whatever the block size.
 /// Every oscillator starts at phase 0, where its value is 0 (the band-limited square's
 /// step is centred on its midpoint), so the first non-zero sample is the one after the
-/// onset.
+/// onset, plus the limiter's look-ahead delay.
 #[test]
 fn events_land_at_exact_sample_offsets() {
     for onset in [0_u64, 1, 255, 256, 1_000, 4_097] {
@@ -141,7 +146,7 @@ fn events_land_at_exact_sample_offsets() {
             let first = out.iter().position(|s| *s != 0.0);
             assert_eq!(
                 first,
-                Some(onset as usize + 1),
+                Some(onset as usize + 1 + latency()),
                 "onset {onset}, block {block}"
             );
         }
@@ -241,7 +246,7 @@ fn pause_fades_out_and_play_resumes() {
     graph.process(&mut out);
     let samples = left(&out);
     assert!(
-        samples[961..].iter().all(|s| *s == 0.0),
+        samples[961 + latency()..].iter().all(|s| *s == 0.0),
         "silent after 20 ms"
     );
     assert!(worst_step(&samples) <= 2.0 * natural_step(1.0));
@@ -271,6 +276,7 @@ fn speed_scales_timing_but_not_pitch() {
     graph.process(&mut out);
     let samples = left(&out);
     let onset = samples.iter().position(|s| *s != 0.0).unwrap();
+    let onset = onset - latency();
     assert!((24_000..24_002).contains(&onset), "onset {onset}");
     // 0.5 s at double speed lasts 0.25 s; count upward zero crossings in its middle.
     let middle = &samples[onset + 2_400..onset + 9_600];
@@ -297,8 +303,12 @@ fn a_cue_plays_in_the_next_block() {
     }));
     let mut out = vec![0.0; 512];
     graph.process(&mut out);
-    assert_eq!(out[0], 0.0, "phase 0 at the onset frame");
-    assert_ne!(out[2], 0.0, "sounding from the second frame");
+    let first = left(&out).iter().position(|s| *s != 0.0);
+    assert_eq!(
+        first,
+        Some(1 + latency()),
+        "sounding from the frame after the onset"
+    );
     assert!(!graph.stats().playing);
 }
 
@@ -314,7 +324,7 @@ fn gain_changes_are_smoothed() {
     let samples = left(&out);
     assert!(worst_step(&samples) <= 2.0 * natural_step(1.0));
     assert!(
-        samples[480..].iter().all(|s| s.abs() < 0.002),
+        samples[480 + latency()..].iter().all(|s| s.abs() < 0.002),
         "at −60 dB after 10 ms"
     );
 }
@@ -327,10 +337,10 @@ fn playback_stops_at_the_end_of_the_plan() {
     );
     let mut graph = graph(&score, 256);
     graph.apply(Command::Play);
-    let mut out = vec![0.0; 2 * 4_800];
+    let mut out = vec![0.0; 2 * 9_600];
     graph.process(&mut out);
     let stats = graph.stats();
     assert!(!stats.playing);
     assert_eq!(stats.active_voices, 0);
-    assert!(left(&out)[4_800..].iter().all(|s| *s == 0.0));
+    assert!(left(&out)[4_800 + latency()..].iter().all(|s| *s == 0.0));
 }
