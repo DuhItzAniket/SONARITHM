@@ -36,7 +36,7 @@ exclude = [
 [workspace.package]
 # One shared version for every crate until v1.0 (02 §6); release-plz bumps it in the release
 # PR (release-plz.toml, one version group).
-version = "0.0.0"
+version = "0.1.0-alpha"
 edition = "2024"
 rust-version = "1.88"
 repository = "https://github.com/DuhItzAniket/SONARITHM"
@@ -50,24 +50,24 @@ categories = ["multimedia::audio", "accessibility", "visualization", "science"]
 
 [workspace.dependencies]
 # Internal crates. Use `dep.workspace = true` in member manifests.
-sonarithm = { path = "crates/sonarithm", version = "0.0.0" }
-sonarithm-core = { path = "crates/sonarithm-core", version = "0.0.0" }
-sonarithm-spec = { path = "crates/sonarithm-spec", version = "0.0.0" }
+sonarithm = { path = "crates/sonarithm", version = "0.1.0-alpha" }
+sonarithm-core = { path = "crates/sonarithm-core", version = "0.1.0-alpha" }
+sonarithm-spec = { path = "crates/sonarithm-spec", version = "0.1.0-alpha" }
 # Without its defaults (file paths, C codecs), so wasm32 crates can depend on it; the app,
 # CLI and Python crates enable `fs` and `zstd` (xtask/src/ci.rs, WASM_NO_DEFAULT_FEATURES).
-sonarithm-data = { path = "crates/sonarithm-data", version = "0.0.0", default-features = false }
-sonarithm-compiler = { path = "crates/sonarithm-compiler", version = "0.0.0" }
-sonarithm-dsp = { path = "crates/sonarithm-dsp", version = "0.0.0" }
-sonarithm-render = { path = "crates/sonarithm-render", version = "0.0.0" }
-sonarithm-audio = { path = "crates/sonarithm-audio", version = "0.0.0" }
-sonarithm-export = { path = "crates/sonarithm-export", version = "0.0.0" }
-sonarithm-stream = { path = "crates/sonarithm-stream", version = "0.0.0" }
-sonarithm-i18n = { path = "crates/sonarithm-i18n", version = "0.0.0" }
-sonarithm-app = { path = "crates/sonarithm-app", version = "0.0.0" }
-sonarithm-numisona = { path = "crates/engines/sonarithm-numisona", version = "0.0.0" }
-sonarithm-audaxis = { path = "crates/engines/sonarithm-audaxis", version = "0.0.0" }
-sonarithm-echometric = { path = "crates/engines/sonarithm-echometric", version = "0.0.0" }
-sonarithm-sonotrace = { path = "crates/engines/sonarithm-sonotrace", version = "0.0.0" }
+sonarithm-data = { path = "crates/sonarithm-data", version = "0.1.0-alpha", default-features = false }
+sonarithm-compiler = { path = "crates/sonarithm-compiler", version = "0.1.0-alpha" }
+sonarithm-dsp = { path = "crates/sonarithm-dsp", version = "0.1.0-alpha" }
+sonarithm-render = { path = "crates/sonarithm-render", version = "0.1.0-alpha" }
+sonarithm-audio = { path = "crates/sonarithm-audio", version = "0.1.0-alpha" }
+sonarithm-export = { path = "crates/sonarithm-export", version = "0.1.0-alpha" }
+sonarithm-stream = { path = "crates/sonarithm-stream", version = "0.1.0-alpha" }
+sonarithm-i18n = { path = "crates/sonarithm-i18n", version = "0.1.0-alpha" }
+sonarithm-app = { path = "crates/sonarithm-app", version = "0.1.0-alpha" }
+sonarithm-numisona = { path = "crates/engines/sonarithm-numisona", version = "0.1.0-alpha" }
+sonarithm-audaxis = { path = "crates/engines/sonarithm-audaxis", version = "0.1.0-alpha" }
+sonarithm-echometric = { path = "crates/engines/sonarithm-echometric", version = "0.1.0-alpha" }
+sonarithm-sonotrace = { path = "crates/engines/sonarithm-sonotrace", version = "0.1.0-alpha" }
 
 # Third-party crates. Each addition needs a justification in its PR and must pass
 # `cargo deny check` (docs/engineering/supply-chain-and-licensing.md).

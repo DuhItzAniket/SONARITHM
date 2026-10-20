@@ -1,6 +1,6 @@
 # Project Status
 
-> **Last updated:** 2026-10-18 · **Current stage:** A (A01 in progress) · **Next gate:** Gate A (alpha), target Feb 2027
+> **Last updated:** 2026-10-21 · **Current stage:** A (A07 release PR open) and B (B01, B02, B03 and B06 in progress) · **Next gate:** Gate A (alpha), target Feb 2027
 > **Owner:** Project lead. **Update rule:** every PR that changes a task's or phase's state updates this file ([sdlc/README](README.md)).
 
 ## 1. Summary
@@ -26,7 +26,7 @@ Status values: `Not started` · `In progress` · `In review` · `Done` · `Block
 | A | A04 | Data layer | **Done** | 100% | 2026-10-19; [phase review](reviews/A04-phase-review.md), [retro](retrospectives/A04-retro.md). See [A04 tasks](#a04-tasks) |
 | A | A05 | Render engine, audio backend, export | **Done** | 100% | 2026-10-21; [phase review](reviews/A05-phase-review.md). PB-01, PB-02 and PB-03 decisions and the cable test (#123) are with the owner. See [A05 tasks](#a05-tasks) |
 | A | A06 | NUMISONA v1 | **Done** | 100% | 2026-10-19; [phase review](reviews/A06-phase-review.md). See [A06 tasks](#a06-tasks) |
-| A | A07 | CLI, Python, v0.1.0-alpha | **In progress** | ≈15% | #156 fixed (#159); the facade in review. See [A07 tasks](#a07-tasks) |
+| A | A07 | CLI, Python, v0.1.0-alpha | **In review** | ≈95% | Code complete: T01 to T07 merged; the v0.1.0-alpha release PR (T08, #183) waits for the owner's first-release steps (#129). [Phase review](reviews/A07-phase-review.md). See [A07 tasks](#a07-tasks) |
 | A | A08 | Research instrumentation v0, ICAD 2027 | **Done** (owner steps pending) | 100% | 2026-10-21; [phase review](reviews/A08-phase-review.md). P01 submission or deferral and the v0.2.0-alpha tag are the owner's at Gate A. See [A08 tasks](#a08-tasks) |
 | B | B01 | Desktop shell, IPC, app core | **In progress** | ≈10% | Planned 2026-10-21: 9 [tasks](../planning/implementation-plan.md#b01--desktop-shell-ipc-and-app-core), issues [#191](https://github.com/DuhItzAniket/SONARITHM/issues/191)–[#199](https://github.com/DuhItzAniket/SONARITHM/issues/199). Lane R: T01 in review (`sonarithm-app`, [ADR-0017](../decisions/0017-ipc-protocol-v1.md)); T02 and T06 next. The rest waits for Gate U: the Windows walkthroughs and ADR-0002/0003 confirmed for Windows (OD-15, [#129](https://github.com/DuhItzAniket/SONARITHM/issues/129)). See [B01 tasks](#b01-tasks) |
 | B | B02 | Design system and application frame | In progress | ≈10% | T08 (catalogues, locale formatting, pseudo-locale) done (#260). Planned 2026-10-21: 11 [tasks](../planning/implementation-plan.md#b02--design-system-and-application-frame), issues [#200](https://github.com/DuhItzAniket/SONARITHM/issues/200)–[#210](https://github.com/DuhItzAniket/SONARITHM/issues/210). Lane R now: T01, T02, T08; the rest waits for Gate U; T10 needs the owner's component checks (HP-07), T11 needs OD-03 |
@@ -181,14 +181,14 @@ Work runs in a separate agent session through one PR per task, based on `main`. 
 | Task | Status | Notes |
 |---|---|---|
 | A07 prerequisite #156 `without_inference()` keeps declared fields | **Done** | Merged in #159. Declared `fields` are written into the schema without inference; NUMISONA's example datasets declare their roles and read without inference (data unchanged, same fingerprints) |
-| A07-T01 Facade crate API, rustdoc examples | In review | `Sonarithm` (platform + NUMISONA), `Spec`, `compile`/`compile_with` (host datasets through `Platform::with_dataset`, `SNR-COMP-026`), `quick`, summary and L1/L2 description; doc examples run as tests; builds for wasm32 without default features. Rendering joins when A05's export crate lands |
-| A07-T02 CLI commands, `--json`, `--plain` | In review | Part 1 merged in #169 (`render`, `validate`, `inspect`, `lint` stub, `quick -o`, `schema`, `spec migrate`). Part 2: `play` and `devices` on A05's player (text-line announcements, keys, `--device`, `--speed`, `null` backend), and `quick` plays. Screen-reader check of `play` in a terminal: owner (#129) |
+| A07-T01 Facade crate API, rustdoc examples | **Done** | Merged in #162; rendering (`render_to_file`, `render_wav`) in #169. `Sonarithm` (platform + NUMISONA), `Spec`, `compile`/`compile_with` (host datasets through `Platform::with_dataset`, `SNR-COMP-026`), `quick`, summary and L1/L2 description; doc examples run as tests; builds for wasm32 without default features |
+| A07-T02 CLI commands, `--json`, `--plain` | **Done** | Part 1 merged in #169 (`render`, `validate`, `inspect`, `lint` stub, `quick -o`, `schema`, `spec migrate`). Part 2 merged in #174: `play` and `devices` on A05's player (text-line announcements, keys, `--device`, `--speed`, `null` backend), and `quick` plays. Screen-reader check of `play` in a terminal: owner (#129) |
 | A07-T03 Python package (PyO3/maturin abi3) | **Done** | Merged in #171. `sonarithm._core` + Python layer, abi3 ≥ 3.10; pyarrow, pandas, polars, dict, records, arrays and paths; `render`, `wav`, notebook `play`; wheels built and 19 pytest tests passed on Linux, Windows and macOS with Python 3.10 and 3.14 (wheels run 39503116734), including Score and WAV parity with the facade |
 | A07-T04 Examples gallery | **Done** | Merged in #175. DS-001 to DS-005 as CSV from seeded generators (`cargo xtask gallery`, checked in CI), a spec each, README and notebook; the `ci / gallery` job renders every spec to FLAC (artifact `gallery-renders`); facade and notebook tests; licences recorded in datasets.md (CC BY 4.0) |
 | A07-T05 release-plz, git-cliff, wheels workflow | **Done** | Merged in #176. `release-plz.toml` (one version group, facade tag `vX.Y.Z`, Keep a Changelog via embedded git-cliff), `release-plz.yml` (release PR, release on merge, dry run), `wheels.yml` publish (Trusted Publishing, TestPyPI rehearsal), `release-binaries.yml` (auditable CLI, SBOM, notices, attestations). Dry run: `cargo publish --workspace --dry-run` packaged and verify-built all 11 crates. Owner steps: release-process.md |
-| A07-T06 Zenodo, `CITATION.cff` | In review | `.zenodo.json` (software, description, keywords, related repository) and `CITATION.cff` in step; `cargo xtask citation` checks both in CI and `--release DATE` sets version and date. Author names and ORCID: owner (#129) |
-| A07-T07 Quickstart tutorial | In review | `docs/tutorials/quickstart.md`: install (Python or CLI), CSV to FLAC, read the description and the applied defaults; every command checked. The three-person timing test (NFR-12) is the owner's; its protocol is in the tutorial (#129) |
-| A07-T08 Release v0.1.0-alpha | Not started | Publishing needs the owner's go |
+| A07-T06 Zenodo, `CITATION.cff` | **Done** | Merged in #172. `.zenodo.json` (software, description, keywords, related repository) and `CITATION.cff` in step; `cargo xtask citation` checks both in CI and `--release DATE` sets version and date. Author names and ORCID: owner (#129) |
+| A07-T07 Quickstart tutorial | **Done** | Merged in #180. `docs/tutorials/quickstart.md`: install (Python or CLI), CSV to FLAC, read the description and the applied defaults; every command checked. The three-person timing test (NFR-12) is the owner's; its protocol is in the tutorial (#129) |
+| A07-T08 Release v0.1.0-alpha | In review | #183: version 0.1.0-alpha for every crate, citation dates, the changelog section and the release gate checklist; auto-merge stays off. The release-plz dry run is fixed in #182 (F-103). Publishing (crates.io, PyPI, tag, GitHub pre-release, Zenodo) is the owner's: release-process "First release: owner steps" (#84, #129) |
 
 ### A08 tasks
 
@@ -278,6 +278,7 @@ Maturity scale: `Designed` → `Prototype` → `Alpha` → `Beta` → `Stable` �
 | 2026-10-19 | A07 started: `without_inference()` keeps declared fields (#156) |
 | 2026-10-21 | A08: T01 merged (#163), engine code blocks (#161); P01 draft v0 in review (T05) |
 | 2026-10-21 | A07: #156 fixed (#159); facade API (T01) in review |
+| 2026-10-21 | A07 code complete: T01 to T07 merged (#162, #169, #170, #171, #172, #174, #175, #176, #180); the v0.1.0-alpha release PR (T08) and the [phase review](reviews/A07-phase-review.md); publishing waits for the owner |
 | 2026-10-19 | A05: all thirteen tasks implemented; T01, T03 and T04 merged, the rest landing in three bundles; PB-02 and PB-03 not declared met on HW-01 (F-053, F-055); owner steps listed in the A05 worklog |
 | 2026-10-21 | A05 done: all thirteen tasks merged (#118–#120, #122, #126, #160, #168, #178); [phase review](reviews/A05-phase-review.md) with the gate summary; owner decisions pending for PB-01, PB-02 and PB-03 |
 | 2026-10-21 | A08 done: generators (#163), code blocks (#161), P01 draft (#165), study runner (#166, #179), replication gallery (#177), benchmark report (#189); [phase review](reviews/A08-phase-review.md); v0.2.0-alpha checklist prepared |
