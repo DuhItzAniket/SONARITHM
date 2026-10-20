@@ -552,6 +552,15 @@ A05 (render engine, audio backends, export) uses F-050 to F-069.
 - **Affects:** PB-01; ADR-0016; F-033; 06 §9; R-03
 - **Papers:** P07
 
+### F-103 · The musl build of release-plz cannot render any changelog; the glibc build can
+
+- **Date:** 2026-10-21 · **Phase:** A07 · **Type:** engineering · **Status:** new
+- **Statement:** Every `release-plz / dry-run` run since the release tooling landed failed at "Preview the release PR" with "Template parse error … stack limit reached", pointing at line 1, column 1 of the changelog header. The binary that `taiki-e/install-action` installs for release-plz 0.3.172 is the x86_64 musl build. On Ubuntu, `release-plz update` fails with that build and passes with the glibc build of the same version, with or without a `header` in `[changelog]`. On Windows, 0.3.173 passes. The parser under Tera (pest 2.9) refuses to start when the free stack it measures is under 64 KiB. Stack bounds are measured through `stacker`, so the musl build most likely measures too little (not traced further). `release-plz/action` installs release-plz with cargo-binstall, which picks the glibc build, so only the dry run was affected. The dry run now downloads the glibc build and checks its SHA-256.
+- **Evidence:** the A07 release-plz fix PR; `release-plz update --config release-plz.toml` run under WSL Ubuntu 24.04 (glibc 2.39) with the musl and the glibc 0.3.172 builds, each with and without the header (2 × 2: both musl runs fail, both glibc runs pass); CI run 39512839937; `pest` 2.9.4 `parser_state.rs` (`REQUIRED_STACK_SPACE`)
+- **Evidence level / confidence:** EV-C / Strong for the failure and the fix; the musl mechanism is inferred
+- **Affects:** `release-plz.yml`, supply-chain release tools, release-process
+- **Papers:** none
+
 ### F-102 · Every Score hash changes with every release, because the header records the crate versions
 
 - **Date:** 2026-10-21 · **Phase:** A07 · **Type:** engineering · **Status:** new

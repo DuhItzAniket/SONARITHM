@@ -47,9 +47,21 @@ jobs:
       - run: rustup toolchain install
       # cpal (sonarithm-audio) links ALSA on Linux.
       - run: sudo apt-get update && sudo apt-get install --yes --no-install-recommends libasound2-dev
-      - uses: taiki-e/install-action@8cca0918f8471c33515202b73f56ab27f2bed283 # v2.87.29
-        with:
-          tool: release-plz
+      # The glibc build of the version release-plz/action v0.5.142 runs in the jobs below.
+      # Not install-action: it installs the musl build, which fails every changelog with
+      # "stack limit reached" (its template parser checks the free stack, and the musl
+      # build reports too little).
+      - name: Install release-plz
+        env:
+          RELEASE_PLZ_VERSION: 0.3.172
+          # The digest GitHub records for the release asset.
+          RELEASE_PLZ_SHA256: 84b7013d164e1fc780b31dc9ef190977830599d6cb5ce81c993f6fcbd3cdc1aa
+        run: |
+          curl --proto '=https' --tlsv1.2 -sSfL -o "$RUNNER_TEMP/release-plz.tar.gz" \
+            "https://github.com/release-plz/release-plz/releases/download/release-plz-v${RELEASE_PLZ_VERSION}/release-plz-x86_64-unknown-linux-gnu.tar.gz"
+          echo "${RELEASE_PLZ_SHA256}  $RUNNER_TEMP/release-plz.tar.gz" | sha256sum --check --strict
+          tar -xzf "$RUNNER_TEMP/release-plz.tar.gz" -C "$HOME/.cargo/bin" release-plz
+          release-plz --version
       # Packages every publishable crate and builds it from its .crate file, in dependency
       # order, as `cargo publish` would; nothing is uploaded.
       - run: cargo publish --workspace --dry-run --locked
