@@ -13,7 +13,7 @@ Publication deadlines are fixed points in the [roadmap](../planning/roadmap.md):
 
 | ID | Paper | Primary venue | Deadline | Roadmap phases | Depends on | Status |
 |---|---|---|---|---|---|---|
-| P01 | Toolkit/system paper: spec compiler, deterministic engine, replication gallery | ICAD 2027 | ~Mar 2027 [EST] | A01–A08 | Gallery, benchmarks, `v0.2.0-alpha` | outline ([P01](papers/P01-icad-2027-toolkit/outline.md)) |
+| P01 | Toolkit/system paper: spec compiler, deterministic engine, replication gallery | ICAD 2027 | ~Mar 2027 [EST] | A01–A08 | Gallery, benchmarks, `v0.2.0-alpha` | draft v0 ([P01](papers/P01-icad-2027-toolkit/src/paper.md)); ICAD 2027 call not yet published (checked 2026-10-19) |
 | P02 | Software paper | JOSS | Rolling; earliest about 6 months after the repository goes public | B07 | Six months of public history; evidence of research use | outline ([P02](papers/P02-joss/outline.md)) |
 | P03 | Open evaluation benchmark and harness | ICAD 2027 or IEEE VIS 2027 short paper | ~Mar 2027 [EST] | A08 | Generators GEN-001..004; EXP-001 if approved in time | planned |
 | P03 ext. | Pacing × range × context factorial (plus stream, spacing and comfort studies) | ICAD 2028 or ACM TACCESS | ~Mar 2028 [EST] / rolling | D06 | EXP-002, EXP-003, EXP-010, EXP-011 | planned |
