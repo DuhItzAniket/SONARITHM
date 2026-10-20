@@ -53,6 +53,7 @@ No reference-class machine is available yet (risk R-22). Rows on HW-01 apply the
 | A05 (null device, 128 frames) | 2026-10-19 | A05-T10 PR | HW-01 / HW-01e | 128 frames @ 48 kHz, timer-driven null device at real-time priority | — | — | 194 / 153 missed timer deadlines (10 min each, about 225,000 callbacks) | — | — | — | — | The same loop without rendering misses 0.05% of deadlines (worst wake-up 3.4 ms late); per-block render p99.9 106–120 µs, max 382 µs of 2,667 µs on HW-01 (`block_times`). HW-01's driver has no 128-frame period (F-030), so PB-02 at 128 frames is not declared met (F-055) |
 | A05 (cross-OS golden) | 2026-10-21 | [#178](https://github.com/DuhItzAniket/SONARITHM/pull/178) | CI-LNX, CI-WIN, CI-MAC | 256-frame blocks @ 48 kHz (offline) | — | — | — | — | −240 (identical; the comparison's floor) against CI-LNX, all six cases | 0.0000 | yes | `golden-compare` in CI run 39509526921; PB-06 met (F-056) |
 | A05 | | | | | | | | | | | | |
+| A08 (replication gallery, end to end) | 2026-10-21 | A08-T02 branch `0103de8` (on `2af548f`); A08-T04 PR | HW-01; HW-01e | offline, 256-frame blocks @ 48 kHz, one thread | — | — | — | 131.7 (HW-01; 130.5–132.3), 70.9 (HW-01e; 70.3–71.3): compile + render + 24-bit WAV + loudness meter, 443.8 s of audio in 49 renders, 5 runs each | −∞ across CI-WIN, CI-LNX, CI-MAC (WAV SHA-256 identical) | 0 | yes (release-independent hashes) | `cargo run --release -p xtask -- replication --timings`; raw tables in [benchmarks/a08-replication-timings](benchmarks/a08-replication-timings/); [report](benchmark-report-a08.md); F-115, F-116 |
 | A07 `v0.1.0-alpha` | | | | | | | | | | | | |
 | A08 `v0.2.0-alpha` | | | | | | | | | | | | |
 | B03 | | | | | | | | | | | | |
@@ -98,6 +99,7 @@ The A01 research hook records CI times as a baseline.
 - **Latency.** Measure key press to cue onset on a loopback capture: timestamp a synthetic key event, detect the cue onset in the captured audio, and compute the difference. Report p50 and p95. Use the harness from A02 and B03 so that results are comparable across phases.
 - **Soak.** Ten minutes of continuous playback of the benchmark Score at 128-frame buffers; count xruns as the backend reports them (cpal provides xrun reporting). B06 uses a 1 kHz input stream for one hour and also records peak memory.
 - **Real-time factor.** Audio duration divided by wall-clock time for an offline render of the 4-track, 10k-event Score in DS-006. State the thread count.
+- **End-to-end export (A08).** `cargo run --release -p xtask -- replication --timings` times, per replication-gallery spec, the compile (including the CSV load) and the export (plan, offline render, WAV file, EBU R128 and true-peak metering, manifest) on one thread; the real-time factor is audio duration over their sum. Run it five times on all cores and five times pinned to the four E-cores (`ProcessorAffinity = 0xF0000`), with no compiler running, and report medians and ranges ([report](benchmark-report-a08.md#method)).
 - **Compile time.** Criterion benchmarks on the DS-006 inputs; report the median.
 - **Determinism.** Compare Score IR hashes across the CI matrix. For audio, compute the null-test residual and the integrated-loudness difference (EBU R128) between renders, as [ADR-0013](../decisions/0013-determinism-and-provenance.md) defines them. Store SHA-256 hashes of renders for same-platform regression checks.
 - **UI.** Measure playhead frame rate and scripting time per frame with a 1M-point series, downsampled in Rust, in each webview (WebView2, WKWebView, WebKitGTK).
@@ -111,3 +113,4 @@ The A01 research hook records CI times as a baseline.
 |---|---|---|
 | 2026-10-18 | Baseline tables and budgets from architecture overview §7 and roadmap exit criteria. | Research lead |
 | 2026-10-19 | A02 spike rows; hardware IDs HW-01, HW-01e, CI-LNX, CI-WIN and CI-MAC. | A02 session (AI agent), for review |
+| 2026-10-21 | A08 row: end-to-end export of the replication gallery; method note; [A08 report](benchmark-report-a08.md). | A08 session (AI agent), for review |

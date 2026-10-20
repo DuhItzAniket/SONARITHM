@@ -667,3 +667,21 @@ A05 (render engine, audio backends, export) uses F-050 to F-069.
 - **Evidence level / confidence:** EV-C / Strong for the reproduced values; the published values are EV-L (F-110 to F-112)
 - **Affects:** CL-04; SDR-16, SDR-22, SDR-29; candidate spec minor version (envelope settings) and a noise or click source in the DSP; P01 §6.1
 - **Papers:** P01
+
+### F-115 · Exporting the replication gallery end to end runs at about 130× real time on one thread of the development laptop and 70× on four E-cores
+
+- **Date:** 2026-10-21 · **Phase:** A08 · **Type:** benchmark · **Status:** new
+- **Statement:** Compiling and exporting the 49 replication-gallery specs one at a time on one thread (CSV load, encoding, render at 48 kHz in 256-frame blocks, 24-bit WAV, EBU R128 and true-peak metering, manifest) took 3.37 s for 443.8 s of audio on HW-01, a median real-time factor of 131.7× (130.5–132.3 over 5 runs), and 70.9× (70.3–71.3) pinned to four E-cores. Compiles took under 1.5 ms per spec; the export dominates. Dense scores are slower: the Tucker Brown curves (1000 overlapping 0.2 s notes, about 20 sounding at once) export at 89× and 45×, the sparser Smith & Walker and Nees & Walker items at about 205× and 122×. On the code before A05's voice optimizations (#178) the same runs gave 99.5× and 55.4×.
+- **Evidence:** A08-T04 PR; `cargo run --release -p xtask -- replication --timings` at `0103de8` (on `2af548f`); raw tables `docs/research-paper/benchmarks/a08-replication-timings/`; [benchmarks log](benchmarks-log.md) "A08 (replication gallery, end to end)"; Windows 11 10.0.26300, AC, Balanced plan, Rust 1.99.0, release, no compiler running
+- **Evidence level / confidence:** EV-C / Moderate (one machine; HW-01e is a stand-in for the reference laptop, 12 §8)
+- **Affects:** CL-12 (offline speed part), PB-03 context (F-053), P01 §6.2, P07
+- **Papers:** P01, P07
+
+### F-116 · The 49 replication-gallery renders are byte-identical on Windows, Linux and macOS (AArch64)
+
+- **Date:** 2026-10-21 · **Phase:** A08 · **Type:** benchmark · **Status:** new
+- **Statement:** For every replication-gallery spec, the 24-bit WAV export, its loudness figures and the Score hash with engine versions written as `*` are identical on CI-WIN, CI-LNX and CI-MAC: the xtask test `the_replication_gallery_renders_reproducibly` compares each with the committed record on all three runners. The null-test residual between platforms is therefore −∞ dBFS and the loudness difference zero, stronger than ADR-0013's budget (≤ −90 dBFS, LUFS Δ ≤ 0.1), across 49 specs that cover four published designs, four instruments, overlapping voices and an imported grammar. It extends the A02 spike's result (F-039) from one benchmark Score to the gallery.
+- **Evidence:** A08-T02 PR's CI runs (`clippy and test` on ubuntu-latest, windows-latest and macos-latest, for example run 39508775101); `replication/*/manifests.json`. A05's six golden cases are byte-identical across the same runners too (F-056)
+- **Evidence level / confidence:** EV-C / Strong (three platforms and two CPU architectures; CI virtual machines, no audio devices involved)
+- **Affects:** CL-02, CL-03, ADR-0013, NFR-03; P01 §6.2
+- **Papers:** P01, P07

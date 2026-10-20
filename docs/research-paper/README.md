@@ -77,6 +77,7 @@ Cross-reference IDs in code comments, test names, commit messages, PR descriptio
 | [contributions.md](contributions.md) | Claims, the evidence each needs, and current status |
 | [related-work.md](related-work.md) | Paper-ready annotated related work, keyed to [references.bib](../research/references.bib) |
 | [datasets.md](datasets.md) | Registry of datasets and stimulus generators |
+| [benchmark-report-a08.md](benchmark-report-a08.md) | A08's technical benchmark report for P01 and P07: latency, rendering speed and determinism against the budgets |
 | [benchmarks-log.md](benchmarks-log.md) | Engineering metrics per release and phase, against budgets |
 | [papers/](papers/README.md) | One folder per paper, starting with an outline |
 
