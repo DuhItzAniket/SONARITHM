@@ -15,8 +15,9 @@ temps: 1 data track, 3.25 seconds, analysis mode.
 A line chart overview: time along x, pitch for y.
 Track anomaly: 10 tones from 0.00 to 3.25 seconds. Pitch follows anomaly, 400 to 1400 Hz; time follows year.
 In anomaly, the highest pitch, 1400 Hz, is at 3.00 seconds (row 9); the lowest, 400 Hz, at 1.00 seconds (row 3).
+Playing temps.spec.json, 3.25 seconds, on null.
+Finished at 3.25 seconds.
 --- stderr
-note: playback arrives with the audio backend (A05); use -o FILE.flac to render a file.
 Context cues (ticks, reference tone, legend, earcons) are not available in this build; AUDAXIS arrives in B03.
     Diagnostic severity: warning
 diagnostic help: Location: /context.

@@ -59,7 +59,9 @@ sonarithm-echometric = { path = "crates/engines/sonarithm-echometric", version =
 anyhow = "1.0.100"          # apps/* and xtask only (coding-standards §4.1)
 # CLI argument parsing (11 §2). No `color` feature: help and errors stay plain text for
 # screen readers (A11Y), and no terminal-detection dependencies.
-clap = { version = "4.6.7", default-features = false, features = ["std", "derive", "help", "usage", "error-context", "suggestions"] }
+clap = { version = "4.6.7", default-features = false, features = ["std", "derive", "env", "help", "usage", "error-context", "suggestions"] }
+# Raw keyboard input for `sonarithm play` (apps/cli only).
+crossterm = { version = "0.29.0", default-features = false, features = ["events", "windows"] }
 # Apache Arrow, the data contract (ADR-0006). The split crates keep the default feature
 # set small (no prettyprint, CSV or JSON readers) and wasm32-clean.
 arrow-array = "60.0.0"

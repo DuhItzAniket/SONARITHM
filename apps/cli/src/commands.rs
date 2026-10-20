@@ -17,8 +17,8 @@ use sonarithm::{
 };
 
 use crate::cli::{
-    Checked, Command, FormatArg, Inspect, MarkArg, Migrate, Output, Quick, Render, Schema,
-    SpecCommand, StudyCommand,
+    Checked, Command, Devices, FormatArg, Inspect, MarkArg, Migrate, Output, Play, Quick, Render,
+    Schema, SpecCommand, StudyCommand,
 };
 use crate::output::{Counts, Exit, Out, counts, error, json_value, line, raw, shown};
 
@@ -26,6 +26,8 @@ use crate::output::{Counts, Exit, Out, counts, error, json_value, line, raw, sho
 pub(crate) fn run(command: &Command, out: Out) -> Exit {
     match command {
         Command::Render(args) => render(args, out),
+        Command::Play(args) => play(args, out),
+        Command::Devices(args) => devices(args, out),
         Command::Validate(args) => validate(args, out),
         Command::Inspect(args) => inspect(args, out),
         Command::Lint(args) => lint(args, out),
@@ -566,6 +568,134 @@ fn render(args: &Render, out: Out) -> Exit {
 }
 
 #[derive(Serialize)]
+struct PlayJson<'a> {
+    spec: &'a str,
+    ok: bool,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    played: Option<crate::play::Played>,
+    counts: Counts,
+    diagnostics: &'a Diagnostics,
+}
+
+fn play(args: &Play, out: Out) -> Exit {
+    let source = match read_source(&args.spec) {
+        Ok(source) => source,
+        Err(message) => return unreadable(out, &file_name(&args.spec), &message),
+    };
+    let compiled = overridden(&source, args.data.as_deref(), args.seed)
+        .and_then(|spec| Ok(Sonarithm::new().compile(&spec)?));
+    let (compiled, diagnostics) = match compiled {
+        Ok(compiled) => {
+            let diagnostics = compiled.diagnostics().clone();
+            (Some(compiled), diagnostics)
+        }
+        Err(Failed::Diagnostics(diagnostics)) => (None, diagnostics),
+        Err(Failed::Message(message)) => return unreadable(out, &source.name, &message),
+    };
+    let exit = Exit::of(&diagnostics, args.deny_warnings);
+    let mut played = None;
+    if let (Some(compiled), Exit::Success) = (&compiled, exit) {
+        // Diagnostics come first, so a screen reader hears warnings before the sound.
+        if !out.json() {
+            out.diagnostics(&source.name, &source.text, &diagnostics, args.verbose);
+        }
+        let settings = crate::play::Playback {
+            name: &source.name,
+            device: args.device.as_deref(),
+            speed: args.speed,
+            json: out.json(),
+        };
+        match crate::play::play(compiled, args.backend, &settings) {
+            Ok(done) => played = Some(done),
+            Err(message) => return unreadable(out, &source.name, &message),
+        }
+    }
+    if out.json() {
+        json_value(&PlayJson {
+            spec: &source.name,
+            ok: played.is_some(),
+            played,
+            counts: Counts::of(&diagnostics),
+            diagnostics: &diagnostics,
+        });
+        return exit;
+    }
+    match (&compiled, &played) {
+        (_, Some(_)) => {}
+        (Some(_), None) => line(format!(
+            "{} has warnings and --deny-warnings is set; nothing was played.",
+            source.name
+        )),
+        (None, _) => line(format!(
+            "{} did not compile: {}.",
+            source.name,
+            counts(&diagnostics)
+        )),
+    }
+    if played.is_none() {
+        out.diagnostics(&source.name, &source.text, &diagnostics, args.verbose);
+    }
+    hint_verbose(out, &diagnostics, args.verbose);
+    exit
+}
+
+#[derive(Serialize)]
+struct DeviceJson {
+    id: String,
+    name: String,
+    is_default: bool,
+    sample_rate: Option<u32>,
+    channels: Option<u16>,
+}
+
+fn devices(args: &Devices, out: Out) -> Exit {
+    let devices = match crate::play::devices(args.backend) {
+        Ok(devices) => devices,
+        Err(message) => return unreadable(out, "devices", &message),
+    };
+    if out.json() {
+        let list: Vec<DeviceJson> = devices
+            .iter()
+            .map(|d| DeviceJson {
+                id: d.id.clone(),
+                name: d.name.clone(),
+                is_default: d.is_default,
+                sample_rate: d.sample_rate,
+                channels: d.channels,
+            })
+            .collect();
+        json_value(&json!({ "ok": true, "devices": list }));
+        return Exit::Success;
+    }
+    line(match devices.len() {
+        0 => "No output devices.".to_owned(),
+        1 => "1 output device:".to_owned(),
+        n => format!("{n} output devices:"),
+    });
+    for device in &devices {
+        let mut facts = Vec::new();
+        if device.is_default {
+            facts.push("default".to_owned());
+        }
+        if let Some(rate) = device.sample_rate {
+            facts.push(format!("{rate} Hz"));
+        }
+        if let Some(channels) = device.channels {
+            facts.push(format!(
+                "{channels} {}",
+                if channels == 1 { "channel" } else { "channels" }
+            ));
+        }
+        if facts.is_empty() {
+            line(format!("{}.", device.name));
+        } else {
+            line(format!("{}: {}.", device.name, facts.join(", ")));
+        }
+    }
+    Exit::Success
+}
+
+#[derive(Serialize)]
 struct Linted<'a> {
     spec: &'a str,
     ok: bool,
@@ -612,6 +742,8 @@ struct Quicked<'a> {
     spec_written: Option<&'a str>,
     #[serde(skip_serializing_if = "Option::is_none")]
     rendered: Option<RenderedJson<'a>>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    played: Option<crate::play::Played>,
     ok: bool,
     summary: Option<sonarithm::Summary>,
     description: Option<sonarithm::Description>,
@@ -619,12 +751,8 @@ struct Quicked<'a> {
     diagnostics: &'a Diagnostics,
 }
 
-fn quick(args: &Quick, out: Out) -> Exit {
-    let data_name = file_name(&args.data);
-    let mut quick = match Sonarithm::new().quick().data_file(&args.data) {
-        Ok(quick) => quick,
-        Err(err) => return unreadable(out, &data_name, &err.to_string()),
-    };
+/// The quick builder with the command line's choices.
+fn configure(mut quick: sonarithm::Quick, args: &Quick) -> sonarithm::Quick {
     if let Some(x) = &args.x {
         quick = quick.x(x);
     }
@@ -647,6 +775,15 @@ fn quick(args: &Quick, out: Out) -> Exit {
     if let Some(name) = &args.name {
         quick = quick.name(name);
     }
+    quick
+}
+
+fn quick(args: &Quick, out: Out) -> Exit {
+    let data_name = file_name(&args.data);
+    let quick = match Sonarithm::new().quick().data_file(&args.data) {
+        Ok(quick) => configure(quick, args),
+        Err(err) => return unreadable(out, &data_name, &err.to_string()),
+    };
     let spec = match quick.spec() {
         Ok(spec) => spec,
         Err(err) => return unreadable(out, &data_name, &err.to_string()),
@@ -680,13 +817,33 @@ fn quick(args: &Quick, out: Out) -> Exit {
         }
         exit = Exit::of(&diagnostics, args.deny_warnings);
     }
+    // Without -o, quick plays: after the summary, description and diagnostics, so a screen
+    // reader hears them first.
+    let playable = compiled
+        .as_ref()
+        .ok()
+        .filter(|_| args.output.is_none() && exit == Exit::Success);
+    let settings = crate::play::Playback {
+        name: spec.name(),
+        device: args.device.as_deref(),
+        speed: None,
+        json: out.json(),
+    };
     if out.json() {
+        let played = match playable {
+            Some(compiled) => match crate::play::play(compiled, args.backend, &settings) {
+                Ok(played) => Some(played),
+                Err(message) => return unreadable(out, &data_name, &message),
+            },
+            None => None,
+        };
         let compiled = compiled.as_ref().ok();
         json_value(&Quicked {
             data: &data_name,
             spec: spec.name(),
             spec_written: written.as_deref(),
             rendered: rendered.as_ref().map(RenderedJson::of),
+            played,
             ok: compiled.is_some(),
             summary: compiled.map(Compiled::summary),
             description: compiled.map(Compiled::describe),
@@ -703,12 +860,8 @@ fn quick(args: &Quick, out: Out) -> Exit {
             print_summary(compiled);
             line("Description:");
             raw(&compiled.describe().to_string());
-            match &rendered {
-                Some(rendered) => print_rendered(rendered),
-                None if args.output.is_none() => out.note(
-                    "playback arrives with the audio backend (A05); use -o FILE.flac to render a file.",
-                ),
-                None => {}
+            if let Some(rendered) = &rendered {
+                print_rendered(rendered);
             }
         }
         Err(_) => line(format!(
@@ -719,6 +872,11 @@ fn quick(args: &Quick, out: Out) -> Exit {
     }
     out.diagnostics(spec.name(), spec.text(), &diagnostics, args.verbose);
     hint_verbose(out, &diagnostics, args.verbose);
+    if let Some(compiled) = playable
+        && let Err(message) = crate::play::play(compiled, args.backend, &settings)
+    {
+        return unreadable(out, &data_name, &message);
+    }
     exit
 }
 

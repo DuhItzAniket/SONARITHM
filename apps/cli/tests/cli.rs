@@ -20,7 +20,12 @@ fn fixtures() -> PathBuf {
 
 fn sonarithm() -> Command {
     let mut command = Command::new(env!("CARGO_BIN_EXE_sonarithm"));
-    command.current_dir(fixtures()).env("NO_COLOR", "1");
+    // Tests never play through a real device (hearing safety, and CI has none): playback
+    // uses the silent null backend unless a test asks otherwise.
+    command
+        .current_dir(fixtures())
+        .env("NO_COLOR", "1")
+        .env("SONARITHM_BACKEND", "null");
     command
 }
 
@@ -249,6 +254,7 @@ fn quick_sonifies_a_data_file_with_the_defaults() {
         value["summary"]["tracks"][0]["pitch_range_hz"],
         serde_json::json!([300.0, 900.0])
     );
+    assert_eq!(value["played"]["finished"], true);
     let bad = run(&["--plain", "quick", "temps.csv", "--y", "nope"]);
     assert_eq!(bad.code, 1);
     assert!(bad.stderr.contains("nope"), "{}", bad.stderr);
@@ -270,6 +276,8 @@ fn quick_writes_a_spec_with_a_relative_data_path() {
             data.to_str().unwrap(),
             "--spec-out",
             "temps.spec.json",
+            "--backend",
+            "null",
         ],
         None,
     );
@@ -492,4 +500,77 @@ fn quick_renders_with_output() {
     assert!(dir.join("anomaly.render.json").is_file());
     let json = run(&["--json", "quick", "temps.csv", "-o", flac.to_str().unwrap()]);
     assert_eq!(json.json()["rendered"]["audio"], "anomaly.flac");
+}
+
+#[test]
+fn play_announces_each_change_as_a_line() {
+    let played = run(&["--plain", "play", "temps.spec.json", "--backend", "null"]);
+    assert_eq!(played.code, 0, "{}", played.transcript());
+    assert_linear(&played);
+    snapshot!("play_null", played);
+    let json = run(&[
+        "--json",
+        "play",
+        "estimated.spec.json",
+        "--backend",
+        "null",
+        "--speed",
+        "4",
+    ]);
+    assert_eq!(json.code, 0, "{}", json.transcript());
+    let value = json.json();
+    assert_eq!(value["played"]["finished"], true);
+    assert_eq!(value["played"]["device"], "null");
+    assert_eq!(value["played"]["events"][1], "Finished at 0.92 seconds.");
+    assert!(json.stderr.is_empty(), "{}", json.stderr);
+}
+
+#[test]
+fn play_refuses_what_it_cannot_play() {
+    let denied = run(&[
+        "--plain",
+        "play",
+        "--deny-warnings",
+        "temps.spec.json",
+        "--backend",
+        "null",
+    ]);
+    assert_eq!(denied.code, 3, "{}", denied.transcript());
+    assert!(
+        denied.stdout.contains("nothing was played"),
+        "{}",
+        denied.stdout
+    );
+    let device = run(&[
+        "--plain",
+        "play",
+        "temps.spec.json",
+        "--backend",
+        "null",
+        "--device",
+        "Nowhere",
+    ]);
+    assert_eq!(device.code, 1, "{}", device.transcript());
+    assert!(
+        device.stderr.contains("`sonarithm devices` lists them"),
+        "{}",
+        device.stderr
+    );
+    assert_eq!(run(&["play", "temps.spec.json", "--speed", "9"]).code, 2);
+    assert_eq!(
+        run(&["--plain", "play", "invalid.spec.json", "--backend", "null"]).code,
+        1
+    );
+}
+
+#[test]
+fn devices_lists_the_outputs() {
+    let plain = run(&["--plain", "devices", "--backend", "null"]);
+    assert_eq!(plain.code, 0, "{}", plain.transcript());
+    assert_eq!(
+        plain.stdout,
+        "1 output device:\nnull: default, 48000 Hz, 2 channels.\n"
+    );
+    let json = run(&["--json", "devices", "--backend", "null"]);
+    assert_eq!(json.json()["devices"][0]["is_default"], true);
 }

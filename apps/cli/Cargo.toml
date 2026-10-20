@@ -21,6 +21,8 @@ doc = false
 
 [dependencies]
 clap.workspace = true
+# Raw keyboard input for `play` (space, arrows, q) when standard input is a terminal.
+crossterm.workspace = true
 # Diagnostic reports: the graphical handler on terminals, the narratable one for `--plain`
 # and pipes (11 §2). `fancy-no-syscall` adds the graphical handler without terminal probing.
 miette = { workspace = true, features = ["fancy-no-syscall"] }
