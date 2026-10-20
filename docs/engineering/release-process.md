@@ -53,11 +53,12 @@ Configured in A07 with `release-plz.toml`. Its `[changelog]` section is the git-
 
 Configuration notes for A07:
 
-- `publish = false` for `xtask`, `sonarithm-py` (released as wheels), `sonarithm-echometric` (until a released crate needs it) and, from B01, `sonarithm-desktop`; `spikes/` is outside the workspace. Everything else is published: the facade, the crates it depends on, `sonarithm-audio` and `sonarithm-cli`.
+- `publish = false` for `xtask`, `sonarithm-py` (released as wheels) and, from B01, `sonarithm-desktop`; `spikes/` is outside the workspace. Everything else is published: the facade, the crates it depends on, `sonarithm-audio`, `sonarithm-echometric` (the CLI's `study` commands need it since A08-T03) and `sonarithm-cli`.
 - Before 1.0, one tag per release (`vX.Y.Z[-pre]`): every crate is in one `version_group`, and only the facade creates the tag and the GitHub release (`git_release_type = "auto"` marks `-alpha`, `-beta` and `-rc` versions as pre-releases). Keys checked against the release-plz documentation on 2026-10-21.
 - The release PR's title is `chore(release): vX.Y.Z` (`pr_name`), which passes the PR-title check and is how `release-plz.yml` recognises a merged release PR.
 - A release PR opened with the default `GITHUB_TOKEN` starts no workflows, so its required checks would never run. The `release-pr` job uses a GitHub App token (`RELEASE_PLZ_APP_ID` variable and `RELEASE_PLZ_APP_KEY` secret in the `release` environment) and skips itself until they exist.
-- The `dry-run` job (pull requests that change release configuration, and manual runs) runs `cargo publish --workspace --dry-run --locked`, which packages every publishable crate and builds it from its `.crate` file in dependency order, then `release-plz update` to show the release PR's version and changelog. Nothing is uploaded or pushed.
+- The `dry-run` job (pull requests that change release configuration, and manual runs) runs `cargo publish --workspace --dry-run --locked`, which packages every publishable crate and builds it from its `.crate` file in dependency order, then `release-plz update` to show the release PR's version and changelog. Nothing is uploaded or pushed. It runs the glibc build of the release-plz version that `release-plz/action` uses, downloaded and checked against its SHA-256, because the musl build cannot render a changelog (F-103). Update the version and the digest when Dependabot updates the action.
+- `[changelog] header` is set so that release-plz writes each new section one blank line below `## [Unreleased]`; without it, the new heading follows directly and markdownlint rejects the file (MD022).
 - release-plz does not update `CITATION.cff` or `.zenodo.json`. The release PR runs `cargo xtask citation --release YYYY-MM-DD`, and CI's `cargo xtask citation` check fails until it has.
 
 ### CLI binaries

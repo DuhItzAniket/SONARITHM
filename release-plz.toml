@@ -32,6 +32,10 @@ git_release_enable = false
 changelog_update = false
 
 [changelog]
+# CHANGELOG.md's own header text is kept as written. With this `header`, release-plz
+# writes each new section one blank line below "## [Unreleased]"; without it, the new
+# heading follows "## [Unreleased]" directly, which markdownlint rejects (MD022).
+header = "# Changelog\n"
 # Keep a Changelog 1.1.0 sections, as CHANGELOG.md uses; entries read as user-facing
 # sentences because commit subjects do (git-workflow.md).
 body = """
@@ -125,6 +129,10 @@ version_group = "sonarithm"
 
 [[package]]
 name = "sonarithm-numisona"
+version_group = "sonarithm"
+
+[[package]]
+name = "sonarithm-echometric"
 version_group = "sonarithm"
 
 [[package]]

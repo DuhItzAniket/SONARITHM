@@ -17,6 +17,7 @@
 | OD-11 | Python API docs tool | pdoc; Sphinx + autodoc | Decide in A07 | Core lead | A07 | Open |
 | OD-12 | Second UI locale | Community-driven choice | Pick with the community during B05 | Project lead | B07 | Open |
 | OD-13 | Project website and domain (docs site, stable schema URLs) | GitHub Pages; custom domain | GitHub Pages first; a custom domain if available | Owner | C06 | Open |
+| OD-14 | `release-plz/action` installs release-plz with cargo-binstall (GPL-3.0), a CI tool that is not a dependency and is not distributed; the [licence policy](../engineering/supply-chain-and-licensing.md) denies GPL even for build-time npm devDependencies | Accept GPL-3.0 for CI tools that are never shipped; replace the action in the `release-pr` and `release` jobs with the checksum-verified download the `dry-run` job uses | Replace the action (a small change to `release-plz.yml`; nothing else in CI runs a GPL tool) | **Owner** | Before the first release PR from release-plz (after v0.1.0-alpha) | Open |
 
 ## Closed decisions
 

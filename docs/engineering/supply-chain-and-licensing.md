@@ -188,7 +188,8 @@ The release workflows run these tools as CI binaries; none is a dependency of a 
 
 | Tool | Version | Licence | Used in |
 |---|---|---|---|
-| release-plz (embeds git-cliff for the changelog) | 0.3.173, action v0.5.142 | MIT OR Apache-2.0 | `release-plz.yml` |
+| release-plz (embeds git-cliff for the changelog) | 0.3.172, the glibc build (action v0.5.142, and a checksum-verified download in the dry run) | MIT OR Apache-2.0 | `release-plz.yml` |
+| cargo-binstall (inside release-plz/action, which installs release-plz with it) | 1.25.3 | GPL-3.0 | `release-plz.yml` `release-pr` and `release` jobs; under review ([OD-14](../planning/open-decisions.md)) |
 | git-cliff | 2.14 (through release-plz) | MIT OR Apache-2.0 (relicensed from GPL-3.0 in 2023, so the GPL caution that applied earlier no longer does) | `release-plz.yml` |
 | cargo-semver-checks | 0.51 (through release-plz) | Apache-2.0 OR MIT | `release-plz.yml` |
 | maturin | 1.15 | MIT OR Apache-2.0 | `wheels.yml`, build backend in `bindings/python/pyproject.toml` |
