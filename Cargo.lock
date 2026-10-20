@@ -289,6 +289,19 @@ dependencies = [
 ]
 
 [[package]]
+name = "audio_thread_priority"
+version = "0.38.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "e0b30b2f3d2da482d0faeaafd8f88a38fbc62abb58d3b402cfa195793f4c92ab"
+dependencies = [
+ "cfg-if",
+ "libc",
+ "log",
+ "mach2 0.4.3",
+ "windows-sys 0.61.2",
+]
+
+[[package]]
 name = "autocfg"
 version = "1.5.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -776,7 +789,7 @@ checksum = "6f02e8d0327b42d3e2e4ab2119af397344eb9fc54a34bf0ddeaa1277af8681f1"
 dependencies = [
  "alsa",
  "alsa-sys",
- "audio_thread_priority",
+ "audio_thread_priority 0.35.1",
  "block2",
  "coreaudio-rs",
  "dasp_sample",
@@ -2672,7 +2685,7 @@ name = "sonarithm-audio"
 version = "0.0.0"
 dependencies = [
  "allocation-counter",
- "audio_thread_priority",
+ "audio_thread_priority 0.38.0",
  "cpal",
  "rtrb",
  "sonarithm-core",

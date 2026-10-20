@@ -85,7 +85,7 @@ jiff = { version = "0.2.38", default-features = false, features = ["std"] }
 cpal = { version = "0.18.2", features = ["realtime"] }
 # Real-time thread priority for SONARITHM's own device threads (the WASAPI backend), the
 # version cpal's `realtime` feature uses.
-audio_thread_priority = { version = "0.35", default-features = false }
+audio_thread_priority = { version = "0.38", default-features = false }
 # The Windows WASAPI backend of ADR-0016 (RAW and exclusive mode); only sonarithm-audio.
 wasapi = "0.26.0"
 # The performance counter for latency measurement (the clock WASAPI timestamps use); the
