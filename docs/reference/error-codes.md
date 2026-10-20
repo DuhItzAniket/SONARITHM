@@ -23,6 +23,7 @@ Owner: `sonarithm-compiler`.
 | `SNR-COMP-023` | warning | Context cues are not available in this build | Ticks, the reference tone, the spoken legend and earcons come from AUDAXIS (B03). | — |
 | `SNR-COMP-024` | error | Data file cannot be read | Check the path (relative to the spec) and the format. | — |
 | `SNR-COMP-025` | error | Transform cannot run | Check the transform's parameters against RFC-0001 §4. | — |
+| `SNR-COMP-026` | error | Dataset not provided | Provide the data under this ID (in Python, `data={"main": df}`), or use a `file` or `inline` source. | — |
 
 ## SNR-DATA
 

@@ -180,3 +180,39 @@ fn file_sources_read_relative_to_the_base_directory() {
             .any(|d| d.code.as_str() == "SNR-COMP-024")
     );
 }
+
+#[test]
+fn dataset_sources_read_what_the_host_provides() {
+    let loaded = sonarithm_data::read_bytes(
+        b"x,y\n1,2\n2,4\n",
+        sonarithm_data::Format::Csv,
+        "frame.csv",
+        &sonarithm_data::ReadOptions::new(),
+    )
+    .unwrap();
+    let platform = Platform::new().with_dataset("main", loaded.bundle.clone());
+    let source = r#"{ "kind": "dataset", "id": "main" }"#;
+    let compiled = compile(&platform, &spec(source, "[]")).unwrap();
+    assert_eq!(rows(&compiled), 2);
+    assert_eq!(
+        compiled.score.header.data_fingerprint,
+        sonarithm_data::bundle_fingerprint(&loaded.bundle).unwrap(),
+        "the host's data, unchanged"
+    );
+    let other = r#"{ "kind": "dataset", "id": "other" }"#;
+    let Err(Failure::Invalid(diagnostics)) = compile(&platform, &spec(other, "[]")) else {
+        panic!("expected an error")
+    };
+    let error = diagnostics.iter().find(|d| d.is_error()).unwrap();
+    assert_eq!(error.code.as_str(), "SNR-COMP-026");
+    assert_eq!(error.location.as_ref().unwrap().as_str(), "/data/source/id");
+    // Without datasets, the source kind is not registered.
+    let Err(Failure::Invalid(diagnostics)) = compile(&Platform::new(), &spec(source, "[]")) else {
+        panic!("expected an error")
+    };
+    assert!(
+        diagnostics
+            .iter()
+            .any(|d| d.code.as_str() == "SNR-COMP-010")
+    );
+}

@@ -34,10 +34,10 @@ pub(crate) const WASM_CRATES: &[&str] = &[
 
 /// Crates in [`WASM_CRATES`] that build for wasm32 without their default features, because
 /// a default feature reads the file system or builds C code (`sonarithm-data`: "Partial
-/// (no fs)" in 02 §2). They get a cargo invocation of their own, so the flag does not
+/// (no fs)" in 02 §2; the facade passes those features through). They get a cargo invocation of their own, so the flag does not
 /// change the other crates. Workspace crates depend on them with `default-features =
 /// false`, so the first invocation does not turn the defaults back on.
-pub(crate) const WASM_NO_DEFAULT_FEATURES: &[&str] = &["sonarithm-data"];
+pub(crate) const WASM_NO_DEFAULT_FEATURES: &[&str] = &["sonarithm-data", "sonarithm"];
 
 const WASM_TARGET: &str = "wasm32-unknown-unknown";
 

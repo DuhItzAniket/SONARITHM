@@ -1249,6 +1249,7 @@ checksum = "b67d3d2e287e4b86c10b3f3b641033d1f89b74bdb39d05f34952e2b9a6fe21cd"
 dependencies = [
  "console",
  "once_cell",
+ "serde",
  "similar",
  "tempfile",
 ]
@@ -2096,6 +2097,17 @@ checksum = "199905e6153d6405f9728fe44daace35f8f837bbf830bb6e85fbd5828709a886"
 [[package]]
 name = "sonarithm"
 version = "0.0.0"
+dependencies = [
+ "insta",
+ "serde",
+ "serde_json",
+ "sonarithm-compiler",
+ "sonarithm-core",
+ "sonarithm-data",
+ "sonarithm-numisona",
+ "sonarithm-spec",
+ "thiserror",
+]
 
 [[package]]
 name = "sonarithm-audio"

@@ -61,7 +61,7 @@ Unknown top-level keys are an **error**. The exception is the `x-` vendor prefix
 | `chart` | PLOTSONA | `path`, `extractor` (`auto`, `office`, `svg`, `vega`, `plotly`, `pdf-vector`, `raster`, `ml`), `calibration` |
 | `function` | CURVASONA | `expr`, `domain`, `samples` or `step`, `variables` |
 | `stream` | SONOTRACE | `transport` (`websocket`, `mqtt`, `serial`, `osc`, `tail`), `url`/`port`/`topic`, `schema`, `window` |
-| `dataset` | platform | A reference to a dataset already loaded in a project (desktop/app core) |
+| `dataset` | platform | A reference to a dataset the host already holds: a dataset loaded in a project (desktop/app core), or data handed to the facade or the Python package (A07) |
 
 `fields` overrides inference ([03-data-model.md §3](03-data-model.md#3-field-semantics)). Any field that is not mentioned keeps its inferred metadata.
 
