@@ -7,6 +7,10 @@ rust-version.workspace = true
 repository.workspace = true
 license.workspace = true
 publish.workspace = true
+keywords.workspace = true
+categories = ["command-line-utilities", "multimedia::audio", "accessibility"]
+homepage.workspace = true
+readme = "README.md"
 
 [[bin]]
 name = "sonarithm"

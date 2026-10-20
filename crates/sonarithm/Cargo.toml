@@ -7,6 +7,10 @@ rust-version.workspace = true
 repository.workspace = true
 license.workspace = true
 publish.workspace = true
+keywords.workspace = true
+categories.workspace = true
+homepage.workspace = true
+readme = "README.md"
 
 [features]
 # File reading, spreadsheets and Zstandard-compressed columnar files, as in the data layer.

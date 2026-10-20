@@ -1,8 +1,10 @@
 # Python wheels (docs/engineering/release-process.md, "Python wheel release"; 11 §3).
 # Builds the abi3 wheel of `sonarithm` for Linux (manylinux_2_28), Windows and macOS, plus the
 # sdist; installs each wheel into a clean Python 3.10 and 3.14 and runs the pytest suite
-# against it. Publishing to PyPI (Trusted Publishing, release tags only) is added by A07-T05.
-# Release builds never restore caches (ci-cd.md, hardening rules), so this workflow has none.
+# against it. On a release tag (vX.Y.Z[-pre], pushed by release-plz) the `publish` job attests
+# every file and uploads them to PyPI with Trusted Publishing from the `release`
+# environment; a manual run with `publish: testpypi` rehearses on TestPyPI. Release builds
+# never restore caches (ci-cd.md, hardening rules), so this workflow has none.
 name: wheels
 
 on:
@@ -18,7 +20,14 @@ on:
       - ".github/workflows/wheels.yml"
   push:
     branches: [main]
+    tags: ["v*"]
   workflow_dispatch:
+    inputs:
+      publish:
+        description: "Upload the built files: none, or testpypi to rehearse a release"
+        type: choice
+        options: [none, testpypi]
+        default: none
 
 permissions: {}
 
@@ -121,3 +130,34 @@ jobs:
           "$py" -c "import sonarithm, sys; print(sonarithm.__version__, sonarithm.__file__); sys.exit(0 if sonarithm.quick({'x': [1.0, 2.0], 'y': [3.0, 4.0]}).summary()['tracks'][0]['notes'] == 2 else 1)"
           "$py" -m pip install pytest pyarrow pandas polars numpy
           "$py" -m pytest -q bindings/python/tests
+
+  publish:
+    name: publish (${{ startsWith(github.ref, 'refs/tags/v') && 'PyPI' || 'TestPyPI' }})
+    needs: [build, sdist, test]
+    if: >-
+      github.repository == 'DuhItzAniket/SONARITHM' &&
+      (startsWith(github.ref, 'refs/tags/v') || inputs.publish == 'testpypi')
+    runs-on: ubuntu-latest
+    environment: release
+    permissions:
+      contents: read
+      id-token: write
+      attestations: write
+    timeout-minutes: 15
+    steps:
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          pattern: "{wheel-*,sdist}"
+          merge-multiple: true
+          path: dist
+      - uses: actions/attest-build-provenance@4d101475d8b20a2381f78447822ac1eab6504dd8 # v4.2.2
+        with:
+          subject-path: dist/*
+      # Trusted Publishing: PyPI trusts this workflow and environment (configured by the
+      # owner on PyPI and TestPyPI); no API token exists anywhere.
+      - if: startsWith(github.ref, 'refs/tags/v')
+        uses: pypa/gh-action-pypi-publish@dc37677b2e1c63e2034f94d8a5b11f265b73ba33 # v1.14.2
+      - if: ${{ !startsWith(github.ref, 'refs/tags/v') }}
+        uses: pypa/gh-action-pypi-publish@dc37677b2e1c63e2034f94d8a5b11f265b73ba33 # v1.14.2
+        with:
+          repository-url: https://test.pypi.org/legacy/

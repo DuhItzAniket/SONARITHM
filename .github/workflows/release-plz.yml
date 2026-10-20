@@ -1,0 +1,124 @@
+# Release automation for the Rust crates (docs/engineering/release-process.md, "Library
+# release flow"; configuration in release-plz.toml).
+#
+# - `release-pr` (every push to main): opens or updates the release PR.
+# - `release` (a push to main that merges the release PR, recognised by its title):
+#   publishes the crates to crates.io with trusted publishing, tags vX.Y.Z[-pre] and
+#   creates the GitHub release. It runs in the protected `release` environment.
+# - `dry-run` (pull requests that touch release configuration, and manual runs): packages
+#   and verify-builds every crate that would be published, and shows the release PR's
+#   version and changelog, without publishing anything or pushing.
+#
+# A release PR opened with the default GITHUB_TOKEN does not start other workflows, so its
+# required checks would never run; the release-pr job uses a GitHub App token
+# (RELEASE_PLZ_APP_ID and RELEASE_PLZ_APP_KEY in the `release` environment, set up by the
+# owner) and does nothing until they exist.
+name: release-plz
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    paths:
+      - "release-plz.toml"
+      - "Cargo.toml"
+      - "**/Cargo.toml"
+      - ".github/workflows/release-plz.yml"
+  workflow_dispatch:
+
+permissions: {}
+
+concurrency:
+  group: release-plz-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  dry-run:
+    if: github.event_name != 'push'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - run: rustup toolchain install
+      # cpal (sonarithm-audio) links ALSA on Linux.
+      - run: sudo apt-get update && sudo apt-get install --yes --no-install-recommends libasound2-dev
+      - uses: taiki-e/install-action@8cca0918f8471c33515202b73f56ab27f2bed283 # v2.87.29
+        with:
+          tool: release-plz
+      # Packages every publishable crate and builds it from its .crate file, in dependency
+      # order, as `cargo publish` would; nothing is uploaded.
+      - run: cargo publish --workspace --dry-run --locked
+      # The release PR's content: next version and changelog entries, written locally only.
+      - name: Preview the release PR
+        run: |
+          release-plz update --config release-plz.toml
+          git --no-pager diff --stat
+          git --no-pager diff -- CHANGELOG.md Cargo.toml | head -200
+
+  release-pr:
+    if: github.event_name == 'push' && github.repository == 'DuhItzAniket/SONARITHM'
+    runs-on: ubuntu-latest
+    environment: release
+    permissions:
+      contents: read
+    timeout-minutes: 30
+    steps:
+      - id: app
+        if: vars.RELEASE_PLZ_APP_ID != ''
+        uses: actions/create-github-app-token@64ab729a6294000f5aa4a4bc0b73d1f32bc45510 # v3.3.0
+        with:
+          app-id: ${{ vars.RELEASE_PLZ_APP_ID }}
+          private-key: ${{ secrets.RELEASE_PLZ_APP_KEY }}
+      - if: steps.app.outputs.token == ''
+        run: echo "The release PR needs the RELEASE_PLZ_APP_ID variable and RELEASE_PLZ_APP_KEY secret in the release environment (release-process.md); skipping."
+      - if: steps.app.outputs.token != ''
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          token: ${{ steps.app.outputs.token }}
+          persist-credentials: false
+      - if: steps.app.outputs.token != ''
+        run: rustup toolchain install
+      - if: steps.app.outputs.token != ''
+        uses: release-plz/action@8921286633dfa0c4020f7f30bd1c14fe19cbb10e # v0.5.142
+        with:
+          command: release-pr
+          config: release-plz.toml
+        env:
+          GITHUB_TOKEN: ${{ steps.app.outputs.token }}
+
+  # Only a merged release PR (its squash commit keeps the title from `pr_name`) releases.
+  release:
+    if: >-
+      github.event_name == 'push' && github.repository == 'DuhItzAniket/SONARITHM' &&
+      startsWith(github.event.head_commit.message, 'chore(release):')
+    runs-on: ubuntu-latest
+    environment: release
+    permissions:
+      contents: write
+      id-token: write
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - run: rustup toolchain install
+      - run: sudo apt-get update && sudo apt-get install --yes --no-install-recommends libasound2-dev
+      # crates.io trusted publishing: a short-lived token from this workflow's OIDC identity,
+      # no registry token in secrets. Configure it on crates.io for each crate after the
+      # first, manual, publish.
+      - id: crates-io
+        uses: rust-lang/crates-io-auth-action@c6f97d42243bad5fab37ca0427f495c86d5b1a18 # v1.0.5
+      - uses: release-plz/action@8921286633dfa0c4020f7f30bd1c14fe19cbb10e # v0.5.142
+        with:
+          command: release
+          config: release-plz.toml
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          CARGO_REGISTRY_TOKEN: ${{ steps.crates-io.outputs.token }}
