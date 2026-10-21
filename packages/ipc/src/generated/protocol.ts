@@ -47,17 +47,26 @@ export const EVENT_CHANNELS = {
   settings_notice: "app",
 } as const;
 
-/** The reply each command gives, as a type. */
+/** The commands whose reply is a binary view (ADR-0017 §6). */
+export const BINARY_COMMANDS = ["view_get", "table_page"] as const;
+
+/** The reply each JSON command gives, as a type. */
 export type ReplyKinds = typeof REPLY_KINDS;
 
 /** A command name, such as `transport_seek`. */
 export type Command = Request["command"];
 
+/** A command that replies in JSON. */
+export type JsonCommand = keyof ReplyKinds;
+
+/** A command that replies with a binary view. */
+export type BinaryCommand = (typeof BINARY_COMMANDS)[number];
+
 /** The request type of one command. */
 export type RequestFor<C extends Command> = Extract<Request, { command: C }>;
 
-/** The reply type of one command. */
-export type ReplyFor<C extends Command> = Extract<Reply, { reply: ReplyKinds[C] }>;
+/** The reply type of one JSON command. */
+export type ReplyFor<C extends JsonCommand> = Extract<Reply, { reply: ReplyKinds[C] }>;
 
 /** The binary view layout (ADR-0017 §6); see crates/sonarithm-app/src/ipc/binary.rs. */
 export const BINARY = {
@@ -67,6 +76,7 @@ export const BINARY = {
   columnEntryBytes: 16,
   align: 8,
   flagValidity: 1,
+  rowColumn: "__snr_row",
   offset: {
     magic: 0,
     version: 4,
@@ -152,7 +162,47 @@ settings: Settings, } } | { "command": "devices_list" } | { "command": "device_s
 /**
  * The device's ID from `devices_list`, or `null`.
  */
-id: string | null, } };
+id: string | null, } } | { "command": "view_get", "args": { 
+/**
+ * The dataset's ID.
+ */
+dataset: string, 
+/**
+ * The x field: numbers, dates or timestamps.
+ */
+x: string, 
+/**
+ * The y field.
+ */
+y: string, 
+/**
+ * The x range to draw; by default all of x.
+ */
+range: ViewRange | null, 
+/**
+ * The plot's width in device pixels.
+ */
+pxWidth: number, 
+/**
+ * M4 for plots (pixel-exact, used when zooming), LTTB for overviews.
+ */
+method: ViewMethod, } } | { "command": "table_page", "args": { 
+/**
+ * The dataset's ID.
+ */
+dataset: string, 
+/**
+ * The first row of the page, in sort order.
+ */
+offset: number, 
+/**
+ * The most rows, at most 10 000.
+ */
+limit: number, 
+/**
+ * The order; by default the table's.
+ */
+sort: TableSort | null, } };
 
 /**
  * A successful reply.
@@ -623,6 +673,37 @@ isDefault: boolean,
  * Whether SONARITHM is set to use it.
  */
 selected: boolean, };
+
+/**
+ * An x range for [`Request::ViewGet`], in the x field's units (seconds for times).
+ */
+export type ViewRange = { 
+/**
+ * The left edge.
+ */
+start: number, 
+/**
+ * The right edge.
+ */
+end: number, };
+
+/**
+ * How a view is downsampled.
+ */
+export type ViewMethod = "m4" | "lttb";
+
+/**
+ * The order of a table page.
+ */
+export type TableSort = { 
+/**
+ * The field to sort by.
+ */
+field: string, 
+/**
+ * Largest first.
+ */
+descending: boolean, };
 
 /**
  * Every user setting (12 §3). Unknown fields are refused, so a typo is an error and not a

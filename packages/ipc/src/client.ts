@@ -3,10 +3,10 @@
 
 import type {
   Channel,
-  Command,
+  BinaryCommand,
+  JsonCommand,
   Event,
   ReplyFor,
-  Request,
   RequestFor,
 } from "./generated/protocol.ts";
 import { PROTOCOL_VERSION, REPLY_KINDS } from "./generated/protocol.ts";
@@ -34,11 +34,11 @@ export class ProtocolMismatchError extends Error {
 /** The typed client: the UI's view of the host, built on an {@link IpcTransport}. */
 export interface Client {
   /** Sends a command and resolves with the reply type that command gives. */
-  call<C extends Command>(request: RequestFor<C>): Promise<ReplyFor<C>>;
+  call<C extends JsonCommand>(request: RequestFor<C>): Promise<ReplyFor<C>>;
   /** Calls `handler` for every event on `channel`; returns a function that unsubscribes. */
   subscribe(channel: Channel, handler: (event: Event) => void): () => void;
-  /** Sends a command whose reply is a binary view. */
-  binary(request: Request): Promise<ArrayBuffer>;
+  /** Sends a command whose reply is a binary view; read it with `readView`. */
+  binary(request: RequestFor<BinaryCommand>): Promise<ArrayBuffer>;
 }
 
 /**
@@ -65,15 +65,16 @@ export async function connect(transport: IpcTransport): Promise<Client> {
     throw new ProtocolMismatchError(protocol);
   }
   return {
-    async call<C extends Command>(
+    async call<C extends JsonCommand>(
       request: RequestFor<C>,
     ): Promise<ReplyFor<C>> {
       const reply = await transport.invoke(request);
-      const expected: string = REPLY_KINDS[request.command];
+      const { command } = request as { command: JsonCommand };
+      const expected: string = REPLY_KINDS[command];
       if (reply.reply !== expected) {
         throw new IpcFailure({
           code: "SNR-APP-009",
-          message: `The host answered ${request.command} with a ${reply.reply} reply, not ${expected}.`,
+          message: `The host answered ${command} with a ${reply.reply} reply, not ${expected}.`,
           hint: null,
           pointer: null,
         });

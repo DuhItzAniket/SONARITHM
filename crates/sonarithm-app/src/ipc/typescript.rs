@@ -10,12 +10,13 @@ use std::fmt::Write as _;
 use ts_rs::{Config, TS};
 
 use super::binary::{self, DataType, ViewKind};
-use super::{COMMANDS, EVENTS, PROTOCOL_VERSION};
+use super::{BINARY_COMMANDS, COMMANDS, EVENTS, PROTOCOL_VERSION};
 use crate::ipc::Channel;
 use crate::ipc::{
     ClockAnchor, CompileReport, Counts, DatasetSummary, DeviceSummary, DiagnosticInfo, Event,
     ExportRequest, ExportResult, FieldSummary, HistoryState, IpcError, JobInfo, JobKind, JobState,
-    LoopSpan, PlaybackStatus, Reply, Request, ScoreInfo, SpecState, TrackInfo, TransportState,
+    LoopSpan, PlaybackStatus, Reply, Request, ScoreInfo, SpecState, TableSort, TrackInfo,
+    TransportState, ViewMethod, ViewRange,
 };
 use crate::settings::{AudioSettings, Consent, Modalities, Settings, Theme, Verbosity};
 
@@ -68,15 +69,25 @@ pub fn typescript() -> String {
         let _ = writeln!(out, "  {event}: \"{channel}\",");
     }
     out.push_str(
-        "} as const;\n\n\
-         /** The reply each command gives, as a type. */\n\
+        "} as const;\n\n/** The commands whose reply is a binary view (ADR-0017 §6). */\n\
+         export const BINARY_COMMANDS = [",
+    );
+    let names: Vec<String> = BINARY_COMMANDS.iter().map(|c| format!("\"{c}\"")).collect();
+    out.push_str(&names.join(", "));
+    out.push_str(
+        "] as const;\n\n\
+         /** The reply each JSON command gives, as a type. */\n\
          export type ReplyKinds = typeof REPLY_KINDS;\n\n\
          /** A command name, such as `transport_seek`. */\n\
          export type Command = Request[\"command\"];\n\n\
+         /** A command that replies in JSON. */\n\
+         export type JsonCommand = keyof ReplyKinds;\n\n\
+         /** A command that replies with a binary view. */\n\
+         export type BinaryCommand = (typeof BINARY_COMMANDS)[number];\n\n\
          /** The request type of one command. */\n\
          export type RequestFor<C extends Command> = Extract<Request, { command: C }>;\n\n\
-         /** The reply type of one command. */\n\
-         export type ReplyFor<C extends Command> = Extract<Reply, { reply: ReplyKinds[C] }>;\n\n",
+         /** The reply type of one JSON command. */\n\
+         export type ReplyFor<C extends JsonCommand> = Extract<Reply, { reply: ReplyKinds[C] }>;\n\n",
     );
     binary_constants(&mut out);
     declare::<Request>(&mut out, &cfg);
@@ -103,6 +114,9 @@ pub fn typescript() -> String {
     declare::<JobInfo>(&mut out, &cfg);
     declare::<HistoryState>(&mut out, &cfg);
     declare::<DeviceSummary>(&mut out, &cfg);
+    declare::<ViewRange>(&mut out, &cfg);
+    declare::<ViewMethod>(&mut out, &cfg);
+    declare::<TableSort>(&mut out, &cfg);
     declare::<Settings>(&mut out, &cfg);
     declare::<AudioSettings>(&mut out, &cfg);
     declare::<Theme>(&mut out, &cfg);
@@ -205,6 +219,7 @@ fn binary_constants(out: &mut String) {
            columnEntryBytes: {},\n  \
            align: {},\n  \
            flagValidity: {},\n  \
+           rowColumn: \"{}\",\n  \
            offset: {{\n    \
              magic: {},\n    \
              version: {},\n    \
@@ -224,6 +239,7 @@ fn binary_constants(out: &mut String) {
         binary::COLUMN_ENTRY_BYTES,
         binary::ALIGN,
         binary::FLAG_VALIDITY,
+        binary::ROW_COLUMN,
         binary::offset::MAGIC,
         binary::offset::VERSION,
         binary::offset::KIND,
