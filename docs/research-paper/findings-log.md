@@ -722,6 +722,15 @@ A05 (render engine, audio backends, export) uses F-050 to F-069.
 - **Affects:** ADR-0017 §1; 09 §1; B01-T03 (the Tauri host keeps `App` behind one lock)
 - **Papers:** none yet
 
+### F-141 · Reading an embedded Parquet member in place cuts the peak memory of opening it by 1.6 times the member's size
+
+- **Date:** 2026-10-21 · **Phase:** B05 · **Type:** engineering · **Status:** new
+- **Statement:** RFC-0002's condition B asks that a project's embedded data not be held twice in memory. Reading a 200,000-row, two-column Parquet member (2.5 MB, Snappy, values that do not compress) in place from the stored ZIP member peaks at 9.0 MB of heap; reading the member into a buffer and decoding that peaks at 12.9 MB, 3.9 MB more, because the buffered path holds the member and a copy of it while decoding. The in-place path reads only the footer and each page header with positional reads (the structural check of #146 now streams page headers instead of loading each column chunk), so the default 2 GiB data limit stands.
+- **Evidence:** `crates/sonarithm-app/tests/project_memory.rs` (`rfc_0002_condition_b_embedded_data_is_read_in_place`, `allocation_counter::measure` peaks) on HW-01 (Windows 11, Rust 1.99.0, debug build); `sonarithm_data::read_parquet_at`, `columnar::check_pages`
+- **Evidence level / confidence:** EV-C / Moderate (one data shape on one machine; the saving grows with the member's size, the decoded table dominates either way)
+- **Affects:** RFC-0002 §6, ADR-0018; NFR-11; the data limits of A04 (`Limits::DEFAULT`)
+- **Papers:** none yet
+
 ### F-143 · On the monitoring bed, event salience shows as a spectral-centroid rise of 39 %, 51 % and 97 % at constant level
 
 - **Date:** 2026-10-25 · **Phase:** B06 · **Type:** engineering · **Status:** new

@@ -18,6 +18,7 @@
 
 - ADR-0017, IPC protocol v1 (#259): one `Request`/`Reply`/`Event` set in `sonarithm-app::ipc`, `App::dispatch` as the only entry point, typed errors with `SNR-APP` codes, the `hello` version handshake, the binary view header, and the layering edge `sonarithm-app → sonarithm`.
 - B01-T01: `sonarithm-app` with datasets, the spec and its undo history, compile reports, the transport on its own control thread, export jobs, settings and devices; 16 headless scenarios on the null device, including one that no reply, error or event holds an absolute path (ADR-0017 §7).
+- B05-T04: `.sonarithm` project bundles per RFC-0002 (accepted with conditions A and B) and ADR-0018: reader and writer, autosaves and recovery, the `project_*` commands, a memory test for condition B (F-141) and the `project_open` fuzz target.
 
 ## Decisions
 
@@ -27,6 +28,8 @@
 | The app core owns the control thread that drives A05's `Player` | `Player` is not `Send` (F-140) | ADR-0017 §1 |
 | Settings v0 is the unversioned flat layout | No release wrote settings yet; v0 keeps the migration chain tested from the first version | No ADR needed: settings are not a contract in rfcs/README §1 |
 | Export paths from the UI must be absolute `.wav` or `.flac` paths in an existing folder | 09 §4: no path traversal from UI strings | No ADR needed: local choice |
+| Project replies carry file names and the recent list opens by index, not by path as RFC-0002 §9 sketched | ADR-0017 §7: no folder crosses the protocol | Reported to the coordinator; RFC-0002 §9 is additive and unchanged in substance |
+| The Parquet structural check streams page headers instead of loading each column chunk | Condition B: no copy of a member in memory | F-141 |
 
 ## Problems and how they were solved
 
@@ -37,6 +40,7 @@
 ## Findings to log
 
 - F-140: A05's `Player` cannot move between threads, so the app core owns the thread that drives it — [findings log](../../research-paper/findings-log.md)
+- F-141: reading an embedded Parquet member in place cuts the peak memory of opening it by 1.6 times the member's size — [findings log](../../research-paper/findings-log.md)
 
 ## Next steps
 
