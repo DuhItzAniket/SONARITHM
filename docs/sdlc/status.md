@@ -24,7 +24,7 @@ Status values: `Not started` · `In progress` · `In review` · `Done` · `Block
 | A | A02 | Technical spikes and prototype gate | **In review** | ≈80% | All spikes built and measured on Windows and CI; gate report draft: Conditional go recommended. PB-01 fails on Windows shared mode; screen-reader, macOS and Linux manual steps pending. See [A02 tasks](#a02-tasks) |
 | A | A03 | Core types, Spec v0.1, Score IR | **Done** | 100% | 2026-10-19; [phase review](reviews/A03-phase-review.md), [retro](retrospectives/A03-retro.md). See [A03 tasks](#a03-tasks) |
 | A | A04 | Data layer | **Done** | 100% | 2026-10-19; [phase review](reviews/A04-phase-review.md), [retro](retrospectives/A04-retro.md). See [A04 tasks](#a04-tasks) |
-| A | A05 | Render engine, audio backend, export | **Done** | 100% | 2026-10-21; [phase review](reviews/A05-phase-review.md). PB-01, PB-02 and PB-03 decisions and the cable test (#123) are with the owner. See [A05 tasks](#a05-tasks) |
+| A | A05 | Render engine, audio backend, export | **Done** | 100% | 2026-10-21; [phase review](reviews/A05-phase-review.md). Owner's budget decisions (2026-10-21): PB-01 deferred to B03 (#186), PB-02 accepted with a 128-frame rerun later (#187), PB-03 waived for the alpha with a follow-up before Gate B (#185), PB-06 accepted. The cable test (#123) is with the owner. See [A05 tasks](#a05-tasks) |
 | A | A06 | NUMISONA v1 | **Done** | 100% | 2026-10-19; [phase review](reviews/A06-phase-review.md). See [A06 tasks](#a06-tasks) |
 | A | A07 | CLI, Python, v0.1.0-alpha | **In review** | ≈95% | Code complete: T01 to T07 merged; the v0.1.0-alpha release PR (T08, #183) waits for the owner's first-release steps (#129). [Phase review](reviews/A07-phase-review.md). See [A07 tasks](#a07-tasks) |
 | A | A08 | Research instrumentation v0, ICAD 2027 | **Done** (owner steps pending) | 100% | 2026-10-21; [phase review](reviews/A08-phase-review.md). P01 submission or deferral and the v0.2.0-alpha tag are the owner's at Gate A. See [A08 tasks](#a08-tasks) |
@@ -279,6 +279,7 @@ Maturity scale: `Designed` → `Prototype` → `Alpha` → `Beta` → `Stable` �
 | 2026-10-21 | A08: T01 merged (#163), engine code blocks (#161); P01 draft v0 in review (T05) |
 | 2026-10-21 | A07: #156 fixed (#159); facade API (T01) in review |
 | 2026-10-21 | A07 code complete: T01 to T07 merged (#162, #169, #170, #171, #172, #174, #175, #176, #180); the v0.1.0-alpha release PR (T08) and the [phase review](reviews/A07-phase-review.md); publishing waits for the owner |
+| 2026-10-21 | Owner's budget decisions for v0.1.0-alpha: PB-01 deferred to B03 (#186), PB-02 accepted (128-frame rerun #187), PB-03 waived for the alpha (#185), PB-06 accepted |
 | 2026-10-19 | A05: all thirteen tasks implemented; T01, T03 and T04 merged, the rest landing in three bundles; PB-02 and PB-03 not declared met on HW-01 (F-053, F-055); owner steps listed in the A05 worklog |
 | 2026-10-21 | A05 done: all thirteen tasks merged (#118–#120, #122, #126, #160, #168, #178); [phase review](reviews/A05-phase-review.md) with the gate summary; owner decisions pending for PB-01, PB-02 and PB-03 |
 | 2026-10-21 | A08 done: generators (#163), code blocks (#161), P01 draft (#165), study runner (#166, #179), replication gallery (#177), benchmark report (#189); [phase review](reviews/A08-phase-review.md); v0.2.0-alpha checklist prepared |
