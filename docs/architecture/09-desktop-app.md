@@ -72,6 +72,8 @@ The IPC protocol has a version constant shared by host and UI. Because both ship
 
 The UI calls an `IpcTransport` interface (`invoke`, `subscribe`, `binary`). The Tauri implementation is the default. If the A02 gate triggers the fallback ([ADR-0002](../decisions/0002-desktop-shell-tauri.md)), an Electron implementation (Node bindings to `sonarithm-app` via napi-rs) replaces it, and the React code does not change.
 
+**As built (B01-T02).** `@sonarithm/ipc` exports the generated protocol (`packages/ipc/src/generated/protocol.ts`: `Request`, `Reply`, `Event`, every payload type, `PROTOCOL_VERSION`, `REPLY_KINDS`, `EVENT_CHANNELS` and the `BINARY` layout), the `IpcTransport` interface, `connect(transport)`, which sends `hello` first and rejects with `ProtocolMismatchError` on a version mismatch, `createMockTransport` for tests and Storybook, and `readView`, which reads a binary view into typed arrays without copying and refuses, with `SNR-APP-050`, any header version, kind or data type it does not know. Provenance travels as its own data types (class codes named by the generated `PROVENANCE_CLASSES`, and confidences), so the UI can qualify estimates (ADR-0017 §6). `client.call(request)` resolves with the reply type of its command (`ReplyFor<C>`, generated from the Rust command table), so the hand-written part of the client is small.
+
 ## 3. Frontend architecture
 
 | Concern | Approach |

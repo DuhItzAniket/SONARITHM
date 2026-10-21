@@ -1,4 +1,11 @@
 {
   "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    // Node runs the tests on the TypeScript sources (type stripping), which needs explicit
+    // `.ts` extensions in imports.
+    "allowImportingTsExtensions": true,
+    // TypeScript 6 includes no @types packages unless listed.
+    "types": ["node"]
+  },
   "include": ["src"]
 }
