@@ -39,8 +39,8 @@ flowchart TB
 | `Series` | Segments (bins) | Data tracks (`TrackRole::Data`) |
 | `Axes` | One node per axis, with range, unit and polarity | Channel ranges and legends |
 | `Insights` | One node per annotation | ECHOMETRIC and CURVASONA annotations |
-| `Segment` | Points | Even bins or semantic segments (trend segments, decades, bars) |
-| `Point` | — | A data row (`RowRef`) |
+| `Segment` | Points | Semantic segments (trend-segment annotations that partition the series), else even bins of at least 8 points and at most 12 per series. The bin sizes are provisional (OD-18) |
+| `Point` | — | A data row (`RowRef`) the track reads, in the encoder's time order, with its value (or none, for a missing value), provenance and onset. Without a time field, a field with role `category` or `label` names the points (bars) |
 | `Node`, `Edge` (networks, Stage D) | Neighbours, incident edges | Graph data (Data Navigator model; requires H-05 before defaults ship) |
 
 **Movement verbs** (keys in [keyboard-and-navigation](../design/keyboard-and-navigation.md)):

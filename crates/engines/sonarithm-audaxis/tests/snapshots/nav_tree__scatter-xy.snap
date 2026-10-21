@@ -1,0 +1,32 @@
+---
+source: crates/engines/sonarithm-audaxis/tests/nav_tree.rs
+expression: outline(&tree)
+---
+dataset title Some("scatter-xy"), 1 series, 40 points
+  series "weight" track points field Some("weight") unit None, 40 points range 54.6..91.6 x 154.3..192.5
+    segment 8 points range 54.6..62.7 x 154.3..160.4
+      point 0 row 0 x 154.3 value Some(58.7) t 0
+      … 6 more points
+      point 7 row 8 x 160.4 value Some(62.7) t 1.75
+    segment 8 points range 58.5..68 x 162..167.8
+      point 8 row 12 x 162 value Some(58.5) t 2
+      … 6 more points
+      point 15 row 18 x 167.8 value Some(68.0) t 3.75
+    segment 8 points range 63.6..73.3 x 169.8..175.9
+      point 16 row 16 x 169.8 value Some(64.1) t 4
+      … 6 more points
+      point 23 row 22 x 175.9 value Some(68.3) t 5.75
+    segment 8 points range 69..79.3 x 177..182.8
+      point 24 row 24 x 177 value Some(75.5) t 6
+      … 6 more points
+      point 31 row 34 x 182.8 value Some(79.3) t 7.75
+    segment 8 points range 75.6..91.6 x 183.1..192.5
+      point 32 row 31 x 183.1 value Some(76.8) t 8
+      … 6 more points
+      point 39 row 38 x 192.5 value Some(91.6) t 9.75
+  axes
+    axis X "height" field Some("height") unit None values Number range 154.3..192.5
+    axis Y "weight" field Some("weight") unit None values Number range 54.6..91.6
+  insights
+  filters
+    filter "weight" series 1

@@ -90,7 +90,7 @@ pub trait Sink: Send + Sync {                      // MIDI file, OSC, …
 }
 ```
 
-**Implemented in A03** (`sonarithm_core::engine`, A03-T04) with the signatures of [ADR-0014](../decisions/0014-capability-trait-signatures.md): the traits and `Registry<D>` are generic over the compiler's data type `D`, spec input arrives as a `SpecFragment` (compact JSON plus its pointer), analyzer and shaper IDs are given at registration, and `Engine::register` returns a `Result`. `Sink`, `VoiceProvider` and `nav_tree` are added with their first implementations (A05, C04, B03).
+**Implemented in A03** (`sonarithm_core::engine`, A03-T04) with the signatures of [ADR-0014](../decisions/0014-capability-trait-signatures.md): the traits and `Registry<D>` are generic over the compiler's data type `D`, spec input arrives as a `SpecFragment` (compact JSON plus its pointer), analyzer and shaper IDs are given at registration, and `Engine::register` returns a `Result`. `Sink` and `VoiceProvider` are added with their first implementations (A05, C04); `ContextProvider::nav_tree` joined in B03-T01, with a default that builds no tree.
 
 **Resolution rules.**
 
@@ -223,3 +223,5 @@ pub struct Diagnostic {
 ## 8. NavTree (summary)
 
 The NavTree is built by AUDAXIS from (Score, data, annotations). It is documented in [08-interaction-and-accessibility.md](08-interaction-and-accessibility.md#2-the-navigation-model). The compiler returns it alongside the Score, so the CLI's `inspect` command and the Python API can expose the same structure (for example to generate accessible text reports).
+
+**Implemented in B03-T01.** The types are in `sonarithm_core::nav` (`NavTree`, `NavNode`, `NavKind` with typed payloads, `NavTree::check`). After the shapers, the compiler passes the whole resolved spec (pointer `""`), the Score, the data and the annotations to each registered context provider's `nav_tree` and keeps the first tree in `Compiled::nav`. Building the tree records no engine in the Score header and never changes the Score hash. The tree holds data, not words: announcements are composed from it with the message catalogues (B03-T03).

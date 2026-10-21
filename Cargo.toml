@@ -16,6 +16,7 @@ members = [
     "crates/sonarithm-export",
     "crates/sonarithm-i18n",
     "crates/engines/sonarithm-numisona",
+    "crates/engines/sonarithm-audaxis",
     "crates/engines/sonarithm-echometric",
     "apps/cli",
     "bindings/python",
@@ -54,6 +55,7 @@ sonarithm-audio = { path = "crates/sonarithm-audio", version = "0.0.0" }
 sonarithm-export = { path = "crates/sonarithm-export", version = "0.0.0" }
 sonarithm-i18n = { path = "crates/sonarithm-i18n", version = "0.0.0" }
 sonarithm-numisona = { path = "crates/engines/sonarithm-numisona", version = "0.0.0" }
+sonarithm-audaxis = { path = "crates/engines/sonarithm-audaxis", version = "0.0.0" }
 sonarithm-echometric = { path = "crates/engines/sonarithm-echometric", version = "0.0.0" }
 
 # Third-party crates. Each addition needs a justification in its PR and must pass

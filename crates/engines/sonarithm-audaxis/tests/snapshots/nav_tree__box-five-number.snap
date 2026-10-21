@@ -1,0 +1,16 @@
+---
+source: crates/engines/sonarithm-audaxis/tests/nav_tree.rs
+expression: outline(&tree)
+---
+dataset title Some("box-five-number"), 1 series, 15 points
+  series "value" track boxes field Some("value") unit None, 15 points range 390..728 x 0..14
+    segment 15 points range 390..728 x 0..14
+      point 0 row 0 x "easy" value Some(390.0) t 0
+      … 13 more points
+      point 14 row 14 x "hard" value Some(728.0) t 4.666666666666667
+  axes
+    axis X "group" field Some("group") unit None values Category
+    axis Y "value" field Some("value") unit None values Number range 390..728
+  insights
+  filters
+    filter "value" series 1

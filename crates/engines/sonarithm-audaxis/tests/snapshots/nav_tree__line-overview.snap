@@ -1,0 +1,60 @@
+---
+source: crates/engines/sonarithm-audaxis/tests/nav_tree.rs
+expression: outline(&tree)
+---
+dataset title Some("line-overview"), 1 series, 120 points
+  series "Temperature" track line field Some("temp") unit Some("°C"), 120 points range 7.97..21.48 x 0..119
+    segment 10 points range 7.97..10.16 x 0..9
+      point 0 row 0 x 0 value Some(7.97) t 0
+      … 8 more points
+      point 9 row 9 x 9 value Some(9.48) t 3
+    segment 10 points range 8.82..12.38 x 10..19
+      point 10 row 10 x 10 value Some(8.82) t 3.3333333333333335
+      … 8 more points
+      point 19 row 19 x 19 value Some(11.69) t 6.333333333333333
+    segment 10 points range 11.37..14.23 x 20..29
+      point 20 row 20 x 20 value Some(11.69) t 6.666666666666667
+      … 8 more points
+      point 29 row 29 x 29 value Some(14.23) t 9.666666666666666
+    segment 10 points range 13.8..16.45 x 30..39
+      point 30 row 30 x 30 value Some(13.8) t 10
+      … 8 more points
+      point 39 row 39 x 39 value Some(16.41) t 13
+    segment 10 points range 14.89..18.12 x 40..49
+      point 40 row 40 x 40 value Some(15.33) t 13.333333333333334
+      … 8 more points
+      point 49 row 49 x 49 value Some(18.12) t 16.333333333333332
+    segment 10 points range 16.17..19.31 x 50..59
+      point 50 row 50 x 50 value Some(18.42) t 16.666666666666668
+      … 8 more points
+      point 59 row 59 x 59 value Some(18.83) t 19.666666666666668
+    segment 10 points range 17.78..20.33 x 60..69
+      point 60 row 60 x 60 value Some(18.64) t 20
+      … 8 more points
+      point 69 row 69 x 69 value Some(17.89) t 23
+    segment 10 points range 18.07..20.47 x 70..79
+      point 70 row 70 x 70 value Some(20.47) t 23.333333333333332
+      … 8 more points
+      point 79 row 79 x 79 value Some(20.17) t 26.333333333333332
+    segment 10 points range 18.58..20.05 x 80..89
+      point 80 row 80 x 80 value Some(19.95) t 26.666666666666668
+      … 8 more points
+      point 89 row 89 x 89 value Some(19.97) t 29.666666666666668
+    segment 10 points range 18.5..21.48 x 90..99
+      point 90 row 90 x 90 value Some(18.94) t 30
+      … 8 more points
+      point 99 row 99 x 99 value Some(19.47) t 33
+    segment 10 points range 18.57..20.72 x 100..109
+      point 100 row 100 x 100 value Some(20.72) t 33.333333333333336
+      … 8 more points
+      point 109 row 109 x 109 value Some(20.33) t 36.333333333333336
+    segment 10 points range 17.37..20.58 x 110..119
+      point 110 row 110 x 110 value Some(18.15) t 36.666666666666664
+      … 8 more points
+      point 119 row 119 x 119 value Some(19.39) t 39.666666666666664
+  axes
+    axis X "day" field Some("day") unit None values Number range 0..119
+    axis Y "Temperature" field Some("temp") unit Some("°C") values Number range 7.97..21.48
+  insights
+  filters
+    filter "Temperature" series 1

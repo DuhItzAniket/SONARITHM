@@ -1,0 +1,16 @@
+---
+source: crates/engines/sonarithm-audaxis/tests/nav_tree.rs
+expression: outline(&tree)
+---
+dataset title Some("bar-discrete"), 1 series, 5 points
+  series "Units sold" track bars field Some("sold") unit None, 5 points range 9..57 x 0..4
+    segment 5 points range 9..57 x 0..4
+      point 0 row 0 x "apple" value Some(42.0) t 0
+      … 3 more points
+      point 4 row 4 x "fig" value Some(9.0) t 2
+  axes
+    axis X "fruit" field Some("fruit") unit None values Category
+    axis Y "Units sold" field Some("sold") unit None values Number range 9..57
+  insights
+  filters
+    filter "Units sold" series 1

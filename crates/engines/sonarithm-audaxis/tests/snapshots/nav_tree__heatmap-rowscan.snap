@@ -1,0 +1,36 @@
+---
+source: crates/engines/sonarithm-audaxis/tests/nav_tree.rs
+expression: outline(&tree)
+---
+dataset title Some("heatmap-rowscan"), 1 series, 48 points
+  series "level" track cells field Some("level") unit None, 48 points range 0.03..10 x 0..7
+    segment 8 points range 0.03..0.59 x 0..1
+      point 0 row 0 x 0 value Some(0.08) t 0
+      … 6 more points
+      point 7 row 9 x 1 value Some(0.59) t 1.75
+    segment 8 points range 0.16..2.23 x 1..2
+      point 8 row 17 x 1 value Some(0.69) t 2
+      … 6 more points
+      point 15 row 26 x 2 value Some(1.89) t 3.75
+    segment 8 points range 0.5..5.13 x 2..3
+      point 16 row 34 x 2 value Some(1.15) t 4
+      … 6 more points
+      point 23 row 43 x 3 value Some(1.15) t 5.75
+    segment 8 points range 1.89..8.46 x 4..5
+      point 24 row 4 x 4 value Some(4.35) t 6
+      … 6 more points
+      point 31 row 13 x 5 value Some(8.46) t 7.75
+    segment 8 points range 2.23..10 x 5..6
+      point 32 row 21 x 5 value Some(10.0) t 8
+      … 6 more points
+      point 39 row 30 x 6 value Some(7.17) t 9.75
+    segment 8 points range 1.15..5.13 x 6..7
+      point 40 row 38 x 6 value Some(4.35) t 10
+      … 6 more points
+      point 47 row 47 x 7 value Some(1.15) t 11.75
+  axes
+    axis X "column" field Some("column") unit None values Number range 0..7
+    axis Y "level" field Some("level") unit None values Number range 0.03..10
+  insights
+  filters
+    filter "level" series 1

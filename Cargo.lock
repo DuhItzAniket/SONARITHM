@@ -3020,6 +3020,24 @@ dependencies = [
 ]
 
 [[package]]
+name = "sonarithm-audaxis"
+version = "0.0.0"
+dependencies = [
+ "arrow-array",
+ "arrow-schema",
+ "insta",
+ "proptest",
+ "serde",
+ "serde_json",
+ "sonarithm-compiler",
+ "sonarithm-core",
+ "sonarithm-data",
+ "sonarithm-numisona",
+ "sonarithm-spec",
+ "thiserror 2.0.21",
+]
+
+[[package]]
 name = "sonarithm-audio"
 version = "0.0.0"
 dependencies = [
