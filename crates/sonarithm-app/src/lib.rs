@@ -41,6 +41,7 @@ mod history;
 pub mod ipc;
 mod jobs;
 pub mod patch;
+pub mod profile;
 pub mod project;
 pub mod settings;
 pub mod speech;

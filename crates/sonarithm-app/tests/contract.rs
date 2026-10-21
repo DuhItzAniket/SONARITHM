@@ -36,6 +36,7 @@ fn requests(dir: &TempDir) -> Vec<Value> {
     .to_string();
     let wav = dir.path().join("t.wav");
     let project = dir.path().join("t.sonarithm");
+    let exported = dir.path().join("contract.json");
     vec![
         json!({ "command": "hello", "args": { "protocol": 1 } }),
         json!({ "command": "dataset_open", "args": { "path": csv } }),
@@ -82,6 +83,16 @@ fn requests(dir: &TempDir) -> Vec<Value> {
         json!({ "command": "project_recent" }),
         json!({ "command": "project_open_recent", "args": { "index": 0 } }),
         json!({ "command": "project_open", "args": { "path": project } }),
+        json!({ "command": "profile_list" }),
+        json!({ "command": "profile_get", "args": { "id": "preset:analyst" } }),
+        json!({ "command": "profile_save", "args": { "profile": {
+            "format": "sonarithm-profile", "formatVersion": "1.0", "name": "Contract" } } }),
+        json!({ "command": "profile_activate", "args": { "id": "contract" } }),
+        json!({ "command": "profile_export", "args": { "id": "contract", "path": exported } }),
+        json!({ "command": "profile_import", "args": { "path": exported } }),
+        json!({ "command": "profile_flip_polarity", "args": { "field": "temp" } }),
+        json!({ "command": "settings_effective" }),
+        json!({ "command": "spec_quick", "args": { "dataset": "d1", "x": "day", "y": "temp" } }),
         json!({ "command": "dataset_close", "args": { "id": "d1" } }),
         json!({ "command": "project_new" }),
     ]

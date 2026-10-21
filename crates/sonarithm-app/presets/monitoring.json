@@ -1,0 +1,13 @@
+{
+  "format": "sonarithm-profile",
+  "formatVersion": "1.0",
+  "name": "Monitoring",
+  "sound": {
+    "context": { "spokenLegend": true }
+  },
+  "interaction": {
+    "verbosity": "terse",
+    "modalities": { "sonification": true, "speech": true, "braille": false, "visual": true },
+    "speech": { "route": "screenReader" }
+  }
+}

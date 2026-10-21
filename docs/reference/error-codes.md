@@ -39,6 +39,10 @@ Owner: `sonarithm-app`.
 | `SNR-APP-070` | error | No such stream | List the open streams with stream_list; a stopped stream is gone. | — |
 | `SNR-APP-071` | error | The stream source is not valid | Give a transport (websocket, osc, serial, mqtt or tail) and its address; a file to            follow is an absolute path in an existing folder. | — |
 | `SNR-APP-072` | error | The stream cannot connect | Offer the stream again with stream_offer, show the user what it connects to, and            connect with the token only after the user approves. | A11Y-16 |
+| `SNR-APP-080` | error | The profile is not valid | Use a profile exported from SONARITHM, or fix the value the message names. | SDR-38 |
+| `SNR-APP-081` | error | The profile needs a newer SONARITHM | Update SONARITHM to use this profile; this version does not guess at newer formats. | — |
+| `SNR-APP-082` | warning | Parts of the profile are unknown to this version | The profile works; saving it with this version drops what it does not know. | — |
+| `SNR-APP-083` | error | No such profile | List the profiles with profile_list. Presets cannot be changed: save a copy. | — |
 
 ## SNR-COMP
 

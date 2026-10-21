@@ -67,6 +67,9 @@ pub struct Settings {
     /// How announcements are spoken and sequenced with sonification (08 §4).
     #[serde(default)]
     pub speech: SpeechSettings,
+    /// The active profile's ID (ADR-0020), if any.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub active_profile: Option<String>,
 }
 
 impl Default for Settings {
@@ -80,6 +83,7 @@ impl Default for Settings {
             keymap: BTreeMap::new(),
             consent: Consent::default(),
             speech: SpeechSettings::default(),
+            active_profile: None,
         }
     }
 }
@@ -159,7 +163,9 @@ pub enum Theme {
 }
 
 /// Announcement verbosity (08 §4).
-#[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Serialize, Deserialize, TS)]
+#[derive(
+    Clone, Copy, Debug, Default, PartialEq, Eq, Serialize, Deserialize, TS, schemars::JsonSchema,
+)]
 #[serde(rename_all = "camelCase")]
 #[non_exhaustive]
 pub enum Verbosity {

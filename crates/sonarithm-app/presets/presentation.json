@@ -1,0 +1,11 @@
+{
+  "format": "sonarithm-profile",
+  "formatVersion": "1.0",
+  "name": "Presentation",
+  "sound": {
+    "context": { "ticks": false, "referenceTone": false, "spokenLegend": true }
+  },
+  "interaction": {
+    "modalities": { "sonification": true, "speech": false, "braille": false, "visual": true }
+  }
+}
