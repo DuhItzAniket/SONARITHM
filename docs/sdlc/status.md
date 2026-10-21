@@ -33,7 +33,7 @@ Status values: `Not started` · `In progress` · `In review` · `Done` · `Block
 | B | B03 | AUDAXIS v1 | Not started | 0% | Planned 2026-10-21: 14 [tasks](../planning/implementation-plan.md#b03--audaxis-v1-navigation-context-and-speech), issues [#211](https://github.com/DuhItzAniket/SONARITHM/issues/211)–[#224](https://github.com/DuhItzAniket/SONARITHM/issues/224). Lane R now: T01–T03, T05–T08, T11; T12 waits for [#186](https://github.com/DuhItzAniket/SONARITHM/issues/186) and [#123](https://github.com/DuhItzAniket/SONARITHM/issues/123); T13 needs NVDA, JAWS, VoiceOver and Orca runs (HP-08) and the Linux and macOS checks (HP-02, HP-03; OD-15) |
 | B | B04 | Visualization and linked cursor | Not started | 0% | Planned 2026-10-21: 8 [tasks](../planning/implementation-plan.md#b04--visualization-and-linked-cursor), issues [#225](https://github.com/DuhItzAniket/SONARITHM/issues/225)–[#232](https://github.com/DuhItzAniket/SONARITHM/issues/232). Lane R now: T03; the rest waits for Gate U |
 | B | B05 | Inspector, spec editor, projects | Not started | 0% | Planned 2026-10-21: 8 [tasks](../planning/implementation-plan.md#b05--inspector-spec-editor-and-project-files), issues [#233](https://github.com/DuhItzAniket/SONARITHM/issues/233)–[#240](https://github.com/DuhItzAniket/SONARITHM/issues/240). Lane R now: T01, T04 (project-format RFC first); the rest waits for Gate U |
-| B | B06 | SONOTRACE v1 | Not started | 0% | Planned 2026-10-21: 7 [tasks](../planning/implementation-plan.md#b06--sonotrace-v1-transport-streams-and-monitoring), issues [#241](https://github.com/DuhItzAniket/SONARITHM/issues/241)–[#247](https://github.com/DuhItzAniket/SONARITHM/issues/247). Lane R now: all but T06 |
+| B | B06 | SONOTRACE v1 | **In progress** | ≈5% | Planned 2026-10-21: 7 [tasks](../planning/implementation-plan.md#b06--sonotrace-v1-transport-streams-and-monitoring), issues [#241](https://github.com/DuhItzAniket/SONARITHM/issues/241)–[#247](https://github.com/DuhItzAniket/SONARITHM/issues/247). Lane R now: all but T06. T01 in review. See [B06 tasks](#b06-tasks) |
 | B | B07 | Conformance, tutorial, co-design, v0.5.0-beta | Not started | 0% | Planned 2026-10-21: 10 [tasks](../planning/implementation-plan.md#b07--accessibility-conformance-tutorial-and-co-design-round-1), issues [#248](https://github.com/DuhItzAniket/SONARITHM/issues/248)–[#257](https://github.com/DuhItzAniket/SONARITHM/issues/257). JOSS P02 (calendar-gated, OD-17). Co-design round 1 needs HP-09 (OD-16); `v0.5.0-beta` waits for [#185](https://github.com/DuhItzAniket/SONARITHM/issues/185) and [#187](https://github.com/DuhItzAniket/SONARITHM/issues/187) |
 | C | C01 | PLOTSONA exact ingestion | Not started | 0% | |
 | C | C02 | PLOTSONA raster digitizer | Not started | 0% | |
@@ -190,6 +190,16 @@ Work runs in a separate agent session through one PR per task into `crates/engin
 | A08-T04 Technical benchmark report | **Done** | Merged in #189. [Report](../research-paper/benchmark-report-a08.md): end-to-end export 131.7× (HW-01) and 70.9× (HW-01e) real time (F-115); golden cases and 49 gallery renders byte-identical on three OSes (F-116); budget decisions #185, #186, #187 |
 | A08-T05 P01 draft | **Done** (draft) | Merged in #165. Draft v0 in `papers/P01-icad-2027-toolkit/src/paper.md` with authorship, artifact, AI-usage and submission records; every citation checked against its source. Submission is the owner's act; the ICAD 2027 call is not published yet |
 | A08-T06 Release v0.2.0-alpha | Prepared | [Release checklist](releases/v0.2.0-alpha.md). The release PR comes from release-plz after v0.1.0-alpha; the owner tags and publishes |
+
+### B06 tasks
+
+Lane R work runs in the app-core and SONOTRACE session, one PR per task. T06 (the stream UI) waits for Gate U. A task is Done when its PR is merged with CI green.
+
+| Task | Status | Notes |
+|---|---|---|
+| B06-T01 `StreamTable` | In review | `sonarithm_data::StreamTable`: sequence numbers, row or time-window capacity with a hard row limit, shared-buffer snapshots, `SNR-DATA-071` when a reader falls behind; property tests for bounded memory, contiguity and snapshot consistency; provenance kept in canonical form |
+| B06-T02 Stream adapters with consent | Not started | After T01 |
+| B06-T03 `sonarithm-sonotrace` live and transport | Not started | After T01 |
 
 ## 3. Current iteration
 

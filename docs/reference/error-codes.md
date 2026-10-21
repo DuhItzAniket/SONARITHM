@@ -66,6 +66,8 @@ Owner: `sonarithm-data`.
 | `SNR-DATA-055` | error | Invalid transform parameters | Fix the parameters the message names (RFC-0001 §4). | — |
 | `SNR-DATA-056` | info | A transform ran | None needed; the message states the rows in and out. | — |
 | `SNR-DATA-060` | error | The view cannot be drawn | Ask for a finite, increasing x range and a width of at least one pixel. | — |
+| `SNR-DATA-070` | error | The stream cannot be used | Give a stream a row limit of at least 1, a positive window in seconds over a time field, and append batches with the stream's fields. | — |
+| `SNR-DATA-071` | warning | Stream rows were dropped before they were read | The source is faster than the stream's window keeps. Widen the window or raise its row limit, or read the stream more often. | — |
 
 ## SNR-ENG
 

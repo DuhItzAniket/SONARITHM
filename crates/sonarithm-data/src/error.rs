@@ -193,6 +193,12 @@ pub enum DataError {
         /// The missing field.
         field: String,
     },
+    /// A stream that cannot be set up, or a batch that does not fit it.
+    #[error("invalid stream: {reason}")]
+    InvalidStream {
+        /// What is wrong.
+        reason: String,
+    },
 }
 
 impl DataError {
@@ -318,6 +324,12 @@ impl DataError {
                 format!(
                     "Table `{table}` has no field `{field}`. Check the spelling against the \
                      data's column names."
+                ),
+            ),
+            Self::InvalidStream { reason } => (
+                &codes::INVALID_STREAM,
+                format!(
+                    "The stream cannot be used: {reason}. Check the stream's fields and its capacity (a row limit of at least 1, a positive window in seconds)."
                 ),
             ),
         };

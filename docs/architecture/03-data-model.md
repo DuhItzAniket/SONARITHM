@@ -186,6 +186,8 @@ A `StreamTable` is an append-only, ring-buffered sequence of record batches with
 - **Incremental compilation** encodes only new rows ([05 §6](05-compiler-and-score-ir.md#6-incremental-and-live-compilation)).
 - **Backpressure:** when the source outruns the window, the oldest rows are dropped and a diagnostic is raised. Rows are never silently skipped in the middle.
 
+**As built (B06-T01).** `sonarithm_data::StreamTable` lives in the data layer, so SONOTRACE can read it without depending on the network adapters. Rows get sequence numbers from 0 in arrival order. `Capacity::rows(n)` keeps the newest `n` rows; `Capacity::window(field, seconds, max_rows)` keeps the rows within `seconds` of the newest row's time (numbers read as seconds; timestamps, dates and durations converted) and never more than `max_rows`, so memory is bounded at any source rate (PB-11). Eviction removes whole batches or a slice of the oldest one. `since(seq)` returns a `Snapshot` of the rows from `seq` on that shares their Arrow buffers; if a reader fell behind, the snapshot starts at the oldest row kept and reports the rows it skipped with `SNR-DATA-071`, as does an append whose batch alone exceeds the row limit. Provenance columns are rewritten in canonical form on append (§4). A batch whose fields differ from the stream's is refused (`SNR-DATA-070`).
+
 ## 9. Interoperability
 
 | Boundary | Mechanism |

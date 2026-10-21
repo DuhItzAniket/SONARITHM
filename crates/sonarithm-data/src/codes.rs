@@ -5,7 +5,7 @@
 //!
 //! Codes are grouped by tens: 001–009 sources and limits; 010–019 delimited text; 020–029
 //! JSON and spreadsheets; 030–039 inference; 040–049 metadata and provenance; 050–059
-//! transforms; 060–069 views. A released code is never reused.
+//! transforms; 060–069 views; 070–079 streams. A released code is never reused.
 
 use sonarithm_core::codes::{Area, CodeInfo, CodeStatus, CodeTable, validate};
 use sonarithm_core::diagnostic::Severity;
@@ -304,6 +304,23 @@ code!(
     []
 );
 
+code!(
+    /// A stream cannot be set up, or a batch does not fit it (03 §8).
+    INVALID_STREAM, "SNR-DATA-070", Error,
+    "The stream cannot be used",
+    "Give a stream a row limit of at least 1, a positive window in seconds over a time field, and append batches with the stream's fields.",
+    []
+);
+
+code!(
+    /// A reader fell behind a stream's window and rows were dropped before it read them
+    /// (03 §8 backpressure).
+    STREAM_ROWS_DROPPED, "SNR-DATA-071", Warning,
+    "Stream rows were dropped before they were read",
+    "The source is faster than the stream's window keeps. Widen the window or raise its row limit, or read the stream more often.",
+    []
+);
+
 /// Every `SNR-DATA` code, in ascending order.
 pub const CODES: CodeTable = CodeTable {
     area: Area::Data,
@@ -344,6 +361,8 @@ pub const CODES: CodeTable = CodeTable {
         INVALID_TRANSFORM,
         TRANSFORM_APPLIED,
         INVALID_VIEW,
+        INVALID_STREAM,
+        STREAM_ROWS_DROPPED,
     ],
 };
 

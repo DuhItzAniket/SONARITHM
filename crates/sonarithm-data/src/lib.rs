@@ -20,6 +20,7 @@ mod infer;
 pub mod meta;
 pub mod provenance;
 pub mod source;
+pub mod stream;
 pub mod table;
 pub mod transform;
 
@@ -36,6 +37,7 @@ pub use source::read_file;
 pub use source::{CsvOptions, JsonOptions, Limits, Loaded, ReadOptions, read_batches, read_bytes};
 #[cfg(feature = "xlsx")]
 pub use source::{SheetOptions, SheetRef};
+pub use stream::{Appended, Capacity, Snapshot, StreamTable};
 pub use table::Table;
 pub use transform::{
     AggregateFn, AggregateOp, BinMethod, NormalizeMethod, ResampleMethod, SmoothMethod, SortOrder,
