@@ -6,6 +6,7 @@
 //! | Module | Responsibility |
 //! |---|---|
 //! | [`live`] | Live encoding: encodes a [`StreamTable`]'s window with the track's encoder and emits the events of new rows only, by sequence number (05 §6) |
+//! | [`rate_limit`] | Stream announcements: one per stream every 5 s, coalesced, stale after 10 s; errors and alarms never dropped; pause, hide and stop (A11Y-16) |
 //! | [`transport`] | Scrub grains that preview the value at the cursor (A11Y-09), and long-series windowing |
 //! | engine | The `stream` source: a spec's `{"kind": "stream", …}` reads the window of the stream the host connected |
 //!
@@ -18,6 +19,7 @@
 
 pub mod codes;
 pub mod live;
+pub mod rate_limit;
 pub mod transport;
 
 use std::sync::Arc;
