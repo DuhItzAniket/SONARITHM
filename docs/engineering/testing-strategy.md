@@ -229,7 +229,15 @@ The headless app core (`sonarithm-app`, B01) holds all non-UI desktop behaviour,
 
 - **Before B01**: integration tests drive the facade (`sonarithm`): spec + data → Score → rendered file + manifest.
 - **From B01**: scenarios drive `sonarithm-app` with a null audio backend: open dataset → compile → plan → play → seek → export; undo/redo; autosave and crash recovery; settings and profiles.
-- **Network deny (B01)**: the scenarios run under a harness that fails on any network connection attempt (P8). The mechanism per OS is defined in B01.
+- **Network deny (B01)**: the scenarios run under a harness that fails on any network connection attempt (P8): `cargo xtask network-deny`, in the `network-deny` CI job on three OSes. It builds the `sonarithm-app` test executables and runs each under the OS's mechanism:
+
+  | OS | Mechanism | What counts as an attempt |
+  |---|---|---|
+  | Linux | `strace -f -e trace=connect,sendto,sendmsg,sendmmsg` | A traced call with an `AF_INET` or `AF_INET6` address (Unix sockets do not count) |
+  | macOS | `sandbox-exec` with `(deny network-outbound (remote ip "*:*"))`, so attempts also fail | A kernel `deny(1) network-outbound` line for the process in `log show` |
+  | Windows | Windows Filtering Platform connection auditing (`auditpol`, needs an elevated shell, as CI runners have) | An outbound 5156 or 5157 event for the process in the Security log |
+
+  `--self-test` is the negative test: an ignored probe (`network_probe_connects`) connects to 192.0.2.1 (TEST-NET-1) over TCP and UDP, and the harness fails unless it sees those attempts, so a mechanism that stops working cannot pass silently. B01-T09 runs the same mechanisms against the packaged app.
 - **Project round trip (B05)**: a saved project reopens bit-identically; every inspector edit round-trips through the spec without loss.
 - **IPC contract**: ts-rs types are regenerated in CI and must produce no diff; Tauri command handlers are tested with typed payloads; frontend tests use the same generated types through `mockIPC`.
 

@@ -93,6 +93,7 @@ From phase A07, release-plz maintains this file: it generates each release's ent
   - `sonarithm-stream`: live stream adapters for WebSocket and OSC (default features), serial and MQTT (opt-in features) and file tail, each opened only with the user's explicit consent; messages become rows through a schema, fill a bounded stream table, and the connection reconnects, pauses and stops on request.
 - Desktop app core (phase B01, Lane R):
   - `sonarithm-app`, the headless app core behind the desktop app: one `App::dispatch` entry point for the IPC protocol v1 ([ADR-0017](docs/decisions/0017-ipc-protocol-v1.md)) with datasets, the spec and its undo history, compile reports with diagnostics, the authoritative transport (play, pause, stop, seek, speed, loop, stop all audio) on its own control thread, export jobs with progress and cancellation, device selection, and versioned settings with migrations and crash-safe writes. Playback starts only on a play command (A11Y-15); a new Score, a device change or a device failure pauses it. `SNR-APP` diagnostic codes.
+  - `cargo xtask network-deny`: the app-core tests run under strace (Linux), `sandbox-exec` (macOS) or Windows Filtering Platform auditing, and any outbound connection attempt fails the run; a self-test proves each mechanism catches a deliberate one (NFR-04).
 
 ### Fixed
 

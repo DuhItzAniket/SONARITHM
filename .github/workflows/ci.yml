@@ -297,9 +297,37 @@ jobs:
           retention-days: 14
           if-no-files-found: error
 
+  # Network deny (B01-T06; NFR-04, ADR-0012): the app-core tests run under an OS mechanism
+  # that records every outbound connection attempt (strace, sandbox-exec, WFP auditing;
+  # testing-strategy §10). The self-test first proves the mechanism sees a deliberate one.
+  network-deny:
+    name: network-deny (${{ matrix.os }})
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    permissions:
+      contents: read
+    timeout-minutes: 30
+    env:
+      SONARITHM_BACKEND: "null"
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - run: rustup toolchain install
+      - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
+        with:
+          save-if: ${{ github.ref == 'refs/heads/main' }}
+      - if: runner.os == 'Linux'
+        run: sudo apt-get update && sudo apt-get install --yes --no-install-recommends libasound2-dev strace
+      - run: cargo xtask network-deny --self-test
+      - run: cargo xtask network-deny
+
   all-checks-pass:
     if: always()
-    needs: [fmt, clippy-test, doc, deny, check-deps, msrv, wasm32, golden, golden-compare, no-alloc, frontend, gallery]
+    needs: [fmt, clippy-test, doc, deny, check-deps, msrv, wasm32, golden, golden-compare, no-alloc, frontend, gallery, network-deny]
     runs-on: ubuntu-latest
     permissions: {}
     timeout-minutes: 5

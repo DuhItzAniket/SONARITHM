@@ -1,0 +1,362 @@
+// SPDX-FileCopyrightText: 2026 SONARITHM contributors
+// SPDX-License-Identifier: MIT OR Apache-2.0
+
+//! `cargo xtask network-deny`: runs the app-core test executables under an OS mechanism
+//! that records every outbound network connection attempt, and fails if there is any
+//! (NFR-04, ADR-0012, AGENTS.md rule 9; B01-T06).
+//!
+//! | OS | Mechanism | Needs |
+//! |---|---|---|
+//! | Linux | `strace -f` traces `connect`, `sendto`, `sendmsg` and `sendmmsg`; an `AF_INET` or `AF_INET6` address is an attempt | `strace` |
+//! | macOS | `sandbox-exec` with a profile that denies `network-outbound` to any IP address; the kernel's `deny(1) network-outbound` log lines for the process are the attempts (`log show`) | nothing extra |
+//! | Windows | Windows Filtering Platform connection auditing (`auditpol`, events 5156 and 5157 in the Security log); an outbound event for the process is an attempt | an elevated shell (CI runners are) |
+//!
+//! `--self-test` runs a probe that connects on purpose (TCP and UDP to 192.0.2.1, a
+//! documentation address that routes nowhere) and fails unless the mechanism sees it, so
+//! a mechanism that stopped working cannot pass silently. testing-strategy §10 documents
+//! the mechanisms; B01-T09 runs the same checks against the packaged app.
+
+use std::path::{Path, PathBuf};
+use std::process::{Command, Stdio};
+use std::time::{Duration, Instant};
+
+use anyhow::{Context as _, Result, bail};
+use cargo_metadata::Message;
+
+/// The crate whose test executables run under the harness.
+const PACKAGE: &str = "sonarithm-app";
+/// The probe test (in `crates/sonarithm-app/tests/network_probe.rs`).
+const PROBE: &str = "network_probe_connects";
+
+/// One test executable's result.
+struct Run {
+    name: String,
+    attempts: Vec<String>,
+}
+
+pub(crate) fn run(root: &Path, rest: &[String]) -> Result<()> {
+    let self_test = match rest {
+        [] => false,
+        [flag] if flag == "--self-test" => true,
+        [other, ..] => bail!("unexpected option `{other}`; expected `--self-test` or nothing"),
+    };
+    let mechanism = Mechanism::detect()?;
+    mechanism.prepare(root)?;
+    let executables = build(root)?;
+    let mut runs = Vec::new();
+    for exe in &executables {
+        let name = exe
+            .file_name()
+            .map(|n| n.to_string_lossy().into_owned())
+            .unwrap_or_default();
+        let is_probe = name.starts_with("network_probe");
+        if self_test != is_probe {
+            continue;
+        }
+        let args: Vec<&str> = if self_test {
+            vec!["--ignored", "--exact", PROBE]
+        } else {
+            vec![]
+        };
+        println!("network-deny: running {name} under {}", mechanism.name());
+        let attempts = mechanism.attempts(root, exe, &args)?;
+        runs.push(Run { name, attempts });
+    }
+    if runs.is_empty() {
+        bail!("no test executables of {PACKAGE} were found");
+    }
+    let total: usize = runs.iter().map(|run| run.attempts.len()).sum();
+    for run in &runs {
+        println!(
+            "network-deny: {} made {} connection attempt(s)",
+            run.name,
+            run.attempts.len()
+        );
+        for line in run.attempts.iter().take(5) {
+            println!("    {line}");
+        }
+    }
+    match (self_test, total) {
+        (false, 0) => {
+            println!(
+                "network-deny: no connection attempts ({})",
+                mechanism.name()
+            );
+            Ok(())
+        }
+        (false, n) => {
+            bail!("{n} network connection attempt(s) without a consent gate (NFR-04, ADR-0012)")
+        }
+        (true, 0) => bail!(
+            "self-test: the probe's deliberate connections were not seen, so {} does not \
+             work on this machine",
+            mechanism.name()
+        ),
+        (true, n) => {
+            println!("network-deny: self-test saw the probe's {n} attempt(s); the harness works");
+            Ok(())
+        }
+    }
+}
+
+/// Builds the package's test executables and returns their paths.
+fn build(root: &Path) -> Result<Vec<PathBuf>> {
+    let cargo = std::env::var("CARGO").unwrap_or_else(|_| "cargo".to_owned());
+    let output = Command::new(cargo)
+        .current_dir(root)
+        .args([
+            "test",
+            "--locked",
+            "--no-run",
+            "--message-format=json",
+            "-p",
+            PACKAGE,
+        ])
+        .stderr(Stdio::inherit())
+        .output()
+        .context("running `cargo test --no-run`")?;
+    if !output.status.success() {
+        bail!("building the {PACKAGE} tests failed");
+    }
+    let mut executables = Vec::new();
+    for message in Message::parse_stream(output.stdout.as_slice()) {
+        if let Message::CompilerArtifact(artifact) = message.context("reading cargo's output")?
+            && artifact.profile.test
+            && let Some(exe) = artifact.executable
+        {
+            executables.push(exe.into_std_path_buf());
+        }
+    }
+    executables.sort();
+    Ok(executables)
+}
+
+#[derive(Clone, Copy, Debug)]
+enum Mechanism {
+    Strace,
+    Sandbox,
+    Wfp,
+}
+
+impl Mechanism {
+    fn detect() -> Result<Self> {
+        if cfg!(target_os = "linux") {
+            Ok(Self::Strace)
+        } else if cfg!(target_os = "macos") {
+            Ok(Self::Sandbox)
+        } else if cfg!(windows) {
+            Ok(Self::Wfp)
+        } else {
+            bail!("network-deny has no mechanism for this OS")
+        }
+    }
+
+    fn name(self) -> &'static str {
+        match self {
+            Self::Strace => "strace",
+            Self::Sandbox => "sandbox-exec",
+            Self::Wfp => "Windows Filtering Platform auditing",
+        }
+    }
+
+    fn prepare(self, root: &Path) -> Result<()> {
+        match self {
+            Self::Strace => {
+                let ok = Command::new("strace")
+                    .arg("-V")
+                    .stdout(Stdio::null())
+                    .status()
+                    .is_ok_and(|status| status.success());
+                if !ok {
+                    bail!("strace is not installed (`sudo apt-get install strace`)");
+                }
+                Ok(())
+            }
+            Self::Sandbox => {
+                let dir = work_dir(root)?;
+                std::fs::write(
+                    dir.join("deny.sb"),
+                    "(version 1)\n(allow default)\n(deny network-outbound (remote ip \"*:*\"))\n",
+                )
+                .context("writing the sandbox profile")
+            }
+            Self::Wfp => {
+                // The GUID is "Filtering Platform Connection", so the call works in any
+                // display language.
+                let status = Command::new("auditpol")
+                    .args([
+                        "/set",
+                        "/subcategory:{0CCE9226-69AE-11D9-BED3-505054503030}",
+                        "/success:enable",
+                        "/failure:enable",
+                    ])
+                    .stdout(Stdio::null())
+                    .status()
+                    .context("running auditpol")?;
+                if !status.success() {
+                    bail!(
+                        "auditpol could not enable connection auditing; run the harness from \
+                         an elevated shell"
+                    );
+                }
+                Ok(())
+            }
+        }
+    }
+
+    /// Runs `exe` and returns a line per outbound connection attempt.
+    fn attempts(self, root: &Path, exe: &Path, args: &[&str]) -> Result<Vec<String>> {
+        let started = Instant::now();
+        match self {
+            Self::Strace => {
+                let log = work_dir(root)?.join("strace.log");
+                let status = Command::new("strace")
+                    .args([
+                        "-f",
+                        "-qq",
+                        "-e",
+                        "trace=connect,sendto,sendmsg,sendmmsg",
+                        "-o",
+                    ])
+                    .arg(&log)
+                    .arg(exe)
+                    .args(args)
+                    .env("SONARITHM_BACKEND", "null")
+                    .status()
+                    .context("running strace")?;
+                check(exe, status.success())?;
+                let text = std::fs::read_to_string(&log).context("reading the strace log")?;
+                Ok(inet_lines(&text))
+            }
+            Self::Sandbox => {
+                let profile = work_dir(root)?.join("deny.sb");
+                let mut child = Command::new("sandbox-exec")
+                    .arg("-f")
+                    .arg(&profile)
+                    .arg(exe)
+                    .args(args)
+                    .env("SONARITHM_BACKEND", "null")
+                    .spawn()
+                    .context("running sandbox-exec")?;
+                let pid = child.id();
+                let status = child.wait().context("waiting for the tests")?;
+                check(exe, status.success())?;
+                // Give the unified log a moment to persist the kernel's lines.
+                std::thread::sleep(Duration::from_secs(2));
+                let minutes = started.elapsed().as_secs() / 60 + 2;
+                let output = Command::new("log")
+                    .args(["show", "--style", "compact", "--last"])
+                    .arg(format!("{minutes}m"))
+                    .args(["--predicate", "eventMessage CONTAINS \"network-outbound\""])
+                    .output()
+                    .context("running `log show`")?;
+                let text = String::from_utf8_lossy(&output.stdout);
+                Ok(sandbox_lines(&text, pid))
+            }
+            Self::Wfp => {
+                let mut child = Command::new(exe)
+                    .args(args)
+                    .env("SONARITHM_BACKEND", "null")
+                    .spawn()
+                    .context("running the tests")?;
+                let pid = child.id();
+                let status = child.wait().context("waiting for the tests")?;
+                check(exe, status.success())?;
+                std::thread::sleep(Duration::from_secs(2));
+                let seconds = started.elapsed().as_secs() + 60;
+                let script = format!(
+                    "Get-WinEvent -FilterHashtable @{{LogName='Security'; Id=5156,5157; \
+                     StartTime=(Get-Date).AddSeconds(-{seconds})}} -ErrorAction SilentlyContinue | \
+                     ForEach-Object {{ $d = @{{}}; ([xml]$_.ToXml()).Event.EventData.Data | \
+                     ForEach-Object {{ if ($_.Name) {{ $d[$_.Name] = $_.'#text' }} }}; \
+                     \"$($_.Id)`t$($d.ProcessID)`t$($d.Direction)`t$($d.DestAddress):$($d.DestPort)`t$($d.Application)\" }}"
+                );
+                let output = Command::new("powershell")
+                    .args(["-NoProfile", "-NonInteractive", "-Command", &script])
+                    .output()
+                    .context("reading the Security event log")?;
+                let text = String::from_utf8_lossy(&output.stdout);
+                Ok(wfp_lines(&text, pid))
+            }
+        }
+    }
+}
+
+fn work_dir(root: &Path) -> Result<PathBuf> {
+    let dir = root.join("target").join("network-deny");
+    std::fs::create_dir_all(&dir).with_context(|| format!("creating {}", dir.display()))?;
+    Ok(dir)
+}
+
+fn check(exe: &Path, ok: bool) -> Result<()> {
+    if ok {
+        Ok(())
+    } else {
+        bail!("the tests in {} failed under the harness", exe.display())
+    }
+}
+
+/// strace lines with an IPv4 or IPv6 address.
+fn inet_lines(log: &str) -> Vec<String> {
+    log.lines()
+        .filter(|line| line.contains("sa_family=AF_INET"))
+        .map(str::to_owned)
+        .collect()
+}
+
+/// Sandbox denials of the process `pid`, such as
+/// `Sandbox: network_probe-1(4242) deny(1) network-outbound 192.0.2.1:9`.
+fn sandbox_lines(log: &str, pid: u32) -> Vec<String> {
+    let tag = format!("({pid})");
+    log.lines()
+        .filter(|line| line.contains("deny") && line.contains("network-outbound"))
+        .filter(|line| line.contains(&tag))
+        .map(str::to_owned)
+        .collect()
+}
+
+/// Outbound WFP connection events (`%%14593`) of the process `pid`. Each line is
+/// `id \t pid \t direction \t destination \t application`.
+fn wfp_lines(log: &str, pid: u32) -> Vec<String> {
+    let pid = pid.to_string();
+    log.lines()
+        .filter(|line| {
+            let fields: Vec<&str> = line.split('\t').collect();
+            fields.get(1) == Some(&pid.as_str()) && fields.get(2) == Some(&"%%14593")
+        })
+        .map(str::to_owned)
+        .collect()
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn strace_lines_with_inet_addresses_are_attempts() {
+        let log = "\
+4242 connect(3, {sa_family=AF_UNIX, sun_path=\"/run/user/1000/pulse/native\"}, 110) = 0
+4243 connect(5, {sa_family=AF_INET, sin_port=htons(9), sin_addr=inet_addr(\"192.0.2.1\")}, 16) = -1 EINPROGRESS
+4243 sendto(6, \"x\", 1, 0, {sa_family=AF_INET6, sin6_port=htons(9)}, 28) = 1
+4243 sendto(7, \"x\", 1, 0, NULL, 0) = 1";
+        assert_eq!(inet_lines(log).len(), 2);
+    }
+
+    #[test]
+    fn sandbox_denials_count_only_for_the_process() {
+        let log = "\
+2026-10-21 10:00:00.1 E  kernel[0:1] Sandbox: network_probe-1(4242) deny(1) network-outbound 192.0.2.1:9
+2026-10-21 10:00:00.2 E  kernel[0:1] Sandbox: other(99) deny(1) network-outbound 10.0.0.1:443
+2026-10-21 10:00:00.3 E  kernel[0:1] Sandbox: network_probe-1(4242) allow network-outbound /private/var/run/syslog";
+        assert_eq!(sandbox_lines(log, 4242).len(), 1);
+    }
+
+    #[test]
+    fn wfp_events_count_only_outbound_ones_of_the_process() {
+        let log = "\
+5156\t4242\t%%14593\t192.0.2.1:9\t\\device\\harddiskvolume2\\t\\network_probe.exe
+5156\t4242\t%%14592\t127.0.0.1:50000\t\\device\\harddiskvolume2\\t\\network_probe.exe
+5157\t77\t%%14593\t10.0.0.1:443\t\\device\\harddiskvolume2\\other.exe";
+        assert_eq!(wfp_lines(log, 4242).len(), 1);
+    }
+}
