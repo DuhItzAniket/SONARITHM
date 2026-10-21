@@ -90,6 +90,38 @@ pub(crate) fn compile(spec: &str, data: Option<DataBundle>) -> Compiled {
     }
 }
 
+/// Compiles an inline-data `spec`, then rebuilds its navigation tree with `annotations`
+/// (no analyzer is registered in these tests, so insights come from here).
+pub(crate) fn tree_with(
+    spec: &serde_json::Value,
+    annotations: &[sonarithm_core::engine::Annotation],
+) -> NavTree {
+    let compiled = compile(&spec.to_string(), None);
+    let prepared = sonarithm_spec::prepare(&spec.to_string(), None).unwrap();
+    let bundle = inline_bundle(spec);
+    let mut cx = CompileContext::new(
+        0,
+        sonarithm_core::engine::Budget::default(),
+        CancelToken::new(),
+    );
+    sonarithm_audaxis::nav::tree::build(
+        &prepared.resolved,
+        &compiled.score,
+        &bundle,
+        annotations,
+        &mut cx,
+    )
+    .unwrap()
+}
+
+/// The data of an inline-data spec, loaded as the test source loads it.
+pub(crate) fn inline_bundle(spec: &serde_json::Value) -> DataBundle {
+    let bytes = serde_json::to_vec(&spec["data"]["source"]["values"]).unwrap();
+    read_bytes(&bytes, Format::Json, "inline.json", &ReadOptions::new())
+        .unwrap()
+        .bundle
+}
+
 /// The compiled navigation tree; panics if there is none.
 pub(crate) fn tree(compiled: &Compiled) -> &NavTree {
     compiled

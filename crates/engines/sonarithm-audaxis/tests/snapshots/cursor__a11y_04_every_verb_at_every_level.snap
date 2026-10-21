@@ -1,0 +1,180 @@
+---
+source: crates/engines/sonarithm-audaxis/tests/cursor.rs
+expression: table
+---
+dataset:
+  Right      boundary Last
+  Left       boundary First
+  Jump+Right boundary Last
+  Jump+Left  boundary First
+  Home       boundary First
+  End        boundary Last
+  Down       → series temp
+  Up         boundary Top
+  Enter      → series temp
+  PageDown   invalid NotInSeries
+  PageUp     invalid NotInSeries
+  Jump+Up    invalid NotHere
+  Jump+Down  invalid NotHere
+  N          → point 3 of temp [landmark]
+  Shift+N    → point 7 of temp [landmark]
+series temp:
+  Right      → series humid
+  Left       boundary First
+  Jump+Right → series humid
+  Jump+Left  boundary First
+  Home       boundary First
+  End        → filters
+  Down       → segment 1 of temp
+  Up         → dataset
+  Enter      → segment 1 of temp
+  PageDown   → series humid
+  PageUp     boundary First
+  Jump+Up    → point 7 of temp [landmark]
+  Jump+Down  → point 0 of temp
+  N          → point 3 of temp [landmark]
+  Shift+N    → point 7 of temp [landmark]
+axes:
+  Right      → insights
+  Left       → series humid
+  Jump+Right → insights
+  Jump+Left  → series humid
+  Home       → series temp
+  End        → filters
+  Down       → axis day
+  Up         → dataset
+  Enter      → axis day
+  PageDown   invalid NotInSeries
+  PageUp     invalid NotInSeries
+  Jump+Up    invalid NotInSeries
+  Jump+Down  invalid NotInSeries
+  N          → point 3 of temp [landmark]
+  Shift+N    → point 7 of temp [landmark]
+insights:
+  Right      → filters
+  Left       → axes
+  Jump+Right → filters
+  Jump+Left  → axes
+  Home       → series temp
+  End        → filters
+  Down       → insight-group extrema
+  Up         → dataset
+  Enter      → insight-group extrema
+  PageDown   invalid NotInSeries
+  PageUp     invalid NotInSeries
+  Jump+Up    invalid NotInSeries
+  Jump+Down  invalid NotInSeries
+  N          → point 3 of temp [landmark]
+  Shift+N    → point 7 of temp [landmark]
+filters:
+  Right      boundary Last
+  Left       → insights
+  Jump+Right boundary Last
+  Jump+Left  → insights
+  Home       → series temp
+  End        boundary Last
+  Down       → filter temp
+  Up         → dataset
+  Enter      → filter temp
+  PageDown   invalid NotInSeries
+  PageUp     invalid NotInSeries
+  Jump+Up    invalid NotInSeries
+  Jump+Down  invalid NotInSeries
+  N          → point 3 of temp [landmark]
+  Shift+N    → point 7 of temp [landmark]
+segment 2 of temp:
+  Right      boundary Last
+  Left       → segment 1 of temp
+  Jump+Right boundary Last
+  Jump+Left  → segment 1 of temp
+  Home       → segment 1 of temp
+  End        boundary Last
+  Down       → point 10 of temp
+  Up         → series temp
+  Enter      → point 10 of temp
+  PageDown   → segment 2 of humid
+  PageUp     boundary First
+  Jump+Up    → point 7 of temp [landmark]
+  Jump+Down  → point 0 of temp
+  N          → point 3 of temp [landmark]
+  Shift+N    → point 7 of temp [landmark]
+axis day:
+  Right      → axis temp
+  Left       boundary First
+  Jump+Right → axis temp
+  Jump+Left  boundary First
+  Home       boundary First
+  End        → axis humid
+  Down       boundary Bottom
+  Up         → axes
+  Enter      boundary Bottom
+  PageDown   invalid NotInSeries
+  PageUp     invalid NotInSeries
+  Jump+Up    invalid NotInSeries
+  Jump+Down  invalid NotInSeries
+  N          → point 3 of temp [landmark]
+  Shift+N    → point 7 of temp [landmark]
+insight-group extrema:
+  Right      boundary Last
+  Left       boundary First
+  Jump+Right boundary Last
+  Jump+Left  boundary First
+  Home       boundary First
+  End        boundary Last
+  Down       → insight minimum
+  Up         → insights
+  Enter      → insight minimum
+  PageDown   invalid NotInSeries
+  PageUp     invalid NotInSeries
+  Jump+Up    invalid NotInSeries
+  Jump+Down  invalid NotInSeries
+  N          → point 3 of temp [landmark]
+  Shift+N    → point 7 of temp [landmark]
+filter humid:
+  Right      boundary Last
+  Left       → filter temp
+  Jump+Right boundary Last
+  Jump+Left  → filter temp
+  Home       → filter temp
+  End        boundary Last
+  Down       boundary Bottom
+  Up         → filters
+  Enter      toggle (included: false)
+  PageDown   invalid NotInSeries
+  PageUp     invalid NotInSeries
+  Jump+Up    invalid NotInSeries
+  Jump+Down  invalid NotInSeries
+  N          → point 3 of temp [landmark]
+  Shift+N    → point 7 of temp [landmark]
+point 12 of temp:
+  Right      → point 13 of temp
+  Left       → point 11 of temp
+  Jump+Right → point 14 of temp
+  Jump+Left  → point 10 of temp
+  Home       → point 0 of temp [enters segment 1 of temp]
+  End        → point 19 of temp
+  Down       boundary Bottom
+  Up         → segment 2 of temp
+  Enter      describe
+  PageDown   → point 12 of humid [enters segment 2 of humid]
+  PageUp     boundary First
+  Jump+Up    → point 7 of temp [enters segment 1 of temp] [landmark]
+  Jump+Down  → point 0 of temp [enters segment 1 of temp]
+  N          boundary Last
+  Shift+N    → point 7 of temp [enters segment 1 of temp] [landmark]
+insight minimum:
+  Right      → insight maximum
+  Left       boundary First
+  Jump+Right → insight maximum
+  Jump+Left  boundary First
+  Home       boundary First
+  End        → insight maximum
+  Down       boundary Bottom
+  Up         → insight-group extrema
+  Enter      → point 3 of temp [landmark]
+  PageDown   invalid NotInSeries
+  PageUp     invalid NotInSeries
+  Jump+Up    invalid NotInSeries
+  Jump+Down  invalid NotInSeries
+  N          → point 3 of temp [landmark]
+  Shift+N    → point 7 of temp [landmark]

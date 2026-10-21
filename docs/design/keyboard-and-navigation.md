@@ -75,7 +75,7 @@ Notation: "Jump" is Ctrl on Windows and Linux and Option on macOS (KB-07).
 | Local: out | Up, or Backspace | To the parent, keeping the x position |
 | Lateral | PageUp / PageDown | Previous / next series at the same position: the same segment, or the point with the same x (nearest x if absent, and the announcement says "nearest") |
 | Targeted: extremes | Jump+Up / Jump+Down | Maximum / minimum point of the current scope (selection if any, else the series), landing at point level |
-| Targeted: insights | N / Shift+N | Next / previous insight in the current series, in x order |
+| Targeted: insights | N / Shift+N | Next / previous insight in the current series, in x order. The cursor lands on the insight's point, with the landmark earcon, so repeated presses stay in the series |
 | Targeted: landmarks | X, Y, I, F, D | X axis, Y axis, Insights, Filters, Dataset root |
 | Targeted: go to | G | "Go to x" field (number, date or category); moves to the nearest point |
 | Targeted: search | Primary+F | "Find value" field; moves to the next point equal to or crossing the value |

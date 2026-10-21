@@ -18,7 +18,8 @@
 ## What was done
 
 - B02-T08: `crates/sonarithm-i18n` (Fluent catalogues `common`, `ui` and `units` in `locales/en-US/`; ICU4X numbers and dates; 26 units with symbol, terse and verbose forms; `en-XA` and `check_pseudo`) and `packages/i18n` (`createLocalizer`, the same pseudo-locale, the `sonarithm/no-literal-ui-string` rule). The frontend CI job now runs `pnpm -r test`. Merged as #260.
-- B03-T01: `sonarithm_core::nav` (NavTree types and invariant check), `ContextProvider::nav_tree`, `Compiled::nav` in the compiler, and `crates/engines/sonarithm-audaxis` with the tree builder; snapshots for the six NUMISONA templates, property tests and OD-18.
+- B03-T01: `sonarithm_core::nav` (NavTree types and invariant check), `ContextProvider::nav_tree`, `Compiled::nav` in the compiler, and `crates/engines/sonarithm-audaxis` with the tree builder; snapshots for the six NUMISONA templates, property tests and OD-18. Merged as #262.
+- B03-T02: `nav::Cursor` with the verbs of keyboard §4.2 and §4.3, outcomes (moved, boundary, invalid, describe, toggled) with their earcon IDs, and where am I; a verb-by-level matrix snapshot reviewed against §4.3 row by row.
 
 ## Decisions
 
@@ -33,6 +34,7 @@
 | AUDAXIS stays out of the facade's default engines until B03-T05 | Every resolved spec has a `context` section, so registering AUDAXIS before its context tracks exist would drop warning `SNR-COMP-023` from every compile and churn CLI snapshots twice | status.md B03 tasks |
 | Points are rows read from the spec and data (filter, time field, x order), not from Score events | Glide events carry only a bounding row range; onsets come from the Score afterwards | 07 AUDAXIS |
 | Even segments: at least 8 points, at most 12 per series, provisional | No design rule or source sets a size; recorded as an open decision instead of a default with a rule ID | OD-18 |
+| N and Shift+N land on the insight's point, not the insight node | "Next insight in the current series" needs the cursor to stay in the series; the move is flagged as a landmark | keyboard §4.2 |
 | B02-T08 built before B01-T02 (its listed dependency) | It needs no generated IPC type: the catalogues are plain files and the contract test reads them directly | status.md B02 tasks |
 
 ## Problems and how they were solved
@@ -49,5 +51,5 @@
 
 ## Next steps
 
-- [ ] B03-T02: cursor, verbs and where am I (agent).
+- [ ] B03-T03: announcement composer and queue (agent).
 - [ ] Owner: when `sonarithm-i18n` first ships in a release, publish it once by hand so crates.io trusted publishing can be set up for it ([release process](../../engineering/release-process.md)); checklist #129.

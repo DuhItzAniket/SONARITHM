@@ -10,6 +10,7 @@ From phase A07, release-plz maintains this file: it generates each release's ent
 
 ### Added
 
+- The navigation cursor (B03-T02): every movement verb of the keymap (step, jump by 10 %, first and last, in and out, lateral to another series, maximum and minimum, insights, landmarks, go to x, find value, Enter) and "where am I". Moves never wrap: at an edge the cursor stays and reports the boundary earcon; a verb that does not apply reports why.
 - The navigation tree (B03-T01): the `sonarithm-audaxis` engine crate builds a NavTree (dataset, series, segments, points with their data rows, axes, insights and filters) from each compiled Score, and the compiler returns it beside the Score (`Compiled::nav`). The tree types live in `sonarithm_core::nav`.
 - Message catalogues and locale formatting (B02-T08): the `sonarithm-i18n` crate with Fluent catalogues shared with the desktop UI, ICU4X number and date formatting that matches `Intl.NumberFormat`, spoken unit names (symbol, terse and verbose), and the `en-XA` pseudo-locale with a check for hard-coded, concatenated and truncated strings; the `@sonarithm/i18n` package and the `sonarithm/no-literal-ui-string` ESLint rule.
 - Documentation baseline (2026-10-18), written before any code:
