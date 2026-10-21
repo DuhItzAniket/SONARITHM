@@ -1,5 +1,5 @@
 ---
-status: proposed
+status: accepted
 date: 2026-10-21
 decision-makers: ["@DuhItzAniket"]
 consulted: ["coordinator agent (Claude Code), under the owner's delegation of contract approvals"]
@@ -37,6 +37,8 @@ Two questions also need one recorded answer:
 ## Decision outcome
 
 Chosen option: **A**.
+
+Accepted on 2026-10-21 by the coordinator under the owner's delegation of contract approvals, with one condition: polarity goes into the effective spec too, like every other sound preference (§3), and a test proves that a Score re-renders from its manifest without the profile (Confirmation).
 
 ### 1. The document
 
@@ -90,10 +92,15 @@ A profile is a UTF-8 JSON object:
 
 * **Interaction preferences** (verbosity, part order, modalities, speech, keymap) are resolved field by field in the app core. A UI action is a session override: it applies at once and persists only if the listener saves it to a profile.
 * **Sound preferences reach the compiler only through the spec.**
-  * Before compiling, the app core fills spec fields that the spec leaves unset with the profile's values: pitch range, pace, instrument, context cues. This produces the effective spec, which is what gets compiled, and its canonical form is what the render manifest records. The compiler and the Score IR do not change, and a Score is reproducible from its manifest without the profile (rule 1, ADR-0013).
+  * Before compiling, the app core fills spec fields that the spec leaves unset with the profile's values: pitch range, pace, instrument, context cues, and polarity (below). This produces the effective spec, which is what gets compiled, and its canonical form is what the render manifest records. The compile receives no profile of any kind, so the compiler and the Score IR do not change, and a Score is reproducible from its manifest without the profile (rule 1, ADR-0013).
   * A spec value always wins.
   * `marks` applies only where the spec leaves the choice: templates and quick sonifications.
-* **Polarity** uses NUMISONA's existing `PolarityProfile`: spec explicit > profile concept > concept table, then the flip (SDR-15). The one-key flip toggles the field in the active profile, saves it, and recompiles (FR-032).
+* **Polarity is written into the effective spec as an explicit value.** NUMISONA's `PolarityProfile` is an engine input, not a spec field, so the app core does not pass it to the compiler.
+  * For every pitch channel, the app core resolves the polarity with NUMISONA's public `polarity::resolve`, the built-in concept table and the active profile. The order is NUMISONA's: spec explicit > profile concept > concept table > generic (SDR-12..14).
+  * It then applies the profile's one-key flip (SDR-15). The flip is a persisted UI action, the highest layer, so it inverts a spec's explicit value too, as NUMISONA's own resolution does.
+  * It writes the result as an explicit `positive` or `negative` on the channel, so the recorded effective spec alone gives the same Score.
+  * The one-key flip toggles the field in the active profile, saves it, and recompiles (FR-032).
+  * The inspector shows the polarity's source (spec, profile or concept table), the same information NUMISONA's diagnostics give today.
 * **The effective-settings view.**
   * A new `settings_effective` command returns every setting with its value and the layer it came from. The CLI's `inspect --settings` uses the same function (12 §3).
   * The value of any setting is announced on request.
@@ -101,7 +108,7 @@ A profile is a UTF-8 JSON object:
 
 ### Consequences
 
-* Good, because the compiler, the engines and the Score IR are untouched, and every Score stays reproducible from its manifest.
+* Good, because the compiler, the engines and the Score IR are untouched, and every Score stays reproducible from its manifest: the compile never sees a profile, only the effective spec.
 * Good, because one document serves user profiles, presets and projects, and a project can carry a class's or a study's settings.
 * Good, because each value's source is inspectable and can be announced (12 §3).
 * Bad, because the effective spec differs from the spec text the user typed. The spec editor must show which values came from the profile (B05 inspector).
@@ -114,6 +121,10 @@ B03-T08's tests:
 * Schema tests, and an import–export round trip that is byte-identical after canonicalisation.
 * Precedence unit tests over all six layers.
 * `sdr_15_*`: the flip persists and survives a restart.
+* A reproducibility test, the acceptance condition:
+  1. Render with a profile that flips a field, sets a concept's polarity, and fills pitch range, pace, instrument and context cues.
+  2. Re-render from the canonical spec recorded in that render's manifest, with no profile at all.
+  3. The two Score hashes are identical.
 * `sdr_38_*`: one test per personalization field.
 * The project profile round-trips through a `.sonarithm` bundle.
 * The existing project tests keep passing.
