@@ -20,7 +20,8 @@
 - B02-T08: `crates/sonarithm-i18n` (Fluent catalogues `common`, `ui` and `units` in `locales/en-US/`; ICU4X numbers and dates; 26 units with symbol, terse and verbose forms; `en-XA` and `check_pseudo`) and `packages/i18n` (`createLocalizer`, the same pseudo-locale, the `sonarithm/no-literal-ui-string` rule). The frontend CI job now runs `pnpm -r test`. Merged as #260.
 - B03-T01: `sonarithm_core::nav` (NavTree types and invariant check), `ContextProvider::nav_tree`, `Compiled::nav` in the compiler, and `crates/engines/sonarithm-audaxis` with the tree builder; snapshots for the six NUMISONA templates, property tests and OD-18. Merged as #262.
 - B03-T02: `nav::Cursor` with the verbs of keyboard §4.2 and §4.3, outcomes (moved, boundary, invalid, describe, toggled) with their earcon IDs, and where am I; a verb-by-level matrix snapshot reviewed against §4.3 row by row. Merged as #264.
-- B03-T05: `context` module (ticks, dynamic reference, legend), the render engine's `click` instrument, `Composer::legend`, polarity and pitch range on series nodes, the `context-cues` golden case, OD-19.
+- B03-T05: `context` module (ticks, dynamic reference, legend), the render engine's `click` instrument, `Composer::legend`, polarity and pitch range on series nodes, the `context-cues` golden case, OD-19. Merged as #269.
+- B03-T06: the render engine's `EarconSound` (redesigned synthesis, two-part and gliding earcons, `Command::Earcon` with its own voice pool on the earcon bus), AUDAXIS's `earcons` catalogue and `for_outcome`, `earcons.ftl`, `E-GAP`; the `earcons` golden reference updated.
 - B03-T11: `spatial::Spatial` shaper and the A11Y-14 guard (`SNR-ENG-100` to `103`, AUDAXIS's first code table), the mono-downmix conformance test and the `stereo-placement` golden case.
 - B03-T03: `announce::Composer` (parts as catalogue messages joined by `announce-join`, spoken and display forms, mandatory qualifiers, where am I, pause) and `AnnouncementQueue` (§9.1 classes, supersede, priority, history); `announce.ftl` joins the shared catalogue, with contract cases; `XType::Year` so years are spoken without grouping. Merged as #267.
 
@@ -47,6 +48,8 @@
 | The reference tone uses the pitch the data gives the maximum or minimum | It then follows the track's own scale and polarity without depending on NUMISONA | sound-design §7.2 |
 | Ticks use a render instrument (`click`), not a new earcon kind | An earcon kind would change the Score IR enum (a contract); an instrument name is free text | sound-design §7.1 |
 | AUDAXIS joins the facade's default engines in its own step | Every spec resolves with context defaults, so it adds ticks and a reference tone to every default render and changes the parity golden case, the gallery, the replication gallery and CLI snapshots | status.md B03 tasks |
+| Gap earcons are interactive, not compiled | 03 §5 asks for them "in exploration mode", so no Score earcon kind (a contract change) is needed | keyboard §11 (`E-GAP`) |
+| Live earcons get their own voice pool on the earcon bus | Live cues play on the data bus; earcons must sit at the earcon level (sound-design §6.2) and never steal data cue voices | 06 §4 |
 | B02-T08 built before B01-T02 (its listed dependency) | It needs no generated IPC type: the catalogues are plain files and the contract test reads them directly | status.md B02 tasks |
 
 ## Problems and how they were solved
@@ -55,6 +58,7 @@
 |---|---|---|
 | ICU4X formatters cannot go in Fluent's thread-safe memoizer | ICU4X data payloads use `Rc` unless `icu_provider`'s `sync` feature is on | `icu_provider` with `sync` |
 | The guard saw every track's timing as varying | Note durations and tap counts were added to one range | One range per property; tests with handcrafted Scores |
+| Two-part earcons never switched to their second note | The frame helper rounds 0 s up to one frame, so the first part overlapped the second | Part boundaries use plain rounding; a test checks that E-MODE rises and falls |
 | A point's x value vanished in a JSON round trip | `NavNode` flattens its kind, so the node's `x` extent and the point's `x` value shared one key | The node field is `span`; a round-trip unit test guards it |
 | Bar charts had no x labels in the tree | The bar template orders by row and names no time field | A field with role `category` or `label` names the points when there is no time field |
 

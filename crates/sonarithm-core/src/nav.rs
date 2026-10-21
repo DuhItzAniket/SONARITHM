@@ -161,6 +161,10 @@ pub struct DatasetNode {
     pub series: u32,
     /// The number of points in all series.
     pub points: u64,
+    /// Whether a missing value at the cursor plays the gap earcon (`data.missing:
+    /// "earcon"`, 03 §5).
+    #[serde(default)]
+    pub gap_earcons: bool,
 }
 
 /// A data track as a series of points.

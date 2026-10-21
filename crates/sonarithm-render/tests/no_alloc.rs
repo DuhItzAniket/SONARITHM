@@ -25,7 +25,7 @@ use sonarithm_core::{Db, Frames, Hz, Pan, SampleRate, Seconds};
 use sonarithm_render::fixtures::{BENCHMARK_SEED, benchmark_score};
 use sonarithm_render::graph::{Command, Cue, GainTarget, LoopRange};
 use sonarithm_render::{
-    Bus, Graph, GraphConfig, Instrument, PlanConfig, Processor, RenderPlan, realtime,
+    Bus, EarconSound, Graph, GraphConfig, Instrument, PlanConfig, Processor, RenderPlan, realtime,
 };
 
 fn graph(seconds: f64) -> Graph {
@@ -84,6 +84,11 @@ fn a_scripted_session_never_allocates_on_the_audio_thread() {
             duration: Seconds(0.12),
         }));
         blocks(&mut audio, &mut out, 5, "cue");
+    }
+    // Every earcon live, more than the earcon pool holds (B03-T06).
+    for sound in EarconSound::ALL {
+        control.send(Command::Earcon(sound));
+        blocks(&mut audio, &mut out, 3, "earcon");
     }
     // A plan swap: the new graph is built here, off the audio thread; the old one fades out
     // and is handed to the collector without being freed on the audio thread.

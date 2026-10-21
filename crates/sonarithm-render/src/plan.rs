@@ -17,7 +17,7 @@ mod tests;
 
 pub use build::{PlanError, Planned, earcon_duration};
 
-use sonarithm_core::{EarconKind, Frames, Hz, SampleRate, TrackId, TrackRole};
+use sonarithm_core::{Frames, Hz, SampleRate, TrackId, TrackRole};
 use sonarithm_dsp::PanGains;
 
 /// The mix buses of the render graph (06 §3). Speech tracks have no bus: speech is never
@@ -199,7 +199,7 @@ pub enum EventKind {
     /// An earcon.
     Earcon {
         /// Which earcon.
-        kind: EarconKind,
+        kind: crate::earcon::EarconSound,
         /// Linear gain relative to the track.
         gain: f32,
     },

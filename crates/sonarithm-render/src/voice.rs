@@ -85,6 +85,10 @@ const CLICK_CUTOFF: Hz = Hz(8_000.0);
 
 /// The sound source of a voice.
 #[derive(Clone, Copy, Debug)]
+#[expect(
+    clippy::large_enum_variant,
+    reason = "voices live in preallocated pools; boxing would allocate on the audio thread"
+)]
 enum Source {
     /// One oscillator: sine, triangle, saw or square.
     Wave(Oscillator),

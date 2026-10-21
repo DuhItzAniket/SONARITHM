@@ -12,18 +12,18 @@
   },
   "reference": {
     "platform": "windows-x86_64",
-    "sha256": "sha256:7c79229fbb29c0ae335923ffcb3ed78f74c2131394212c8233a97d9be4905542",
+    "sha256": "sha256:0d112db9e030fa697a03e0a8b31996f0b6bbc9f863456e0fad3a3f25b7e41158",
     "frames": 192000,
-    "integratedLufs": -19.23,
+    "integratedLufs": -19.215,
     "truePeakDbtp": -9.276,
     "peakDbfs": -9.306,
-    "rmsDbfs": -25.46,
+    "rmsDbfs": -25.032,
     "centroidHz": [
-      2490.2,
-      1300.0,
+      2482.9,
+      1299.9,
       1410.8,
       1108.4
     ]
   },
-  "reason": "First references (A05-T11)."
+  "reason": "B03-T06 replaces A05's provisional earcons with the designed set: longer decays for E-BOUNDARY (about 60 ms), E-LANDMARK (about 120 ms) and E-THRESHOLD (about 30 ms), as keyboard §11 describes"
 }

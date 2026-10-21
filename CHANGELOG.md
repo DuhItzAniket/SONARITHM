@@ -10,6 +10,7 @@ From phase A07, release-plz maintains this file: it generates each release's ent
 
 ### Added
 
+- The earcon set (B03-T06): the designed earcons replace A05's placeholders; the app can play any earcon live (`Command::Earcon`); each has a text equivalent for the log and speech; a new gap earcon marks missing values when the spec asks for it.
 - Context cues (B03-T05): AUDAXIS adds the tick track (short clicks at the major x ticks for discrete notes, SDR-16), the dynamic reference tone (the series maximum while values rise and the minimum while they fall, in its own timbre, SDR-17) and the spoken legend before playback (title, ranges, units, polarity, mode and cues, SDR-18). The render engine gains a `click` instrument.
 - Announcements (B03-T03): AUDAXIS composes what the screen reader says for every cursor move, boundary, invalid action, where am I and pause from the shared message catalogue, terse or verbose, in the listener's part order. Unit names are spoken and symbols shown. Every estimated or derived value carries its qualifier. A queue keeps only the latest navigation announcement, never drops errors, and logs everything with a link to its data point.
 - The navigation cursor (B03-T02): every movement verb of the keymap (step, jump by 10 %, first and last, in and out, lateral to another series, maximum and minimum, insights, landmarks, go to x, find value, Enter) and "where am I". Moves never wrap: at an edge the cursor stays and reports the boundary earcon; a verb that does not apply reports why.

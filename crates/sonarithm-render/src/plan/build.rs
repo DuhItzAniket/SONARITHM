@@ -58,13 +58,7 @@ pub struct Planned {
 /// AUDAXIS designs them (B03).
 #[must_use]
 pub fn earcon_duration(kind: EarconKind) -> Seconds {
-    Seconds::from_millis(match kind {
-        EarconKind::Boundary => 60.0,
-        EarconKind::Landmark => 120.0,
-        EarconKind::Threshold => 30.0,
-        EarconKind::Alarm => 600.0,
-        _ => 150.0,
-    })
+    crate::earcon::EarconSound::from(kind).duration()
 }
 
 impl RenderPlan {
@@ -239,7 +233,7 @@ fn plan_track(
                     length,
                     source,
                     kind: EventKind::Earcon {
-                        kind: earcon.kind,
+                        kind: earcon.kind.into(),
                         gain: to_f32(earcon.gain.to_gain()),
                     },
                 });

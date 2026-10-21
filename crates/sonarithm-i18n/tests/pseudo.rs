@@ -58,6 +58,11 @@ fn sample_args(style: UnitStyle) -> Args {
         .text("mode", "analysis")
         .text("ticks", "yes")
         .text("reference", "yes")
+        .text("name", "11")
+        .text("state", "on")
+        .text("stream", "13")
+        .text("event", "14")
+        .text("condition", "15")
 }
 
 #[test]
