@@ -19,7 +19,7 @@
 
 - **Implementation plan §3:** 67 task rows (B01 9, B02 11, B03 14, B04 8, B05 8, B06 7, B07 10), each with its rules and budgets and a "Blocked on" column. Two lanes: Lane R (23 Rust and framework-agnostic tasks, which can start now) and Lane U (37 shell and UI tasks behind "Gate U", the A02 gate's conditions for B01). Seven more tasks wait only on owner items. A critical-path diagram, the 17 human-paced items (HP-01 to HP-17) and the carry-over issues (#185, #186, #187, #123, #92, #94, #95).
 - **Roadmap:** a Stage B re-estimate (≈ 15–19 agent session-days, about two calendar weeks with two sessions), re-estimated phase sizes with their owner gates, a note that the Gantt is the baseline, and B07's exit and Gate B tied to OD-16 and OD-17.
-- **Records:** OD-15 to OD-17; R-24 to R-27, with the R-10 and R-22 triggers tied to the tasks that need them; finding F-120 (Stage A's pace).
+- **Records:** OD-15 (proposed, then closed by the coordinator: ADR-0002's Confirmation timing, the A02 gate report and ADR-0003's version note updated), OD-16 and OD-17; R-24 to R-27, with the R-10 and R-22 triggers tied to the tasks that need them; finding F-120 (Stage A's pace).
 - **Consistency fixes:** testing-strategy §13.3 and the conformance plan §8.1 still called co-design round 1 an ethics-approved research activity; both now follow OD-04. The research lane's RL-T01 and RL-T04 deadlines point at B07-T04.
 - **GitHub:** milestones B01–B07; issues [#191](https://github.com/DuhItzAniket/SONARITHM/issues/191)–[#257](https://github.com/DuhItzAniket/SONARITHM/issues/257) with labels, milestones and the board's Phase, Size and Status fields (B01–B07 added to the Phase field, Stage A values unchanged); blocked tasks carry `status/blocked`; #185, #186 and #187 joined their Stage B milestones and link the tasks that wait for them.
 
@@ -28,7 +28,7 @@
 | Decision | Why | Record |
 |---|---|---|
 | Split Stage B into Lane R and Lane U | The A02 gate holds Tauri and React work until the walkthroughs; the Rust work does not depend on either ADR | Implementation plan §3.1; no ADR needed |
-| Keep the A02 gate conditions as written; propose opening Lane U after HP-01 alone | Changing a gate condition and ADR-0002's confirmation timing is the coordinator's call | OD-15 (open) |
+| Open Lane U after HP-01 and HP-04; the Linux session (HP-02) moves to B03's exit; the Tauri host stays a thin adapter | Windows with NVDA is the primary configuration and runs on the owner's laptop; a thin host means a late Linux failure costs only the host. Proposed here, approved by the coordinator under the owner's delegation the same day | OD-15 (closed 2026-10-21); ADR-0002 Confirmation; A02 gate report |
 | Project format v1 needs an RFC before B05-T04's code | AGENTS.md rule 11 | B05-T04 row |
 | Sizes stay S, M and L as relative effort; estimates in session-days | Stage A's code finished in about 55 hours against a four-month baseline window | F-120; plan §1.1 |
 
@@ -52,6 +52,7 @@
 
 ## Next steps
 
-- [ ] Coordinator: decide OD-15 (open Lane U after HP-01 alone) and start the two Lane R sessions (plan §3.1).
-- [ ] Owner: HP-01 and HP-02 (A02 walkthroughs, #129), which open Gate U.
+- [x] Coordinator: decide OD-15 (approved 2026-10-21; recorded in the same PR).
+- [ ] Coordinator: start the two Lane R sessions (plan §3.1), and lift `status/blocked` from Lane U issues once HP-01 and HP-04 are done.
+- [ ] Owner: HP-01, the NVDA and Narrator walkthroughs (#129), which with HP-04 opens Gate U. HP-02 (Linux, Orca) is due by B03's exit.
 - [ ] Owner: decide OD-16 and OD-17 before B07; start HP-09 (policy, budget, recruiting) early, because it sets Gate B's date.

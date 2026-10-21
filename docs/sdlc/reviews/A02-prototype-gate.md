@@ -38,10 +38,17 @@ Conditions (conditional go):
 | Condition | Owner | Due | Issue |
 |---|---|---|---|
 | NVDA and Narrator walkthroughs on HW-01 (WALKTHROUGH.md §1–2); OD-05 recommendation from steps 11–15 | Owner | Before B01 starts | to open |
-| Ubuntu live-USB session on HW-01: WebKitGTK IPC and WebGL2 on the Intel and discrete GPUs, Orca walkthrough (WALKTHROUGH.md §3). A Linux failure that cannot be fixed within one week triggers the Electron fallback (ADR-0002) | Owner | Before B01 starts | to open |
+| Ubuntu live-USB session on HW-01: WebKitGTK IPC and WebGL2 on the Intel and discrete GPUs, Orca walkthrough (WALKTHROUGH.md §3). A Linux failure that cannot be fixed within one week triggers the Electron fallback (ADR-0002) | Owner | By B03's exit (OD-15, 2026-10-21; was before B01) | to open |
 | macOS session (lab Mac or volunteer): WKWebView IPC and WebGL2, App Nap check, VoiceOver walkthrough (WALKTHROUGH.md §4) | Owner (arranges access) | By B03 (R-22) | to open |
 | A latency plan for PB-01 in A05: a WASAPI RAW or exclusive-mode backend option, a per-device latency calibration, and an acoustic or cable confirmation of the A02 numbers | Audio lead | A05 planning | to open |
 | Licence decision for `assert_no_alloc` (BSD-1-Clause) before A05 uses it (F-038) | Owner | A05 start | to open |
+
+**Amended 2026-10-21 ([OD-15](../../planning/open-decisions.md#closed-decisions), coordinator under the owner's delegation).**
+
+- Stage B's shell and UI work (Lane U) starts once two things are done: the NVDA and Narrator walkthroughs, and ADR-0002 and ADR-0003 confirmed for Windows in this report.
+- The Ubuntu live-USB session moves to B03's exit criteria.
+- The macOS session keeps its due date.
+- The Tauri host stays a thin adapter over `sonarithm-app`, so a late Linux failure costs only the host.
 
 ## Go/no-go criteria
 
@@ -233,7 +240,7 @@ The exclusive-mode accessibility cost (it can silence the screen reader's speech
 | ADR | Recommendation | Reason |
 |---|---|---|
 | [ADR-0004](../../decisions/0004-audio-backend-and-render-graph.md) own render graph over a cpal-backed `AudioBackend` | **Amend**: confirm the owned graph and record the A02 evidence. Amend the backend part: cpal 0.18 in WASAPI shared mode cannot meet PB-01 on the development laptop, so A05 adds a WASAPI backend option (RAW stream, exclusive mode via `wasapi`) and a per-device latency calibration behind the same `AudioBackend` trait. Also record that the `RenderGraph` contract has a control half and an RT processor | F-030 to F-036, F-039 |
-| [ADR-0002](../../decisions/0002-desktop-shell-tauri.md) Tauri 2 shell | **Keep provisional; no amendment yet.** The Windows evidence supports it (PB-08, PB-09), and IPC passes on all CI runners. The deciding Linux evidence (WebKitGTK frame rates on real GPUs, Orca) is pending; the Electron trigger is not evaluated | F-040 to F-044 |
+| [ADR-0002](../../decisions/0002-desktop-shell-tauri.md) Tauri 2 shell | **Keep provisional; no amendment yet.** Its Confirmation section now sets the timing (OD-15): Windows evidence gates B01, and Linux and macOS are due by B03's exit. The Windows evidence supports it (PB-08, PB-09), and IPC passes on all CI runners. The deciding Linux evidence (WebKitGTK frame rates on real GPUs, Orca) is pending; the Electron trigger is not evaluated | F-040 to F-044 |
 | [ADR-0003](../../decisions/0003-frontend-react-and-react-aria.md) React + React Aria Components | **Keep provisional.** The prototype is built and the UI Automation tree is as expected; the screen-reader walkthroughs, which are the confirmation the ADR names, are pending | F-045 |
 
 Recorded (the coordinator reviews these with the approval the owner delegated):

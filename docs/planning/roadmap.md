@@ -167,7 +167,7 @@ The chart is the baseline v1 and is re-baselined at Gate A. Stage A's code was c
 
 - At most two build-heavy agent sessions run at once on the owner's 16 GB laptop.
 - Most of Stage B is UI work whose acceptance needs people: screen-reader runs, co-design sessions and listening checks.
-- The [A02 gate](../sdlc/reviews/A02-prototype-gate.md#decision) holds the shell and UI work (Lane U) until the owner's walkthroughs are done and ADR-0002 and ADR-0003 are confirmed or amended ("Gate U"). The Rust work (Lane R) can start now.
+- The [A02 gate](../sdlc/reviews/A02-prototype-gate.md#decision) holds the shell and UI work (Lane U) until the owner's Windows walkthroughs are done and ADR-0002 and ADR-0003 are confirmed for Windows ("Gate U", [OD-15](open-decisions.md#closed-decisions)). Linux and macOS confirmation is due by B03's exit. The Rust work (Lane R) can start now.
 
 **Estimate.** Agent-paced work in session-days (one agent session on the phase), from Stage A's one to two days per phase of 9–13 tasks:
 
@@ -175,7 +175,7 @@ The chart is the baseline v1 and is re-baselined at Gate A. Stage A's code was c
 |---|---|---|---|---|
 | B01 | 9 | T01, T02, T06 | ≈ 2 session-days | Gate U; HP-03 (App Nap) |
 | B02 | 11 | T01, T02, T08 | ≈ 2–3 | Gate U; HP-07 (component checks), HP-16 (OD-03) |
-| B03 | 14 | T01–T03, T05–T08, T11 | ≈ 3–4 | Gate U; HP-01 (OD-05), HP-05 ([#123](https://github.com/DuhItzAniket/SONARITHM/issues/123), [#186](https://github.com/DuhItzAniket/SONARITHM/issues/186)), HP-08 (task suite), HP-14 |
+| B03 | 14 | T01–T03, T05–T08, T11 | ≈ 3–4 | Gate U; HP-02 and HP-03 (exit); HP-01 (OD-05), HP-05 ([#123](https://github.com/DuhItzAniket/SONARITHM/issues/123), [#186](https://github.com/DuhItzAniket/SONARITHM/issues/186)), HP-08 (task suite), HP-14 |
 | B04 | 8 | T03 | ≈ 2 | Gate U; HP-02, HP-03 (real webviews) |
 | B05 | 8 | T01, T04 | ≈ 2–3 | Gate U; HP-14; the project-format RFC |
 | B06 | 7 | all but T06 | ≈ 2 | Gate U for T06 only |
@@ -184,7 +184,7 @@ The chart is the baseline v1 and is re-baselined at Gate A. Stage A's code was c
 
 **What sets Gate B's date: the human-paced items, not the engineering.**
 
-- **Gate U:** HP-01, HP-02 and HP-04. [OD-15](open-decisions.md) proposes opening Lane U after HP-01 alone.
+- **Gate U:** HP-01 and HP-04 ([OD-15](open-decisions.md#closed-decisions), closed 2026-10-21). HP-02, the Linux session with Orca, is a B03 exit criterion.
 - **Screen-reader runs:** the B03 task suite (HP-08) and the full matrix (HP-10). Access to JAWS and a braille display is not arranged yet (R-25).
 - **Co-design round 1:** it needs RV University's policy confirmed in writing, a compensation budget and recruited participants (HP-09). [OD-16](open-decisions.md) covers the case where it cannot run.
 - **JOSS:** P02 eligibility is calendar-gated: six months of public history, about 2027-04-18 at the earliest, TODO(verify) ([OD-17](open-decisions.md)).
@@ -212,8 +212,8 @@ Gate B's date stays TODO(verify) until HP-09's lead time is known. The HP items 
 | | |
 |---|---|
 | **Deliverables** | `sonarithm-audaxis`: NavTree builder; discrete-step navigation (local, lateral, spatial, targeted); "where am I"; earcon set; tick track (SDR-16); dynamic reference tone (SDR-17); spoken legends (SDR-18); announcement composer with verbosity and ordering (A11Y-12); speech/sonification sequencing (A11Y-20); screen-reader routing via platform announcements, plus optional self-voicing (`sonarithm-speech`); braille review line (A11Y-21); the keymap in [keyboard-and-navigation.md](../design/keyboard-and-navigation.md). |
-| **Exit criteria** | All A11Y requirements owned by AUDAXIS pass their tests. A scripted task suite (find max, compare series, read value at x) completes with NVDA, JAWS, VoiceOver and Orca. |
-| **Size** | L (baseline ≈5 weeks). Re-estimate 2026-10-21: ≈ 3–4 agent session-days. Owner gates: Gate U, HP-01, HP-05, HP-08, HP-14 |
+| **Exit criteria** | All A11Y requirements owned by AUDAXIS pass their tests. A scripted task suite (find max, compare series, read value at x) completes with NVDA, JAWS, VoiceOver and Orca. ADR-0002 and ADR-0003 are confirmed on Linux and macOS (HP-02, HP-03; OD-15). |
+| **Size** | L (baseline ≈5 weeks). Re-estimate 2026-10-21: ≈ 3–4 agent session-days. Owner gates: Gate U, HP-01, HP-02, HP-03, HP-05, HP-08, HP-14 |
 
 ### B04 · Visualization and linked cursor
 

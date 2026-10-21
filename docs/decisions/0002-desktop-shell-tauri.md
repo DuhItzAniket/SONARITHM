@@ -49,6 +49,8 @@ The **A02 prototype gate** measures:
 
 **If (2) or (3) fails on Linux and cannot be mitigated within one week, switch to Electron** and record the outcome as ADR-0002a. Results go in `docs/sdlc/reviews/A02-prototype-gate.md`.
 
+**Timing (2026-10-21, [OD-15](../planning/open-decisions.md#closed-decisions)).** The Windows evidence gates B01: the WebView2 measurements and the NVDA and Narrator walkthroughs. Confirmation on Linux (WebKitGTK, Orca) and macOS (WKWebView, VoiceOver) is due by B03's exit, and the Electron trigger above applies when the Linux check runs. The Tauri host stays a thin adapter: all logic lives in `sonarithm-app` behind the IPC protocol, so a late switch to Electron replaces only the host, not the app logic or the React code. The decision itself is unchanged.
+
 ## Pros and cons of the options
 
 ### Electron 44
