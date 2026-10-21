@@ -34,7 +34,7 @@ Chosen option: **A**, because the whole protocol, including command names, then 
 
 ### 1. Where it lives
 
-`sonarithm-app` has a module `ipc` with `Request`, `Reply`, `Event`, `IpcError`, `PROTOCOL_VERSION` and the binary view header. `App::dispatch(Request) -> Result<Reply, IpcError>` is the only entry point for commands. The app core is a synchronous state machine: the host calls `dispatch` from command handlers and `App::tick` from one control thread every 10 ms or less (it services the audio player and the job queue). Long work runs in the job queue on worker threads. `sonarithm-app` has no Tauri, Electron or webview types.
+`sonarithm-app` has a module `ipc` with `Request`, `Reply`, `Event`, `IpcError`, `PROTOCOL_VERSION` and the binary view header. `App::dispatch(Request) -> Result<Reply, IpcError>` is the only entry point for commands; `App` is `Send`, and a host keeps it behind one lock. The app core drives itself: its own control thread owns the audio player (whose device stream is not `Send` on every OS) and ticks it every 10 ms, and long work runs in the job queue on worker threads. Those threads hand events to the host's `EventSink` directly, so the host never polls. `sonarithm-app` has no Tauri, Electron or webview types.
 
 ### 2. Commands and replies (JSON)
 
