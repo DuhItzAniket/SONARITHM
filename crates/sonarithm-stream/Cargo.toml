@@ -1,0 +1,36 @@
+[package]
+name = "sonarithm-stream"
+description = "SONARITHM live stream adapters (WebSocket, OSC, serial, MQTT, file tail) behind a per-connection consent gate."
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+repository.workspace = true
+license.workspace = true
+# Not published until the desktop app needs it from crates.io.
+publish = false
+
+[features]
+# 02 §4: WebSocket and OSC on by default; serial and MQTT opt in.
+default = ["websocket", "osc"]
+websocket = ["dep:tungstenite"]
+osc = ["dep:rosc"]
+serial = ["dep:serialport"]
+mqtt = ["dep:rumqttc"]
+
+[dependencies]
+arrow-array.workspace = true
+arrow-schema.workspace = true
+rosc = { workspace = true, optional = true }
+rumqttc = { workspace = true, optional = true }
+serde_json.workspace = true
+serialport = { workspace = true, optional = true }
+sonarithm-core.workspace = true
+sonarithm-data.workspace = true
+thiserror.workspace = true
+tungstenite = { workspace = true, optional = true }
+
+[dev-dependencies]
+proptest.workspace = true
+
+[lints]
+workspace = true

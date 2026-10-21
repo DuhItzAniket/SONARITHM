@@ -1,6 +1,7 @@
 # Long-running checks (docs/engineering/ci-cd.md#workflow-inventory). Fuzzing (testing-strategy
 # §7), 30 minutes per target each night: the spec parser and migrations (from A03) and the
-# data-layer importers (from A04: CSV/TSV, JSON/NDJSON, XLSX/ODS, Parquet/Arrow IPC).
+# data-layer importers (from A04: CSV/TSV, JSON/NDJSON, XLSX/ODS, Parquet/Arrow IPC) and
+# the stream payload decoders (from B06: JSON, OSC, lines).
 # Manual dispatch takes the seconds per target; use 3600 for an exit run. Pull requests that
 # touch a fuzzed crate run a two-minute smoke fuzz of every target. From A05: the 10-minute
 # allocation soak on the null device (testing-strategy §9.3). Not a required check.
@@ -20,6 +21,7 @@ on:
       - "crates/sonarithm-core/**"
       - "crates/sonarithm-spec/**"
       - "crates/sonarithm-data/**"
+      - "crates/sonarithm-stream/**"
       - ".github/workflows/nightly.yml"
 
 permissions: {}
@@ -45,6 +47,9 @@ jobs:
           - { crate: sonarithm-data, target: json_read }
           - { crate: sonarithm-data, target: xlsx_read }
           - { crate: sonarithm-data, target: columnar_read }
+          - { crate: sonarithm-stream, target: stream_json }
+          - { crate: sonarithm-stream, target: stream_osc }
+          - { crate: sonarithm-stream, target: stream_line }
     env:
       FUZZ_SECONDS: ${{ github.event_name == 'pull_request' && '120' || inputs.seconds || '1800' }}
     steps:

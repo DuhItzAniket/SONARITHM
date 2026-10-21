@@ -1,0 +1,44 @@
+# cargo-fuzz harness for sonarithm-stream's payload decoders (B06-T02, testing-strategy §7).
+# Not part of the main workspace: it needs the nightly toolchain. Run from the parent crate:
+#   cargo +nightly fuzz run stream_json -- -max_total_time=3600
+# CI runs every target in .github/workflows/nightly.yml.
+
+[package]
+name = "sonarithm-stream-fuzz"
+version = "0.0.0"
+edition = "2024"
+license = "MIT OR Apache-2.0"
+publish = false
+
+[package.metadata]
+cargo-fuzz = true
+
+[dependencies]
+libfuzzer-sys = "0.4.13"
+serde_json = "1.0.145"
+sonarithm-stream = { path = ".." }
+
+# A workspace of its own, so the main workspace (stable toolchain) never builds it.
+[workspace]
+members = ["."]
+
+[[bin]]
+name = "stream_json"
+path = "fuzz_targets/stream_json.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "stream_osc"
+path = "fuzz_targets/stream_osc.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "stream_line"
+path = "fuzz_targets/stream_line.rs"
+test = false
+doc = false
+bench = false
