@@ -17,7 +17,7 @@
 ## What was done
 
 - ADR-0017, IPC protocol v1 (#259): one `Request`/`Reply`/`Event` set in `sonarithm-app::ipc`, `App::dispatch` as the only entry point, typed errors with `SNR-APP` codes, the `hello` version handshake, the binary view header, and the layering edge `sonarithm-app → sonarithm`.
-- B01-T01: `sonarithm-app` with datasets, the spec and its undo history, compile reports, the transport on its own control thread, export jobs, settings and devices; 15 headless scenarios on the null device.
+- B01-T01: `sonarithm-app` with datasets, the spec and its undo history, compile reports, the transport on its own control thread, export jobs, settings and devices; 16 headless scenarios on the null device, including one that no reply, error or event holds an absolute path (ADR-0017 §7).
 
 ## Decisions
 
