@@ -114,6 +114,8 @@ jobs:
       - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
         with:
           save-if: ${{ github.ref == 'refs/heads/main' }}
+      # xtask links the app core, and cpal (sonarithm-audio) links ALSA.
+      - run: sudo apt-get update && sudo apt-get install --yes --no-install-recommends libasound2-dev
       - run: cargo xtask codegen
       - name: Generated files are up to date
         run: |
