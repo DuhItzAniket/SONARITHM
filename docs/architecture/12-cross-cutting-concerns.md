@@ -43,7 +43,7 @@ Every effective value is inspectable through `sonarithm inspect --settings` and 
 
 ```text
 project.sonarithm
-├── manifest.json            # format version, app version, created/modified, member list with sha256
+├── manifest.json            # format version, generator version, specs, datasets, member list with sha256 (no timestamps)
 ├── specs/
 │   └── <spec-id>.json       # one or more specs
 ├── data/
@@ -59,6 +59,7 @@ project.sonarithm
 - The **format version** is independent of the app version. Readers refuse newer major versions and migrate older ones explicitly.
 - Data can be **embedded** (a snapshot, the default for reproducibility) or **linked** (a path plus fingerprint; a missing or changed fingerprint is a warning on open).
 - Projects never store secrets (API keys) or absolute user paths.
+- Version 1 of the format is fixed by [RFC-0002](../rfcs/0002-project-format-v1.md) ([ADR-0018](../decisions/0018-project-format-v1.md)).
 
 ## 5. Internationalization and localization
 
