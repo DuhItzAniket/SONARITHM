@@ -23,6 +23,7 @@ use std::collections::BTreeMap;
 use serde::{Deserialize, Serialize};
 use sonarithm_core::codes::CodeInfo;
 use sonarithm_core::{Diagnostic, Severity};
+use ts_rs::TS;
 
 use crate::settings::Settings;
 
@@ -30,8 +31,53 @@ use crate::settings::Settings;
 /// optional field, a reply or an event keeps it; a breaking change increments it.
 pub const PROTOCOL_VERSION: u32 = 1;
 
+pub mod binary;
+pub mod typescript;
+
+/// Every command with the [`Reply`] variant it answers with, in [`Request`] order. The
+/// TypeScript client's `ReplyFor<C>` is generated from it; the contract test checks it
+/// against [`crate::App::dispatch`].
+pub const COMMANDS: &[(&str, &str)] = &[
+    ("hello", "hello"),
+    ("dataset_open", "dataset"),
+    ("dataset_close", "datasets"),
+    ("dataset_list", "datasets"),
+    ("spec_get", "spec"),
+    ("spec_set", "spec"),
+    ("compile", "compile"),
+    ("transport_state", "transport"),
+    ("transport_play", "transport"),
+    ("transport_pause", "transport"),
+    ("transport_stop", "transport"),
+    ("transport_seek", "transport"),
+    ("transport_set_speed", "transport"),
+    ("transport_set_loop", "transport"),
+    ("stop_all", "transport"),
+    ("export_render", "job"),
+    ("job_status", "job"),
+    ("job_cancel", "job"),
+    ("job_list", "jobs"),
+    ("history_undo", "history"),
+    ("history_redo", "history"),
+    ("settings_get", "settings"),
+    ("settings_set", "settings"),
+    ("devices_list", "devices"),
+    ("device_select", "transport"),
+];
+
+/// Every event kind with the channel that carries it ([`Event::channel`]).
+pub const EVENTS: &[(&str, &str)] = &[
+    ("clock", "clock"),
+    ("job_progress", "jobs"),
+    ("job_done", "jobs"),
+    ("playback_finished", "app"),
+    ("device_changed", "app"),
+    ("audio_failed", "app"),
+    ("settings_notice", "app"),
+];
+
 /// A command from the UI (09 §2.1).
-#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize, TS)]
 #[serde(
     tag = "command",
     content = "args",
@@ -166,7 +212,7 @@ impl Request {
 }
 
 /// A successful reply.
-#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize, TS)]
 #[serde(
     tag = "reply",
     rename_all = "snake_case",
@@ -214,7 +260,7 @@ pub enum Reply {
 
 /// A command that could not run (ADR-0017 §3, 12 §1). Spec and data problems are not
 /// errors: they come back as diagnostics in a [`CompileReport`].
-#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, thiserror::Error)]
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, TS, thiserror::Error)]
 #[serde(rename_all = "camelCase")]
 #[error("{code}: {message}")]
 pub struct IpcError {
@@ -256,7 +302,7 @@ impl IpcError {
 }
 
 /// An event pushed to the UI on one of the channels of ADR-0017 §4.
-#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize, TS)]
 #[serde(
     tag = "event",
     rename_all = "snake_case",
@@ -313,7 +359,7 @@ impl Event {
 }
 
 /// The event channels of ADR-0017 §4.
-#[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize, TS)]
 #[serde(rename_all = "snake_case")]
 #[non_exhaustive]
 pub enum Channel {
@@ -332,7 +378,7 @@ pub enum Channel {
 }
 
 /// An open dataset.
-#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize, TS)]
 #[serde(rename_all = "camelCase")]
 #[non_exhaustive]
 pub struct DatasetSummary {
@@ -349,7 +395,7 @@ pub struct DatasetSummary {
 }
 
 /// One field of a dataset, with its inferred semantics (03 §3).
-#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, TS)]
 #[serde(rename_all = "camelCase")]
 #[non_exhaustive]
 pub struct FieldSummary {
@@ -368,7 +414,7 @@ pub struct FieldSummary {
 }
 
 /// A diagnostic for the UI (05 §7).
-#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, TS)]
 #[serde(rename_all = "camelCase")]
 #[non_exhaustive]
 pub struct DiagnosticInfo {
@@ -405,7 +451,7 @@ impl From<&Diagnostic> for DiagnosticInfo {
 }
 
 /// The session's spec.
-#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, TS)]
 #[serde(rename_all = "camelCase")]
 #[non_exhaustive]
 pub struct SpecState {
@@ -416,7 +462,7 @@ pub struct SpecState {
 }
 
 /// The result of a compile.
-#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize, TS)]
 #[serde(rename_all = "camelCase")]
 #[non_exhaustive]
 pub struct CompileReport {
@@ -431,7 +477,7 @@ pub struct CompileReport {
 }
 
 /// Diagnostic counts by severity.
-#[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Serialize, Deserialize, TS)]
 #[serde(rename_all = "camelCase")]
 #[non_exhaustive]
 pub struct Counts {
@@ -444,7 +490,7 @@ pub struct Counts {
 }
 
 /// Facts about a compiled Score.
-#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize, TS)]
 #[serde(rename_all = "camelCase")]
 #[non_exhaustive]
 pub struct ScoreInfo {
@@ -463,7 +509,7 @@ pub struct ScoreInfo {
 }
 
 /// One track of a Score.
-#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, TS)]
 #[serde(rename_all = "camelCase")]
 #[non_exhaustive]
 pub struct TrackInfo {
@@ -478,7 +524,7 @@ pub struct TrackInfo {
 }
 
 /// Whether the transport is playing.
-#[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Serialize, Deserialize, TS)]
 #[serde(rename_all = "snake_case")]
 #[non_exhaustive]
 pub enum PlaybackStatus {
@@ -492,7 +538,7 @@ pub enum PlaybackStatus {
 }
 
 /// A loop range in seconds.
-#[derive(Clone, Copy, Debug, PartialEq, Serialize, Deserialize)]
+#[derive(Clone, Copy, Debug, PartialEq, Serialize, Deserialize, TS)]
 #[serde(rename_all = "camelCase")]
 pub struct LoopSpan {
     /// Where the loop starts.
@@ -503,7 +549,7 @@ pub struct LoopSpan {
 
 /// The authoritative transport state (09 §3): the UI renders it and never assumes an intent
 /// succeeded.
-#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize, TS)]
 #[serde(rename_all = "camelCase")]
 #[non_exhaustive]
 pub struct TransportState {
@@ -524,7 +570,7 @@ pub struct TransportState {
 }
 
 /// A transport clock anchor (06 §9): the UI extrapolates the playhead from it.
-#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize, TS)]
 #[serde(rename_all = "camelCase")]
 #[non_exhaustive]
 pub struct ClockAnchor {
@@ -538,7 +584,7 @@ pub struct ClockAnchor {
 }
 
 /// What to export.
-#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize, TS)]
 #[serde(rename_all = "camelCase")]
 #[non_exhaustive]
 pub struct ExportRequest {
@@ -546,6 +592,7 @@ pub struct ExportRequest {
     pub path: String,
     /// The sample rate in hertz; by default the spec's.
     #[serde(default)]
+    #[ts(optional = nullable)]
     pub sample_rate: Option<u32>,
     /// Write the `WebVTT` cue sidecar (default yes).
     #[serde(default = "yes")]
@@ -573,7 +620,7 @@ const fn yes() -> bool {
 }
 
 /// What an export wrote.
-#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize, TS)]
 #[serde(rename_all = "camelCase")]
 #[non_exhaustive]
 pub struct ExportResult {
@@ -594,7 +641,7 @@ pub struct ExportResult {
 }
 
 /// What kind of work a job does.
-#[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize, TS)]
 #[serde(rename_all = "snake_case")]
 #[non_exhaustive]
 pub enum JobKind {
@@ -603,7 +650,7 @@ pub enum JobKind {
 }
 
 /// Where a job is in its life.
-#[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize, TS)]
 #[serde(rename_all = "snake_case")]
 #[non_exhaustive]
 pub enum JobState {
@@ -628,7 +675,7 @@ impl JobState {
 }
 
 /// A job and its outcome.
-#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize, TS)]
 #[serde(rename_all = "camelCase")]
 #[non_exhaustive]
 pub struct JobInfo {
@@ -647,7 +694,7 @@ pub struct JobInfo {
 }
 
 /// The history after an undo or redo.
-#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, TS)]
 #[serde(rename_all = "camelCase")]
 #[non_exhaustive]
 pub struct HistoryState {
@@ -664,7 +711,7 @@ pub struct HistoryState {
 }
 
 /// An output device.
-#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, TS)]
 #[serde(rename_all = "camelCase")]
 #[non_exhaustive]
 pub struct DeviceSummary {
@@ -676,4 +723,62 @@ pub struct DeviceSummary {
     pub is_default: bool,
     /// Whether SONARITHM is set to use it.
     pub selected: bool,
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn every_event_travels_on_its_declared_channel() {
+        let transport = TransportState {
+            status: PlaybackStatus::Stopped,
+            position_s: 0.0,
+            duration_s: 1.0,
+            speed: 1.0,
+            loop_range: None,
+            loaded: true,
+            device: None,
+        };
+        let job = JobInfo {
+            id: 1,
+            kind: JobKind::Export,
+            state: JobState::Finished,
+            progress: 1.0,
+            export: None,
+            error: None,
+        };
+        let error = IpcError {
+            code: "SNR-APP-011".into(),
+            message: "m".into(),
+            hint: None,
+            pointer: None,
+        };
+        let events = [
+            Event::Clock(ClockAnchor {
+                transport,
+                host_time_s: None,
+                seq: 1,
+            }),
+            Event::JobProgress {
+                id: 1,
+                progress: 0.5,
+            },
+            Event::JobDone(job),
+            Event::PlaybackFinished { duration_s: 1.0 },
+            Event::DeviceChanged {
+                device: "null".into(),
+            },
+            Event::AudioFailed {
+                error: error.clone(),
+            },
+            Event::SettingsNotice { error },
+        ];
+        assert_eq!(events.len(), EVENTS.len());
+        for (event, (name, channel)) in events.iter().zip(EVENTS) {
+            let json = serde_json::to_value(event).unwrap();
+            assert_eq!(json["event"], *name);
+            assert_eq!(serde_json::to_value(event.channel()).unwrap(), *channel);
+        }
+    }
 }

@@ -210,7 +210,7 @@ Lane R work runs in one agent session (app core and SONOTRACE), one PR per task,
 | Task | Status | Notes |
 |---|---|---|
 | B01-T01 `sonarithm-app` headless app core | In review | `App::dispatch` over the IPC protocol of [ADR-0017](../decisions/0017-ipc-protocol-v1.md): datasets, spec with undo tokens, compile, transport on a control thread that owns A05's `Player` (F-140), export jobs, versioned settings with crash-safe writes, devices. 16 headless scenarios on the null device (open → compile → play → seek → stop → export; A11Y-15; device loss; v0 settings migration; fault injection; no absolute path in any reply, error or event) |
-| B01-T02 Typed IPC: ts-rs codegen, `IpcTransport` | Not started | Next |
+| B01-T02 Typed IPC: ts-rs codegen, `IpcTransport` | In review | `cargo xtask codegen` writes `packages/ipc/src/generated/protocol.ts` (ts-rs 12) and a Rust-encoded binary-view fixture; `REPLY_KINDS` and `EVENT_CHANNELS` generated from the Rust tables; `@sonarithm/ipc` has `IpcTransport`, `connect` (fails fast on a protocol mismatch), `createMockTransport` and `readView`; a contract test sends every command through `dispatch`; Node test runner on the TypeScript sources in CI |
 | B01-T06 Network-deny integration test | In review | `cargo xtask network-deny` runs the app-core tests under strace, `sandbox-exec` or WFP auditing and fails on any outbound attempt; `--self-test` must catch a deliberate probe; `network-deny` CI job on three OSes; mechanisms in testing-strategy §10 |
 
 ### B06 tasks

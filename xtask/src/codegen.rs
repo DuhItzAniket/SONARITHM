@@ -8,10 +8,11 @@
 //! | `docs/reference/error-codes.md` | [`crate::codes`] (A03-T02) |
 //! | `schemas/sonarithm-spec-0.1.schema.json` | `sonarithm_spec::json_schema` (A03-T06) |
 //! | `schemas/sonarithm-render-manifest-1.schema.json` | `sonarithm_export::manifest::json_schema` (A05-T08) |
+//! | `packages/ipc/src/generated/protocol.ts` | `sonarithm_app::ipc::typescript` with ts-rs (B01-T02, ADR-0011, ADR-0017) |
+//! | `packages/ipc/src/generated/fixtures.ts` | `sonarithm_app::ipc::typescript::fixtures` (a Rust-encoded binary view for the TypeScript reader's test) |
 //!
-//! The TypeScript IPC types in `packages/ipc/src/generated/` join in B01
-//! (docs/engineering/dev-environment.md#common-commands). The `docs / schema-diff` CI job
-//! runs this task and then fails on any diff, so a stale generated file cannot be merged.
+//! The `docs / schema-diff` CI job runs this task and then fails on any diff, so a stale
+//! generated file cannot be merged.
 
 use std::path::Path;
 
@@ -30,6 +31,16 @@ pub(crate) fn run(root: &Path) -> Result<()> {
         root,
         sonarithm_export::manifest::MANIFEST_SCHEMA_PATH,
         &sonarithm_export::manifest::json_schema(),
+    )?;
+    write(
+        root,
+        sonarithm_app::ipc::typescript::PATH,
+        &sonarithm_app::ipc::typescript::typescript(),
+    )?;
+    write(
+        root,
+        sonarithm_app::ipc::typescript::FIXTURES_PATH,
+        &sonarithm_app::ipc::typescript::fixtures(),
     )
 }
 

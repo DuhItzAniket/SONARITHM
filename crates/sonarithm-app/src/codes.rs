@@ -176,6 +176,17 @@ pub const EXPORT_FAILED: CodeInfo = CodeInfo {
     status: CodeStatus::Active,
 };
 
+/// A buffer is not a binary view this version reads (ADR-0017 §6).
+pub const BINARY_VIEW: CodeInfo = CodeInfo {
+    code: "SNR-APP-050",
+    severity: Severity::Error,
+    summary: "Not a binary view this version reads",
+    help: "Build the user interface and the host from the same commit; a view's header version, \
+           kind and data types must all be known to the reader.",
+    rules: &[],
+    status: CodeStatus::Active,
+};
+
 /// A file the user chose cannot be used: missing, not a regular file, or not a data file.
 pub const FILE_REFUSED: CodeInfo = CodeInfo {
     code: "SNR-APP-060",
@@ -207,6 +218,7 @@ pub const CODES: CodeTable = CodeTable {
         UNKNOWN_JOB,
         EXPORT_PATH,
         EXPORT_FAILED,
+        BINARY_VIEW,
         FILE_REFUSED,
     ],
 };

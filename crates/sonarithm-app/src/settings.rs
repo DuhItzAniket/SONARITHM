@@ -18,6 +18,7 @@ use std::path::{Path, PathBuf};
 
 use serde::{Deserialize, Serialize};
 use serde_json::{Map, Value};
+use ts_rs::TS;
 
 use crate::codes;
 use crate::ipc::IpcError;
@@ -39,7 +40,7 @@ pub const BUFFER_RANGE: (u32, u32) = (16, 8192);
 
 /// Every user setting (12 §3). Unknown fields are refused, so a typo is an error and not a
 /// silently ignored setting.
-#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize, TS)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 #[non_exhaustive]
 pub struct Settings {
@@ -110,7 +111,7 @@ impl Settings {
 }
 
 /// Audio output settings.
-#[derive(Clone, Debug, Default, PartialEq, Serialize, Deserialize)]
+#[derive(Clone, Debug, Default, PartialEq, Serialize, Deserialize, TS)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 #[non_exhaustive]
 pub struct AudioSettings {
@@ -123,7 +124,7 @@ pub struct AudioSettings {
 }
 
 /// The UI theme (design-language §5).
-#[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Serialize, Deserialize, TS)]
 #[serde(rename_all = "camelCase")]
 #[non_exhaustive]
 pub enum Theme {
@@ -141,7 +142,7 @@ pub enum Theme {
 }
 
 /// Announcement verbosity (08 §4).
-#[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Serialize, Deserialize, TS)]
 #[serde(rename_all = "camelCase")]
 #[non_exhaustive]
 pub enum Verbosity {
@@ -153,7 +154,7 @@ pub enum Verbosity {
 }
 
 /// Output modalities (A11Y-10).
-#[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize, TS)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 #[non_exhaustive]
 #[expect(
@@ -183,7 +184,7 @@ impl Default for Modalities {
 }
 
 /// Consent to network features (ADR-0012). Each is `None` until the user answers.
-#[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Serialize, Deserialize, TS)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 #[non_exhaustive]
 pub struct Consent {

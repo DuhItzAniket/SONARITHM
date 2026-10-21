@@ -27,7 +27,7 @@ Write an ADR when a decision is hard to reverse, affects several crates or engin
 | [0008](0008-offline-first-extraction-and-ai.md) | Exact-first, offline-first chart extraction and AI | accepted | — |
 | [0009](0009-wasm-plugins-compile-time.md) | WebAssembly component plugins, compile time only | proposed | D05 |
 | [0010](0010-licensing.md) | Licensing: MIT OR Apache-2.0 for code, CC BY 4.0 for docs and data, DCO | accepted (2026-10-18) | A01-T13 |
-| [0011](0011-typed-ipc-ts-rs.md) | Typed IPC via ts-rs and JSON Schema | accepted | B01 |
+| [0011](0011-typed-ipc-ts-rs.md) | Typed IPC via ts-rs and JSON Schema | accepted | B01-T02: generated protocol types, the generated command → reply table and a contract test over every command; `docs / schema-diff` fails on stale output |
 | [0012](0012-privacy-and-telemetry.md) | No default telemetry; offline by default | accepted | — |
 | [0013](0013-determinism-and-provenance.md) | Determinism and render provenance | accepted | A05 golden tests |
 | [0014](0014-capability-trait-signatures.md) | Capability traits are generic over the data type and take spec fragments | accepted (2026-10-19, coordinator under owner delegation) | A03-T04 (done), A04 instantiates `D` |
