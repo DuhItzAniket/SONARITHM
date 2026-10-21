@@ -171,7 +171,7 @@ BLV people are paid co-designers and evaluators throughout: about 10–15 partic
 | Evaluation round 2 | C06 (`v1.0.0`) | 10–15 participants | Validate Stage C engines and fixes |
 | Research studies | D06 | Per preregistration | Published studies ([roadmap](../planning/roadmap.md)) |
 
-Ethics approval comes before any study; the roadmap plans the ethics application for December 2026 (A08).
+Ethics approval comes before any study. The owner works alone without an ethics route ([OD-04](../planning/open-decisions.md#closed-decisions)), so evaluation round 1 runs as paid product usability feedback, not as a study: no research data is published from it, and it waits for RV University's policy to be confirmed in writing, a compensation budget and recruited participants ([implementation plan §3.3](../planning/implementation-plan.md#33-owner-and-human-paced-items), HP-09).
 
 ### 8.2 Recruiting
 

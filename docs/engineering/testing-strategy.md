@@ -291,7 +291,7 @@ Procedure:
 
 - **Chartability**: the 14 critical tests every release and all 50 heuristics at major versions (A11Y-33).
 - **ACR**: v0 in B07 and v1 in C06, against WCAG 2.2 AA via WCAG2ICT (A11Y-31).
-- **Co-design rounds** (A11Y-34) are research activities with ethics approval, not tests. Their findings are logged in the [findings log](../research-paper/findings-log.md) and triaged into issues.
+- **Co-design rounds** (A11Y-34) are not tests. While there is no ethics route ([OD-04](../planning/open-decisions.md#closed-decisions)), they run as paid product usability feedback, and no research data is published from them. Their findings are logged in the [findings log](../research-paper/findings-log.md) and triaged into issues.
 - **Optional automation**: Guidepup for NVDA and VoiceOver smoke tests is assessed in B03; its maturity is unverified.
 
 ## 14. Latency measurement

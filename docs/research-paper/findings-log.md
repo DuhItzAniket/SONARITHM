@@ -685,3 +685,12 @@ A05 (render engine, audio backends, export) uses F-050 to F-069.
 - **Evidence level / confidence:** EV-C / Strong (three platforms and two CPU architectures; CI virtual machines, no audio devices involved)
 - **Affects:** CL-02, CL-03, ADR-0013, NFR-03; P01 §6.2
 - **Papers:** P01, P07
+
+### F-120 · Agent sessions closed 69 of the 78 Stage A phase tasks in about 55 hours, and the nine still open all wait on the owner
+
+- **Date:** 2026-10-21 · **Phase:** Stage B planning · **Type:** engineering · **Status:** new
+- **Statement:** Between 2026-10-18 19:09 and 2026-10-21 02:11 UTC (about 55 hours), agent sessions closed 69 of the 78 Stage A phase issues (milestones A01–A08); the baseline roadmap planned Stage A for November 2026 to February 2027. In the same period 89 pull requests were merged (2026-10-18 18:24 to 2026-10-21 02:40 UTC), and 63 of the commits on `main` are dated 2026-10-19. The nine open issues all wait on the owner: A02-T01 and A02-T05 to T08 (manual walkthroughs and measurements on other OSes, the gate sign-off), A05-T13 (the cable test), A07-T08 and A08-T06 (the release go-aheads) and A08-T05 (the paper submission). An issue's close time is when its PR merged, not how long the work took.
+- **Evidence:** `gh issue list --state all --search "label:stage/a"` (creation and close times, milestones); `gh pr list --state merged`; `git log --format=%ad --date=short` on `main` at 6bf7dcd; the Stage B planning PR
+- **Evidence level / confidence:** EV-C / Moderate (complete counts from GitHub, one project and one owner; close times measure merges, not effort)
+- **Affects:** the Stage B re-estimate (roadmap §3, implementation plan §3.1); R-24, R-26, R-27; OD-15, OD-17
+- **Papers:** P02 (AI-usage disclosure and development history)

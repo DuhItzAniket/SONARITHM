@@ -1,6 +1,6 @@
 # Roadmap
 
-> **Status:** Baseline v1 (2026-10-18). **Owner:** Project lead.
+> **Status:** Baseline v1 (2026-10-18); Stage B re-estimated 2026-10-21. **Owner:** Project lead.
 > **Live progress:** [docs/sdlc/status.md](../sdlc/status.md). **Task-level plan:** [implementation-plan.md](implementation-plan.md). **Risks:** [risk-register.md](risk-register.md).
 
 ## 1. Shape of the plan
@@ -55,6 +55,8 @@ gantt
   D05 Plugins & WebAssembly            :d05, 2028-02-01, 49d
   D06 Research studies programme       :d06, 2027-11-01, 180d
 ```
+
+The chart is the baseline v1 and is re-baselined at Gate A. Stage A's code was complete on 2026-10-21, months ahead of it; the [Stage B re-estimate](#stage-b-re-estimate) explains what that means for Stage B, whose dates now depend on owner and human-paced items.
 
 ---
 
@@ -155,13 +157,47 @@ gantt
 
 **Goal.** A desktop app that a blind screen-reader user can install, open data in, explore, configure and export from, without sighted help. It must also be credible to sighted analysts.
 
+### Stage B re-estimate
+
+> Added 2026-10-21 with the Stage B task rows ([implementation plan §3](implementation-plan.md#3-stage-b--accessible-desktop-task-level)). The estimates are planning figures, not measurements; each phase review re-baselines them.
+
+**Stage A's actual pace.** Agent sessions closed 69 of the 78 Stage A phase tasks in about 55 hours (2026-10-18 19:09 to 2026-10-21 02:11 UTC), against a baseline window of November 2026 to February 2027. Sessions for A03, A04, A05, A06 and A08 all closed tasks on 2026-10-19. The nine open tasks all wait on the owner: walkthroughs on other OSes, the cable test, release go-aheads and the paper submission ([F-120](../research-paper/findings-log.md#implementation-findings)).
+
+**What differs in Stage B.**
+
+- At most two build-heavy agent sessions run at once on the owner's 16 GB laptop.
+- Most of Stage B is UI work whose acceptance needs people: screen-reader runs, co-design sessions and listening checks.
+- The [A02 gate](../sdlc/reviews/A02-prototype-gate.md#decision) holds the shell and UI work (Lane U) until the owner's walkthroughs are done and ADR-0002 and ADR-0003 are confirmed or amended ("Gate U"). The Rust work (Lane R) can start now.
+
+**Estimate.** Agent-paced work in session-days (one agent session on the phase), from Stage A's one to two days per phase of 9–13 tasks:
+
+| Phase | Tasks | Lane R (starts now) | Agent estimate | Owner and human-paced items |
+|---|---|---|---|---|
+| B01 | 9 | T01, T02, T06 | ≈ 2 session-days | Gate U; HP-03 (App Nap) |
+| B02 | 11 | T01, T02, T08 | ≈ 2–3 | Gate U; HP-07 (component checks), HP-16 (OD-03) |
+| B03 | 14 | T01–T03, T05–T08, T11 | ≈ 3–4 | Gate U; HP-01 (OD-05), HP-05 ([#123](https://github.com/DuhItzAniket/SONARITHM/issues/123), [#186](https://github.com/DuhItzAniket/SONARITHM/issues/186)), HP-08 (task suite), HP-14 |
+| B04 | 8 | T03 | ≈ 2 | Gate U; HP-02, HP-03 (real webviews) |
+| B05 | 8 | T01, T04 | ≈ 2–3 | Gate U; HP-14; the project-format RFC |
+| B06 | 7 | all but T06 | ≈ 2 | Gate U for T06 only |
+| B07 | 10 | none | ≈ 2–3 | HP-06 ([#187](https://github.com/DuhItzAniket/SONARITHM/issues/187)), HP-09 (co-design route), HP-10 (matrix), HP-12 (signing), HP-13 (JOSS), HP-14, HP-15, HP-17 |
+| **Total** | **67** | **23** | **≈ 15–19 session-days**, about two calendar weeks with two sessions and the dependency chain | — |
+
+**What sets Gate B's date: the human-paced items, not the engineering.**
+
+- **Gate U:** HP-01, HP-02 and HP-04. [OD-15](open-decisions.md) proposes opening Lane U after HP-01 alone.
+- **Screen-reader runs:** the B03 task suite (HP-08) and the full matrix (HP-10). Access to JAWS and a braille display is not arranged yet (R-25).
+- **Co-design round 1:** it needs RV University's policy confirmed in writing, a compensation budget and recruited participants (HP-09). [OD-16](open-decisions.md) covers the case where it cannot run.
+- **JOSS:** P02 eligibility is calendar-gated: six months of public history, about 2027-04-18 at the earliest, TODO(verify) ([OD-17](open-decisions.md)).
+
+Gate B's date stays TODO(verify) until HP-09's lead time is known. The HP items are listed in [implementation plan §3.3](implementation-plan.md#33-owner-and-human-paced-items), with the issue that tracks each.
+
 ### B01 · Desktop shell, IPC and app core
 
 | | |
 |---|---|
 | **Deliverables** | `apps/desktop` (Tauri 2) with `sonarithm-desktop`; `sonarithm-app` (sessions, undo/redo command bus, job queue, settings, profiles); typed IPC (ts-rs → `@sonarithm/ipc`); hot paths over Channels and binary `ipc::Response`; playhead clock anchors; a network-deny integration test; crash-safe autosave. |
 | **Exit criteria** | Open → play → stop works on all OSes. Channel throughput meets the A02 budget. Cold start ≤ 2 s. Zero network calls in the network-deny test. |
-| **Size** | M (≈3 weeks) |
+| **Size** | M (baseline ≈3 weeks). Re-estimate 2026-10-21: ≈ 2 agent session-days. Owner gates: Gate U, HP-03 |
 
 ### B02 · Design system and application frame
 
@@ -169,7 +205,7 @@ gantt
 |---|---|
 | **Deliverables** | `@sonarithm/ui`: OKLCH token generator (dark, light, high-contrast; `forced-colors` honoured), IBM Plex Sans/Mono, React Aria-based components (Button, ToggleButton, Slider with unit announcements, Tree, Table, Toolbar, Menu, Dialog, ComboBox, Tabs); fixed regions with F6 cycling; command palette; Storybook with the a11y addon; Vitest browser-mode visual tests. Follows [design-language.md](../design/design-language.md). |
 | **Exit criteria** | Every component passes axe and a manual NVDA/VoiceOver check. A design review against the anti-pattern list has zero violations. High-contrast theme is complete. |
-| **Size** | M (≈4 weeks) |
+| **Size** | M (baseline ≈4 weeks). Re-estimate 2026-10-21: ≈ 2–3 agent session-days. Owner gates: Gate U, HP-07, HP-16 |
 
 ### B03 · AUDAXIS v1: navigation, context and speech
 
@@ -177,7 +213,7 @@ gantt
 |---|---|
 | **Deliverables** | `sonarithm-audaxis`: NavTree builder; discrete-step navigation (local, lateral, spatial, targeted); "where am I"; earcon set; tick track (SDR-16); dynamic reference tone (SDR-17); spoken legends (SDR-18); announcement composer with verbosity and ordering (A11Y-12); speech/sonification sequencing (A11Y-20); screen-reader routing via platform announcements, plus optional self-voicing (`sonarithm-speech`); braille review line (A11Y-21); the keymap in [keyboard-and-navigation.md](../design/keyboard-and-navigation.md). |
 | **Exit criteria** | All A11Y requirements owned by AUDAXIS pass their tests. A scripted task suite (find max, compare series, read value at x) completes with NVDA, JAWS, VoiceOver and Orca. |
-| **Size** | L (≈5 weeks) |
+| **Size** | L (baseline ≈5 weeks). Re-estimate 2026-10-21: ≈ 3–4 agent session-days. Owner gates: Gate U, HP-01, HP-05, HP-08, HP-14 |
 
 ### B04 · Visualization and linked cursor
 
@@ -185,7 +221,7 @@ gantt
 |---|---|
 | **Deliverables** | `@sonarithm/viz`: uPlot for line and time series; a WebGL2 layer for dense, waveform and spectrogram views (WebGPU optional); M4/LTTB tiles from Rust; playhead extrapolated from clock anchors with latency compensation; linked cursor across plot, table and navigation; CVD-safe palettes and perceptual colormaps. |
 | **Exit criteria** | 60 fps playhead with 1M-point series on reference hardware in all three webviews. The cursor stays in sync within one frame. |
-| **Size** | M (≈4 weeks) |
+| **Size** | M (baseline ≈4 weeks). Re-estimate 2026-10-21: ≈ 2 agent session-days. Owner gates: Gate U, HP-02, HP-03 |
 
 ### B05 · Inspector, spec editor and project files
 
@@ -193,7 +229,7 @@ gantt
 |---|---|
 | **Deliverables** | Mapping inspector (channels, scales, polarity flip, ranges, concept selector, mode switch), engine-grouped panels; CodeMirror 6 spec editor with schema validation and diagnostics; `.sonarithm` project bundle (spec + data snapshot + profile + manifests); import/export of specs; Analysis/Presentation/Monitoring modes surfaced (SDR-36). |
 | **Exit criteria** | Every inspector edit round-trips to the spec and back without loss. Undo/redo covers all edits. A project reopens bit-identically. |
-| **Size** | M (≈3 weeks) |
+| **Size** | M (baseline ≈3 weeks). Re-estimate 2026-10-21: ≈ 2–3 agent session-days. Owner gates: Gate U, HP-14 |
 
 ### B06 · SONOTRACE v1: transport, streams and monitoring
 
@@ -201,17 +237,17 @@ gantt
 |---|---|
 | **Deliverables** | `sonarithm-stream` + `sonarithm-sonotrace`: transport state machine (XState on the UI side, Rust authoritative); loop, speed and scrub; WebSocket, OSC, serial and MQTT sources with backpressure; incremental encoding; Monitoring mode with an ambient soundscape (SDR-35); rate-limited announcements and pause/stop/hide (A11Y-16). |
 | **Exit criteria** | A 1 kHz input stream sonifies for 1 hour with no xruns and bounded memory. Announcement rate limits are verified. |
-| **Size** | M (≈4 weeks) |
+| **Size** | M (baseline ≈4 weeks). Re-estimate 2026-10-21: ≈ 2 agent session-days. Owner gates: Gate U (T06 only) |
 
 ### B07 · Accessibility conformance, tutorial and co-design round 1
 
 | | |
 |---|---|
-| **Deliverables** | A built-in 15-minute interactive tutorial (SDR-37, A11Y-30); context help; ACR v0 (WCAG 2.2 AA via WCAG2ICT); the manual screen-reader matrix (A11Y-32); Chartability audit (A11Y-33); co-design round 1 with 10–15 BLV participants (A11Y-34) run as product usability feedback, not as a research study (OD-04); fixes. **Release `v0.5.0-beta`.** JOSS submission (P02). |
-| **Exit criteria** | No open "critical" accessibility issues. Co-design findings are logged and triaged. The ACR is published. P02 is submitted. |
-| **Size** | M (≈4 weeks) |
+| **Deliverables** | A built-in 15-minute interactive tutorial (SDR-37, A11Y-30); context help; ACR v0 (WCAG 2.2 AA via WCAG2ICT); the manual screen-reader matrix (A11Y-32); Chartability audit (A11Y-33); co-design round 1 with 10–15 BLV participants (A11Y-34) run as product usability feedback, not as a research study (OD-04), once the co-design route is in place (HP-09); fixes. **Release `v0.5.0-beta`.** JOSS submission (P02). |
+| **Exit criteria** | No open "critical" accessibility issues. Co-design findings are logged and triaged. The ACR is published. P02 is submitted, or its deferral is recorded at Gate B (OD-17: JOSS eligibility is calendar-gated). |
+| **Size** | M (baseline ≈4 weeks). Re-estimate 2026-10-21: ≈ 2–3 agent session-days; the rest is human-paced. Owner gates: HP-06, HP-09, HP-10, HP-12 to HP-15, HP-17 |
 
-**Gate B (beta).** A BLV user completes the core tasks unaided in ≥ 80% of attempts during co-design round 1. All Stage B exit criteria are met.
+**Gate B (beta).** A BLV user completes the core tasks unaided in ≥ 80% of attempts during co-design round 1. All Stage B exit criteria are met. If round 1 cannot run, OD-16 applies.
 
 ---
 
