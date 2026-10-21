@@ -28,6 +28,7 @@ full = ["fs", "xlsx", "zstd"]
 [dependencies]
 serde.workspace = true
 serde_json.workspace = true
+sonarithm-audaxis.workspace = true
 sonarithm-compiler.workspace = true
 sonarithm-core.workspace = true
 sonarithm-data.workspace = true

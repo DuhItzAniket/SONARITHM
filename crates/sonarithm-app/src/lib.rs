@@ -43,6 +43,7 @@ mod jobs;
 pub mod patch;
 pub mod project;
 pub mod settings;
+pub mod speech;
 #[doc(hidden)]
 pub mod testing;
 mod transport;

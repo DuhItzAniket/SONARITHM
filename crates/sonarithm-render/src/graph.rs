@@ -86,7 +86,14 @@ pub enum GainTarget {
     Bus(Bus),
     /// The master: the sonification volume, independent of the system volume (A11Y-15).
     Master,
+    /// The speech ducker before the master (06 §3): [`DUCK_LEVEL`] while speech plays over
+    /// sonification, 0 dB otherwise (A11Y-20).
+    Duck,
 }
+
+/// How far the ducker lowers sonification while self-voicing speaks over it: about 20 dB
+/// below speech (A11Y-20, sound-design §6.2; 08 §4).
+pub const DUCK_LEVEL: Db = Db(-20.0);
 
 /// A one-shot cue.
 #[derive(Clone, Copy, Debug, PartialEq)]
@@ -238,6 +245,7 @@ pub struct Graph {
     scratch: Vec<f32>,
     bus_gains: [LinearSmoother; 4],
     master_gain: LinearSmoother,
+    duck_gain: LinearSmoother,
     startup: Option<StartupRamp>,
     limiter: TruePeakLimiter,
     playing: bool,
@@ -306,6 +314,7 @@ impl Graph {
             scratch: vec![0.0; max_block],
             bus_gains: Bus::ALL.map(level),
             master_gain: LinearSmoother::new(1.0, SMOOTHING_TIME, rate),
+            duck_gain: LinearSmoother::new(1.0, SMOOTHING_TIME, rate),
             startup: config.startup_ramp.then(|| StartupRamp::new(rate)),
             limiter: TruePeakLimiter::new(rate),
             plan,
@@ -378,6 +387,7 @@ impl Graph {
         self.looping = previous.looping;
         self.bus_gains = previous.bus_gains;
         self.master_gain = previous.master_gain;
+        self.duck_gain = previous.duck_gain;
         self.age = previous.age;
         self.reanchor(position);
         self.playing = previous.playing;
@@ -428,6 +438,7 @@ impl Graph {
                         }
                     }
                     GainTarget::Master => self.master_gain.set_target(gain),
+                    GainTarget::Duck => self.duck_gain.set_target(gain),
                 }
             }
             Command::Cue(cue) => self.cue(&cue),
@@ -763,7 +774,7 @@ impl Graph {
             return;
         };
         for (l, r) in left.iter_mut().zip(right.iter_mut()) {
-            let mut g = self.master_gain.next_value();
+            let mut g = self.master_gain.next_value() * self.duck_gain.next_value();
             if let Some(ramp) = &mut self.startup {
                 g *= ramp.next_gain();
             }

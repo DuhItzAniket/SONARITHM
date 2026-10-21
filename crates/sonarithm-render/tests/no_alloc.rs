@@ -73,6 +73,10 @@ fn a_scripted_session_never_allocates_on_the_audio_thread() {
     blocks(&mut audio, &mut out, 200, "loop wraps");
     control.send(Command::SetGain(GainTarget::Bus(Bus::Context), Db(-20.0)));
     control.send(Command::SetGain(GainTarget::Master, Db(-6.0)));
+    control.send(Command::SetGain(
+        GainTarget::Duck,
+        sonarithm_render::DUCK_LEVEL,
+    ));
     control.send(Command::SetSpeed(1.5));
     blocks(&mut audio, &mut out, 50, "gain and speed");
     for _ in 0..6 {

@@ -65,6 +65,7 @@ struct LoopCommand(Option<LoopRange>);
 enum GainKey {
     Bus(usize),
     Master,
+    Duck,
 }
 
 /// Plays a Score on a device and recovers from device loss.
@@ -123,6 +124,7 @@ impl<B: AudioBackend> Player<B> {
                 let key = match target {
                     GainTarget::Bus(bus) => GainKey::Bus(bus.index()),
                     GainTarget::Master => GainKey::Master,
+                    GainTarget::Duck => GainKey::Duck,
                 };
                 self.replay.gains.insert(key, level);
             }
@@ -221,6 +223,7 @@ impl<B: AudioBackend> Player<B> {
                     None => continue,
                 },
                 GainKey::Master => GainTarget::Master,
+                GainKey::Duck => GainTarget::Duck,
             };
             self.controller.send(Command::SetGain(target, *level));
         }

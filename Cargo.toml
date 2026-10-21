@@ -15,6 +15,7 @@ members = [
     "crates/sonarithm-audio",
     "crates/sonarithm-export",
     "crates/sonarithm-stream",
+    "crates/sonarithm-speech",
     "crates/sonarithm-i18n",
     "crates/sonarithm-app",
     "crates/engines/sonarithm-numisona",
@@ -63,6 +64,7 @@ sonarithm-render = { path = "crates/sonarithm-render", version = "0.0.0" }
 sonarithm-audio = { path = "crates/sonarithm-audio", version = "0.0.0" }
 sonarithm-export = { path = "crates/sonarithm-export", version = "0.0.0" }
 sonarithm-stream = { path = "crates/sonarithm-stream", version = "0.0.0" }
+sonarithm-speech = { path = "crates/sonarithm-speech", version = "0.0.0" }
 sonarithm-i18n = { path = "crates/sonarithm-i18n", version = "0.0.0" }
 sonarithm-app = { path = "crates/sonarithm-app", version = "0.0.0" }
 sonarithm-numisona = { path = "crates/engines/sonarithm-numisona", version = "0.0.0" }
@@ -163,6 +165,9 @@ serde_path_to_error = "0.1.20"   # JSON pointers for spec shape errors (04 §8 l
 serde_json = { version = "1.0.145", features = ["float_roundtrip"] }
 sha2 = { version = "0.11.0", default-features = false }  # spec hash, Score hash, fingerprints (ADR-0013)
 thiserror = "2.0.17"
+# Optional self-voicing (sonarithm-speech's `system` feature, B03-T07; tech-stack: Trial).
+# MIT; on Linux it binds speech-dispatcher (LGPL-2.1 OR MIT OR Apache-2.0).
+tts = "0.26.3"
 # Live stream adapters (sonarithm-stream, B06-T02; 02 §4 features). Synchronous clients on
 # the adapter's own thread: no async runtime for WebSocket, OSC, serial or file tail.
 # tungstenite without TLS (`ws://` only until a TLS backend is chosen).

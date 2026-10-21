@@ -19,6 +19,7 @@
 - ADR-0017, IPC protocol v1 (#259): one `Request`/`Reply`/`Event` set in `sonarithm-app::ipc`, `App::dispatch` as the only entry point, typed errors with `SNR-APP` codes, the `hello` version handshake, the binary view header, and the layering edge `sonarithm-app → sonarithm`.
 - B01-T01: `sonarithm-app` with datasets, the spec and its undo history, compile reports, the transport on its own control thread, export jobs, settings and devices; 16 headless scenarios on the null device, including one that no reply, error or event holds an absolute path (ADR-0017 §7).
 - B05-T04: `.sonarithm` project bundles per RFC-0002 (accepted with conditions A and B) and ADR-0018: reader and writer, autosaves and recovery, the `project_*` commands, a memory test for condition B (F-141) and the `project_open` fuzz target.
+- B03-T07: speech and sonification sequencing in the app core (`speech::Sequencer` on the control thread), the −20 dB ducker in the render graph, `sonarithm-speech` with the opt-in `tts` engine, sequenced WebVTT cues, `announce_repeat` and the `announcement` event.
 
 ## Decisions
 
@@ -30,6 +31,10 @@
 | Export paths from the UI must be absolute `.wav` or `.flac` paths in an existing folder | 09 §4: no path traversal from UI strings | No ADR needed: local choice |
 | Project replies carry file names and the recent list opens by index, not by path as RFC-0002 §9 sketched | ADR-0017 §7: no folder crosses the protocol | Reported to the coordinator; RFC-0002 §9 is additive and unchanged in substance |
 | The Parquet structural check streams page headers instead of loading each column chunk | Condition B: no copy of a member in memory | F-141 |
+| The sequencer runs on the transport's control thread | That thread owns the player, so pausing and ducking need no extra channel; time is passed in, so the rules are tested without a clock | 08 §4 as built |
+| Self-voicing is an opt-in `system` feature of `sonarithm-speech` | Headless builds and CI need no speech engine; Linux needs libspeechd-dev only where self-voicing ships | 02 §2 |
+| The app core registers AUDAXIS through a facade opt-in, not as a facade default | The default changes every Score's header (F-142); making it the default is B03's decision | F-142 |
+| Speech durations are estimated at 180 words per minute unless the listener sets a rate | No documented rate; estimates err long, so speech is not talked over | TODO(verify) in B07 |
 
 ## Problems and how they were solved
 
@@ -41,6 +46,7 @@
 
 - F-140: A05's `Player` cannot move between threads, so the app core owns the thread that drives it — [findings log](../../research-paper/findings-log.md)
 - F-141: reading an embedded Parquet member in place cuts the peak memory of opening it by 1.6 times the member's size — [findings log](../../research-paper/findings-log.md)
+- F-142: registering AUDAXIS changes every Score's header, so the app's Scores differ from the CLI's until AUDAXIS is a default engine — [findings log](../../research-paper/findings-log.md)
 
 ## Next steps
 

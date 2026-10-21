@@ -331,6 +331,45 @@ fn gain_changes_are_smoothed() {
     );
 }
 
+/// The RMS level of `samples` in dB.
+fn rms_db(samples: &[f32]) -> f64 {
+    let power = samples
+        .iter()
+        .map(|s| f64::from(*s) * f64::from(*s))
+        .sum::<f64>()
+        / samples.len() as f64;
+    10.0 * sonarithm_core::math::log10(power)
+}
+
+/// A11Y-20: while self-voicing speaks over sonification, the ducker holds it about 20 dB
+/// below its level, and releasing the duck restores the level. Measured on a steady sine
+/// well below the limiter, within 0.05 dB.
+#[test]
+fn a11y_20_the_ducker_holds_sonification_20_db_down() {
+    let mut graph = graph(&drone(), 480);
+    graph.apply(Command::SetGain(GainTarget::Master, Db(-12.0)));
+    graph.apply(Command::Play);
+    let mut out = vec![0.0; 2 * 24_000];
+    graph.process(&mut out);
+    let before = rms_db(&left(&out)[4_800..]);
+    graph.apply(Command::SetGain(GainTarget::Duck, DUCK_LEVEL));
+    graph.process(&mut out);
+    let ducked = rms_db(&left(&out)[4_800..]);
+    graph.apply(Command::SetGain(GainTarget::Duck, Db(0.0)));
+    graph.process(&mut out);
+    let after = rms_db(&left(&out)[4_800..]);
+    assert!(
+        (ducked - before - DUCK_LEVEL.0).abs() < 0.05,
+        "ducked by {:.3} dB",
+        ducked - before
+    );
+    assert!(
+        (after - before).abs() < 0.05,
+        "restored to {:.3} dB",
+        after - before
+    );
+}
+
 #[test]
 fn playback_stops_at_the_end_of_the_plan() {
     let score = score(

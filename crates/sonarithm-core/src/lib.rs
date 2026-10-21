@@ -20,6 +20,7 @@ pub mod math;
 pub mod nav;
 pub mod provenance;
 pub mod score;
+pub mod speech;
 #[cfg(any(test, feature = "test-support"))]
 pub mod testing;
 pub mod units;
@@ -33,4 +34,5 @@ pub use score::{
     Note, PitchRange, Priority, Score, ScoreEvent, ScoreHeader, ScoreTrack, ShaperStage,
     SpecVersion, Speech, Timbre, TrackRole,
 };
+pub use speech::{WordsPerMinute, spoken_duration};
 pub use units::{Cents, Db, Frames, Hz, Midi, Pan, SampleRate, Seconds};

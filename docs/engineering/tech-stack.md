@@ -30,7 +30,7 @@
 | Decode | symphonia | 0.6.1 | Adopt | MPL-2.0 | C01 | Audio input for samples and audification sources |
 | Export | hound (WAV); flacenc (FLAC); midly (SMF) | 3.5.1; 0.5.1; 0.5.3 | Adopt (flacenc Trial) | Apache/MIT | A05/C04 | MP3 via mp3lame-encoder is **LGPL**, optional feature only |
 | Live MIDI / OSC | midir; rosc | 0.11.1; 0.11.4 | Adopt | MIT/Apache | C04 | |
-| Speech | tts | 0.26.3 | Trial | MIT | B03 | Last release Jul 2024; repo active. Self-voicing only |
+| Speech | tts | 0.26.3 | Trial | MIT | B03 | Last release Jul 2024; repo active. Self-voicing only, behind `sonarithm_speech::Speaker` and the opt-in `system` feature (B03-T07); on Linux it binds speech-dispatcher (needs libspeechd-dev) |
 | Data model | arrow + parquet; bytes | 60; 1.12 | Adopt | Apache-2.0; MIT | A04 | The split crates (`arrow-array`, `-data`, `-schema`, `-select`, `-ipc`, `-ord`, `-row`) instead of the `arrow` umbrella; parquet without its async (tokio) default and with pure-Rust codecs. zstd (C) is the default-on `zstd` feature of `sonarithm-data`, off in the wasm32 build |
 | File formats | csv; encoding_rs + chardetng; calamine; jiff (+ chrono interop) | 1.4; 0.8.42 + 1.0.0; 0.37.0; 0.2.38 | Adopt | MIT/Unlicense; MIT/Apache (+ BSD-3-Clause data tables) | A04 | encoding_rs and chardetng (both by H. Sivonen) decode and guess non-UTF-8 CSV. calamine sits behind the default `xlsx` feature. jiff without default features: civil date-time parsing only, no time-zone database and no clock |
 | DataFrame adapter | polars | 0.55.2 | Trial (feature) | MIT | A04 | Rust API breaks without deprecation |
