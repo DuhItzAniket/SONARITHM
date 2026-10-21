@@ -6,8 +6,9 @@
 //!
 //! AUDAXIS registers one context provider. It builds the navigation tree
 //! ([`nav::tree`], 08 §2) that the compiler returns beside the Score, and, from B03-T05,
-//! the context tracks (ticks, the reference tone, the spoken legend). The cursor and its
-//! verbs, the announcement composer, the earcons and spatial placement follow in B03.
+//! the context tracks (ticks, the reference tone, the spoken legend). The [`nav::Cursor`]
+//! moves through the tree with the verbs of keyboard-and-navigation §4. The announcement
+//! composer, the full earcon set and spatial placement follow in B03.
 //!
 //! The engine reads its own part of the spec and the data; it never depends on another
 //! engine (02 §3 rule 2). Everything it builds is ordered and deterministic (ADR-0013).
@@ -16,6 +17,7 @@
 #![deny(missing_docs)]
 
 mod columns;
+pub mod earcons;
 pub mod nav;
 
 use std::borrow::Borrow;
