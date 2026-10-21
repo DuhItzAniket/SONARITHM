@@ -1,0 +1,29 @@
+{
+  "description": "One message ID renders the same text in Rust (sonarithm-i18n, tests/contract.rs) and TypeScript (@sonarithm/i18n, test/contract.test.ts). A number argument is an object with `number` and the Intl.NumberFormat digit options both sides support: minimumFractionDigits, maximumFractionDigits, minimumIntegerDigits and useGrouping.",
+  "cases": [
+    { "locale": "en-US", "id": "unit-celsius", "args": { "value": { "number": 28.7, "minimumFractionDigits": 1 }, "style": "verbose" }, "expected": "28.7 degrees Celsius" },
+    { "locale": "en-US", "id": "unit-celsius", "args": { "value": { "number": 1 }, "style": "verbose" }, "expected": "1 degree Celsius" },
+    { "locale": "en-US", "id": "unit-celsius", "args": { "value": { "number": 1, "minimumFractionDigits": 1 }, "style": "verbose" }, "expected": "1.0 degrees Celsius" },
+    { "locale": "en-US", "id": "unit-celsius", "args": { "value": { "number": 1.0004, "maximumFractionDigits": 2 }, "style": "verbose" }, "expected": "1 degree Celsius" },
+    { "locale": "en-US", "id": "unit-celsius", "args": { "value": { "number": 28.7 }, "style": "terse" }, "expected": "28.7 degrees C" },
+    { "locale": "en-US", "id": "unit-celsius", "args": { "value": { "number": 28.7 }, "style": "symbol" }, "expected": "28.7 °C" },
+    { "locale": "en-US", "id": "unit-hectopascal", "args": { "value": { "number": 1012 }, "style": "verbose" }, "expected": "1,012 hectopascals" },
+    { "locale": "en-US", "id": "unit-percent", "args": { "value": { "number": 61.005, "maximumFractionDigits": 2 }, "style": "symbol" }, "expected": "61.01%" },
+    { "locale": "en-US", "id": "unit-percent", "args": { "value": { "number": 0.12345 }, "style": "terse" }, "expected": "0.123 percent" },
+    { "locale": "en-US", "id": "unit-other", "args": { "value": { "number": 3 }, "unit": "furlongs" }, "expected": "3 furlongs" },
+    { "locale": "en-US", "id": "common-point-count", "args": { "count": { "number": 1 } }, "expected": "1 point" },
+    { "locale": "en-US", "id": "common-point-count", "args": { "count": { "number": 1234567 } }, "expected": "1,234,567 points" },
+    { "locale": "en-US", "id": "common-position", "args": { "index": { "number": 195 }, "total": { "number": 365 } }, "expected": "195 of 365" },
+    { "locale": "en-US", "id": "common-number", "args": { "value": { "number": 1980, "useGrouping": false } }, "expected": "1980" },
+    { "locale": "en-US", "id": "common-number", "args": { "value": { "number": -2.5, "minimumIntegerDigits": 2 } }, "expected": "-02.5" },
+    { "locale": "en-US", "id": "common-number", "args": { "value": { "number": 2.0005 } }, "expected": "2.001" },
+    { "locale": "en-US", "id": "ui-stop-all-audio", "args": {}, "expected": "Stop all audio" },
+    { "locale": "en-US", "id": "ui-product-name", "args": {}, "expected": "SONARITHM" },
+    { "locale": "en-GB", "id": "common-number", "args": { "value": { "number": 1234.5 } }, "expected": "1,234.5" },
+    { "locale": "en-IN", "id": "common-point-count", "args": { "count": { "number": 1234567 } }, "expected": "12,34,567 points" },
+    { "locale": "en-XA", "id": "ui-stop-all-audio", "args": {}, "expected": "⟦Šţöƥ àļļ àûðîö~~~~~~⟧" },
+    { "locale": "en-XA", "id": "ui-product-name", "args": {}, "expected": "⟦ŠÖÑÀŔÎŢĤṀ~~~~⟧" },
+    { "locale": "en-XA", "id": "unit-celsius", "args": { "value": { "number": 28.7 }, "style": "verbose" }, "expected": "⟦28.7 ðéĝŕééš Çéļšîûš~~~~~~~~⟧" },
+    { "locale": "en-XA", "id": "common-point-count", "args": { "count": { "number": 3 } }, "expected": "⟦3 ƥöîñţš~~~~⟧" }
+  ]
+}

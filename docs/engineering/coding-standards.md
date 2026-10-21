@@ -363,7 +363,7 @@ Reason: accessibility is a deciding criterion for this project, and we want the 
 
 ### 12.7 Strings and internationalisation
 
-- No user-facing string literals in components. Strings come from Fluent message catalogues with the same message IDs as the Rust side ([08 §9](../architecture/08-interaction-and-accessibility.md#9-localization-of-announcements)).
+- No user-facing string literals in components. Strings come from Fluent message catalogues with the same message IDs as the Rust side ([08 §9](../architecture/08-interaction-and-accessibility.md#9-localization-of-announcements)): the files in `crates/sonarithm-i18n/locales/`, formatted with `@sonarithm/i18n`. The ESLint rule `sonarithm/no-literal-ui-string` enforces this for JSX text and user-facing attributes (`aria-label`, `title`, `alt`, `placeholder`, `label` and others).
 - Never build sentences by concatenation; use message arguments and plural forms. Announcement text is composed from structured parts so verbosity and order stay configurable (A11Y-12).
 - Numbers, units and dates use locale-aware formatting. RAC components receive the locale through `I18nProvider`.
 - Copy follows the design language: terse, unit-bearing, sentence case, no exclamation marks.

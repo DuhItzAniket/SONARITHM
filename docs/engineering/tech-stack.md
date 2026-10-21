@@ -47,7 +47,7 @@
 | TS codegen | ts-rs | 12.0.1 | Adopt | MIT | B01 | specta/tauri-specta 2.0.0-rc.25 Trial ([ADR-0011](../decisions/0011-typed-ipc-ts-rs.md)) |
 | Errors / diagnostics | thiserror; miette; anyhow (apps only) | 2.0.21; 7.6.0; — | Adopt | MIT/Apache | A03 | |
 | Logging | tracing (+ tracing-subscriber, tracing-appender) | 0.1.44 | Adopt | MIT | A03 | Never on the audio thread |
-| i18n | fluent-rs; icu4x | — | Adopt | Apache/Unicode | B03 | Versions pinned in B03 |
+| i18n | fluent-bundle; ICU4X (`icu_decimal`, `icu_datetime`); @fluent/bundle (UI) | 0.16.0; 2.3.0; 0.19.1 | Adopt | Apache/MIT; Unicode-3.0; Apache-2.0 | B02 | `sonarithm-i18n` and `@sonarithm/i18n` (B02-T08); ICU4X `sync` for shareable payloads |
 | CLI | clap | — | Adopt | MIT/Apache | A07 | |
 
 ## 3. Desktop and frontend

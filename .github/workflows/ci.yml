@@ -251,6 +251,9 @@ jobs:
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       - run: pnpm -r lint
+      # Package tests with node:test, including the Rust–TypeScript message contract and the
+      # pseudo-locale check of @sonarithm/i18n (B02-T08).
+      - run: pnpm -r test
 
   # The examples gallery (examples/README.md): its datasets regenerate byte for byte from
   # their seeded generators, and every spec renders with the CLI. The renders are uploaded

@@ -10,6 +10,7 @@ From phase A07, release-plz maintains this file: it generates each release's ent
 
 ### Added
 
+- Message catalogues and locale formatting (B02-T08): the `sonarithm-i18n` crate with Fluent catalogues shared with the desktop UI, ICU4X number and date formatting that matches `Intl.NumberFormat`, spoken unit names (symbol, terse and verbose), and the `en-XA` pseudo-locale with a check for hard-coded, concatenated and truncated strings; the `@sonarithm/i18n` package and the `sonarithm/no-literal-ui-string` ESLint rule.
 - Documentation baseline (2026-10-18), written before any code:
   - Research: the kickoff research report, seven research notes, and the design-rules catalogue (`SDR-##`, `A11Y-##`).
   - Product: the engine catalogue (nine engines on one platform).

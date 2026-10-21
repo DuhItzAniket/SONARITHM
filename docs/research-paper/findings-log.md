@@ -694,3 +694,12 @@ A05 (render engine, audio backends, export) uses F-050 to F-069.
 - **Evidence level / confidence:** EV-C / Moderate (complete counts from GitHub, one project and one owner; close times measure merges, not effort)
 - **Affects:** the Stage B re-estimate (roadmap §3, implementation plan §3.1); R-24, R-26, R-27; OD-15, OD-17
 - **Papers:** P02 (AI-usage disclosure and development history)
+
+### F-130 · ICU4X 2.3 and V8's Intl print the same digits for 24 shared message cases once Rust rounds half-expand from the shortest round-trip digits
+
+- **Date:** 2026-10-21 · **Phase:** B02 · **Type:** engineering · **Status:** new
+- **Statement:** With numbers formatted by ICU4X 2.3 (`icu_decimal`, `fixed_decimal` from shortest round-trip digits, half-expand rounding, at most three fraction digits by default) and plural forms chosen from the value rounded the same way, `fluent-bundle` 0.16 renders all 24 cases of the Rust–TypeScript contract exactly as `@fluent/bundle` 0.19.1 over V8's `Intl` in Node 25.9 does, including `61.005` at two fraction digits (`61.01`), `1.0004` at two digits selecting the singular (`1 degree Celsius`), Indian grouping (`12,34,567`) and the pseudo-locale. Without the pre-rounding, fluent-rs picks plural forms from the unrounded value and the minimum fraction digits only, so `1.0004` would read "1 degrees".
+- **Evidence:** `crates/sonarithm-i18n/tests/contract.rs` and `packages/i18n/test/contract.test.ts` on `tests/fixtures/contract.json`, both passing on HW-01 (Windows 11, Rust 1.99.0, Node 25.9.0); the frontend CI job runs the TypeScript half on Node 24; fluent-bundle 0.16.0 `PluralOperands` from `FluentNumber` (source); PR for B02-T08 ([#207](https://github.com/DuhItzAniket/SONARITHM/issues/207))
+- **Evidence level / confidence:** EV-C / Moderate (24 cases in four English locales; CLDR versions in ICU4X and V8 can drift, which the contract test would catch)
+- **Affects:** NFR-09, A11Y-12, DL-P12 (one value, one formatter); 12 §5
+- **Papers:** none yet

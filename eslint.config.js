@@ -10,6 +10,8 @@ import jsxA11y from "eslint-plugin-jsx-a11y";
 import reactHooks from "eslint-plugin-react-hooks";
 import tseslint from "typescript-eslint";
 
+import sonarithm from "./packages/i18n/eslint/plugin.js";
+
 export default defineConfig([
   globalIgnores(["**/dist/", "**/storybook-static/", "**/src/generated/"]),
   js.configs.recommended,
@@ -29,6 +31,30 @@ export default defineConfig([
     rules: {
       // Required in addition to the strict preset (coding-standards §12.2).
       "jsx-a11y/control-has-associated-label": "error",
+    },
+  },
+  {
+    // UI text comes from the Fluent catalogues (coding-standards §12.7, NFR-09).
+    files: ["**/*.{jsx,tsx}"],
+    plugins: { sonarithm },
+    rules: { "sonarithm/no-literal-ui-string": "error" },
+  },
+  {
+    // node:test's test() and describe() return promises the runner awaits itself.
+    files: ["**/test/**/*.ts"],
+    rules: {
+      "@typescript-eslint/no-floating-promises": [
+        "error",
+        {
+          allowForKnownSafeCalls: [
+            {
+              from: "package",
+              name: ["describe", "it", "suite", "test"],
+              package: "node:test",
+            },
+          ],
+        },
+      ],
     },
   },
   {

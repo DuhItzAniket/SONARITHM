@@ -14,6 +14,7 @@ members = [
     "crates/sonarithm-render",
     "crates/sonarithm-audio",
     "crates/sonarithm-export",
+    "crates/sonarithm-i18n",
     "crates/engines/sonarithm-numisona",
     "crates/engines/sonarithm-echometric",
     "apps/cli",
@@ -51,6 +52,7 @@ sonarithm-dsp = { path = "crates/sonarithm-dsp", version = "0.0.0" }
 sonarithm-render = { path = "crates/sonarithm-render", version = "0.0.0" }
 sonarithm-audio = { path = "crates/sonarithm-audio", version = "0.0.0" }
 sonarithm-export = { path = "crates/sonarithm-export", version = "0.0.0" }
+sonarithm-i18n = { path = "crates/sonarithm-i18n", version = "0.0.0" }
 sonarithm-numisona = { path = "crates/engines/sonarithm-numisona", version = "0.0.0" }
 sonarithm-echometric = { path = "crates/engines/sonarithm-echometric", version = "0.0.0" }
 
@@ -99,6 +101,21 @@ ebur128 = "0.1.10"
 # worker threads (`par`), logging or serde.
 flacenc = { version = "0.5.1", default-features = false }
 hound = "3.5.1"
+# Message catalogues (12 §5): Fluent messages shared with the UI (sonarithm-i18n only). The
+# memoizer and language identifiers are the versions fluent-bundle uses.
+fluent-bundle = "0.16.0"
+fluent-syntax = "0.12.0"     # sonarithm-i18n tests: walk the catalogue AST
+intl-memoizer = "0.5.3"
+unic-langid = "0.9.6"
+# Locale formatting of numbers and dates (12 §5) with ICU4X's compiled data; no serde or
+# data-provider features (sonarithm-i18n only).
+fixed_decimal = { version = "0.7.2", default-features = false, features = ["ryu"] }
+icu_calendar = { version = "2.3.0", default-features = false, features = ["compiled_data"] }
+icu_datetime = { version = "2.3.0", default-features = false, features = ["compiled_data"] }
+icu_decimal = { version = "2.3.0", default-features = false, features = ["compiled_data", "alloc"] }
+icu_locale_core = { version = "2.3.0", default-features = false }
+# `sync` makes ICU4X data payloads Send + Sync, so a localizer can be shared between threads.
+icu_provider = { version = "2.3.0", default-features = false, features = ["sync"] }
 # Pure-Rust maths for every Score-affecting transcendental function (ADR-0013). The default
 # `arch` feature only swaps in IEEE-exact instructions (sqrt, rounding), so results stay
 # identical on every platform.
