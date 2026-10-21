@@ -31,8 +31,19 @@ const PROBE: &str = "network_probe_connects";
 /// One test executable's result.
 struct Run {
     name: String,
+    /// The process ID, for the log-based mechanisms.
+    pid: Option<u32>,
     attempts: Vec<String>,
 }
+
+/// The waits, in seconds, before each read of the OS log by the self-test. The unified log
+/// (macOS) and the Security log (Windows) persist entries asynchronously, sometimes
+/// seconds late on a busy runner, so the self-test reads until it sees the probe.
+const SELF_TEST_WAITS: [u64; 5] = [2, 3, 5, 8, 12];
+
+/// The wait before the one read of the OS log after an ordinary run, which must not miss
+/// a late entry.
+const SETTLE: u64 = 10;
 
 pub(crate) fn run(root: &Path, rest: &[String]) -> Result<()> {
     let self_test = match rest {
@@ -44,6 +55,7 @@ pub(crate) fn run(root: &Path, rest: &[String]) -> Result<()> {
     mechanism.prepare(root)?;
     let executables = build(root)?;
     let mut runs = Vec::new();
+    let started = Instant::now();
     for exe in &executables {
         let name = exe
             .file_name()
@@ -59,11 +71,34 @@ pub(crate) fn run(root: &Path, rest: &[String]) -> Result<()> {
             vec![]
         };
         println!("network-deny: running {name} under {}", mechanism.name());
-        let attempts = mechanism.attempts(root, exe, &args)?;
-        runs.push(Run { name, attempts });
+        let (pid, attempts) = mechanism.run(root, exe, &args)?;
+        runs.push(Run {
+            name,
+            pid,
+            attempts,
+        });
     }
     if runs.is_empty() {
         bail!("no test executables of {PACKAGE} were found");
+    }
+    if mechanism.logged() {
+        let waits: &[u64] = if self_test {
+            &SELF_TEST_WAITS
+        } else {
+            &[SETTLE]
+        };
+        for wait in waits {
+            std::thread::sleep(Duration::from_secs(*wait));
+            let log = mechanism.read_log(started)?;
+            for run in &mut runs {
+                if let Some(pid) = run.pid {
+                    run.attempts = mechanism.lines(&log, pid);
+                }
+            }
+            if runs.iter().all(|run| !run.attempts.is_empty()) {
+                break;
+            }
+        }
     }
     let total: usize = runs.iter().map(|run| run.attempts.len()).sum();
     for run in &runs {
@@ -204,9 +239,14 @@ impl Mechanism {
         }
     }
 
-    /// Runs `exe` and returns a line per outbound connection attempt.
-    fn attempts(self, root: &Path, exe: &Path, args: &[&str]) -> Result<Vec<String>> {
-        let started = Instant::now();
+    /// Whether attempts come from an OS log read after the tests.
+    const fn logged(self) -> bool {
+        matches!(self, Self::Sandbox | Self::Wfp)
+    }
+
+    /// Runs `exe` under the mechanism. strace returns its attempts at once; the log-based
+    /// mechanisms return the process ID for [`Mechanism::lines`].
+    fn run(self, root: &Path, exe: &Path, args: &[&str]) -> Result<(Option<u32>, Vec<String>)> {
         match self {
             Self::Strace => {
                 let log = work_dir(root)?.join("strace.log");
@@ -226,7 +266,7 @@ impl Mechanism {
                     .context("running strace")?;
                 check(exe, status.success())?;
                 let text = std::fs::read_to_string(&log).context("reading the strace log")?;
-                Ok(inet_lines(&text))
+                Ok((None, inet_lines(&text)))
             }
             Self::Sandbox => {
                 let profile = work_dir(root)?.join("deny.sb");
@@ -241,17 +281,7 @@ impl Mechanism {
                 let pid = child.id();
                 let status = child.wait().context("waiting for the tests")?;
                 check(exe, status.success())?;
-                // Give the unified log a moment to persist the kernel's lines.
-                std::thread::sleep(Duration::from_secs(2));
-                let minutes = started.elapsed().as_secs() / 60 + 2;
-                let output = Command::new("log")
-                    .args(["show", "--style", "compact", "--last"])
-                    .arg(format!("{minutes}m"))
-                    .args(["--predicate", "eventMessage CONTAINS \"network-outbound\""])
-                    .output()
-                    .context("running `log show`")?;
-                let text = String::from_utf8_lossy(&output.stdout);
-                Ok(sandbox_lines(&text, pid))
+                Ok((Some(pid), Vec::new()))
             }
             Self::Wfp => {
                 let mut child = Command::new(exe)
@@ -262,7 +292,25 @@ impl Mechanism {
                 let pid = child.id();
                 let status = child.wait().context("waiting for the tests")?;
                 check(exe, status.success())?;
-                std::thread::sleep(Duration::from_secs(2));
+                Ok((Some(pid), Vec::new()))
+            }
+        }
+    }
+
+    /// The OS log since `started` (with a margin), for [`Mechanism::lines`].
+    fn read_log(self, started: Instant) -> Result<String> {
+        let output = match self {
+            Self::Strace => return Ok(String::new()),
+            Self::Sandbox => {
+                let minutes = started.elapsed().as_secs() / 60 + 2;
+                Command::new("log")
+                    .args(["show", "--style", "compact", "--last"])
+                    .arg(format!("{minutes}m"))
+                    .args(["--predicate", "eventMessage CONTAINS \"network-outbound\""])
+                    .output()
+                    .context("running `log show`")?
+            }
+            Self::Wfp => {
                 let seconds = started.elapsed().as_secs() + 60;
                 let script = format!(
                     "Get-WinEvent -FilterHashtable @{{LogName='Security'; Id=5156,5157; \
@@ -271,13 +319,21 @@ impl Mechanism {
                      ForEach-Object {{ if ($_.Name) {{ $d[$_.Name] = $_.'#text' }} }}; \
                      \"$($_.Id)`t$($d.ProcessID)`t$($d.Direction)`t$($d.DestAddress):$($d.DestPort)`t$($d.Application)\" }}"
                 );
-                let output = Command::new("powershell")
+                Command::new("powershell")
                     .args(["-NoProfile", "-NonInteractive", "-Command", &script])
                     .output()
-                    .context("reading the Security event log")?;
-                let text = String::from_utf8_lossy(&output.stdout);
-                Ok(wfp_lines(&text, pid))
+                    .context("reading the Security event log")?
             }
+        };
+        Ok(String::from_utf8_lossy(&output.stdout).into_owned())
+    }
+
+    /// The attempts of process `pid` in `log`.
+    fn lines(self, log: &str, pid: u32) -> Vec<String> {
+        match self {
+            Self::Strace => Vec::new(),
+            Self::Sandbox => sandbox_lines(log, pid),
+            Self::Wfp => wfp_lines(log, pid),
         }
     }
 }
