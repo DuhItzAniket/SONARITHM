@@ -15,6 +15,8 @@ export const REPLY_KINDS = {
   dataset_list: "datasets",
   spec_get: "spec",
   spec_set: "spec",
+  spec_apply: "spec_patch",
+  spec_validate: "validation",
   compile: "compile",
   transport_state: "transport",
   transport_play: "transport",
@@ -130,6 +132,18 @@ id: string, } } | { "command": "dataset_list" } | { "command": "spec_get" } | { 
 /**
  * The spec as JSON text.
  */
+text: string, } } | { "command": "spec_apply", "args": { 
+/**
+ * The operations, in order.
+ */
+patch: Array<PatchOp>, 
+/**
+ * A name for the edit in the history, such as `Set pitch range`.
+ */
+label: string | null, } } | { "command": "spec_validate", "args": { 
+/**
+ * The spec as JSON text.
+ */
 text: string, } } | { "command": "compile" } | { "command": "transport_state" } | { "command": "transport_play" } | { "command": "transport_pause" } | { "command": "transport_stop" } | { "command": "transport_seek", "args": { 
 /**
  * Seconds from the start of the Score, at most its duration.
@@ -219,7 +233,15 @@ appVersion: string, } | { "reply": "dataset" } & DatasetSummary | { "reply": "da
 /**
  * The datasets.
  */
-datasets: Array<DatasetSummary>, } | { "reply": "spec" } & SpecState | { "reply": "compile" } & CompileReport | { "reply": "transport" } & TransportState | { "reply": "job" } & JobInfo | { "reply": "jobs", 
+datasets: Array<DatasetSummary>, } | { "reply": "spec" } & SpecState | { "reply": "spec_patch" } & SpecPatchResult | { "reply": "validation", 
+/**
+ * Every diagnostic, in the validator's order.
+ */
+diagnostics: Array<DiagnosticInfo>, 
+/**
+ * Errors, warnings and infos.
+ */
+counts: Counts, } | { "reply": "compile" } & CompileReport | { "reply": "transport" } & TransportState | { "reply": "job" } & JobInfo | { "reply": "jobs", 
 /**
  * The jobs, oldest first.
  */
@@ -376,6 +398,80 @@ text: string | null,
  * The undo token of the edit that produced it, when the request was an edit.
  */
 undoToken: number | null, };
+
+/**
+ * The spec after an applied patch (09 §2.1 `SpecPatchResult`).
+ */
+export type SpecPatchResult = { 
+/**
+ * The edit's undo token.
+ */
+undoToken: number, 
+/**
+ * The spec text after the patch.
+ */
+text: string, 
+/**
+ * The validation diagnostics of the patched spec (an invalid spec is kept, so editing
+ * can pass through invalid states).
+ */
+diagnostics: Array<DiagnosticInfo>, 
+/**
+ * Errors, warnings and infos.
+ */
+counts: Counts, };
+
+/**
+ * One JSON Patch operation (RFC 6902 §4). Paths are JSON pointers (RFC 6901), the same
+ * pointers diagnostics carry.
+ */
+export type PatchOp = { "op": "add", 
+/**
+ * Where.
+ */
+path: string, 
+/**
+ * The value.
+ */
+value: JsonValue, } | { "op": "remove", 
+/**
+ * What.
+ */
+path: string, } | { "op": "replace", 
+/**
+ * What.
+ */
+path: string, 
+/**
+ * The new value.
+ */
+value: JsonValue, } | { "op": "move", 
+/**
+ * From where.
+ */
+from: string, 
+/**
+ * To where.
+ */
+path: string, } | { "op": "copy", 
+/**
+ * From where.
+ */
+from: string, 
+/**
+ * To where.
+ */
+path: string, } | { "op": "test", 
+/**
+ * Where.
+ */
+path: string, 
+/**
+ * The expected value.
+ */
+value: JsonValue, };
+
+export type JsonValue = number | string | boolean | Array<JsonValue> | { [key in string]: JsonValue } | null;
 
 /**
  * The result of a compile.

@@ -15,8 +15,8 @@ use crate::ipc::Channel;
 use crate::ipc::{
     ClockAnchor, CompileReport, Counts, DatasetSummary, DeviceSummary, DiagnosticInfo, Event,
     ExportRequest, ExportResult, FieldSummary, HistoryState, IpcError, JobInfo, JobKind, JobState,
-    LoopSpan, PlaybackStatus, Reply, Request, ScoreInfo, SpecState, TableSort, TrackInfo,
-    TransportState, ViewMethod, ViewRange,
+    LoopSpan, PlaybackStatus, Reply, Request, ScoreInfo, SpecPatchResult, SpecState, TableSort,
+    TrackInfo, TransportState, ViewMethod, ViewRange,
 };
 use crate::settings::{AudioSettings, Consent, Modalities, Settings, Theme, Verbosity};
 
@@ -99,6 +99,9 @@ pub fn typescript() -> String {
     declare::<FieldSummary>(&mut out, &cfg);
     declare::<DiagnosticInfo>(&mut out, &cfg);
     declare::<SpecState>(&mut out, &cfg);
+    declare::<SpecPatchResult>(&mut out, &cfg);
+    declare::<crate::patch::PatchOp>(&mut out, &cfg);
+    declare::<serde_json::Value>(&mut out, &cfg);
     declare::<CompileReport>(&mut out, &cfg);
     declare::<Counts>(&mut out, &cfg);
     declare::<ScoreInfo>(&mut out, &cfg);
