@@ -271,6 +271,37 @@ pub const FILE_REFUSED: CodeInfo = CodeInfo {
     status: CodeStatus::Active,
 };
 
+/// No open stream has this ID (B06-T05).
+pub const UNKNOWN_STREAM: CodeInfo = CodeInfo {
+    code: "SNR-APP-070",
+    severity: Severity::Error,
+    summary: "No such stream",
+    help: "List the open streams with stream_list; a stopped stream is gone.",
+    rules: &[],
+    status: CodeStatus::Active,
+};
+
+/// A stream source cannot be offered: an unknown transport or a bad address.
+pub const STREAM_SOURCE: CodeInfo = CodeInfo {
+    code: "SNR-APP-071",
+    severity: Severity::Error,
+    summary: "The stream source is not valid",
+    help: "Give a transport (websocket, osc, serial, mqtt or tail) and its address; a file to            follow is an absolute path in an existing folder.",
+    rules: &[],
+    status: CodeStatus::Active,
+};
+
+/// A stream cannot connect: no offer has this token, or the stream could not start
+/// (ADR-0012: every connection needs the user's approval of one offer).
+pub const STREAM_CONNECT: CodeInfo = CodeInfo {
+    code: "SNR-APP-072",
+    severity: Severity::Error,
+    summary: "The stream cannot connect",
+    help: "Offer the stream again with stream_offer, show the user what it connects to, and            connect with the token only after the user approves.",
+    rules: &["A11Y-16"],
+    status: CodeStatus::Active,
+};
+
 /// Every `SNR-APP` code, in ascending order.
 pub const CODES: CodeTable = CodeTable {
     area: Area::App,
@@ -301,6 +332,9 @@ pub const CODES: CodeTable = CodeTable {
         SPEC_PATCH,
         BINARY_VIEW,
         FILE_REFUSED,
+        UNKNOWN_STREAM,
+        STREAM_SOURCE,
+        STREAM_CONNECT,
     ],
 };
 

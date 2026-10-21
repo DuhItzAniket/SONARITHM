@@ -22,8 +22,10 @@ sonarithm-core.workspace = true
 sonarithm-data = { workspace = true, features = ["fs"] }
 sonarithm-i18n.workspace = true
 sonarithm-render.workspace = true
+sonarithm-sonotrace.workspace = true
 sonarithm-spec.workspace = true
 sonarithm-speech.workspace = true
+sonarithm-stream.workspace = true
 thiserror.workspace = true
 ts-rs.workspace = true
 # Project bundles (RFC-0002): deflate through flate2 with the pure-Rust zlib-rs backend.

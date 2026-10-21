@@ -75,6 +75,13 @@ pub const COMMANDS: &[(&str, &str)] = &[
     ("project_recover", "project"),
     ("project_discard_recovery", "recovery"),
     ("announce_repeat", "announce"),
+    ("stream_offer", "stream_offer"),
+    ("stream_connect", "streams"),
+    ("stream_pause", "streams"),
+    ("stream_resume", "streams"),
+    ("stream_hide", "streams"),
+    ("stream_stop", "streams"),
+    ("stream_list", "streams"),
 ];
 
 /// The commands whose reply is a binary view (ADR-0017 §6), sent with
@@ -242,6 +249,54 @@ pub enum Request {
     /// pauses first, or ducks with "duck instead of pause" (keyboard §9.2). Replies
     /// [`Reply::Announce`].
     AnnounceRepeat,
+    /// Describes a live stream source without opening it, for the consent prompt
+    /// (ADR-0012, A11Y-16). Replies [`Reply::StreamOffer`] with a one-time token.
+    StreamOffer {
+        /// `websocket`, `osc`, `serial`, `mqtt` or `tail` (RFC-0001 stream sources).
+        transport: String,
+        /// The URL, for `websocket` and `mqtt`.
+        #[serde(default)]
+        url: Option<String>,
+        /// The port, for `osc` and `serial`.
+        #[serde(default)]
+        port: Option<String>,
+        /// The topic, for `mqtt`.
+        #[serde(default)]
+        topic: Option<String>,
+        /// The file to follow, for `tail`: an absolute path the user chose.
+        #[serde(default)]
+        path: Option<String>,
+    },
+    /// Opens an offered stream. Send it only from the user's confirmation of that offer:
+    /// one approval opens one connection. Replies [`Reply::Streams`].
+    StreamConnect {
+        /// The token from `stream_offer`.
+        token: u64,
+    },
+    /// Pauses a stream: its data is discarded and its notices wait (A11Y-16). Replies
+    /// [`Reply::Streams`].
+    StreamPause {
+        /// The stream's ID.
+        id: String,
+    },
+    /// Resumes a paused or hidden stream. Replies [`Reply::Streams`].
+    StreamResume {
+        /// The stream's ID.
+        id: String,
+    },
+    /// Hides a stream's notices: they go to the log only (A11Y-16). Replies
+    /// [`Reply::Streams`].
+    StreamHide {
+        /// The stream's ID.
+        id: String,
+    },
+    /// Stops and closes a stream. Replies [`Reply::Streams`].
+    StreamStop {
+        /// The stream's ID.
+        id: String,
+    },
+    /// The open streams. Replies [`Reply::Streams`].
+    StreamList,
     /// A downsampled view of two fields of a dataset for drawing (03 §7). Binary: a view of
     /// kind `m4Tile` or `lttbTile` with the columns `row`, `x` and `y` (ADR-0017 §6).
     ViewGet {
@@ -345,6 +400,13 @@ impl Request {
             Self::ProjectRecover { .. } => "project_recover",
             Self::ProjectDiscardRecovery => "project_discard_recovery",
             Self::AnnounceRepeat => "announce_repeat",
+            Self::StreamOffer { .. } => "stream_offer",
+            Self::StreamConnect { .. } => "stream_connect",
+            Self::StreamPause { .. } => "stream_pause",
+            Self::StreamResume { .. } => "stream_resume",
+            Self::StreamHide { .. } => "stream_hide",
+            Self::StreamStop { .. } => "stream_stop",
+            Self::StreamList => "stream_list",
             Self::ViewGet { .. } => "view_get",
             Self::TablePage { .. } => "table_page",
         }
@@ -421,6 +483,13 @@ pub enum Reply {
     Announce {
         /// `false` when there was nothing to repeat.
         queued: bool,
+    },
+    /// A stream source, described for the consent prompt.
+    StreamOffer(StreamOfferInfo),
+    /// The open streams.
+    Streams {
+        /// In the order they were opened.
+        streams: Vec<StreamInfo>,
     },
 }
 
@@ -569,6 +638,73 @@ pub struct AnnouncementInfo {
     pub self_voiced: bool,
     /// The navigation node it describes, if any.
     pub node: Option<u32>,
+}
+
+/// A stream source described for the consent prompt; nothing is open yet. Files are named
+/// alone, never with their folders (ADR-0017 §7).
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, TS)]
+#[serde(rename_all = "camelCase")]
+#[non_exhaustive]
+pub struct StreamOfferInfo {
+    /// The one-time token for `stream_connect`.
+    pub token: u64,
+    /// The transport: `websocket`, `osc`, `serial`, `mqtt` or `tail`.
+    pub transport: String,
+    /// What it connects to: a URL, a port, or a file name.
+    pub target: String,
+    /// The MQTT topic, if any.
+    pub topic: Option<String>,
+}
+
+/// An open stream (A11Y-16).
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, TS)]
+#[serde(rename_all = "camelCase")]
+#[non_exhaustive]
+pub struct StreamInfo {
+    /// The stream's ID, such as `s1`.
+    pub id: String,
+    /// The transport.
+    pub transport: String,
+    /// What it connects to: a URL, a port, or a file name.
+    pub target: String,
+    /// The connection.
+    pub connection: StreamConnection,
+    /// Whether its notices are spoken, waiting or logged only.
+    pub notices: StreamNotices,
+    /// Messages received.
+    pub received: u64,
+    /// Messages dropped because they did not fit the schema.
+    pub invalid: u64,
+}
+
+/// Where a stream's connection is.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize, TS)]
+#[serde(rename_all = "camelCase")]
+#[non_exhaustive]
+pub enum StreamConnection {
+    /// Opening for the first time.
+    Connecting,
+    /// Receiving.
+    Connected,
+    /// Connected, discarding data until resumed.
+    Paused,
+    /// Lost; trying again.
+    Reconnecting,
+    /// Stopped.
+    Stopped,
+}
+
+/// What happens to a stream's notices (A11Y-16).
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize, TS)]
+#[serde(rename_all = "camelCase")]
+#[non_exhaustive]
+pub enum StreamNotices {
+    /// Spoken, at most one every 5 s, summed up.
+    Active,
+    /// Waiting until the stream resumes; stale ones are dropped.
+    Paused,
+    /// Logged only.
+    Hidden,
 }
 
 /// The class of an announcement (keyboard §9.1).

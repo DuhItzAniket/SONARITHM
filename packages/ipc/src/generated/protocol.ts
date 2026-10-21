@@ -46,6 +46,13 @@ export const REPLY_KINDS = {
   project_recover: "project",
   project_discard_recovery: "recovery",
   announce_repeat: "announce",
+  stream_offer: "stream_offer",
+  stream_connect: "streams",
+  stream_pause: "streams",
+  stream_resume: "streams",
+  stream_hide: "streams",
+  stream_stop: "streams",
+  stream_list: "streams",
 } as const;
 
 /** The channel that carries each event. */
@@ -207,7 +214,47 @@ embedData: boolean, } } | { "command": "project_recent" } | { "command": "projec
 /**
  * The autosave's ID from `project_recovery`.
  */
-id: number, } } | { "command": "project_discard_recovery" } | { "command": "announce_repeat" } | { "command": "view_get", "args": { 
+id: number, } } | { "command": "project_discard_recovery" } | { "command": "announce_repeat" } | { "command": "stream_offer", "args": { 
+/**
+ * `websocket`, `osc`, `serial`, `mqtt` or `tail` (RFC-0001 stream sources).
+ */
+transport: string, 
+/**
+ * The URL, for `websocket` and `mqtt`.
+ */
+url: string | null, 
+/**
+ * The port, for `osc` and `serial`.
+ */
+port: string | null, 
+/**
+ * The topic, for `mqtt`.
+ */
+topic: string | null, 
+/**
+ * The file to follow, for `tail`: an absolute path the user chose.
+ */
+path: string | null, } } | { "command": "stream_connect", "args": { 
+/**
+ * The token from `stream_offer`.
+ */
+token: number, } } | { "command": "stream_pause", "args": { 
+/**
+ * The stream's ID.
+ */
+id: string, } } | { "command": "stream_resume", "args": { 
+/**
+ * The stream's ID.
+ */
+id: string, } } | { "command": "stream_hide", "args": { 
+/**
+ * The stream's ID.
+ */
+id: string, } } | { "command": "stream_stop", "args": { 
+/**
+ * The stream's ID.
+ */
+id: string, } } | { "command": "stream_list" } | { "command": "view_get", "args": { 
 /**
  * The dataset's ID.
  */
@@ -292,7 +339,11 @@ autosaves: Array<AutosaveInfo>, } | { "reply": "announce",
 /**
  * `false` when there was nothing to repeat.
  */
-queued: boolean, };
+queued: boolean, } | { "reply": "stream_offer" } & StreamOfferInfo | { "reply": "streams", 
+/**
+ * In the order they were opened.
+ */
+streams: Array<StreamInfo>, };
 
 /**
  * A command that could not run (ADR-0017 §3, 12 §1). Spec and data problems are not
@@ -1086,3 +1137,68 @@ node: number | null, };
  * The class of an announcement (keyboard §9.1).
  */
 export type AnnouncementClass = "navigation" | "response" | "status" | "stream" | "earconText";
+
+/**
+ * A stream source described for the consent prompt; nothing is open yet. Files are named
+ * alone, never with their folders (ADR-0017 §7).
+ */
+export type StreamOfferInfo = { 
+/**
+ * The one-time token for `stream_connect`.
+ */
+token: number, 
+/**
+ * The transport: `websocket`, `osc`, `serial`, `mqtt` or `tail`.
+ */
+transport: string, 
+/**
+ * What it connects to: a URL, a port, or a file name.
+ */
+target: string, 
+/**
+ * The MQTT topic, if any.
+ */
+topic: string | null, };
+
+/**
+ * An open stream (A11Y-16).
+ */
+export type StreamInfo = { 
+/**
+ * The stream's ID, such as `s1`.
+ */
+id: string, 
+/**
+ * The transport.
+ */
+transport: string, 
+/**
+ * What it connects to: a URL, a port, or a file name.
+ */
+target: string, 
+/**
+ * The connection.
+ */
+connection: StreamConnection, 
+/**
+ * Whether its notices are spoken, waiting or logged only.
+ */
+notices: StreamNotices, 
+/**
+ * Messages received.
+ */
+received: number, 
+/**
+ * Messages dropped because they did not fit the schema.
+ */
+invalid: number, };
+
+/**
+ * Where a stream's connection is.
+ */
+export type StreamConnection = "connecting" | "connected" | "paused" | "reconnecting" | "stopped";
+
+/**
+ * What happens to a stream's notices (A11Y-16).
+ */
+export type StreamNotices = "active" | "paused" | "hidden";

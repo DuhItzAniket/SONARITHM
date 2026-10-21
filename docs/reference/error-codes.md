@@ -36,6 +36,9 @@ Owner: `sonarithm-app`.
 | `SNR-APP-040` | error | The spec patch does not apply | Check each operation's path against the current spec (spec_get); a patch applies completely or not at all. | — |
 | `SNR-APP-050` | error | Not a binary view this version reads | Build the user interface and the host from the same commit; a view's header version, kind and data types must all be known to the reader. | — |
 | `SNR-APP-060` | error | The file cannot be opened | Choose an existing CSV, TSV, JSON, NDJSON, Parquet, Arrow, XLSX or ODS file. | — |
+| `SNR-APP-070` | error | No such stream | List the open streams with stream_list; a stopped stream is gone. | — |
+| `SNR-APP-071` | error | The stream source is not valid | Give a transport (websocket, osc, serial, mqtt or tail) and its address; a file to            follow is an absolute path in an existing folder. | — |
+| `SNR-APP-072` | error | The stream cannot connect | Offer the stream again with stream_offer, show the user what it connects to, and            connect with the token only after the user approves. | A11Y-16 |
 
 ## SNR-COMP
 
