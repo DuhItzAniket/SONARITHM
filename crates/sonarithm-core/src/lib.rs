@@ -17,6 +17,7 @@ pub mod digest;
 pub mod engine;
 pub mod ids;
 pub mod math;
+pub mod nav;
 pub mod provenance;
 pub mod score;
 #[cfg(any(test, feature = "test-support"))]

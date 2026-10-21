@@ -39,11 +39,11 @@ Each engine is one crate under `crates/engines/` and implements `Engine`. This p
 
 ## AUDAXIS (`sonarithm-audaxis`), B03 (HRTF in D03)
 
-**Registers:** ContextProvider (ticks, reference tone, legends, earcons, insight markers rendered as earcons); Shaper `Spatial`; earcon VoiceProvider; the navigation model.
+**Registers:** ContextProvider (ticks, reference tone, legends, earcons, insight markers rendered as earcons; and `nav_tree`, B03-T01); Shaper `Spatial`; earcon VoiceProvider; the navigation model.
 
 | Module | Responsibility |
 |---|---|
-| `nav::tree` | Builds `NavTree` from Score, data and annotations ([08 §2](08-interaction-and-accessibility.md#2-the-navigation-model)) |
+| `nav::tree` | Builds `NavTree` from Score, data and annotations ([08 §2](08-interaction-and-accessibility.md#2-the-navigation-model)). Points are the rows a track reads, ordered as the encoder orders them; without a time field, a `category` or `label` field names them. Segments come from trend-segment annotations or even bins (OD-18) (B03-T01) |
 | `nav::cursor` | Cursor state and the verbs local/lateral/spatial/targeted; "where am I" |
 | `announce` | Composes announcements from templates (verbosity, part order, units, provenance qualifiers); queue with a supersede policy |
 | `context` | Tick track (SDR-16, auto off for glides); dynamic extreme reference tone (SDR-17); spoken legend (SDR-18) |

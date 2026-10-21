@@ -17,7 +17,8 @@
 
 ## What was done
 
-- B02-T08: `crates/sonarithm-i18n` (Fluent catalogues `common`, `ui` and `units` in `locales/en-US/`; ICU4X numbers and dates; 26 units with symbol, terse and verbose forms; `en-XA` and `check_pseudo`) and `packages/i18n` (`createLocalizer`, the same pseudo-locale, the `sonarithm/no-literal-ui-string` rule). The frontend CI job now runs `pnpm -r test`.
+- B02-T08: `crates/sonarithm-i18n` (Fluent catalogues `common`, `ui` and `units` in `locales/en-US/`; ICU4X numbers and dates; 26 units with symbol, terse and verbose forms; `en-XA` and `check_pseudo`) and `packages/i18n` (`createLocalizer`, the same pseudo-locale, the `sonarithm/no-literal-ui-string` rule). The frontend CI job now runs `pnpm -r test`. Merged as #260.
+- B03-T01: `sonarithm_core::nav` (NavTree types and invariant check), `ContextProvider::nav_tree`, `Compiled::nav` in the compiler, and `crates/engines/sonarithm-audaxis` with the tree builder; snapshots for the six NUMISONA templates, property tests and OD-18.
 
 ## Decisions
 
@@ -28,6 +29,10 @@
 | Numbers follow `Intl.NumberFormat`'s digit rules in Rust (half-expand from shortest round-trip digits, three fraction digits by default), and plural forms use the rounded value | Rust and the UI must print the same digits (DL-P12); fluent-rs ignores maximum fraction digits when choosing plurals | F-130 |
 | Bidi isolation marks off on both sides | Full RTL is post-1.0 (12 §5); the marks reach speech synthesizers as characters | 12 §5 |
 | Dates are formatted in Rust only (Gregorian), not through Fluent's `DATETIME` | fluent-rs has no `DATETIME`; the UI shows data values from the Rust formatter (DL-P12) | 12 §5 |
+| NavTree types in `sonarithm-core`, built through `ContextProvider::nav_tree` | Engines talk through core types (02 §3 rule 2), and ADR-0014 already foresaw the tree joining `ContextProvider` as an additive change | 05 §3, §8 |
+| AUDAXIS stays out of the facade's default engines until B03-T05 | Every resolved spec has a `context` section, so registering AUDAXIS before its context tracks exist would drop warning `SNR-COMP-023` from every compile and churn CLI snapshots twice | status.md B03 tasks |
+| Points are rows read from the spec and data (filter, time field, x order), not from Score events | Glide events carry only a bounding row range; onsets come from the Score afterwards | 07 AUDAXIS |
+| Even segments: at least 8 points, at most 12 per series, provisional | No design rule or source sets a size; recorded as an open decision instead of a default with a rule ID | OD-18 |
 | B02-T08 built before B01-T02 (its listed dependency) | It needs no generated IPC type: the catalogues are plain files and the contract test reads them directly | status.md B02 tasks |
 
 ## Problems and how they were solved
@@ -35,6 +40,8 @@
 | Problem | Cause | Resolution |
 |---|---|---|
 | ICU4X formatters cannot go in Fluent's thread-safe memoizer | ICU4X data payloads use `Rc` unless `icu_provider`'s `sync` feature is on | `icu_provider` with `sync` |
+| A point's x value vanished in a JSON round trip | `NavNode` flattens its kind, so the node's `x` extent and the point's `x` value shared one key | The node field is `span`; a round-trip unit test guards it |
+| Bar charts had no x labels in the tree | The bar template orders by row and names no time field | A field with role `category` or `label` names the points when there is no time field |
 
 ## Findings to log
 
@@ -42,5 +49,5 @@
 
 ## Next steps
 
-- [ ] B03-T01: `sonarithm-audaxis` and the NavTree (agent).
+- [ ] B03-T02: cursor, verbs and where am I (agent).
 - [ ] Owner: when `sonarithm-i18n` first ships in a release, publish it once by hand so crates.io trusted publishing can be set up for it ([release process](../../engineering/release-process.md)); checklist #129.

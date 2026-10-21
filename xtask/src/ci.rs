@@ -30,6 +30,7 @@ pub(crate) const WASM_CRATES: &[&str] = &[
     "sonarithm-export",
     "sonarithm-i18n",
     "sonarithm-numisona",
+    "sonarithm-audaxis",
     "sonarithm-echometric",
 ];
 

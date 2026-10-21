@@ -19,6 +19,7 @@ use sonarithm_core::engine::{
     SourceKind, SpecFragment, TrackRequest,
 };
 use sonarithm_core::ids::{AnalyzerId, EngineId, TrackId};
+use sonarithm_core::nav::NavTree;
 use sonarithm_core::score::{EngineVersion, Score, ScoreHeader, ShaperStage};
 use sonarithm_core::units::Seconds;
 use sonarithm_spec::data::Source;
@@ -70,6 +71,9 @@ pub struct Compiled {
     /// The share of data rows in each provenance class after transforms
     /// ([`CompilerData::provenance_mix`]), for the render manifest.
     pub provenance: BTreeMap<String, f64>,
+    /// The navigation tree (05 §8), when a registered context provider builds one
+    /// (AUDAXIS). It is not part of the Score and never changes its hash.
+    pub nav: Option<NavTree>,
 }
 
 /// Why a compile produced no Score.
@@ -143,7 +147,11 @@ impl<D: CompilerData> Compiler<D> {
             diagnostics: prepared.diagnostics.clone(),
         };
         match run.stages(spec, prepared.hash) {
-            Ok((score, provenance)) => {
+            Ok(Finished {
+                score,
+                provenance,
+                nav,
+            }) => {
                 let mut diagnostics = run.diagnostics;
                 diagnostics.extend(run.cx.take_diagnostics());
                 if diagnostics.has_errors() {
@@ -154,6 +162,7 @@ impl<D: CompilerData> Compiler<D> {
                     canonical_spec: prepared.canonical,
                     diagnostics,
                     provenance,
+                    nav,
                 })
             }
             Err(Stop::Cancelled) => Err(Failure::Cancelled),
@@ -165,6 +174,13 @@ impl<D: CompilerData> Compiler<D> {
             }
         }
     }
+}
+
+/// What the stages produce.
+struct Finished {
+    score: Score,
+    provenance: BTreeMap<String, f64>,
+    nav: Option<NavTree>,
 }
 
 /// Why the stages stopped early.
@@ -183,11 +199,7 @@ struct Run<'a, D> {
 }
 
 impl<D: CompilerData> Run<'_, D> {
-    fn stages(
-        &mut self,
-        spec: &Spec,
-        spec_hash: Sha256Digest,
-    ) -> Result<(Score, BTreeMap<String, f64>), Stop> {
+    fn stages(&mut self, spec: &Spec, spec_hash: Sha256Digest) -> Result<Finished, Stop> {
         let mut data = self.resolve_source(spec)?;
         if !spec.transform.is_empty() {
             let at = SpecPointer::root().key("transform");
@@ -232,7 +244,12 @@ impl<D: CompilerData> Run<'_, D> {
                 ),
             ))));
         }
-        Ok((score, data.provenance_mix()))
+        let nav = self.navigate(spec, &score, &data, &annotations)?;
+        Ok(Finished {
+            provenance: data.provenance_mix(),
+            score,
+            nav,
+        })
     }
 
     /// Resolves `data.source` through the registered source for its kind.
@@ -353,6 +370,34 @@ impl<D: CompilerData> Run<'_, D> {
             }
         }
         self.cx.check_cancelled().map_err(stop)
+    }
+
+    /// The navigation tree of the finished Score: the first one a context provider builds
+    /// (05 §8). Building it records no engine in the header, because the tree is not part
+    /// of the Score.
+    fn navigate(
+        &mut self,
+        spec: &Spec,
+        score: &Score,
+        data: &D,
+        annotations: &[Annotation],
+    ) -> Result<Option<NavTree>, Stop> {
+        let registry = self.registry;
+        let mut providers = registry.context_providers().peekable();
+        if providers.peek().is_none() {
+            return Ok(None);
+        }
+        let whole = fragment(SpecPointer::root(), spec)?;
+        for (_, provider) in providers {
+            let tree = provider
+                .nav_tree(&whole, score, data, annotations, &mut self.cx)
+                .map_err(stop)?;
+            if tree.is_some() {
+                self.cx.check_cancelled().map_err(stop)?;
+                return Ok(tree);
+            }
+        }
+        Ok(None)
     }
 
     /// Runs the shapers in their fixed order; quantization only in Presentation (SDR-10).

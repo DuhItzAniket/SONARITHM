@@ -54,7 +54,7 @@ AUDAXIS builds the navigation tree from the dataset ([engine catalogue](../produ
 | Level | Node | Children | Notes |
 |---|---|---|---|
 | 0 | **Dataset** (root) | Series 1…n, Axes, Insights, Filters | Announces the summary (A11Y-01, A11Y-02) |
-| 1 | **Series** k | Segments | Segments are x-bins (for example months, or equal bins) or analysis segments |
+| 1 | **Series** k | Segments | Segments are x-bins (for example months, or equal bins) or analysis segments. B03 builds even bins of at least 8 points, at most 12 per series, until co-design settles the size (OD-18) |
 | 1 | **Axes** | X axis, Y axis | Extra grouping level, as in Chart Reader |
 | 1 | **Insights** | Insight types (extrema, outliers, change points, trend segments) | Extra grouping level; insights come from ECHOMETRIC analyzers |
 | 1 | **Filters** | One filter per series | Enter toggles a series in or out of playback and view |

@@ -25,6 +25,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::diagnostic::{Diagnostic, SpecPointer};
 use crate::ids::{AnalyzerId, EngineId, RowRange, RuleId, TrackId};
+use crate::nav::NavTree;
 use crate::provenance::Confidence;
 use crate::score::{EngineVersion, Mode, Score, ScoreTrack};
 
@@ -336,8 +337,9 @@ pub trait Encoder<D>: Send + Sync {
     ) -> Result<ScoreTrack, CompileError>;
 }
 
-/// Adds context tracks: ticks, reference tones, legends, earcons (AUDAXIS). Navigation-tree
-/// building joins this trait in B03.
+/// Adds context tracks (ticks, reference tones, legends, earcons) and builds the navigation
+/// tree (AUDAXIS; 05 §2, §8). The navigation tree joined this trait in B03, as ADR-0014
+/// foresaw; its default builds none, so providers that only add tracks are unchanged.
 pub trait ContextProvider<D>: Send + Sync {
     /// The context tracks for the encoded `score`, from the spec's `context` object.
     ///
@@ -352,6 +354,26 @@ pub trait ContextProvider<D>: Send + Sync {
         annotations: &[Annotation],
         cx: &mut CompileContext,
     ) -> Result<Vec<ScoreTrack>, CompileError>;
+
+    /// The navigation tree of the finished `score` (08 §2), or `None` if this provider
+    /// builds none. `spec` is the whole resolved spec (pointer `""`), because the tree needs
+    /// the tracks, the substrate, the field semantics and the title. The compiler calls it
+    /// after the shapers and keeps the first tree a provider returns.
+    ///
+    /// # Errors
+    ///
+    /// A [`CompileError`] when the tree cannot be built.
+    fn nav_tree(
+        &self,
+        spec: &SpecFragment,
+        score: &Score,
+        data: &D,
+        annotations: &[Annotation],
+        cx: &mut CompileContext,
+    ) -> Result<Option<NavTree>, CompileError> {
+        let _ = (spec, score, data, annotations, cx);
+        Ok(None)
+    }
 }
 
 /// Transforms the merged Score in a fixed slot: quantize, loudness, spatial, lint (05 §2).

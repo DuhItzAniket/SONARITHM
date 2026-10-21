@@ -1,0 +1,16 @@
+---
+source: crates/engines/sonarithm-audaxis/tests/nav_tree.rs
+expression: outline(&tree)
+---
+dataset title Some("histogram"), 1 series, 10 points
+  series "count" track bins field Some("count") unit None, 10 points range 3..47 x 0.02..19.487
+    segment 10 points range 3..47 x 0.02..19.487
+      point 0 row 0 x 0.02 value Some(47.0) t 0
+      … 8 more points
+      point 9 row 9 x 19.487 value Some(3.0) t 4.5
+  axes
+    axis X "bin" field Some("bin") unit None values Number range 0.02..19.487
+    axis Y "count" field Some("count") unit None values Number range 3..47
+  insights
+  filters
+    filter "count" series 1
