@@ -151,6 +151,8 @@ jobs:
       - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
         with:
           save-if: ${{ github.ref == 'refs/heads/main' }}
+      # xtask links the app core for its code tables, and cpal (sonarithm-audio) links ALSA.
+      - run: sudo apt-get update && sudo apt-get install --yes --no-install-recommends libasound2-dev
       # The crate list lives in xtask/src/ci.rs (WASM_CRATES).
       - run: cargo xtask wasm-check
 
