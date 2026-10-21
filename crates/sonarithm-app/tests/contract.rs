@@ -41,6 +41,10 @@ fn requests(dir: &TempDir) -> Vec<Value> {
         json!({ "command": "dataset_list" }),
         json!({ "command": "spec_set", "args": { "text": spec } }),
         json!({ "command": "spec_get" }),
+        json!({ "command": "spec_apply", "args": { "patch": [
+            { "op": "replace", "path": "/tracks/0/id", "value": "t" }
+        ], "label": "Rename track" } }),
+        json!({ "command": "spec_validate", "args": { "text": "{}" } }),
         json!({ "command": "compile" }),
         json!({ "command": "transport_state" }),
         json!({ "command": "transport_seek", "args": { "seconds": 0.5 } }),

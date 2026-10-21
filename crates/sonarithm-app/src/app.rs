@@ -18,7 +18,7 @@ use crate::history::History;
 use crate::ipc::{
     CompileReport, Counts, DatasetSummary, DeviceSummary, DiagnosticInfo, Event, ExportRequest,
     ExportResult, FieldSummary, HistoryState, IpcError, JobKind, PROTOCOL_VERSION, Reply, Request,
-    ScoreInfo, SpecState, TrackInfo,
+    ScoreInfo, SpecPatchResult, SpecState, TrackInfo,
 };
 use crate::jobs::{Failure, JobQueue, Output, Work};
 use crate::settings::{Settings, SettingsStore};
@@ -141,6 +141,8 @@ impl App {
                 undo_token: None,
             })),
             Request::SpecSet { text } => self.spec_set(text),
+            Request::SpecApply { patch, label } => self.spec_apply(&patch, label),
+            Request::SpecValidate { text } => Ok(validation(&text)),
             Request::Compile => self.compile(),
             Request::TransportState => self.act(Action::State),
             Request::TransportPlay => self.act(Action::Play),
@@ -310,6 +312,47 @@ impl App {
         }))
     }
 
+    fn spec_apply(
+        &mut self,
+        patch: &[crate::patch::PatchOp],
+        label: Option<String>,
+    ) -> Result<Reply, IpcError> {
+        let text = self
+            .spec
+            .clone()
+            .ok_or_else(|| IpcError::new(&codes::NO_SPEC, "The session has no spec to patch."))?;
+        let document: serde_json::Value = serde_json::from_str(&text).map_err(|err| {
+            IpcError::new(
+                &codes::SPEC_PATCH,
+                format!("The spec is not JSON, so it cannot be patched: {err}."),
+            )
+        })?;
+        let patched = crate::patch::apply(&document, patch).map_err(|why| {
+            IpcError::new(
+                &codes::SPEC_PATCH,
+                format!("The patch does not apply: {why}."),
+            )
+        })?;
+        let new_text = serde_json::to_string_pretty(&patched).map_err(|err| {
+            IpcError::new(
+                &codes::SPEC_PATCH,
+                format!("The patched spec cannot be written: {err}."),
+            )
+        })?;
+        let label = label.unwrap_or_else(|| "Edit spec".to_owned());
+        let token = self
+            .history
+            .record(label, Some(text), Some(new_text.clone()));
+        self.spec = Some(new_text.clone());
+        let (diagnostics, counts) = diagnose(&new_text);
+        Ok(Reply::SpecPatch(SpecPatchResult {
+            undo_token: token,
+            text: new_text,
+            diagnostics,
+            counts,
+        }))
+    }
+
     fn compile(&mut self) -> Result<Reply, IpcError> {
         let text = self
             .spec
@@ -466,6 +509,37 @@ impl App {
             .configure(output(&self.settings))
             .map(Reply::Transport)
     }
+}
+
+/// The validation diagnostics of spec text.
+fn diagnose(text: &str) -> (Vec<DiagnosticInfo>, Counts) {
+    let diagnostics = match Spec::from_json_str(text) {
+        Ok(spec) => spec.validate(),
+        Err(err) => err.diagnostics(),
+    };
+    let infos: Vec<DiagnosticInfo> = diagnostics.iter().map(DiagnosticInfo::from).collect();
+    let counts = count(&infos);
+    (infos, counts)
+}
+
+fn validation(text: &str) -> Reply {
+    let (diagnostics, counts) = diagnose(text);
+    Reply::Validation {
+        diagnostics,
+        counts,
+    }
+}
+
+fn count(diagnostics: &[DiagnosticInfo]) -> Counts {
+    let mut counts = Counts::default();
+    for diagnostic in diagnostics {
+        match diagnostic.severity.as_str() {
+            "error" => counts.errors += 1,
+            "warning" => counts.warnings += 1,
+            _ => counts.info += 1,
+        }
+    }
+    counts
 }
 
 fn hello(protocol: u32) -> Result<Reply, IpcError> {
@@ -640,14 +714,7 @@ fn report<'a>(
     compiled: Option<&Compiled>,
 ) -> CompileReport {
     let diagnostics: Vec<DiagnosticInfo> = diagnostics.map(DiagnosticInfo::from).collect();
-    let mut counts = Counts::default();
-    for diagnostic in &diagnostics {
-        match diagnostic.severity.as_str() {
-            "error" => counts.errors += 1,
-            "warning" => counts.warnings += 1,
-            _ => counts.info += 1,
-        }
-    }
+    let counts = count(&diagnostics);
     let score = compiled.map(|compiled| {
         let summary = compiled.summary();
         ScoreInfo {

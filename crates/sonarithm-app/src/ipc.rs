@@ -44,6 +44,8 @@ pub const COMMANDS: &[(&str, &str)] = &[
     ("dataset_list", "datasets"),
     ("spec_get", "spec"),
     ("spec_set", "spec"),
+    ("spec_apply", "spec_patch"),
+    ("spec_validate", "validation"),
     ("compile", "compile"),
     ("transport_state", "transport"),
     ("transport_play", "transport"),
@@ -111,6 +113,19 @@ pub enum Request {
     SpecGet,
     /// Replaces the session's spec text; undoable. Replies [`Reply::Spec`].
     SpecSet {
+        /// The spec as JSON text.
+        text: String,
+    },
+    /// Applies a JSON Patch (RFC 6902) to the session's spec, all or nothing, as one undoable
+    /// edit. Replies [`Reply::SpecPatch`] with the validation diagnostics of the result.
+    SpecApply {
+        /// The operations, in order.
+        patch: Vec<crate::patch::PatchOp>,
+        /// A name for the edit in the history, such as `Set pitch range`.
+        label: Option<String>,
+    },
+    /// Validates spec text without changing the session. Replies [`Reply::Validation`].
+    SpecValidate {
         /// The spec as JSON text.
         text: String,
     },
@@ -251,6 +266,8 @@ impl Request {
             Self::DatasetList => "dataset_list",
             Self::SpecGet => "spec_get",
             Self::SpecSet { .. } => "spec_set",
+            Self::SpecApply { .. } => "spec_apply",
+            Self::SpecValidate { .. } => "spec_validate",
             Self::Compile => "compile",
             Self::TransportState => "transport_state",
             Self::TransportPlay => "transport_play",
@@ -301,6 +318,15 @@ pub enum Reply {
     },
     /// The session's spec.
     Spec(SpecState),
+    /// The spec after a patch.
+    SpecPatch(SpecPatchResult),
+    /// The diagnostics of spec text.
+    Validation {
+        /// Every diagnostic, in the validator's order.
+        diagnostics: Vec<DiagnosticInfo>,
+        /// Errors, warnings and infos.
+        counts: Counts,
+    },
     /// The result of a compile.
     Compile(CompileReport),
     /// The transport, after the command.
@@ -524,6 +550,22 @@ pub struct SpecState {
     pub text: Option<String>,
     /// The undo token of the edit that produced it, when the request was an edit.
     pub undo_token: Option<u64>,
+}
+
+/// The spec after an applied patch (09 §2.1 `SpecPatchResult`).
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, TS)]
+#[serde(rename_all = "camelCase")]
+#[non_exhaustive]
+pub struct SpecPatchResult {
+    /// The edit's undo token.
+    pub undo_token: u64,
+    /// The spec text after the patch.
+    pub text: String,
+    /// The validation diagnostics of the patched spec (an invalid spec is kept, so editing
+    /// can pass through invalid states).
+    pub diagnostics: Vec<DiagnosticInfo>,
+    /// Errors, warnings and infos.
+    pub counts: Counts,
 }
 
 /// The result of a compile.

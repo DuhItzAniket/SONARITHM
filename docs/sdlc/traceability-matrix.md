@@ -61,7 +61,7 @@
 | FR-101 | [06 §7](../architecture/06-audio-engine.md#7-export) | A05, B03 | UT (VTT validity) | In progress: WebVTT sidecar of speech events and markers with a validity test; ffmpeg reads it (A05-T08); cue timing with AUDAXIS (B03) |
 | FR-102 | [06 §7](../architecture/06-audio-engine.md#7-export) | C04 | GT | Planned |
 | FR-110 | [12 §4](../architecture/12-cross-cutting-concerns.md#4-project-file-format) | B05 | IT (round trip, crash injection) | Planned |
-| FR-111 | [09 §2.1](../architecture/09-desktop-app.md#21-command-surface-initial) | B05 | IT | Planned |
+| FR-111 | [09 §2.1](../architecture/09-desktop-app.md#21-command-surface-initial) | B01, B05 | IT, PT | In progress: one undo history on the command bus with tokens (B01-T01); spec patches undo and redo (`every_patch_kind_is_undoable_and_redoable`, `applying_then_undoing_returns_the_canonical_spec`, B05-T01); inspector edits after Gate U |
 | FR-112 | [09 §3](../architecture/09-desktop-app.md#3-frontend-architecture) | B05 | E2E, AT | Planned |
 | FR-113 | [09 §3](../architecture/09-desktop-app.md#3-frontend-architecture) | B05 | E2E (round trip) | Planned |
 | FR-114 | [08 §6](../architecture/08-interaction-and-accessibility.md#6-modalities-profiles-and-settings) | B03 | UT (schema), E2E | Planned |

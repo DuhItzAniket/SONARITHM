@@ -176,6 +176,17 @@ pub const EXPORT_FAILED: CodeInfo = CodeInfo {
     status: CodeStatus::Active,
 };
 
+/// A spec patch could not be applied; the spec is unchanged.
+pub const SPEC_PATCH: CodeInfo = CodeInfo {
+    code: "SNR-APP-040",
+    severity: Severity::Error,
+    summary: "The spec patch does not apply",
+    help: "Check each operation's path against the current spec (spec_get); a patch applies \
+           completely or not at all.",
+    rules: &[],
+    status: CodeStatus::Active,
+};
+
 /// A buffer is not a binary view this version reads (ADR-0017 §6).
 pub const BINARY_VIEW: CodeInfo = CodeInfo {
     code: "SNR-APP-050",
@@ -218,6 +229,7 @@ pub const CODES: CodeTable = CodeTable {
         UNKNOWN_JOB,
         EXPORT_PATH,
         EXPORT_FAILED,
+        SPEC_PATCH,
         BINARY_VIEW,
         FILE_REFUSED,
     ],

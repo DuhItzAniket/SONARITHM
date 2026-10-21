@@ -19,6 +19,7 @@ sonarithm-audio.workspace = true
 sonarithm-core.workspace = true
 sonarithm-data = { workspace = true, features = ["fs"] }
 sonarithm-render.workspace = true
+sonarithm-spec.workspace = true
 thiserror.workspace = true
 ts-rs.workspace = true
 
