@@ -92,7 +92,7 @@ SONARITHM/
 | `sonarithm-i18n` | Message catalogues (`locales/<locale>/*.ftl`, shared with `@sonarithm/i18n`), locale formatting of numbers and dates, spoken unit names, the `en-XA` pseudo-locale and its check (12 §5) | fluent-bundle, ICU4X (`icu_decimal`, `icu_datetime`) | Yes | 1.88 | B02 |
 | `sonarithm-stream` | Live source adapters with backpressure and reconnect | core, data, tokio, tokio-tungstenite, serialport, rumqttc, rosc | No | 1.88 | B06 |
 | `sonarithm-speech` | Optional self-voicing; screen-reader routing where the platform allows | tts | No | 1.88 | B03 |
-| `sonarithm-app` | Projects (`.sonarithm` bundles), sessions, undo/redo (command pattern), job queue, profiles, settings | compiler, render, audio, export, data | No | 1.88 | B01 |
+| `sonarithm-app` | Projects (`.sonarithm` bundles), sessions, undo/redo (command pattern), job queue, profiles, settings, the IPC protocol ([ADR-0017](../decisions/0017-ipc-protocol-v1.md)) | facade, compiler, render, audio, export, data | No | 1.88 | B01 |
 | `sonarithm` | Facade: stable public API (`Sonarithm::compile`, `render_to_file`, builders) | all library crates (feature-gated) | Yes | 1.88 | A07 |
 | `sonarithm-cli` | `sonarithm` binary: `render`, `play`, `validate`, `schema`, `describe`, `lint`, `inspect` | facade, app, clap, miette | No | 1.88 | A07 |
 | `sonarithm-py` | Python module (`sonarithm._core`) | facade, pyo3, numpy, arrow (C Data Interface) | No | 1.88 | A07 |
@@ -118,7 +118,7 @@ flowchart BT
   audio[sonarithm-audio] --> render
   export[sonarithm-export] --> render
   stream[sonarithm-stream] --> data
-  app[sonarithm-app] --> compiler & audio & export & stream
+  app[sonarithm-app] --> facade & compiler & audio & export & stream
   facade[sonarithm] --> compiler & render & export
   cli[apps/cli] --> app & facade
   desktop[apps/desktop/src-tauri] --> app
@@ -131,7 +131,7 @@ flowchart BT
 4. **The compiler, engines, render and DSP crates must build for `wasm32-unknown-unknown`.** CI builds them (A01 onward).
 5. **Heavy or exotic dependencies live in leaf crates behind features:** ML runtimes, wasmtime, MQTT, SQL, LGPL codecs, and `allocation-counter`, whose counting global allocator stays in tests and in `sonarithm-audio`'s opt-in `count-allocations` feature (A05-T10). Default features stay permissively licensed (see [supply chain policy](../engineering/supply-chain-and-licensing.md)).
 6. **Apps contain no business logic.** If the CLI and the desktop app both need it, it goes in `sonarithm-app` or below.
-7. **`xtask` never ships.** It may depend on the compiler, `sonarithm-export` and the crates below them (`sonarithm-render`, `sonarithm-dsp`), to read code tables and generate schemas (A03, A05); no crate depends on it.
+7. **`xtask` never ships.** It may depend on the compiler, `sonarithm-export`, `sonarithm-app` and the crates below them, to read code tables and generate schemas and IPC types (A03, A05, B01); no crate depends on it.
 
 ## 4. Feature flags (planned)
 

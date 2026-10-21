@@ -3206,6 +3206,21 @@ dependencies = [
 ]
 
 [[package]]
+name = "sonarithm-app"
+version = "0.0.0"
+dependencies = [
+ "proptest",
+ "serde",
+ "serde_json",
+ "sonarithm",
+ "sonarithm-audio",
+ "sonarithm-core",
+ "sonarithm-data",
+ "sonarithm-render",
+ "thiserror 2.0.21",
+]
+
+[[package]]
 name = "sonarithm-audaxis"
 version = "0.0.0"
 dependencies = [
@@ -4333,6 +4348,7 @@ dependencies = [
  "serde",
  "serde_json",
  "sha2",
+ "sonarithm-app",
  "sonarithm-audaxis",
  "sonarithm-compiler",
  "sonarithm-core",
