@@ -365,6 +365,20 @@ pub(super) fn read_parquet(
     name: &str,
     options: &ReadOptions,
 ) -> Result<Table, DataError> {
+    read_parquet_from(Bytes::copy_from_slice(bytes), name, options)
+}
+
+/// Reads Parquet from any random-access source: bytes in memory, or a region of a file read
+/// in place ([`FileRegion`]). Only the footer and one column chunk at a time are read for
+/// the structural checks, so memory follows the decoded table, not the source (RFC-0002 §6).
+pub(super) fn read_parquet_from<R>(
+    source: R,
+    name: &str,
+    options: &ReadOptions,
+) -> Result<Table, DataError>
+where
+    R: parquet::file::reader::ChunkReader + CloneHandle + 'static,
+{
     let unreadable = |source: parquet::errors::ParquetError| DataError::Unreadable {
         format: Format::Parquet,
         reason: source.to_string(),
@@ -374,16 +388,40 @@ pub(super) fn read_parquet(
         reason,
     };
     let (schema, batches) = super::contained(Format::Parquet, || {
-        super::thrift::check_footer(bytes).map_err(malformed)?;
-        let builder = ParquetRecordBatchReaderBuilder::try_new(Bytes::copy_from_slice(bytes))
-            .map_err(unreadable)?;
+        let total = parquet::file::reader::Length::len(&source);
+        if total >= 8 {
+            let tail = source.get_bytes(total - 8, 8).map_err(unreadable)?;
+            let footer = tail
+                .get(..4)
+                .and_then(|b| <[u8; 4]>::try_from(b).ok())
+                .map_or(0, |b| u64::from(u32::from_le_bytes(b)));
+            if footer + 8 <= total {
+                let length = usize::try_from(footer + 8).unwrap_or(usize::MAX);
+                let tail = source
+                    .get_bytes(total - footer - 8, length)
+                    .map_err(unreadable)?;
+                super::thrift::check_footer(&tail).map_err(malformed)?;
+            }
+        }
+        let checker = source.clone_handle();
+        let builder = ParquetRecordBatchReaderBuilder::try_new(source).map_err(unreadable)?;
         for row_group in builder.metadata().row_groups() {
             for column in row_group.columns() {
                 let start = column
                     .dictionary_page_offset()
                     .unwrap_or_else(|| column.data_page_offset());
-                super::thrift::check_column_chunk(bytes, start, column.compressed_size())
-                    .map_err(malformed)?;
+                let (Ok(at), Ok(size)) = (
+                    u64::try_from(start),
+                    usize::try_from(column.compressed_size()),
+                ) else {
+                    return Err(malformed(
+                        "a column chunk has a negative offset or length".to_owned(),
+                    ));
+                };
+                if at.saturating_add(size as u64) > total {
+                    return Err(malformed("a column chunk lies outside the file".to_owned()));
+                }
+                check_pages(&checker, at, size as u64).map_err(malformed)?;
             }
         }
         let rows = u64::try_from(builder.metadata().file_metadata().num_rows()).unwrap_or(0);
@@ -839,4 +877,179 @@ mod tests {
             }
         }
     }
+}
+
+/// The first window read for a page header, and the largest a header may need.
+const HEADER_WINDOW: usize = 4 << 10;
+const MAX_HEADER: usize = 16 << 20;
+
+/// Walks the page headers of a column chunk at `start` (`length` bytes), reading only
+/// each header, never the pages: the check of #146 without holding the chunk in memory.
+fn check_pages<R: parquet::file::reader::ChunkReader>(
+    source: &R,
+    start: u64,
+    length: u64,
+) -> Result<(), String> {
+    let end = start
+        .checked_add(length)
+        .ok_or_else(|| "a column chunk lies outside the file".to_owned())?;
+    let mut at = start;
+    while at < end {
+        let mut window = HEADER_WINDOW;
+        let (header, page) = loop {
+            let take = usize::try_from(end - at).unwrap_or(usize::MAX).min(window);
+            let bytes = source
+                .get_bytes(at, take)
+                .map_err(|_| "a page header cannot be read".to_owned())?;
+            match super::thrift::page_header(&bytes)? {
+                Some(found) => break found,
+                None if take < window || window >= MAX_HEADER => {
+                    return Err("a page header is malformed: the Thrift data ends early".to_owned());
+                }
+                None => window *= 4,
+            }
+        };
+        at = at
+            .checked_add(header as u64)
+            .and_then(|a| a.checked_add(page))
+            .filter(|a| *a <= end)
+            .ok_or_else(|| "a page runs past the end of its column chunk".to_owned())?;
+    }
+    Ok(())
+}
+
+/// A source a Parquet reader can clone cheaply: one more handle on the same data.
+pub(super) trait CloneHandle {
+    fn clone_handle(&self) -> Self;
+}
+
+impl CloneHandle for Bytes {
+    fn clone_handle(&self) -> Self {
+        self.clone()
+    }
+}
+
+/// Part of a file, read in place with positional reads (RFC-0002 §6): a stored member of a
+/// project bundle. Clones share the file; reads never move a shared cursor.
+#[cfg(feature = "fs")]
+#[derive(Clone, Debug)]
+pub(super) struct FileRegion {
+    file: Arc<std::fs::File>,
+    offset: u64,
+    len: u64,
+}
+
+#[cfg(feature = "fs")]
+impl FileRegion {
+    pub(super) fn new(file: std::fs::File, offset: u64, len: u64) -> Self {
+        Self {
+            file: Arc::new(file),
+            offset,
+            len,
+        }
+    }
+}
+
+#[cfg(feature = "fs")]
+impl CloneHandle for FileRegion {
+    fn clone_handle(&self) -> Self {
+        self.clone()
+    }
+}
+
+#[cfg(feature = "fs")]
+impl parquet::file::reader::Length for FileRegion {
+    fn len(&self) -> u64 {
+        self.len
+    }
+}
+
+#[cfg(feature = "fs")]
+impl parquet::file::reader::ChunkReader for FileRegion {
+    type T = RegionReader;
+
+    fn get_read(&self, start: u64) -> parquet::errors::Result<Self::T> {
+        Ok(RegionReader {
+            file: Arc::clone(&self.file),
+            at: self.offset.saturating_add(start.min(self.len)),
+            end: self.offset.saturating_add(self.len),
+        })
+    }
+
+    fn get_bytes(&self, start: u64, length: usize) -> parquet::errors::Result<Bytes> {
+        let outside =
+            || parquet::errors::ParquetError::EOF("a read past the end of the region".to_owned());
+        let end = start.checked_add(length as u64).ok_or_else(outside)?;
+        if end > self.len {
+            return Err(outside());
+        }
+        let mut buffer = vec![0; length];
+        read_exact_at(&self.file, &mut buffer, self.offset + start)
+            .map_err(|err| parquet::errors::ParquetError::External(Box::new(err)))?;
+        Ok(Bytes::from(buffer))
+    }
+}
+
+/// A sequential reader over part of a [`FileRegion`].
+#[cfg(feature = "fs")]
+pub(super) struct RegionReader {
+    file: Arc<std::fs::File>,
+    at: u64,
+    end: u64,
+}
+
+#[cfg(feature = "fs")]
+impl std::io::Read for RegionReader {
+    fn read(&mut self, buf: &mut [u8]) -> std::io::Result<usize> {
+        let left = usize::try_from(self.end.saturating_sub(self.at)).unwrap_or(usize::MAX);
+        let want = buf.len().min(left);
+        if want == 0 {
+            return Ok(0);
+        }
+        let n = read_at(&self.file, &mut buf[..want], self.at)?;
+        self.at += n as u64;
+        Ok(n)
+    }
+}
+
+/// One positional read of `file` at `offset`: never moves a cursor other readers depend on.
+///
+/// # Errors
+///
+/// The operating system's read error.
+#[cfg(feature = "fs")]
+pub fn read_at(file: &std::fs::File, buf: &mut [u8], offset: u64) -> std::io::Result<usize> {
+    #[cfg(unix)]
+    {
+        std::os::unix::fs::FileExt::read_at(file, buf, offset)
+    }
+    #[cfg(windows)]
+    {
+        std::os::windows::fs::FileExt::seek_read(file, buf, offset)
+    }
+    #[cfg(not(any(unix, windows)))]
+    {
+        let _ = (file, buf, offset);
+        Err(std::io::Error::other(
+            "positional reads are not available here",
+        ))
+    }
+}
+
+/// [`read_at`] until `buf` is full.
+///
+/// # Errors
+///
+/// The read error, or `UnexpectedEof` if the file ends first.
+#[cfg(feature = "fs")]
+pub fn read_exact_at(file: &std::fs::File, buf: &mut [u8], offset: u64) -> std::io::Result<()> {
+    let mut done = 0;
+    while done < buf.len() {
+        let n = read_at(file, &mut buf[done..], offset + done as u64)?;
+        if n == 0 {
+            return Err(std::io::Error::from(std::io::ErrorKind::UnexpectedEof));
+        }
+        done += n;
+    }
+    Ok(())
 }

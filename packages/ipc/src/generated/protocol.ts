@@ -36,6 +36,15 @@ export const REPLY_KINDS = {
   settings_set: "settings",
   devices_list: "devices",
   device_select: "transport",
+  project_new: "project",
+  project_open: "project",
+  project_open_recent: "project",
+  project_save: "project",
+  project_save_as: "project",
+  project_recent: "recent",
+  project_recovery: "recovery",
+  project_recover: "project",
+  project_discard_recovery: "recovery",
 } as const;
 
 /** The channel that carries each event. */
@@ -176,7 +185,27 @@ settings: Settings, } } | { "command": "devices_list" } | { "command": "device_s
 /**
  * The device's ID from `devices_list`, or `null`.
  */
-id: string | null, } } | { "command": "view_get", "args": { 
+id: string | null, } } | { "command": "project_new" } | { "command": "project_open", "args": { 
+/**
+ * The project file.
+ */
+path: string, } } | { "command": "project_open_recent", "args": { 
+/**
+ * The position in `project_recent`'s list.
+ */
+index: number, } } | { "command": "project_save" } | { "command": "project_save_as", "args": { 
+/**
+ * The project file, ending in `.sonarithm`.
+ */
+path: string, 
+/**
+ * Embed every dataset; otherwise data opened from files is linked.
+ */
+embedData: boolean, } } | { "command": "project_recent" } | { "command": "project_recovery" } | { "command": "project_recover", "args": { 
+/**
+ * The autosave's ID from `project_recovery`.
+ */
+id: number, } } | { "command": "project_discard_recovery" } | { "command": "view_get", "args": { 
 /**
  * The dataset's ID.
  */
@@ -249,7 +278,15 @@ jobs: Array<JobInfo>, } | { "reply": "history" } & HistoryState | { "reply": "se
 /**
  * The devices, the system default marked.
  */
-devices: Array<DeviceSummary>, };
+devices: Array<DeviceSummary>, } | { "reply": "project" } & ProjectSummary | { "reply": "recent", 
+/**
+ * Most recent first.
+ */
+projects: Array<RecentProject>, } | { "reply": "recovery", 
+/**
+ * Newest first.
+ */
+autosaves: Array<AutosaveInfo>, };
 
 /**
  * A command that could not run (ADR-0017 §3, 12 §1). Spec and data problems are not
@@ -769,6 +806,86 @@ isDefault: boolean,
  * Whether SONARITHM is set to use it.
  */
 selected: boolean, };
+
+/**
+ * A project (RFC-0002 §9). Files are named alone, never with their folders (ADR-0017 §7).
+ */
+export type ProjectSummary = { 
+/**
+ * The display name.
+ */
+name: string, 
+/**
+ * The project file's name, once saved.
+ */
+fileName: string | null, 
+/**
+ * Whether there are changes since the last save.
+ */
+unsaved: boolean, 
+/**
+ * The spec IDs, in order.
+ */
+specs: Array<string>, 
+/**
+ * The spec the session edits.
+ */
+activeSpec: string | null, 
+/**
+ * The datasets.
+ */
+datasets: Array<ProjectDatasetInfo>, 
+/**
+ * Warnings from opening: unavailable linked data, newer format parts.
+ */
+diagnostics: Array<DiagnosticInfo>, };
+
+/**
+ * A dataset of a project.
+ */
+export type ProjectDatasetInfo = { 
+/**
+ * The ID specs name it by.
+ */
+id: string, 
+/**
+ * The original file name.
+ */
+name: string, 
+/**
+ * Linked to a file rather than embedded.
+ */
+linked: boolean, 
+/**
+ * Whether its data is loaded (linked data can be missing or changed).
+ */
+available: boolean, };
+
+/**
+ * A recent project.
+ */
+export type RecentProject = { 
+/**
+ * The position for `project_open_recent`.
+ */
+index: number, 
+/**
+ * The file name.
+ */
+name: string, };
+
+/**
+ * An autosave (RFC-0002 §8).
+ */
+export type AutosaveInfo = { 
+/**
+ * The ID for `project_recover`.
+ */
+id: number, 
+/**
+ * When it was written: the file system's time, in seconds since 1970.
+ */
+modifiedS: number, };
 
 /**
  * An x range for [`Request::ViewGet`], in the x field's units (seconds for times).
