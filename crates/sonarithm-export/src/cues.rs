@@ -33,7 +33,8 @@ pub fn cues(score: &Score) -> Vec<Cue> {
 }
 
 /// [`cues`] for speech at `rate`, with the announcement policy of AUDAXIS (08 §4, A11Y-20):
-/// speech is sequenced, never overlapped, so a cue ends when the next one starts. Otherwise
+/// speech is sequenced, never overlapped, so texts that start together share one cue and a
+/// cue ends when the next one starts. Otherwise
 /// a cue lasts [`CUE_DURATION`] or, when its text takes longer to speak, until its speech
 /// would end; never past the end of the Score, and always at least 1 ms.
 #[must_use]
@@ -55,16 +56,29 @@ pub fn cues_at(score: &Score, rate: WordsPerMinute) -> Vec<Cue> {
         .map(|marker| cue(marker.t, &marker.label));
     let mut all: Vec<Cue> = speech.chain(markers).collect();
     all.sort_by(|a, b| a.start.total_cmp(&b.start));
+    // Speech that starts together is spoken one after the other: one cue, its texts on
+    // separate lines, as long as the longest.
+    let mut merged: Vec<Cue> = Vec::with_capacity(all.len());
+    for cue in all {
+        match merged.last_mut() {
+            Some(last) if last.start == cue.start => {
+                last.text.push('\n');
+                last.text.push_str(&cue.text);
+                last.end = Seconds(last.end.0.max(cue.end.0));
+            }
+            _ => merged.push(cue),
+        }
+    }
     let duration = score.header.duration.0;
-    let starts: Vec<f64> = all.iter().map(|cue| cue.start.0).collect();
-    for (index, cue) in all.iter_mut().enumerate() {
-        let next = starts
-            .get(index + 1..)
-            .and_then(|later| later.iter().copied().find(|t| *t > cue.start.0))
-            .unwrap_or(f64::INFINITY);
+    let starts: Vec<f64> = merged.iter().map(|cue| cue.start.0).collect();
+    for (cue, next) in merged
+        .iter_mut()
+        .zip(starts.iter().skip(1).map(Some).chain([None]))
+    {
+        let next = next.copied().unwrap_or(f64::INFINITY);
         cue.end = Seconds(cue.end.0.min(next).min(duration).max(cue.start.0 + 0.001));
     }
-    all
+    merged
 }
 
 /// A WebVTT timestamp, `HH:MM:SS.mmm`, rounded to the nearest millisecond.
@@ -221,6 +235,24 @@ mod tests {
         for pair in cues.windows(2) {
             assert!(pair[0].end <= pair[1].start, "{pair:?}");
         }
+    }
+
+    #[test]
+    fn a11y_20_speech_that_starts_together_shares_one_cue() {
+        let mut score = score();
+        if let Some(track) = score.tracks.first_mut() {
+            track.events = vec![
+                ScoreEvent::Speech(Speech::new(Seconds(0.0), "Legend")),
+                ScoreEvent::Speech(Speech::new(Seconds(0.0), "8.5")),
+                ScoreEvent::Speech(Speech::new(Seconds(1.0), "9.25")),
+            ];
+        }
+        score.markers.clear();
+        let cues = cues(&score);
+        assert_eq!(cues.len(), 2);
+        assert_eq!(cues[0].text, "Legend\n8.5");
+        assert_eq!(cues[0].end, Seconds(1.0));
+        assert!(webvtt(&cues).contains("\n00:00:00.000 --> 00:00:01.000\nLegend\n8.5\n"));
     }
 
     #[test]
