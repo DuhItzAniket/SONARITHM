@@ -344,3 +344,39 @@ fn playback_stops_at_the_end_of_the_plan() {
     assert_eq!(stats.active_voices, 0);
     assert!(left(&out)[4_800 + latency()..].iter().all(|s| *s == 0.0));
 }
+
+/// SDR-16: the click instrument is a short broadband burst, the same on every render, and
+/// it ignores pitch (sound-design §7.1).
+#[test]
+fn sdr_16_the_click_is_short_broadband_noise() {
+    let clicks = |cents: f64| {
+        score(
+            0.2,
+            vec![track(
+                "click",
+                TrackRole::Context,
+                vec![note(0.05, 0.010, cents)],
+            )],
+        )
+    };
+    let samples = left(&render(&clicks(0.0), 256));
+    assert_eq!(
+        samples,
+        left(&render(&clicks(1_200.0), 256)),
+        "pitch is ignored"
+    );
+    assert_eq!(samples, left(&render(&clicks(0.0), 64)), "deterministic");
+    let sounding: Vec<usize> = (0..samples.len())
+        .filter(|&i| samples[i].abs() > 1e-4)
+        .collect();
+    let (first, last) = (sounding[0], sounding[sounding.len() - 1]);
+    let length = (last - first) as f64 / 48_000.0;
+    assert!((0.008..=0.012).contains(&length), "about 10 ms: {length} s");
+    // Noise crosses zero far more often than any data tone in the SDR-08 range would.
+    let crossings = samples[first..=last]
+        .windows(2)
+        .filter(|w| (w[0] >= 0.0) != (w[1] >= 0.0))
+        .count();
+    let per_second = crossings as f64 / length;
+    assert!(per_second > 4_000.0, "{per_second} crossings per second");
+}

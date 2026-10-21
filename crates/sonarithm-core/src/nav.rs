@@ -132,6 +132,16 @@ pub enum XValue {
     Category(String),
 }
 
+/// How a series maps values to pitch, as heard in the Score.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, Serialize, Deserialize)]
+#[serde(rename_all = "lowercase")]
+pub enum Polarity {
+    /// Higher values sound higher.
+    Positive,
+    /// Higher values sound lower.
+    Negative,
+}
+
 /// Which axis an [`AxisNode`] describes.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize)]
 #[serde(rename_all = "lowercase")]
@@ -168,6 +178,11 @@ pub struct SeriesNode {
     pub points: u64,
     /// The range of the point values.
     pub range: Option<ValueRange>,
+    /// The range of the pitches the points play, in Hz.
+    pub pitch_hz: Option<ValueRange>,
+    /// The polarity heard in the Score: the pitch of the largest value against the pitch
+    /// of the smallest. `None` when the pitch does not follow the values.
+    pub polarity: Option<Polarity>,
 }
 
 /// One axis: its field, unit and extent.
@@ -587,6 +602,8 @@ mod tests {
                 ucum: None,
                 points: 3,
                 range: None,
+                pitch_hz: None,
+                polarity: None,
             })),
         );
         let segment = tree.push(

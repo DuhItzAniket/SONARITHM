@@ -171,3 +171,32 @@ announce-excluded =
 announce-time = { $hours }:{ $minutes }:{ $seconds }
 # A date with its time of day.
 announce-date-time = { $date }, { $time }
+
+## The spoken legend (SDR-18; sound-design §7.3)
+
+announce-legend-x = X axis { $field }, { $range }
+announce-legend-y = { $series }, { $range }
+announce-legend-mapping =
+    { $polarity ->
+        [positive] Pitch from { $low } to { $high } hertz; higher values sound higher
+        [negative] Pitch from { $low } to { $high } hertz; higher values sound lower
+       *[other] Pitch from { $low } to { $high } hertz
+    }
+announce-legend-mode =
+    { $mode ->
+        [presentation] Presentation mode
+       *[analysis] Analysis mode
+    }
+announce-legend-cues =
+    { $ticks ->
+        [yes]
+            { $reference ->
+                [yes] Ticks and reference tone on
+               *[no] Ticks on
+            }
+       *[no]
+            { $reference ->
+                [yes] Reference tone on
+               *[no] No context cues
+            }
+    }

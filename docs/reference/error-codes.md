@@ -119,6 +119,10 @@ Owner: `sonarithm-audaxis`. Numbers SNR-ENG-100 to SNR-ENG-199.
 | `SNR-ENG-101` | warning | Only timbre varies | Map the field to pitch, duration or taps as well, or announce the categories. | A11Y-14, SDR-25 |
 | `SNR-ENG-102` | warning | Pitches outside the expanded range | Keep data pitches within 65 to 1480 Hz (SDR-08), so they survive high-frequency hearing loss and small speakers. | A11Y-14, SDR-08 |
 | `SNR-ENG-103` | warning | Spatial mode not available | Binaural and multichannel output arrive in D03; this build plays stereo. | SDR-30 |
+| `SNR-ENG-104` | warning | Static reference tone | Use the default dynamic-extreme reference (`context.reference.kind: dynamic-extreme`); a static reference did not help listeners (SDR-17). | SDR-17 |
+| `SNR-ENG-105` | warning | Reference tone left out | Point `context.reference.track` at a data track with at least two different values, and keep a reference value inside the data's range. | SDR-17 |
+| `SNR-ENG-106` | warning | Ticks left out | Ticks need a data track with at least two points at different x positions, and a positive `context.ticks.every`. | SDR-16 |
+| `SNR-ENG-107` | info | Ticks chosen automatically | Set `context.ticks.enabled` to `true` or `false`, and `context.ticks.every` to choose the interval. | SDR-16 |
 
 Owner: `sonarithm-sonotrace`. Numbers SNR-ENG-200 to SNR-ENG-299.
 

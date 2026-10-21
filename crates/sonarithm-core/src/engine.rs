@@ -341,14 +341,16 @@ pub trait Encoder<D>: Send + Sync {
 /// tree (AUDAXIS; 05 §2, §8). The navigation tree joined this trait in B03, as ADR-0014
 /// foresaw; its default builds none, so providers that only add tracks are unchanged.
 pub trait ContextProvider<D>: Send + Sync {
-    /// The context tracks for the encoded `score`, from the spec's `context` object.
+    /// The context tracks for the encoded `score`. `spec` is the whole resolved spec
+    /// (pointer `""`): the cues depend on its `context` object and also on the tracks, the
+    /// substrate and the field semantics (B03-T05).
     ///
     /// # Errors
     ///
     /// A [`CompileError`] when the context cannot be built.
     fn context_tracks(
         &self,
-        context: &SpecFragment,
+        spec: &SpecFragment,
         score: &Score,
         data: &D,
         annotations: &[Annotation],

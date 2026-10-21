@@ -79,6 +79,10 @@ fn brightness_cutoff(
     Hz(cutoff.min(PARTIAL_LIMIT * f64::from(rate.get())))
 }
 
+/// The low-pass cutoff of the click (sound-design §7.1: "low-passed near 8 kHz for
+/// comfort").
+const CLICK_CUTOFF: Hz = Hz(8_000.0);
+
 /// The sound source of a voice.
 #[derive(Clone, Copy, Debug)]
 enum Source {
@@ -93,9 +97,25 @@ enum Source {
     },
     /// An earcon synthesizer.
     Earcon(Earcon),
+    /// Seeded white noise through a low-pass (the click).
+    Noise { state: u64, filter: Biquad },
 }
 
 impl Source {
+    /// A click with seeded noise (SDR-02), so every render of a Score sounds the same.
+    fn click(seed: u64, rate: SampleRate) -> Self {
+        Self::Noise {
+            // xorshift needs a non-zero state.
+            state: crate::earcon::splitmix(seed) | 1,
+            filter: Biquad::new(
+                BiquadKind::LowPass,
+                CLICK_CUTOFF,
+                sonarithm_dsp::filter::BUTTERWORTH_Q,
+                rate,
+            ),
+        }
+    }
+
     fn new(instrument: Instrument) -> Self {
         let wave = |waveform| Self::Wave(Oscillator::new(waveform));
         match instrument {
@@ -129,7 +149,7 @@ impl Source {
                 };
                 *weights = mallet_weights(*increment, *brightness);
             }
-            Self::Earcon(_) => {}
+            Self::Earcon(_) | Self::Noise { .. } => {}
         }
     }
 
@@ -185,6 +205,15 @@ impl Source {
                 to_f32(sum)
             }
             Self::Earcon(earcon) => earcon.next_sample(),
+            Self::Noise { state, filter } => {
+                *state ^= *state << 13;
+                *state ^= *state >> 7;
+                *state ^= *state << 17;
+                // The top 24 bits as a uniform value in [−1, 1).
+                #[expect(clippy::cast_precision_loss, reason = "24 bits fit an f32 exactly")]
+                let uniform = (*state >> 40) as f32 / 8_388_608.0 - 1.0;
+                filter.process(uniform)
+            }
         }
     }
 }
@@ -544,7 +573,11 @@ impl Sound {
                 pan: tone.pan,
                 frequency: tone.frequency.0,
                 brightness: f64::from(tone.brightness),
-                source: Source::new(tone.instrument),
+                source: if tone.instrument == Instrument::Click {
+                    Source::click(seed, rate)
+                } else {
+                    Source::new(tone.instrument)
+                },
             },
             EventKind::Glide(glide) => {
                 let point = track
@@ -559,7 +592,11 @@ impl Sound {
                     pan: PanGains::constant_power(Pan(point.pan)),
                     frequency: Cents(point.cents).to_hz().0,
                     brightness: point.brightness,
-                    source: Source::new(glide.instrument),
+                    source: if glide.instrument == Instrument::Click {
+                        Source::click(seed, rate)
+                    } else {
+                        Source::new(glide.instrument)
+                    },
                 }
             }
             EventKind::Earcon { kind, gain } => Self {

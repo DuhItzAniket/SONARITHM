@@ -36,7 +36,10 @@ fn inline(values: &[Value], pitch: &Value, pan: Option<&Value>) -> Value {
         "data": {"source": {"kind": "inline", "values": values},
                  "fields": {"x": {"role": "x"}}},
         "substrate": {"time": {"pace": {"pointsPerSecond": 2}}},
-        "tracks": [{"id": "y", "mark": "tone", "channels": channels}]
+        "tracks": [{"id": "y", "mark": "tone", "channels": channels}],
+        // Context cues off: these tests are about stereo placement alone.
+        "context": {"ticks": {"enabled": false}, "reference": {"kind": "none"},
+                    "legend": {"speak": "off"}}
     })
 }
 

@@ -138,6 +138,7 @@ These targets are a proposal and need a finding before the export defaults are f
 | Level | −10 dB relative to data (proposal) |
 | Space | Centred; never panned |
 | Equivalent | The visual axis ticks; tick positions are listed in the spoken legend |
+| B03 build | The render engine's `click` instrument: seeded white noise through an 8 kHz low-pass. Its ramps are the engine's 5 ms minimum (SDR-22), so a 10 ms click rises and falls over 5 ms each rather than the 1 ms of the proposal above. Without `context.ticks.every`, ticks fall on a "nice" step (1, 2 or 5 × 10ⁿ) for about five intervals across the x range (provisional, OD-19) |
 
 ### 7.2 Dynamic reference tone (SDR-17)
 
@@ -149,10 +150,13 @@ These targets are a proposal and need a finding before the export defaults are f
 | Direction changes | Trend direction from a smoothed slope with hysteresis (proposal), so noise does not make the reference flap; switches crossfade over at least 40 ms |
 | Lint | The reference converging with the data tone near an extreme is the information, so the critical-band spacing check (SDR-28) treats the reference as an intentional exception |
 | Equivalent | The plot can draw the current reference level as a faint line; the legend states that the reference is on |
+| B03 build | One note per trend run, at the pitch the data gives the series maximum (rising) or minimum (falling), so the reference follows the track's own mapping. The trend is a 3-point moving average with hysteresis of 5 % of the value range (provisional). Consecutive notes overlap by 40 ms, and the engine's 40 ms ramps make the overlap a crossfade. An explicit `static-value` reference is built with warning `SNR-ENG-104` (SDR-17) |
 
 ### 7.3 Spoken legend (SDR-18)
 
 Available before playback (L in the explorer) and at the start of an audio narrative: series name; axis ranges and units; mapping (channel, range, scale); polarity; mode; which context cues are on. Example: "Temperature. Pitch from 400 to 1400 hertz for 3.1 to 28.7 degrees Celsius; higher sounds higher. Analysis mode. Ticks on months. Reference tone on."
+
+B03 builds it from the navigation tree: the title, the x range, each series' value range with its unit, the pitch range with the polarity heard in the Score, the mode and the cues. With `speak: before-play` (the default), the Score carries it as a speech track at time 0 in the source locale, `en-US`, for exports; the app speaks it in the listener's locale.
 
 ## 8. Earcon design rules
 

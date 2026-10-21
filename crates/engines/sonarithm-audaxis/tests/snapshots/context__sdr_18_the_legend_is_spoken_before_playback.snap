@@ -1,0 +1,5 @@
+---
+source: crates/engines/sonarithm-audaxis/tests/context.rs
+expression: speech.text.clone()
+---
+Weather. X axis day, 0 to 19. Temperature, 0 degrees Celsius to 19 degrees Celsius. Pitch from 400 to 1,400 hertz; higher values sound higher. Analysis mode. Ticks and reference tone on

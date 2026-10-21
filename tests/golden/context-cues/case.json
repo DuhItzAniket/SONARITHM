@@ -1,0 +1,31 @@
+{
+  "description": "Context cues (B03-T05): a rising and falling mallet series with the default tick clicks at major x ticks (SDR-16) and the dynamic reference tone in a triangle timbre (SDR-17), compiled with NUMISONA and AUDAXIS; the spoken legend is speech and is not rendered.",
+  "source": {
+    "kind": "score"
+  },
+  "sampleRate": 48000,
+  "blockSize": 256,
+  "tolerances": {
+    "nullResidualDbfs": -90.0,
+    "lufsDelta": 0.1,
+    "centroidRelative": 0.01
+  },
+  "reference": {
+    "platform": "windows-x86_64",
+    "sha256": "sha256:74457c8c9ff502e9e6dcdf6427692346a8c02f81ddb632a250f9ec8f95203c15",
+    "frames": 276000,
+    "integratedLufs": -14.789,
+    "truePeakDbtp": -9.187,
+    "peakDbfs": -9.226,
+    "rmsDbfs": -18.105,
+    "centroidHz": [
+      2086.4,
+      1509.9,
+      739.9,
+      2162.4,
+      1557.9,
+      802.0
+    ]
+  },
+  "reason": "First reference (B03-T05)."
+}

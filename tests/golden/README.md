@@ -5,7 +5,7 @@ Checked-in expectations that more than one test suite reads.
 | Directory | What | Checked by | Regenerate |
 |---|---|---|---|
 | `parity/` | A spec, its CSV, the Score the facade compiles for it (engine versions written as `*`, since they change with every release) and the SHA-256 of its default WAV render | `crates/sonarithm/tests/parity.rs` (Rust facade) and `bindings/python/tests/test_parity.py` (Python package): both front ends must produce this Score, value for value | `UPDATE_PARITY=1 cargo test -p sonarithm --test parity`, with the reason in the PR |
-| `benchmark-10s/`, `compensation-sweep/`, `earcons/`, `glide-sweeps/`, `limiter-stress/`, `stereo-placement/`, `taps-and-short-notes/` | Golden-audio cases of the render engine: a `case.json` manifest (hashes and metrics, no audio) and, for handcrafted Scores, a `score.json` | `cargo xtask golden` and the `golden` and `golden-compare` CI jobs (A05-T11, below) | `cargo xtask golden --update --reason "<why>"`, in its own PR |
+| `benchmark-10s/`, `compensation-sweep/`, `context-cues/`, `earcons/`, `glide-sweeps/`, `limiter-stress/`, `stereo-placement/`, `taps-and-short-notes/` | Golden-audio cases of the render engine: a `case.json` manifest (hashes and metrics, no audio) and, for handcrafted Scores, a `score.json` | `cargo xtask golden` and the `golden` and `golden-compare` CI jobs (A05-T11, below) | `cargo xtask golden --update --reason "<why>"`, in its own PR |
 
 ## Golden-audio cases (A05-T11)
 
@@ -20,6 +20,7 @@ Each directory is one case: `case.json` (the manifest) and, for handcrafted Scor
 | `earcons` | Every compiled earcon kind, with seeded noise (provisional sounds) |
 | `glide-sweeps` | Glides with moving pitch, level, pan and brightness |
 | `limiter-stress` | The master true-peak limiter on a +12 dB chord |
+| `context-cues` | Tick clicks (SDR-16) and the dynamic reference tone (SDR-17) over a rising and falling mallet series, compiled with NUMISONA and AUDAXIS (B03-T05). `crates/engines/sonarithm-audaxis/tests/context.rs` checks that `score.json` matches a fresh compile |
 | `stereo-placement` | x on pan from left to right and y on pitch, compiled with NUMISONA and AUDAXIS (B03-T11, SDR-30). `crates/engines/sonarithm-audaxis/tests/spatial.rs` checks that `score.json` matches a fresh compile |
 | `taps-and-short-notes` | Tap counts 1–8 (A11Y-13) and notes from 2 ms to 40 ms (SDR-22) |
 

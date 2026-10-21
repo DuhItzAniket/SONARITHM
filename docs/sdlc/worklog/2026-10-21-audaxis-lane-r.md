@@ -20,8 +20,9 @@
 - B02-T08: `crates/sonarithm-i18n` (Fluent catalogues `common`, `ui` and `units` in `locales/en-US/`; ICU4X numbers and dates; 26 units with symbol, terse and verbose forms; `en-XA` and `check_pseudo`) and `packages/i18n` (`createLocalizer`, the same pseudo-locale, the `sonarithm/no-literal-ui-string` rule). The frontend CI job now runs `pnpm -r test`. Merged as #260.
 - B03-T01: `sonarithm_core::nav` (NavTree types and invariant check), `ContextProvider::nav_tree`, `Compiled::nav` in the compiler, and `crates/engines/sonarithm-audaxis` with the tree builder; snapshots for the six NUMISONA templates, property tests and OD-18. Merged as #262.
 - B03-T02: `nav::Cursor` with the verbs of keyboard §4.2 and §4.3, outcomes (moved, boundary, invalid, describe, toggled) with their earcon IDs, and where am I; a verb-by-level matrix snapshot reviewed against §4.3 row by row. Merged as #264.
+- B03-T05: `context` module (ticks, dynamic reference, legend), the render engine's `click` instrument, `Composer::legend`, polarity and pitch range on series nodes, the `context-cues` golden case, OD-19.
 - B03-T11: `spatial::Spatial` shaper and the A11Y-14 guard (`SNR-ENG-100` to `103`, AUDAXIS's first code table), the mono-downmix conformance test and the `stereo-placement` golden case.
-- B03-T03: `announce::Composer` (parts as catalogue messages joined by `announce-join`, spoken and display forms, mandatory qualifiers, where am I, pause) and `AnnouncementQueue` (§9.1 classes, supersede, priority, history); `announce.ftl` joins the shared catalogue, with contract cases; `XType::Year` so years are spoken without grouping.
+- B03-T03: `announce::Composer` (parts as catalogue messages joined by `announce-join`, spoken and display forms, mandatory qualifiers, where am I, pause) and `AnnouncementQueue` (§9.1 classes, supersede, priority, history); `announce.ftl` joins the shared catalogue, with contract cases; `XType::Year` so years are spoken without grouping. Merged as #267.
 
 ## Decisions
 
@@ -42,6 +43,10 @@
 | Announcement parts joined through a catalogue message (`announce-join`), right to left | Part order is configurable (A11Y-12), so no single message can hold every order; nesting keeps each announcement one message for the pseudo-locale check | 08 §4 |
 | Every announcement has a spoken and a display form | Speech uses unit names, the log, readout and braille use symbols (keyboard §8.1); one formatter gives both the same value and precision (DL-P12) | 08 §4 |
 | Derived and synthetic values carry qualifiers too | 03 §4 rule 3 states numbers plainly only for exact, vector and user-edited values | 03 §4 |
+| Context providers receive the whole resolved spec | Ticks need the time field, tracks and field semantics, not only `/context`; the signature stays the same, and no other provider exists | 05 §3 |
+| The reference tone uses the pitch the data gives the maximum or minimum | It then follows the track's own scale and polarity without depending on NUMISONA | sound-design §7.2 |
+| Ticks use a render instrument (`click`), not a new earcon kind | An earcon kind would change the Score IR enum (a contract); an instrument name is free text | sound-design §7.1 |
+| AUDAXIS joins the facade's default engines in its own step | Every spec resolves with context defaults, so it adds ticks and a reference tone to every default render and changes the parity golden case, the gallery, the replication gallery and CLI snapshots | status.md B03 tasks |
 | B02-T08 built before B01-T02 (its listed dependency) | It needs no generated IPC type: the catalogues are plain files and the contract test reads them directly | status.md B02 tasks |
 
 ## Problems and how they were solved

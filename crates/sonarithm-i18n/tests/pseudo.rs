@@ -49,6 +49,15 @@ fn sample_args(style: UnitStyle) -> Args {
         .number("seconds", 11.0)
         .text("date", "6")
         .text("time", "7")
+        .text("field", "8")
+        .text("series", "9")
+        .text("range", "10")
+        .number("low", 400.0)
+        .number("high", 1400.0)
+        .text("polarity", "positive")
+        .text("mode", "analysis")
+        .text("ticks", "yes")
+        .text("reference", "yes")
 }
 
 #[test]
