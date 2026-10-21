@@ -577,6 +577,7 @@ pub(crate) fn assemble(spec: &Spec, all: &[Series], annotations: &[Annotation]) 
         title: spec.name.clone(),
         series: u32::try_from(all.len()).unwrap_or(u32::MAX),
         points: all.iter().map(|s| s.points.len() as u64).sum(),
+        gap_earcons: spec.data.missing == Some(sonarithm_spec::data::Missing::Earcon),
     });
     let root = tree.root();
     let mut placed: Vec<(NavNodeId, Vec<NavNodeId>)> = Vec::new();

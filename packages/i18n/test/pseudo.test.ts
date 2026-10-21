@@ -56,6 +56,11 @@ function sampleArgs(style: string): MessageArgs {
     mode: "analysis",
     ticks: "yes",
     reference: "yes",
+    name: "11",
+    state: "on",
+    stream: "13",
+    event: "14",
+    condition: "15",
   };
 }
 

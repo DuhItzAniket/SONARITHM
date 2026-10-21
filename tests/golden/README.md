@@ -17,7 +17,7 @@ Each directory is one case: `case.json` (the manifest) and, for handcrafted Scor
 |---|---|
 | `benchmark-10s` | The DS-006 benchmark Score, 10 s: mallet and square data tracks, sine ticks, triangle monitoring |
 | `compensation-sweep` | ISO 226:2023 compensation (SDR-24) over the expanded SDR-08 range |
-| `earcons` | Every compiled earcon kind, with seeded noise (provisional sounds) |
+| `earcons` | Every compiled earcon kind, with seeded noise (the B03-T06 set) |
 | `glide-sweeps` | Glides with moving pitch, level, pan and brightness |
 | `limiter-stress` | The master true-peak limiter on a +12 dB chord |
 | `context-cues` | Tick clicks (SDR-16) and the dynamic reference tone (SDR-17) over a rising and falling mallet series, compiled with NUMISONA and AUDAXIS (B03-T05). `crates/engines/sonarithm-audaxis/tests/context.rs` checks that `score.json` matches a fresh compile |

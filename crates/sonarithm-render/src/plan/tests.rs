@@ -295,7 +295,7 @@ proptest! {
                 start,
                 length,
                 source: 0,
-                kind: EventKind::Earcon { kind: EarconKind::Boundary, gain: 1.0 },
+                kind: EventKind::Earcon { kind: EarconKind::Boundary.into(), gain: 1.0 },
             })
             .collect();
         events.sort_by_key(|e| e.start);

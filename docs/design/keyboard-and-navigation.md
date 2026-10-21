@@ -376,6 +376,9 @@ Earcons mark structure and events; they are designed to be distinct from data to
 | `E-STREAM` | Stream event: anomaly, threshold, connect, disconnect | Soft chime whose brightness scales with event class; never urgent | "<Stream>: <event>" | On in Monitoring |
 | `E-ALARM` | User-configured true alarm only | Repeating pulsed pattern designed for urgency following Edworthy et al. 1991 (SDR-35) | "Alarm: <condition>" | Off; exists only when the user configures an alarm |
 | `E-LEVEL` | Moved into a child level or out to the parent | Very short up or down glide, about 50 ms | None (the level is in the announcement) | Off (optional) |
+| `E-GAP` | The cursor is on a missing value (`data.missing: "earcon"`, 03 §5) | Two soft noise taps 60 ms apart, low-passed near 3 kHz, about 70 ms in all (proposal, B03) | "No value" | On when the spec asks for it |
+
+B03 (B03-T06) builds this set in the render engine (`EarconSound`; live with `Command::Earcon`) and lists it in AUDAXIS (`earcons::CATALOGUE`) with each text equivalent from the message catalogue. The frequencies and lengths are proposals until the listening check (HP-11).
 
 Reserved for Stage C (CURVASONA, A11Y-28): `E-ZERO` (zero crossing), `E-ASYMPTOTE`, `E-UNDEFINED`, `E-OFFSCREEN`. Reserved for the C02 experiment: `E-ESTIMATE` (low-confidence region).
 

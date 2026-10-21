@@ -94,7 +94,7 @@ The contract has two halves (F-036):
 
 | Channel | Direction | Mechanism | Payload |
 |---|---|---|---|
-| Commands | Control → RT | `rtrb` SPSC ring, fixed capacity (1024) | `Play`, `Pause`, `Seek(frames)`, `SetSpeed(f32)`, `SetLoop`, `SetGain(bus, Db)`, `TriggerCue(CueId, params)`, `StopAll` |
+| Commands | Control → RT | `rtrb` SPSC ring, fixed capacity (1024) | `Play`, `Pause`, `Seek(frames)`, `SetSpeed(f32)`, `SetLoop`, `SetGain(bus, Db)`, `TriggerCue(CueId, params)`, `StopAll`; `Earcon(EarconSound)` plays an earcon live on the earcon bus (B03-T06) |
 | Plan swap | Control → RT | `rtrb` carrying a `basedrop::Shared<RenderPlan>` | A new plan, applied at the next block boundary with crossfade |
 | Live events | Control → RT | `rtrb` SPSC, timestamped with a target frame | Stream-derived notes, lens events, excitations |
 | Engine state | RT → telemetry | `triple_buffer` | Sample position, host timestamp of the block, playing flag, speed, xrun count, peak/RMS per bus |

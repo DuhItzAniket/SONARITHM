@@ -3,7 +3,9 @@
 
 #![allow(
     clippy::cast_possible_truncation,
-    reason = "test frame counts are small"
+    clippy::cast_sign_loss,
+    clippy::cast_precision_loss,
+    reason = "test frame counts are small and non-negative"
 )]
 
 use sonarithm_core::{
@@ -379,4 +381,102 @@ fn sdr_16_the_click_is_short_broadband_noise() {
         .count();
     let per_second = crossings as f64 / length;
     assert!(per_second > 4_000.0, "{per_second} crossings per second");
+}
+
+/// Renders one live earcon from a silent graph and returns the left channel.
+fn live_earcon(sound: crate::EarconSound) -> Vec<f32> {
+    let silent = score(1.0, vec![track("sine", TrackRole::Data, Vec::new())]);
+    let mut graph = graph(&silent, 256);
+    graph.apply(Command::Earcon(sound));
+    let mut out = vec![0.0; 2 * 48_000];
+    graph.process(&mut out);
+    left(&out)
+}
+
+/// The spectral flatness (geometric over arithmetic mean of the power spectrum) of the
+/// first 2048 sounding samples, between 117 Hz and 600 Hz (E-BOUNDARY's band): near 1 for
+/// noise, near 0 for a tone with a few partials.
+fn flatness(samples: &[f32]) -> f64 {
+    let start = samples.iter().position(|s| s.abs() > 1e-4).unwrap_or(0);
+    let window: Vec<f64> = samples[start..]
+        .iter()
+        .take(2048)
+        .enumerate()
+        // A Hann window, so a tone's energy stays in its bins.
+        .map(|(i, s)| {
+            let w = sonarithm_core::math::sin(core::f64::consts::PI * i as f64 / 2047.0);
+            f64::from(*s) * w * w
+        })
+        .collect();
+    let n = window.len() as f64;
+    let mut log_sum = 0.0;
+    let mut sum = 0.0;
+    let mut bins = 0.0;
+    for k in 5..=25_u32 {
+        // 23.4 Hz per bin at 48 kHz over 2048 samples: 117 Hz to 586 Hz.
+        let (mut re, mut im) = (0.0, 0.0);
+        for (i, x) in window.iter().enumerate() {
+            let angle = core::f64::consts::TAU * f64::from(k) * i as f64 / n;
+            re += x * sonarithm_core::math::cos(angle);
+            im -= x * sonarithm_core::math::sin(angle);
+        }
+        let power = re * re + im * im + 1e-20;
+        log_sum += sonarithm_core::math::ln(power);
+        sum += power;
+        bins += 1.0;
+    }
+    sonarithm_core::math::exp(log_sum / bins) / (sum / bins)
+}
+
+/// B03-T06: every earcon plays live on the earcon bus, audibly and briefly (ED-02: at most
+/// about 150 ms, except the alarm), and never louder than full scale.
+#[test]
+fn every_earcon_plays_live_on_the_earcon_bus() {
+    for sound in crate::EarconSound::ALL {
+        let samples = live_earcon(sound);
+        let sounding: Vec<usize> = (0..samples.len())
+            .filter(|&i| samples[i].abs() > 1e-4)
+            .collect();
+        assert!(!sounding.is_empty(), "{sound:?} is silent");
+        let length = (sounding[sounding.len() - 1] - sounding[0]) as f64 / 48_000.0;
+        let limit = if sound == crate::EarconSound::Alarm {
+            0.6
+        } else {
+            0.15
+        };
+        assert!(length <= limit + 0.01, "{sound:?} lasts {length} s");
+        assert!(samples.iter().all(|s| s.is_finite() && s.abs() <= 1.0));
+    }
+}
+
+/// B03-T06 acceptance: E-BOUNDARY is noise-based and distinct from data tones; its
+/// spectrum is far flatter than a mallet note's (ED-01, A11Y-08).
+#[test]
+fn e_boundary_is_noise_based_and_distinct_from_data_tones() {
+    let boundary = flatness(&live_earcon(crate::EarconSound::Boundary));
+    let mallet = score(
+        0.5,
+        vec![track("mallet", TrackRole::Data, vec![note(0.0, 0.25, 0.0)])],
+    );
+    let tone = flatness(&left(&render(&mallet, 256)));
+    assert!(boundary > 5.0 * tone, "boundary {boundary}, mallet {tone}");
+}
+
+/// Two-note earcons rise for on and fall for off (ED-03): the zero-crossing rate of the
+/// second note is above the first's for E-MODE on, below for off.
+#[test]
+fn mode_earcons_rise_for_on_and_fall_for_off() {
+    let rate = |samples: &[f32], from: f64, to: f64| {
+        let start = samples.iter().position(|s| s.abs() > 1e-4).unwrap_or(0);
+        let a = start + (from * 48_000.0) as usize;
+        let b = start + (to * 48_000.0) as usize;
+        samples[a..b]
+            .windows(2)
+            .filter(|w| (w[0] >= 0.0) != (w[1] >= 0.0))
+            .count()
+    };
+    let on = live_earcon(crate::EarconSound::ModeOn);
+    assert!(rate(&on, 0.065, 0.110) > rate(&on, 0.005, 0.050));
+    let off = live_earcon(crate::EarconSound::ModeOff);
+    assert!(rate(&off, 0.065, 0.110) < rate(&off, 0.005, 0.050));
 }

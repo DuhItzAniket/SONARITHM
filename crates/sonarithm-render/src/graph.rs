@@ -22,7 +22,7 @@ use sonarithm_dsp::env::{note_ramp, ramp_frames};
 use sonarithm_dsp::smooth::SMOOTHING_TIME;
 use sonarithm_dsp::{LinearSmoother, PanGains, TruePeakLimiter};
 
-use crate::earcon::splitmix;
+use crate::earcon::{EarconSound, splitmix};
 use crate::plan::{Bus, EventKind, Instrument, PlannedEvent, RenderPlan, Tone, TrackPlan};
 use crate::voice::{Start, VoicePool};
 
@@ -39,6 +39,8 @@ pub const SPEED_RANGE: (f64, f64) = (0.25, 4.0);
 const MAX_RESUME_SCAN: usize = 256;
 /// Voices for live cues (06 §3: "Live cue voices", routed to the data bus).
 const CUE_VOICES: usize = 4;
+/// Voices for live earcons, on the earcon bus (keyboard §11; B03-T06).
+const EARCON_VOICES: usize = 4;
 
 /// A transport or mixer command from the control thread (06 §4). Fixed size and `Copy`, so
 /// it travels through a wait-free ring.
@@ -61,6 +63,9 @@ pub enum Command {
     SetGain(GainTarget, Db),
     /// Play a one-shot cue now (the point cue of sound-design §3.2).
     Cue(Cue),
+    /// Play an earcon now, on the earcon bus: the interactive earcons (invalid action,
+    /// mode and level changes, a missing value) and any other of the catalogue.
+    Earcon(EarconSound),
     /// Fade out everything, including cues, and pause ("stop all audio", A11Y-15).
     StopAll,
 }
@@ -225,6 +230,8 @@ pub struct Graph {
     tracks: Vec<TrackState>,
     cue_track: TrackPlan,
     cues: VoicePool,
+    earcon_track: TrackPlan,
+    earcons: VoicePool,
     buses: [Stereo; 4],
     master: Stereo,
     /// Per-voice work buffer, `max_block` long.
@@ -281,6 +288,19 @@ impl Graph {
                 breakpoints: Vec::new(),
             },
             cues: VoicePool::new(CUE_VOICES),
+            earcon_track: TrackPlan {
+                id: sonarithm_core::TrackId::new("earcon"),
+                bus: Bus::Earcon,
+                gain: 1.0,
+                instrument: Instrument::default(),
+                polyphony: EARCON_VOICES,
+                voices: EARCON_VOICES,
+                longest: 0,
+                noise_seed: 0,
+                events: Vec::new(),
+                breakpoints: Vec::new(),
+            },
+            earcons: VoicePool::new(EARCON_VOICES),
             buses: [stereo(), stereo(), stereo(), stereo()],
             master: stereo(),
             scratch: vec![0.0; max_block],
@@ -385,6 +405,7 @@ impl Graph {
                 let frames = ramp_frames(PAUSE_FADE, self.rate);
                 self.cues
                     .iter_mut()
+                    .chain(self.earcons.iter_mut())
                     .for_each(|voice| voice.fade_out(frames));
             }
             Command::Seek(frame) => self.seek(frame.0),
@@ -410,6 +431,7 @@ impl Graph {
                 }
             }
             Command::Cue(cue) => self.cue(&cue),
+            Command::Earcon(sound) => self.earcon(sound),
         }
     }
 
@@ -520,6 +542,36 @@ impl Graph {
         self.age += 1;
     }
 
+    /// Starts a live earcon on the earcon bus. RT-safe: the voice comes from a fixed pool.
+    fn earcon(&mut self, sound: EarconSound) {
+        let length = sound
+            .duration()
+            .to_frames(self.rate)
+            .map_or(1, |f| f.0.max(1));
+        let event = PlannedEvent {
+            start: 0,
+            length,
+            source: 0,
+            kind: EventKind::Earcon {
+                kind: sound,
+                gain: 1.0,
+            },
+        };
+        let (voice, _) = self.earcons.allocate();
+        voice.start(
+            &event,
+            &self.earcon_track,
+            self.rate,
+            Start {
+                offset: 0,
+                speed: 1.0,
+                age: self.age,
+                noise_seed: self.age,
+            },
+        );
+        self.age += 1;
+    }
+
     /// Renders the next `out.len() / 2` frames into interleaved stereo `out`. Every event
     /// whose start falls in the block starts at its exact sample.
     ///
@@ -534,8 +586,9 @@ impl Graph {
         for chunk in frames.chunks_mut(self.max_block) {
             self.process_block(chunk, &mut peak);
         }
-        let active: usize =
-            self.tracks.iter().map(|t| t.pool.active()).sum::<usize>() + self.cues.active();
+        let active: usize = self.tracks.iter().map(|t| t.pool.active()).sum::<usize>()
+            + self.cues.active()
+            + self.earcons.active();
         self.stats.peak = peak;
         self.stats.active_voices = u32::try_from(active).unwrap_or(u32::MAX);
         self.stats.playing = self.playing;
@@ -665,11 +718,25 @@ impl Graph {
                 voice.render(left, right, track, self.rate, &mut self.scratch);
             }
         }
-        // Live cues play on the data bus (06 §3).
-        let [[left, right], ..] = &mut self.buses;
+        // Live cues play on the data bus (06 §3), live earcons on the earcon bus.
+        let [[left, right], _, [earcon_left, earcon_right], _] = &mut self.buses;
         if let (Some(left), Some(right)) = (left.get_mut(from..to), right.get_mut(from..to)) {
             for voice in self.cues.iter_mut().filter(|voice| voice.is_active()) {
                 voice.render(left, right, &self.cue_track, self.rate, &mut self.scratch);
+            }
+        }
+        if let (Some(left), Some(right)) = (
+            earcon_left.get_mut(from..to),
+            earcon_right.get_mut(from..to),
+        ) {
+            for voice in self.earcons.iter_mut().filter(|voice| voice.is_active()) {
+                voice.render(
+                    left,
+                    right,
+                    &self.earcon_track,
+                    self.rate,
+                    &mut self.scratch,
+                );
             }
         }
     }
