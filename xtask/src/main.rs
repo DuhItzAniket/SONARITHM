@@ -21,6 +21,7 @@ mod codegen;
 mod codes;
 mod gallery;
 mod golden;
+mod network_deny;
 mod replication;
 
 use std::path::{Path, PathBuf};
@@ -45,6 +46,9 @@ Tasks:
                      --update --reason '<why>' [case...]   rewrite the references
                      --render-set <dir>                     write WAVs and summary.json
                      --compare <reference> <set>...         null residual and ΔLUFS (PB-06)
+  network-deny       Run the app-core tests under an OS mechanism that records network
+                     connection attempts, and fail on any (NFR-04; testing-strategy §10)
+                     Options: --self-test  check that a deliberate connection is seen
   replication        Render the replication gallery (replication/) and check it against the
                      committed files
                      Options: --update   rewrite the generated files and manifests
@@ -87,6 +91,7 @@ fn run() -> Result<()> {
             codes::run(&root)
         }
         Some("golden") => golden::run(&root, &rest),
+        Some("network-deny") => network_deny::run(&root, &rest),
         Some("replication") => {
             let mode = match rest.as_slice() {
                 [] => replication::Mode::Check,
