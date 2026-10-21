@@ -25,6 +25,7 @@ sonarithm-export.workspace = true
 sonarithm-numisona.workspace = true
 sonarithm-echometric.workspace = true
 sonarithm-render.workspace = true
+sonarithm-sonotrace.workspace = true
 sonarithm-spec.workspace = true
 
 [lints]

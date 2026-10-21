@@ -111,6 +111,13 @@ Owner: `sonarithm-numisona`. Numbers SNR-ENG-001 to SNR-ENG-099.
 | `SNR-ENG-080` | warning | Erie construct not imported | Spec v0.1 has no equivalent; the note says what the import does instead. Adjust the imported spec by hand if the construct matters. | SDR-05 |
 | `SNR-ENG-081` | info | Erie construct imported approximately | Check the imported spec against the note; the construct maps onto spec v0.1 with the stated difference. | SDR-05 |
 
+Owner: `sonarithm-sonotrace`. Numbers SNR-ENG-200 to SNR-ENG-299.
+
+| Code | Severity | Meaning | How to fix | Rules |
+|---|---|---|---|---|
+| `SNR-ENG-200` | error | No stream is connected | Connect the stream first (a connection opens only on your command); the spec then compiles against the rows the stream holds. | A11Y-16 |
+| `SNR-ENG-201` | warning | Live mode skipped events without a data row | Live mode plays the events of new rows only. Context events such as ticks and earcons come from AUDAXIS in live mode instead. | — |
+
 Owner: `sonarithm-echometric`. Numbers SNR-ENG-600 to SNR-ENG-699.
 
 | Code | Severity | Meaning | How to fix | Rules |

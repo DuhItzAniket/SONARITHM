@@ -85,6 +85,7 @@ From phase A07, release-plz maintains this file: it generates each release's ent
   - Replication gallery (`replication/`): Smith & Walker's context-cue conditions, Nees & Walker's density × reversals cells, Tucker Brown et al.'s transit curves and the Erie gallery subset, rendered from committed specs with their records; `cargo xtask replication` regenerates the stimuli and checks every render on three operating systems, and `--timings` measures them.
 - SONOTRACE streams (phase B06, Lane R):
   - `sonarithm-data` `StreamTable`: bounded, append-only storage for live data with row sequence numbers, a row or time-window capacity with a hard row limit, cheap snapshots that later appends never change, and `SNR-DATA-071` when rows are dropped before a reader read them; provenance columns kept in canonical form.
+  - `sonarithm-sonotrace`, the SONOTRACE engine: the spec's `stream` source reads the window of a connected stream; live encoding emits each new row's events exactly once and replays deterministically; scrub grains preview a track's value at the cursor; long series play in windows.
 
 ### Fixed
 
