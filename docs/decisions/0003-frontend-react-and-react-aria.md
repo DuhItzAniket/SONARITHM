@@ -41,6 +41,8 @@ Chosen option: **React 19.2 + TypeScript + Vite with React Aria Components (RAC)
 
 The A02 spike (5) confirms RAC Tree, Slider and Toolbar behaviour with NVDA, VoiceOver and Orca inside the chosen shell.
 
+**For the record (2026-10-21):** the A02 prototype ran React 19.3 with React Aria Components 1.22, newer than the React 19.2 named above. The confirmation records the versions it confirms. Confirmation follows the timing in [ADR-0002](0002-desktop-shell-tauri.md#confirmation) ([OD-15](../planning/open-decisions.md#closed-decisions)): Windows first, then VoiceOver and Orca by B03's exit.
+
 ## Pros and cons of the options
 
 ### Radix / Base UI
