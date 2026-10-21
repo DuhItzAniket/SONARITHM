@@ -65,6 +65,10 @@ pub const COMMANDS: &[(&str, &str)] = &[
     ("device_select", "transport"),
 ];
 
+/// The commands whose reply is a binary view (ADR-0017 §6), sent with
+/// [`crate::App::dispatch_binary`] and the transport's `binary`.
+pub const BINARY_COMMANDS: &[&str] = &["view_get", "table_page"];
+
 /// Every event kind with the channel that carries it ([`Event::channel`]).
 pub const EVENTS: &[(&str, &str)] = &[
     ("clock", "clock"),
@@ -175,6 +179,65 @@ pub enum Request {
         /// The device's ID from `devices_list`, or `null`.
         id: Option<String>,
     },
+    /// A downsampled view of two fields of a dataset for drawing (03 §7). Binary: a view of
+    /// kind `m4Tile` or `lttbTile` with the columns `row`, `x` and `y` (ADR-0017 §6).
+    ViewGet {
+        /// The dataset's ID.
+        dataset: String,
+        /// The x field: numbers, dates or timestamps.
+        x: String,
+        /// The y field.
+        y: String,
+        /// The x range to draw; by default all of x.
+        range: Option<ViewRange>,
+        /// The plot's width in device pixels.
+        px_width: u32,
+        /// M4 for plots (pixel-exact, used when zooming), LTTB for overviews.
+        method: ViewMethod,
+    },
+    /// A page of a dataset's rows for the data table. Binary: a `tablePage` view whose
+    /// first column, `__snr_row`, holds each row's index.
+    TablePage {
+        /// The dataset's ID.
+        dataset: String,
+        /// The first row of the page, in sort order.
+        offset: u64,
+        /// The most rows, at most 10 000.
+        limit: u32,
+        /// The order; by default the table's.
+        sort: Option<TableSort>,
+    },
+}
+
+/// An x range for [`Request::ViewGet`], in the x field's units (seconds for times).
+#[derive(Clone, Copy, Debug, PartialEq, Serialize, Deserialize, TS)]
+#[serde(rename_all = "camelCase")]
+pub struct ViewRange {
+    /// The left edge.
+    pub start: f64,
+    /// The right edge.
+    pub end: f64,
+}
+
+/// How a view is downsampled.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize, TS)]
+#[serde(rename_all = "snake_case")]
+#[non_exhaustive]
+pub enum ViewMethod {
+    /// Min, max, first and last per pixel column: pixel-exact lines (M4, VLDB 2014).
+    M4,
+    /// Largest-Triangle-Three-Buckets: `pxWidth` representative points.
+    Lttb,
+}
+
+/// The order of a table page.
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, TS)]
+#[serde(rename_all = "camelCase")]
+pub struct TableSort {
+    /// The field to sort by.
+    pub field: String,
+    /// Largest first.
+    pub descending: bool,
 }
 
 impl Request {
@@ -207,6 +270,8 @@ impl Request {
             Self::SettingsSet { .. } => "settings_set",
             Self::DevicesList => "devices_list",
             Self::DeviceSelect { .. } => "device_select",
+            Self::ViewGet { .. } => "view_get",
+            Self::TablePage { .. } => "table_page",
         }
     }
 }

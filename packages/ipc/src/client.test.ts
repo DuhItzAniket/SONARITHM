@@ -4,7 +4,9 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 
+import { readView } from "./binary.ts";
 import { ProtocolMismatchError, connect } from "./client.ts";
+import { SAMPLE_VIEW, SAMPLE_VIEW_BASE64 } from "./generated/fixtures.ts";
 import type { Event, TransportState } from "./generated/protocol.ts";
 import { PROTOCOL_VERSION } from "./generated/protocol.ts";
 import { createMockTransport } from "./mock.ts";
@@ -96,4 +98,34 @@ void test("events reach the subscribers of their channel only", async () => {
   });
   assert.equal(clock.length, 1);
   assert.equal(jobs.length, 1);
+});
+
+void test("binary commands resolve with a view the reader decodes", async () => {
+  const bytes = Uint8Array.from(atob(SAMPLE_VIEW_BASE64), (c) =>
+    c.charCodeAt(0),
+  );
+  const transport = createMockTransport(
+    {},
+    { binary: { table_page: bytes.buffer } },
+  );
+  const client = await connect(transport);
+  const buffer = await client.binary({
+    command: "table_page",
+    args: { dataset: "d1", offset: 0, limit: 3, sort: null },
+  });
+  assert.equal(readView(buffer).rows, SAMPLE_VIEW.rows);
+  await assert.rejects(
+    client.binary({
+      command: "view_get",
+      args: {
+        dataset: "d1",
+        x: "t",
+        y: "v",
+        range: null,
+        pxWidth: 100,
+        method: "m4",
+      },
+    }),
+    IpcFailure,
+  );
 });

@@ -3,7 +3,9 @@
 
 import type {
   Channel,
+  BinaryCommand,
   Command,
+  JsonCommand,
   Event,
   Reply,
   ReplyFor,
@@ -16,7 +18,7 @@ import { IpcFailure } from "./transport.ts";
 
 /** A handler per command; each returns the reply type its command gives. */
 export type MockHandlers = {
-  [C in Command]?: (
+  [C in JsonCommand]?: (
     request: RequestFor<C>,
   ) => ReplyFor<C> | Promise<ReplyFor<C>>;
 };
@@ -34,7 +36,7 @@ export interface MockOptions {
   /** The protocol version the mock host speaks; by default the UI's. */
   readonly protocol?: number;
   /** Binary replies by command. */
-  readonly binary?: Partial<Record<Command, ArrayBuffer>>;
+  readonly binary?: Partial<Record<BinaryCommand, ArrayBuffer>>;
 }
 
 /**
@@ -71,7 +73,7 @@ export function createMockTransport(
       }
       return { reply: "hello", protocol: hostProtocol, appVersion: "mock" };
     }
-    const handler = handlers[request.command] as
+    const handler = handlers[request.command as JsonCommand] as
       ((request: Request) => Reply | Promise<Reply>) | undefined;
     if (handler === undefined) {
       throw unhandled(request.command);
@@ -95,7 +97,7 @@ export function createMockTransport(
     },
     binary(request) {
       requests.push(request);
-      const buffer = options.binary?.[request.command];
+      const buffer = options.binary?.[request.command as BinaryCommand];
       return buffer === undefined
         ? Promise.reject(unhandled(request.command))
         : Promise.resolve(buffer);

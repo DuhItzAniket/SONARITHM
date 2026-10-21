@@ -23,6 +23,7 @@ pub mod source;
 pub mod stream;
 pub mod table;
 pub mod transform;
+pub mod view;
 
 pub use bundle::{
     Annotation, AnnotationKind, BundleId, DataBundle, Format, SourceDescriptor, SourceKind,
