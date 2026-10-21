@@ -73,7 +73,9 @@ macro_rules! snapshot {
     ($name:expr, $run:expr) => {
         insta::with_settings!({
             filters => vec![
-                (r"(sonarithm|numisona|platform)( |\x22: \x22)\d+\.\d+\.\d+(-[0-9A-Za-z.]+)?", "$1$2[version]"),
+                // Semver pre-release identifiers are dot-separated, so a sentence's full stop
+                // after `0.1.0-alpha` stays out of the match.
+                (r"(sonarithm|numisona|platform)( |\x22: \x22)\d+\.\d+\.\d+(-[0-9A-Za-z-]+(\.[0-9A-Za-z-]+)*)?", "$1$2[version]"),
                 (r"(Score hash: |\x22score_hash\x22: \x22)[0-9a-f]{64}", "$1[score hash]"),
             ],
         }, {

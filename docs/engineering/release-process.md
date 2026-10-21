@@ -54,6 +54,7 @@ Configured in A07 with `release-plz.toml`. Its `[changelog]` section is the git-
 Configuration notes for A07:
 
 - `publish = false` for `xtask`, `sonarithm-py` (released as wheels) and, from B01, `sonarithm-desktop`; `spikes/` is outside the workspace. Everything else is published: the facade, the crates it depends on, `sonarithm-audio`, `sonarithm-echometric` (the CLI's `study` commands need it since A08-T03) and `sonarithm-cli`.
+- v0.1.0-alpha ships Stage A only, 12 crates: `sonarithm`, `sonarithm-core`, `sonarithm-spec`, `sonarithm-data`, `sonarithm-compiler`, `sonarithm-dsp`, `sonarithm-render`, `sonarithm-audio`, `sonarithm-export`, `sonarithm-numisona`, `sonarithm-echometric` and `sonarithm-cli`. The Stage B crates (`sonarithm-app`, `sonarithm-audaxis`, `sonarithm-i18n`, `sonarithm-sonotrace`, `sonarithm-stream`) are `publish = false` and are not in `release-plz.toml` until a Stage B release publishes them. No Stage A crate depends on them.
 - Before 1.0, one tag per release (`vX.Y.Z[-pre]`): every crate is in one `version_group`, and only the facade creates the tag and the GitHub release (`git_release_type = "auto"` marks `-alpha`, `-beta` and `-rc` versions as pre-releases). Keys checked against the release-plz documentation on 2026-10-21.
 - The release PR's title is `chore(release): vX.Y.Z` (`pr_name`), which passes the PR-title check and is how `release-plz.yml` recognises a merged release PR.
 - A release PR opened with the default `GITHUB_TOKEN` starts no workflows, so its required checks would never run. The `release-pr` job uses a GitHub App token (`RELEASE_PLZ_APP_ID` variable and `RELEASE_PLZ_APP_KEY` secret in the `release` environment) and skips itself until they exist.
@@ -68,7 +69,7 @@ Configuration notes for A07:
 
 ### First release: owner steps
 
-The first publish of each crate is manual, and trusted publishers can only be added to projects that exist. Before tagging v0.1.0-alpha, the owner:
+The first publish of each crate is manual, and trusted publishers can only be added to projects that exist. The v0.1.0-alpha release PR is an ordinary PR prepared by hand. Its title starts with `build(release):`, not `chore(release):`, so merging it does not start the `release` job, which is for release-plz's own release PRs. The release commit is that PR's merge commit. Before tagging v0.1.0-alpha, the owner:
 
 1. Creates the `release` environment (deployments from `main` and tags `v*`).
 2. Publishes the crates once, in dependency order, from the release commit: `cargo publish --workspace --locked` with a short-lived crates.io token, then adds the trusted publisher (repository `DuhItzAniket/SONARITHM`, workflow `release-plz.yml`, environment `release`) to each crate on crates.io and deletes the token.

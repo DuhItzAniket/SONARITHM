@@ -16,6 +16,20 @@ From phase A07, release-plz maintains this file: it generates each release's ent
 - Stereo placement and the never-alone guard (B03-T11): AUDAXIS keeps every stereo position in range and warns when a data track varies only in pan, only in timbre, or in pitches outside 65–1480 Hz, so essential information survives mono output, NVDA's sound split and high-frequency hearing loss (A11Y-14). Binaural and multichannel requests play in stereo with a warning until D03.
 - The navigation tree (B03-T01): the `sonarithm-audaxis` engine crate builds a NavTree (dataset, series, segments, points with their data rows, axes, insights and filters) from each compiled Score, and the compiler returns it beside the Score (`Compiled::nav`). The tree types live in `sonarithm_core::nav`.
 - Message catalogues and locale formatting (B02-T08): the `sonarithm-i18n` crate with Fluent catalogues shared with the desktop UI, ICU4X number and date formatting that matches `Intl.NumberFormat`, spoken unit names (symbol, terse and verbose), and the `en-XA` pseudo-locale with a check for hard-coded, concatenated and truncated strings; the `@sonarithm/i18n` package and the `sonarithm/no-literal-ui-string` ESLint rule.
+- SONOTRACE streams (phase B06, Lane R):
+  - `sonarithm-data` `StreamTable`: bounded, append-only storage for live data with row sequence numbers, a row or time-window capacity with a hard row limit, cheap snapshots that later appends never change, and `SNR-DATA-071` when rows are dropped before a reader read them; provenance columns kept in canonical form.
+  - `sonarithm-sonotrace`, the SONOTRACE engine: the spec's `stream` source reads the window of a connected stream; live encoding emits each new row's events exactly once and replays deterministically; scrub grains preview a track's value at the cursor; long series play in windows.
+  - `sonarithm-stream`: live stream adapters for WebSocket and OSC (default features), serial and MQTT (opt-in features) and file tail, each opened only with the user's explicit consent; messages become rows through a schema, fill a bounded stream table, and the connection reconnects, pauses and stops on request.
+- Desktop app core (phase B01, Lane R):
+  - `sonarithm-app`, the headless app core behind the desktop app: one `App::dispatch` entry point for the IPC protocol v1 ([ADR-0017](docs/decisions/0017-ipc-protocol-v1.md)) with datasets, the spec and its undo history, compile reports with diagnostics, the authoritative transport (play, pause, stop, seek, speed, loop, stop all audio) on its own control thread, export jobs with progress and cancellation, device selection, and versioned settings with migrations and crash-safe writes. Playback starts only on a play command (A11Y-15); a new Score, a device change or a device failure pauses it. `SNR-APP` diagnostic codes.
+  - `cargo xtask network-deny`: the app-core tests run under strace (Linux), `sandbox-exec` (macOS) or Windows Filtering Platform auditing, and any outbound connection attempt fails the run; a self-test proves each mechanism catches a deliberate one (NFR-04).
+
+## [0.1.0-alpha] - 2026-10-21
+
+The first public alpha: the Rust core, the `sonarithm` command line tool and the `sonarithm` Python package compile specs to Scores, render them to WAV and FLAC with a provenance manifest, and play them. The desktop application follows in Stage B. The published crates also contain the first Stage B building blocks that later engines use, such as the navigation-tree types in `sonarithm-core` and `StreamTable` in `sonarithm-data`. Their entries are listed with those engines, under [Unreleased].
+
+### Added
+
 - Documentation baseline (2026-10-18), written before any code:
   - Research: the kickoff research report, seven research notes, and the design-rules catalogue (`SDR-##`, `A11Y-##`).
   - Product: the engine catalogue (nine engines on one platform).
@@ -87,16 +101,10 @@ From phase A07, release-plz maintains this file: it generates each release's ent
   - `sonarithm-echometric` study runner library: TOML protocol files (`sonarithm-study/0`) with conditions, blocks and generator parameters, checked with `SNR-ENG-600`–`607` diagnostics; a seeded trial order with counterbalancing; responses scored against each stimulus's ground truth (point estimation, trend identification, counting, choice); a JSONL log (`sonarithm-study-log/0`) with pseudonymous codes and no paths; pause, and resumption from the log in a new run.
   - `sonarithm study check` and `sonarithm study run`: check a protocol and its condition specs, then run a session with one plain line per prompt and typed answers (screen-reader friendly), replays, pauses, breaks, `--resume`, the silent `--audio null` output, and audio context recorded only as entered; with the pilot protocol `examples/studies/pilot-001`. `sonarithm-echometric` is now published with the CLI.
   - Replication gallery (`replication/`): Smith & Walker's context-cue conditions, Nees & Walker's density × reversals cells, Tucker Brown et al.'s transit curves and the Erie gallery subset, rendered from committed specs with their records; `cargo xtask replication` regenerates the stimuli and checks every render on three operating systems, and `--timings` measures them.
-- SONOTRACE streams (phase B06, Lane R):
-  - `sonarithm-data` `StreamTable`: bounded, append-only storage for live data with row sequence numbers, a row or time-window capacity with a hard row limit, cheap snapshots that later appends never change, and `SNR-DATA-071` when rows are dropped before a reader read them; provenance columns kept in canonical form.
-  - `sonarithm-sonotrace`, the SONOTRACE engine: the spec's `stream` source reads the window of a connected stream; live encoding emits each new row's events exactly once and replays deterministically; scrub grains preview a track's value at the cursor; long series play in windows.
-  - `sonarithm-stream`: live stream adapters for WebSocket and OSC (default features), serial and MQTT (opt-in features) and file tail, each opened only with the user's explicit consent; messages become rows through a schema, fill a bounded stream table, and the connection reconnects, pauses and stops on request.
-- Desktop app core (phase B01, Lane R):
-  - `sonarithm-app`, the headless app core behind the desktop app: one `App::dispatch` entry point for the IPC protocol v1 ([ADR-0017](docs/decisions/0017-ipc-protocol-v1.md)) with datasets, the spec and its undo history, compile reports with diagnostics, the authoritative transport (play, pause, stop, seek, speed, loop, stop all audio) on its own control thread, export jobs with progress and cancellation, device selection, and versioned settings with migrations and crash-safe writes. Playback starts only on a play command (A11Y-15); a new Score, a device change or a device failure pauses it. `SNR-APP` diagnostic codes.
-  - `cargo xtask network-deny`: the app-core tests run under strace (Linux), `sandbox-exec` (macOS) or Windows Filtering Platform auditing, and any outbound connection attempt fails the run; a self-test proves each mechanism catches a deliberate one (NFR-04).
 
 ### Fixed
 
 - `sonarithm-data`: `ReadOptions::without_inference()` keeps the field semantics declared in `fields` (type, unit, concept, role, label, description) instead of dropping them (#156).
 
-[Unreleased]: https://github.com/DuhItzAniket/SONARITHM/commits/main
+[Unreleased]: https://github.com/DuhItzAniket/SONARITHM/compare/v0.1.0-alpha...HEAD
+[0.1.0-alpha]: https://github.com/DuhItzAniket/SONARITHM/releases/tag/v0.1.0-alpha

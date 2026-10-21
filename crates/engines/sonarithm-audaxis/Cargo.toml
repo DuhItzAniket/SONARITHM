@@ -6,7 +6,7 @@ edition.workspace = true
 rust-version.workspace = true
 repository.workspace = true
 license.workspace = true
-publish.workspace = true
+publish = false  # Stage B: held back from v0.1.0-alpha (Stage A only) until a Stage B release (release-process.md)
 
 [dependencies]
 arrow-array.workspace = true

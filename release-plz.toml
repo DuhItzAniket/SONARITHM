@@ -84,9 +84,7 @@ changelog_include = [
   "sonarithm-render",
   "sonarithm-audio",
   "sonarithm-export",
-  "sonarithm-i18n",
   "sonarithm-numisona",
-  "sonarithm-audaxis",
   "sonarithm-echometric",
   "sonarithm-cli",
   "sonarithm-py",
@@ -96,7 +94,9 @@ git_tag_name = "v{{ version }}"
 git_release_enable = true
 git_release_type = "auto"
 
-# Every other published crate shares the facade's version.
+# Every other published crate shares the facade's version. Stage B crates (sonarithm-app,
+# -audaxis, -i18n, -sonotrace, -stream) are `publish = false` and stay out of this file until a
+# Stage B release publishes them (release-process.md); v0.1.0-alpha ships Stage A only.
 [[package]]
 name = "sonarithm-core"
 version_group = "sonarithm"
@@ -130,15 +130,7 @@ name = "sonarithm-export"
 version_group = "sonarithm"
 
 [[package]]
-name = "sonarithm-i18n"
-version_group = "sonarithm"
-
-[[package]]
 name = "sonarithm-numisona"
-version_group = "sonarithm"
-
-[[package]]
-name = "sonarithm-audaxis"
 version_group = "sonarithm"
 
 [[package]]
