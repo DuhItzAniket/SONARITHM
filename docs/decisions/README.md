@@ -33,6 +33,7 @@ Write an ADR when a decision is hard to reverse, affects several crates or engin
 | [0014](0014-capability-trait-signatures.md) | Capability traits are generic over the data type and take spec fragments | accepted (2026-10-19, coordinator under owner delegation) | A03-T04 (done), A04 instantiates `D` |
 | [0015](0015-spec-v0.1-frozen.md) | Spec v0.1 frozen per RFC-0001 | accepted (2026-10-19) | A03-T06..T11 implement it |
 | [0016](0016-windows-low-latency-backend.md) | A Windows low-latency audio backend and per-device latency calibration | accepted (2026-10-19, coordinator under owner delegation) | A05 cable measurement against PB-01 |
+| [0017](0017-ipc-protocol-v1.md) | IPC protocol v1: one request type in the headless app core | accepted (2026-10-21, coordinator under owner delegation) | B01-T01, B01-T02, B04-T03 |
 
 ## Process
 
