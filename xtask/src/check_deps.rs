@@ -83,9 +83,11 @@ const LAYERS: &[(&str, &[&str])] = &[
     ("sonarithm-export", &["sonarithm-render"]),
     ("sonarithm-stream", &["sonarithm-data"]),
     ("sonarithm-speech", &["sonarithm-core"]),
+    // The app core works over the facade (B01-T01, ADR-0017 §8).
     (
         "sonarithm-app",
         &[
+            "sonarithm",
             "sonarithm-compiler",
             "sonarithm-audio",
             "sonarithm-export",
@@ -102,7 +104,10 @@ const LAYERS: &[(&str, &[&str])] = &[
     ("sonarithm-wasm", &["sonarithm"]),
     ("sonarithm-plugin-host", &["sonarithm-core"]),
     // xtask reads code tables and schemas from the library crates (codegen, codes).
-    ("xtask", &["sonarithm-compiler", "sonarithm-export"]),
+    (
+        "xtask",
+        &["sonarithm-compiler", "sonarithm-export", "sonarithm-app"],
+    ),
 ];
 
 /// Crates `sonarithm-core` must not reach (§3 rule 1): async runtimes, audio I/O,

@@ -1,0 +1,622 @@
+// SPDX-FileCopyrightText: 2026 SONARITHM contributors
+// SPDX-License-Identifier: MIT OR Apache-2.0
+
+//! [`App`]: the session and the command bus behind the IPC protocol.
+
+use std::collections::BTreeMap;
+use std::path::{Path, PathBuf};
+use std::sync::Arc;
+use std::time::Duration;
+
+use sonarithm::{Compiled, DataBundle, Datasets, Normalization, RenderOptions, Sonarithm, Spec};
+use sonarithm_data::{ReadOptions, read_file};
+
+use crate::codes;
+use crate::events::EventSink;
+use crate::history::History;
+use crate::ipc::{
+    CompileReport, Counts, DatasetSummary, DeviceSummary, DiagnosticInfo, Event, ExportRequest,
+    ExportResult, FieldSummary, HistoryState, IpcError, JobKind, PROTOCOL_VERSION, Reply, Request,
+    ScoreInfo, SpecState, TrackInfo,
+};
+use crate::jobs::{Failure, JobQueue, Output, Work};
+use crate::settings::{Settings, SettingsStore};
+use crate::transport::{Action, AudioOutput, OutputConfig, Transport};
+
+/// How the app core starts.
+#[derive(Clone, Debug)]
+#[non_exhaustive]
+pub struct AppConfig {
+    /// The folder for settings: the OS app-config folder (09 §5).
+    pub config_dir: PathBuf,
+    /// The audio output.
+    pub audio: AudioOutput,
+}
+
+impl AppConfig {
+    /// Settings in `config_dir`, audio on the system's devices.
+    #[must_use]
+    pub fn new(config_dir: impl Into<PathBuf>) -> Self {
+        Self {
+            config_dir: config_dir.into(),
+            audio: AudioOutput::System,
+        }
+    }
+
+    /// The same configuration with another audio output, such as [`AudioOutput::null`].
+    #[must_use]
+    pub fn with_audio(mut self, audio: AudioOutput) -> Self {
+        self.audio = audio;
+        self
+    }
+}
+
+/// An open dataset.
+struct Open {
+    summary: DatasetSummary,
+    bundle: DataBundle,
+}
+
+/// The headless app core: one session (open datasets, the spec, the last compiled Score
+/// and its undo history), the transport, the job queue and the settings.
+///
+/// Every operation is a [`Request`] through [`App::dispatch`] (ADR-0017). `App` is `Send`;
+/// a host keeps it behind one lock. Its threads report through the [`EventSink`].
+pub struct App {
+    snr: Sonarithm,
+    sink: Arc<dyn EventSink>,
+    store: SettingsStore,
+    settings: Settings,
+    datasets: BTreeMap<u64, Open>,
+    next_dataset: u64,
+    spec: Option<String>,
+    compiled: Option<Compiled>,
+    history: History<Option<String>>,
+    // Dropped in this order: jobs finish or cancel before the transport stops.
+    jobs: JobQueue,
+    transport: Transport,
+}
+
+impl std::fmt::Debug for App {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("App")
+            .field("datasets", &self.datasets.len())
+            .field("spec", &self.spec.is_some())
+            .field("compiled", &self.compiled.is_some())
+            .finish_non_exhaustive()
+    }
+}
+
+impl App {
+    /// Starts the app core: reads (and if needed migrates) the settings and starts the
+    /// control and job threads. No audio device opens until the first play (09 §7).
+    /// Settings notices go to `sink` as [`Event::SettingsNotice`].
+    ///
+    /// # Errors
+    ///
+    /// `SNR-APP-007` if a thread cannot start.
+    pub fn new(config: AppConfig, sink: Arc<dyn EventSink>) -> Result<Self, IpcError> {
+        let AppConfig { config_dir, audio } = config;
+        let mut store = SettingsStore::new(config_dir);
+        let loaded = store.load();
+        for error in loaded.notices {
+            sink.emit(Event::SettingsNotice { error });
+        }
+        let settings = loaded.settings;
+        let transport = Transport::spawn(audio, output(&settings), Arc::clone(&sink))?;
+        let jobs = JobQueue::new(Arc::clone(&sink));
+        Ok(Self {
+            snr: Sonarithm::new(),
+            sink,
+            store,
+            settings,
+            datasets: BTreeMap::new(),
+            next_dataset: 1,
+            spec: None,
+            compiled: None,
+            history: History::default(),
+            jobs,
+            transport,
+        })
+    }
+
+    /// Runs one command (the command bus). Every session, transport, export, history,
+    /// settings and device operation goes through here.
+    ///
+    /// # Errors
+    ///
+    /// [`IpcError`] when the command cannot run; spec and data problems come back as
+    /// diagnostics in the reply instead.
+    pub fn dispatch(&mut self, request: Request) -> Result<Reply, IpcError> {
+        match request {
+            Request::Hello { protocol } => hello(protocol),
+            Request::DatasetOpen { path } => self.dataset_open(Path::new(&path)),
+            Request::DatasetClose { id } => self.dataset_close(&id),
+            Request::DatasetList => Ok(self.datasets()),
+            Request::SpecGet => Ok(Reply::Spec(SpecState {
+                text: self.spec.clone(),
+                undo_token: None,
+            })),
+            Request::SpecSet { text } => self.spec_set(text),
+            Request::Compile => self.compile(),
+            Request::TransportState => self.act(Action::State),
+            Request::TransportPlay => self.act(Action::Play),
+            Request::TransportPause => self.act(Action::Pause),
+            Request::TransportStop => self.act(Action::Stop),
+            Request::TransportSeek { seconds } => self.act(Action::Seek(seconds)),
+            Request::TransportSetSpeed { speed } => self.act(Action::Speed(speed)),
+            Request::TransportSetLoop { range } => self.act(Action::Loop(range)),
+            Request::StopAll => self.act(Action::StopAll),
+            Request::ExportRender { options } => self.export(&options),
+            Request::JobStatus { id } => self.jobs.status(id).map(Reply::Job),
+            Request::JobCancel { id } => self.jobs.cancel(id, &*self.sink).map(Reply::Job),
+            Request::JobList => Ok(Reply::Jobs {
+                jobs: self.jobs.list(),
+            }),
+            Request::HistoryUndo => Ok(self.step(true)),
+            Request::HistoryRedo => Ok(self.step(false)),
+            Request::SettingsGet => Ok(Reply::Settings(self.settings.clone())),
+            Request::SettingsSet { settings } => self.settings_set(settings),
+            Request::DevicesList => self.devices(),
+            Request::DeviceSelect { id } => self.device_select(id),
+        }
+    }
+
+    /// [`App::dispatch`] for a request as JSON text, returning the reply as JSON: what a
+    /// host that only moves text (a test harness, an Electron bridge) needs.
+    ///
+    /// # Errors
+    ///
+    /// `SNR-APP-009` when the text is not a request; otherwise as [`App::dispatch`].
+    pub fn dispatch_json(&mut self, request: &str) -> Result<serde_json::Value, IpcError> {
+        let request: Request = serde_json::from_str(request).map_err(|err| {
+            IpcError::new(
+                &codes::BAD_REQUEST,
+                format!("The request is not a valid IPC message: {err}."),
+            )
+        })?;
+        let reply = self.dispatch(request)?;
+        serde_json::to_value(reply).map_err(|err| {
+            IpcError::new(
+                &codes::BAD_REQUEST,
+                format!("The reply could not be encoded: {err}."),
+            )
+        })
+    }
+
+    /// Waits until every job is done, at most `limit` (tests and orderly shutdown).
+    #[must_use]
+    pub fn wait_for_jobs(&self, limit: Duration) -> bool {
+        self.jobs.wait_idle(limit)
+    }
+
+    /// Makes the null device disappear, as an unplugged headset does (tests).
+    #[doc(hidden)]
+    pub fn unplug_audio(&self) {
+        self.transport.unplug();
+    }
+
+    fn act(&self, action: Action) -> Result<Reply, IpcError> {
+        self.transport.act(action).map(Reply::Transport)
+    }
+
+    fn dataset_open(&mut self, path: &Path) -> Result<Reply, IpcError> {
+        let path = data_file(path)?;
+        let loaded = read_file(&path, None, &ReadOptions::new())
+            .map_err(|err| IpcError::from_diagnostic(&err.to_diagnostic()))?;
+        let number = self.next_dataset;
+        self.next_dataset += 1;
+        let id = format!("d{number}");
+        let name = file_name(&path);
+        let summary = summarize(&id, &name, &loaded.bundle, &loaded.diagnostics);
+        self.datasets.insert(
+            number,
+            Open {
+                summary: summary.clone(),
+                bundle: loaded.bundle,
+            },
+        );
+        Ok(Reply::Dataset(summary))
+    }
+
+    fn dataset_close(&mut self, id: &str) -> Result<Reply, IpcError> {
+        let number = self
+            .datasets
+            .iter()
+            .find(|(_, open)| open.summary.id == id)
+            .map(|(number, _)| *number)
+            .ok_or_else(|| unknown_dataset(id))?;
+        self.datasets.remove(&number);
+        Ok(self.datasets())
+    }
+
+    fn datasets(&self) -> Reply {
+        Reply::Datasets {
+            datasets: self
+                .datasets
+                .values()
+                .map(|open| open.summary.clone())
+                .collect(),
+        }
+    }
+
+    fn spec_set(&mut self, text: String) -> Result<Reply, IpcError> {
+        if let Err(err) = Spec::from_json_str(text.as_str()) {
+            return Err(first_error(&err));
+        }
+        let before = self.spec.replace(text.clone());
+        let token = self.history.record("Set spec", before, Some(text.clone()));
+        Ok(Reply::Spec(SpecState {
+            text: Some(text),
+            undo_token: Some(token),
+        }))
+    }
+
+    fn compile(&mut self) -> Result<Reply, IpcError> {
+        let text = self
+            .spec
+            .as_deref()
+            .ok_or_else(|| IpcError::new(&codes::NO_SPEC, "The session has no spec to compile."))?;
+        let spec = Spec::from_json_str(text).map_err(|err| first_error(&err))?;
+        let mut datasets = Datasets::new();
+        for open in self.datasets.values() {
+            datasets.insert(open.summary.id.clone(), open.bundle.clone());
+        }
+        match self.snr.compile_with(&spec, &datasets) {
+            Ok(compiled) => {
+                let report = report(true, compiled.diagnostics().iter(), Some(&compiled));
+                self.transport
+                    .load(Some(Arc::new(compiled.score().clone())));
+                self.compiled = Some(compiled);
+                Ok(Reply::Compile(report))
+            }
+            Err(err) => {
+                let diagnostics = err.diagnostics();
+                if diagnostics.is_empty() {
+                    return Err(IpcError::new(
+                        &codes::COMPILE_FAILED,
+                        format!("The compile failed: {err}."),
+                    ));
+                }
+                Ok(Reply::Compile(report(false, diagnostics.iter(), None)))
+            }
+        }
+    }
+
+    fn export(&mut self, request: &ExportRequest) -> Result<Reply, IpcError> {
+        let compiled = self.compiled.clone().ok_or_else(|| {
+            IpcError::new(
+                &codes::NOT_COMPILED,
+                "There is no compiled Score to export.",
+            )
+        })?;
+        let path = export_path(&request.path)?;
+        let mut options = RenderOptions::new();
+        if let Some(rate) = request.sample_rate {
+            options = options.with_sample_rate(rate);
+        }
+        if !request.cues {
+            options = options.without_cues();
+        }
+        if request.preserve_level {
+            options = options.with_normalization(Normalization::Preserve);
+        }
+        let snr = self.snr.clone();
+        let folder = path.parent().map(Path::to_path_buf).unwrap_or_default();
+        let work: Work = Box::new(move |context| {
+            if context.cancelled() {
+                return Err(Failure::Cancelled);
+            }
+            let rendered = snr
+                .render_to_file(&compiled, &path, &options)
+                .map_err(|err| {
+                    Failure::Failed(IpcError::new(
+                        &codes::EXPORT_FAILED,
+                        scrub(&format!("The export failed: {err}."), &folder),
+                    ))
+                })?;
+            context.progress(1.0);
+            if context.cancelled() {
+                // The user no longer wants these files.
+                let _ = std::fs::remove_file(&rendered.audio);
+                let _ = std::fs::remove_file(&rendered.manifest_path);
+                if let Some(cues) = &rendered.cues {
+                    let _ = std::fs::remove_file(cues);
+                }
+                return Err(Failure::Cancelled);
+            }
+            let output = &rendered.manifest.output;
+            Ok(Output::Export(ExportResult {
+                audio: file_name(&rendered.audio),
+                manifest: file_name(&rendered.manifest_path),
+                cues: rendered.cues.as_deref().map(file_name),
+                duration_s: rendered.manifest.render.duration_s,
+                sample_rate: rendered.manifest.render.sample_rate,
+                integrated_lufs: output.integrated_lufs,
+                true_peak_dbtp: output.true_peak_dbtp,
+            }))
+        });
+        self.jobs.submit(JobKind::Export, work).map(Reply::Job)
+    }
+
+    fn step(&mut self, back: bool) -> Reply {
+        let edit = if back {
+            self.history.undo()
+        } else {
+            self.history.redo()
+        };
+        let (token, label) = match edit {
+            Some(edit) => {
+                self.spec = if back { edit.before } else { edit.after };
+                (Some(edit.token), Some(edit.label))
+            }
+            None => (None, None),
+        };
+        Reply::History(HistoryState {
+            token,
+            label,
+            can_undo: self.history.can_undo(),
+            can_redo: self.history.can_redo(),
+            spec: SpecState {
+                text: self.spec.clone(),
+                undo_token: None,
+            },
+        })
+    }
+
+    fn settings_set(&mut self, settings: Settings) -> Result<Reply, IpcError> {
+        self.store.save(&settings)?;
+        self.settings = settings;
+        self.transport.configure(output(&self.settings))?;
+        Ok(Reply::Settings(self.settings.clone()))
+    }
+
+    fn devices(&self) -> Result<Reply, IpcError> {
+        let chosen = self.settings.audio.device.as_deref();
+        let devices = self
+            .transport
+            .devices()?
+            .into_iter()
+            .map(|device| DeviceSummary {
+                selected: chosen.map_or(device.is_default, |id| id == device.id),
+                id: device.id,
+                name: device.name,
+                is_default: device.is_default,
+            })
+            .collect();
+        Ok(Reply::Devices { devices })
+    }
+
+    fn device_select(&mut self, id: Option<String>) -> Result<Reply, IpcError> {
+        if let Some(wanted) = &id
+            && !self
+                .transport
+                .devices()?
+                .iter()
+                .any(|device| &device.id == wanted)
+        {
+            return Err(IpcError::new(
+                &codes::AUDIO_UNAVAILABLE,
+                format!("No output device has the ID {wanted}."),
+            ));
+        }
+        let mut settings = self.settings.clone();
+        settings.audio.device = id;
+        self.store.save(&settings)?;
+        self.settings = settings;
+        self.transport
+            .configure(output(&self.settings))
+            .map(Reply::Transport)
+    }
+}
+
+fn hello(protocol: u32) -> Result<Reply, IpcError> {
+    if protocol != PROTOCOL_VERSION {
+        return Err(IpcError::new(
+            &codes::PROTOCOL_MISMATCH,
+            format!(
+                "The user interface speaks IPC protocol {protocol}, but this host speaks protocol {PROTOCOL_VERSION}."
+            ),
+        ));
+    }
+    Ok(Reply::Hello {
+        protocol: PROTOCOL_VERSION,
+        app_version: sonarithm::VERSION.to_owned(),
+    })
+}
+
+fn output(settings: &Settings) -> OutputConfig {
+    OutputConfig {
+        device: settings.audio.device.clone(),
+        buffer_frames: settings.audio.buffer_frames,
+        volume_db: settings.audio.volume_db,
+    }
+}
+
+fn unknown_dataset(id: &str) -> IpcError {
+    IpcError::new(
+        &codes::UNKNOWN_DATASET,
+        format!("No open dataset has the ID {id}."),
+    )
+}
+
+/// The first error of a facade error, as an IPC error.
+fn first_error(err: &sonarithm::Error) -> IpcError {
+    let diagnostics = err.diagnostics();
+    diagnostics.iter().find(|d| d.is_error()).map_or_else(
+        || IpcError::new(&codes::COMPILE_FAILED, err.to_string()),
+        IpcError::from_diagnostic,
+    )
+}
+
+/// Checks a UI-supplied export path: absolute, `.wav` or `.flac`, in a folder that exists
+/// (09 §4: no path traversal from UI strings).
+fn export_path(text: &str) -> Result<PathBuf, IpcError> {
+    let path = PathBuf::from(text);
+    let refuse = |why: &str| IpcError::new(&codes::EXPORT_PATH, why.to_owned());
+    if !path.is_absolute() {
+        return Err(refuse(
+            "The export path must be a full path chosen in the save dialog.",
+        ));
+    }
+    let extension = path
+        .extension()
+        .and_then(|ext| ext.to_str())
+        .map(str::to_ascii_lowercase);
+    if !matches!(extension.as_deref(), Some("wav" | "flac")) {
+        return Err(refuse("The export file must end in .wav or .flac."));
+    }
+    let (Some(folder), Some(name)) = (path.parent(), path.file_name()) else {
+        return Err(refuse("The export path has no file name."));
+    };
+    // Canonical, so `..` and links cannot move the target elsewhere (ADR-0017 §7).
+    let folder = std::fs::canonicalize(folder)
+        .ok()
+        .filter(|folder| folder.is_dir())
+        .ok_or_else(|| refuse("The export folder does not exist."))?;
+    let target = folder.join(name);
+    if target.exists() && !target.is_file() {
+        return Err(refuse(
+            "The export target exists and is not a file; choose another name.",
+        ));
+    }
+    Ok(target)
+}
+
+/// The data extensions A04 reads.
+const DATA_EXTENSIONS: [&str; 8] = [
+    "csv", "tsv", "json", "ndjson", "parquet", "arrow", "xlsx", "ods",
+];
+
+/// Checks a UI-supplied data file: it exists, is a regular file (not a directory, device or
+/// pipe) and has a data extension. Returns its canonical path (ADR-0017 §7). Errors name
+/// the file only, never its folder.
+fn data_file(path: &Path) -> Result<PathBuf, IpcError> {
+    let name = file_name(path);
+    let refuse = |why: &str| IpcError::new(&codes::FILE_REFUSED, format!("`{name}` {why}"));
+    let extension = path
+        .extension()
+        .and_then(|ext| ext.to_str())
+        .map(str::to_ascii_lowercase);
+    if !extension
+        .as_deref()
+        .is_some_and(|ext| DATA_EXTENSIONS.contains(&ext))
+    {
+        return Err(refuse("is not a data file SONARITHM reads."));
+    }
+    let canonical = std::fs::canonicalize(path)
+        .map_err(|_| refuse("cannot be opened: it does not exist or cannot be read."))?;
+    let regular = std::fs::metadata(&canonical).is_ok_and(|meta| meta.is_file());
+    if !regular {
+        return Err(refuse("is not a regular file."));
+    }
+    Ok(canonical)
+}
+
+/// A path's file name alone, for replies and messages (03 §2 `locator_redacted`).
+fn file_name(path: &Path) -> String {
+    path.file_name().map_or_else(
+        || "the file".to_owned(),
+        |n| n.to_string_lossy().into_owned(),
+    )
+}
+
+/// `text` without any mention of `folder`, in its display forms (a backstop: lower layers
+/// already name files alone).
+fn scrub(text: &str, folder: &Path) -> String {
+    let shown = folder.display().to_string();
+    if shown.is_empty() {
+        return text.to_owned();
+    }
+    let mut out = text.to_owned();
+    for form in [
+        shown.clone(),
+        shown.replace('\\', "/"),
+        shown.replace('/', "\\"),
+    ] {
+        out = out.replace(&form, "");
+    }
+    out
+}
+
+fn summarize(
+    id: &str,
+    name: &str,
+    bundle: &DataBundle,
+    diagnostics: &sonarithm_core::Diagnostics,
+) -> DatasetSummary {
+    let table = bundle.primary();
+    let fields = table
+        .map(|table| {
+            table
+                .schema()
+                .fields()
+                .iter()
+                .filter(|field| !field.name().starts_with("__snr_"))
+                .map(|field| {
+                    let meta = table.field_meta(field.name()).unwrap_or_default();
+                    FieldSummary {
+                        name: field.name().clone(),
+                        data_type: field.data_type().to_string(),
+                        field_type: meta.ftype.map(|t| t.as_str().to_owned()),
+                        role: meta.role.map(|r| r.as_str().to_owned()),
+                        unit: meta.unit.map(|u| u.text),
+                        concept: meta.concept.map(|c| c.as_str().to_owned()),
+                    }
+                })
+                .collect()
+        })
+        .unwrap_or_default();
+    DatasetSummary {
+        id: id.to_owned(),
+        name: name.to_owned(),
+        rows: table.map_or(0, sonarithm_data::Table::num_rows),
+        fields,
+        diagnostics: diagnostics.iter().map(DiagnosticInfo::from).collect(),
+    }
+}
+
+fn report<'a>(
+    ok: bool,
+    diagnostics: impl Iterator<Item = &'a sonarithm_core::Diagnostic>,
+    compiled: Option<&Compiled>,
+) -> CompileReport {
+    let diagnostics: Vec<DiagnosticInfo> = diagnostics.map(DiagnosticInfo::from).collect();
+    let mut counts = Counts::default();
+    for diagnostic in &diagnostics {
+        match diagnostic.severity.as_str() {
+            "error" => counts.errors += 1,
+            "warning" => counts.warnings += 1,
+            _ => counts.info += 1,
+        }
+    }
+    let score = compiled.map(|compiled| {
+        let summary = compiled.summary();
+        ScoreInfo {
+            duration_s: summary.duration_s,
+            mode: serde_json::to_value(summary.mode)
+                .ok()
+                .and_then(|mode| mode.as_str().map(str::to_owned))
+                .unwrap_or_default(),
+            spec_hash: summary.spec_hash,
+            score_hash: summary.score_hash,
+            tracks: summary
+                .tracks
+                .iter()
+                .map(|track| TrackInfo {
+                    id: track.id.clone(),
+                    instrument: track.instrument.clone(),
+                    events: u64::try_from(track.events).unwrap_or(u64::MAX),
+                    estimated: u64::try_from(track.estimated).unwrap_or(u64::MAX),
+                })
+                .collect(),
+            engines: summary.engines,
+        }
+    });
+    CompileReport {
+        ok,
+        diagnostics,
+        counts,
+        score,
+    }
+}

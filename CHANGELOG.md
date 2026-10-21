@@ -90,6 +90,8 @@ From phase A07, release-plz maintains this file: it generates each release's ent
   - `sonarithm-data` `StreamTable`: bounded, append-only storage for live data with row sequence numbers, a row or time-window capacity with a hard row limit, cheap snapshots that later appends never change, and `SNR-DATA-071` when rows are dropped before a reader read them; provenance columns kept in canonical form.
   - `sonarithm-sonotrace`, the SONOTRACE engine: the spec's `stream` source reads the window of a connected stream; live encoding emits each new row's events exactly once and replays deterministically; scrub grains preview a track's value at the cursor; long series play in windows.
   - `sonarithm-stream`: live stream adapters for WebSocket and OSC (default features), serial and MQTT (opt-in features) and file tail, each opened only with the user's explicit consent; messages become rows through a schema, fill a bounded stream table, and the connection reconnects, pauses and stops on request.
+- Desktop app core (phase B01, Lane R):
+  - `sonarithm-app`, the headless app core behind the desktop app: one `App::dispatch` entry point for the IPC protocol v1 ([ADR-0017](docs/decisions/0017-ipc-protocol-v1.md)) with datasets, the spec and its undo history, compile reports with diagnostics, the authoritative transport (play, pause, stop, seek, speed, loop, stop all audio) on its own control thread, export jobs with progress and cancellation, device selection, and versioned settings with migrations and crash-safe writes. Playback starts only on a play command (A11Y-15); a new Score, a device change or a device failure pauses it. `SNR-APP` diagnostic codes.
 
 ### Fixed
 

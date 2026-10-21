@@ -5,6 +5,30 @@
 
 Every diagnostic carries a stable code `SNR-<AREA>-<NNN>`. A code, once released, is never reused or renumbered; retired codes stay listed. Severity is the default; settings such as `--deny-warnings` can raise it.
 
+## SNR-APP
+
+Owner: `sonarithm-app`.
+
+| Code | Severity | Meaning | How to fix | Rules |
+|---|---|---|---|---|
+| `SNR-APP-001` | error | IPC protocol version mismatch | Build the user interface and the host from the same commit, so both speak the same protocol version. | — |
+| `SNR-APP-002` | error | No open dataset has this ID | dataset_open returns the ID of each dataset it opens; dataset_list lists them. | — |
+| `SNR-APP-003` | error | No spec to compile | Set a spec with spec_set first; its data source can name an open dataset as {"kind": "dataset", "id": "d1"}. | — |
+| `SNR-APP-004` | error | Nothing is compiled yet | Compile the spec first; playback and export use the last Score that compiled. | — |
+| `SNR-APP-005` | error | Transport value out of range | Positions are seconds from 0 to the Score's duration, speeds are 0.25 to 4 times, and a loop needs a start before its end. | A11Y-09 |
+| `SNR-APP-006` | error | Audio output is not available | Check that an output device is connected and not in exclusive use by another application, or choose another device with device_select. | — |
+| `SNR-APP-007` | error | The playback control thread is not responding | Restart SONARITHM. If it happens again, report it with the log file. | — |
+| `SNR-APP-008` | error | The compile failed | Check the spec and its data source, then compile again. If it happens again, report            it with the spec. | — |
+| `SNR-APP-009` | error | Invalid IPC request | Send a request generated from the protocol types: {"command": "<name>", "args":            {...}}. | — |
+| `SNR-APP-010` | error | Settings could not be saved | Check that the settings folder is writable and the disk is not full. The previous settings stay in place. | — |
+| `SNR-APP-011` | warning | Settings were recovered | The settings file could not be read, so the last good copy or the defaults are in use. Saving settings writes a new file. | — |
+| `SNR-APP-012` | warning | Settings come from a newer version | This version uses its defaults and does not overwrite the newer file. Update SONARITHM to use those settings. | — |
+| `SNR-APP-013` | error | Invalid setting | The sonification volume is −60 to 0 dB, and a buffer size is 16 to 8192 frames. | A11Y-15 |
+| `SNR-APP-020` | error | No job has this ID | export_render returns the job's ID; job_list lists the jobs of this session. | — |
+| `SNR-APP-021` | error | Export path not usable | Choose a file ending in .wav or .flac in a folder that exists. | — |
+| `SNR-APP-022` | error | Export failed | Check that the folder is writable and the disk is not full, then export again. | — |
+| `SNR-APP-060` | error | The file cannot be opened | Choose an existing CSV, TSV, JSON, NDJSON, Parquet, Arrow, XLSX or ODS file. | — |
+
 ## SNR-COMP
 
 Owner: `sonarithm-compiler`.

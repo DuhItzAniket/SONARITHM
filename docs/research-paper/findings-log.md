@@ -702,4 +702,11 @@ A05 (render engine, audio backends, export) uses F-050 to F-069.
 - **Evidence:** `crates/sonarithm-i18n/tests/contract.rs` and `packages/i18n/test/contract.test.ts` on `tests/fixtures/contract.json`, both passing on HW-01 (Windows 11, Rust 1.99.0, Node 25.9.0); the frontend CI job runs the TypeScript half on Node 24; fluent-bundle 0.16.0 `PluralOperands` from `FluentNumber` (source); PR for B02-T08 ([#207](https://github.com/DuhItzAniket/SONARITHM/issues/207))
 - **Evidence level / confidence:** EV-C / Moderate (24 cases in four English locales; CLDR versions in ICU4X and V8 can drift, which the contract test would catch)
 - **Affects:** NFR-09, A11Y-12, DL-P12 (one value, one formatter); 12 §5
+### F-140 · A05's `Player` cannot move between threads, so the app core owns the thread that drives it
+
+- **Date:** 2026-10-21 · **Phase:** B01 · **Type:** engineering · **Status:** new
+- **Statement:** `sonarithm_audio::Stream` keeps the device stream as a `Box<dyn Any>` without `Send`, because cpal streams are not `Send` on every OS, so `Player<B>` is not `Send` either. A host cannot keep the player inside shared state (Tauri's managed state needs `Send + Sync`). `sonarithm-app` therefore creates the player on its own control thread, which ticks it every 10 ms and answers transport commands over a channel; `App` itself is `Send` and holds only the channel. The same thread follows the playhead, stops at the end of the Score, and turns device changes into events, so a host never polls. ADR-0017 §1 records the design.
+- **Evidence:** `crates/sonarithm-audio/src/backend.rs` (`Stream::_keep`); `crates/sonarithm-app/src/transport.rs`; the B01-T01 scenarios on the null device (`device_loss_pauses_at_the_same_position`, `playback_stops_at_the_end_and_reports_it`)
+- **Evidence level / confidence:** EV-C / Strong (a compile-time property, checked by the scenarios)
+- **Affects:** ADR-0017 §1; 09 §1; B01-T03 (the Tauri host keeps `App` behind one lock)
 - **Papers:** none yet

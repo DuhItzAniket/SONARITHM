@@ -1,0 +1,8 @@
+{
+  "theme": "contrast",
+  "outputDevice": "null",
+  "bufferSize": 512,
+  "volume": -12.5,
+  "verbose": true,
+  "keymap": { "transport.play": "Ctrl+Space" }
+}
