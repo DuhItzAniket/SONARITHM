@@ -43,6 +43,10 @@ const SPDX_HEADER: &str = concat!(
 
 /// The whole generated file.
 #[must_use]
+#[expect(
+    clippy::too_many_lines,
+    reason = "one declaration per protocol type, in protocol order"
+)]
 pub fn typescript() -> String {
     // u64 values (IDs, counts, generations) stay below 2^53, so they are plain numbers.
     let cfg = Config::new().with_large_int("number");
@@ -138,6 +142,22 @@ pub fn typescript() -> String {
     declare::<crate::ipc::StreamInfo>(&mut out, &cfg);
     declare::<crate::ipc::StreamConnection>(&mut out, &cfg);
     declare::<crate::ipc::StreamNotices>(&mut out, &cfg);
+    declare::<crate::ipc::ProfileInfo>(&mut out, &cfg);
+    declare::<crate::profile::Profile>(&mut out, &cfg);
+    declare::<crate::profile::SoundPrefs>(&mut out, &cfg);
+    declare::<crate::profile::PitchRange>(&mut out, &cfg);
+    declare::<crate::profile::Pace>(&mut out, &cfg);
+    declare::<crate::profile::MarkPreference>(&mut out, &cfg);
+    declare::<crate::profile::Direction>(&mut out, &cfg);
+    declare::<crate::profile::PolarityPrefs>(&mut out, &cfg);
+    declare::<crate::profile::ContextPrefs>(&mut out, &cfg);
+    declare::<crate::profile::InteractionPrefs>(&mut out, &cfg);
+    declare::<crate::profile::PartName>(&mut out, &cfg);
+    declare::<crate::profile::PartOrder>(&mut out, &cfg);
+    declare::<crate::profile::ModalityPrefs>(&mut out, &cfg);
+    declare::<crate::profile::SpeechPrefs>(&mut out, &cfg);
+    declare::<crate::profile::Layer>(&mut out, &cfg);
+    declare::<crate::profile::EffectiveSetting>(&mut out, &cfg);
     let trimmed = out.trim_end().len();
     out.truncate(trimmed);
     out.push('\n');

@@ -1,0 +1,15 @@
+{
+  "format": "sonarithm-profile",
+  "formatVersion": "1.0",
+  "name": "Classroom",
+  "sound": {
+    "timbre": "mallet",
+    "pace": { "pointsPerSecond": 2 },
+    "context": { "ticks": true, "referenceTone": true, "spokenLegend": true }
+  },
+  "interaction": {
+    "verbosity": "verbose",
+    "modalities": { "sonification": true, "speech": true, "braille": false, "visual": true },
+    "speech": { "route": "screenReader" }
+  }
+}

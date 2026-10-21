@@ -37,7 +37,9 @@ use ts_rs::TS;
 use crate::ipc::{AnnouncementClass, AnnouncementInfo};
 
 /// Where announcements are spoken (A11Y-19).
-#[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Serialize, Deserialize, TS)]
+#[derive(
+    Clone, Copy, Debug, Default, PartialEq, Eq, Serialize, Deserialize, TS, schemars::JsonSchema,
+)]
 #[serde(rename_all = "camelCase")]
 pub enum SpeechRoute {
     /// The listener's screen reader, through the host's announcer (the default).

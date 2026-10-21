@@ -37,6 +37,8 @@
 
 Every effective value is inspectable through `sonarithm inspect --settings` and the desktop "Effective settings" view, and is announced on request.
 
+**As built (B03-T08, [ADR-0020](../decisions/0020-profile-format-v1.md)).** The app core's `settings_effective` gives every setting with its layer. Profiles live in `profiles/` in the app-config folder and `settings.json` names the active one; the project layer is the bundle's `profiles/project-profile.json`. The CLI's `inspect --settings` follows when the CLI uses the app core (A07).
+
 ## 4. Project file format
 
 `.sonarithm` is a **ZIP container** (stored, not compressed, for large Parquet members; deflate for JSON):

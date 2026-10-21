@@ -58,7 +58,7 @@ impl ProjectState {
     }
 }
 
-fn warning_info(error: &IpcError) -> DiagnosticInfo {
+pub(super) fn warning_info(error: &IpcError) -> DiagnosticInfo {
     DiagnosticInfo {
         severity: "warning".to_owned(),
         code: error.code.clone(),
@@ -203,6 +203,16 @@ impl App {
         self.next_dataset = numbers.last().map_or(1, |n| n + 1);
         state.path = path;
         state.warnings = opened.warnings;
+        // The project's profile (ADR-0020 §2): a broken one is reported and not used.
+        if let Some(bytes) = state.reserved.get(super::profiles::PROJECT_MEMBER) {
+            match crate::profile::parse(bytes) {
+                Ok((_, warnings)) => state.warnings.extend(warnings),
+                Err(err) => state.warnings.push(IpcError::new(
+                    &codes::PROFILE_INVALID,
+                    format!("The project's profile is not used: {}", err.message),
+                )),
+            }
+        }
         self.project = state;
     }
 

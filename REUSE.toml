@@ -75,6 +75,14 @@ precedence = "closest"
 SPDX-FileCopyrightText = "2026 SONARITHM contributors"
 SPDX-License-Identifier = "MIT OR Apache-2.0"
 
+# Built-in profile presets (B03-T08, ADR-0020): JSON documents, which cannot carry SPDX
+# headers; same licence as the code.
+[[annotations]]
+path = ["crates/sonarithm-app/presets/**"]
+precedence = "closest"
+SPDX-FileCopyrightText = "2026 SONARITHM contributors"
+SPDX-License-Identifier = "MIT OR Apache-2.0"
+
 # A02 spikes (spikes/, throwaway; roadmap A02). Source files carry SPDX headers. These cover
 # lockfiles and binary assets (code licence) and measurement results (data licence, ADR-0010).
 [[annotations]]
