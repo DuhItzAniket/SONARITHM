@@ -1,0 +1,132 @@
+---
+source: crates/engines/sonarithm-sonotrace/src/tests.rs
+expression: grains
+---
+[
+  {
+    "t": 0.0,
+    "dur": 0.08,
+    "pitch": -1200.0,
+    "gain": -3.0,
+    "pan": 0.0,
+    "timbre": {
+      "preset": null,
+      "brightness": 0.5
+    },
+    "taps": 1,
+    "src": null,
+    "conf": null
+  },
+  {
+    "t": 0.1,
+    "dur": 0.08,
+    "pitch": -1200.0,
+    "gain": -3.0,
+    "pan": 0.0,
+    "timbre": {
+      "preset": null,
+      "brightness": 0.5
+    },
+    "taps": 1,
+    "src": null,
+    "conf": null
+  },
+  {
+    "t": 0.3,
+    "dur": 0.08,
+    "pitch": -1200.0,
+    "gain": -3.0,
+    "pan": 0.0,
+    "timbre": {
+      "preset": null,
+      "brightness": 0.5
+    },
+    "taps": 1,
+    "src": null,
+    "conf": null
+  },
+  {
+    "t": 0.6,
+    "dur": 0.08,
+    "pitch": -600.0,
+    "gain": -3.0,
+    "pan": 0.0,
+    "timbre": {
+      "preset": null,
+      "brightness": 0.5
+    },
+    "taps": 1,
+    "src": null,
+    "conf": null
+  },
+  {
+    "t": 1.9,
+    "dur": 0.08,
+    "pitch": 700.0,
+    "gain": -3.0,
+    "pan": 0.0,
+    "timbre": {
+      "preset": null,
+      "brightness": 0.5
+    },
+    "taps": 1,
+    "src": null,
+    "conf": null
+  },
+  {
+    "t": 2.5,
+    "dur": 0.08,
+    "pitch": 0.0,
+    "gain": -6.0,
+    "pan": 0.0,
+    "timbre": {
+      "preset": null,
+      "brightness": 0.5
+    },
+    "taps": 1,
+    "src": null,
+    "conf": null
+  },
+  {
+    "t": 3.0,
+    "dur": 0.08,
+    "pitch": 600.0,
+    "gain": -3.0,
+    "pan": 0.0,
+    "timbre": {
+      "preset": null,
+      "brightness": 0.5
+    },
+    "taps": 1,
+    "src": null,
+    "conf": null
+  },
+  {
+    "t": 3.5,
+    "dur": 0.08,
+    "pitch": 1200.0,
+    "gain": 0.0,
+    "pan": 0.0,
+    "timbre": {
+      "preset": null,
+      "brightness": 0.5
+    },
+    "taps": 1,
+    "src": null,
+    "conf": null
+  },
+  {
+    "t": 9.0,
+    "dur": 0.08,
+    "pitch": 700.0,
+    "gain": -3.0,
+    "pan": 0.0,
+    "timbre": {
+      "preset": null,
+      "brightness": 0.5
+    },
+    "taps": 1,
+    "src": null,
+    "conf": null
+  }
+]

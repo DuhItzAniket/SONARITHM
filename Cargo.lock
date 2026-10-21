@@ -3238,6 +3238,20 @@ dependencies = [
 ]
 
 [[package]]
+name = "sonarithm-sonotrace"
+version = "0.0.0"
+dependencies = [
+ "arrow-array",
+ "arrow-schema",
+ "insta",
+ "proptest",
+ "serde_json",
+ "sonarithm-core",
+ "sonarithm-data",
+ "sonarithm-spec",
+]
+
+[[package]]
 name = "sonarithm-spec"
 version = "0.0.0"
 dependencies = [
@@ -3998,6 +4012,7 @@ dependencies = [
  "sonarithm-export",
  "sonarithm-numisona",
  "sonarithm-render",
+ "sonarithm-sonotrace",
  "sonarithm-spec",
 ]
 

@@ -18,6 +18,7 @@ members = [
     "crates/engines/sonarithm-numisona",
     "crates/engines/sonarithm-audaxis",
     "crates/engines/sonarithm-echometric",
+    "crates/engines/sonarithm-sonotrace",
     "apps/cli",
     "bindings/python",
     "xtask",
@@ -57,6 +58,7 @@ sonarithm-i18n = { path = "crates/sonarithm-i18n", version = "0.0.0" }
 sonarithm-numisona = { path = "crates/engines/sonarithm-numisona", version = "0.0.0" }
 sonarithm-audaxis = { path = "crates/engines/sonarithm-audaxis", version = "0.0.0" }
 sonarithm-echometric = { path = "crates/engines/sonarithm-echometric", version = "0.0.0" }
+sonarithm-sonotrace = { path = "crates/engines/sonarithm-sonotrace", version = "0.0.0" }
 
 # Third-party crates. Each addition needs a justification in its PR and must pass
 # `cargo deny check` (docs/engineering/supply-chain-and-licensing.md).

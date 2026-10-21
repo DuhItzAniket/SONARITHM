@@ -66,6 +66,8 @@ Each engine is one crate under `crates/engines/` and implements `Engine`. This p
 
 **Tests:** a deterministic stream replay (recorded input → identical event sequence); a 1-hour soak with a 1 kHz synthetic source (B06 exit); rate-limit property tests.
 
+**As built (B06-T03).** `sonarithm-sonotrace` registers the `stream` source: a spec's `{"kind": "stream", …}` reads the window of the `StreamTable` the host connected (`Sonotrace::with_window`), and fails with `SNR-ENG-200` when none is. `live::Live` follows one track: each `advance` encodes the stream's current window with the track's encoder from the registry, so scales and shapers see the sliding window, and keeps only the events of rows past its cursor, mapped to sequence numbers through each event's source row; rows the stream dropped first are reported as skipped. Every row's event is emitted once, and a recorded input replays to the same event sequence (`sdr_01_recorded_input_replays_to_an_identical_event_sequence`). **Deviation from 05 §6:** there is no `encode_incremental` on the core `Encoder` trait; adding one is a cross-engine contract change that needs an RFC, and the PB-11 soak (B06-T07) decides whether window encoding is fast enough. `transport::scrub_grain` gives a track's preview at the cursor: an 80 ms note (provisional, the low end of SDR-32's grain range; TODO(verify) with HP-11) that starts at the cursor with the local pitch, level, pan and brightness, interpolated along glides. `transport::window` and `windows` cut a long series into sections that start at 0.
+
 ## PLOTSONA (`sonarithm-plotsona` + optional `sonarithm-plotsona-ml`), C01/C02 (ML in D04)
 
 **Registers:** Source `chart` with extractor tiers; chart-type templates (expressed as NUMISONA specs).

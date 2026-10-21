@@ -1,0 +1,24 @@
+[package]
+name = "sonarithm-sonotrace"
+description = "SONOTRACE: SONARITHM's streaming and transport engine (live encoding over stream windows, scrub grains, long-series windows)."
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+repository.workspace = true
+license.workspace = true
+publish.workspace = true
+
+[dependencies]
+sonarithm-core.workspace = true
+sonarithm-data.workspace = true
+sonarithm-spec.workspace = true
+
+[dev-dependencies]
+arrow-array.workspace = true
+arrow-schema.workspace = true
+insta = { workspace = true, features = ["json"] }
+proptest.workspace = true
+serde_json.workspace = true
+
+[lints]
+workspace = true
