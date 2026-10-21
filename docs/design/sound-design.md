@@ -180,7 +180,7 @@ The catalogue (IDs, meanings, acoustic descriptions, text equivalents) is in [ke
 | Spatial redundancy | Analysis mode does not stack pan, elevation and pitch on one variable | SDR-27 (SHOULD) |
 | Spacing | Simultaneous tones stay more than about 1 ERB apart (lint) | SDR-28 (INFER) |
 | Space | Stereo or binaural for kinematic or positional variables or segregation; warn that generic HRTFs cause front–back confusion | SDR-30; D03 |
-| Robustness | Pan never carries information alone; test in mono and with NVDA sound split | A11Y-14 |
+| Robustness | Pan never carries information alone; test in mono and with NVDA sound split. AUDAXIS checks every compiled Score: only pan, only timbre, or data pitches outside 65–1480 Hz along a data track is a warning (B03-T11), and a mono-downmix test checks that pitch information survives | A11Y-14 |
 
 ## 10. Monitoring soundscape
 

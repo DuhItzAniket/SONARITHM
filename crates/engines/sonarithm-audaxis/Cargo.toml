@@ -25,6 +25,8 @@ sonarithm-compiler.workspace = true
 # Tests compile real templates through NUMISONA. A dev-dependency only: engines never
 # depend on each other in shipped code (02 §3 rule 2), and check-deps skips dev-dependencies.
 sonarithm-numisona.workspace = true
+# Offline renders for the mono-survival test (A11Y-14); never plays audio.
+sonarithm-render.workspace = true
 
 [lints]
 workspace = true

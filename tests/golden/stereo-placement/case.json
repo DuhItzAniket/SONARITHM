@@ -1,0 +1,29 @@
+{
+  "description": "Stereo placement (B03-T11): eight mallet notes, x on pan from left to right (a positional variable, SDR-30) and y on pitch, compiled with NUMISONA and AUDAXIS; the constant-power panner keeps every note's power.",
+  "source": {
+    "kind": "score"
+  },
+  "sampleRate": 48000,
+  "blockSize": 256,
+  "tolerances": {
+    "nullResidualDbfs": -90.0,
+    "lufsDelta": 0.1,
+    "centroidRelative": 0.01
+  },
+  "reference": {
+    "platform": "windows-x86_64",
+    "sha256": "sha256:6e61d47c33ea4a751e9d8ff76d703a0dcfc2b90acfaf8339c3dfb3ce3c90a06b",
+    "frames": 180000,
+    "integratedLufs": -33.068,
+    "truePeakDbtp": -20.783,
+    "peakDbfs": -20.792,
+    "rmsDbfs": -36.041,
+    "centroidHz": [
+      815.4,
+      915.4,
+      1823.0,
+      1133.2
+    ]
+  },
+  "reason": "First reference (B03-T11)."
+}

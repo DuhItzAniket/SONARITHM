@@ -23,6 +23,7 @@ sonarithm-data.workspace = true
 sonarithm-dsp.workspace = true
 sonarithm-export.workspace = true
 sonarithm-numisona.workspace = true
+sonarithm-audaxis.workspace = true
 sonarithm-echometric.workspace = true
 sonarithm-render.workspace = true
 sonarithm-sonotrace.workspace = true

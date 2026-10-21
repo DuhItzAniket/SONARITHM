@@ -48,7 +48,7 @@ Each engine is one crate under `crates/engines/` and implements `Engine`. This p
 | `announce` | Composes announcements from templates (verbosity, part order, units, provenance qualifiers); queue with a supersede policy |
 | `context` | Tick track (SDR-16, auto off for glides); dynamic extreme reference tone (SDR-17); spoken legend (SDR-18) |
 | `earcons` | Earcon catalogue (boundary, invalid, landmark, threshold, mode change, stream event). Each has a text equivalent (A11Y-08) |
-| `spatial` | Constant-power stereo; ITD/ILD; binaural via SOFA HRTF (D03); guard so pan is never the sole carrier (A11Y-14) |
+| `spatial` | Constant-power stereo; ITD/ILD; binaural via SOFA HRTF (D03); guard so pan is never the sole carrier (A11Y-14). B03-T11: the `Spatial` shaper keeps positions in [−1, 1] and warns when only pan (`SNR-ENG-100`) or only timbre (`SNR-ENG-101`) varies along a data track, or when data pitches leave 65–1480 Hz (`SNR-ENG-102`, SDR-08); binaural and multichannel fall back to stereo with `SNR-ENG-103` |
 | `braille` | Review-line text and compact sparkline encoding (A11Y-21) |
 
 **Tests:** NavTree snapshots per chart type; verb-sequence property tests (no dead ends, every node reachable, "where am I" always defined); announcement snapshot tests (terse and verbose, several locales from B07); scripted screen-reader task suites (B03 exit).

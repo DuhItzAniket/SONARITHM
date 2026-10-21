@@ -111,6 +111,15 @@ Owner: `sonarithm-numisona`. Numbers SNR-ENG-001 to SNR-ENG-099.
 | `SNR-ENG-080` | warning | Erie construct not imported | Spec v0.1 has no equivalent; the note says what the import does instead. Adjust the imported spec by hand if the construct matters. | SDR-05 |
 | `SNR-ENG-081` | info | Erie construct imported approximately | Check the imported spec against the note; the construct maps onto spec v0.1 with the stated difference. | SDR-05 |
 
+Owner: `sonarithm-audaxis`. Numbers SNR-ENG-100 to SNR-ENG-199.
+
+| Code | Severity | Meaning | How to fix | Rules |
+|---|---|---|---|---|
+| `SNR-ENG-100` | warning | Only pan varies | Map the field to pitch or duration as well, so it survives mono output, NVDA sound split and one-ear listening. | A11Y-14 |
+| `SNR-ENG-101` | warning | Only timbre varies | Map the field to pitch, duration or taps as well, or announce the categories. | A11Y-14, SDR-25 |
+| `SNR-ENG-102` | warning | Pitches outside the expanded range | Keep data pitches within 65 to 1480 Hz (SDR-08), so they survive high-frequency hearing loss and small speakers. | A11Y-14, SDR-08 |
+| `SNR-ENG-103` | warning | Spatial mode not available | Binaural and multichannel output arrive in D03; this build plays stereo. | SDR-30 |
+
 Owner: `sonarithm-sonotrace`. Numbers SNR-ENG-200 to SNR-ENG-299.
 
 | Code | Severity | Meaning | How to fix | Rules |

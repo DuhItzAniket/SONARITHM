@@ -3033,6 +3033,7 @@ dependencies = [
  "sonarithm-core",
  "sonarithm-data",
  "sonarithm-numisona",
+ "sonarithm-render",
  "sonarithm-spec",
  "thiserror 2.0.21",
 ]
@@ -4004,6 +4005,7 @@ dependencies = [
  "serde",
  "serde_json",
  "sha2",
+ "sonarithm-audaxis",
  "sonarithm-compiler",
  "sonarithm-core",
  "sonarithm-data",

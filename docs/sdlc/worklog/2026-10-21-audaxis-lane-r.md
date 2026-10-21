@@ -19,7 +19,8 @@
 
 - B02-T08: `crates/sonarithm-i18n` (Fluent catalogues `common`, `ui` and `units` in `locales/en-US/`; ICU4X numbers and dates; 26 units with symbol, terse and verbose forms; `en-XA` and `check_pseudo`) and `packages/i18n` (`createLocalizer`, the same pseudo-locale, the `sonarithm/no-literal-ui-string` rule). The frontend CI job now runs `pnpm -r test`. Merged as #260.
 - B03-T01: `sonarithm_core::nav` (NavTree types and invariant check), `ContextProvider::nav_tree`, `Compiled::nav` in the compiler, and `crates/engines/sonarithm-audaxis` with the tree builder; snapshots for the six NUMISONA templates, property tests and OD-18. Merged as #262.
-- B03-T02: `nav::Cursor` with the verbs of keyboard §4.2 and §4.3, outcomes (moved, boundary, invalid, describe, toggled) with their earcon IDs, and where am I; a verb-by-level matrix snapshot reviewed against §4.3 row by row.
+- B03-T02: `nav::Cursor` with the verbs of keyboard §4.2 and §4.3, outcomes (moved, boundary, invalid, describe, toggled) with their earcon IDs, and where am I; a verb-by-level matrix snapshot reviewed against §4.3 row by row. Merged as #264.
+- B03-T11: `spatial::Spatial` shaper and the A11Y-14 guard (`SNR-ENG-100` to `103`, AUDAXIS's first code table), the mono-downmix conformance test and the `stereo-placement` golden case.
 
 ## Decisions
 
@@ -35,6 +36,8 @@
 | Points are rows read from the spec and data (filter, time field, x order), not from Score events | Glide events carry only a bounding row range; onsets come from the Score afterwards | 07 AUDAXIS |
 | Even segments: at least 8 points, at most 12 per series, provisional | No design rule or source sets a size; recorded as an open decision instead of a default with a rule ID | OD-18 |
 | N and Shift+N land on the insight's point, not the insight node | "Next insight in the current series" needs the cursor to stay in the series; the move is flagged as a landmark | keyboard §4.2 |
+| The A11Y-14 guard checks the finished Score, not the spec | It then covers every encoder; NUMISONA's spec-level `SNR-ENG-052` already covers its own tracks, so AUDAXIS skips a track NUMISONA warned about | 07 AUDAXIS |
+| Pitch extremes use SDR-08's expanded range (65–1480 Hz) as the line | It is the evidence-backed range; no rule gives a separate hearing-loss limit, so no new number was invented | `SNR-ENG-102` |
 | B02-T08 built before B01-T02 (its listed dependency) | It needs no generated IPC type: the catalogues are plain files and the contract test reads them directly | status.md B02 tasks |
 
 ## Problems and how they were solved
@@ -42,6 +45,7 @@
 | Problem | Cause | Resolution |
 |---|---|---|
 | ICU4X formatters cannot go in Fluent's thread-safe memoizer | ICU4X data payloads use `Rc` unless `icu_provider`'s `sync` feature is on | `icu_provider` with `sync` |
+| The guard saw every track's timing as varying | Note durations and tap counts were added to one range | One range per property; tests with handcrafted Scores |
 | A point's x value vanished in a JSON round trip | `NavNode` flattens its kind, so the node's `x` extent and the point's `x` value shared one key | The node field is `span`; a round-trip unit test guards it |
 | Bar charts had no x labels in the tree | The bar template orders by row and names no time field | A field with role `category` or `label` names the points when there is no time field |
 
