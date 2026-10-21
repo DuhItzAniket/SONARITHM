@@ -11,7 +11,7 @@
 | Current focus | A02 (spikes) and A03 (core types) in parallel; tasks tracked on the [project board](https://github.com/users/DuhItzAniket/projects/2). Owner: funding for paid BLV usability sessions (OD-10) |
 | Latest release | none |
 | Blocking decisions | none for A01 (OD-01 and OD-09 closed 2026-10-18) |
-| Top risks | R-08 scope creep (20), R-09 bus factor (20), R-02 screen readers in the webview (15), R-22 no macOS/Linux hardware (9) |
+| Top risks | R-08 scope creep (20), R-09 bus factor (20), R-24 human-paced validation lags agent-paced building (16), R-02 screen readers in the webview (15), R-22 no macOS/Linux hardware (9) |
 
 ## 2. Phase board
 
@@ -28,13 +28,13 @@ Status values: `Not started` · `In progress` · `In review` · `Done` · `Block
 | A | A06 | NUMISONA v1 | **Done** | 100% | 2026-10-19; [phase review](reviews/A06-phase-review.md). See [A06 tasks](#a06-tasks) |
 | A | A07 | CLI, Python, v0.1.0-alpha | **In progress** | ≈15% | #156 fixed (#159); the facade in review. See [A07 tasks](#a07-tasks) |
 | A | A08 | Research instrumentation v0, ICAD 2027 | **In progress** | ≈25% | P01 without participant studies (OD-04). See [A08 tasks](#a08-tasks) |
-| B | B01 | Desktop shell, IPC, app core | Not started | 0% | |
-| B | B02 | Design system and application frame | Not started | 0% | |
-| B | B03 | AUDAXIS v1 | Not started | 0% | |
-| B | B04 | Visualization and linked cursor | Not started | 0% | |
-| B | B05 | Inspector, spec editor, projects | Not started | 0% | |
-| B | B06 | SONOTRACE v1 | Not started | 0% | |
-| B | B07 | Conformance, tutorial, co-design, v0.5.0-beta | Not started | 0% | JOSS P02 |
+| B | B01 | Desktop shell, IPC, app core | Not started | 0% | Planned 2026-10-21: 9 [tasks](../planning/implementation-plan.md#b01--desktop-shell-ipc-and-app-core), issues [#191](https://github.com/DuhItzAniket/SONARITHM/issues/191)–[#199](https://github.com/DuhItzAniket/SONARITHM/issues/199). Lane R now: T01, T02, T06; the rest waits for Gate U (the A02 walkthroughs, [#129](https://github.com/DuhItzAniket/SONARITHM/issues/129)) |
+| B | B02 | Design system and application frame | Not started | 0% | Planned 2026-10-21: 11 [tasks](../planning/implementation-plan.md#b02--design-system-and-application-frame), issues [#200](https://github.com/DuhItzAniket/SONARITHM/issues/200)–[#210](https://github.com/DuhItzAniket/SONARITHM/issues/210). Lane R now: T01, T02, T08; the rest waits for Gate U; T10 needs the owner's component checks (HP-07), T11 needs OD-03 |
+| B | B03 | AUDAXIS v1 | Not started | 0% | Planned 2026-10-21: 14 [tasks](../planning/implementation-plan.md#b03--audaxis-v1-navigation-context-and-speech), issues [#211](https://github.com/DuhItzAniket/SONARITHM/issues/211)–[#224](https://github.com/DuhItzAniket/SONARITHM/issues/224). Lane R now: T01–T03, T05–T08, T11; T12 waits for [#186](https://github.com/DuhItzAniket/SONARITHM/issues/186) and [#123](https://github.com/DuhItzAniket/SONARITHM/issues/123); T13 needs NVDA, JAWS, VoiceOver and Orca runs (HP-08) |
+| B | B04 | Visualization and linked cursor | Not started | 0% | Planned 2026-10-21: 8 [tasks](../planning/implementation-plan.md#b04--visualization-and-linked-cursor), issues [#225](https://github.com/DuhItzAniket/SONARITHM/issues/225)–[#232](https://github.com/DuhItzAniket/SONARITHM/issues/232). Lane R now: T03; the rest waits for Gate U |
+| B | B05 | Inspector, spec editor, projects | Not started | 0% | Planned 2026-10-21: 8 [tasks](../planning/implementation-plan.md#b05--inspector-spec-editor-and-project-files), issues [#233](https://github.com/DuhItzAniket/SONARITHM/issues/233)–[#240](https://github.com/DuhItzAniket/SONARITHM/issues/240). Lane R now: T01, T04 (project-format RFC first); the rest waits for Gate U |
+| B | B06 | SONOTRACE v1 | Not started | 0% | Planned 2026-10-21: 7 [tasks](../planning/implementation-plan.md#b06--sonotrace-v1-transport-streams-and-monitoring), issues [#241](https://github.com/DuhItzAniket/SONARITHM/issues/241)–[#247](https://github.com/DuhItzAniket/SONARITHM/issues/247). Lane R now: all but T06 |
+| B | B07 | Conformance, tutorial, co-design, v0.5.0-beta | Not started | 0% | Planned 2026-10-21: 10 [tasks](../planning/implementation-plan.md#b07--accessibility-conformance-tutorial-and-co-design-round-1), issues [#248](https://github.com/DuhItzAniket/SONARITHM/issues/248)–[#257](https://github.com/DuhItzAniket/SONARITHM/issues/257). JOSS P02 (calendar-gated, OD-17). Co-design round 1 needs HP-09 (OD-16); `v0.5.0-beta` waits for [#185](https://github.com/DuhItzAniket/SONARITHM/issues/185) and [#187](https://github.com/DuhItzAniket/SONARITHM/issues/187) |
 | C | C01 | PLOTSONA exact ingestion | Not started | 0% | |
 | C | C02 | PLOTSONA raster digitizer | Not started | 0% | |
 | C | C03 | CURVASONA | Not started | 0% | |
@@ -240,3 +240,4 @@ Maturity scale: `Designed` → `Prototype` → `Alpha` → `Beta` → `Stable` �
 | 2026-10-21 | A07: #156 fixed (#159); facade API (T01) in review |
 | 2026-10-19 | A05: all thirteen tasks implemented; T01, T03 and T04 merged, the rest landing in three bundles; PB-02 and PB-03 not declared met on HW-01 (F-053, F-055); owner steps listed in the A05 worklog |
 | 2026-10-21 | A05 done: all thirteen tasks merged (#118–#120, #122, #126, #160, #168, #178); [phase review](reviews/A05-phase-review.md) with the gate summary; owner decisions pending for PB-01, PB-02 and PB-03 |
+| 2026-10-21 | Stage B planned to task level: 67 tasks, issues [#191](https://github.com/DuhItzAniket/SONARITHM/issues/191)–[#257](https://github.com/DuhItzAniket/SONARITHM/issues/257), milestones B01–B07; Lane R (23 tasks) can start, Lane U waits for the A02 walkthroughs (Gate U); owner items HP-01 to HP-17; OD-15 to OD-17, R-24 to R-27, F-120 ([worklog](worklog/2026-10-21-stage-b-planning.md)) |
