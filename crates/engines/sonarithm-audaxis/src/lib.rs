@@ -4,7 +4,8 @@
 //! AUDAXIS, SONARITHM's navigation and context engine (docs/architecture/07-engines.md,
 //! AUDAXIS; 08).
 //!
-//! AUDAXIS registers one context provider. It builds the navigation tree
+//! AUDAXIS registers one context provider and the `Spatial` shaper ([`spatial`]: stereo
+//! placement and the never-alone guard, A11Y-14). The context provider builds the navigation tree
 //! ([`nav::tree`], 08 §2) that the compiler returns beside the Score, and, from B03-T05,
 //! the context tracks (ticks, the reference tone, the spoken legend). The [`nav::Cursor`]
 //! moves through the tree with the verbs of keyboard-and-navigation §4. The announcement
@@ -16,20 +17,23 @@
 #![forbid(unsafe_code)]
 #![deny(missing_docs)]
 
+pub mod codes;
 mod columns;
 pub mod earcons;
 pub mod nav;
+pub mod spatial;
 
 use std::borrow::Borrow;
 use std::sync::Arc;
 
+use sonarithm_core::diagnostic::Diagnostic;
 use sonarithm_core::engine::{
     Annotation, CompileContext, CompileError, ContextProvider, Engine, EngineManifest, Registrar,
     RegistryError, SpecFragment,
 };
 use sonarithm_core::ids::EngineId;
 use sonarithm_core::nav::NavTree;
-use sonarithm_core::score::{EngineVersion, Score, ScoreTrack};
+use sonarithm_core::score::{EngineVersion, Score, ScoreTrack, ShaperStage};
 use sonarithm_data::DataBundle;
 
 /// The engine ID.
@@ -66,7 +70,7 @@ impl<D: Borrow<DataBundle> + 'static> Engine<D> for Audaxis {
 
     fn register(&self, registrar: &mut Registrar<'_, D>) -> Result<(), RegistryError> {
         registrar.context(Arc::new(Context));
-        Ok(())
+        registrar.shaper(ShaperStage::Spatial, Arc::new(spatial::Spatial))
     }
 }
 
@@ -76,12 +80,28 @@ struct Context;
 impl<D: Borrow<DataBundle>> ContextProvider<D> for Context {
     fn context_tracks(
         &self,
-        _context: &SpecFragment,
+        context: &SpecFragment,
         _score: &Score,
         _data: &D,
         _annotations: &[Annotation],
-        _cx: &mut CompileContext,
+        cx: &mut CompileContext,
     ) -> Result<Vec<ScoreTrack>, CompileError> {
+        let context: sonarithm_spec::sections::Context = context.parse()?;
+        if let Some(spatial) = context.spatial
+            && spatial.mode != sonarithm_spec::sections::SpatialMode::Stereo
+        {
+            let at = sonarithm_core::diagnostic::SpecPointer::root()
+                .key("context")
+                .key("spatial")
+                .key("mode");
+            cx.report(
+                Diagnostic::new(
+                    &codes::SPATIAL_MODE_UNAVAILABLE,
+                    "Binaural and multichannel output arrive in D03; this Score plays in stereo.",
+                )
+                .at(at),
+            );
+        }
         // The tick track, the reference tone and the spoken legend arrive in B03-T05.
         Ok(Vec::new())
     }
