@@ -1,16 +1,16 @@
 # RFC 0002: Project format v1 (`.sonarithm` bundles)
 
-> **Status:** In discussion (proposed 2026-10-21). **Author(s):** project lead (drafted by an AI coding agent, Claude Code, for review by the coordinator under the owner's delegation).
+> **Status:** **Accepted** on 2026-10-21 by the coordinator under the owner's delegation of contract approvals, with the three proposed answers to the unresolved questions and two conditions added (linked-data safety, §4; memory, §6). The 7-day final comment period was waived by the coordinator under the same delegation (fast-track, sole maintainer, no other participants). Outcome recorded in [ADR-0018](../decisions/0018-project-format-v1.md). **Author(s):** project lead (drafted by an AI coding agent, Claude Code, for review by the coordinator under the owner's delegation).
 > **Related:** [RFC process](README.md) · [12 §4 project file format](../architecture/12-cross-cutting-concerns.md#4-project-file-format) · [09 §5 persistence](../architecture/09-desktop-app.md#5-persistence) · [ADR-0013](../decisions/0013-determinism-and-provenance.md) · [ADR-0012](../decisions/0012-privacy-and-telemetry.md) · [ADR-0017](../decisions/0017-ipc-protocol-v1.md)
 
 | Field | Value |
 |---|---|
 | RFC | 0002 |
 | Start date | 2026-10-21 |
-| RFC PR | TODO (opened with this file) |
+| RFC PR | Opened with this file (branch `docs/rfc-0002-project-format`) |
 | Affects | Persisted formats (the project bundle); IPC protocol (additive commands) |
 | Phase | B05 (task B05-T04, [#236](https://github.com/DuhItzAniket/SONARITHM/issues/236)) |
-| Related ADR(s) | ADR-0018 records the outcome once accepted |
+| Related ADR(s) | [ADR-0018](../decisions/0018-project-format-v1.md) records the outcome |
 | Supersedes | none |
 
 ## Summary
@@ -104,13 +104,22 @@ IDs in paths match `^[A-Za-z0-9][A-Za-z0-9_-]{0,63}$`. Dataset IDs are the IDs s
 
 The manifest is JSON with sorted object keys and no insignificant whitespace (RFC 8785 canonical form, as the spec hash uses), so it is byte-stable. Unknown manifest fields are refused in a reader of the same major version and ignored in a reader of an older minor version (§5).
 
-**No timestamps.** 12 §4 lists `created` and `modified`; this RFC proposes to drop them (unresolved question 1): the file system keeps those times, timestamps would make every re-save differ in bytes, and they reveal when someone worked (ADR-0012).
+**No timestamps** (resolved question 1). The manifest has no `created` or `modified` field: the file system keeps those times, timestamps would make every re-save differ in bytes (ADR-0013), and they reveal when someone worked (ADR-0012). 12 §4 is updated to match.
 
 ### 4. Linked data and paths
 
 - `link` is a relative path from the project file's folder to the data file, with `/` separators. A writer computes it; if no relative path exists (another drive on Windows), the writer refuses with `SNR-APP-033` and the hint to embed the data.
 - A writer never writes an absolute path, a drive letter, a UNC path, a home-directory shorthand or a URL anywhere in the bundle. It checks the specs too: a spec whose `file` source names an absolute path is refused with `SNR-APP-033` and the hint to open the file as a dataset and refer to it by ID.
-- On open, a missing linked file or a fingerprint mismatch is a warning (`SNR-APP-034`) naming the dataset; the dataset is then unavailable and specs that use it report `SNR-COMP-026` when compiled.
+- On open, a missing linked file or a fingerprint mismatch is a warning (`SNR-APP-034`) naming the dataset by its file name only, never a directory (resolved question 3); the dataset is then unavailable and specs that use it report `SNR-COMP-026` when compiled.
+
+**Linked-data safety** (acceptance condition A). A shared project chooses its own `link`, so `../../` can point anywhere the user can read. On open, before reading a linked file, the reader:
+
+1. resolves the link against the project's folder and canonicalises it (symbolic links followed);
+2. requires a regular file with a data extension A04 reads (`.csv`, `.tsv`, `.json`, `.ndjson`, `.parquet`, `.arrow`, `.xlsx`, `.ods`); a directory, device, pipe, socket or any other extension is refused with `SNR-APP-034`, without opening it;
+3. reads it with A04's reader limits (`Limits::DEFAULT`);
+4. compares its fingerprint with the manifest's before anything else sees the data: on a mismatch the dataset stays unavailable and is never shown, analysed, compiled or embedded on a later save; the warning names the file.
+
+Tests cover a link to a non-data file, to a device path (`/dev/zero`, `NUL`), to a directory, and a symbolic link whose target is not allowed (where the OS lets the test create one).
 
 ### 5. Versions and migrations
 
@@ -124,7 +133,9 @@ The manifest is JSON with sorted object keys and no insignificant whitespace (RF
 A reader:
 
 1. Refuses member names that are absolute, contain `..`, `\`, a drive letter, a NUL or a control character, or lie outside the folders of §2 (zip-slip, `SNR-APP-032`). It never writes members to disk; it reads them into memory.
-2. Applies limits: at most 10 000 members; at most 64 MiB per JSON member; at most 4 GiB uncompressed in total; a compression ratio of at most 100:1 per deflated member. It stops reading a member as soon as it exceeds its declared size. Over a limit: `SNR-APP-032`. The limits mirror A04's `Limits` and are adjustable for trusted files.
+2. Applies limits: at most 10 000 members; at most 64 MiB per JSON member; at most 2 GiB uncompressed in total, A04's limit for one input, so a project never opens more than its files could directly; a compression ratio of at most 100:1 per deflated member. It stops reading a member as soon as it exceeds its declared size. Over a limit: `SNR-APP-032`. Each embedded table also meets A04's `Limits` (rows, fields, cells). The limits are adjustable for trusted files.
+
+   **Memory** (acceptance condition B). The total limit must not mean holding it in RAM on a 16 GB laptop. Stored (uncompressed) Parquet members are read in place: the reader takes the member's offset and length from the ZIP directory and hands the Parquet decoder a bounded file-slice reader, so the member's bytes are never buffered whole; only the decoded table is in memory, as for a Parquet file opened directly. This needs a data-layer entry point that reads Parquet from a seekable source (A04's reader copies its input into memory today); B05-T04 adds it. Deflated members are JSON and at most 64 MiB each. A Parquet member that is not stored (a hand-made bundle) is refused with `SNR-APP-032`, since deflate cannot be read in place.
 3. Checks every member listed in the manifest against its length and SHA-256 before parsing it; a mismatch or a listed member that is missing refuses the project (`SNR-APP-032`, "damaged or altered"). Members not listed are ignored.
 4. Parses specs with `sonarithm-spec` (diagnostics reported, never fatal to opening) and embedded data with A04's Parquet reader and its limits.
 
@@ -140,7 +151,8 @@ A fuzz target (`project_open`) runs the reader on arbitrary bytes in `nightly.ym
 
 ### 8. Autosave and crash recovery
 
-- While a project has unsaved changes, the app core writes an autosave bundle to `<app-data>/autosave/` after each change, at most once every 30 s, keeping the last 5 (`autosave-<n>.sonarithm`, `n` counting up). Autosaves embed all data, so a recovery never depends on a linked file.
+- While a project has unsaved changes, the app core writes an autosave bundle to `<app-data>/autosave/` after each change, at most once every 30 s, keeping the last 5 (`autosave-<n>.sonarithm`, `n` counting up) (resolved question 2). Autosaves embed all data, so a recovery never depends on a linked file.
+- The autosave folder has a total size budget: when a new autosave would exceed it, the oldest are deleted first, and if one autosave alone exceeds it, the app keeps only that newest one and says so in the status log. The budget is TODO(verify): B05-T07's memory and disk soak sets it, because five copies of a 1M-row dataset are the likely problem; until then it is 2 GiB.
 - A clean exit or an explicit save deletes the autosaves of that project.
 - On start, autosaves that remain mean the last session did not end cleanly: `project_recovery` lists them (newest first, with their names and the file system's modification time) and the UI offers the newest. `project_recover { id }` opens one as an unsaved project; `project_discard_recovery` deletes them.
 
@@ -168,7 +180,9 @@ A fuzz target (`project_open`) runs the reader on arbitrary bytes in `nightly.ym
 - Round trip: a project with two specs, an embedded and a linked dataset and each reserved folder reopens with specs byte for byte and data equal by fingerprint; saving it again without changes gives identical bytes.
 - A property test: random spec texts and small tables round-trip.
 - Crash injection: an interrupted save leaves the previous file readable; a session dropped without a clean exit leaves autosaves that the next start offers, and recovering yields the last snapshot.
-- Refusals: zip-slip names, an oversized member, a bad ratio, a tampered member, a missing listed member, a newer major version; one test per code.
+- Refusals: zip-slip names, an oversized member, a bad ratio, a tampered member, a missing listed member, a deflated Parquet member, a newer major version; one test per code.
+- Linked data: a link to a non-data file, a device, a directory and a symbolic link to a disallowed target are refused unread; a fingerprint mismatch leaves the dataset unavailable and out of the next save.
+- Memory: opening a project with a large stored Parquet member does not allocate the member's size before decoding (checked with a counting allocator around the reader, as A05-T10 does for the audio thread).
 - No absolute path is ever written: a property test scans every byte of saved bundles for the temporary folder's absolute path and for drive or root prefixes in manifest paths.
 - `cargo fuzz` target `project_open` in `nightly.yml`.
 
@@ -201,9 +215,13 @@ None on design rules or defaults: the project stores specs, and specs carry ever
 
 ## Unresolved questions
 
-1. Drop `created` and `modified` from the manifest (proposed), or keep them as optional fields the user can turn off?
-2. Is 5 autosaves at most every 30 s right? (Proposed; revisit with B05-T07's memory soak.)
-3. Should a linked dataset's file name (not path) be shown when the link is broken? (Proposed yes; it is already in `datasets[].name`.)
+All three were resolved at acceptance (2026-10-21):
+
+1. `created` and `modified` are dropped from the manifest (§3); 12 §4 is updated.
+2. At most 5 autosaves, at most every 30 s, within a total size budget set from B05-T07 (§8; the budget is TODO(verify)).
+3. A broken link shows the dataset's file name only, never directories (§4).
+
+The size budget's value is the only open number; B05-T07 measures it.
 
 ## Future possibilities
 
