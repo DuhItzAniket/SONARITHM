@@ -53,6 +53,18 @@ Waivers requested: none. Criteria 1 (upload) and 2 depend on the publish, which 
 | Wheels | 3 OSes × Python 3.10 and 3.14 | 6 of 6 test jobs green | GitHub-hosted runners | Met |
 | Dry-run release | succeeds | `cargo publish --workspace --dry-run --locked` packaged and verify-built all 11 publishable crates | HW-01; CI `release-plz / dry-run` (green from #182) | Met |
 
+### Release gate: performance budgets
+
+The owner decided the budgets that A05 left open in the coordinator session on 2026-10-21: "Accept A05's recommendations for v0.1.0-alpha: defer PB-01 to B03, waive PB-03 for alpha with a follow-up before Gate B, accept PB-02 with a 128-frame rerun later, and accept PB-06." The measurements are A05's ([A05 phase review](A05-phase-review.md)).
+
+| Budget | Measured (A05) | Decision for `v0.1.0-alpha` | Follow-up |
+|---|---|---|---|
+| PB-01 key press → cue onset ≤ 50 ms p95 | 104.0 ms p95 (RAW shared), HW-01 loopback (F-052) | **Deferred to B03** | #186; cable test #123 |
+| PB-02 0 xruns in 10 min at 128 frames | 0 underruns at the device's 480- and 144-frame periods; 128 frames not available on HW-01 (F-055) | **Accepted** | 128-frame rerun on capable hardware, #187 |
+| PB-03 offline render ≥ 50× real time | 91.4× on HW-01, 43–46× on HW-01e (F-053) | **Waived for the alpha**; since **met**: 60× on HW-01e on 2026-10-25 (#185, F-134) | Done (#185) |
+| PB-04, PB-05 | Within budget (A06, A04) | — | — |
+| PB-06 null residual ≤ −90 dBFS, ΔLUFS ≤ 0.1 | Bit-identical on three OSes (F-056) | **Accepted** | — |
+
 ## Scope
 
 **Delivered**
