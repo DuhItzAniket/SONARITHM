@@ -35,11 +35,12 @@ use sonarithm_core::engine::{Annotation, CompileContext, CompileError};
 use sonarithm_core::ids::{AnalyzerId, RowRef, TrackId};
 use sonarithm_core::nav::{
     AxisName, AxisNode, DatasetNode, FilterNode, InsightGroupNode, InsightNode, NavKind, NavNode,
-    NavNodeId, NavTree, PointNode, SegmentNode, SeriesNode, ValueRange, XSpan, XType, XValue,
+    NavNodeId, NavTree, PointNode, Polarity, SegmentNode, SeriesNode, ValueRange, XSpan, XType,
+    XValue,
 };
 use sonarithm_core::provenance::Provenance;
 use sonarithm_core::score::{Score, ScoreEvent, ScoreTrack, TrackRole};
-use sonarithm_core::units::Seconds;
+use sonarithm_core::units::{Cents, Seconds};
 use sonarithm_data::{DataBundle, RowProvenance, Table};
 use sonarithm_spec::data::Role;
 use sonarithm_spec::spec::Spec;
@@ -63,13 +64,18 @@ const ROW_COLUMN: &str = "__snr_audaxis_row";
 
 /// One point of a series, before it becomes a node.
 #[derive(Clone, Debug)]
-struct Point {
-    row: RowRef,
-    position: f64,
-    x: Option<XValue>,
-    value: Option<f64>,
-    provenance: Provenance,
-    t: Option<Seconds>,
+pub(crate) struct Point {
+    pub(crate) row: RowRef,
+    pub(crate) position: f64,
+    pub(crate) x: Option<XValue>,
+    pub(crate) value: Option<f64>,
+    pub(crate) provenance: Provenance,
+    /// The onset in the Score, if the point is played.
+    pub(crate) t: Option<Seconds>,
+    /// How long it plays: the note's duration, or the time to the next breakpoint.
+    pub(crate) dur: Option<Seconds>,
+    /// The pitch it plays.
+    pub(crate) pitch: Option<Cents>,
 }
 
 /// A field's name, spoken label and unit.
@@ -83,16 +89,20 @@ struct FieldInfo {
 
 /// One data track as a series.
 #[derive(Clone, Debug)]
-struct Series {
-    track: TrackId,
+pub(crate) struct Series {
+    pub(crate) track: TrackId,
     value_field: FieldInfo,
     x_field: FieldInfo,
-    x_type: XType,
-    points: Vec<Point>,
+    pub(crate) x_type: XType,
+    pub(crate) points: Vec<Point>,
+    /// The track's instrument.
+    pub(crate) instrument: String,
+    /// Whether the track plays glides (continuous marks).
+    pub(crate) glides: bool,
 }
 
 impl Series {
-    fn label(&self) -> String {
+    pub(crate) fn label(&self) -> String {
         self.value_field
             .label
             .clone()
@@ -106,6 +116,41 @@ impl Series {
 
     fn range(&self) -> Option<ValueRange> {
         ValueRange::of(self.points.iter().filter_map(|p| p.value))
+    }
+
+    /// The pitch range in Hz of the played points.
+    fn pitch_hz(&self) -> Option<ValueRange> {
+        ValueRange::of(
+            self.points
+                .iter()
+                .filter_map(|p| p.pitch.map(|c| c.to_hz().0)),
+        )
+    }
+
+    /// The polarity heard: the pitch of the largest value against that of the smallest.
+    pub(crate) fn polarity(&self) -> Option<Polarity> {
+        let (low, high) = self.extremes()?;
+        let (low, high) = (low.pitch?, high.pitch?);
+        if high.0 > low.0 {
+            Some(Polarity::Positive)
+        } else if high.0 < low.0 {
+            Some(Polarity::Negative)
+        } else {
+            None
+        }
+    }
+
+    /// The played points with the smallest and the largest value (the first of equals).
+    pub(crate) fn extremes(&self) -> Option<(&Point, &Point)> {
+        let played = || {
+            self.points
+                .iter()
+                .filter(|p| p.value.is_some() && p.pitch.is_some())
+        };
+        let value = |p: &Point| p.value.unwrap_or(f64::NAN);
+        let low = played().reduce(|a, b| if value(b) < value(a) { b } else { a })?;
+        let high = played().reduce(|a, b| if value(b) > value(a) { b } else { a })?;
+        Some((low, high))
     }
 }
 
@@ -122,12 +167,23 @@ pub fn build(
     annotations: &[Annotation],
     cx: &mut CompileContext,
 ) -> Result<NavTree, CompileError> {
+    let all = read(spec, score, data, cx)?;
+    Ok(assemble(spec, &all, annotations))
+}
+
+/// Reads every data track of `score` as a series, in Score order.
+pub(crate) fn read(
+    spec: &Spec,
+    score: &Score,
+    data: &DataBundle,
+    cx: &mut CompileContext,
+) -> Result<Vec<Series>, CompileError> {
     let mut all = Vec::new();
     for track in score.tracks.iter().filter(|t| t.role == TrackRole::Data) {
         cx.check_cancelled()?;
         all.push(series(spec, track, data)?);
     }
-    Ok(assemble(spec, &all, annotations))
+    Ok(all)
 }
 
 /// Reads one data track's points.
@@ -139,6 +195,11 @@ fn series(spec: &Spec, track: &ScoreTrack, data: &DataBundle) -> Result<Series, 
         x_field: FieldInfo::default(),
         x_type: XType::RowOrder,
         points: Vec::new(),
+        instrument: track.instrument.0.clone(),
+        glides: track
+            .events
+            .iter()
+            .any(|e| matches!(e, ScoreEvent::Glide(_))),
     };
     let Some(table) = table_of(track, data) else {
         return Ok(series);
@@ -209,6 +270,8 @@ fn series(spec: &Spec, track: &ScoreTrack, data: &DataBundle) -> Result<Series, 
                     .as_ref()
                     .map_or(Provenance::EXACT, |p| p.get(row)),
                 t: None,
+                dur: None,
+                pitch: None,
             })
         })
         .collect();
@@ -394,16 +457,18 @@ fn filtered_rows(table: &Table, filter: Option<&Filter>) -> Result<Vec<usize>, C
         .unwrap_or_default())
 }
 
-/// Copies each point's onset from the track's events: a note's onset by its row; a glide's
-/// breakpoints, in order, to the points with a value inside its rows, when the counts
-/// agree (the last breakpoint holds the final value and has no row).
+/// Copies each point's onset, length and pitch from the track's events: a note's by its
+/// row; a glide's breakpoints, in order, to the points with a value inside its rows, when
+/// the counts agree (the last breakpoint holds the final value and has no row).
 fn assign_onsets(points: &mut [Point], track: &ScoreTrack) {
-    let mut by_row: BTreeMap<u64, Seconds> = BTreeMap::new();
+    let mut by_row: BTreeMap<u64, (Seconds, Seconds, Cents)> = BTreeMap::new();
     for event in &track.events {
         match event {
             ScoreEvent::Note(note) => {
                 if let Some(src) = note.src {
-                    by_row.entry(src.row).or_insert(note.t);
+                    by_row
+                        .entry(src.row)
+                        .or_insert((note.t, note.dur, note.pitch));
                 }
             }
             ScoreEvent::Glide(glide) => {
@@ -421,8 +486,11 @@ fn assign_onsets(points: &mut [Point], track: &ScoreTrack) {
                     .collect();
                 let breakpoints = glide.curve.len().saturating_sub(1);
                 if members.len() == breakpoints {
-                    for (&i, breakpoint) in members.iter().zip(&glide.curve) {
+                    for (k, (&i, breakpoint)) in members.iter().zip(&glide.curve).enumerate() {
+                        let next = glide.curve.get(k + 1).map_or(glide.t1, |b| b.t);
                         points[i].t = Some(breakpoint.t);
+                        points[i].dur = Some(Seconds(next.0 - breakpoint.t.0));
+                        points[i].pitch = Some(breakpoint.pitch);
                     }
                 }
             }
@@ -430,8 +498,12 @@ fn assign_onsets(points: &mut [Point], track: &ScoreTrack) {
         }
     }
     for point in points.iter_mut() {
-        if let Some(&t) = by_row.get(&point.row.row) {
-            point.t.get_or_insert(t);
+        if point.t.is_none()
+            && let Some(&(t, dur, pitch)) = by_row.get(&point.row.row)
+        {
+            point.t = Some(t);
+            point.dur = Some(dur);
+            point.pitch = Some(pitch);
         }
     }
 }
@@ -500,7 +572,7 @@ fn semantic_segments(series: &Series, annotations: &[Annotation]) -> Option<Vec<
 }
 
 /// Puts the series, axes, insights and filters together.
-fn assemble(spec: &Spec, all: &[Series], annotations: &[Annotation]) -> NavTree {
+pub(crate) fn assemble(spec: &Spec, all: &[Series], annotations: &[Annotation]) -> NavTree {
     let mut tree = NavTree::new(DatasetNode {
         title: spec.name.clone(),
         series: u32::try_from(all.len()).unwrap_or(u32::MAX),
@@ -516,6 +588,8 @@ fn assemble(spec: &Spec, all: &[Series], annotations: &[Annotation]) -> NavTree 
             ucum: series.value_field.ucum.clone(),
             points: series.points.len() as u64,
             range: series.range(),
+            pitch_hz: series.pitch_hz(),
+            polarity: series.polarity(),
         }))
         .with_label(series.label())
         .with_span(series.span());

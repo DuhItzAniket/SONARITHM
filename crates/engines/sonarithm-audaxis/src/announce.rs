@@ -7,5 +7,7 @@
 pub mod compose;
 pub mod queue;
 
-pub use compose::{Announcement, Class, Composer, KeyNames, Part, Politeness, Settings, Verbosity};
+pub use compose::{
+    Announcement, Class, Composer, KeyNames, LegendCues, Part, Politeness, Settings, Verbosity,
+};
 pub use queue::{AnnouncementQueue, Delivery, HistoryEntry, Priority};

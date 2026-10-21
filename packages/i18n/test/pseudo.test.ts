@@ -47,6 +47,15 @@ function sampleArgs(style: string): MessageArgs {
     seconds: { number: 11 },
     date: "6",
     time: "7",
+    field: "8",
+    series: "9",
+    range: "10",
+    low: { number: 400 },
+    high: { number: 1400 },
+    polarity: "positive",
+    mode: "analysis",
+    ticks: "yes",
+    reference: "yes",
   };
 }
 

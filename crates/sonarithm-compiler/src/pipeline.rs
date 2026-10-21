@@ -344,9 +344,9 @@ impl<D: CompilerData> Run<'_, D> {
         score: &mut Score,
     ) -> Result<(), Stop> {
         let registry = self.registry;
-        let Some(context) = &spec.context else {
+        if spec.context.is_none() {
             return Ok(());
-        };
+        }
         let at = SpecPointer::root().key("context");
         let providers: Vec<_> = registry.context_providers().collect();
         if providers.is_empty() {
@@ -355,10 +355,12 @@ impl<D: CompilerData> Run<'_, D> {
                     &codes::CONTEXT_UNAVAILABLE,
                     "Context cues (ticks, reference tone, legend, earcons) are not available in this build; AUDAXIS arrives in B03.",
                 )
-                .at(at.clone()),
+                .at(at),
             );
         }
-        let params = fragment(at, context)?;
+        // The whole resolved spec (pointer ""): context cues depend on the tracks, the
+        // substrate and the field semantics as well as `context` (05 §3).
+        let params = fragment(SpecPointer::root(), spec)?;
         for (engine, provider) in providers {
             self.use_engine(&engine.clone());
             let tracks = provider

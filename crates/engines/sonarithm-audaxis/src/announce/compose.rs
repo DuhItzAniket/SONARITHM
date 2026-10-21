@@ -19,11 +19,14 @@
 
 use std::collections::BTreeSet;
 
-use sonarithm_core::nav::{AxisName, NavKind, NavNode, NavNodeId, NavTree, XType, XValue};
+use sonarithm_core::nav::{
+    AxisName, NavKind, NavNode, NavNodeId, NavTree, Polarity, XType, XValue,
+};
 use sonarithm_core::provenance::Provenance;
 use sonarithm_i18n::{
     Args, DateLength, DatePattern, I18nError, Localizer, Number, NumberOptions, UnitRef, UnitStyle,
 };
+use sonarithm_spec::sections::LegendPart;
 
 use crate::earcons::EarconId;
 use crate::nav::cursor::{Cursor, Edge, Invalid, Move, Outcome, WhereAmI};
@@ -210,6 +213,19 @@ impl Announcement {
     }
 }
 
+/// Which context cues the legend says are on.
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
+pub struct LegendCues {
+    /// The tick track (SDR-16).
+    pub ticks: bool,
+    /// The reference tone (SDR-17).
+    pub reference: bool,
+}
+
+fn yes(on: bool) -> &'static str {
+    if on { "yes" } else { "no" }
+}
+
 /// The pieces of one announcement before ordering: a leading name and the parts.
 #[derive(Default)]
 struct Pieces {
@@ -356,6 +372,137 @@ impl<'l> Composer<'l> {
         announcement.display = paused(self.localizer, &announcement.display)?;
         announcement.class = Class::Response;
         Ok(announcement)
+    }
+
+    /// The spoken legend (SDR-18, sound-design §7.3), verbose whatever the setting: the
+    /// title, the x range, each series' value range with its unit, the pitch mapping with
+    /// its polarity, the mode and the context cues that are on. `parts` are the spec's
+    /// `context.legend.parts`; the mode and the cues are always said.
+    ///
+    /// # Errors
+    ///
+    /// As [`Composer::outcome`].
+    pub fn legend(
+        &self,
+        tree: &NavTree,
+        parts: &[LegendPart],
+        mode: &str,
+        cues: LegendCues,
+    ) -> Result<Announcement, I18nError> {
+        let mut speech = Vec::new();
+        let mut display = Vec::new();
+        for (units, out) in [
+            (UnitStyle::Verbose, &mut speech),
+            (UnitStyle::Symbol, &mut display),
+        ] {
+            *out = self.legend_parts(tree, parts, units)?;
+            out.push(self.message("announce-legend-mode", &Args::new().text("mode", mode))?);
+            out.push(
+                self.message(
+                    "announce-legend-cues",
+                    &Args::new()
+                        .text("ticks", yes(cues.ticks))
+                        .text("reference", yes(cues.reference)),
+                )?,
+            );
+        }
+        Ok(Announcement {
+            class: Class::Response,
+            politeness: Politeness::Polite,
+            speech: self.join(&speech)?,
+            display: self.join(&display)?,
+            node: Some(tree.root()),
+            earcon: None,
+            speak: true,
+            error: false,
+        })
+    }
+
+    fn legend_parts(
+        &self,
+        tree: &NavTree,
+        parts: &[LegendPart],
+        units: UnitStyle,
+    ) -> Result<Vec<String>, I18nError> {
+        let mut out = Vec::new();
+        let has = |part: LegendPart| parts.contains(&part);
+        if has(LegendPart::Title)
+            && let Some(NavKind::Dataset(dataset)) = tree.node(tree.root()).map(|n| &n.kind)
+            && let Some(title) = &dataset.title
+        {
+            out.push(self.text(title)?);
+        }
+        if has(LegendPart::XRange)
+            && let Some(axes) = tree.landmark("axes")
+            && let Some(&x_axis) = tree.children(axes).first()
+            && let Some(node) = tree.node(x_axis)
+            && let NavKind::Axis(axis) = &node.kind
+            && let (Some(label), Some(range)) = (node.label.as_deref(), axis.range)
+        {
+            let from = self.x_label(tree, Some(&XValue::Number(range.min)), true)?;
+            let to = self.x_label(tree, Some(&XValue::Number(range.max)), true)?;
+            if let (Some(from), Some(to)) = (from, to) {
+                out.push(
+                    self.message(
+                        "announce-legend-x",
+                        &Args::new()
+                            .text("field", label)
+                            .text("range", self.range(from, to, false)?),
+                    )?,
+                );
+            }
+        }
+        for series in tree.series() {
+            let Some(node) = tree.node(series) else {
+                continue;
+            };
+            let NavKind::Series(info) = &node.kind else {
+                continue;
+            };
+            let label = node.label.clone().unwrap_or_default();
+            if has(LegendPart::YRange)
+                && let Some(range) = info.range
+            {
+                let unit = if has(LegendPart::Units) {
+                    info.unit.as_deref().map(|text| UnitRef {
+                        text,
+                        ucum: info.ucum.as_deref(),
+                    })
+                } else {
+                    None
+                };
+                let from = self.quantity(range.min, unit, units)?;
+                let to = self.quantity(range.max, unit, units)?;
+                out.push(
+                    self.message(
+                        "announce-legend-y",
+                        &Args::new()
+                            .text("series", label.as_str())
+                            .text("range", self.range(from, to, false)?),
+                    )?,
+                );
+            }
+            if has(LegendPart::Polarity)
+                && let Some(pitch) = info.pitch_hz
+            {
+                let hz = |v: f64| Number::with_options(v, NumberOptions::fixed(0));
+                let polarity = match info.polarity {
+                    Some(Polarity::Positive) => "positive",
+                    Some(Polarity::Negative) => "negative",
+                    None => "other",
+                };
+                out.push(
+                    self.message(
+                        "announce-legend-mapping",
+                        &Args::new()
+                            .number_with("low", hz(pitch.min))
+                            .number_with("high", hz(pitch.max))
+                            .text("polarity", polarity),
+                    )?,
+                );
+            }
+        }
+        Ok(out)
     }
 
     /// The "where am I" report (keyboard §6, A11Y-07), verbose whatever the setting: every

@@ -1,0 +1,454 @@
+{
+  "header": {
+    "ir_version": 1,
+    "spec_version": "0.1",
+    "spec_hash": "1096a06906c1d833871ab2aaa8883dc8673eaf987fbcd34d4d8d9487a98543e6",
+    "data_fingerprint": "ef198113d1eaa17d23154376c98bd0e3a6f7b27964b2615b06d83f74e9da8b15",
+    "seed": 0,
+    "mode": "analysis",
+    "duration": 5.75,
+    "engines": {
+      "audaxis": "*",
+      "numisona": "*",
+      "platform": "*"
+    },
+    "shapers": [
+      "spatial"
+    ]
+  },
+  "tracks": [
+    {
+      "id": "temp",
+      "role": "data",
+      "engine": "numisona",
+      "instrument": "mallet",
+      "gain": 0.0,
+      "pan": 0.0,
+      "pitch_range": {
+        "low": -165.00422849992196,
+        "high": 2003.821677969203
+      },
+      "events": [
+        {
+          "type": "note",
+          "t": 0.0,
+          "dur": 0.25,
+          "pitch": 454.66031620554224,
+          "gain": -18.0,
+          "pan": 0.0,
+          "timbre": {
+            "preset": null,
+            "brightness": 0.5
+          },
+          "taps": 1,
+          "src": {
+            "table": 0,
+            "generation": 0,
+            "row": 0
+          },
+          "conf": null
+        },
+        {
+          "type": "note",
+          "t": 0.5,
+          "dur": 0.25,
+          "pitch": 764.4925885582743,
+          "gain": -18.0,
+          "pan": 0.0,
+          "timbre": {
+            "preset": null,
+            "brightness": 0.5
+          },
+          "taps": 1,
+          "src": {
+            "table": 0,
+            "generation": 0,
+            "row": 1
+          },
+          "conf": null
+        },
+        {
+          "type": "note",
+          "t": 1.0,
+          "dur": 0.25,
+          "pitch": 1384.1571332637386,
+          "gain": -18.0,
+          "pan": 0.0,
+          "timbre": {
+            "preset": null,
+            "brightness": 0.5
+          },
+          "taps": 1,
+          "src": {
+            "table": 0,
+            "generation": 0,
+            "row": 2
+          },
+          "conf": null
+        },
+        {
+          "type": "note",
+          "t": 1.5,
+          "dur": 0.25,
+          "pitch": 1074.3248609110065,
+          "gain": -18.0,
+          "pan": 0.0,
+          "timbre": {
+            "preset": null,
+            "brightness": 0.5
+          },
+          "taps": 1,
+          "src": {
+            "table": 0,
+            "generation": 0,
+            "row": 3
+          },
+          "conf": null
+        },
+        {
+          "type": "note",
+          "t": 2.0,
+          "dur": 0.25,
+          "pitch": 144.82804385281014,
+          "gain": -18.0,
+          "pan": 0.0,
+          "timbre": {
+            "preset": null,
+            "brightness": 0.5
+          },
+          "taps": 1,
+          "src": {
+            "table": 0,
+            "generation": 0,
+            "row": 4
+          },
+          "conf": null
+        },
+        {
+          "type": "note",
+          "t": 2.5,
+          "dur": 0.25,
+          "pitch": -165.00422849992196,
+          "gain": -18.0,
+          "pan": 0.0,
+          "timbre": {
+            "preset": null,
+            "brightness": 0.5
+          },
+          "taps": 1,
+          "src": {
+            "table": 0,
+            "generation": 0,
+            "row": 5
+          },
+          "conf": null
+        },
+        {
+          "type": "note",
+          "t": 3.0,
+          "dur": 0.25,
+          "pitch": 454.66031620554224,
+          "gain": -18.0,
+          "pan": 0.0,
+          "timbre": {
+            "preset": null,
+            "brightness": 0.5
+          },
+          "taps": 1,
+          "src": {
+            "table": 0,
+            "generation": 0,
+            "row": 6
+          },
+          "conf": null
+        },
+        {
+          "type": "note",
+          "t": 3.5,
+          "dur": 0.25,
+          "pitch": 1693.9894056164705,
+          "gain": -18.0,
+          "pan": 0.0,
+          "timbre": {
+            "preset": null,
+            "brightness": 0.5
+          },
+          "taps": 1,
+          "src": {
+            "table": 0,
+            "generation": 0,
+            "row": 7
+          },
+          "conf": null
+        },
+        {
+          "type": "note",
+          "t": 4.0,
+          "dur": 0.25,
+          "pitch": 2003.821677969203,
+          "gain": -18.0,
+          "pan": 0.0,
+          "timbre": {
+            "preset": null,
+            "brightness": 0.5
+          },
+          "taps": 1,
+          "src": {
+            "table": 0,
+            "generation": 0,
+            "row": 8
+          },
+          "conf": null
+        },
+        {
+          "type": "note",
+          "t": 4.5,
+          "dur": 0.25,
+          "pitch": 1384.1571332637386,
+          "gain": -18.0,
+          "pan": 0.0,
+          "timbre": {
+            "preset": null,
+            "brightness": 0.5
+          },
+          "taps": 1,
+          "src": {
+            "table": 0,
+            "generation": 0,
+            "row": 9
+          },
+          "conf": null
+        },
+        {
+          "type": "note",
+          "t": 5.0,
+          "dur": 0.25,
+          "pitch": 764.4925885582743,
+          "gain": -18.0,
+          "pan": 0.0,
+          "timbre": {
+            "preset": null,
+            "brightness": 0.5
+          },
+          "taps": 1,
+          "src": {
+            "table": 0,
+            "generation": 0,
+            "row": 10
+          },
+          "conf": null
+        },
+        {
+          "type": "note",
+          "t": 5.5,
+          "dur": 0.25,
+          "pitch": 1074.3248609110065,
+          "gain": -18.0,
+          "pan": 0.0,
+          "timbre": {
+            "preset": null,
+            "brightness": 0.5
+          },
+          "taps": 1,
+          "src": {
+            "table": 0,
+            "generation": 0,
+            "row": 11
+          },
+          "conf": null
+        }
+      ]
+    },
+    {
+      "id": "audaxis.ticks",
+      "role": "context",
+      "engine": "audaxis",
+      "instrument": "click",
+      "gain": 0.0,
+      "pan": 0.0,
+      "pitch_range": null,
+      "events": [
+        {
+          "type": "note",
+          "t": 0.0,
+          "dur": 0.01,
+          "pitch": 0.0,
+          "gain": 0.0,
+          "pan": 0.0,
+          "timbre": {
+            "preset": null,
+            "brightness": 0.5
+          },
+          "taps": 1,
+          "src": null,
+          "conf": null
+        },
+        {
+          "type": "note",
+          "t": 1.0,
+          "dur": 0.01,
+          "pitch": 0.0,
+          "gain": 0.0,
+          "pan": 0.0,
+          "timbre": {
+            "preset": null,
+            "brightness": 0.5
+          },
+          "taps": 1,
+          "src": null,
+          "conf": null
+        },
+        {
+          "type": "note",
+          "t": 2.0,
+          "dur": 0.01,
+          "pitch": 0.0,
+          "gain": 0.0,
+          "pan": 0.0,
+          "timbre": {
+            "preset": null,
+            "brightness": 0.5
+          },
+          "taps": 1,
+          "src": null,
+          "conf": null
+        },
+        {
+          "type": "note",
+          "t": 3.0,
+          "dur": 0.01,
+          "pitch": 0.0,
+          "gain": 0.0,
+          "pan": 0.0,
+          "timbre": {
+            "preset": null,
+            "brightness": 0.5
+          },
+          "taps": 1,
+          "src": null,
+          "conf": null
+        },
+        {
+          "type": "note",
+          "t": 4.0,
+          "dur": 0.01,
+          "pitch": 0.0,
+          "gain": 0.0,
+          "pan": 0.0,
+          "timbre": {
+            "preset": null,
+            "brightness": 0.5
+          },
+          "taps": 1,
+          "src": null,
+          "conf": null
+        },
+        {
+          "type": "note",
+          "t": 5.0,
+          "dur": 0.01,
+          "pitch": 0.0,
+          "gain": 0.0,
+          "pan": 0.0,
+          "timbre": {
+            "preset": null,
+            "brightness": 0.5
+          },
+          "taps": 1,
+          "src": null,
+          "conf": null
+        }
+      ]
+    },
+    {
+      "id": "audaxis.reference",
+      "role": "context",
+      "engine": "audaxis",
+      "instrument": "triangle",
+      "gain": 0.0,
+      "pan": 0.0,
+      "pitch_range": null,
+      "events": [
+        {
+          "type": "note",
+          "t": 0.0,
+          "dur": 1.54,
+          "pitch": 2003.821677969203,
+          "gain": 0.0,
+          "pan": 0.0,
+          "timbre": {
+            "preset": null,
+            "brightness": 0.5
+          },
+          "taps": 1,
+          "src": null,
+          "conf": null
+        },
+        {
+          "type": "note",
+          "t": 1.5,
+          "dur": 1.54,
+          "pitch": -165.00422849992196,
+          "gain": 0.0,
+          "pan": 0.0,
+          "timbre": {
+            "preset": null,
+            "brightness": 0.5
+          },
+          "taps": 1,
+          "src": null,
+          "conf": null
+        },
+        {
+          "type": "note",
+          "t": 3.0,
+          "dur": 1.54,
+          "pitch": 2003.821677969203,
+          "gain": 0.0,
+          "pan": 0.0,
+          "timbre": {
+            "preset": null,
+            "brightness": 0.5
+          },
+          "taps": 1,
+          "src": null,
+          "conf": null
+        },
+        {
+          "type": "note",
+          "t": 4.5,
+          "dur": 1.25,
+          "pitch": -165.00422849992196,
+          "gain": 0.0,
+          "pan": 0.0,
+          "timbre": {
+            "preset": null,
+            "brightness": 0.5
+          },
+          "taps": 1,
+          "src": null,
+          "conf": null
+        }
+      ]
+    },
+    {
+      "id": "audaxis.legend",
+      "role": "speech",
+      "engine": "audaxis",
+      "instrument": "speech",
+      "gain": 0.0,
+      "pan": 0.0,
+      "pitch_range": null,
+      "events": [
+        {
+          "type": "speech",
+          "t": 0.0,
+          "text": "Weather. X axis day, 0 to 11. Temperature, 3 degrees Celsius to 10 degrees Celsius. Pitch from 400 to 1,400 hertz; higher values sound higher. Analysis mode. Ticks and reference tone on",
+          "priority": "normal",
+          "src": null
+        }
+      ]
+    }
+  ],
+  "markers": []
+}

@@ -1,0 +1,166 @@
+---
+source: crates/engines/sonarithm-audaxis/tests/context.rs
+expression: context
+---
+[
+  {
+    "id": "audaxis.ticks",
+    "role": "context",
+    "engine": "audaxis",
+    "instrument": "click",
+    "gain": 0.0,
+    "pan": 0.0,
+    "pitch_range": null,
+    "events": [
+      {
+        "type": "note",
+        "t": 0.0,
+        "dur": 0.01,
+        "pitch": 0.0,
+        "gain": 0.0,
+        "pan": 0.0,
+        "timbre": {
+          "preset": null,
+          "brightness": 0.5
+        },
+        "taps": 1,
+        "src": null,
+        "conf": null
+      },
+      {
+        "type": "note",
+        "t": 1.0,
+        "dur": 0.01,
+        "pitch": 0.0,
+        "gain": 0.0,
+        "pan": 0.0,
+        "timbre": {
+          "preset": null,
+          "brightness": 0.5
+        },
+        "taps": 1,
+        "src": null,
+        "conf": null
+      },
+      {
+        "type": "note",
+        "t": 2.0,
+        "dur": 0.01,
+        "pitch": 0.0,
+        "gain": 0.0,
+        "pan": 0.0,
+        "timbre": {
+          "preset": null,
+          "brightness": 0.5
+        },
+        "taps": 1,
+        "src": null,
+        "conf": null
+      },
+      {
+        "type": "note",
+        "t": 3.0,
+        "dur": 0.01,
+        "pitch": 0.0,
+        "gain": 0.0,
+        "pan": 0.0,
+        "timbre": {
+          "preset": null,
+          "brightness": 0.5
+        },
+        "taps": 1,
+        "src": null,
+        "conf": null
+      },
+      {
+        "type": "note",
+        "t": 4.0,
+        "dur": 0.01,
+        "pitch": 0.0,
+        "gain": 0.0,
+        "pan": 0.0,
+        "timbre": {
+          "preset": null,
+          "brightness": 0.5
+        },
+        "taps": 1,
+        "src": null,
+        "conf": null
+      }
+    ]
+  },
+  {
+    "id": "audaxis.reference",
+    "role": "context",
+    "engine": "audaxis",
+    "instrument": "triangle",
+    "gain": 0.0,
+    "pan": 0.0,
+    "pitch_range": null,
+    "events": [
+      {
+        "type": "note",
+        "t": 0.0,
+        "dur": 1.54,
+        "pitch": 2003.821677969203,
+        "gain": 0.0,
+        "pan": 0.0,
+        "timbre": {
+          "preset": null,
+          "brightness": 0.5
+        },
+        "taps": 1,
+        "src": null,
+        "conf": null
+      },
+      {
+        "type": "note",
+        "t": 1.5,
+        "dur": 1.54,
+        "pitch": -165.00422849992196,
+        "gain": 0.0,
+        "pan": 0.0,
+        "timbre": {
+          "preset": null,
+          "brightness": 0.5
+        },
+        "taps": 1,
+        "src": null,
+        "conf": null
+      },
+      {
+        "type": "note",
+        "t": 3.0,
+        "dur": 1.75,
+        "pitch": 2003.821677969203,
+        "gain": 0.0,
+        "pan": 0.0,
+        "timbre": {
+          "preset": null,
+          "brightness": 0.5
+        },
+        "taps": 1,
+        "src": null,
+        "conf": null
+      }
+    ]
+  },
+  {
+    "id": "audaxis.legend",
+    "role": "speech",
+    "engine": "audaxis",
+    "instrument": "speech",
+    "gain": 0.0,
+    "pan": 0.0,
+    "pitch_range": null,
+    "events": [
+      {
+        "type": "speech",
+        "t": 0.0,
+        "text": "Weather. X axis day, 0 to 9. Temperature, 3 degrees Celsius to 10 degrees Celsius. Pitch from 400 to 1,400 hertz; higher values sound higher. Analysis mode. Ticks and reference tone on",
+        "priority": "normal",
+        "src": null
+      }
+    ]
+  }
+]

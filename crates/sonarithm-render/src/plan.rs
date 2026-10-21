@@ -80,6 +80,9 @@ pub enum Instrument {
     Triangle,
     /// A band-limited sawtooth.
     Saw,
+    /// A broadband click: seeded white noise low-passed near 8 kHz for comfort, for the
+    /// tick track (SDR-16; sound-design §7.1). It ignores pitch and brightness.
+    Click,
 }
 
 impl Instrument {
@@ -92,6 +95,7 @@ impl Instrument {
             "square" => Some(Self::Square),
             "triangle" => Some(Self::Triangle),
             "saw" => Some(Self::Saw),
+            "click" => Some(Self::Click),
             _ => None,
         }
     }
@@ -105,6 +109,7 @@ impl Instrument {
             Self::Square => "square",
             Self::Triangle => "triangle",
             Self::Saw => "saw",
+            Self::Click => "click",
         }
     }
 }

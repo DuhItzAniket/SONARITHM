@@ -90,7 +90,7 @@ pub trait Sink: Send + Sync {                      // MIDI file, OSC, …
 }
 ```
 
-**Implemented in A03** (`sonarithm_core::engine`, A03-T04) with the signatures of [ADR-0014](../decisions/0014-capability-trait-signatures.md): the traits and `Registry<D>` are generic over the compiler's data type `D`, spec input arrives as a `SpecFragment` (compact JSON plus its pointer), analyzer and shaper IDs are given at registration, and `Engine::register` returns a `Result`. `Sink` and `VoiceProvider` are added with their first implementations (A05, C04); `ContextProvider::nav_tree` joined in B03-T01, with a default that builds no tree.
+**Implemented in A03** (`sonarithm_core::engine`, A03-T04) with the signatures of [ADR-0014](../decisions/0014-capability-trait-signatures.md): the traits and `Registry<D>` are generic over the compiler's data type `D`, spec input arrives as a `SpecFragment` (compact JSON plus its pointer), analyzer and shaper IDs are given at registration, and `Engine::register` returns a `Result`. `Sink` and `VoiceProvider` are added with their first implementations (A05, C04); `ContextProvider::nav_tree` joined in B03-T01, with a default that builds no tree. From B03-T05, `context_tracks` receives the whole resolved spec (pointer `""`) rather than `/context`, because ticks need the time field, the tracks and the field semantics; the signature is unchanged.
 
 **Resolution rules.**
 
