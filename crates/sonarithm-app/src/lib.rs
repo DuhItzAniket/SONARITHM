@@ -44,6 +44,7 @@ pub mod patch;
 pub mod project;
 pub mod settings;
 pub mod speech;
+mod streams;
 #[doc(hidden)]
 pub mod testing;
 mod transport;

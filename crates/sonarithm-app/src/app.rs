@@ -21,6 +21,7 @@ use sonarithm_speech::WordsPerMinute;
 use crate::codes;
 use crate::events::EventSink;
 use crate::history::History;
+use crate::ipc::StreamOfferInfo;
 use crate::ipc::{
     CompileReport, Counts, DatasetSummary, DeviceSummary, DiagnosticInfo, Event, ExportRequest,
     ExportResult, FieldSummary, HistoryState, IpcError, JobKind, PROTOCOL_VERSION, PlaybackStatus,
@@ -29,6 +30,7 @@ use crate::ipc::{
 use crate::jobs::{Failure, JobQueue, Output, Work};
 use crate::settings::{Settings, SettingsStore};
 use crate::speech::{SequencerConfig, SpeakerSource};
+use crate::streams::{self, StreamAction};
 use crate::transport::{Action, AudioOutput, OutputConfig, Transport};
 
 mod projects;
@@ -98,6 +100,10 @@ pub struct App {
     snr: Sonarithm,
     /// Formats announcements; `None` only if the embedded catalogue is broken.
     localizer: Option<Localizer>,
+    /// Stream sources described to the user and not yet approved, by token.
+    offers: BTreeMap<u64, sonarithm_stream::Endpoint>,
+    next_offer: u64,
+    next_stream: u64,
     sink: Arc<dyn EventSink>,
     store: SettingsStore,
     settings: Settings,
@@ -160,6 +166,9 @@ impl App {
         Ok(Self {
             snr,
             localizer: Localizer::new(LOCALE).ok(),
+            offers: BTreeMap::new(),
+            next_offer: 1,
+            next_stream: 1,
             sink,
             store,
             settings,
@@ -228,6 +237,27 @@ impl App {
             Request::AnnounceRepeat => Ok(Reply::Announce {
                 queued: self.transport.repeat()?,
             }),
+            Request::StreamOffer {
+                transport,
+                url,
+                port,
+                topic,
+                path,
+            } => self.stream_offer(
+                &transport,
+                url.as_deref(),
+                port.as_deref(),
+                topic.as_deref(),
+                path.as_deref(),
+            ),
+            Request::StreamConnect { token } => self.stream_connect(token),
+            Request::StreamPause { id } => self.stream_act(id, StreamAction::Pause),
+            Request::StreamResume { id } => self.stream_act(id, StreamAction::Resume),
+            Request::StreamHide { id } => self.stream_act(id, StreamAction::Hide),
+            Request::StreamStop { id } => self.stream_act(id, StreamAction::Stop),
+            Request::StreamList => Ok(Reply::Streams {
+                streams: self.transport.stream_list()?,
+            }),
             Request::ProjectNew => Ok(self.project_new()),
             Request::ProjectOpen { path } => self.project_open(Path::new(&path)),
             Request::ProjectOpenRecent { index } => self.project_open_recent(index),
@@ -256,6 +286,60 @@ impl App {
             self.changed();
         }
         Ok(reply)
+    }
+
+    /// Describes a stream source for the consent prompt and keeps it under a one-time token.
+    fn stream_offer(
+        &mut self,
+        transport: &str,
+        url: Option<&str>,
+        port: Option<&str>,
+        topic: Option<&str>,
+        path: Option<&str>,
+    ) -> Result<Reply, IpcError> {
+        let endpoint = streams::endpoint(transport, url, port, topic, path)?;
+        let (transport, target, topic) = streams::target(&endpoint);
+        let token = self.next_offer;
+        self.next_offer += 1;
+        self.offers.insert(token, endpoint);
+        Ok(Reply::StreamOffer(StreamOfferInfo {
+            token,
+            transport: transport.to_owned(),
+            target,
+            topic,
+        }))
+    }
+
+    /// Opens the offered stream: the user approved it (ADR-0012, A11Y-16). The token is
+    /// used up, so one approval opens one connection.
+    fn stream_connect(&mut self, token: u64) -> Result<Reply, IpcError> {
+        let endpoint = self.offers.remove(&token).ok_or_else(|| {
+            IpcError::new(
+                &codes::STREAM_CONNECT,
+                format!("No stream offer has the token {token}, or it was used already."),
+            )
+        })?;
+        let options =
+            sonarithm_stream::Options::new(sonarithm_stream::Capacity::Rows(streams::STREAM_ROWS));
+        let consent = sonarithm_stream::Consent::user_approved(endpoint.clone());
+        let connection = sonarithm_stream::connect(consent, options).map_err(|err| {
+            IpcError::new(
+                &codes::STREAM_CONNECT,
+                format!("The stream could not start: {err}."),
+            )
+        })?;
+        let id = format!("s{}", self.next_stream);
+        self.next_stream += 1;
+        self.transport.stream_open(id, endpoint, connection);
+        Ok(Reply::Streams {
+            streams: self.transport.stream_list()?,
+        })
+    }
+
+    fn stream_act(&mut self, id: String, action: StreamAction) -> Result<Reply, IpcError> {
+        Ok(Reply::Streams {
+            streams: self.transport.stream_act(id, action)?,
+        })
     }
 
     /// Pauses, then announces the current value (A11Y-09, keyboard §9.2 item 3).

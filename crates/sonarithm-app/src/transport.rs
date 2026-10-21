@@ -33,6 +33,7 @@ use crate::codes;
 use crate::events::EventSink;
 use crate::ipc::{ClockAnchor, Event, IpcError, LoopSpan, PlaybackStatus, TransportState};
 use crate::speech::{Output, Sequencer, SequencerConfig, SpeakerSource, SpeechRoute};
+use crate::streams::{LiveStreams, StreamAction};
 
 /// How often the control thread services the player.
 const TICK: Duration = Duration::from_millis(10);
@@ -96,6 +97,15 @@ enum Message {
     Devices(Reply<Vec<DeviceInfo>>),
     Announce(Box<Announcement>),
     Repeat(Reply<bool>),
+    StreamOpen(
+        Box<(
+            String,
+            sonarithm_stream::Endpoint,
+            sonarithm_stream::Connection,
+        )>,
+    ),
+    StreamAct(String, StreamAction, Reply<Vec<crate::ipc::StreamInfo>>),
+    StreamList(Reply<Vec<crate::ipc::StreamInfo>>),
     Unplug,
     Shutdown,
 }
@@ -164,6 +174,32 @@ impl Transport {
         self.ask(Message::Repeat)
     }
 
+    /// Hands an approved, open stream to the control thread.
+    pub(crate) fn stream_open(
+        &self,
+        id: String,
+        endpoint: sonarithm_stream::Endpoint,
+        connection: sonarithm_stream::Connection,
+    ) {
+        let _ = self
+            .sender
+            .send(Message::StreamOpen(Box::new((id, endpoint, connection))));
+    }
+
+    /// Pauses, resumes, hides or stops a stream; the streams afterwards.
+    pub(crate) fn stream_act(
+        &self,
+        id: String,
+        action: StreamAction,
+    ) -> Result<Vec<crate::ipc::StreamInfo>, IpcError> {
+        self.ask(|reply| Message::StreamAct(id, action, reply))
+    }
+
+    /// The open streams.
+    pub(crate) fn stream_list(&self) -> Result<Vec<crate::ipc::StreamInfo>, IpcError> {
+        self.ask(Message::StreamList)
+    }
+
     /// Loads a new Score (or none). Playback pauses; it never continues into the new
     /// Score on its own (A11Y-15).
     pub(crate) fn load(&self, score: Option<Arc<Score>>) {
@@ -229,6 +265,7 @@ struct Control<B: AudioBackend, F: Fn() -> B> {
     seq: u64,
     last_anchor: Option<Instant>,
     sequencer: Sequencer,
+    streams: LiveStreams,
     speaker_source: Option<SpeakerSource>,
     /// The self-voicing speaker, made on first use; `Err` once making it failed.
     speaker: Option<Result<Box<dyn Speaker>, ()>>,
@@ -246,6 +283,7 @@ impl<B: AudioBackend, F: Fn() -> B> Control<B, F> {
     ) -> Self {
         Self {
             sequencer: Sequencer::new(config.speech),
+            streams: LiveStreams::new(),
             speaker_source,
             speaker: None,
             epoch: Instant::now(),
@@ -276,8 +314,9 @@ impl<B: AudioBackend, F: Fn() -> B> Control<B, F> {
             self.service();
             self.speak();
         }
-        // Dropping the player closes the stream.
+        // Dropping the player closes the audio stream; live streams stop too.
         self.player = None;
+        self.streams.stop_all();
     }
 
     fn duration(&self) -> f64 {
@@ -328,6 +367,17 @@ impl<B: AudioBackend, F: Fn() -> B> Control<B, F> {
             Message::Repeat(reply) => {
                 let now = self.now_ms();
                 let _ = reply.send(Ok(self.sequencer.repeat(now)));
+            }
+            Message::StreamOpen(open) => {
+                let (id, endpoint, connection) = *open;
+                self.streams.open(id, &endpoint, connection);
+            }
+            Message::StreamAct(id, action, reply) => {
+                let result = self.streams.act(&id, action).map(|()| self.streams.list());
+                let _ = reply.send(result);
+            }
+            Message::StreamList(reply) => {
+                let _ = reply.send(Ok(self.streams.list()));
             }
             Message::Unplug => {
                 if let Some(player) = &mut self.player {
@@ -665,6 +715,14 @@ impl<B: AudioBackend, F: Fn() -> B> Control<B, F> {
     /// One step of the sequencer (08 §4).
     fn speak(&mut self) {
         let now = self.now_ms();
+        #[expect(
+            clippy::cast_precision_loss,
+            reason = "milliseconds since the thread started, far below 2^52"
+        )]
+        let now_s = Seconds(now as f64 / 1_000.0);
+        for announcement in self.streams.tick(now_s) {
+            self.sequencer.push(announcement, now);
+        }
         let playing = self.model.status == PlaybackStatus::Playing;
         let speaking = match (&self.speaker, self.sequencer.config().route) {
             (Some(Ok(speaker)), SpeechRoute::SelfVoicing) => speaker.is_speaking(),

@@ -19,6 +19,7 @@ const EN_US: &[(&str, &str)] = &[
         include_str!("../locales/en-US/announce.ftl"),
     ),
     ("common.ftl", include_str!("../locales/en-US/common.ftl")),
+    ("stream.ftl", include_str!("../locales/en-US/stream.ftl")),
     ("ui.ftl", include_str!("../locales/en-US/ui.ftl")),
     ("units.ftl", include_str!("../locales/en-US/units.ftl")),
 ];
