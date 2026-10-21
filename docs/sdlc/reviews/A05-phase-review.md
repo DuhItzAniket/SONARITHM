@@ -10,7 +10,7 @@
 | Phase | A05 · Render engine, audio backend and export ([roadmap](../../planning/roadmap.md#a05--render-engine-audio-backend-and-export)) |
 | Planned window | 2026-11-29 – 2026-12-27 (4 weeks) |
 | Actual window | 2026-10-19 – 2026-10-21 |
-| Outcome | **Done, with owner decisions pending** on PB-01, PB-02 and PB-03 |
+| Outcome | **Done.** The owner decided PB-01, PB-02, PB-03 and PB-06 on 2026-10-21 (gate summary below) |
 
 A05 delivered:
 
@@ -24,22 +24,22 @@ A05 delivered:
 
 Renders are bit-identical across three OSes and every block size. The audio thread allocates nothing.
 
-Two budgets are not met as written on the owner's only machine: PB-02 and PB-03. PB-01, which belongs to B03, is far from its target on this laptop's audio driver. The recommendations are below. The cable-latency confirmation of ADR-0016 (#123) is an owner step.
+Two budgets are not met as written on the owner's only machine: PB-02 and PB-03. PB-01, which belongs to B03, is far from its target on this laptop's audio driver. The owner accepted the recommendations below on 2026-10-21. The cable-latency confirmation of ADR-0016 (#123) is an owner step.
 
 ## Exit criteria
 
 | # | Criterion (verbatim from the roadmap) | Result | Evidence |
 |---|---|---|---|
-| 1 | 0 xruns in a 10-min soak at 128-frame buffers on reference hardware. | Partially met; **owner decision pending** | 0 underruns in 10-minute soaks at every period HW-01 offers: WASAPI RAW 480 frames, exclusive 144 frames; cpal 0 late callbacks. The driver has no 128-frame period (F-030), and no reference-class machine exists (R-22). The worst 128-frame block renders in 382 µs of 2,667 µs (F-055) |
-| 2 | Offline render ≥ 50× real time on the benchmark Score. | Partially met; **owner decision pending** | 91.4× (criterion) and 92–96× (`render_speed`) on HW-01; 43–46× on HW-01e, the CPU-limited rerun that 12 §8 requires above half the budget (F-053) |
+| 1 | 0 xruns in a 10-min soak at 128-frame buffers on reference hardware. | Partially met; **accepted by the owner** for `v0.1.0-alpha` (PB-02), with the 128-frame rerun in #187 | 0 underruns in 10-minute soaks at every period HW-01 offers: WASAPI RAW 480 frames, exclusive 144 frames; cpal 0 late callbacks. The driver has no 128-frame period (F-030), and no reference-class machine exists (R-22). The worst 128-frame block renders in 382 µs of 2,667 µs (F-055) |
+| 2 | Offline render ≥ 50× real time on the benchmark Score. | Partially met; **waived by the owner** for `v0.1.0-alpha` (PB-03), with the follow-up in #185 | 91.4× (criterion) and 92–96× (`render_speed`) on HW-01; 43–46× on HW-01e, the CPU-limited rerun that 12 §8 requires above half the budget (F-053) |
 | 3 | The null-test residual between OSes is ≤ −90 dBFS for the golden set. | Met | All six golden cases bit-identical on Windows and macOS against Linux: residual at the −240 dBFS floor, ΔLUFS 0.0000 (`golden-compare` on #178, F-056) |
 | 4 | No allocations on the audio thread (debug assertion run in CI). | Met | `no-alloc` job green on ubuntu, windows and macos (#178), and the nightly `alloc-soak` job green on its PR run. `allocation-counter` replaces `assert_no_alloc` (F-038, F-054) |
 
-Proposed waivers (owner decision pending):
+Waivers granted by the owner on 2026-10-21:
 
 | Criterion | Reason | Owner | Follow-up |
 |---|---|---|---|
-| 2 (PB-03) for `v0.1.0-alpha` | Only the stand-in for the reference machine misses, by about 10%. At 43× a 60 s export takes about 1.4 s | @DuhItzAniket | SIMD voice batching and a rerun on reference hardware before Gate B (issue to open if the waiver is granted) |
+| 2 (PB-03) for `v0.1.0-alpha` | Only the stand-in for the reference machine misses, by about 10%. At 43× a 60 s export takes about 1.4 s | @DuhItzAniket | SIMD voice batching and a rerun on reference hardware before Gate B (#185) |
 
 ## Gate summary: budgets and recommendations
 
@@ -47,10 +47,10 @@ Budgets from [12 §8](../../architecture/12-cross-cutting-concerns.md#8-performa
 
 | Budget | Target | Measured | Recommendation | Decision |
 |---|---|---|---|---|
-| PB-01 key press → cue onset | ≤ 50 ms p95 at 256 frames, 48 kHz | Loopback self-test through `Command::Cue`, 200 cues, software path only: RAW shared p50 99.2 ms, p95 104.0 ms; default shared p95 145.6 ms (F-052). A02's direct RAW renderer: p95 83.7 ms (F-032). The shared period is fixed at 480 frames (F-030); exclusive mode queues about 100 ms (F-051). Not yet measured acoustically (#123) | **Defer to B03**, where 12 §8 places PB-01's final check. The engine's share is small: a 128-frame block renders in at most 0.4 ms, and a command waits at most one 10 ms period. Decide after the cable test and one run on a device with small shared periods. If those still exceed 50 ms, re-baseline PB-01 per device class rather than waive it | Owner decision pending |
-| PB-02 audio robustness | 0 xruns in 10 min at 128 frames | 0 underruns at the device's periods (480 and 144 frames); 769,982 callbacks with no allocation (F-055) | **Accept for `v0.1.0-alpha` at the device's periods**; rerun at 128 frames on a USB interface or reference hardware | Owner decision pending |
-| PB-03 offline render speed | ≥ 50× real time (4 tracks, 10k events) | 91.4× on HW-01; 43–46× on HW-01e (F-053) | **Waive for `v0.1.0-alpha`**, with the follow-up before Gate B (above) | Owner decision pending |
-| PB-06 determinism | Null residual ≤ −90 dBFS; ΔLUFS ≤ 0.1 | Bit-identical on three OSes and two architectures (F-056) | **Accept**: `golden-compare` passed | Owner decision pending |
+| PB-01 key press → cue onset | ≤ 50 ms p95 at 256 frames, 48 kHz | Loopback self-test through `Command::Cue`, 200 cues, software path only: RAW shared p50 99.2 ms, p95 104.0 ms; default shared p95 145.6 ms (F-052). A02's direct RAW renderer: p95 83.7 ms (F-032). The shared period is fixed at 480 frames (F-030); exclusive mode queues about 100 ms (F-051). Not yet measured acoustically (#123) | **Defer to B03**, where 12 §8 places PB-01's final check. The engine's share is small: a 128-frame block renders in at most 0.4 ms, and a command waits at most one 10 ms period. Decide after the cable test and one run on a device with small shared periods. If those still exceed 50 ms, re-baseline PB-01 per device class rather than waive it | **Deferred to B03** by the owner, 2026-10-21 (#186, #123) |
+| PB-02 audio robustness | 0 xruns in 10 min at 128 frames | 0 underruns at the device's periods (480 and 144 frames); 769,982 callbacks with no allocation (F-055) | **Accept for `v0.1.0-alpha` at the device's periods**; rerun at 128 frames on a USB interface or reference hardware | **Accepted** by the owner, 2026-10-21; rerun #187 |
+| PB-03 offline render speed | ≥ 50× real time (4 tracks, 10k events) | 91.4× on HW-01; 43–46× on HW-01e (F-053) | **Waive for `v0.1.0-alpha`**, with the follow-up before Gate B (above) | **Waived for `v0.1.0-alpha`** by the owner, 2026-10-21; follow-up #185 |
+| PB-06 determinism | Null residual ≤ −90 dBFS; ΔLUFS ≤ 0.1 | Bit-identical on three OSes and two architectures (F-056) | **Accept**: `golden-compare` passed | **Accepted** by the owner, 2026-10-21 |
 
 ## Definition of Done (phase)
 
@@ -80,9 +80,9 @@ Budgets from [12 §8](../../architecture/12-cross-cutting-concerns.md#8-performa
 
 | Metric | Budget | Measured | Conditions | Evidence | Verdict |
 |---|---|---|---|---|---|
-| PB-01 key press → onset, p95 | ≤ 50 ms | 104.0 ms (RAW), 145.6 ms (default) | HW-01, WASAPI shared, 480-frame period, loopback, 200 cues | F-052, benchmarks log | Outside (owner decision pending) |
+| PB-01 key press → onset, p95 | ≤ 50 ms | 104.0 ms (RAW), 145.6 ms (default) | HW-01, WASAPI shared, 480-frame period, loopback, 200 cues | F-052, benchmarks log | Outside; deferred to B03 by the owner (#186) |
 | PB-02 underruns, 10 min | 0 at 128 frames | 0 at 480 and 144 frames; 128 not available | HW-01, silent soaks | F-055, benchmarks log | Not measurable at 128 frames |
-| PB-03 render speed | ≥ 50× | 91.4× (HW-01), 43–46× (HW-01e) | DS-006 Score, 256-frame blocks, 1 thread | F-053, benchmarks log | Outside on HW-01e (owner decision pending) |
+| PB-03 render speed | ≥ 50× | 91.4× (HW-01), 43–46× (HW-01e) | DS-006 Score, 256-frame blocks, 1 thread | F-053, benchmarks log | Outside on HW-01e; waived for `v0.1.0-alpha` by the owner (#185) |
 | PB-06 null residual, ΔLUFS | ≤ −90 dBFS, ≤ 0.1 | Identical (−240 dBFS floor), 0.0000 | CI-LNX, CI-WIN, CI-MAC, six cases | F-056, benchmarks log | Within |
 | NFR-10 true peak under stress | ≤ −1 dBTP | −1.186 and −1.162 dBTP | Two stress Scores, ebur128 meter | F-050 | Within |
 
@@ -110,9 +110,9 @@ Budgets from [12 §8](../../architecture/12-cross-cutting-concerns.md#8-performa
 
 | Item | Reason | Where it goes |
 |---|---|---|
-| A 128-frame device soak | HW-01's driver has no 128-frame period | Owner step on other hardware (PB-02) |
+| A 128-frame device soak | HW-01's driver has no 128-frame period | Owner step on other hardware (PB-02, #187) |
 | Acoustic latency and NVDA coexistence | Needs a cable and the owner | #123 (owner checklist #129) |
-| SIMD voice rendering | PB-03 on the reference stand-in | Before Gate B, if the waiver is granted |
+| SIMD voice rendering | PB-03 on the reference stand-in | Before Gate B (#185) |
 | `IAudioClient3` small shared periods | Not offered by HW-01's driver | When a device that offers them is available |
 | Latency tooling on macOS and Linux | No hardware (R-22) | R-22 follow-up |
 | ISO 226 Annex B comparison; EBU Tech 3342 cases | Need the full standard and the test signals | TODO(verify) |
@@ -168,10 +168,10 @@ No UI changed. The engine makes these choices for blind and low-vision users:
 
 | Action | Owner | Due | Issue |
 |---|---|---|---|
-| Decide PB-01, PB-02, PB-03 and PB-06 (gate summary above) | @DuhItzAniket | Before `v0.1.0-alpha` | — |
+| Decide PB-01, PB-02, PB-03 and PB-06 (gate summary above) | @DuhItzAniket | Before `v0.1.0-alpha` | Done 2026-10-21 |
 | Cable latency test and NVDA check (ADR-0016) | @DuhItzAniket | Before B03 | #123, checklist #129 |
 | Device hot-plug script | @DuhItzAniket | — | checklist #129 |
-| SIMD voice rendering and a PB-03 rerun on reference hardware | Render maintainer | Before Gate B | To open if PB-03 is waived |
+| SIMD voice rendering and a PB-03 rerun on reference hardware | Render maintainer | Before Gate B | #185 |
 | A 128-frame soak on a capable device | @DuhItzAniket | Before Gate B | — |
 | Remove the Dependabot ignore for `audio_thread_priority` when cpal requires a newer version | Maintainer | With the next cpal upgrade | #173 |
 
