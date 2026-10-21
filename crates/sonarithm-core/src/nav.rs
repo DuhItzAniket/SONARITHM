@@ -109,6 +109,9 @@ impl ValueRange {
 pub enum XType {
     /// Plain numbers.
     Number,
+    /// Calendar years written as plain numbers (a temporal field such as `1980`), spoken
+    /// without grouping separators.
+    Year,
     /// Calendar dates, as days since 1970-01-01.
     Date,
     /// Instants, as seconds since 1970-01-01T00:00:00 UTC.

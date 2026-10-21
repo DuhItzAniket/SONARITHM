@@ -3218,6 +3218,7 @@ dependencies = [
  "sonarithm-compiler",
  "sonarithm-core",
  "sonarithm-data",
+ "sonarithm-i18n",
  "sonarithm-numisona",
  "sonarithm-render",
  "sonarithm-spec",

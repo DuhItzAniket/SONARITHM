@@ -21,6 +21,7 @@
 - B03-T01: `sonarithm_core::nav` (NavTree types and invariant check), `ContextProvider::nav_tree`, `Compiled::nav` in the compiler, and `crates/engines/sonarithm-audaxis` with the tree builder; snapshots for the six NUMISONA templates, property tests and OD-18. Merged as #262.
 - B03-T02: `nav::Cursor` with the verbs of keyboard §4.2 and §4.3, outcomes (moved, boundary, invalid, describe, toggled) with their earcon IDs, and where am I; a verb-by-level matrix snapshot reviewed against §4.3 row by row. Merged as #264.
 - B03-T11: `spatial::Spatial` shaper and the A11Y-14 guard (`SNR-ENG-100` to `103`, AUDAXIS's first code table), the mono-downmix conformance test and the `stereo-placement` golden case.
+- B03-T03: `announce::Composer` (parts as catalogue messages joined by `announce-join`, spoken and display forms, mandatory qualifiers, where am I, pause) and `AnnouncementQueue` (§9.1 classes, supersede, priority, history); `announce.ftl` joins the shared catalogue, with contract cases; `XType::Year` so years are spoken without grouping.
 
 ## Decisions
 
@@ -38,6 +39,9 @@
 | N and Shift+N land on the insight's point, not the insight node | "Next insight in the current series" needs the cursor to stay in the series; the move is flagged as a landmark | keyboard §4.2 |
 | The A11Y-14 guard checks the finished Score, not the spec | It then covers every encoder; NUMISONA's spec-level `SNR-ENG-052` already covers its own tracks, so AUDAXIS skips a track NUMISONA warned about | 07 AUDAXIS |
 | Pitch extremes use SDR-08's expanded range (65–1480 Hz) as the line | It is the evidence-backed range; no rule gives a separate hearing-loss limit, so no new number was invented | `SNR-ENG-102` |
+| Announcement parts joined through a catalogue message (`announce-join`), right to left | Part order is configurable (A11Y-12), so no single message can hold every order; nesting keeps each announcement one message for the pseudo-locale check | 08 §4 |
+| Every announcement has a spoken and a display form | Speech uses unit names, the log, readout and braille use symbols (keyboard §8.1); one formatter gives both the same value and precision (DL-P12) | 08 §4 |
+| Derived and synthetic values carry qualifiers too | 03 §4 rule 3 states numbers plainly only for exact, vector and user-edited values | 03 §4 |
 | B02-T08 built before B01-T02 (its listed dependency) | It needs no generated IPC type: the catalogues are plain files and the contract test reads them directly | status.md B02 tasks |
 
 ## Problems and how they were solved
@@ -55,5 +59,5 @@
 
 ## Next steps
 
-- [ ] B03-T03: announcement composer and queue (agent).
+- [ ] B03-T05, T06, T11: context tracks, earcon set, stereo placement (agent).
 - [ ] Owner: when `sonarithm-i18n` first ships in a release, publish it once by hand so crates.io trusted publishing can be set up for it ([release process](../../engineering/release-process.md)); checklist #129.

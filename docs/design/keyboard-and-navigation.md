@@ -310,7 +310,7 @@ An announcement is composed from parts. Users choose verbosity and reorder parts
 | Selection | "selected" | — |
 | Hint | "Press Down to explore points" | Verbose only, first visit to a node type only |
 
-Default order. Terse: value, x, tags, provenance. Verbose: series, x, value, position, tags, provenance, hint.
+Default order. Terse: value, x, tags, provenance. Verbose: series, x, value, position, tags, provenance, hint. B03 puts the level part first in both, so a level change, or the segment a step enters, is heard before the value. The name of a node that is not a point (a series, an axis, a filter) always leads. In B03 the parts are joined with a full stop and a space (`announce-join`), so speech pauses between them.
 
 Speech text uses spoken unit names from the unit table ("°C" → "degrees Celsius" in verbose, "degrees C" in terse; "dB" → "decibels"); symbols stay in visual text and braille (DL-P12). Numbers use the user's locale.
 

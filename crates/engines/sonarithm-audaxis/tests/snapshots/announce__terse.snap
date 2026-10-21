@@ -1,0 +1,94 @@
+---
+source: crates/engines/sonarithm-audaxis/tests/announce.rs
+expression: "transcript(&announcements(&localizer, settings))"
+---
+(start)    Navigation
+  speech:  Weather. 2 series. 40 points
+  display: Weather. 2 series. 40 points
+Down       Navigation
+  speech:  Temperature. series. 20 points. 10 degrees C to 20 degrees C. 0 to 19
+  display: Temperature. series. 20 points. 10 °C to 20 °C. 0 to 19
+Down       Navigation
+  speech:  segment. 10 points. 10 degrees C to 20 degrees C. 0 to 9
+  display: segment. 10 points. 10 °C to 20 °C. 0 to 9
+Down       Navigation
+  speech:  point. 10 degrees C. 0
+  display: point. 10 °C. 0
+Right      Navigation
+  speech:  13 degrees C. 1
+  display: 13 °C. 1
+N          Navigation [E-LANDMARK]
+  speech:  19 degrees C. 3. minimum
+  display: 19 °C. 3. minimum
+End        Navigation
+  speech:  10 to 19. 12 degrees C. 19
+  display: 10 to 19. 12 °C. 19
+Right      EarconText [E-BOUNDARY] (log only)
+  speech:  Last
+  display: Last
+PageDown   Navigation
+  speech:  10 to 19. 53 percent. 19
+  display: 10 to 19. 53%. 19
+G 5        Navigation
+  speech:  0 to 9. no value. 5
+  display: 0 to 9. no value. 5
+W          Response
+  speech:  Weather. Humidity. Series 2 of 2. 0 to 9. Segment 1 of 2. 5. Point 6 of 20. no value. Previous 68 percent. Next 52 percent. All series included
+  display: Weather. Humidity. Series 2 of 2. 0 to 9. Segment 1 of 2. 5. Point 6 of 20. no value. Previous 68%. Next 52%. All series included
+Left       Navigation
+  speech:  68 percent. 4
+  display: 68%. 4
+PageUp     Navigation
+  speech:  0 to 9. 11 degrees C. 4
+  display: 0 to 9. 11 °C. 4
+PageUp     EarconText [E-BOUNDARY] (log only)
+  speech:  First
+  display: First
+Up         Navigation
+  speech:  segment. 10 points. 10 degrees C to 20 degrees C. 0 to 9
+  display: segment. 10 points. 10 °C to 20 °C. 0 to 9
+Up         Navigation
+  speech:  Temperature. series. 20 points. 10 degrees C to 20 degrees C. 0 to 19
+  display: Temperature. series. 20 points. 10 °C to 20 °C. 0 to 19
+Enter      Navigation
+  speech:  segment. 10 points. 10 degrees C to 20 degrees C. 0 to 9
+  display: segment. 10 points. 10 °C to 20 °C. 0 to 9
+X          Navigation
+  speech:  X axis. day. 0 to 19
+  display: X axis. day. 0 to 19
+Right      Navigation
+  speech:  Y axis. Temperature. 10 degrees C to 20 degrees C
+  display: Y axis. Temperature. 10 °C to 20 °C
+I          Navigation
+  speech:  2 insights
+  display: 2 insights
+Down       Navigation
+  speech:  extrema. insight type. 2 insights
+  display: extrema. insight type. 2 insights
+Down       Navigation
+  speech:  Insight. minimum. 19 degrees C. 3
+  display: Insight. minimum. 19 °C. 3
+Enter      Navigation [E-LANDMARK]
+  speech:  19 degrees C. 3. minimum
+  display: 19 °C. 3. minimum
+F          Navigation
+  speech:  Filters
+  display: Filters
+Down       Navigation
+  speech:  Temperature. filter. included
+  display: Temperature. filter. included
+Enter      Response
+  speech:  Temperature. excluded
+  display: Temperature. excluded
+D          Navigation
+  speech:  Weather. dataset. 2 series. 40 points
+  display: Weather. dataset. 2 series. 40 points
+W          Response
+  speech:  Weather. 1 series excluded
+  display: Weather. 1 series excluded
+(pause)    Response
+  speech:  Paused. 20 degrees C. 7. maximum
+  display: Paused. 20 °C. 7. maximum
+(describe) Response
+  speech:  Temperature. 7. 20 degrees Celsius. Point 8 of 20. maximum
+  display: Temperature. 7. 20 °C. Point 8 of 20. maximum

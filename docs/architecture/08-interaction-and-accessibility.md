@@ -96,6 +96,7 @@ flowchart LR
 
 | Concern | Policy |
 |---|---|
+| **Composition** | AUDAXIS composes each announcement from parts, each a message of the shared catalogue, joined by the localized `announce-join` message in the listener's order. Every announcement has a spoken form (unit names) and a display form (unit symbols) from the same value and precision (DL-P12). The provenance part of a value that is not stated plainly is added even if the listener's order leaves it out (B03-T03) |
 | **Supersede** | Rapid navigation replaces queued, stale announcements. Only the latest cursor announcement survives (A11Y-17) |
 | **Priority** | `polite` for navigation and status; `assertive` only for errors, device loss and true alarms |
 | **Sequencing** | During playback, speech is suppressed except for alarms. On pause, the current value is announced (A11Y-09). During exploration, the announcement follows the cue (A11Y-20) |

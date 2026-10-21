@@ -14,6 +14,10 @@ pub const CATALOGUE_LOCALES: &[&str] = &[SOURCE_LOCALE];
 
 /// The English catalogue: (file name, contents).
 const EN_US: &[(&str, &str)] = &[
+    (
+        "announce.ftl",
+        include_str!("../locales/en-US/announce.ftl"),
+    ),
     ("common.ftl", include_str!("../locales/en-US/common.ftl")),
     ("ui.ftl", include_str!("../locales/en-US/ui.ftl")),
     ("units.ftl", include_str!("../locales/en-US/units.ftl")),

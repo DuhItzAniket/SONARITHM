@@ -34,14 +34,14 @@
 | FR-041 | [08](../architecture/08-interaction-and-accessibility.md) | B03 | ST (legend text), AT | Planned |
 | FR-042 | [08 §2](../architecture/08-interaction-and-accessibility.md#2-the-navigation-model) | B03 | PT (reachability), AT (task suite) | In progress (B03-T01, #211): NavTree built by `sonarithm-audaxis`; `a11y_04_every_node_is_reachable_and_every_point_is_a_row` (property test), `a11y_04_nav_tree_snapshots_for_the_six_templates`; cursor and verbs (B03-T02, #212): `a11y_04_every_verb_at_every_level`, `a11y_04_verb_sequences_never_leave_the_tree`, `a11y_04_no_dead_end`, `a11y_07_where_am_i_is_defined_at_every_node`, `a11y_08_boundary_moves_keep_the_cursor_and_bonk` |
 | FR-043 | [08 §3](../architecture/08-interaction-and-accessibility.md#3-what-a-cursor-move-produces) | B03 | UT, AT | Planned |
-| FR-044 | [08 §4](../architecture/08-interaction-and-accessibility.md#4-announcement-pipeline) | B03 | ST (templates), AT (NVDA, JAWS, VO, Orca) | Planned |
+| FR-044 | [08 §4](../architecture/08-interaction-and-accessibility.md#4-announcement-pipeline) | B03 | ST (templates), AT (NVDA, JAWS, VO, Orca) | In progress (B03-T03, #213): `a11y_12_announcement_snapshots_at_terse_and_verbose`, `a11y_12_part_order_is_configurable`, `a11y_17_only_the_latest_navigation_survives_and_errors_are_never_dropped`, `nfr_09_every_announcement_passes_the_pseudo_locale_check`; routes in B03-T04, screen-reader runs in B03-T13 |
 | FR-045 | [08 §3](../architecture/08-interaction-and-accessibility.md#3-what-a-cursor-move-produces) | B03 | AT (braille display) | Planned |
 | FR-046 | [09 §3](../architecture/09-desktop-app.md#3-frontend-architecture) | B04 | E2E, AT | Planned |
 | FR-047 | [08 §6](../architecture/08-interaction-and-accessibility.md#6-modalities-profiles-and-settings) | B03 | E2E, AT | Planned |
 | FR-048 | [06 §3](../architecture/06-audio-engine.md#3-render-graph) | B03, D03 | GT | In progress (B03-T11, #221): stereo placement with the A11Y-14 guard; `a11y_14_information_survives_a_mono_downmix`, `a11y_14_pan_alone_is_reported_once`, golden case `stereo-placement`; binaural and multichannel in D03 |
 | FR-049 | [08 §4](../architecture/08-interaction-and-accessibility.md#4-announcement-pipeline) | B03 | AT, CD | Planned |
 | FR-050 | [06 §5](../architecture/06-audio-engine.md#5-scheduler-and-transport) | A05, B01 | UT (sample-accurate dispatch), E2E | In progress: play, pause, stop, seek, loop and speed in `sonarithm_render::Graph`, with unit tests (A05-T04); UI controls in B01 |
-| FR-051 | [08 §4](../architecture/08-interaction-and-accessibility.md#4-announcement-pipeline) | B03 | AT | Planned |
+| FR-051 | [08 §4](../architecture/08-interaction-and-accessibility.md#4-announcement-pipeline) | B03 | AT | In progress (B03-T03, #213): `Composer::paused` announces the current value (snapshot); sequencing on pause in B03-T07 |
 | FR-052 | [07 SONOTRACE](../architecture/07-engines.md) | B06 | IT, CD; EXP for H-09 | Planned |
 | FR-060 | [07 CURVASONA](../architecture/07-engines.md) | C03 | UT, CD (teacher pilot) | Planned |
 | FR-061 | [07 CURVASONA](../architecture/07-engines.md) | C03 | UT (round trip), GT | Planned |
