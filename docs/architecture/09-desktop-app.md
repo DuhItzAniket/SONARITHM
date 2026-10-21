@@ -109,10 +109,12 @@ The UI calls an `IpcTransport` interface (`invoke`, `subscribe`, `binary`). The 
 |---|---|---|
 | Settings | OS app-config dir (`tauri::path`) | JSON, schema-validated, versioned |
 | Profiles | App-config dir `/profiles` | JSON (portable) |
-| Projects | User-chosen path | `.sonarithm` bundle ([12 §4](12-cross-cutting-concerns.md#4-project-file-format)) |
-| Autosave and crash recovery | App-data dir `/autosave` | Last N snapshots; offered on next start |
+| Projects | User-chosen path | `.sonarithm` bundle ([12 §4](12-cross-cutting-concerns.md#4-project-file-format), [RFC-0002](../rfcs/0002-project-format-v1.md)); the recent list in the app-config dir (`recent-projects.json`) |
+| Autosave and crash recovery | App-data dir `/autosave` | The newest 5 bundles, at most one every 30 s while there are unsaved changes, 2 GiB in all (TODO(verify) in B05-T07); offered on next start; removed by a save or a clean exit |
 | Logs | App-log dir | Rotating text logs, local only ([12 §2](12-cross-cutting-concerns.md#2-logging-tracing-and-observability)) |
 | Model weights (D04) | App-data dir `/models` | Downloaded on explicit request, checksummed |
+
+**As built (B05-T04).** `sonarithm-app::project` reads and writes bundles ([ADR-0018](../decisions/0018-project-format-v1.md)). A save writes the whole bundle to a temporary file, flushes it and renames it over the old one, the same crash-safe write as settings. Opening checks every member against the manifest's SHA-256 before using it, reads embedded Parquet in place from the stored member (a positional reader per column chunk; no copy of the member in memory, F-141), and opens linked data only when the link resolves, after canonicalisation, to a regular file with a data extension whose fingerprint matches; otherwise the dataset is listed as unavailable with a warning that names the file alone. The protocol names projects by file name: `project_recent` lists file names with an index, and `project_open_recent` opens by that index, so no folder reaches the UI (ADR-0017 §7). Editing commands mark the session unsaved and write an autosave when the last one is 30 s old; `App::shutdown` removes the autosaves, so only a crash leaves them for `project_recovery`.
 
 ## 6. Packaging
 
