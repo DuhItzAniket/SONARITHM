@@ -53,6 +53,7 @@ fn requests(dir: &TempDir) -> Vec<Value> {
         json!({ "command": "transport_set_loop", "args": { "range": null } }),
         json!({ "command": "transport_play" }),
         json!({ "command": "transport_pause" }),
+        json!({ "command": "announce_repeat" }),
         json!({ "command": "stop_all" }),
         json!({ "command": "transport_stop" }),
         json!({ "command": "export_render", "args": { "options": { "path": wav, "cues": false, "preserveLevel": false } } }),

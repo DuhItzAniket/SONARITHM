@@ -48,6 +48,34 @@ fn tmp(name: &str) -> PathBuf {
     dir
 }
 
+/// With navigation, a compile also returns AUDAXIS's navigation tree, and AUDAXIS's
+/// shaping (stereo placement, A11Y-14) is recorded in the Score header; the data events
+/// are the same.
+#[test]
+fn navigation_builds_the_tree_beside_the_score() {
+    let plain = Sonarithm::builder().with_default_engines().build().unwrap();
+    let navigating = Sonarithm::builder()
+        .with_default_engines()
+        .with_navigation()
+        .build()
+        .unwrap();
+    let without = plain.compile(&temps()).unwrap();
+    let with = navigating.compile(&temps()).unwrap();
+    assert!(without.nav().is_none());
+    let tree = with.nav().unwrap();
+    assert!(tree.len() > 3, "dataset, series, axes and three points");
+    assert_eq!(
+        with.score().tracks[0].events,
+        without.score().tracks[0].events
+    );
+    assert!(
+        navigating
+            .engines()
+            .iter()
+            .any(|engine| engine.id.as_str() == "audaxis")
+    );
+}
+
 #[test]
 fn a_spec_compiles_with_the_default_engines() {
     let snr = Sonarithm::builder().with_default_engines().build().unwrap();

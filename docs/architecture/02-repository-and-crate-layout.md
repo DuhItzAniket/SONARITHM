@@ -91,7 +91,7 @@ SONARITHM/
 | `sonarithm-export` | WAV/FLAC/MIDI writers; render manifest (`*.render.json`); speech/cue sidecar | core, render, hound, flacenc, midly, sha2 | Yes | 1.88 | A05 |
 | `sonarithm-i18n` | Message catalogues (`locales/<locale>/*.ftl`, shared with `@sonarithm/i18n`), locale formatting of numbers and dates, spoken unit names, the `en-XA` pseudo-locale and its check (12 §5) | fluent-bundle, ICU4X (`icu_decimal`, `icu_datetime`) | Yes | 1.88 | B02 |
 | `sonarithm-stream` | Live source adapters with backpressure and reconnect | core, data, tokio, tokio-tungstenite, serialport, rumqttc, rosc | No | 1.88 | B06 |
-| `sonarithm-speech` | Optional self-voicing; screen-reader routing where the platform allows | tts | No | 1.88 | B03 |
+| `sonarithm-speech` | Optional self-voicing: the `Speaker` trait, a silent recorder, and the platform engine behind the opt-in `system` feature | core; tts (optional) | No | 1.88 | B03 |
 | `sonarithm-app` | Projects (`.sonarithm` bundles), sessions, undo/redo (command pattern), job queue, profiles, settings, the IPC protocol ([ADR-0017](../decisions/0017-ipc-protocol-v1.md)) | facade, compiler, render, audio, export, data | No | 1.88 | B01 |
 | `sonarithm` | Facade: stable public API (`Sonarithm::compile`, `render_to_file`, builders) | all library crates (feature-gated) | Yes | 1.88 | A07 |
 | `sonarithm-cli` | `sonarithm` binary: `render`, `play`, `validate`, `schema`, `describe`, `lint`, `inspect` | facade, app, clap, miette | No | 1.88 | A07 |
@@ -118,7 +118,8 @@ flowchart BT
   audio[sonarithm-audio] --> render
   export[sonarithm-export] --> render
   stream[sonarithm-stream] --> data
-  app[sonarithm-app] --> facade & compiler & audio & export & stream
+  speech[sonarithm-speech] --> core
+  app[sonarithm-app] --> facade & compiler & audio & export & stream & speech
   facade[sonarithm] --> compiler & render & export
   cli[apps/cli] --> app & facade
   desktop[apps/desktop/src-tauri] --> app

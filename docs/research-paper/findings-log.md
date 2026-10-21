@@ -719,3 +719,12 @@ A05 (render engine, audio backends, export) uses F-050 to F-069.
 - **Evidence level / confidence:** EV-C / Moderate (one data shape on one machine; the saving grows with the member's size, the decoded table dominates either way)
 - **Affects:** RFC-0002 §6, ADR-0018; NFR-11; the data limits of A04 (`Limits::DEFAULT`)
 - **Papers:** none yet
+
+### F-142 · Registering AUDAXIS changes every Score's header, so the app's Scores differ from the CLI's until AUDAXIS is a default engine
+
+- **Date:** 2026-10-21 · **Phase:** B03 · **Type:** engineering · **Status:** new
+- **Statement:** The navigation tree that announcements describe exists only when AUDAXIS is registered with the compiler. The facade registers only NUMISONA by default, so B03-T07 adds an opt-in (`Builder::with_navigation`) that the app core uses. With AUDAXIS registered, a spec without `context` still compiles to a different Score: the header lists `audaxis` among the engines and `spatial` among the shapers (stereo placement, B03-T11), so the Score hash changes, while the data events stay the same. The same spec therefore hashes differently in the desktop app and in the CLI or Python until B03 makes AUDAXIS a default engine of the facade.
+- **Evidence:** `crates/sonarithm/tests/facade.rs` (`navigation_builds_the_tree_beside_the_score`); the two Score headers compared on HW-01
+- **Evidence level / confidence:** EV-C / Strong (deterministic)
+- **Affects:** ADR-0013 (provenance: a render manifest names the Score hash); 05 §8; B03 (making AUDAXIS a default engine), A07 parity between the CLI, Python and the app
+- **Papers:** none yet

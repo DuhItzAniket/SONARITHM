@@ -5,6 +5,7 @@
 
 use std::collections::BTreeMap;
 
+use sonarithm_audaxis::Audaxis;
 use sonarithm_compiler::{Compiler, Failure, Platform};
 use sonarithm_core::engine::{CancelToken, Engine, EngineManifest};
 use sonarithm_data::DataBundle;
@@ -40,6 +41,7 @@ use crate::spec::Spec;
 #[derive(Clone, Debug)]
 pub struct Sonarithm {
     numisona: Option<Numisona>,
+    audaxis: Option<Audaxis>,
 }
 
 impl Default for Sonarithm {
@@ -55,6 +57,7 @@ impl Sonarithm {
     pub fn new() -> Self {
         Self {
             numisona: Some(Numisona::new()),
+            audaxis: None,
         }
     }
 
@@ -69,6 +72,9 @@ impl Sonarithm {
         let mut engines = vec![Platform::new().manifest()];
         if let Some(numisona) = &self.numisona {
             engines.push(Engine::<DataBundle>::manifest(numisona));
+        }
+        if let Some(audaxis) = &self.audaxis {
+            engines.push(Engine::<DataBundle>::manifest(audaxis));
         }
         engines
     }
@@ -115,6 +121,9 @@ impl Sonarithm {
         if let Some(numisona) = &self.numisona {
             engines.push(numisona);
         }
+        if let Some(audaxis) = &self.audaxis {
+            engines.push(audaxis);
+        }
         let compiler = Compiler::new(&engines).map_err(|diagnostic| {
             let mut one = sonarithm_core::Diagnostics::new();
             one.push(*diagnostic);
@@ -140,6 +149,7 @@ impl Sonarithm {
 #[must_use]
 pub struct Builder {
     default_engines: bool,
+    navigation: bool,
     profile: Option<PolarityProfile>,
 }
 
@@ -148,6 +158,16 @@ impl Builder {
     /// (`inline`, `file` and `dataset` sources) is always registered.
     pub fn with_default_engines(mut self) -> Self {
         self.default_engines = true;
+        self
+    }
+
+    /// Registers AUDAXIS (B03): compiles also build the navigation tree beside the Score
+    /// ([`Compiled::nav`], 05 §8), AUDAXIS shapes the Score (stereo placement, A11Y-14) and
+    /// records itself in the header, and the spec's `context` cues come from it. The app
+    /// core uses this; the CLI and Python bindings do not yet, so their Scores differ from
+    /// the app's by AUDAXIS's shaping until B03 makes it a default engine.
+    pub fn with_navigation(mut self) -> Self {
+        self.navigation = true;
         self
     }
 
@@ -168,12 +188,16 @@ impl Builder {
             Some(profile) => Numisona::with_profile(profile),
             None => Numisona::new(),
         });
-        let snr = Sonarithm { numisona };
+        let audaxis = self.navigation.then(Audaxis::new);
+        let snr = Sonarithm { numisona, audaxis };
         // Registering once here surfaces conflicts at build time, not at the first compile.
         let platform = Platform::new();
         let mut engines: Vec<&dyn Engine<DataBundle>> = vec![&platform];
         if let Some(numisona) = &snr.numisona {
             engines.push(numisona);
+        }
+        if let Some(audaxis) = &snr.audaxis {
+            engines.push(audaxis);
         }
         Compiler::new(&engines).map_err(|diagnostic| {
             let mut one = sonarithm_core::Diagnostics::new();

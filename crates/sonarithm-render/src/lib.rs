@@ -28,7 +28,7 @@ pub mod plan;
 pub mod rt;
 mod voice;
 
-pub use graph::{Command, Cue, GainTarget, Graph, GraphConfig, GraphStats, LoopRange};
+pub use graph::{Command, Cue, DUCK_LEVEL, GainTarget, Graph, GraphConfig, GraphStats, LoopRange};
 pub use offline::OfflineRender;
 pub use plan::{
     Bus, EventKind, GlideRef, Instrument, PlanConfig, PlanError, Planned, PlannedBreakpoint,

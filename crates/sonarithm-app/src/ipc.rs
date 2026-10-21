@@ -74,6 +74,7 @@ pub const COMMANDS: &[(&str, &str)] = &[
     ("project_recovery", "recovery"),
     ("project_recover", "project"),
     ("project_discard_recovery", "recovery"),
+    ("announce_repeat", "announce"),
 ];
 
 /// The commands whose reply is a binary view (ADR-0017 §6), sent with
@@ -89,6 +90,7 @@ pub const EVENTS: &[(&str, &str)] = &[
     ("device_changed", "app"),
     ("audio_failed", "app"),
     ("settings_notice", "app"),
+    ("announcement", "announcements"),
 ];
 
 /// A command from the UI (09 §2.1).
@@ -236,6 +238,10 @@ pub enum Request {
     },
     /// Deletes every autosave. Replies [`Reply::Recovery`].
     ProjectDiscardRecovery,
+    /// Speaks the last announcement again (keyboard `nav.repeat`, R). During playback it
+    /// pauses first, or ducks with "duck instead of pause" (keyboard §9.2). Replies
+    /// [`Reply::Announce`].
+    AnnounceRepeat,
     /// A downsampled view of two fields of a dataset for drawing (03 §7). Binary: a view of
     /// kind `m4Tile` or `lttbTile` with the columns `row`, `x` and `y` (ADR-0017 §6).
     ViewGet {
@@ -338,6 +344,7 @@ impl Request {
             Self::ProjectRecovery => "project_recovery",
             Self::ProjectRecover { .. } => "project_recover",
             Self::ProjectDiscardRecovery => "project_discard_recovery",
+            Self::AnnounceRepeat => "announce_repeat",
             Self::ViewGet { .. } => "view_get",
             Self::TablePage { .. } => "table_page",
         }
@@ -409,6 +416,11 @@ pub enum Reply {
     Recovery {
         /// Newest first.
         autosaves: Vec<AutosaveInfo>,
+    },
+    /// Whether an announcement was queued.
+    Announce {
+        /// `false` when there was nothing to repeat.
+        queued: bool,
     },
 }
 
@@ -495,6 +507,8 @@ pub enum Event {
         /// The notice.
         error: IpcError,
     },
+    /// Text for the announcer (08 §4), in the order it may be spoken.
+    Announcement(AnnouncementInfo),
 }
 
 impl Event {
@@ -508,6 +522,7 @@ impl Event {
             | Self::DeviceChanged { .. }
             | Self::AudioFailed { .. }
             | Self::SettingsNotice { .. } => Channel::App,
+            Self::Announcement(_) => Channel::Announcements,
         }
     }
 }
@@ -529,6 +544,48 @@ pub enum Channel {
     App,
     /// Binary meter frames (B01-T04).
     Meters,
+}
+
+/// An announcement, sequenced with sonification (B03-T07). The host sends `speech` to the
+/// screen reader unless SONARITHM already spoke it (`selfVoiced`), and shows `display`.
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, TS)]
+#[serde(rename_all = "camelCase")]
+#[non_exhaustive]
+pub struct AnnouncementInfo {
+    /// Its order.
+    pub seq: u64,
+    /// The text to speak, with spoken unit names.
+    pub speech: String,
+    /// The text to show and to send to braille, with unit symbols.
+    pub display: String,
+    /// Its class (keyboard §9.1).
+    pub class: AnnouncementClass,
+    /// Errors, device loss and alarms only (08 §4); everything else is polite.
+    pub assertive: bool,
+    /// It cuts off speech in progress (navigation, responses, earcon text).
+    pub interrupt: bool,
+    /// SONARITHM spoke it through self-voicing: show it, but do not send it to the
+    /// screen reader.
+    pub self_voiced: bool,
+    /// The navigation node it describes, if any.
+    pub node: Option<u32>,
+}
+
+/// The class of an announcement (keyboard §9.1).
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize, TS)]
+#[serde(rename_all = "camelCase")]
+#[non_exhaustive]
+pub enum AnnouncementClass {
+    /// A cursor move.
+    Navigation,
+    /// The answer to a command: where am I, repeat, the value on pause.
+    Response,
+    /// A status change or an error.
+    Status,
+    /// A stream notice.
+    Stream,
+    /// The text of an earcon.
+    EarconText,
 }
 
 /// An open dataset.
@@ -1001,6 +1058,16 @@ mod tests {
                 error: error.clone(),
             },
             Event::SettingsNotice { error },
+            Event::Announcement(AnnouncementInfo {
+                seq: 1,
+                speech: "Paused. 12.5".into(),
+                display: "Paused. 12.5".into(),
+                class: AnnouncementClass::Response,
+                assertive: false,
+                interrupt: true,
+                self_voiced: false,
+                node: Some(7),
+            }),
         ];
         assert_eq!(events.len(), EVENTS.len());
         for (event, (name, channel)) in events.iter().zip(EVENTS) {

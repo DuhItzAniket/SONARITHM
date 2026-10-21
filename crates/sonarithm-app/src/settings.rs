@@ -20,8 +20,11 @@ use serde::{Deserialize, Serialize};
 use serde_json::{Map, Value};
 use ts_rs::TS;
 
+use sonarithm_speech::WordsPerMinute;
+
 use crate::codes;
 use crate::ipc::IpcError;
+pub use crate::speech::SpeechRoute;
 
 /// The current settings format version.
 pub const SETTINGS_VERSION: u32 = 1;
@@ -33,6 +36,10 @@ const BACKUP: &str = "settings.json.bak";
 /// The sonification volume range in dB (A11Y-15). 0 dB is the level the Score was
 /// mastered at; the volume only ever lowers it.
 pub const VOLUME_RANGE_DB: (f64, f64) = (-60.0, 0.0);
+
+/// The speaking rates a user may set, in words per minute: a sanity bound on the setting,
+/// not a research value.
+pub const SPEECH_RATE_RANGE: (f64, f64) = (WordsPerMinute::MIN.0, 1_000.0);
 
 /// The buffer sizes a user may request, in frames.
 pub const BUFFER_RANGE: (u32, u32) = (16, 8192);
@@ -57,6 +64,9 @@ pub struct Settings {
     pub keymap: BTreeMap<String, String>,
     /// Consent for features that use the network (ADR-0012). `None` means not asked yet.
     pub consent: Consent,
+    /// How announcements are spoken and sequenced with sonification (08 §4).
+    #[serde(default)]
+    pub speech: SpeechSettings,
 }
 
 impl Default for Settings {
@@ -69,6 +79,7 @@ impl Default for Settings {
             modalities: Modalities::default(),
             keymap: BTreeMap::new(),
             consent: Consent::default(),
+            speech: SpeechSettings::default(),
         }
     }
 }
@@ -94,6 +105,13 @@ impl Settings {
             return Err(IpcError::new(
                 &codes::SETTINGS_VALUE,
                 format!("A buffer of {frames} frames is outside 16 to 8192 frames."),
+            ));
+        }
+        let rate = self.speech.rate_wpm;
+        if !(SPEECH_RATE_RANGE.0..=SPEECH_RATE_RANGE.1).contains(&rate) {
+            return Err(IpcError::new(
+                &codes::SETTINGS_VALUE,
+                format!("A speaking rate of {rate} words per minute is outside 30 to 1000."),
             ));
         }
         if self.settings_version != SETTINGS_VERSION {
@@ -178,6 +196,31 @@ impl Default for Modalities {
             speech: true,
             braille: true,
             visual: true,
+        }
+    }
+}
+
+/// How announcements are spoken (08 §4, keyboard-and-navigation §9.2; B03-T07).
+#[derive(Clone, Copy, Debug, PartialEq, Serialize, Deserialize, TS)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+#[non_exhaustive]
+pub struct SpeechSettings {
+    /// Where announcements are spoken: the screen reader (the default, A11Y-19) or
+    /// SONARITHM's own voice.
+    pub route: SpeechRoute,
+    /// A speaking command during playback ducks sonification 20 dB instead of pausing it
+    /// (keyboard §9.2 item 4; A11Y-20).
+    pub duck_instead_of_pause: bool,
+    /// The speaking rate that sequencing estimates assume, in words per minute.
+    pub rate_wpm: f64,
+}
+
+impl Default for SpeechSettings {
+    fn default() -> Self {
+        Self {
+            route: SpeechRoute::ScreenReader,
+            duck_instead_of_pause: false,
+            rate_wpm: WordsPerMinute::DEFAULT.0,
         }
     }
 }
