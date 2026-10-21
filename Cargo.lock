@@ -3209,10 +3209,12 @@ dependencies = [
 name = "sonarithm-app"
 version = "0.0.0"
 dependencies = [
+ "allocation-counter",
  "arrow-array",
  "proptest",
  "serde",
  "serde_json",
+ "sha2",
  "sonarithm",
  "sonarithm-audio",
  "sonarithm-core",
@@ -3221,6 +3223,7 @@ dependencies = [
  "sonarithm-spec",
  "thiserror 2.0.21",
  "ts-rs",
+ "zip",
 ]
 
 [[package]]

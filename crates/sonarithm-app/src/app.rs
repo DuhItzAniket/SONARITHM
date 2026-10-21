@@ -24,6 +24,8 @@ use crate::jobs::{Failure, JobQueue, Output, Work};
 use crate::settings::{Settings, SettingsStore};
 use crate::transport::{Action, AudioOutput, OutputConfig, Transport};
 
+mod projects;
+
 /// How the app core starts.
 #[derive(Clone, Debug)]
 #[non_exhaustive]
@@ -32,6 +34,8 @@ pub struct AppConfig {
     pub config_dir: PathBuf,
     /// The audio output.
     pub audio: AudioOutput,
+    /// The folder for autosaves: the OS app-data folder (09 §5); by default `config_dir`.
+    pub data_dir: Option<PathBuf>,
 }
 
 impl AppConfig {
@@ -41,7 +45,15 @@ impl AppConfig {
         Self {
             config_dir: config_dir.into(),
             audio: AudioOutput::System,
+            data_dir: None,
         }
+    }
+
+    /// The same configuration with autosaves under `data_dir`.
+    #[must_use]
+    pub fn with_data_dir(mut self, data_dir: impl Into<PathBuf>) -> Self {
+        self.data_dir = Some(data_dir.into());
+        self
     }
 
     /// The same configuration with another audio output, such as [`AudioOutput::null`].
@@ -56,6 +68,8 @@ impl AppConfig {
 struct Open {
     summary: DatasetSummary,
     bundle: DataBundle,
+    /// The canonical file it was read from, if any: what a saved project links.
+    origin: Option<PathBuf>,
 }
 
 /// The headless app core: one session (open datasets, the spec, the last compiled Score
@@ -74,6 +88,10 @@ pub struct App {
     compiled: Option<Compiled>,
     history: History<Option<String>>,
     tiles: TileCache,
+    config_dir: PathBuf,
+    data_dir: PathBuf,
+    project: projects::ProjectState,
+    autosaves: crate::project::Autosaves,
     // Dropped in this order: jobs finish or cancel before the transport stops.
     jobs: JobQueue,
     transport: Transport,
@@ -98,8 +116,14 @@ impl App {
     ///
     /// `SNR-APP-007` if a thread cannot start.
     pub fn new(config: AppConfig, sink: Arc<dyn EventSink>) -> Result<Self, IpcError> {
-        let AppConfig { config_dir, audio } = config;
-        let mut store = SettingsStore::new(config_dir);
+        let AppConfig {
+            config_dir,
+            audio,
+            data_dir,
+        } = config;
+        let data_dir = data_dir.unwrap_or_else(|| config_dir.clone());
+        let autosaves = crate::project::Autosaves::new(data_dir.join("autosave"));
+        let mut store = SettingsStore::new(config_dir.clone());
         let loaded = store.load();
         for error in loaded.notices {
             sink.emit(Event::SettingsNotice { error });
@@ -118,9 +142,19 @@ impl App {
             compiled: None,
             history: History::default(),
             tiles: TileCache::new(crate::views::TILE_CACHE),
+            config_dir,
+            data_dir,
+            project: projects::ProjectState::new(),
+            autosaves,
             jobs,
             transport,
         })
+    }
+
+    /// Ends the session cleanly: the autosaves go (RFC-0002 §8). Dropping the app without
+    /// this is what a crash looks like, and the next start offers the autosaves.
+    pub fn shutdown(self) {
+        self.autosaves.discard();
     }
 
     /// Runs one command (the command bus). Every session, transport, export, history,
@@ -133,15 +167,15 @@ impl App {
     pub fn dispatch(&mut self, request: Request) -> Result<Reply, IpcError> {
         match request {
             Request::Hello { protocol } => hello(protocol),
-            Request::DatasetOpen { path } => self.dataset_open(Path::new(&path)),
-            Request::DatasetClose { id } => self.dataset_close(&id),
+            Request::DatasetOpen { path } => self.edit(|app| app.dataset_open(Path::new(&path))),
+            Request::DatasetClose { id } => self.edit(|app| app.dataset_close(&id)),
             Request::DatasetList => Ok(self.datasets()),
             Request::SpecGet => Ok(Reply::Spec(SpecState {
                 text: self.spec.clone(),
                 undo_token: None,
             })),
-            Request::SpecSet { text } => self.spec_set(text),
-            Request::SpecApply { patch, label } => self.spec_apply(&patch, label),
+            Request::SpecSet { text } => self.edit(|app| app.spec_set(text)),
+            Request::SpecApply { patch, label } => self.edit(|app| app.spec_apply(&patch, label)),
             Request::SpecValidate { text } => Ok(validation(&text)),
             Request::Compile => self.compile(),
             Request::TransportState => self.act(Action::State),
@@ -158,17 +192,40 @@ impl App {
             Request::JobList => Ok(Reply::Jobs {
                 jobs: self.jobs.list(),
             }),
-            Request::HistoryUndo => Ok(self.step(true)),
-            Request::HistoryRedo => Ok(self.step(false)),
+            Request::HistoryUndo => self.edit(|app| Ok(app.step(true))),
+            Request::HistoryRedo => self.edit(|app| Ok(app.step(false))),
             Request::SettingsGet => Ok(Reply::Settings(self.settings.clone())),
             Request::SettingsSet { settings } => self.settings_set(settings),
             Request::DevicesList => self.devices(),
             Request::DeviceSelect { id } => self.device_select(id),
+            Request::ProjectNew => Ok(self.project_new()),
+            Request::ProjectOpen { path } => self.project_open(Path::new(&path)),
+            Request::ProjectOpenRecent { index } => self.project_open_recent(index),
+            Request::ProjectSave => self.project_save(),
+            Request::ProjectSaveAs { path, embed_data } => self.project_save_as(&path, embed_data),
+            Request::ProjectRecent => Ok(self.project_recent()),
+            Request::ProjectRecovery => Ok(self.project_recovery()),
+            Request::ProjectRecover { id } => self.project_recover(id),
+            Request::ProjectDiscardRecovery => Ok(self.project_discard_recovery()),
             Request::ViewGet { .. } | Request::TablePage { .. } => Err(IpcError::new(
                 &codes::BAD_REQUEST,
                 "This command returns a binary view; send it with dispatch_binary.",
             )),
         }
+    }
+
+    /// Runs an editing command and, when it succeeds, marks the session changed (and
+    /// autosaves when due).
+    fn edit(
+        &mut self,
+        run: impl FnOnce(&mut Self) -> Result<Reply, IpcError>,
+    ) -> Result<Reply, IpcError> {
+        let reply = run(self)?;
+        let changed = !matches!(&reply, Reply::History(state) if state.token.is_none());
+        if changed {
+            self.changed();
+        }
+        Ok(reply)
     }
 
     /// Runs a command whose reply is a binary view (ADR-0017 §6): `view_get` and
@@ -268,6 +325,7 @@ impl App {
             Open {
                 summary: summary.clone(),
                 bundle: loaded.bundle,
+                origin: Some(path.clone()),
             },
         );
         Ok(Reply::Dataset(summary))

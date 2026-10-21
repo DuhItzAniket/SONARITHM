@@ -27,6 +27,12 @@ Owner: `sonarithm-app`.
 | `SNR-APP-020` | error | No job has this ID | export_render returns the job's ID; job_list lists the jobs of this session. | — |
 | `SNR-APP-021` | error | Export path not usable | Choose a file ending in .wav or .flac in a folder that exists. | — |
 | `SNR-APP-022` | error | Export failed | Check that the folder is writable and the disk is not full, then export again. | — |
+| `SNR-APP-030` | error | The project has no file yet | Use project_save_as to choose where to save it. | — |
+| `SNR-APP-031` | error | The project needs a newer SONARITHM | Update SONARITHM to open this project; this version does not guess at newer formats. | — |
+| `SNR-APP-032` | error | The project cannot be opened safely | The file is damaged, altered or not a SONARITHM project. Open a copy you trust, or an autosave. | — |
+| `SNR-APP-033` | error | A project never stores an absolute path | Open files as datasets and refer to them by ID, and embed data that is on another drive than the project. | — |
+| `SNR-APP-034` | warning | Linked data is unavailable | Put the file back where the project expects it, unchanged, or open the data again and save the project. | — |
+| `SNR-APP-035` | warning | Parts of the project are unknown to this version | The project opens; saving it with this version drops what it does not know. | — |
 | `SNR-APP-040` | error | The spec patch does not apply | Check each operation's path against the current spec (spec_get); a patch applies completely or not at all. | — |
 | `SNR-APP-050` | error | Not a binary view this version reads | Build the user interface and the host from the same commit; a view's header version, kind and data types must all be known to the reader. | — |
 | `SNR-APP-060` | error | The file cannot be opened | Choose an existing CSV, TSV, JSON, NDJSON, Parquet, Arrow, XLSX or ODS file. | — |

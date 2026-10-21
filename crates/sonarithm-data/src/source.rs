@@ -28,6 +28,8 @@ pub use self::csv::CsvOptions;
 pub use self::json::JsonOptions;
 #[cfg(feature = "xlsx")]
 pub use self::spreadsheet::{SheetOptions, SheetRef};
+#[cfg(feature = "fs")]
+pub use columnar::{read_at, read_exact_at};
 pub use columnar::{write_ipc, write_parquet};
 
 /// Size limits for one source, so that a hostile or mistaken input fails cleanly instead
@@ -447,6 +449,37 @@ pub fn read_file(
     }
     let bytes = std::fs::read(path).map_err(io)?;
     read_bytes(&bytes, format, &locator, options)
+}
+
+/// Reads Parquet stored in part of a file, in place: `offset` and `len` locate it (a stored
+/// member of a project bundle, RFC-0002 §6). The region is read with positional reads, one
+/// column chunk at a time for the structural checks, so the region's bytes are never held
+/// whole; only the decoded table is in memory. `locator` names it as [`read_bytes`] does.
+///
+/// # Errors
+///
+/// As [`read_bytes`] for Parquet; [`DataError::LimitExceeded`] when `len` is over the byte
+/// limit.
+#[cfg(feature = "fs")]
+pub fn read_parquet_at(
+    file: std::fs::File,
+    offset: u64,
+    len: u64,
+    locator: &str,
+    options: &ReadOptions,
+) -> Result<Loaded, DataError> {
+    if len > options.limits.max_bytes {
+        return Err(DataError::LimitExceeded {
+            limit: Limit::Bytes,
+            max: options.limits.max_bytes,
+            found: len,
+        });
+    }
+    let name = table_name(locator);
+    let region = columnar::FileRegion::new(file, offset, len);
+    let table = columnar::read_parquet_from(region, &name, options)?;
+    let source = SourceDescriptor::new(SourceKind::File(Format::Parquet), locator, "parquet");
+    finish(&table, Diagnostics::new(), source, options)
 }
 
 /// Runs a third-party decoder (arrow-ipc, parquet, calamine), turning a panic on malformed

@@ -28,7 +28,6 @@ pub const SETTINGS_VERSION: u32 = 1;
 
 /// The settings file's name.
 pub const FILE: &str = "settings.json";
-const TEMP: &str = "settings.json.tmp";
 const BACKUP: &str = "settings.json.bak";
 
 /// The sonification volume range in dB (A11Y-15). 0 dB is the level the Score was
@@ -345,31 +344,63 @@ impl SettingsStore {
     fn write_atomic(&self, bytes: &[u8]) -> Result<(), IpcError> {
         let io = |err: std::io::Error| write_error(&err.to_string());
         std::fs::create_dir_all(&self.dir).map_err(io)?;
-        let temp = self.dir.join(TEMP);
         let target = self.dir.join(FILE);
-        {
-            let mut file = std::fs::File::create(&temp).map_err(io)?;
-            if self.fault == Some(Fault::PartialTemp) {
-                let half = bytes.get(..bytes.len() / 2).unwrap_or_default();
-                file.write_all(half).map_err(io)?;
-                return Err(write_error("interrupted (fault injection)"));
-            }
-            file.write_all(bytes).map_err(io)?;
-            file.sync_all().map_err(io)?;
-        }
-        if self.fault == Some(Fault::BeforeRename) {
-            return Err(write_error("interrupted (fault injection)"));
-        }
-        if target.exists() {
+        let backup = || -> Result<(), String> {
             // Keep the last good copy; a damaged main file falls back to it.
-            if matches!(read_value(&target), Read::Value(_)) {
-                std::fs::copy(&target, self.dir.join(BACKUP)).map_err(io)?;
+            if target.exists() && matches!(read_value(&target), Read::Value(_)) {
+                std::fs::copy(&target, self.dir.join(BACKUP)).map_err(|err| err.to_string())?;
             }
-        }
-        std::fs::rename(&temp, &target).map_err(io)?;
-        sync_dir(&self.dir);
-        Ok(())
+            Ok(())
+        };
+        write_atomically_with(&target, bytes, self.fault, backup)
+            .map_err(|detail| write_error(&detail))
     }
+}
+
+/// Writes `bytes` to `target` crash-safely: `<target>.tmp`, flushed, then renamed over the
+/// target. A crash at any point leaves the previous file whole (NFR-11). `fault` interrupts
+/// the write, for fault-injection tests.
+///
+/// # Errors
+///
+/// The file system's error, in words; the previous file stays.
+pub(crate) fn write_atomically(
+    target: &Path,
+    bytes: &[u8],
+    fault: Option<Fault>,
+) -> Result<(), String> {
+    write_atomically_with(target, bytes, fault, || Ok(()))
+}
+
+fn write_atomically_with(
+    target: &Path,
+    bytes: &[u8],
+    fault: Option<Fault>,
+    before_rename: impl FnOnce() -> Result<(), String>,
+) -> Result<(), String> {
+    let io = |err: std::io::Error| err.to_string();
+    let mut temp = target.as_os_str().to_owned();
+    temp.push(".tmp");
+    let temp = PathBuf::from(temp);
+    {
+        let mut file = std::fs::File::create(&temp).map_err(io)?;
+        if fault == Some(Fault::PartialTemp) {
+            let half = bytes.get(..bytes.len() / 2).unwrap_or_default();
+            file.write_all(half).map_err(io)?;
+            return Err("interrupted (fault injection)".to_owned());
+        }
+        file.write_all(bytes).map_err(io)?;
+        file.sync_all().map_err(io)?;
+    }
+    if fault == Some(Fault::BeforeRename) {
+        return Err("interrupted (fault injection)".to_owned());
+    }
+    before_rename()?;
+    std::fs::rename(&temp, target).map_err(io)?;
+    if let Some(dir) = target.parent() {
+        sync_dir(dir);
+    }
+    Ok(())
 }
 
 fn write_error(detail: &str) -> IpcError {

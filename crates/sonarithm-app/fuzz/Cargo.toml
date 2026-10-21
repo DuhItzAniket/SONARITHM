@@ -1,0 +1,31 @@
+# cargo-fuzz harness for sonarithm-app (testing-strategy §7): the `.sonarithm` project
+# reader (RFC-0002 §11, B05-T04). Not part of the main workspace: it needs the nightly
+# toolchain. Run from the parent crate with
+#   cargo +nightly fuzz run project_open -- -max_total_time=3600
+# CI runs it in .github/workflows/nightly.yml. On Linux it needs libasound2-dev, since the
+# app core links the audio crate.
+
+[package]
+name = "sonarithm-app-fuzz"
+version = "0.0.0"
+edition = "2024"
+license = "MIT OR Apache-2.0"
+publish = false
+
+[package.metadata]
+cargo-fuzz = true
+
+[dependencies]
+libfuzzer-sys = "0.4.13"
+sonarithm-app = { path = ".." }
+
+# A workspace of its own, so the main workspace (stable toolchain) never builds it.
+[workspace]
+members = ["."]
+
+[[bin]]
+name = "project_open"
+path = "fuzz_targets/project_open.rs"
+test = false
+doc = false
+bench = false

@@ -35,6 +35,7 @@ fn requests(dir: &TempDir) -> Vec<Value> {
     })
     .to_string();
     let wav = dir.path().join("t.wav");
+    let project = dir.path().join("t.sonarithm");
     vec![
         json!({ "command": "hello", "args": { "protocol": 1 } }),
         json!({ "command": "dataset_open", "args": { "path": csv } }),
@@ -63,7 +64,17 @@ fn requests(dir: &TempDir) -> Vec<Value> {
         json!({ "command": "settings_get" }),
         json!({ "command": "devices_list" }),
         json!({ "command": "device_select", "args": { "id": null } }),
+        // The first edit of the session wrote autosave 1; saving discards autosaves.
+        json!({ "command": "project_recovery" }),
+        json!({ "command": "project_recover", "args": { "id": 1 } }),
+        json!({ "command": "project_discard_recovery" }),
+        json!({ "command": "project_save_as", "args": { "path": project, "embedData": true } }),
+        json!({ "command": "project_save" }),
+        json!({ "command": "project_recent" }),
+        json!({ "command": "project_open_recent", "args": { "index": 0 } }),
+        json!({ "command": "project_open", "args": { "path": project } }),
         json!({ "command": "dataset_close", "args": { "id": "d1" } }),
+        json!({ "command": "project_new" }),
     ]
 }
 

@@ -1,7 +1,8 @@
 # Long-running checks (docs/engineering/ci-cd.md#workflow-inventory). Fuzzing (testing-strategy
 # §7), 30 minutes per target each night: the spec parser and migrations (from A03) and the
-# data-layer importers (from A04: CSV/TSV, JSON/NDJSON, XLSX/ODS, Parquet/Arrow IPC) and
-# the stream payload decoders (from B06: JSON, OSC, lines).
+# data-layer importers (from A04: CSV/TSV, JSON/NDJSON, XLSX/ODS, Parquet/Arrow IPC), the
+# `.sonarithm` project reader (from B05) and the stream payload decoders (from B06: JSON,
+# OSC, lines).
 # Manual dispatch takes the seconds per target; use 3600 for an exit run. Pull requests that
 # touch a fuzzed crate run a two-minute smoke fuzz of every target. From A05: the 10-minute
 # allocation soak on the null device (testing-strategy §9.3). Not a required check.
@@ -22,6 +23,7 @@ on:
       - "crates/sonarithm-spec/**"
       - "crates/sonarithm-data/**"
       - "crates/sonarithm-stream/**"
+      - "crates/sonarithm-app/**"
       - ".github/workflows/nightly.yml"
 
 permissions: {}
@@ -50,6 +52,7 @@ jobs:
           - { crate: sonarithm-stream, target: stream_json }
           - { crate: sonarithm-stream, target: stream_osc }
           - { crate: sonarithm-stream, target: stream_line }
+          - { crate: sonarithm-app, target: project_open }
     env:
       FUZZ_SECONDS: ${{ github.event_name == 'pull_request' && '120' || inputs.seconds || '1800' }}
     steps:
@@ -63,6 +66,9 @@ jobs:
             exit 1
           fi
       - run: rustup toolchain install nightly --profile minimal
+      # The app core links the audio crate, whose ALSA backend needs the headers.
+      - if: matrix.crate == 'sonarithm-app'
+        run: sudo apt-get update && sudo apt-get install --yes --no-install-recommends libasound2-dev
       - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
         with:
           workspaces: crates/${{ matrix.crate }}/fuzz -> target

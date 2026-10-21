@@ -117,6 +117,10 @@ pub fn typescript() -> String {
     declare::<JobInfo>(&mut out, &cfg);
     declare::<HistoryState>(&mut out, &cfg);
     declare::<DeviceSummary>(&mut out, &cfg);
+    declare::<crate::ipc::ProjectSummary>(&mut out, &cfg);
+    declare::<crate::ipc::ProjectDatasetInfo>(&mut out, &cfg);
+    declare::<crate::ipc::RecentProject>(&mut out, &cfg);
+    declare::<crate::ipc::AutosaveInfo>(&mut out, &cfg);
     declare::<ViewRange>(&mut out, &cfg);
     declare::<ViewMethod>(&mut out, &cfg);
     declare::<TableSort>(&mut out, &cfg);

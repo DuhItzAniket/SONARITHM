@@ -13,6 +13,7 @@ publish = false
 [dependencies]
 arrow-array.workspace = true
 serde.workspace = true
+sha2.workspace = true
 serde_json.workspace = true
 sonarithm.workspace = true
 sonarithm-audio.workspace = true
@@ -22,8 +23,12 @@ sonarithm-render.workspace = true
 sonarithm-spec.workspace = true
 thiserror.workspace = true
 ts-rs.workspace = true
+# Project bundles (RFC-0002): deflate through flate2 with the pure-Rust zlib-rs backend.
+zip = { workspace = true, features = ["deflate-flate2-zlib-rs"] }
 
 [dev-dependencies]
+# Counts allocations in the project-memory test only (RFC-0002 §6, condition B).
+allocation-counter.workspace = true
 proptest.workspace = true
 
 [lints]
