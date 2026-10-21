@@ -15,55 +15,14 @@ mod support;
 use std::fmt::Write as _;
 
 use proptest::prelude::*;
-use serde_json::{Value, json};
+use serde_json::json;
 use sonarithm_audaxis::earcons::EarconId;
 use sonarithm_audaxis::nav::{Cursor, Edge, Invalid, Landmark, Outcome, Verb, XTarget};
-use sonarithm_core::engine::Annotation;
-use sonarithm_core::ids::{AnalyzerId, RowRange};
 use sonarithm_core::nav::{NavKind, NavNodeId, NavTree};
-use support::{inline_bundle, tree_with};
+use support::{tree_with, weather};
 
-/// Two series (temperature and humidity) over 20 days, so each has two segments of ten
-/// points; humidity has no value on day 5.
-fn spec() -> Value {
-    let values: Vec<Value> = (0..20)
-        .map(|day| {
-            let humidity = if day == 5 {
-                Value::Null
-            } else {
-                json!(40 + (day * 7) % 30)
-            };
-            json!({"day": day, "temp": 10 + (day * 3) % 11, "humid": humidity})
-        })
-        .collect();
-    json!({
-        "specVersion": "0.1",
-        "name": "Weather",
-        "data": {"source": {"kind": "inline", "values": values},
-                 "fields": {"day": {"role": "x"}}},
-        "tracks": [
-            {"id": "temp", "mark": "tone", "channels": {"pitch": {"field": "temp"}}},
-            {"id": "humid", "mark": "tone", "channels": {"pitch": {"field": "humid"}}}
-        ]
-    })
-}
-
-/// The fixture tree with two extrema insights on temperature (days 3 and 7).
 fn fixture() -> NavTree {
-    let spec = spec();
-    let rows = inline_bundle(&spec).primary().unwrap().rows();
-    let at = |row, label| {
-        Annotation::new(
-            AnalyzerId::from_static("extrema"),
-            label,
-            RowRange {
-                start: row,
-                end: row + 1,
-                ..rows
-            },
-        )
-    };
-    tree_with(&spec, &[at(7, "maximum"), at(3, "minimum")])
+    weather()
 }
 
 /// A short name for a node, for the verb matrix.

@@ -122,6 +122,51 @@ pub(crate) fn inline_bundle(spec: &serde_json::Value) -> DataBundle {
         .bundle
 }
 
+/// Two series (temperature in °C and humidity in %) over 20 days, so each has two
+/// segments of ten points; humidity has no value on day 5.
+pub(crate) fn weather_spec() -> serde_json::Value {
+    let values: Vec<serde_json::Value> = (0..20)
+        .map(|day| {
+            let humidity = if day == 5 {
+                serde_json::Value::Null
+            } else {
+                serde_json::json!(40 + (day * 7) % 30)
+            };
+            serde_json::json!({"day": day, "temp": 10 + (day * 3) % 11, "humid": humidity})
+        })
+        .collect();
+    serde_json::json!({
+        "specVersion": "0.1",
+        "name": "Weather",
+        "data": {"source": {"kind": "inline", "values": values},
+                 "fields": {"day": {"role": "x"},
+                            "temp": {"unit": "°C", "label": "Temperature"},
+                            "humid": {"unit": "%", "label": "Humidity"}}},
+        "tracks": [
+            {"id": "temp", "mark": "tone", "channels": {"pitch": {"field": "temp"}}},
+            {"id": "humid", "mark": "tone", "channels": {"pitch": {"field": "humid"}}}
+        ]
+    })
+}
+
+/// The weather tree with two extrema insights on temperature (days 3 and 7).
+pub(crate) fn weather() -> NavTree {
+    let spec = weather_spec();
+    let rows = inline_bundle(&spec).primary().unwrap().rows();
+    let at = |row, label| {
+        sonarithm_core::engine::Annotation::new(
+            sonarithm_core::ids::AnalyzerId::from_static("extrema"),
+            label,
+            sonarithm_core::ids::RowRange {
+                start: row,
+                end: row + 1,
+                ..rows
+            },
+        )
+    };
+    tree_with(&spec, &[at(7, "maximum"), at(3, "minimum")])
+}
+
 /// The compiled navigation tree; panics if there is none.
 pub(crate) fn tree(compiled: &Compiled) -> &NavTree {
     compiled

@@ -27,6 +27,26 @@ function sampleArgs(style: string): MessageArgs {
     index: { number: 2 },
     total: { number: 5 },
     unit: "furlongs",
+    // Data arguments have no letters, so the test sees only catalogue text.
+    text: "12.5",
+    first: "1",
+    rest: "2",
+    from: "3",
+    to: "4",
+    qualifier: "5",
+    confidence: { number: 0.82 },
+    key: "↓",
+    kind: "point",
+    class: "cv_estimate",
+    axis: "x",
+    included: "yes",
+    edge: "last",
+    reason: "one-series",
+    hours: { number: 14 },
+    minutes: { number: 2 },
+    seconds: { number: 11 },
+    date: "6",
+    time: "7",
   };
 }
 

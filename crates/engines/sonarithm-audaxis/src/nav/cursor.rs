@@ -280,6 +280,11 @@ impl Cursor {
         self.excluded.contains(&series)
     }
 
+    /// The series filtered out of playback and view.
+    pub fn excluded(&self) -> impl Iterator<Item = NavNodeId> + '_ {
+        self.excluded.iter().copied()
+    }
+
     /// Applies `verb`. The cursor stays on a valid node whatever happens.
     pub fn apply(&mut self, tree: &NavTree, verb: &Verb) -> Outcome {
         if tree.node(self.node).is_none() {

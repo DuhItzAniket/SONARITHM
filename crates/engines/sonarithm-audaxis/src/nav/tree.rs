@@ -155,7 +155,17 @@ fn series(spec: &Spec, track: &ScoreTrack, data: &DataBundle) -> Result<Series, 
     });
     let positions: Vec<(f64, Option<XValue>)> = match &x_values {
         Some(Values::Numbers(xs, kind)) => {
-            series.x_type = *kind;
+            series.x_type = if *kind == XType::Number
+                && series
+                    .x_field
+                    .name
+                    .as_deref()
+                    .is_some_and(|f| is_temporal(spec, table, f))
+            {
+                XType::Year
+            } else {
+                *kind
+            };
             rows.retain(|&row| xs.get(row).is_some_and(|x| !x.is_nan()));
             rows.sort_by(|&a, &b| xs[a].total_cmp(&xs[b]));
             rows.iter()
@@ -292,6 +302,17 @@ fn time_field(spec: &Spec, table: &Table) -> Option<String> {
                     .is_ok_and(|meta| meta.role == Some(sonarithm_data::Role::X))
             })
     })
+}
+
+/// Whether a field is declared or inferred temporal (03 §3.1), so plain numbers on it are
+/// years.
+fn is_temporal(spec: &Spec, table: &Table, field: &str) -> bool {
+    match spec.data.fields.get(field).and_then(|f| f.field_type) {
+        Some(declared) => declared == sonarithm_spec::data::FieldType::Temporal,
+        None => table
+            .field_meta(field)
+            .is_ok_and(|m| m.ftype == Some(sonarithm_data::FieldType::Temporal)),
+    }
 }
 
 /// A field that names rows when there is no time field: the first declared with role
@@ -547,7 +568,10 @@ fn add_axes(tree: &mut NavTree, all: &[Series]) {
         .find(|s| s.x_field.name.is_some())
         .or(all.first());
     let x_type = x_source.map_or(XType::RowOrder, |s| s.x_type);
-    let numeric_x = matches!(x_type, XType::Number | XType::Date | XType::Timestamp);
+    let numeric_x = matches!(
+        x_type,
+        XType::Number | XType::Year | XType::Date | XType::Timestamp
+    );
     let x_range = numeric_x
         .then(|| ValueRange::of(all.iter().flat_map(|s| s.points.iter().map(|p| p.position))))
         .flatten();

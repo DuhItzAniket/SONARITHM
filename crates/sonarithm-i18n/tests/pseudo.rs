@@ -28,6 +28,27 @@ fn sample_args(style: UnitStyle) -> Args {
         .number("index", 2.0)
         .number("total", 5.0)
         .text("unit", "furlongs")
+        // Data arguments have no letters, so the pseudo-locale test sees only catalogue
+        // text; selectors fall back to their default variant.
+        .text("text", "12.5")
+        .text("first", "1")
+        .text("rest", "2")
+        .text("from", "3")
+        .text("to", "4")
+        .text("qualifier", "5")
+        .number("confidence", 0.82)
+        .text("key", "↓")
+        .text("kind", "point")
+        .text("class", "cv_estimate")
+        .text("axis", "x")
+        .text("included", "yes")
+        .text("edge", "last")
+        .text("reason", "one-series")
+        .number("hours", 14.0)
+        .number("minutes", 2.0)
+        .number("seconds", 11.0)
+        .text("date", "6")
+        .text("time", "7")
 }
 
 #[test]

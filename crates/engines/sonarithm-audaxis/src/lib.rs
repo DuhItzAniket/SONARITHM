@@ -8,8 +8,9 @@
 //! placement and the never-alone guard, A11Y-14). The context provider builds the navigation tree
 //! ([`nav::tree`], 08 §2) that the compiler returns beside the Score, and, from B03-T05,
 //! the context tracks (ticks, the reference tone, the spoken legend). The [`nav::Cursor`]
-//! moves through the tree with the verbs of keyboard-and-navigation §4. The announcement
-//! composer, the full earcon set and spatial placement follow in B03.
+//! moves through the tree with the verbs of keyboard-and-navigation §4, and [`announce`]
+//! turns its outcomes into catalogue text for the screen reader. The full earcon set and
+//! spatial placement follow in B03.
 //!
 //! The engine reads its own part of the spec and the data; it never depends on another
 //! engine (02 §3 rule 2). Everything it builds is ordered and deterministic (ADR-0013).
@@ -17,6 +18,7 @@
 #![forbid(unsafe_code)]
 #![deny(missing_docs)]
 
+pub mod announce;
 pub mod codes;
 mod columns;
 pub mod earcons;
