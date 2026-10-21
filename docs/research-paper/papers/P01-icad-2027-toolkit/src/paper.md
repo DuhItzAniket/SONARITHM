@@ -131,15 +131,16 @@ All measurements follow the method notes of the benchmarks log: median and state
 | Compile, 100k rows × 4 tracks | ≤ 200 ms | 35.1 ms (HW-01), 54.3 ms (HW-01e), median | F-083 |
 | Compile, 1M rows × 4 tracks | ≤ 1 s | 362 ms (HW-01), 545 ms (HW-01e) | F-083 |
 | Load a 1M-row CSV | ≤ 1.5 s | 0.51 s (HW-01), 0.91 s (HW-01e) | F-070 |
-| Offline render speed, 4-track 10k-event Score | ≥ 50× real time | [[TODO(verify): A05-T12 result, F-053]] | benchmarks log |
+| Offline render speed, 4-track 10k-event Score | ≥ 50× real time | 91.4× (HW-01); 43–46× (HW-01e), so not declared met | F-053 |
+| Export of the replication gallery, end to end (compile, render, WAV, loudness meter), one thread | — | 131.7× real time (HW-01), 70.9× (HW-01e); 443.8 s of audio in 49 renders, 5 runs each | F-115 |
 | Key press to cue onset, p95 | ≤ 50 ms at 256 frames | 123.1 ms through cpal in WASAPI shared mode; 83.7 ms with a direct RAW stream (prototype measurements) | F-031, F-032 |
 | Score IR across operating systems | identical | identical hashes on Windows, macOS and Linux in CI | A03, A06 tests |
-| Offline audio across operating systems | null residual ≤ −90 dBFS | bit-identical on Linux, Windows and macOS (x86-64 and AArch64) in the prototype | F-039; [[TODO(verify): golden set, A05-T11]] |
+| Offline audio across operating systems | null residual ≤ −90 dBFS | byte-identical on Windows, Linux and macOS (AArch64) for A05's six golden cases and all 49 replication-gallery renders | F-116, F-039; #178 |
 | Stimulus generators across operating systems | identical | pinned SHA-256 digests match on all three CI platforms | A08-T01 |
 
 [[FIGURE F4: latency distribution and real-time factor per OS. FIGURE F5: cross-OS null residuals for the golden set. Fill from A08-T04.]]
 
-The latency budget is **not met** on the Windows development machine. Shared-mode WASAPI ignored the requested buffer size and imposed a 480-frame period (F-030), and an OEM enhancement component added about 38 ms (F-032). A direct RAW stream bypasses that component and reaches 83.7 ms p95, still above budget. We report this as measured and discuss it in §7.
+The latency budget is **not met** on the Windows development machine; the project deferred it to the accessible-navigation phase (B03). Shared-mode WASAPI ignored the requested buffer size and imposed a 480-frame period (F-030), and an OEM enhancement component added about 38 ms (F-032). A direct RAW stream bypasses that component and reaches 83.7 ms p95, still above budget. We report this as measured and discuss it in §7.
 
 ### 6.3 Heuristic check against Hermann's criteria
 
