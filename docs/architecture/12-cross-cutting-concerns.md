@@ -64,9 +64,11 @@ project.sonarithm
 
 | Area | Approach |
 |---|---|
-| Message catalogues | Fluent (`fluent-rs`). The same message IDs in the UI and in Rust announcement templates |
-| Numbers, dates, units | ICU4X formatting per locale; unit names spoken in full at verbose verbosity |
-| Pseudo-locale | A CI check catches truncation and concatenated strings (B02) |
+| Message catalogues | Fluent. The `.ftl` files live in `crates/sonarithm-i18n/locales/<locale>/` and are embedded in the crate (`fluent-bundle`); `@sonarithm/i18n` loads the same files in the UI (`@fluent/bundle`), so a message ID means the same text in Rust announcement templates and in the UI. IDs are kebab-case with an area prefix: `unit-`, `common-`, `ui-`, `announce-` (B03). A contract test runs the same cases (`crates/sonarithm-i18n/tests/fixtures/contract.json`) through both and expects identical text (B02-T08) |
+| Numbers, dates, units | Numbers through ICU4X with `Intl.NumberFormat`'s digit rules (half-expand rounding from the shortest round-trip digits, at most three fraction digits by default), so Rust and the UI print the same digits (F-130). Dates through ICU4X in the proleptic Gregorian calendar. Each unit message prints a value in one of three forms: the symbol for visual text and braille, and terse and verbose spoken names ("°C", "degrees C", "degrees Celsius"); UCUM codes and symbols map to unit messages, and unknown units are printed as written |
+| Locale choice | A language with a catalogue uses it, with the requested locale's formats (`en-GB` reads the English catalogue with British dates); a language without one falls back to English text and English formats, so a sentence never mixes languages |
+| Pseudo-locale | `en-XA`: the English catalogue with accented letters, about 40 % extra length, and `⟦ ⟧` around every message. The check accepts only text that is exactly one marked message, so it catches hard-coded strings, concatenation and truncation. It runs on every catalogue message in Rust and TypeScript (B02-T08) and on every composed announcement (B03); the UI's pseudo-locale run for clipping arrives with the Playwright suite (B02-T03) |
+| Hard-coded UI text | The ESLint rule `sonarithm/no-literal-ui-string` rejects JSX text and user-facing attribute strings in `.tsx` and `.jsx` files |
 | Right-to-left | Layout tokens are logical (`inline-start`); full RTL support is post-1.0 |
 | Locales | English (B03), plus one more locale in B07 to prove the pipeline, chosen with the community |
 

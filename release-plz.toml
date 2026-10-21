@@ -84,6 +84,7 @@ changelog_include = [
   "sonarithm-render",
   "sonarithm-audio",
   "sonarithm-export",
+  "sonarithm-i18n",
   "sonarithm-numisona",
   "sonarithm-echometric",
   "sonarithm-cli",
@@ -125,6 +126,10 @@ version_group = "sonarithm"
 
 [[package]]
 name = "sonarithm-export"
+version_group = "sonarithm"
+
+[[package]]
+name = "sonarithm-i18n"
 version_group = "sonarithm"
 
 [[package]]

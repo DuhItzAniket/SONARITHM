@@ -146,7 +146,7 @@ Every sonified insight has a text, visual or braille equivalent (A11Y-24):
 
 ## 9. Localization of announcements
 
-Templates are localized with **Fluent** (`fluent-rs` on the Rust side; the same message IDs in the frontend). Numbers, dates and units are formatted with ICU4X per locale. Unit names are spoken in full at verbose and abbreviated at terse ("°C" → "degrees Celsius"). English ships in B03 and a second locale in B07 to prove the pipeline.
+Templates are localized with **Fluent** (`fluent-rs` in `sonarithm-i18n` on the Rust side; the same catalogue files and message IDs in the frontend, [12 §5](12-cross-cutting-concerns.md#5-internationalization-and-localization)). Numbers, dates and units are formatted with ICU4X per locale. Unit names are spoken in full at verbose and abbreviated at terse ("°C" → "degrees Celsius"). English ships in B03 and a second locale in B07 to prove the pipeline.
 
 ## 10. Open questions (tracked in [open-decisions](../planning/open-decisions.md))
 

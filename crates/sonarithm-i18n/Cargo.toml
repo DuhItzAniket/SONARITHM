@@ -1,0 +1,31 @@
+[package]
+name = "sonarithm-i18n"
+description = "SONARITHM's message catalogues and locale formatting: Fluent messages shared with the UI, ICU4X numbers and dates, spoken unit names and the pseudo-locale check."
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+repository.workspace = true
+license.workspace = true
+publish.workspace = true
+
+[dependencies]
+fixed_decimal.workspace = true
+fluent-bundle.workspace = true
+icu_calendar.workspace = true
+icu_datetime.workspace = true
+icu_decimal.workspace = true
+icu_locale_core.workspace = true
+# Only for its `sync` feature (see the workspace manifest).
+icu_provider.workspace = true
+intl-memoizer.workspace = true
+thiserror.workspace = true
+unic-langid.workspace = true
+
+[dev-dependencies]
+fluent-syntax.workspace = true
+proptest.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+
+[lints]
+workspace = true

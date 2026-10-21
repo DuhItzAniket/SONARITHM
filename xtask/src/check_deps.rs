@@ -62,6 +62,8 @@ const LAYERS: &[(&str, &[&str])] = &[
     ("sonarithm-spec", &["sonarithm-core"]),
     ("sonarithm-data", &["sonarithm-core"]),
     ("sonarithm-dsp", &["sonarithm-core"]),
+    // Message catalogues and locale formatting (12 §5); engines format announcements with it.
+    ("sonarithm-i18n", &["sonarithm-core"]),
     (
         ENGINE_CRATES,
         &[
@@ -69,6 +71,7 @@ const LAYERS: &[(&str, &[&str])] = &[
             "sonarithm-spec",
             "sonarithm-data",
             "sonarithm-dsp",
+            "sonarithm-i18n",
         ],
     ),
     (

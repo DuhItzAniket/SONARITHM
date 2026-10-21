@@ -5,6 +5,10 @@ packages:
 
 # One version of each tool for the whole workspace; packages refer to it as "catalog:".
 catalog:
+  # Fluent messages in the UI (@sonarithm/i18n); the Rust side is fluent-bundle (12 §5).
+  "@fluent/bundle": ^0.19.1
+  # Node types for package tests run with `node --test` (Node 24, the CI line).
+  "@types/node": ^24.19.2
   # ESLint stays on 9.x until eslint-plugin-jsx-a11y supports ESLint 10 (its peer range ends at ^9).
   "@eslint/js": ^9.39.5
   eslint: ^9.39.5

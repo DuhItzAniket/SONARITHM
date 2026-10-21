@@ -85,7 +85,7 @@
 | NFR-06 | [09 §6](../architecture/09-desktop-app.md#6-packaging) | A01 → C06 | CI matrix | Planned |
 | NFR-07 | [supply chain](../engineering/supply-chain-and-licensing.md) | A01 | cargo-deny, RV | Planned |
 | NFR-08 | [testing-strategy](../engineering/testing-strategy.md) | A03 → | CI | Planned |
-| NFR-09 | [12 §5](../architecture/12-cross-cutting-concerns.md#5-internationalization-and-localization) | B02 | Pseudo-locale CI | Planned |
+| NFR-09 | [12 §5](../architecture/12-cross-cutting-concerns.md#5-internationalization-and-localization) | B02 | Pseudo-locale CI (`nfr_09_every_message_passes_the_pseudo_locale_check` in Rust and TypeScript, seeded concatenation and truncation tests), contract test (`nfr_09_contract_cases_render_as_expected_in_rust` and its TypeScript twin), lint (`nfr_09 the lint fails on a hard-coded UI string`) | In progress (B02-T08, #207): catalogues, formatting, pseudo-locale and lint in review; the UI pseudo-locale run comes with B02-T03, the second locale with B07-T07 |
 | NFR-10 | [06 §10](../architecture/06-audio-engine.md#10-hearing-safety-and-levels) | A05 | UT, GT | Done (A05): true-peak limiter and start-up ramp with acceptance tests against ebur128 (A05-T09, F-050) |
 | NFR-11 | [09 §5](../architecture/09-desktop-app.md#5-persistence) | B05 | IT (fault injection) | Planned |
 | NFR-12 | [vision §8](../product/vision.md#8-success-measures) | A07, B07 | CD (observed sessions) | In progress: quickstart tutorial and its five-minute test protocol (A07-T07); the three-person test is the owner's (#129) |

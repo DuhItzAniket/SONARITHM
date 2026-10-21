@@ -30,6 +30,7 @@ SONARITHM/
 │   ├── sonarithm-render/             # Render graph, scheduler, RenderPlan, real-time + offline driver
 │   ├── sonarithm-audio/              # AudioBackend trait, cpal backend, device management
 │   ├── sonarithm-export/             # WAV/FLAC/MIDI writers, render manifest, cue sidecar
+│   ├── sonarithm-i18n/               # Fluent catalogues (locales/), ICU4X numbers and dates, unit names, pseudo-locale
 │   ├── sonarithm-stream/             # Live sources: WebSocket, MQTT, serial, OSC-in, file tail (tokio)
 │   ├── sonarithm-speech/             # Optional self-voicing via platform TTS (tts crate)
 │   ├── sonarithm-app/                # Headless app core: projects, sessions, undo/redo, jobs, profiles
@@ -59,6 +60,7 @@ SONARITHM/
 ├── packages/                         # Frontend workspace packages (pnpm)
 │   ├── ui/                           # @sonarithm/ui: tokens + React Aria-based components
 │   ├── viz/                          # @sonarithm/viz: uPlot wrappers, WebGL2 layers, playhead
+│   ├── i18n/                         # @sonarithm/i18n: Fluent localizer over the shared catalogues, pseudo-locale, UI string lint
 │   └── ipc/                          # @sonarithm/ipc: generated TS types + typed client
 │
 ├── schemas/                          # Generated JSON Schema (spec, manifest), committed and CI-checked
@@ -87,6 +89,7 @@ SONARITHM/
 | `sonarithm-render` | RenderGraph, Scheduler, `RenderPlan`, voice pool, transport, real-time-safe command and telemetry channels; offline driver | core, dsp, rtrb, triple_buffer, basedrop, atomic_float | Yes | 1.88 | A05 |
 | `sonarithm-audio` | `AudioBackend` trait; cpal backend; device enumeration and hot-plug; latency reporting | render, cpal | Via cpal WebAudio | 1.88 | A05 |
 | `sonarithm-export` | WAV/FLAC/MIDI writers; render manifest (`*.render.json`); speech/cue sidecar | core, render, hound, flacenc, midly, sha2 | Yes | 1.88 | A05 |
+| `sonarithm-i18n` | Message catalogues (`locales/<locale>/*.ftl`, shared with `@sonarithm/i18n`), locale formatting of numbers and dates, spoken unit names, the `en-XA` pseudo-locale and its check (12 §5) | fluent-bundle, ICU4X (`icu_decimal`, `icu_datetime`) | Yes | 1.88 | B02 |
 | `sonarithm-stream` | Live source adapters with backpressure and reconnect | core, data, tokio, tokio-tungstenite, serialport, rumqttc, rosc | No | 1.88 | B06 |
 | `sonarithm-speech` | Optional self-voicing; screen-reader routing where the platform allows | tts | No | 1.88 | B03 |
 | `sonarithm-app` | Projects (`.sonarithm` bundles), sessions, undo/redo (command pattern), job queue, profiles, settings | compiler, render, audio, export, data | No | 1.88 | B01 |
@@ -107,7 +110,8 @@ flowchart BT
   spec[sonarithm-spec] --> core
   data[sonarithm-data] --> core
   dsp[sonarithm-dsp] --> core
-  engines[engines/*] --> core & spec & data
+  i18n[sonarithm-i18n] --> core
+  engines[engines/*] --> core & spec & data & i18n
   engines -. Voice providers .-> dsp
   compiler[sonarithm-compiler] --> spec & data & engines
   render[sonarithm-render] --> dsp

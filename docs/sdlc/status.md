@@ -29,7 +29,7 @@ Status values: `Not started` · `In progress` · `In review` · `Done` · `Block
 | A | A07 | CLI, Python, v0.1.0-alpha | **In progress** | ≈15% | #156 fixed (#159); the facade in review. See [A07 tasks](#a07-tasks) |
 | A | A08 | Research instrumentation v0, ICAD 2027 | **Done** (owner steps pending) | 100% | 2026-10-21; [phase review](reviews/A08-phase-review.md). P01 submission or deferral and the v0.2.0-alpha tag are the owner's at Gate A. See [A08 tasks](#a08-tasks) |
 | B | B01 | Desktop shell, IPC, app core | Not started | 0% | Planned 2026-10-21: 9 [tasks](../planning/implementation-plan.md#b01--desktop-shell-ipc-and-app-core), issues [#191](https://github.com/DuhItzAniket/SONARITHM/issues/191)–[#199](https://github.com/DuhItzAniket/SONARITHM/issues/199). Lane R now: T01, T02, T06; the rest waits for Gate U: the Windows walkthroughs and ADR-0002/0003 confirmed for Windows (OD-15, [#129](https://github.com/DuhItzAniket/SONARITHM/issues/129)) |
-| B | B02 | Design system and application frame | Not started | 0% | Planned 2026-10-21: 11 [tasks](../planning/implementation-plan.md#b02--design-system-and-application-frame), issues [#200](https://github.com/DuhItzAniket/SONARITHM/issues/200)–[#210](https://github.com/DuhItzAniket/SONARITHM/issues/210). Lane R now: T01, T02, T08; the rest waits for Gate U; T10 needs the owner's component checks (HP-07), T11 needs OD-03 |
+| B | B02 | Design system and application frame | In progress | ≈10% | T08 (catalogues, locale formatting, pseudo-locale) in review. Planned 2026-10-21: 11 [tasks](../planning/implementation-plan.md#b02--design-system-and-application-frame), issues [#200](https://github.com/DuhItzAniket/SONARITHM/issues/200)–[#210](https://github.com/DuhItzAniket/SONARITHM/issues/210). Lane R now: T01, T02, T08; the rest waits for Gate U; T10 needs the owner's component checks (HP-07), T11 needs OD-03 |
 | B | B03 | AUDAXIS v1 | Not started | 0% | Planned 2026-10-21: 14 [tasks](../planning/implementation-plan.md#b03--audaxis-v1-navigation-context-and-speech), issues [#211](https://github.com/DuhItzAniket/SONARITHM/issues/211)–[#224](https://github.com/DuhItzAniket/SONARITHM/issues/224). Lane R now: T01–T03, T05–T08, T11; T12 waits for [#186](https://github.com/DuhItzAniket/SONARITHM/issues/186) and [#123](https://github.com/DuhItzAniket/SONARITHM/issues/123); T13 needs NVDA, JAWS, VoiceOver and Orca runs (HP-08) and the Linux and macOS checks (HP-02, HP-03; OD-15) |
 | B | B04 | Visualization and linked cursor | Not started | 0% | Planned 2026-10-21: 8 [tasks](../planning/implementation-plan.md#b04--visualization-and-linked-cursor), issues [#225](https://github.com/DuhItzAniket/SONARITHM/issues/225)–[#232](https://github.com/DuhItzAniket/SONARITHM/issues/232). Lane R now: T03; the rest waits for Gate U |
 | B | B05 | Inspector, spec editor, projects | Not started | 0% | Planned 2026-10-21: 8 [tasks](../planning/implementation-plan.md#b05--inspector-spec-editor-and-project-files), issues [#233](https://github.com/DuhItzAniket/SONARITHM/issues/233)–[#240](https://github.com/DuhItzAniket/SONARITHM/issues/240). Lane R now: T01, T04 (project-format RFC first); the rest waits for Gate U |
@@ -47,6 +47,14 @@ Status values: `Not started` · `In progress` · `In review` · `Done` · `Block
 | D | D04 | ML extraction and AI assist | Not started | 0% | |
 | D | D05 | Plugins and WebAssembly | Not started | 0% | |
 | D | D06 | Research studies programme | Not started | 0% | |
+
+### B02 tasks
+
+Lane R tasks run in agent sessions now; the Lane U tasks wait for Gate U ([implementation plan §3.1](../planning/implementation-plan.md#31-how-stage-b-runs)).
+
+| Task | Status | Notes |
+|---|---|---|
+| B02-T08 Fluent catalogues, locale formatting, pseudo-locale check | In review ([#207](https://github.com/DuhItzAniket/SONARITHM/issues/207)) | `sonarithm-i18n` (Fluent catalogues in `locales/`, ICU4X numbers and dates, unit names, `en-XA`) and `@sonarithm/i18n`; the Rust–TypeScript contract passes 24 shared cases on both sides (F-130); `sonarithm/no-literal-ui-string` lint. Built ahead of B01-T02: it needs no generated IPC type |
 
 ### A01 tasks
 
@@ -242,4 +250,5 @@ Maturity scale: `Designed` → `Prototype` → `Alpha` → `Beta` → `Stable` �
 | 2026-10-21 | A05 done: all thirteen tasks merged (#118–#120, #122, #126, #160, #168, #178); [phase review](reviews/A05-phase-review.md) with the gate summary; owner decisions pending for PB-01, PB-02 and PB-03 |
 | 2026-10-21 | A08 done: generators (#163), code blocks (#161), P01 draft (#165), study runner (#166, #179), replication gallery (#177), benchmark report (#189); [phase review](reviews/A08-phase-review.md); v0.2.0-alpha checklist prepared |
 | 2026-10-21 | Stage B planned to task level: 67 tasks, issues [#191](https://github.com/DuhItzAniket/SONARITHM/issues/191)–[#257](https://github.com/DuhItzAniket/SONARITHM/issues/257), milestones B01–B07; Lane R (23 tasks) can start, Lane U waits for the A02 walkthroughs (Gate U); owner items HP-01 to HP-17; OD-15 to OD-17, R-24 to R-27, F-120 ([worklog](worklog/2026-10-21-stage-b-planning.md)) |
+| 2026-10-21 | B02 started: Fluent catalogues, locale formatting and the pseudo-locale check (T08) in review |
 | 2026-10-21 | OD-15 closed by the coordinator: Gate U opens after the Windows walkthroughs (HP-01) and ADR-0002/0003 confirmed for Windows (HP-04); the Linux session (HP-02) moves to B03's exit; the Tauri host stays thin |
