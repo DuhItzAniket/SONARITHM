@@ -87,6 +87,7 @@ From phase A07, release-plz maintains this file: it generates each release's ent
 - SONOTRACE streams (phase B06, Lane R):
   - `sonarithm-data` `StreamTable`: bounded, append-only storage for live data with row sequence numbers, a row or time-window capacity with a hard row limit, cheap snapshots that later appends never change, and `SNR-DATA-071` when rows are dropped before a reader read them; provenance columns kept in canonical form.
   - `sonarithm-sonotrace`, the SONOTRACE engine: the spec's `stream` source reads the window of a connected stream; live encoding emits each new row's events exactly once and replays deterministically; scrub grains preview a track's value at the cursor; long series play in windows.
+  - `sonarithm-stream`: live stream adapters for WebSocket and OSC (default features), serial and MQTT (opt-in features) and file tail, each opened only with the user's explicit consent; messages become rows through a schema, fill a bounded stream table, and the connection reconnects, pauses and stops on request.
 
 ### Fixed
 

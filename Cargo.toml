@@ -14,6 +14,7 @@ members = [
     "crates/sonarithm-render",
     "crates/sonarithm-audio",
     "crates/sonarithm-export",
+    "crates/sonarithm-stream",
     "crates/sonarithm-i18n",
     "crates/engines/sonarithm-numisona",
     "crates/engines/sonarithm-audaxis",
@@ -24,7 +25,12 @@ members = [
     "xtask",
 ]
 # A02 spikes are standalone throwaway projects with their own lockfiles (roadmap A02).
-exclude = ["spikes", "crates/sonarithm-spec/fuzz", "crates/sonarithm-data/fuzz"]
+exclude = [
+    "spikes",
+    "crates/sonarithm-spec/fuzz",
+    "crates/sonarithm-data/fuzz",
+    "crates/sonarithm-stream/fuzz",
+]
 
 [workspace.package]
 # One shared version for every crate until v1.0 (02 §6); release-plz bumps it in the release
@@ -54,6 +60,7 @@ sonarithm-dsp = { path = "crates/sonarithm-dsp", version = "0.0.0" }
 sonarithm-render = { path = "crates/sonarithm-render", version = "0.0.0" }
 sonarithm-audio = { path = "crates/sonarithm-audio", version = "0.0.0" }
 sonarithm-export = { path = "crates/sonarithm-export", version = "0.0.0" }
+sonarithm-stream = { path = "crates/sonarithm-stream", version = "0.0.0" }
 sonarithm-i18n = { path = "crates/sonarithm-i18n", version = "0.0.0" }
 sonarithm-numisona = { path = "crates/engines/sonarithm-numisona", version = "0.0.0" }
 sonarithm-audaxis = { path = "crates/engines/sonarithm-audaxis", version = "0.0.0" }
@@ -153,6 +160,16 @@ serde_path_to_error = "0.1.20"   # JSON pointers for spec shape errors (04 §8 l
 serde_json = { version = "1.0.145", features = ["float_roundtrip"] }
 sha2 = { version = "0.11.0", default-features = false }  # spec hash, Score hash, fingerprints (ADR-0013)
 thiserror = "2.0.17"
+# Live stream adapters (sonarithm-stream, B06-T02; 02 §4 features). Synchronous clients on
+# the adapter's own thread: no async runtime for WebSocket, OSC, serial or file tail.
+# tungstenite without TLS (`ws://` only until a TLS backend is chosen).
+tungstenite = { version = "0.30.0", default-features = false, features = ["handshake"] }
+# OSC 1.0 packets.
+rosc = { version = "0.11.4", default-features = false, features = ["std"] }
+# Serial ports without libudev (no C dependency on Linux); MPL-2.0, unmodified.
+serialport = { version = "4.10.1", default-features = false }
+# MQTT without TLS; brings tokio, so only the optional `mqtt` feature enables it (02 §3).
+rumqttc = { version = "0.25.1", default-features = false }
 # TOML for engine data tables (NUMISONA's concepts.toml, 03 §3.3); parsing only, no writer.
 toml = { version = "1.1.8", default-features = false, features = ["std", "parse", "serde"] }
 
