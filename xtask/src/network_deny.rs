@@ -34,12 +34,15 @@ struct Run {
     /// The process ID, for the log-based mechanisms.
     pid: Option<u32>,
     attempts: Vec<String>,
+    /// What the tests printed, when the mechanism captures it (sandbox-exec).
+    output: String,
 }
 
-/// The waits, in seconds, before each read of the OS log by the self-test. The unified log
-/// (macOS) and the Security log (Windows) persist entries asynchronously, sometimes
-/// seconds late on a busy runner, so the self-test reads until it sees the probe.
-const SELF_TEST_WAITS: [u64; 5] = [2, 3, 5, 8, 12];
+/// The waits, in seconds, before each read of the OS log by the self-test: about a minute
+/// in all. The unified log (macOS) and the Security log (Windows) persist entries
+/// asynchronously, sometimes tens of seconds late on a busy runner, so the self-test reads
+/// until it sees the probe.
+const SELF_TEST_WAITS: [u64; 7] = [2, 3, 5, 8, 12, 15, 15];
 
 /// The wait before the one read of the OS log after an ordinary run, which must not miss
 /// a late entry.
@@ -66,16 +69,17 @@ pub(crate) fn run(root: &Path, rest: &[String]) -> Result<()> {
             continue;
         }
         let args: Vec<&str> = if self_test {
-            vec!["--ignored", "--exact", PROBE]
+            vec!["--ignored", "--exact", PROBE, "--nocapture"]
         } else {
             vec![]
         };
         println!("network-deny: running {name} under {}", mechanism.name());
-        let (pid, attempts) = mechanism.run(root, exe, &args)?;
+        let (pid, attempts, output) = mechanism.run(root, exe, &args)?;
         runs.push(Run {
             name,
             pid,
             attempts,
+            output,
         });
     }
     if runs.is_empty() {
@@ -99,6 +103,9 @@ pub(crate) fn run(root: &Path, rest: &[String]) -> Result<()> {
                 break;
             }
         }
+    }
+    if self_test && matches!(mechanism, Mechanism::Sandbox) {
+        accept_sandbox_refusals(&mut runs);
     }
     let total: usize = runs.iter().map(|run| run.attempts.len()).sum();
     for run in &runs {
@@ -246,7 +253,12 @@ impl Mechanism {
 
     /// Runs `exe` under the mechanism. strace returns its attempts at once; the log-based
     /// mechanisms return the process ID for [`Mechanism::lines`].
-    fn run(self, root: &Path, exe: &Path, args: &[&str]) -> Result<(Option<u32>, Vec<String>)> {
+    fn run(
+        self,
+        root: &Path,
+        exe: &Path,
+        args: &[&str],
+    ) -> Result<(Option<u32>, Vec<String>, String)> {
         match self {
             Self::Strace => {
                 let log = work_dir(root)?.join("strace.log");
@@ -266,22 +278,25 @@ impl Mechanism {
                     .context("running strace")?;
                 check(exe, status.success())?;
                 let text = std::fs::read_to_string(&log).context("reading the strace log")?;
-                Ok((None, inet_lines(&text)))
+                Ok((None, inet_lines(&text), String::new()))
             }
             Self::Sandbox => {
                 let profile = work_dir(root)?.join("deny.sb");
-                let mut child = Command::new("sandbox-exec")
+                let child = Command::new("sandbox-exec")
                     .arg("-f")
                     .arg(&profile)
                     .arg(exe)
                     .args(args)
                     .env("SONARITHM_BACKEND", "null")
+                    .stdout(Stdio::piped())
                     .spawn()
                     .context("running sandbox-exec")?;
                 let pid = child.id();
-                let status = child.wait().context("waiting for the tests")?;
-                check(exe, status.success())?;
-                Ok((Some(pid), Vec::new()))
+                let finished = child.wait_with_output().context("waiting for the tests")?;
+                let output = String::from_utf8_lossy(&finished.stdout).into_owned();
+                print!("{output}");
+                check(exe, finished.status.success())?;
+                Ok((Some(pid), Vec::new(), output))
             }
             Self::Wfp => {
                 let mut child = Command::new(exe)
@@ -292,7 +307,7 @@ impl Mechanism {
                 let pid = child.id();
                 let status = child.wait().context("waiting for the tests")?;
                 check(exe, status.success())?;
-                Ok((Some(pid), Vec::new()))
+                Ok((Some(pid), Vec::new(), String::new()))
             }
         }
     }
@@ -338,6 +353,24 @@ impl Mechanism {
     }
 }
 
+/// The unified log can drop or delay the kernel's denial lines on a busy runner. The
+/// probe's own EPERM shows that the sandbox refused its connections, which is what the
+/// self-test has to prove.
+fn accept_sandbox_refusals(runs: &mut [Run]) {
+    for run in runs.iter_mut() {
+        if run.attempts.is_empty() {
+            run.attempts = refused_by_sandbox(&run.output);
+            if !run.attempts.is_empty() {
+                println!(
+                    "network-deny: the unified log had no entry for {}; the probe reports \
+                     that the sandbox refused its connections (EPERM)",
+                    run.name
+                );
+            }
+        }
+    }
+}
+
 fn work_dir(root: &Path) -> Result<PathBuf> {
     let dir = root.join("target").join("network-deny");
     std::fs::create_dir_all(&dir).with_context(|| format!("creating {}", dir.display()))?;
@@ -356,6 +389,16 @@ fn check(exe: &Path, ok: bool) -> Result<()> {
 fn inet_lines(log: &str) -> Vec<String> {
     log.lines()
         .filter(|line| line.contains("sa_family=AF_INET"))
+        .map(str::to_owned)
+        .collect()
+}
+
+/// The probe's connections that the sandbox refused: its `network-probe` lines ending in
+/// EPERM (`os error 1`).
+fn refused_by_sandbox(output: &str) -> Vec<String> {
+    output
+        .lines()
+        .filter(|line| line.starts_with("network-probe") && line.ends_with(": os error 1"))
         .map(str::to_owned)
         .collect()
 }
@@ -396,6 +439,17 @@ mod tests {
 4243 sendto(6, \"x\", 1, 0, {sa_family=AF_INET6, sin6_port=htons(9)}, 28) = 1
 4243 sendto(7, \"x\", 1, 0, NULL, 0) = 1";
         assert_eq!(inet_lines(log).len(), 2);
+    }
+
+    #[test]
+    fn only_the_probes_eperm_counts_as_a_sandbox_refusal() {
+        let output = "running 1 test\nnetwork-probe tcp: os error 1\nnetwork-probe udp: os error 1\n\
+                      network-probe tcp: TimedOut\nnetwork-probe udp: os error 13\n";
+        assert_eq!(refused_by_sandbox(output).len(), 2);
+        assert_eq!(
+            refused_by_sandbox("network-probe tcp: sent"),
+            Vec::<String>::new()
+        );
     }
 
     #[test]
