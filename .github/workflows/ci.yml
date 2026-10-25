@@ -265,7 +265,8 @@ jobs:
       # Package tests with node:test, including the Rust–TypeScript message contract and the
       # pseudo-locale check of @sonarithm/i18n (B02-T08), @sonarithm/ipc's client and
       # binary reader against the generated protocol and a Rust-encoded view (B01-T02), and
-      # @sonarithm/ui's token contrast, freshness and lint tests (B02-T01).
+      # @sonarithm/ui's token contrast, freshness and lint tests (B02-T01) and the bundled-font
+      # checks (B02-T02).
       - run: pnpm -r test
 
   # The examples gallery (examples/README.md): its datasets regenerate byte for byte from

@@ -103,3 +103,13 @@ path = ["replication/**"]
 precedence = "closest"
 SPDX-FileCopyrightText = "2026 SONARITHM contributors"
 SPDX-License-Identifier = "CC-BY-4.0"
+
+# IBM Plex Sans and Mono (B02-T02): IBM's unmodified WOFF2 files and IBM's licence file, the
+# only OFL-1.1 files in the repository. The supply-chain policy allows OFL-1.1 for fonts only
+# (docs/engineering/supply-chain-and-licensing.md, "Assets"). Provenance and hashes:
+# packages/ui/fonts/README.md and packages/ui/tokens/fonts.ts.
+[[annotations]]
+path = ["packages/ui/fonts/*.woff2", "packages/ui/fonts/LICENSE.txt"]
+precedence = "override"
+SPDX-FileCopyrightText = "2017 IBM Corp."
+SPDX-License-Identifier = "OFL-1.1"

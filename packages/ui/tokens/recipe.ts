@@ -276,6 +276,26 @@ export const STATIC_TOKENS: readonly (readonly [string, string])[] = [
   // 120 ms is the maximum (DL-P09).
   ["motion-fast", "80ms"],
   ["motion-base", "120ms"],
+  // Typography (§7.1): IBM Plex, bundled by fonts.css; the fallbacks only cover a failed load.
+  ["font-sans", '"IBM Plex Sans", system-ui, sans-serif'],
+  ["font-mono", '"IBM Plex Mono", ui-monospace, monospace'],
+  // The type scale, size over line height in px: 11/16, 12/16, 13/20, 15/20, 18/24.
+  ["type-11-size", "0.6875rem"],
+  ["type-11-line", "1rem"],
+  ["type-12-size", "0.75rem"],
+  ["type-12-line", "1rem"],
+  ["type-13-size", "0.8125rem"],
+  ["type-13-line", "1.25rem"],
+  ["type-15-size", "0.9375rem"],
+  ["type-15-line", "1.25rem"],
+  ["type-18-size", "1.125rem"],
+  ["type-18-line", "1.5rem"],
+  // No light or thin weights: they break up on dark surfaces (§7.1).
+  ["weight-regular", "400"],
+  ["weight-medium", "500"],
+  ["weight-semibold", "600"],
+  // Figures for numbers (§7.1, DL-P04): Plex's default figures are already tabular (F-132).
+  ["numeric", "tabular-nums lining-nums slashed-zero"],
 ];
 
 /** Motion tokens set to 0 ms under `prefers-reduced-motion: reduce` (§9). */

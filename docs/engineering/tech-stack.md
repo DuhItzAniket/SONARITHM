@@ -64,7 +64,7 @@
 | Spec editor | CodeMirror 6 | — | Adopt | MIT | B05 | Monaco rejected as heavier |
 | Layout | Fixed regions + splitters | — | Adopt | — | B02 | dockview's keyboard docking is Enterprise-only, hence fixed regions |
 | Icons | Lucide | — | Adopt | ISC (+ Feather MIT) | B02 | Labelled, sparing |
-| Fonts | IBM Plex Sans + IBM Plex Mono (WOFF2, bundled) | — | Adopt | OFL-1.1 | B02 | Alternative: Source Sans 3 + JetBrains Mono |
+| Fonts | IBM Plex Sans + IBM Plex Mono (WOFF2, bundled unmodified in `packages/ui/fonts`, 400/500/600) | Sans 3.005 (`@ibm/plex-sans` 1.1.0), Mono 2.005 (`@ibm/plex-mono` 2.5.0) | Adopt | OFL-1.1 | B02 | Alternative: Source Sans 3 + JetBrains Mono |
 | Package manager | pnpm (workspaces) | 12.x | Adopt | MIT | A01 | |
 | JS runtime (tooling and CI) | Node.js, an even-numbered **LTS** line | Node 24 LTS; move to Node 26 once it enters LTS (expected late Oct 2026; verify in A01) | Adopt | MIT | A01 | Odd lines (such as the Node 25 on the baseline dev machine) never become LTS. Range pinned in the `engines` field |
 | Lint and format (frontend) | ESLint + typescript-eslint + jsx-a11y (strict) + react-hooks; Prettier; Stylelint 17.16 (no hard-coded colours or spacing; design-language anti-patterns) | Stylelint 17.16 | Adopt | MIT | A01/B02 | Biome rejected: weaker accessibility rule coverage ([coding-standards §12.2](coding-standards.md#122-linting-and-formatting)) |

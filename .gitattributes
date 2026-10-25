@@ -19,6 +19,11 @@
 crates/sonarithm-data/tests/corpus/** -text
 crates/sonarithm-data/fuzz/corpus/** -text
 
+# Bundled IBM Plex files stay byte-identical to upstream (OFL Reserved Font Name; the
+# tests check their SHA-256). IBM's LICENSE.txt has CRLF line endings.
+packages/ui/fonts/*.woff2 -text
+packages/ui/fonts/LICENSE.txt -text
+
 # --- Binary files (no line-ending conversion, no textual diff) -------------
 # Audio
 *.wav     binary
@@ -68,5 +73,7 @@ crates/sonarithm-data/fuzz/corpus/** -text
 # --- Generated files (collapsed in GitHub diffs, excluded from language stats) --
 schemas/**                       linguist-generated=true
 packages/ipc/src/generated/**    linguist-generated=true
+packages/ui/src/generated/**     linguist-generated=true
+packages/ui/font-test/**         linguist-generated=true
 Cargo.lock                       linguist-generated=true
 pnpm-lock.yaml                   linguist-generated=true

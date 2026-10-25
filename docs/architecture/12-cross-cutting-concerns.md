@@ -131,7 +131,7 @@ Results are recorded in [research-paper/benchmarks-log.md](../research-paper/ben
 
 ## 9. Licensing compliance in the product
 
-- An **About → Licences** view lists every third-party component with its licence, generated at build time from Cargo and npm metadata, and includes the OFL font texts and the Lucide ISC + Feather MIT notices.
+- An **About → Licences** view lists every third-party component with its licence, generated at build time from Cargo and npm metadata, and includes the OFL font texts and the Lucide ISC + Feather MIT notices. The bundled fonts' notices come from `@sonarithm/ui/licenses.json`, generated with the fonts (B02-T02).
 - Copyleft components (MP3 via LAME) are only present in builds that enable their feature, and then appear in the licences view.
 - Model weights (D04) show their licence before download.
 
