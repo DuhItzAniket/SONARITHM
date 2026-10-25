@@ -177,6 +177,44 @@ If someone working on C02 sees WPD's or Engauge's source (for example by followi
 
 Licence checks for crates a Stage C phase plans to add, recorded before the phase's code (implementation plan §4.1). The licences are those declared on crates.io for the version named, checked on the date given. Adding the crate still needs `cargo deny check` to pass on the full dependency tree in the PR that adds it.
 
+### C01: PLOTSONA's parsers and corpus tools (C01-T02, checked 2026-10-26)
+
+Versions and licences are those crates.io and PyPI declared on 2026-10-26. `sonarithm-plotsona` is an engine crate, so a runtime dependency must also build for `wasm32-unknown-unknown` and fit the core MSRV (1.88), and every parser it uses reads untrusted files ([12 §6](../architecture/12-cross-cutting-concerns.md#6-security-and-threat-model)).
+
+**Runtime candidates (`sonarithm-plotsona`)**
+
+| Crate | Version | Licence | MSRV | Decision |
+|---|---|---|---|---|
+| `zip` | 9.0.5 (in the lockfile through calamine; 9.1.0 is current) | `MIT` | 1.88 | **Use** for the XLSX, PPTX and DOCX containers, with default features off and only Deflate decompression (`deflate-flate2-zlib-rs`): no AES, bzip2, LZMA, zstd or C code. PLOTSONA checks entry counts, declared sizes and the compression ratio before it inflates anything, and reads through a size cap |
+| `roxmltree` | 0.21.2 | `MIT OR Apache-2.0` | 1.60 | **Use** for Office chart XML and SVG. Its only dependency is `memchr`; it refuses a DTD unless asked (`allow_dtd` is off by default), so there are no entities to expand and no external references to resolve, and it has a node limit |
+| `quick-xml` | 0.42.0 (in the lockfile through calamine) | `MIT` | 1.86 | Not used directly: a streaming reader is not needed for chart parts, and one XML parser for both tiers keeps the fuzzing surface small |
+| `svgtypes` | 0.16.1 | `Apache-2.0 OR MIT` | 1.85 | **Use** for SVG path data, transforms, lengths and colours. Brings `kurbo` 0.13.1 (`Apache-2.0 OR MIT`) and `siphasher` (`MIT OR Apache-2.0`) |
+| `usvg` | 0.49.0 | `Apache-2.0 OR MIT` | 1.85 | Not used at run time: it builds a full rendering tree with font loading and image decoding, far more than mark geometry and tick text need. Dev-only through `resvg` (below) |
+| `lopdf` | 0.46.0 | `MIT` | 1.88 | Not used: its non-optional dependencies include `aes`, `cbc`, `md-5`, `rand`, `getrandom` (which needs a `wasm_js` feature on `wasm32-unknown-unknown`) and `log`, mostly for decryption, which PLOTSONA refuses anyway |
+| `hayro-syntax` | 0.8.0 | `Apache-2.0 OR MIT` | **1.92** | Not used now: its MSRV is above the core MSRV (1.88). Revisit when the MSRV moves; it would replace PLOTSONA's own reader |
+| PLOTSONA's own PDF object reader | — | `MIT OR Apache-2.0` (ours) | 1.88 | **Use:** objects, cross-reference streams and object streams, and the `FlateDecode` filter only, with object-count, depth, stream-size and operator budgets and a fuzz target (C01-T08). Encrypted PDFs are refused with a diagnostic |
+| `flate2` | 1.1.10 (in the lockfile) | `MIT OR Apache-2.0` | 1.67 | **Use** for `FlateDecode` PDF streams, through the pure-Rust backend already in the tree |
+| `calamine` | 0.37.0 (in the lockfile) | `MIT` | 1.88 | **Use** through `sonarithm-data`'s `xlsx` feature for an Office chart's embedded workbook. Optional in PLOTSONA, so its `wasm32` build keeps the caches-only path |
+| `serde_json` | 1.0.154 (in the lockfile) | `MIT OR Apache-2.0` | 1.71 | **Use** for Vega, Vega-Lite, Plotly and Highcharts JSON |
+| `html5ever`, `tl` | 0.40.1, 0.7.8 | `MIT OR Apache-2.0`, `MIT` | 1.85, none declared | Not used: PLOTSONA only needs the text of `<script>` blocks in a local HTML file, which a small scanner finds without building a DOM. No script runs ([OD-25](../planning/open-decisions.md#closed-decisions)) |
+
+**Dev-only corpus tools (C01-T11, C02-T08).** Never shipped and never a runtime dependency; they generate chart files with known data, and the files they produce are committed with their ground truth.
+
+| Tool | Version | Licence | Decision |
+|---|---|---|---|
+| `rust_xlsxwriter` (Rust) | 0.101.0 | `MIT OR Apache-2.0` | Allowed as a dev-dependency or generator tool |
+| XlsxWriter (Python) | 3.3.0 | `BSD-2-Clause` | Allowed |
+| openpyxl (Python) | 3.1.5 | `MIT` | Allowed |
+| python-pptx | 1.0.2 | `MIT` | Allowed |
+| python-docx | 1.2.0 | `MIT` | Allowed |
+| plotly (Python) | 7.1.0 | `MIT` | Allowed (figure JSON and static images) |
+| Kaleido | 1.5.0 | `MIT` (declared in the licence text, no SPDX field) | Allowed; it drives a locally installed Chrome, so it runs only on a developer machine |
+| vl-convert-python | 1.9.0.post1 | `BSD-3-Clause` | Allowed (Vega-Lite to SVG and PDF) |
+| `resvg` | 0.49.0 | `Apache-2.0 OR MIT` | Allowed (SVG to raster for C02) |
+| `svg2pdf` | 0.13.0 | `MIT OR Apache-2.0` | Allowed (SVG to vector PDF) |
+
+No candidate needs a licence outside the allowlist, so C01 files no open decision. The Stage C traps (midly, Highcharts, OCR models) are in [Known traps](#known-traps). Generated corpus charts use CC BY 4.0 or CC0 data, recorded in [datasets.md](../research-paper/datasets.md).
+
 ### C02: raster image crates
 
 Checked on crates.io on 2026-10-26.
