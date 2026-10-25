@@ -1,8 +1,8 @@
 ---
-status: proposed
+status: accepted
 date: 2026-10-26
 decision-makers: ["@DuhItzAniket"]
-consulted: []
+consulted: ["coordinator agent (Claude Code), under the owner's delegation of ADR approvals"]
 informed: []
 ---
 
@@ -32,6 +32,10 @@ PLOTSONA's raster tier (C02) reads values from chart images: axis calibration, c
 Chosen option: **A**, because it gives the same protection as B for the parts of WPD that are documented (its calibration types, masks, colour-distance filter, averaging-window, X-step and bar and blob algorithms are all described in its user documentation), without a second team the project does not have. C adds little that the documentation does not already say, sends files to a third-party service, and invites inspecting the served JavaScript; it is not allowed for now. D leaves no evidence.
 
 The procedure itself (roles, allowed and forbidden sources, the register, the PR line, review checks and what to do after an exposure) is in the [supply-chain policy](../engineering/supply-chain-and-licensing.md#clean-room-procedure-raster-digitizer). The register is [docs/research/clean-room/raster-digitizer-sources.md](../research/clean-room/raster-digitizer-sources.md).
+
+### Acceptance (2026-10-26)
+
+Accepted by the coordinator under the owner's delegation, before C02-T03. Option A keeps the project inside the existing licence policy (AGENTS.md rule 8: no AGPL or GPL code, WebPlotDigitizer re-implemented from its documentation only) without a second team the project does not have. It also leaves a register a reviewer can check. This applies the licence policy; it does not change it.
 
 ### Consequences
 
