@@ -27,6 +27,7 @@ Owner: `sonarithm-app`.
 | `SNR-APP-020` | error | No job has this ID | export_render returns the job's ID; job_list lists the jobs of this session. | — |
 | `SNR-APP-021` | error | Export path not usable | Choose a file ending in .wav or .flac in a folder that exists. | — |
 | `SNR-APP-022` | error | Export failed | Check that the folder is writable and the disk is not full, then export again. | — |
+| `SNR-APP-040` | error | The spec patch does not apply | Check each operation's path against the current spec (spec_get); a patch applies completely or not at all. | — |
 | `SNR-APP-050` | error | Not a binary view this version reads | Build the user interface and the host from the same commit; a view's header version, kind and data types must all be known to the reader. | — |
 | `SNR-APP-060` | error | The file cannot be opened | Choose an existing CSV, TSV, JSON, NDJSON, Parquet, Arrow, XLSX or ODS file. | — |
 
