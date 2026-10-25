@@ -44,3 +44,55 @@
 - [ ] B05-T01, B05-T04, B03-T07, B06-T05, B03-T08 as their predecessors merge (agent).
 - [ ] B06-T07 stream soak once B06-T05 is in (agent).
 - [ ] HP-11: the owner's listening check of the monitoring soundscape (owner, #129).
+
+## Addendum 2026-10-26: the rest of the stack, B06-T07, and the Lane R summary
+
+### What was done
+
+- The stack landed in order, each rebased onto `main` and verified with `cargo xtask ci` first: B05-T01 (#280), B05-T04 (#283), B03-T07 (#285), B06-T05 (#286) and B03-T08 (#352). #286 first failed the `frontend` typecheck: the rebase had left a duplicate `stream` key in the pseudo-locale samples. The local checks now include `pnpm -r typecheck`.
+- B06-T07 (#247): live playback through the app core (`live_start`, `live_stop`).
+  - About once a second, the newest window of the stream is compiled (`Sonarithm::compile_stream` over `Snapshot::within`), placed on the stream's timeline (`Score::offset`) and swapped in while playing (`Player::swap`).
+  - `TransportState` gained `live` and `xruns`.
+  - The `stream_soak` example and the nightly `stream-soak` job measure PB-11.
+- The 1-hour soak on HW-01 (null device) passed (F-144):
+  - memory flat at about 26 MiB;
+  - all 3,601,204 rows received;
+  - the playhead at most 2.04 s behind the newest data;
+  - a full 10 s window compiles in 8.2 ms, so no `encode_incremental` RFC is needed.
+- #282 filed: the `no_alloc_device` test needs more than 200 callbacks in 3 s, and a slow Windows runner fell short.
+
+### Decisions
+
+| Decision | Why | Record |
+|---|---|---|
+| Live playback recompiles the whole window and swaps the Score, rather than appending events | The compile takes about 1 % of the period, and a swap keeps one code path (spec in, Score out) | 07 SONOTRACE and 09 §2.1 as built; F-144 |
+| Each window's Score is shifted onto the stream's timeline | The graph's position carries over a swap, so no seek is needed and nothing jumps | `Score::offset` |
+| The stream keeps 100,000 rows; the spec's `window` limits only what is compiled | Memory stays bounded whatever the spec says (PB-11) | 03 §8 as built |
+| Underruns on the null device are reported, not gated | They count timer misses under other load; PB-11's xrun check needs a real device | testing-strategy §9.3 |
+
+### Lane R summary (Stage B before Gate U)
+
+Lane R built the headless app core and SONOTRACE's stream path, everything the desktop UI will drive after Gate U.
+
+| Phase | Tasks done (PR) |
+|---|---|
+| B01 | T01 app core and IPC v1 (#270), T02 typed IPC (#271), T06 network-deny harness (#272) |
+| B03 | T07 speech sequencing and self-voicing (#285), T08 profiles and presets (#352) |
+| B04 | T03 view tiles and table pages (#277) |
+| B05 | T01 spec patches with undo (#280), T04 project bundles, autosave and recovery (#283) |
+| B06 | T01 `StreamTable` (#261), T02 stream adapters with consent (#265), T03 SONOTRACE live and transport (#263), T04 monitoring soundscape (#278), T05 stream notices and controls (#286), T07 stream soak (in review) |
+
+- **Decisions:** ADR-0017 (IPC protocol v1), RFC-0002 and ADR-0018 (project format v1), ADR-0020 (profiles and settings layers).
+- **Findings:** F-140 to F-144.
+- **Left for Gate U:** the Lane U tasks, including B06-T06's stream UI.
+- **Left for the owner (#129):**
+  - HP-11 listening checks: the monitoring soundscape and the scrub grains;
+  - the M-01 screen-reader runs of speech sequencing (NVDA ducking modes);
+  - PB-11's underrun check on a real device: `cargo run -p sonarithm-app --example stream_soak --release -- --output system --seconds 3600 --max-xruns 0`, at −60 dB;
+  - optionally, making `network-deny` a required check.
+
+### Next steps
+
+- [ ] B06-T07 merges (agent; auto-merge on).
+- [ ] The owner steps above (owner, #129).
+- [ ] #282: make `no_alloc_device` count to a minimum instead of a fixed 3 s window (agent or owner).
