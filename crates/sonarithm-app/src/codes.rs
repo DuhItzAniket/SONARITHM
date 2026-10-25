@@ -176,6 +176,69 @@ pub const EXPORT_FAILED: CodeInfo = CodeInfo {
     status: CodeStatus::Active,
 };
 
+/// `project_save` without a path: the project was never saved.
+pub const NO_PROJECT_PATH: CodeInfo = CodeInfo {
+    code: "SNR-APP-030",
+    severity: Severity::Error,
+    summary: "The project has no file yet",
+    help: "Use project_save_as to choose where to save it.",
+    rules: &[],
+    status: CodeStatus::Active,
+};
+
+/// The project was made by a newer major format version (RFC-0002 §5).
+pub const PROJECT_MAJOR: CodeInfo = CodeInfo {
+    code: "SNR-APP-031",
+    severity: Severity::Error,
+    summary: "The project needs a newer SONARITHM",
+    help: "Update SONARITHM to open this project; this version does not guess at newer formats.",
+    rules: &[],
+    status: CodeStatus::Active,
+};
+
+/// The bundle is unsafe, oversized, altered or malformed (RFC-0002 §6).
+pub const PROJECT_DAMAGED: CodeInfo = CodeInfo {
+    code: "SNR-APP-032",
+    severity: Severity::Error,
+    summary: "The project cannot be opened safely",
+    help: "The file is damaged, altered or not a SONARITHM project. Open a copy you trust, or \
+           an autosave.",
+    rules: &[],
+    status: CodeStatus::Active,
+};
+
+/// A project would store an absolute path (RFC-0002 §4).
+pub const PROJECT_PATH: CodeInfo = CodeInfo {
+    code: "SNR-APP-033",
+    severity: Severity::Error,
+    summary: "A project never stores an absolute path",
+    help: "Open files as datasets and refer to them by ID, and embed data that is on another \
+           drive than the project.",
+    rules: &[],
+    status: CodeStatus::Active,
+};
+
+/// Linked data is missing, changed or not a data file (RFC-0002 §4).
+pub const LINKED_DATA: CodeInfo = CodeInfo {
+    code: "SNR-APP-034",
+    severity: Severity::Warning,
+    summary: "Linked data is unavailable",
+    help: "Put the file back where the project expects it, unchanged, or open the data again \
+           and save the project.",
+    rules: &[],
+    status: CodeStatus::Active,
+};
+
+/// A newer minor format version, or members this version does not know (RFC-0002 §5).
+pub const PROJECT_NEWER: CodeInfo = CodeInfo {
+    code: "SNR-APP-035",
+    severity: Severity::Warning,
+    summary: "Parts of the project are unknown to this version",
+    help: "The project opens; saving it with this version drops what it does not know.",
+    rules: &[],
+    status: CodeStatus::Active,
+};
+
 /// A spec patch could not be applied; the spec is unchanged.
 pub const SPEC_PATCH: CodeInfo = CodeInfo {
     code: "SNR-APP-040",
@@ -229,6 +292,12 @@ pub const CODES: CodeTable = CodeTable {
         UNKNOWN_JOB,
         EXPORT_PATH,
         EXPORT_FAILED,
+        NO_PROJECT_PATH,
+        PROJECT_MAJOR,
+        PROJECT_DAMAGED,
+        PROJECT_PATH,
+        LINKED_DATA,
+        PROJECT_NEWER,
         SPEC_PATCH,
         BINARY_VIEW,
         FILE_REFUSED,

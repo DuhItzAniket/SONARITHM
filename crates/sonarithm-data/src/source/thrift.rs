@@ -71,6 +71,7 @@ pub(super) fn check_footer(file: &[u8]) -> Result<(), String> {
 
 /// Walks every page header of the column chunk at `start..start + length`, the byte range
 /// parquet reads page by page until it is used up.
+#[cfg(test)]
 pub(super) fn check_column_chunk(file: &[u8], start: i64, length: i64) -> Result<(), String> {
     let (Ok(start), Ok(length)) = (usize::try_from(start), usize::try_from(length)) else {
         return Err("a column chunk has a negative offset or length".to_owned());
@@ -91,6 +92,21 @@ pub(super) fn check_column_chunk(file: &[u8], start: i64, length: i64) -> Result
             .map_err(|_| "a page runs past the end of its column chunk".to_owned())?;
     }
     Ok(())
+}
+/// One page header at the start of `window`: its length in bytes and the page's
+/// compressed size. `Ok(None)` when the window ends inside the header, so the caller reads
+/// a larger window.
+pub(super) fn page_header(window: &[u8]) -> Result<Option<(usize, u64)>, String> {
+    let mut input = Input::new(window);
+    match input.structure(MAX_DEPTH, Some(COMPRESSED_PAGE_SIZE)) {
+        Ok(size) => {
+            let size = size.ok_or_else(|| "a page header has no compressed size".to_owned())?;
+            let size = u64::try_from(size).map_err(|_| "a page has a negative size".to_owned())?;
+            Ok(Some((input.at, size)))
+        }
+        Err(reason) if reason == ends_early() => Ok(None),
+        Err(reason) => Err(format!("a page header is malformed: {reason}")),
+    }
 }
 
 /// Thrift compact protocol input with a cursor; every read is bounds-checked.

@@ -65,6 +65,15 @@ pub const COMMANDS: &[(&str, &str)] = &[
     ("settings_set", "settings"),
     ("devices_list", "devices"),
     ("device_select", "transport"),
+    ("project_new", "project"),
+    ("project_open", "project"),
+    ("project_open_recent", "project"),
+    ("project_save", "project"),
+    ("project_save_as", "project"),
+    ("project_recent", "recent"),
+    ("project_recovery", "recovery"),
+    ("project_recover", "project"),
+    ("project_discard_recovery", "recovery"),
 ];
 
 /// The commands whose reply is a binary view (ADR-0017 §6), sent with
@@ -194,6 +203,39 @@ pub enum Request {
         /// The device's ID from `devices_list`, or `null`.
         id: Option<String>,
     },
+    /// Starts an empty, unsaved project. Replies [`Reply::Project`].
+    ProjectNew,
+    /// Opens a `.sonarithm` project the user chose, replacing the session (RFC-0002).
+    /// Replies [`Reply::Project`] with warnings for linked data that is unavailable.
+    ProjectOpen {
+        /// The project file.
+        path: String,
+    },
+    /// Opens a project from the recent list by its position. Replies [`Reply::Project`].
+    ProjectOpenRecent {
+        /// The position in `project_recent`'s list.
+        index: u32,
+    },
+    /// Saves the project to its file. Replies [`Reply::Project`].
+    ProjectSave,
+    /// Saves the project to a new file the user chose. Replies [`Reply::Project`].
+    ProjectSaveAs {
+        /// The project file, ending in `.sonarithm`.
+        path: String,
+        /// Embed every dataset; otherwise data opened from files is linked.
+        embed_data: bool,
+    },
+    /// The recently opened or saved projects, by file name. Replies [`Reply::Recent`].
+    ProjectRecent,
+    /// Autosaves left by a session that did not end cleanly. Replies [`Reply::Recovery`].
+    ProjectRecovery,
+    /// Opens an autosave as an unsaved project. Replies [`Reply::Project`].
+    ProjectRecover {
+        /// The autosave's ID from `project_recovery`.
+        id: u64,
+    },
+    /// Deletes every autosave. Replies [`Reply::Recovery`].
+    ProjectDiscardRecovery,
     /// A downsampled view of two fields of a dataset for drawing (03 §7). Binary: a view of
     /// kind `m4Tile` or `lttbTile` with the columns `row`, `x` and `y` (ADR-0017 §6).
     ViewGet {
@@ -287,6 +329,15 @@ impl Request {
             Self::SettingsSet { .. } => "settings_set",
             Self::DevicesList => "devices_list",
             Self::DeviceSelect { .. } => "device_select",
+            Self::ProjectNew => "project_new",
+            Self::ProjectOpen { .. } => "project_open",
+            Self::ProjectOpenRecent { .. } => "project_open_recent",
+            Self::ProjectSave => "project_save",
+            Self::ProjectSaveAs { .. } => "project_save_as",
+            Self::ProjectRecent => "project_recent",
+            Self::ProjectRecovery => "project_recovery",
+            Self::ProjectRecover { .. } => "project_recover",
+            Self::ProjectDiscardRecovery => "project_discard_recovery",
             Self::ViewGet { .. } => "view_get",
             Self::TablePage { .. } => "table_page",
         }
@@ -346,6 +397,18 @@ pub enum Reply {
     Devices {
         /// The devices, the system default marked.
         devices: Vec<DeviceSummary>,
+    },
+    /// The project after opening or saving.
+    Project(ProjectSummary),
+    /// The recent projects.
+    Recent {
+        /// Most recent first.
+        projects: Vec<RecentProject>,
+    },
+    /// Autosaves that can be recovered.
+    Recovery {
+        /// Newest first.
+        autosaves: Vec<AutosaveInfo>,
     },
 }
 
@@ -815,6 +878,64 @@ pub struct HistoryState {
     pub can_redo: bool,
     /// The spec after the step.
     pub spec: SpecState,
+}
+
+/// A project (RFC-0002 §9). Files are named alone, never with their folders (ADR-0017 §7).
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, TS)]
+#[serde(rename_all = "camelCase")]
+#[non_exhaustive]
+pub struct ProjectSummary {
+    /// The display name.
+    pub name: String,
+    /// The project file's name, once saved.
+    pub file_name: Option<String>,
+    /// Whether there are changes since the last save.
+    pub unsaved: bool,
+    /// The spec IDs, in order.
+    pub specs: Vec<String>,
+    /// The spec the session edits.
+    pub active_spec: Option<String>,
+    /// The datasets.
+    pub datasets: Vec<ProjectDatasetInfo>,
+    /// Warnings from opening: unavailable linked data, newer format parts.
+    pub diagnostics: Vec<DiagnosticInfo>,
+}
+
+/// A dataset of a project.
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, TS)]
+#[serde(rename_all = "camelCase")]
+#[non_exhaustive]
+pub struct ProjectDatasetInfo {
+    /// The ID specs name it by.
+    pub id: String,
+    /// The original file name.
+    pub name: String,
+    /// Linked to a file rather than embedded.
+    pub linked: bool,
+    /// Whether its data is loaded (linked data can be missing or changed).
+    pub available: bool,
+}
+
+/// A recent project.
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, TS)]
+#[serde(rename_all = "camelCase")]
+#[non_exhaustive]
+pub struct RecentProject {
+    /// The position for `project_open_recent`.
+    pub index: u32,
+    /// The file name.
+    pub name: String,
+}
+
+/// An autosave (RFC-0002 §8).
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize, TS)]
+#[serde(rename_all = "camelCase")]
+#[non_exhaustive]
+pub struct AutosaveInfo {
+    /// The ID for `project_recover`.
+    pub id: u64,
+    /// When it was written: the file system's time, in seconds since 1970.
+    pub modified_s: f64,
 }
 
 /// An output device.
