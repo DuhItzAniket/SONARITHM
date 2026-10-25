@@ -20,6 +20,8 @@ const stopped: TransportState = {
   loopRange: null,
   loaded: true,
   device: null,
+  live: false,
+  xruns: 0,
 };
 
 void test("a version mismatch fails fast with a clear error", async () => {
