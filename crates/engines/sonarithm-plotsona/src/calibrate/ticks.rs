@@ -106,7 +106,9 @@ pub fn looks_like_dates(ticks: &[Tick]) -> bool {
         .filter(|t| parse_number(&t.text).is_some() && parse_year(t.text.trim()).is_none())
         .count();
     let has_non_year = ticks.iter().any(|t| parse_year(t.text.trim()).is_none());
-    dated * 2 > ticks.len() && non_year_numbers == 0 && has_non_year
+    // Month names alone are categories unless some tick gives a year.
+    let has_full_date = ticks.iter().any(|t| parse_date(t.text.trim()).is_some());
+    dated * 2 > ticks.len() && non_year_numbers == 0 && has_non_year && has_full_date
 }
 
 fn unread_labels(unread: &[&str], axis: &str) -> Option<Diagnostic> {
@@ -416,6 +418,15 @@ mod tests {
         assert!(!looks_like_dates(&years));
         let mixed = [Tick::new(0.0, "0"), Tick::new(10.0, "Jan 2020")];
         assert!(!looks_like_dates(&mixed));
+        let months = [
+            Tick::new(0.0, "Jan"),
+            Tick::new(10.0, "Feb"),
+            Tick::new(20.0, "Mar"),
+        ];
+        assert!(
+            !looks_like_dates(&months),
+            "month names alone are categories"
+        );
     }
 
     #[test]
