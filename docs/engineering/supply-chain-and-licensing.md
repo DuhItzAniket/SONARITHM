@@ -66,8 +66,8 @@ From the research. The cargo-deny allowlist catches the crates automatically; th
 | nih-plug VST3 bindings | GPLv3 obligations | A plugin-format target | No VST3 support through nih-plug |
 | ChartGemma | Code GPL-3.0 | ML chart extraction (D04) | Do not vendor or link its code. Model weights have separate terms (see [model weights](#model-weights)) |
 | Moondream 3 Preview weights | Business Source License 1.1 (converts to Apache-2.0 two years after release) | Local VLM (D04) | Not bundled. Moondream 3.1 uses a custom model licence: also not bundled |
-| WebPlotDigitizer | AGPL-3.0 (frontend); its cloud "AI Assist" is closed source | PLOTSONA raster digitizer (C02) | Design reference only. Re-implement from its documentation and published papers; never copy, port or translate its source |
-| Engauge Digitizer | GPL | Digitizer reference | Reference only; dormant upstream |
+| WebPlotDigitizer | AGPL-3.0 (frontend); its cloud "AI Assist" is closed source | PLOTSONA raster digitizer (C02) | Design reference only. Re-implement from its documentation and published papers under the [clean-room procedure](#clean-room-procedure-raster-digitizer) ([ADR-0022](../decisions/0022-clean-room-raster-digitizer.md)); never read, copy, port or translate its source |
+| Engauge Digitizer | GPL | Digitizer reference | Reference only, under the same [clean-room procedure](#clean-room-procedure-raster-digitizer); dormant upstream |
 | midly | `Unlicense`, which is not on the allowlist (checked on crates.io, 2026-10-26) | MIDI file export (AXONOTE, C04); [02 §2](../architecture/02-repository-and-crate-layout.md#2-crate-catalogue) names it for `sonarithm-export` | Not added. The owner decides between allowing `Unlicense` and an MIT alternative ([OD-21](../planning/open-decisions.md)) |
 | Highcharts | The library is not open source | Chart JSON extraction (PLOTSONA, C01) | Never used or bundled. Fixtures are options JSON written by hand from its documented format |
 | OCR models (for example ocrs's) | ocrs and rten are `MIT OR Apache-2.0`; the models' own licence is not stated, and they are trained on HierText (CC BY-SA 4.0), TODO(verify) | Tick-label reading (PLOTSONA, C02) | Not bundled. The owner decides ([OD-23](../planning/open-decisions.md)); any model follows [model weights](#model-weights) |
@@ -138,6 +138,61 @@ Before adding a Rust or npm dependency, check:
 3. **Placement:** the MSRV fits the crate's declared `rust-version`; core, compiler, engine, render and DSP crates stay `wasm32`-compatible; heavy or exotic dependencies go in leaf crates behind features.
 4. **Features:** disable default features that are not needed.
 5. **Significance:** a significant dependency (a runtime, framework or core algorithm) needs an ADR ([crate layout](../architecture/02-repository-and-crate-layout.md)).
+
+## Clean-room procedure (raster digitizer)
+
+Adopted in C02-T01 ([ADR-0022](../decisions/0022-clean-room-raster-digitizer.md), proposed). PLOTSONA's raster tier re-implements the workflow that WebPlotDigitizer (WPD) documents, without its AGPL code. The same rules cover Engauge Digitizer (GPL) and any other digitizer whose code is under a licence the [allowlist](#allowed) does not contain.
+
+### Who may read what
+
+| Who | May read | Must not read |
+|---|---|---|
+| Anyone who writes or reviews C02 raster code: the maintainer, contributors and every AI agent session | Sources of the kinds in the [sources register](../research/clean-room/raster-digitizer-sources.md): user documentation, published papers, and general image-processing references | WPD's or Engauge's source code in any form: repositories (beyond the front-page README, for licence facts only), forks, packages, archived copies, code quoted in issues, blog posts or answers, and the JavaScript the hosted WPD application serves (no browser developer tools on it) |
+| Everyone working on SONARITHM | The register and SONARITHM's own design notes | Running the hosted WPD application on charts to compare behaviour (ADR-0022, option C, not allowed for now) |
+
+AI agent sessions are told in their brief that WPD's and Engauge's code is off limits and that they work only from the register. A session never fetches those repositories' source files.
+
+### How sources are recorded
+
+1. Before a PR cites a source, it is in the [register](../research/clean-room/raster-digitizer-sources.md) with an ID (`CR-nn`), its link, its kind, what it may inform and when it was read. A new source is added in the same PR that first uses it.
+2. Readers are recorded by GitHub handle or as "agent session", never by name (ADR-0012).
+3. Licence and status pages are `licence-fact` entries and cannot be cited for code.
+
+### What each C02 PR states
+
+Every PR that adds or changes raster code (C02-T02 to C02-T05, C02-T08, and any later raster change) fills in the template's **Clean-room sources** line: the register IDs it used, and the statement that the author did not read WPD's or Engauge's source. Docs-only PRs write "N/A".
+
+### How reviewers check it
+
+- Every cited ID is in the register, and every entry cited for code has the kind `user-docs`, `paper` or `reference`.
+- Each algorithm in the PR is explained in the PR or in rustdoc in SONARITHM's own words, with the register ID for the documented behaviour it follows and a note on what we designed ourselves (thresholds, tie-breaks, interpolation) where the source is silent.
+- Names, comments and structure come from SONARITHM's design and the documentation's vocabulary, not from another code base: no identifiers, comments, file layout or constants that the cited sources do not explain. An unexplained constant is a review question.
+- Large blocks that look translated from JavaScript or C++ idioms rather than written for the crate are a review question.
+
+### After an exposure
+
+If someone working on C02 sees WPD's or Engauge's source (for example by following a link), they stop work on the affected part and record what they saw in the register's **Exposures** table. Code they wrote for that part after the exposure is not merged; a session that was not exposed re-implements it from the register. Code merged before the exposure stays, with a note in the table.
+
+## Stage C dependency candidates
+
+Licence checks for crates a Stage C phase plans to add, recorded before the phase's code (implementation plan §4.1). The licences are those declared on crates.io for the version named, checked on the date given. Adding the crate still needs `cargo deny check` to pass on the full dependency tree in the PR that adds it.
+
+### C02: raster image crates
+
+Checked on crates.io on 2026-10-26.
+
+| Crate | Version | Licence | MSRV | Decision |
+|---|---|---|---|---|
+| image | 0.25.10 | MIT OR Apache-2.0 | 1.88 | Allowed. Add with `default-features = false` and only the decoders C02 needs (`png`, `jpeg`); the default set includes AVIF encoding through ravif and rav1e, EXR and rayon, which C02 does not need |
+| imageproc | 0.27.0 | MIT | 1.87 | Allowed. Add with `default-features = false` (its defaults add text drawing, FFT and rayon) |
+
+Transitive crates reached by those features, with their declared licences: png (MIT OR Apache-2.0), zune-jpeg (MIT OR Apache-2.0 OR Zlib), zune-core (MIT OR Apache-2.0 OR Zlib), moxcms (BSD-3-Clause OR Apache-2.0), bytemuck (Zlib OR Apache-2.0 OR MIT), byteorder-lite (Unlicense OR MIT), num-traits (MIT OR Apache-2.0), nalgebra (Apache-2.0), approx (Apache-2.0), num (MIT OR Apache-2.0), itertools (MIT OR Apache-2.0), getrandom (MIT OR Apache-2.0), rand and rand_distr (MIT OR Apache-2.0). All are allowed; the `Unlicense OR MIT` choice passes through MIT. Crates that only optional features reach and C02 leaves off: ravif (BSD-3-Clause) and rav1e (BSD-2-Clause), exr (BSD-3-Clause), dav1d (MIT, links the C library libdav1d), mp4parse (MPL-2.0), ab_glyph (Apache-2.0), rustdct (MIT OR Apache-2.0).
+
+Notes for C02-T02, which adds them:
+
+- imageproc depends on getrandom when built for `wasm32`. Whether the engine crate still builds for `wasm32-unknown-unknown` without extra configuration is TODO(verify) with `cargo xtask wasm-check` when the crate is added.
+- imageproc functions that draw random numbers are not used, or are seeded from the spec seed (AGENTS.md rule 3).
+- Decoding limits (decompression bombs) are set through image's own limits API, checked in C02-T02's tests.
 
 ## npm licence checking
 
