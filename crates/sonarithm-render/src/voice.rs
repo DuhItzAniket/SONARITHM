@@ -14,6 +14,7 @@ use sonarithm_core::{Cents, Db, Hz, Pan, SampleRate, Seconds};
 use sonarithm_dsp::env::{MIN_RAMP, ramp_frames};
 use sonarithm_dsp::{
     Adsr, AdsrParams, Biquad, BiquadKind, Oscillator, PanGains, Stage, Waveform, sine_turns,
+    sine_turns_unit,
 };
 
 use crate::earcon::Earcon;
@@ -78,6 +79,9 @@ fn brightness_cutoff(
     }
     Hz(cutoff.min(PARTIAL_LIMIT * f64::from(rate.get())))
 }
+
+/// Samples per chunk when the mallet computes its phases ahead of its partials.
+const MALLET_CHUNK: usize = 64;
 
 /// The low-pass cutoff of the click (sound-design §7.1: "low-passed near 8 kHz for
 /// comfort").
@@ -157,10 +161,22 @@ impl Source {
         }
     }
 
-    /// Writes the next `out.len()` samples.
+    /// Writes the next `out.len()` samples: the same samples as calling `next_sample` for
+    /// each.
     fn fill(&mut self, out: &mut [f32]) {
         match self {
             Self::Wave(osc) => osc.fill(out),
+            // With the phase in [0, 1) and an increment below 1/2 the phase stays in [0, 1),
+            // so the partials can use the cheaper sine (PB-03). Any other mallet, which only
+            // a frequency near the sample rate can produce, plays sample by sample.
+            Self::Mallet {
+                phase,
+                increment,
+                weights,
+                ..
+            } if *phase < 1.0 && *increment < 0.5 => {
+                mallet_fill(out, phase, *increment, *weights);
+            }
             _ => {
                 for sample in out {
                     *sample = self.next_sample();
@@ -218,6 +234,31 @@ impl Source {
                 let uniform = (*state >> 40) as f32 / 8_388_608.0 - 1.0;
                 filter.process(uniform)
             }
+        }
+    }
+}
+
+/// The mallet's samples for a phase in [0, 1) and an increment below 1/2: the same
+/// arithmetic as `Source::next_sample`, with the phases of a chunk computed first so the
+/// partials of several samples can be computed per instruction (PB-03).
+fn mallet_fill(out: &mut [f32], phase: &mut f64, increment: f64, weights: [f64; 4]) {
+    let [w1, w2, w3, w4] = weights;
+    let mut phases = [0.0; MALLET_CHUNK];
+    for chunk in out.chunks_mut(MALLET_CHUNK) {
+        for slot in phases.iter_mut().take(chunk.len()) {
+            *slot = *phase;
+            *phase += increment;
+            if *phase >= 1.0 {
+                *phase -= 1.0;
+            }
+        }
+        for (sample, &p) in chunk.iter_mut().zip(phases.iter()) {
+            // p is in [0, 1) and p + 1/4 in [1/4, 5/4]: both in `sine_turns_unit`'s range.
+            let (s1, cos) = (sine_turns_unit(p), sine_turns_unit(p + 0.25));
+            let s2 = 2.0 * cos * s1;
+            let s3 = 2.0 * cos * s2 - s1;
+            let s4 = 2.0 * cos * s3 - s2;
+            *sample = to_f32(w1 * s1 + w2 * s2 + w3 * s3 + w4 * s4);
         }
     }
 }
@@ -466,19 +507,27 @@ impl Voice {
                 self.active = false;
                 break;
             }
-            self.source.fill(buffer);
-            if let Some(filter) = &mut self.filter {
-                filter.process_buffer(buffer);
+            match (&mut self.source, &mut self.filter) {
+                // One pass, so the oscillator's arithmetic overlaps the filter's (PB-03).
+                (Source::Wave(osc), Some(filter)) => osc.fill_through(buffer, filter),
+                (source, filter) => {
+                    source.fill(buffer);
+                    if let Some(filter) = filter {
+                        filter.process_buffer(buffer);
+                    }
+                }
             }
-            for sample in buffer.iter_mut() {
-                let mut level = self.env.next_level();
-                if let Some(fade) = &mut self.fade {
+            if let Some(fade) = &mut self.fade {
+                for sample in buffer.iter_mut() {
+                    let mut level = self.env.next_level();
                     let x = f64::from(fade.remaining) / f64::from(fade.total);
                     let s = sine_turns(x / 4.0);
                     level *= to_f32(s * s);
                     fade.remaining = fade.remaining.saturating_sub(1);
+                    *sample *= level;
                 }
-                *sample *= level;
+            } else {
+                self.env.apply(buffer);
             }
             if self.glide.is_some() {
                 for ((l, r), sample) in l.iter_mut().zip(r.iter_mut()).zip(buffer.iter()) {
@@ -769,6 +818,34 @@ mod tests {
         assert!(stolen);
         assert_eq!(voice.age(), 3);
         assert_eq!(pool.active(), 2);
+    }
+
+    /// PB-03 (#185): the mallet's chunked fill gives exactly the samples of its per-sample
+    /// path, for any buffer size, and a mallet outside the fast path's range still plays
+    /// sample by sample.
+    #[test]
+    fn the_mallet_fill_matches_its_per_sample_path_bit_for_bit() {
+        for hz in [400.0, 1_400.0, 9_000.0, 30_000.0] {
+            for brightness in [0.0, 0.5, 1.0] {
+                let mallet = || {
+                    let mut source = Source::new(Instrument::Mallet);
+                    source.set_brightness(brightness);
+                    source.set_frequency(Hz(hz), SampleRate::HZ_48000);
+                    source
+                };
+                let mut by_sample = mallet();
+                let expected: Vec<u32> = (0..3_000)
+                    .map(|_| by_sample.next_sample().to_bits())
+                    .collect();
+                let mut by_fill = mallet();
+                let mut actual = vec![0.0_f32; 3_000];
+                for chunk in actual.chunks_mut(83) {
+                    by_fill.fill(chunk);
+                }
+                let actual: Vec<u32> = actual.iter().map(|s| s.to_bits()).collect();
+                assert_eq!(actual, expected, "{hz} Hz, brightness {brightness}");
+            }
+        }
     }
 
     #[test]

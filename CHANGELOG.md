@@ -104,6 +104,10 @@ From phase A07, release-plz maintains this file: it generates each release's ent
   - View tiles and table pages: `view_get` returns M4 tiles (pixel-exact at any zoom) or LTTB overviews of two fields, and `table_page` returns sorted pages of rows with their row indices, as binary views the UI reads without copying.
   - Typed IPC: `cargo xtask codegen` generates the protocol's TypeScript types with ts-rs into `@sonarithm/ipc`, with the command → reply table, the event → channel table and the binary view layout. `@sonarithm/ipc` adds the `IpcTransport` seam, `connect` (fails fast when UI and host speak different protocol versions), a mock transport for tests and a zero-copy binary view reader.
 
+### Changed
+
+- Offline rendering is about 1.5 times faster (#185): the benchmark Score now renders at 60 times real time on four efficiency cores (PB-03 met), with exactly the same output as before.
+
 ### Fixed
 
 - `sonarithm-data`: `ReadOptions::without_inference()` keeps the field semantics declared in `fields` (type, unit, concept, role, label, description) instead of dropping them (#156).

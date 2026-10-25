@@ -38,6 +38,6 @@ pub use filter::{Biquad, BiquadKind, OnePole};
 pub use limiter::TruePeakLimiter;
 pub use loudness::Compensation;
 pub use meter::{Loudness, LoudnessMeter};
-pub use osc::{Oscillator, Waveform, sine_turns};
+pub use osc::{Oscillator, Waveform, sine_turns, sine_turns_unit};
 pub use pan::PanGains;
 pub use smooth::LinearSmoother;

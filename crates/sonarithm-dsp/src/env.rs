@@ -11,7 +11,7 @@
 
 use sonarithm_core::{SampleRate, Seconds};
 
-use crate::osc::sine_turns;
+use crate::osc::sine_turns_unit;
 
 /// The shortest ramp anywhere: 5 ms (06 §3, "mandatory ramps ≥ 5 ms"; SDR-22: never zero).
 ///
@@ -218,23 +218,89 @@ impl Adsr {
                 }
             }
         }
-        #[expect(
-            clippy::cast_possible_truncation,
-            reason = "levels are in [0, 1]; samples are f32 (coding-standards §10)"
-        )]
-        let level = self.level as f32;
-        level
+        to_level(self.level)
     }
 
-    /// Multiplies `buffer` by the envelope, frame by frame.
+    /// Multiplies `buffer` by the envelope: the same levels as calling
+    /// [`Adsr::next_level`] for each frame, computed a stage at a time so the ramps run in
+    /// tight loops (PB-03).
     ///
     /// # Real-time safety
     ///
     /// RT-safe: bounded by `buffer.len()`.
     pub fn apply(&mut self, buffer: &mut [f32]) {
-        for sample in buffer {
-            *sample *= self.next_level();
+        let mut rest = buffer;
+        while !rest.is_empty() {
+            let done = match self.stage {
+                // Constant until a trigger or release from outside the envelope.
+                Stage::Idle | Stage::Sustain => {
+                    self.level = if self.stage == Stage::Idle {
+                        0.0
+                    } else {
+                        self.sustain
+                    };
+                    let level = to_level(self.level);
+                    for sample in rest.iter_mut() {
+                        *sample *= level;
+                    }
+                    rest.len()
+                }
+                Stage::Attack => self.ramp(rest, 1.0, self.attack),
+                Stage::Release => self.ramp(rest, 0.0, self.release),
+                Stage::Decay => self.decay(rest),
+            };
+            rest = rest.get_mut(done..).unwrap_or_default();
         }
+    }
+
+    /// The attack or release ramp towards `to` over `len` frames, for as many samples of
+    /// `buffer` as the ramp has left (at least one). Returns the samples done.
+    fn ramp(&mut self, buffer: &mut [f32], to: f64, len: u32) -> usize {
+        let left = usize::try_from(len.saturating_sub(self.pos).max(1)).unwrap_or(usize::MAX);
+        let count = left.min(buffer.len());
+        let (from, start) = (self.from, self.pos);
+        let releasing = self.stage == Stage::Release;
+        for (pos, sample) in (start + 1..).zip(buffer.iter_mut().take(count)) {
+            // The release ends on exactly 0, as `next_level` does.
+            let level = if releasing && pos >= len {
+                0.0
+            } else {
+                segment(from, to, pos, len)
+            };
+            *sample *= to_level(level);
+        }
+        self.pos = start + u32::try_from(count).unwrap_or(u32::MAX);
+        self.level = segment(from, to, self.pos, len);
+        if self.pos >= len {
+            if releasing {
+                self.level = 0.0;
+                self.stage = Stage::Idle;
+            } else {
+                self.stage = if self.sustain < 1.0 {
+                    Stage::Decay
+                } else {
+                    Stage::Sustain
+                };
+            }
+        }
+        count
+    }
+
+    /// The exponential decay, sample by sample until it settles. Returns the samples done.
+    fn decay(&mut self, buffer: &mut [f32]) -> usize {
+        for (done, sample) in buffer.iter_mut().enumerate() {
+            self.level = self.sustain + (self.level - self.sustain) * self.decay;
+            let settled = self.level - self.sustain < SETTLED;
+            if settled {
+                self.level = self.sustain;
+                self.stage = Stage::Sustain;
+            }
+            *sample *= to_level(self.level);
+            if settled {
+                return done + 1;
+            }
+        }
+        buffer.len()
     }
 }
 
@@ -243,8 +309,18 @@ impl Adsr {
 #[inline]
 fn segment(from: f64, to: f64, pos: u32, len: u32) -> f64 {
     let x = f64::from(pos.min(len)) / f64::from(len.max(1));
-    let s = sine_turns(x / 4.0);
+    // x/4 is in [0, 1/4].
+    let s = sine_turns_unit(x / 4.0);
     from + (to - from) * s * s
+}
+
+#[expect(
+    clippy::cast_possible_truncation,
+    reason = "levels are in [0, 1]; samples are f32 (coding-standards §10)"
+)]
+#[inline]
+fn to_level(level: f64) -> f32 {
+    level as f32
 }
 
 #[cfg(test)]
@@ -289,5 +365,69 @@ mod tests {
         assert_eq!(env.release_frames(), 240);
         assert_eq!(env.attack, 240);
         assert_eq!(env.sustain, 1.0);
+    }
+
+    /// PB-03 (#185): `apply` multiplies by exactly the levels `next_level` gives, through
+    /// every stage and whatever the buffer sizes, including a release that starts during
+    /// the attack and an envelope that has gone idle.
+    #[test]
+    fn apply_matches_next_level_bit_for_bit() {
+        let shapes = [
+            AdsrParams::note(Seconds(0.1)),
+            AdsrParams {
+                attack: Seconds(0.02),
+                decay: Seconds(0.15),
+                sustain: 0.3,
+                release: Seconds(0.01),
+            },
+            AdsrParams {
+                attack: Seconds(0.0),
+                decay: Seconds(0.005),
+                sustain: 0.0,
+                release: Seconds(0.0),
+            },
+        ];
+        for params in shapes {
+            for release_at in [50_usize, 700, 9_000] {
+                for chunk in [1_usize, 7, 64, 256, 4_096] {
+                    let frames = 12_000;
+                    let input: Vec<f32> =
+                        (0..frames).map(|i| 0.5 + (i % 13) as f32 / 26.0).collect();
+                    let mut by_level = Adsr::new(&params, RATE);
+                    let mut by_apply = by_level;
+                    by_level.trigger();
+                    by_apply.trigger();
+                    let mut expected = input.clone();
+                    for (i, sample) in expected.iter_mut().enumerate() {
+                        if i == release_at {
+                            by_level.release();
+                        }
+                        *sample *= by_level.next_level();
+                    }
+                    let mut actual = input.clone();
+                    let mut start = 0;
+                    while start < frames {
+                        // Split at the release frame, as the voice does.
+                        let end = if start < release_at {
+                            (start + chunk).min(release_at)
+                        } else {
+                            (start + chunk).min(frames)
+                        };
+                        if start == release_at {
+                            by_apply.release();
+                        }
+                        by_apply.apply(&mut actual[start..end]);
+                        start = end;
+                    }
+                    let to_bits = |v: &[f32]| v.iter().map(|s| s.to_bits()).collect::<Vec<_>>();
+                    assert_eq!(
+                        to_bits(&actual),
+                        to_bits(&expected),
+                        "{params:?} release at {release_at}, chunks of {chunk}"
+                    );
+                    assert_eq!(by_apply, by_level, "same state afterwards");
+                }
+            }
+        }
     }
 }

@@ -11,9 +11,15 @@
 
 use sonarithm_core::{Hz, SampleRate};
 
+use crate::filter::Biquad;
+
 /// The largest phase increment, in turns per sample: just under the Nyquist frequency.
 /// PolyBLEP correction needs an increment below 0.5.
 const MAX_INCREMENT: f64 = 0.499;
+
+/// Samples per chunk when [`Oscillator::fill`] computes phases ahead of the waveform, so the
+/// waveform arithmetic can run on several samples per instruction.
+const CHUNK: usize = 64;
 
 /// Taylor coefficients of `sin(2πr)` in powers of `r`: `(−1)^k (2π)^(2k+1) / (2k+1)!`,
 /// for `k = 0..8`. On `|r| ≤ 1/4` the truncation error is below 1e-11.
@@ -46,12 +52,48 @@ const fn sine_coefficients() -> [f64; 8] {
 #[inline]
 pub fn sine_turns(turns: f64) -> f64 {
     // Reduce to [−1/2, 1/2], then fold onto [−1/4, 1/4] with sin(π − x) = sin(x).
-    let mut r = turns - turns.round();
-    if r > 0.25 {
-        r = 0.5 - r;
+    sine_folded(turns - turns.round())
+}
+
+/// [`sine_turns`] for `turns` in [0, 1.5): the same result, bit for bit, with a cheaper
+/// reduction. Oscillator phases (in [0, 1), or [0.25, 1.25) for a quarter-turn offset) and
+/// envelope ramps (in [0, 1/4]) are in this range. The renderer uses it on its hot paths
+/// (PB-03, #185).
+///
+/// Outside [0, 1.5) the result is not the sine; debug builds check the range. NaN gives
+/// NaN.
+///
+/// # Real-time safety
+///
+/// RT-safe: arithmetic only.
+#[must_use]
+#[inline]
+pub fn sine_turns_unit(turns: f64) -> f64 {
+    debug_assert!(
+        !(turns < 0.0 || turns >= 1.5),
+        "sine_turns_unit needs turns in [0, 1.5), got {turns}"
+    );
+    // `turns.round()` is 0 below 1/2 and 1 from 1/2 (halves round away from zero), so the
+    // reduction is one comparison. `+ 0.0` turns −0.0 into +0.0, as `−0.0 − round(−0.0)`
+    // does.
+    sine_folded(if turns >= 0.5 {
+        turns - 1.0
+    } else {
+        turns + 0.0
+    })
+}
+
+/// The sine of `r` turns for `r` in [−1/2, 1/2]: folds onto [−1/4, 1/4], then evaluates
+/// the polynomial.
+#[inline]
+fn sine_folded(r: f64) -> f64 {
+    let r = if r > 0.25 {
+        0.5 - r
     } else if r < -0.25 {
-        r = -0.5 - r;
-    }
+        -0.5 - r
+    } else {
+        r
+    };
     let r2 = r * r;
     let mut sum = 0.0;
     let mut k = SINE_COEFFICIENTS.len();
@@ -134,45 +176,131 @@ impl Oscillator {
     /// RT-safe: arithmetic only.
     #[inline]
     pub fn next_sample(&mut self) -> f32 {
-        let p = self.phase;
-        let dt = self.increment;
         let value = match self.waveform {
-            Waveform::Sine => sine_turns(p),
-            Waveform::Triangle => {
-                // Rises from 0 at p = 0 to 1 at p = 1/4, like the sine.
-                let shifted = p + 0.25;
-                let shifted = shifted - shifted.floor();
-                1.0 - 4.0 * (shifted - 0.5).abs()
-            }
-            Waveform::Saw => 2.0 * p - 1.0 - poly_blep(p, dt),
-            Waveform::Square => {
-                let naive = if p < 0.5 { 1.0 } else { -1.0 };
-                let half = if p < 0.5 { p + 0.5 } else { p - 0.5 };
-                naive + poly_blep(p, dt) - poly_blep(half, dt)
-            }
+            Waveform::Sine => sine(self.phase, self.increment),
+            Waveform::Triangle => triangle(self.phase, self.increment),
+            Waveform::Saw => saw(self.phase, self.increment),
+            Waveform::Square => square(self.phase, self.increment),
         };
-        self.phase += dt;
-        if self.phase >= 1.0 {
-            self.phase -= 1.0;
-        }
-        #[expect(
-            clippy::cast_possible_truncation,
-            reason = "samples are f32 (coding-standards §10); the value is in [−1.1, 1.1]"
-        )]
-        let sample = value as f32;
-        sample
+        self.phase = advance(self.phase, self.increment);
+        to_sample(value)
     }
 
-    /// Writes the next `out.len()` samples into `out`.
+    /// Writes the next `out.len()` samples into `out`: the same samples as calling
+    /// [`Oscillator::next_sample`] for each.
+    ///
+    /// # Real-time safety
+    ///
+    /// RT-safe: bounded by `out.len()`; a fixed buffer on the stack.
+    pub fn fill(&mut self, out: &mut [f32]) {
+        match self.waveform {
+            Waveform::Sine => self.fill_with(out, sine),
+            Waveform::Triangle => self.fill_with(out, triangle),
+            Waveform::Saw => self.fill_with(out, saw),
+            Waveform::Square => self.fill_with(out, square),
+        }
+    }
+
+    /// Writes the next `out.len()` samples through `filter`: the same result as
+    /// [`Oscillator::fill`] followed by [`Biquad::process_buffer`], in one pass, so the
+    /// waveform arithmetic overlaps the filter's chain of dependent operations (PB-03).
     ///
     /// # Real-time safety
     ///
     /// RT-safe: bounded by `out.len()`.
-    pub fn fill(&mut self, out: &mut [f32]) {
-        for sample in out {
-            *sample = self.next_sample();
+    pub fn fill_through(&mut self, out: &mut [f32], filter: &mut Biquad) {
+        match self.waveform {
+            Waveform::Sine => self.fill_through_with(out, filter, sine),
+            Waveform::Triangle => self.fill_through_with(out, filter, triangle),
+            Waveform::Saw => self.fill_through_with(out, filter, saw),
+            Waveform::Square => self.fill_through_with(out, filter, square),
         }
     }
+
+    /// [`Oscillator::fill`] for one waveform: the phases of a chunk first, then the
+    /// waveform for every phase, which the compiler can vectorize.
+    #[inline]
+    fn fill_with(&mut self, out: &mut [f32], wave: fn(f64, f64) -> f64) {
+        let dt = self.increment;
+        let mut phase = self.phase;
+        let mut phases = [0.0; CHUNK];
+        for chunk in out.chunks_mut(CHUNK) {
+            for slot in phases.iter_mut().take(chunk.len()) {
+                *slot = phase;
+                phase = advance(phase, dt);
+            }
+            for (sample, &p) in chunk.iter_mut().zip(phases.iter()) {
+                *sample = to_sample(wave(p, dt));
+            }
+        }
+        self.phase = phase;
+    }
+
+    #[inline]
+    fn fill_through_with(
+        &mut self,
+        out: &mut [f32],
+        filter: &mut Biquad,
+        wave: fn(f64, f64) -> f64,
+    ) {
+        let dt = self.increment;
+        let mut phase = self.phase;
+        for sample in out {
+            let x = to_sample(wave(phase, dt));
+            phase = advance(phase, dt);
+            *sample = filter.process(x);
+        }
+        self.phase = phase;
+    }
+}
+
+// The waveforms, for a phase `p` in [0, 1) and an increment `dt` in [0, 0.499]: the
+// oscillator keeps its phase in that range, so the reductions below are exact.
+
+/// The phase after one sample.
+#[inline]
+fn advance(p: f64, dt: f64) -> f64 {
+    let next = p + dt;
+    if next >= 1.0 { next - 1.0 } else { next }
+}
+
+#[inline]
+fn sine(p: f64, _dt: f64) -> f64 {
+    sine_turns_unit(p)
+}
+
+/// Rises from 0 at p = 0 to 1 at p = 1/4, like the sine.
+#[inline]
+fn triangle(p: f64, _dt: f64) -> f64 {
+    // `shifted` is in [1/4, 5/4], so its floor is 0 or 1.
+    let shifted = p + 0.25;
+    let wrapped = if shifted >= 1.0 {
+        shifted - 1.0
+    } else {
+        shifted
+    };
+    1.0 - 4.0 * (wrapped - 0.5).abs()
+}
+
+#[inline]
+fn saw(p: f64, dt: f64) -> f64 {
+    2.0 * p - 1.0 - poly_blep(p, dt)
+}
+
+#[inline]
+fn square(p: f64, dt: f64) -> f64 {
+    let naive = if p < 0.5 { 1.0 } else { -1.0 };
+    let half = if p < 0.5 { p + 0.5 } else { p - 0.5 };
+    naive + poly_blep(p, dt) - poly_blep(half, dt)
+}
+
+#[expect(
+    clippy::cast_possible_truncation,
+    reason = "samples are f32 (coding-standards §10); the value is in [−1.1, 1.1]"
+)]
+#[inline]
+fn to_sample(value: f64) -> f32 {
+    value as f32
 }
 
 /// The PolyBLEP residual for a unit step at phase 0, with phase `t` and increment `dt` in
@@ -306,6 +434,121 @@ mod tests {
                 .fold(f64::NEG_INFINITY, f64::max)
         };
         assert!(worst_alias(&naive) - worst_alias(&blep) > 15.0);
+    }
+
+    /// The reference: `sine_turns` with the general reduction, as before PB-03's fast path.
+    fn reference_sine(turns: f64) -> f64 {
+        sine_turns(turns)
+    }
+
+    /// PB-03 (#185): the fast reduction gives the same bits as the general one everywhere in
+    /// its range, including the halves where `round` breaks ties and the fold's edges.
+    #[test]
+    fn sine_turns_unit_matches_sine_turns_bit_for_bit() {
+        let mut inputs = vec![
+            0.0,
+            -0.0,
+            0.25,
+            0.5,
+            0.75,
+            1.0,
+            1.25,
+            1.499_999_999_999_999_8,
+        ];
+        for edge in [0.25_f64, 0.5, 0.75, 1.0, 1.25] {
+            inputs.push(f64::from_bits(edge.to_bits() - 1));
+            inputs.push(f64::from_bits(edge.to_bits() + 1));
+        }
+        inputs.extend((0..1_500_000).map(|i| f64::from(i) / 1_000_000.0));
+        inputs.extend((0..100_000).map(|i| f64::from(i) * 0.000_014_999_7));
+        for turns in inputs {
+            assert_eq!(
+                sine_turns_unit(turns).to_bits(),
+                reference_sine(turns).to_bits(),
+                "turns {turns}"
+            );
+        }
+        assert!(sine_turns_unit(f64::NAN).is_nan());
+    }
+
+    /// The per-sample oscillator as it was before PB-03, for comparison.
+    fn reference_samples(waveform: Waveform, hz: f64, frames: usize) -> Vec<f32> {
+        let dt = (hz / 48_000.0).min(MAX_INCREMENT);
+        let mut p = 0.0_f64;
+        (0..frames)
+            .map(|_| {
+                let value = match waveform {
+                    Waveform::Sine => reference_sine(p),
+                    Waveform::Triangle => {
+                        let shifted = p + 0.25;
+                        let shifted = shifted - shifted.floor();
+                        1.0 - 4.0 * (shifted - 0.5).abs()
+                    }
+                    Waveform::Saw => 2.0 * p - 1.0 - poly_blep(p, dt),
+                    Waveform::Square => {
+                        let naive = if p < 0.5 { 1.0 } else { -1.0 };
+                        let half = if p < 0.5 { p + 0.5 } else { p - 0.5 };
+                        naive + poly_blep(p, dt) - poly_blep(half, dt)
+                    }
+                };
+                p += dt;
+                if p >= 1.0 {
+                    p -= 1.0;
+                }
+                value as f32
+            })
+            .collect()
+    }
+
+    const WAVEFORMS: [Waveform; 4] = [
+        Waveform::Sine,
+        Waveform::Triangle,
+        Waveform::Saw,
+        Waveform::Square,
+    ];
+
+    fn bits(samples: &[f32]) -> Vec<u32> {
+        samples.iter().map(|s| s.to_bits()).collect()
+    }
+
+    /// PB-03 (#185): `fill`, `fill_through` and `next_sample` give the samples of the
+    /// per-sample oscillator before the speed work, whatever the buffer sizes.
+    #[test]
+    fn fills_match_the_per_sample_oscillator_bit_for_bit() {
+        for waveform in WAVEFORMS {
+            for hz in [0.0, 61.7, 437.3, 1_480.0, 9_999.9, 23_000.0] {
+                let frames = 5_000;
+                let reference = reference_samples(waveform, hz, frames);
+                let mut osc = Oscillator::new(waveform);
+                osc.set_frequency(Hz(hz), RATE);
+                let mut filled = vec![0.0; frames];
+                for chunk in filled.chunks_mut(97) {
+                    osc.fill(chunk);
+                }
+                assert_eq!(bits(&filled), bits(&reference), "fill {waveform:?} {hz}");
+                let mut osc = Oscillator::new(waveform);
+                osc.set_frequency(Hz(hz), RATE);
+                let single: Vec<f32> = (0..frames).map(|_| osc.next_sample()).collect();
+                assert_eq!(bits(&single), bits(&reference), "next {waveform:?} {hz}");
+
+                let filter = Biquad::new(
+                    crate::BiquadKind::LowPass,
+                    Hz(2_000.0),
+                    crate::filter::BUTTERWORTH_Q,
+                    RATE,
+                );
+                let mut expected = reference.clone();
+                filter.clone().process_buffer(&mut expected);
+                let mut osc = Oscillator::new(waveform);
+                osc.set_frequency(Hz(hz), RATE);
+                let mut through = vec![0.0; frames];
+                let mut fused = filter;
+                for chunk in through.chunks_mut(61) {
+                    osc.fill_through(chunk, &mut fused);
+                }
+                assert_eq!(bits(&through), bits(&expected), "through {waveform:?} {hz}");
+            }
+        }
     }
 
     #[test]
