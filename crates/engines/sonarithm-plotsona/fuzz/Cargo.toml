@@ -16,6 +16,7 @@ cargo-fuzz = true
 
 [dependencies]
 libfuzzer-sys = "0.4.13"
+sonarithm-core = { path = "../../../sonarithm-core" }
 sonarithm-plotsona = { path = ".." }
 
 # A workspace of its own, so the main workspace (stable toolchain) never builds it.
@@ -25,6 +26,13 @@ members = ["."]
 [[bin]]
 name = "chart_extract"
 path = "fuzz_targets/chart_extract.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "office_chart"
+path = "fuzz_targets/office_chart.rs"
 test = false
 doc = false
 bench = false

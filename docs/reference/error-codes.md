@@ -198,6 +198,12 @@ Owner: `sonarithm-plotsona`. Numbers SNR-ENG-300 to SNR-ENG-399.
 | `SNR-ENG-324` | warning | Some points lie outside the plot area | Their values are extrapolated beyond the ticks and may belong to a legend or an            annotation rather than the data (10 §3.1). | — |
 | `SNR-ENG-325` | warning | The axis calibration is imprecise | The ticks sit more than 0.5 % of the axis away from the fitted scale, so values            read through it carry that error. Their confidence is lowered to match. | — |
 | `SNR-ENG-326` | warning | Some tick labels could not be read | Unread labels are skipped, never guessed; the axis is calibrated from the rest. | — |
+| `SNR-ENG-340` | warning | Only the first of several charts was read | A chart source reads one chart. Save the chart you want in a file of its own. | — |
+| `SNR-ENG-341` | error | A chart series has no stored values | Office charts keep a cache of the values they show. Open the file in the            program that made it and save it again to rebuild the cache. | — |
+| `SNR-ENG-342` | warning | An external data link was not followed | PLOTSONA never opens files or addresses a document points to (12 §6). The values            cached in the chart are used. | — |
+| `SNR-ENG-343` | warning | The chart's workbook could not be read | The values cached in the chart are used instead; they are what the chart shows. | — |
+| `SNR-ENG-344` | info | Values were read from the chart's workbook | The workbook is the data the chart was built from, so it is preferred to the            chart's cache. | — |
+| `SNR-ENG-345` | warning | The chart's cache differs from its workbook | The workbook's values were used. What the chart shows may be older until the            file is opened and saved in its program. | — |
 
 Owner: `sonarithm-echometric`. Numbers SNR-ENG-600 to SNR-ENG-699.
 

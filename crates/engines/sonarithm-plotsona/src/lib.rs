@@ -16,6 +16,7 @@
 //! | [`budget`] | Size, decompression, ratio, depth, node, point and work budgets |
 //! | [`calibrate`] | Axis calibration for the vector and raster tiers: linear, log and date fits from anchors or tick labels, residuals, the sanity checks of 10 §3.1, category axes |
 //! | [`model`] | The extracted chart (series, points, provenance) and its long table |
+//! | `office` | Tier 1: XLSX, PPTX and DOCX chart parts, from the chart's workbook or its caches (`exact`) |
 //! | [`report`] | The extraction report: container, tier, series, provenance mix, diagnostics |
 //! | engine | The `chart` source: a spec's `{"kind": "chart", "path": …}` |
 //!
@@ -31,6 +32,7 @@ pub mod codes;
 mod container;
 pub mod detect;
 pub mod model;
+mod office;
 pub mod report;
 mod xml;
 
@@ -52,7 +54,6 @@ pub use model::{ChartData, ChartType, Point, Series, XValue};
 pub use report::{ExtractionReport, SeriesReport};
 
 use crate::budget::{Budget, len64, over};
-use crate::container::Package;
 
 /// The engine ID.
 pub const ENGINE: EngineId = EngineId::from_static("plotsona");
@@ -148,31 +149,21 @@ pub fn extract(
 
 /// Runs the extractor of the sniffed container and names it.
 ///
-/// Before a tier's extractor exists, the container is still opened and parsed under the
-/// budgets, so a damaged or hostile file fails with its own code rather than as "not
-/// available".
+/// Before a tier's extractor exists, the container is still parsed under the budgets, so a
+/// damaged or hostile file fails with its own code rather than as "not available".
 fn read_chart(
     sniffed: &detect::Sniffed,
     bytes: &[u8],
     budgets: &Budgets,
     work: &mut Work,
-    _diagnostics: &mut Vec<Diagnostic>,
+    diagnostics: &mut Vec<Diagnostic>,
 ) -> Result<(ChartData, &'static str), Box<Diagnostic>> {
     let container = sniffed.container;
     match container {
         Container::Xlsx | Container::Pptx | Container::Docx => {
-            let mut package = Package::open(bytes, budgets)?;
-            let parts = chart_parts(&package.names());
-            if parts.is_empty() {
-                return Err(Box::new(Diagnostic::new(
-                    &codes::NO_CHART,
-                    format!("The {} has no charts.", container.name()),
-                )));
-            }
-            for part in parts {
-                let xml = package.read(&part, work)?.unwrap_or_default();
-                xml::parse(&xml, "chart part", budgets, work)?;
-            }
+            let is_xlsx = container == Container::Xlsx;
+            let chart = office::extract(bytes, is_xlsx, budgets, work, diagnostics)?;
+            return Ok((chart, "sonarithm-plotsona/office"));
         }
         Container::Svg => {
             xml::parse(bytes, "SVG image", budgets, work)?;
@@ -180,24 +171,6 @@ fn read_chart(
         _ => {}
     }
     Err(not_available(container))
-}
-
-/// The chart parts of an Office package (`xl/charts/chart1.xml`, `ppt/charts/…`,
-/// `word/charts/…`), in name order.
-fn chart_parts(names: &[String]) -> Vec<String> {
-    names
-        .iter()
-        .filter(|name| {
-            ["xl/charts/chart", "ppt/charts/chart", "word/charts/chart"]
-                .iter()
-                .find_map(|prefix| name.strip_prefix(prefix))
-                .and_then(|rest| rest.strip_suffix(".xml"))
-                .is_some_and(|number| {
-                    !number.is_empty() && number.bytes().all(|b| b.is_ascii_digit())
-                })
-        })
-        .cloned()
-        .collect()
 }
 
 /// Checks the result and builds the bundle and report.
@@ -375,6 +348,25 @@ impl ChartSource {
             .len();
         self.budgets.check_input(size)?;
         std::fs::read(&full).map_err(|err| unreadable(err.to_string()))
+    }
+}
+
+/// Entry points for the fuzz targets, which reach one parser without its container. Not a
+/// stable API.
+#[doc(hidden)]
+pub mod fuzzing {
+    use sonarithm_core::Diagnostic;
+
+    use crate::{Budgets, ChartData, Work, office};
+
+    /// Reads `xml` as an Office chart part from its caches, as the Office extractor does.
+    ///
+    /// # Errors
+    ///
+    /// The extractor's diagnostic.
+    pub fn office_chart_part(xml: &[u8], budgets: &Budgets) -> Result<ChartData, Box<Diagnostic>> {
+        let mut work = Work::new(budgets.max_work);
+        office::chart_part(xml, budgets, &mut work, &mut Vec::new())
     }
 }
 
