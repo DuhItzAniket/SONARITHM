@@ -1,6 +1,6 @@
 # Roadmap
 
-> **Status:** Baseline v1 (2026-10-18); Stage B re-estimated 2026-10-21. **Owner:** Project lead.
+> **Status:** Baseline v1 (2026-10-18); Stage B re-estimated 2026-10-21; Stage C re-estimated 2026-10-26. **Owner:** Project lead.
 > **Live progress:** [docs/sdlc/status.md](../sdlc/status.md). **Task-level plan:** [implementation-plan.md](implementation-plan.md). **Risks:** [risk-register.md](risk-register.md).
 
 ## 1. Shape of the plan
@@ -56,7 +56,7 @@ gantt
   D06 Research studies programme       :d06, 2027-11-01, 180d
 ```
 
-The chart is the baseline v1 and is re-baselined at Gate A. Stage A's code was complete on 2026-10-21, months ahead of it; the [Stage B re-estimate](#stage-b-re-estimate) explains what that means for Stage B, whose dates now depend on owner and human-paced items.
+The chart is the baseline v1 and is re-baselined at Gate A. Stage A's code was complete on 2026-10-21, months ahead of it; the [Stage B re-estimate](#stage-b-re-estimate) explains what that means for Stage B, whose dates now depend on owner and human-paced items. The [Stage C re-estimate](#stage-c-re-estimate) does the same for Stage C.
 
 ---
 
@@ -253,29 +253,74 @@ Gate B's date stays TODO(verify) until HP-09's lead time is known. The HP items 
 
 ## 4. Stage C · Bring any chart (general availability)
 
+### Stage C re-estimate
+
+> Added 2026-10-26 with the Stage C task rows ([implementation plan §4](implementation-plan.md#4-stage-c--bring-any-chart-task-level)). The estimates are planning figures, not measurements; each phase review re-baselines them, and Gate B reviews them.
+
+**Actual pace so far.**
+
+- **Stage A:** agent sessions closed 69 of 78 phase tasks in about 55 hours ([F-120](../research-paper/findings-log.md#implementation-findings)); phases of 9–13 tasks took one to two session-days.
+- **Stage B's Rust lane:** 21 of its 23 tasks closed on two calendar days, 2026-10-21 and 2026-10-25, with two or three sessions working at once ([F-150](../research-paper/findings-log.md#implementation-findings)). That is about four to five tasks per session-day. The two still open are B03-T08 (profiles) and B06-T07 (a one-hour soak, which waits until the laptop is free).
+
+**What differs in Stage C.**
+
+- PLOTSONA's parsers take untrusted files, so each needs a fuzz target and budgets; C01 and C02 have more L tasks than Stage B's Rust lane had.
+- Only one build-heavy session runs while the owner uses the laptop for other heavy work, so session-days add up in sequence.
+- Three phases end with people: the teacher pilot (C03), the DAW check (C04) and co-design round 2 (C06). Signing, the external security review and ACR v1 also need the owner or volunteers.
+
+**Estimate.** Agent-paced work in session-days, from the pace above:
+
+| Phase | Tasks | Lane R (no Gate U) | Agent estimate | Owner and human-paced items |
+|---|---|---|---|---|
+| C01 | 13 | T01–T12 | ≈ 3–4 session-days | Gate U (T13); HP-22; RFC-0004 accepted by the coordinator |
+| C02 | 11 | T01–T06, T08, T09 | ≈ 3 | Gate U (T10, T11); HP-18 (OD-23, T07); HP-22; RFC-0005 |
+| C03 | 9 | T01–T07 | ≈ 2 | Gate U (T08, T09); HP-19 (teacher pilot, C03 exit); HP-21 |
+| C04 | 10 | T01–T04, T06–T08 | ≈ 2 | HP-18 (OD-21, T05; OD-22); HP-20 (DAW check, C04 exit); Gate U (T09); HP-21 |
+| C05 | 12 | T01–T10 | ≈ 3 | Gate U (T11); HP-27 (P05, T12) |
+| C06 | 13 | T04, T05 | ≈ 3–4 (agent parts of all 13) | Gate U; HP-05, HP-06 (budgets); HP-23 (signing, updater keys); HP-24 (co-design round 2); HP-25 (security review); HP-26 (matrix); HP-28 (`v1.0.0`); HP-29 (Gate C) |
+| **Total** | **68** | **46** | **≈ 16–18 session-days**, of which Lane R is about 12–14 | — |
+
+**Calendar.** With one build-heavy session at a time, Lane R is about three weeks of daily sessions, or less once two can run; TODO(verify) against the next phase review. Lane U follows Gate U and the Stage B screens it extends.
+
+**What sets Gate C's date: the human-paced items, not the engineering.** Gate U (HP-01, HP-04) and Gate B come first. Then the teacher pilot (HP-19), co-design round 2 (HP-24, the same route as HP-09), the signing route (HP-23, OD-02), the external security review (HP-25) and the full matrix with JAWS and braille (HP-26, R-25). The CHI 2028 deadline for P05 (est. early–mid September 2027) is a fixed point if the owner keeps P05 (OD-26). Gate C's date stays TODO(verify).
+
+The baseline Gantt above is unchanged; it is re-baselined at Gate B.
+
 ### C01 · PLOTSONA: exact ingestion and chart templates
 
 Extract data **exactly** where possible: Office chart XML (`c:numCache`/`c:numLit` in XLSX/PPTX/DOCX), SVG charts (D3, Vega and Plotly marks), Vega/Vega-Lite/Plotly/Highcharts JSON, and vector PDF drawing operators with auto-calibration (ChartDetective approach). Chart-type templates cover line, bar, grouped/stacked bar, scatter, histogram, box, heat map and pie. **Exit:** a 50-chart exact-source corpus extracts with ≤ 0.5% relative error and the correct provenance class `exact`/`vector`.
+
+**Size.** Re-estimate 2026-10-26: ≈ 3–4 agent session-days. Owner gates: Gate U (T13), HP-22. RFC-0004 (spec v0.2) comes first.
 
 ### C02 · PLOTSONA: raster digitizer with human correction
 
 Axis calibration (linear, log, date) with an accessible point-entry alternative; colour-mask curve extraction; bar and point detection; a correction UI; per-point `cv_estimate` provenance with confidence. Low-confidence regions are flagged in speech and text (and optionally in timbre, as an experiment). **Exit:** median relative error ≤ 2% on a raster corpus of clean line and bar charts. Every estimate is labelled in the description and the table.
 
+**Size.** Re-estimate 2026-10-26: ≈ 3 agent session-days. Owner gates: Gate U (T10, T11), HP-18 (OD-23, optional OCR), HP-22.
+
 ### C03 · CURVASONA: functions and audification
 
 Expression input (exmex facade), domain sampling, symbolic derivatives, critical-point analysis (zeros, extrema, inflections, asymptotes, undefined regions), derivative/sign timbre cues (A11Y-28), points of interest, and an audification voice with the speed-up calculator (SDR-31) and presets (seismic, EEG). **Exit:** a function test suite of 40 classic curves shows correct critical points. A blind maths teacher pilot (n ≥ 3) completes the tasks.
+
+**Size.** Re-estimate 2026-10-26: ≈ 2 agent session-days. Owner gates: Gate U (T08, T09), HP-19 (OD-24).
 
 ### C04 · AXONOTE: musical mapping and MIDI/OSC
 
 Scale and tuning quantization (Presentation mode only, SDR-10), instrument library (synth presets, SF2 via rustysynth), the BLV square-wave preset (SDR-29), Standard MIDI File export, live MIDI (midir) and OSC (rosc) out with DAW/VCV Rack recipes. **Exit:** MIDI export round-trips in two DAWs. Quantization is provably absent in Analysis mode (test).
 
+**Size.** Re-estimate 2026-10-26: ≈ 2 agent session-days. Owner gates: HP-18 (OD-21, OD-22), HP-20, Gate U (T09).
+
 ### C05 · ECHOMETRIC v1: analytics, descriptions and lint
 
 Detectors (extrema, outliers, change points, periodicity, trend segments) with augurs and statrs; navigable insights and earcons (A11Y-23); deterministic L1/L2 descriptions and query commands (A11Y-02, A11Y-22); a Score lint with rule-ID diagnostics (SDR-19, -23, -26, -28, -39). **Exit:** each detector is precision/recall-tested on labelled synthetic data. Every lint rule has positive and negative tests.
 
+**Size.** Re-estimate 2026-10-26: ≈ 3 agent session-days. Owner gates: Gate U (T11), HP-27 (P05, OD-26).
+
 ### C06 · Hardening, release engineering and v1.0 GA
 
 Code signing (Windows Artifact Signing or alternative; Apple Developer ID + notarization; AppImage GPG), the Tauri updater with two-custodian keys, installers, a CycloneDX SBOM, build-provenance attestations, immutable releases, the documentation site (Diátaxis), ACR v1, a security review, a performance pass against all budgets, co-design round 2. **Release `v1.0.0`.** The CHI 2028 toolkit paper (P05) is drafted during C05 and submitted at the CHI deadline (est. early–mid Sep 2027), using the C05 release candidate. C06 adds its artifact package and any revisions.
+
+**Size.** Re-estimate 2026-10-26: ≈ 3–4 agent session-days; most of C06 is human-paced. Owner gates: Gate U, HP-05, HP-06, HP-23 to HP-26, HP-28, HP-29.
 
 **Gate C (GA).** All NFR budgets are met. ACR v1 is published. No open critical or high bugs. A support policy is published in SECURITY.md.
 

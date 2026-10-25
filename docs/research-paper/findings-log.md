@@ -790,3 +790,12 @@ A05 (render engine, audio backends, export) uses F-050 to F-069.
 - **Evidence level / confidence:** EV-C / Strong for the acoustic measurement; none yet for perception
 - **Affects:** SDR-35, H-09, sound-design §10, HP-11 (listening check)
 - **Papers:** none yet
+
+### F-150 · Stage B's Rust lane closed 21 of its 23 tasks on two calendar days, about four to five tasks per session-day
+
+- **Date:** 2026-10-26 · **Phase:** Stage C planning · **Type:** engineering · **Status:** new
+- **Statement:** After the Stage B planning PR merged on 2026-10-21, agent sessions closed 21 of the 23 Lane R issues: 13 between 03:59 and 07:19 UTC on 2026-10-21 and 8 between 15:07 and 20:31 UTC on 2026-10-25, with two or three sessions working at once (the worklogs of 2026-10-21 and 2026-10-25: AUDAXIS with the catalogues, the app core with SONOTRACE, then the resumed Rust lane beside design tokens and a render-speed session). The two open Lane R tasks are B03-T08 (profiles) and B06-T07, a one-hour stream soak that waits until the shared laptop is free. None of the 37 Lane U tasks has started, because Gate U (HP-01, HP-04) is still closed. As with F-120, a close time is when the task's PR merged, not how long the work took.
+- **Evidence:** `gh issue list --state closed --label stage/b` (close times; #185 excluded as a carry-over issue); `git log` on `main` at 35fa8d4; the worklogs of those days; the Stage C planning PR
+- **Evidence level / confidence:** EV-C / Moderate (complete counts from GitHub; merges, not effort; sessions overlapped)
+- **Affects:** the Stage C re-estimate (roadmap §4, implementation plan §4.1); R-24, R-27, R-30; OD-20
+- **Papers:** P02 (development history)
