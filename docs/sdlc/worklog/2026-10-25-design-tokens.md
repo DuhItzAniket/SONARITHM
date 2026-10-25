@@ -1,4 +1,4 @@
-# 2026-10-25: Design tokens (B02-T01) and the font licence stop (B02-T02)
+# 2026-10-25: Design tokens (B02-T01) and bundled fonts (B02-T02)
 
 > **Date(s):** 2026-10-25. **Phase:** B02 (T01, T02). **Author:** AI agent (Claude Code, Claude Opus 5.5) in a session started by the coordinator session, to be reviewed by @DuhItzAniket.
 > **Related:** [worklog conventions](README.md) · [design-language §5, §7–§9](../../design/design-language.md#5-colour) · [implementation plan B02](../../planning/implementation-plan.md#b02--design-system-and-application-frame)
@@ -6,13 +6,13 @@
 ## Context and phase
 
 - Phase: B02, Lane R (no owner step needed).
-- Issue(s) / PR(s): B02-T01 [#200](https://github.com/DuhItzAniket/SONARITHM/issues/200); B02-T02 [#201](https://github.com/DuhItzAniket/SONARITHM/issues/201) (stopped).
+- Issue(s) / PR(s): B02-T01 [#200](https://github.com/DuhItzAniket/SONARITHM/issues/200); B02-T02 [#201](https://github.com/DuhItzAniket/SONARITHM/issues/201).
 - Starting point: `@sonarithm/ui` was an empty placeholder; no Stylelint; the design-language colour table held baseline proposals for three themes. The AUDAXIS lane (B03-T06, #275) had just merged, and this session's worktree was cleaned (`cargo clean`) before starting.
 
 ## Goals
 
 - B02-T01: generate the semantic colour tokens in OKLCH for four themes, handle forced colours, `prefers-contrast` and reduced motion, add spacing, radius and motion tokens, validate every §5.3 pair, and lint the detectable anti-patterns.
-- B02-T02: bundle IBM Plex, but only if OFL-1.1 is already in `REUSE.toml` or `deny.toml` (the coordinator's licensing rule).
+- B02-T02: bundle IBM Plex with its OFL notices, add the type scale and tabular figures, verify `tnum` and `zero` per weight, and lint readouts (DL-X10). The coordinator's licensing rule applied: stop if OFL-1.1 is not yet in `REUSE.toml` or `deny.toml`.
 
 ## What was done
 
@@ -39,7 +39,16 @@
   - coding-standards §12.6, testing-strategy §13.1, tech-stack, 09;
   - status, traceability (FR-117), CHANGELOG and F-131.
   - status also records B03-T06 as merged (#275).
-- B02-T02: stopped before any change. IBM Plex is OFL-1.1. ADR-0010 and the supply-chain policy allow OFL-1.1 for fonts, but `REUSE.toml` has no annotation for font files, `LICENSES/` has no `OFL-1.1.txt` and `deny.toml` covers Rust crates only. Reported to the coordinator for the owner.
+- B02-T02, first pass: stopped before any change. OFL-1.1 was in neither `REUSE.toml` nor `deny.toml`, and `LICENSES/` had no `OFL-1.1.txt`. The coordinator then confirmed that the owner-approved supply-chain policy already allows OFL-1.1 for fonts, and that adding the text and annotation implements it.
+- B02-T02 (merged into this worklog after #281):
+  - `packages/ui/fonts/`: IBM's six WOFF2 files (Sans and Mono at 400, 500 and 600) and IBM's `LICENSE.txt`, copied byte for byte from `@ibm/plex-sans` 1.1.0 and `@ibm/plex-mono` 2.5.0, plus a README with their provenance and how to update them.
+  - Licensing: `LICENSES/OFL-1.1.txt` (from `reuse download`); a `REUSE.toml` annotation for those seven files only; `.gitattributes` keeps their exact bytes.
+  - `tokens/fonts.ts` (the font table with upstream SHA-256 values) writes `src/generated/fonts.css` (the @font-face rules and the `snr-numeric` class), `src/generated/licenses.json` (the font notices for the licences view) and `font-test/index.html`.
+  - `tokens/woff2.ts`: a small WOFF2 reader (Brotli from `node:zlib`) for GSUB features, names, the weight class, cmap and advance widths.
+  - Type, weight and numeric tokens in the recipe.
+  - Stylelint: type-scale, family and weight rules, no uppercase, and the `sonarithm/readout-numeric` plugin rule (DL-X10).
+  - Nine more tests (35 in the package), and a rendered check of the test page in Chromium.
+  - Docs: design-language §7.1 and §14, supply-chain, tech-stack, 12 §9, coding-standards §12.6, status, traceability, CHANGELOG, F-132 and F-133.
 
 ## Decisions
 
@@ -54,7 +63,13 @@
 | High-contrast light focus is a deep blue (hue 262) | Mirrors the dark high-contrast choice: a hue nothing else uses, 6.81:1 or more on every surface | design-language §5.2; proposal for B02-T09 |
 | Spacing tokens are `space-1` to `space-6` (4, 8, 12, 16, 24, 32 px) | §7.2 named `space-1 … space-8` but listed six values; the values are the substance | design-language §7.2 |
 | Spacing, rows, bars and targets in rem; radii, hairlines and focus rings in px | Sizes that hold text must grow with text scaling (A11Y-25); lines should stay thin | design-language §7.2 |
-| The CSS lint uses Stylelint's built-in rules only | Every check in the acceptance criteria maps onto a built-in rule, so no plugin is needed | coding-standards §12.6 |
+| The CSS lint uses Stylelint's built-in rules only (B02-T01) | Every check in B02-T01's acceptance criteria maps onto a built-in rule | coding-standards §12.6 |
+| The fonts are vendored, not an npm dependency | IBM's packages run an install-time telemetry script, and pnpm 12 fails the install when it is blocked | F-133; `packages/ui/fonts/README.md` |
+| Unmodified upstream files only, checked by SHA-256 and by the font names | The OFL reserves the name "Plex" for IBM's own font; subsetting or renaming would need a new name | supply-chain policy (fonts row); `fonts.test.ts` |
+| The complete WOFF2 files, not IBM's split subsets | One file per weight covers every Plex script, including the second locale (OD-12), and the six files total about 347 KB | `tokens/fonts.ts` |
+| `font-display: swap` | The files are local, so the swap is not visible in practice, and text is never hidden if a file fails to load | `fonts.css` |
+| A readout is a CSS class whose name contains "readout", and it must compose `snr-numeric` | Readout components do not exist yet; a naming rule in CSS Modules is what a lint can check, and composing a global class works in CSS Modules | coding-standards §12.6 |
+| The font test page is a generated static HTML page | Storybook arrives with B02-T03 (Gate U); the page needs no build and covers every weight from the font table | design-language §14 |
 
 ## Problems and how they were solved
 
@@ -62,6 +77,10 @@
 |---|---|---|
 | An unknown `data-theme` value ignored the OS contrast preference | The first draft matched only `system` and no attribute for "follow the OS" | "Follow the OS" is now `:not()` of the four explicit themes; the selection test covers an unknown value |
 | The sRGB → OKLab → sRGB round trip missed a 1e-6 tolerance | The published matrices have ten digits, so they are not exact inverses | Tolerance 1e-5, far below one 8-bit step |
+| `pnpm install` failed after adding the IBM packages | Their `postinstall` telemetry script was blocked, and pnpm 12 treats ignored builds as an error | Copied the files, removed the dependency (F-133) |
+| IBM's `LICENSE.txt` would change on commit | It has CRLF line endings and `.gitattributes` normalises text to LF | `-text` for the font files |
+| Plex has no `tnum` feature | Its default figures are already tabular | The test checks equal digit widths instead of the feature (F-132) |
+| The first test-page render used fallback fonts | The pane shows `file://` pages outside the project as static snapshots without their stylesheets | Served `packages/ui` from a local static server for the check |
 
 ## Measurements
 
@@ -69,14 +88,18 @@
 |---|---|---|---|
 | Lowest text contrast | 5.42:1 (light `text-3` on `surface-2`) | Generator output, 8-bit sRGB | F-131 |
 | Lowest non-text contrast | 3.03:1 (dark `border-strong` on `surface-3`) | Generator output, 8-bit sRGB | F-131 |
+| Plex digit advance width | 600 units for 0–9 in all six files | WOFF2 hmtx | F-132 |
+| Rendered tabular check | `1111.11`, `8888.88` and `0000.00` equal width in every weight (system sans fallback: 59.7 vs 65.1 px) | Chromium pane, 18 px, HW-01 | F-132 |
 
 ## Findings to log
 
 - F-131: the generated tokens meet all 156 contrast pairs in four themes; light warning and success colours stay below 4.5:1 for text — [findings log](../../research-paper/findings-log.md)
+- F-132: IBM Plex needs no `tnum` feature; its default figures are tabular in every bundled weight, and every weight has `zero`
+- F-133: IBM's Plex npm packages send install telemetry, and pnpm 12 fails the install when their script is blocked
 
 ## Next steps
 
-- [ ] Owner: decide B02-T02's licence step. Adding `LICENSES/OFL-1.1.txt` and a `REUSE.toml` annotation for the font files would unblock it (checklist #129).
-- [ ] B02-T02 once unblocked (agent): IBM Plex WOFF2, type tokens and the `font-size` lint, the font test page, DL-X10.
+- [ ] Owner, with the WebKit checks: open `packages/ui/font-test/index.html` in WKWebView and WebKitGTK (served over HTTP) to see the figures there.
+- [ ] When the npm licence report arrives: merge `@sonarithm/ui/licenses.json` into the app's licences view (12 §9), and review install scripts beside licences (F-133).
 - [ ] B02-T04 (Lane U): components consume the tokens; `GrayText`, `HighlightText` and button system colours in forced colours.
 - [ ] Owner, with B02-T09: forced colours in WKWebView and WebKitGTK (design-language §14).

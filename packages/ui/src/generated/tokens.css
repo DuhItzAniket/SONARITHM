@@ -31,6 +31,22 @@
       --focus-ring-offset: 2px;
       --motion-fast: 80ms;
       --motion-base: 120ms;
+      --font-sans: "IBM Plex Sans", system-ui, sans-serif;
+      --font-mono: "IBM Plex Mono", ui-monospace, monospace;
+      --type-11-size: 0.6875rem;
+      --type-11-line: 1rem;
+      --type-12-size: 0.75rem;
+      --type-12-line: 1rem;
+      --type-13-size: 0.8125rem;
+      --type-13-line: 1.25rem;
+      --type-15-size: 0.9375rem;
+      --type-15-line: 1.25rem;
+      --type-18-size: 1.125rem;
+      --type-18-line: 1.5rem;
+      --weight-regular: 400;
+      --weight-medium: 500;
+      --weight-semibold: 600;
+      --numeric: tabular-nums lining-nums slashed-zero;
     }
 
     :where(:root) {

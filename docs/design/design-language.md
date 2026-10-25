@@ -264,9 +264,9 @@ A diverging map is not chosen yet; B04 selects one with the same CVD and percept
 
 | Item | Specification | Notes |
 |---|---|---|
-| Families | IBM Plex Sans (UI), IBM Plex Mono (readouts, code, tables of numbers), both SIL OFL 1.1, bundled as WOFF2 | Bundling avoids per-platform font differences ([05 §2](../research/notes/05-desktop-frontend-stack.md)). The OFL texts ship with the app. Fallback alternative recorded in the research: Source Sans 3 + JetBrains Mono. |
-| Numerals | `font-variant-numeric: tabular-nums lining-nums slashed-zero` on all numeric text | Plex's tabular-figure defaults and slashed-zero support were not verified in the research ([05 §8](../research/notes/05-desktop-frontend-stack.md), Gaps). B02 verifies them per weight. Readouts use Plex Mono, whose digits are fixed-width regardless. |
-| Scale | `type-11` 11/16 px (tick labels, status bar) · `type-12` 12/16 px (dense tables, secondary UI) · `type-13` 13/20 px (default UI text and controls) · `type-15` 15/20 px (panel and dialog titles) · `type-18` 18/24 px (rare: about dialog, empty-state line) | Sizes are expressed in `rem` against the UI scale so OS text scaling (where the webview exposes it) and in-app zoom both apply (A11Y-25). |
+| Families | IBM Plex Sans (UI), IBM Plex Mono (readouts, code, tables of numbers), both SIL OFL 1.1, bundled as WOFF2: `--font-sans`, `--font-mono` | Bundling avoids per-platform font differences ([05 §2](../research/notes/05-desktop-frontend-stack.md)). B02-T02 bundles IBM's unmodified files at 400, 500 and 600 in `packages/ui/fonts/` (`@sonarithm/ui/fonts.css`); the OFL text and IBM's notice ship with them and in `@sonarithm/ui/licenses.json`. Nothing loads from the network or from system font folders. Fallback alternative recorded in the research: Source Sans 3 + JetBrains Mono. |
+| Numerals | `font-variant-numeric: tabular-nums lining-nums slashed-zero` on all numeric text: the `--numeric` token, applied by the global `snr-numeric` class that readouts use (DL-X10) | Verified per weight in B02-T02 ([F-132](../research-paper/findings-log.md)). Plex has no `tnum` feature because its default figures are already tabular: every digit is 600 units wide in Sans and Mono, at every bundled weight, so a readout does not shift when its weight changes. `zero` turns Sans's plain zero and Mono's dotted zero into a slashed zero. Readouts use Plex Mono, whose digits are fixed-width regardless. |
+| Scale | `type-11` 11/16 px (tick labels, status bar) · `type-12` 12/16 px (dense tables, secondary UI) · `type-13` 13/20 px (default UI text and controls) · `type-15` 15/20 px (panel and dialog titles) · `type-18` 18/24 px (rare: about dialog, empty-state line) | Sizes are expressed in `rem` against the UI scale so OS text scaling (where the webview exposes it) and in-app zoom both apply (A11Y-25). Tokens: `--type-<step>-size` and `--type-<step>-line`, and `--weight-regular`, `--weight-medium`, `--weight-semibold`; Stylelint allows no other font size, line height, family or weight. |
 | Weights | 400 regular (body), 500 medium (labels, emphasis, headers), 600 semibold (panel titles, sparingly) | No light or thin weights; they break up on dark surfaces. Hierarchy comes from weight and colour (`text-1/2/3`), not size jumps. |
 | Case | Sentence case for every label, title and menu item | Engine names are the exception: capitals in headings and prose ([engine catalogue](../product/engines.md)). |
 | Units | Unit follows the value with a space (`28.7 °C`, `-12.0 dB`) in `text-3` | Visual minus uses U+2212 in readouts; spoken text is generated separately ([keymap §8](keyboard-and-navigation.md)). |
@@ -427,7 +427,7 @@ Use this list for every design review and for the B02 exit review. Each item cit
 | Item | Resolution path |
 |---|---|
 | Validate every token pair (§5.3) in all themes; generate the light high-contrast variant | Done in B02-T01: generator output committed, every pair passes ([F-131](../research-paper/findings-log.md)) |
-| Verify Plex `tnum` and `zero` features per weight | Font test page in Storybook |
+| Verify Plex `tnum` and `zero` features per weight | Done in B02-T02: the font tests read every bundled file, and the font test page (`packages/ui/font-test/index.html`, before Storybook arrives in B02-T03) shows both per weight ([F-132](../research-paper/findings-log.md)) |
 | Forced colors in WKWebView and WebKitGTK | Manual test per webview; finding |
 | OS text scaling per webview | Manual test; finding |
 | Native versus in-window menu bar | Decided in [09](../architecture/09-desktop-app.md) |
@@ -441,3 +441,4 @@ Use this list for every design review and for the B02 exit review. Each item cit
 |---|---|---|
 | 2026-10-18 | Baseline created from research notes 05 §8, §10, §11. | Kickoff |
 | 2026-10-25 | B02-T01: §5.2 and §5.3 replaced with the generator's output, including the light high-contrast theme; §5.4 theme selection; spacing tokens are `space-1` to `space-6`; the overlay shadow token. | AI agent (Claude Code), for review |
+| 2026-10-25 | B02-T02: §7.1 records the bundled Plex files, the type and numeric tokens, and the verified figures (no `tnum` needed; `zero` in every weight). | AI agent (Claude Code), for review |

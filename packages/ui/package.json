@@ -8,6 +8,8 @@
   "exports": {
     ".": "./src/index.ts",
     "./tokens.css": "./src/generated/tokens.css",
+    "./fonts.css": "./src/generated/fonts.css",
+    "./licenses.json": "./src/generated/licenses.json",
     "./stylelint-config": "./stylelint/config.js"
   },
   "scripts": {

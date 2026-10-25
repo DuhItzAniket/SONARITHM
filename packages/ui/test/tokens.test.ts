@@ -24,7 +24,7 @@ import {
   parseOklch,
   toHex,
 } from "../tokens/color.ts";
-import { CSS_FILE, JSON_FILE } from "../tokens/generate.ts";
+import { generatedFiles } from "../tokens/generate.ts";
 import {
   COLOR_TOKENS,
   FORCED_COLORS,
@@ -51,12 +51,16 @@ function theme(id: ThemeId): (typeof themes)[number] {
   return found;
 }
 
-test("generated tokens are committed and current", () => {
-  const { css, json, failures } = generate();
-  assert.deepEqual(failures, []);
+test("generated files are committed and current", () => {
+  assert.deepEqual(generate().failures, []);
   const hint = "run `pnpm -C packages/ui tokens` and commit the result";
-  assert.equal(readFileSync(CSS_FILE, "utf8"), css, hint);
-  assert.equal(readFileSync(JSON_FILE, "utf8"), json, hint);
+  for (const [file, contents] of generatedFiles()) {
+    assert.equal(
+      readFileSync(file, "utf8"),
+      contents,
+      `${file.pathname}: ${hint}`,
+    );
+  }
 });
 
 function checkMinimum(minimum: 4.5 | 3): void {

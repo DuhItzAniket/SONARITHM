@@ -133,8 +133,66 @@ test("token-based css passes", async () => {
 @media (forced-colors: active) {
   .control { border-color: ButtonBorder; }
 }
+.label {
+  font-family: var(--font-sans);
+  font-size: var(--type-13-size);
+  line-height: var(--type-13-line);
+  font-weight: var(--weight-medium);
+}
+.cursorReadout {
+  composes: snr-numeric from global;
+  font-family: var(--font-mono);
+}
+.level-readout {
+  font-variant-numeric: var(--numeric);
+}
+.cursorReadout:focus-visible {
+  outline-offset: var(--focus-ring-offset);
+}
 `;
   assert.deepEqual(await broken(css), []);
+});
+
+test("dl_x10 readouts without the numeric class are rejected", async () => {
+  assert.deepEqual(
+    await broken(".cursorReadout { font-family: var(--font-mono); }"),
+    ["sonarithm/readout-numeric"],
+  );
+  assert.deepEqual(await broken(".readout, .label { color: var(--text-1); }"), [
+    "sonarithm/readout-numeric",
+  ]);
+  assert.deepEqual(
+    await broken(".level-readout { composes: snr-numeric from './x.css'; }"),
+    ["sonarithm/readout-numeric"],
+  );
+  assert.deepEqual(
+    await broken(".value { font-variant-numeric: oldstyle-nums; }"),
+    ["declaration-property-value-allowed-list"],
+  );
+});
+
+test("dl_p10 type comes from the scale, the plex families and three weights", async () => {
+  assert.deepEqual(await broken(".a { font-size: 14px; }"), [
+    "declaration-property-value-allowed-list",
+  ]);
+  assert.deepEqual(await broken(".a { font-size: var(--type-14-size); }"), [
+    "declaration-property-value-allowed-list",
+  ]);
+  assert.deepEqual(await broken(".a { line-height: 1.4; }"), [
+    "declaration-property-value-allowed-list",
+  ]);
+  assert.deepEqual(await broken(".a { font-weight: 300; }"), [
+    "declaration-property-value-allowed-list",
+  ]);
+  assert.deepEqual(await broken('.a { font-family: "Inter", sans-serif; }'), [
+    "declaration-property-value-allowed-list",
+  ]);
+  assert.deepEqual(await broken(".a { font: 13px/20px var(--font-sans); }"), [
+    "declaration-property-value-allowed-list",
+  ]);
+  assert.deepEqual(await broken(".a { text-transform: uppercase; }"), [
+    "declaration-property-value-disallowed-list",
+  ]);
 });
 
 test("only the generated token file is exempt", async () => {

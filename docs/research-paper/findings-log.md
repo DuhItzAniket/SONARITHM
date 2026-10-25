@@ -713,6 +713,24 @@ A05 (render engine, audio backends, export) uses F-050 to F-069.
 - **Affects:** A11Y-25, FR-117, DL-X07; design-language §5.2–§5.3 (signal text uses `text-1` with an icon for warning and success in the light theme)
 - **Papers:** none yet
 
+### F-132 · IBM Plex needs no tnum feature: its default figures are tabular, the same width in every bundled weight, and every weight has a slashed zero
+
+- **Date:** 2026-10-25 · **Phase:** B02 · **Type:** engineering · **Status:** new
+- **Statement:** IBM Plex Sans 3.005 and IBM Plex Mono 2.005 (WOFF2, weights 400, 500 and 600) have no `tnum` or `pnum` feature in GSUB. Their default digits are already tabular: each of 0–9 is 600 font units wide in all six files, so digits keep the same width across weights too. Every file has `zero` (slashed zero; Sans's default zero is plain, Mono's is dotted) and `lnum`. The `onum` feature also exists, so oldstyle figures stay out of the CSS. Rendered in Chromium with the bundled files at 18 px, `1111.11`, `8888.88` and `0000.00` have identical widths with default and with tabular figures in every weight. The system sans-serif fallback measured 59.7 and 65.1 px for the first two, so bundling is what keeps readouts from jittering.
+- **Evidence:** `packages/ui/test/fonts.test.ts` (`dl_x10 every weight has tabular figures and a slashed zero`, reading GSUB, cmap and hmtx from each WOFF2 with `packages/ui/tokens/woff2.ts`); the font test page `packages/ui/font-test/index.html` measured in the Claude desktop app's Chromium pane on HW-01; PR for B02-T02 ([#201](https://github.com/DuhItzAniket/SONARITHM/issues/201))
+- **Evidence level / confidence:** EV-C / Strong (direct reading of the font tables; one rendering engine checked, so WebKit renders are the owner's check with the forced-colours item)
+- **Affects:** DL-P04, DL-X10, A11Y-25; design-language §7.1 and §14 (closes the Plex `tnum` and `zero` gap of research notes 05 §8)
+- **Papers:** none yet
+
+### F-133 · IBM's Plex npm packages send install telemetry, and pnpm 12 fails the install when their script is blocked
+
+- **Date:** 2026-10-25 · **Phase:** B02 · **Type:** engineering · **Status:** new
+- **Statement:** `@ibm/plex-sans` 1.1.0 and `@ibm/plex-mono` 2.5.0 depend on `@ibm/telemetry-js` and run `ibmtelemetry --config=telemetry.yml` as a `postinstall` script, which reports to `https://www-api.ibm.com/ibm-telemetry/v1/metrics`. pnpm 12.14 blocked the script, but `pnpm install` then exited with `ERR_PNPM_IGNORED_BUILDS`, which would fail CI. SONARITHM therefore bundles the six WOFF2 files, unmodified, with their upstream SHA-256 recorded and tested, and does not depend on the packages. Updates use `npm pack`, which runs no scripts.
+- **Evidence:** the packages' `package.json` (`scripts.postinstall`, `dependencies`) and `telemetry.yml` as installed on 2026-10-25; the pnpm 12.14.0 install output; `packages/ui/fonts/README.md`
+- **Evidence level / confidence:** EV-C / Strong (observed directly)
+- **Affects:** ADR-0012 (no telemetry without consent), AGENTS rule 9; the supply-chain policy's npm checks (an install-script review belongs next to the licence check)
+- **Papers:** none yet
+
 ### F-140 · A05's `Player` cannot move between threads, so the app core owns the thread that drives it
 
 - **Date:** 2026-10-21 · **Phase:** B01 · **Type:** engineering · **Status:** new
