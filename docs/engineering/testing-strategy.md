@@ -221,7 +221,7 @@ criterion benchmarks live in crate `benches/` directories and, for cross-crate s
 |---|---|---|---|
 | Device soak (A05) | 10 min at 128-frame buffers on reference hardware, representative Score | 0 xruns | Started by a maintainer on a trusted ref: before every release, and after merges that change the scheduler, voice pool, plan swap or backend |
 | Allocation soak (A05) | Debug build, `allocation-counter`, scripted session on a timer-driven null device | No allocation in the callback | Short session on every PR (`no-alloc` job); full 10 minutes nightly ([06 §12](../architecture/06-audio-engine.md#12-real-time-rules-summary)) |
-| Stream soak (B06) | 1 kHz input stream sonified for 1 h | No xruns, bounded memory (RSS sampled) | Memory and throughput nightly on hosted runners; xrun check on reference hardware before releases |
+| Stream soak (B06) | 1 kHz input stream sonified for 1 h | No xruns, bounded memory (RSS sampled) | Memory and throughput nightly on hosted runners; xrun check on reference hardware before releases. As built (B06-T07): the `stream_soak` example of `sonarithm-app` plays a synthetic 1 kHz `tail` stream live through the app core and judges memory, rows and keeping up (`--strict`); the nightly `stream-soak` job runs it for 10 minutes on three OSes on the null device, and `--output system --max-xruns 0` is the device run |
 
 ## 10. Integration tests through the headless app core
 
