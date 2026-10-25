@@ -169,54 +169,74 @@ The base hue is a warm neutral with chroma at or below 0.006, so surfaces read a
 
 The accent is a teal-cyan (hue ≈ 195). It is deliberately not indigo or purple (DL-X01), and it stays clear of the reserved signal hues. The accent marks focus and selection only; it is never a series colour.
 
-### 5.2 Starting semantic tokens
+The generator lives in `packages/ui/tokens/` (B02-T01). `recipe.ts` holds the inputs (base hue 85 at chroma 0.004, accent hue 195 at chroma 0.095) and one lightness ladder per scheme and contrast level. The contrast level is what turns dark and light into their high-contrast themes: surfaces move toward the extreme, text and borders toward the other end, neutrals lose their chroma and the accent gains chroma. `pnpm -C packages/ui tokens` writes `src/generated/tokens.css` and `src/generated/tokens.json`; the package tests fail when the committed files differ from the generator's output, or when any pair in §5.3 is below its threshold.
 
-**Proposed values.** Every value below is a starting point for the B02 generator, not a final colour. B02 must validate every pair in §5.3 against WCAG 2.2 (4.5:1 for text, 3:1 for non-text UI and graphical objects) in each theme. Hex values are the sRGB approximations of the OKLCH values; where an OKLCH value falls slightly outside sRGB, the hex is the clipped approximation and the generator's gamut mapping is authoritative.
+### 5.2 Semantic tokens
 
-| Token | Role | Dark (default) | Light | High contrast (dark base) |
-|---|---|---|---|---|
-| `surface-0` | App background; plot canvas | `oklch(0.185 0.003 85)` ≈ #131311 | `oklch(0.970 0.003 85)` ≈ #F6F5F3 | `oklch(0.140 0 0)` ≈ #090909 |
-| `surface-1` | Panels: tree, inspector, bars | `oklch(0.215 0.003 85)` ≈ #1A1918 | `oklch(0.990 0.002 85)` ≈ #FCFCFA | `oklch(0.140 0 0)` ≈ #090909 |
-| `surface-2` | Inputs, raised controls, table header, overlays | `oklch(0.255 0.004 85)` ≈ #242321 | `oklch(0.950 0.004 85)` ≈ #F0EEEB | `oklch(0.200 0 0)` ≈ #161616 |
-| `surface-3` | Hover, selected row (with an accent indicator) | `oklch(0.300 0.005 85)` ≈ #2F2E2B | `oklch(0.915 0.005 85)` ≈ #E4E3DF | `oklch(0.280 0 0)` ≈ #292929 |
-| `text-1` | Primary text, values | `oklch(0.930 0.004 85)` ≈ #E9E8E5 | `oklch(0.230 0.005 85)` ≈ #1E1D1A | `oklch(0.990 0 0)` ≈ #FCFCFC |
-| `text-2` | Secondary text, labels | `oklch(0.790 0.005 85)` ≈ #BCBAB7 | `oklch(0.400 0.006 85)` ≈ #494744 | `oklch(0.950 0 0)` ≈ #EEEEEE |
-| `text-3` | Tertiary text: units, hints, tick labels | `oklch(0.690 0.006 85)` ≈ #9D9B97 | `oklch(0.490 0.006 85)` ≈ #62605D | `oklch(0.900 0 0)` ≈ #DEDEDE |
-| `border` | Hairline separators (decorative) | `oklch(0.330 0.004 85)` ≈ #363533 | `oklch(0.880 0.004 85)` ≈ #D9D7D4 | `oklch(0.820 0 0)` ≈ #C4C4C4 |
-| `border-strong` | Component boundaries needed to identify a control | `oklch(0.570 0.005 85)` ≈ #797774 | `oklch(0.580 0.006 85)` ≈ #7C7A76 | `oklch(0.950 0 0)` ≈ #EEEEEE |
-| `accent` | Selection, active tab, checked state | `oklch(0.750 0.095 195)` ≈ #5BC1C0 | `oklch(0.500 0.085 200)` ≈ #007176 | `oklch(0.870 0.120 195)` ≈ #61EDED |
-| `focus` | Focus ring (2 px, 2 px offset) | `oklch(0.830 0.110 195)` ≈ #62DEDD | `oklch(0.450 0.090 200)` ≈ #006469 | `oklch(0.940 0.150 105)` ≈ #FAF170 |
-| `signal-playhead` | Playhead line and handle | `oklch(0.960 0.020 95)` ≈ #F6F2E3 | `oklch(0.260 0.010 85)` ≈ #26241F | `oklch(0.990 0 0)` ≈ #FCFCFC (3 px) |
-| `signal-warning` | Warnings, over-range, lint warnings | `oklch(0.800 0.140 70)` ≈ #F7AC4D | `oklch(0.570 0.115 70)` ≈ #A26A18 | `oklch(0.860 0.140 75)` ≈ #FFC35D |
-| `signal-error` | Errors, clipping | `oklch(0.700 0.170 25)` ≈ #F66D67 | `oklch(0.530 0.180 25)` ≈ #BE2E31 | `oklch(0.800 0.120 25)` ≈ #FF9E96 |
-| `signal-ok` | Success, connected, valid | `oklch(0.770 0.140 150)` ≈ #6CCD83 | `oklch(0.530 0.125 150)` ≈ #277F43 | `oklch(0.860 0.160 150)` ≈ #7BEE98 |
+**Generated values (B02-T01).** These are the generator's output, and [`tokens.json`](../../packages/ui/src/generated/tokens.json) is the record. They stay proposals until the B02 design review (B02-T09); the §5.3 pairs are the gate. Hex values are the sRGB colours a browser renders for the emitted OKLCH values. † marks a colour that was outside sRGB, which the generator gamut-maps with the CSS Color 4 algorithm (lightness and hue kept, chroma reduced) before emitting it.
+
+| Token | Role | Dark (default) | Light | High contrast, dark | High contrast, light |
+|---|---|---|---|---|---|
+| `surface-0` | App background; plot canvas | `oklch(0.185 0.004 85)` ≈ #131311 | `oklch(0.97 0.004 85)` ≈ #F6F5F2 | `oklch(0.14 0 0)` ≈ #090909 | `oklch(1 0 0)` ≈ #FFFFFF |
+| `surface-1` | Panels: tree, inspector, bars | `oklch(0.215 0.004 85)` ≈ #1A1917 | `oklch(0.99 0.004 85)` ≈ #FDFCF9 | `oklch(0.14 0 0)` ≈ #090909 | `oklch(1 0 0)` ≈ #FFFFFF |
+| `surface-2` | Inputs, raised controls, table header, overlays | `oklch(0.255 0.004 85)` ≈ #242321 | `oklch(0.95 0.004 85)` ≈ #F0EEEB | `oklch(0.2 0 0)` ≈ #161616 | `oklch(0.96 0 0)` ≈ #F2F2F2 |
+| `surface-3` | Hover, selected row (with an accent indicator) | `oklch(0.3 0.004 85)` ≈ #2F2E2C | `oklch(0.915 0.004 85)` ≈ #E4E3E0 | `oklch(0.28 0 0)` ≈ #292929 | `oklch(0.91 0 0)` ≈ #E1E1E1 |
+| `text-1` | Primary text, values | `oklch(0.93 0.004 85)` ≈ #E9E8E5 | `oklch(0.23 0.004 85)` ≈ #1E1D1B | `oklch(0.99 0 0)` ≈ #FCFCFC | `oklch(0.14 0 0)` ≈ #090909 |
+| `text-2` | Secondary text, labels | `oklch(0.79 0.004 85)` ≈ #BCBAB8 | `oklch(0.4 0.004 85)` ≈ #494745 | `oklch(0.95 0 0)` ≈ #EEEEEE | `oklch(0.22 0 0)` ≈ #1B1B1B |
+| `text-3` | Tertiary text: units, hints, tick labels | `oklch(0.69 0.004 85)` ≈ #9C9B98 | `oklch(0.49 0.004 85)` ≈ #61605E | `oklch(0.9 0 0)` ≈ #DEDEDE | `oklch(0.3 0 0)` ≈ #2E2E2E |
+| `border` | Hairline separators (decorative) | `oklch(0.33 0.004 85)` ≈ #363533 | `oklch(0.88 0.004 85)` ≈ #D9D7D4 | `oklch(0.82 0 0)` ≈ #C4C4C4 | `oklch(0.4 0 0)` ≈ #484848 |
+| `border-strong` | Component boundaries needed to identify a control | `oklch(0.57 0.004 85)` ≈ #787775 | `oklch(0.58 0.004 85)` ≈ #7B7A78 | `oklch(0.95 0 0)` ≈ #EEEEEE | `oklch(0.22 0 0)` ≈ #1B1B1B |
+| `accent` | Selection, active tab, checked state | `oklch(0.75 0.095 195)` ≈ #5BC1C0 | `oklch(0.5001 0.0853 195)` ≈ #007272 † | `oklch(0.87 0.1187 195)` ≈ #63EDEC | `oklch(0.4289 0.0731 195.71)` ≈ #005C5C † |
+| `focus` | Focus ring (2 px, 2 px offset) | `oklch(0.83 0.1092 195)` ≈ #63DEDD | `oklch(0.4563 0.0778 195.44)` ≈ #006465 † | `oklch(0.94 0.15 105)` ≈ #FAF170 | `oklch(0.42 0.19 262)` ≈ #033FB2 |
+| `signal-playhead` | Playhead line and handle | `oklch(0.96 0.02 95)` ≈ #F6F2E3 | `oklch(0.26 0.01 85)` ≈ #26241F | `oklch(0.99 0 0)` ≈ #FCFCFC (3 px) | `oklch(0.14 0 0)` ≈ #090909 (3 px) |
+| `signal-warning` | Warnings, over-range, lint warnings | `oklch(0.8 0.14 70)` ≈ #F7AC4D | `oklch(0.57 0.115 70)` ≈ #A26A18 | `oklch(0.8524 0.1361 78.18)` ≈ #FFC35D † | `oklch(0.5011 0.1116 65.96)` ≈ #8E5400 † |
+| `signal-error` | Errors, clipping | `oklch(0.7 0.17 25)` ≈ #F66D67 | `oklch(0.53 0.18 25)` ≈ #BE2E31 | `oklch(0.7966 0.1166 25.08)` ≈ #FF9E96 † | `oklch(0.48 0.18 25)` ≈ #AC1922 |
+| `signal-ok` | Success, connected, valid | `oklch(0.77 0.14 150)` ≈ #6CCD83 | `oklch(0.53 0.125 150)` ≈ #277F43 | `oklch(0.86 0.16 150)` ≈ #7BEE98 | `oklch(0.461 0.1285 149.48)` ≈ #006B2D † |
+
+Besides the colours, each theme sets `color-scheme` (so scrollbars and native controls match) and the overlay shadow (§8).
 
 Design notes:
 
+- **Changes from the baseline proposals.**
+  - All neutrals share the base chroma 0.004. The baseline varied it from 0.002 to 0.006, which moved no colour by more than one step in any channel.
+  - The light themes use the accent hue 195 instead of 200.
+  - The light high-contrast column is new.
+  - In the high-contrast light theme, focus is a deep blue (hue 262). That hue is not used by the accent or the signals, just as yellow is not in the dark high-contrast theme.
 - **Surfaces.** The dark surfaces sit near the Carbon (#161616) and Material (#121212) dark grays rather than pure black ([05 §8](../research/notes/05-desktop-frontend-stack.md)).
 - **Playhead.** The playhead is a near-neutral, maximum-luminance line with a handle, not a hue. Every hue is already taken by the categorical data palette (§6), so hue would collide with some series; position, shape and luminance identify the playhead instead. This is a proposal to confirm in B04.
 - **Focus versus accent.** The focus ring and the accent are close in colour (about 1.2–1.3:1 against each other). That is acceptable only because the ring always has a 2 px offset in the surface colour, so the ring is judged against the surface. Never indicate focus by an accent fill alone.
 - **Signals in plots.** Warning and error hues are close to the orange and vermillion of the data palette. Signal colours therefore appear in plots only together with an icon or text label (for example a clip marker with "Clip"), never as bare colour.
 
-### 5.3 Contrast pairs to verify in B02
+### 5.3 Contrast pairs
 
-The generator emits a pair list, and CI fails on any pair below its threshold (WCAG 2.2 ratios as pass/fail; APCA only as a supplementary design check for thin text on dark surfaces, since APCA is not in the WCAG 3 draft; [05 §8](../research/notes/05-desktop-frontend-stack.md)).
+The generator emits a pair list with the WCAG 2.2 ratio of the rendered colours, and CI fails on any pair below its threshold (WCAG 2.2 ratios as pass/fail; APCA only as a supplementary design check for thin text on dark surfaces, since APCA is not in the WCAG 3 draft; [05 §8](../research/notes/05-desktop-frontend-stack.md)). The tests also check that a high-contrast theme never lowers a pair's ratio below its standard theme's.
 
-| Foreground | Backgrounds | Threshold | Preliminary result (computed from §5.2) |
+| Foreground | Backgrounds | Threshold | Lowest ratio: dark · light · high contrast dark · high contrast light (B02-T01) |
 |---|---|---|---|
-| `text-1`, `text-2` | `surface-0..3` | 4.5:1 | Passes in all three themes |
-| `text-3` | `surface-0..2` (not used on `surface-3`) | 4.5:1 | Passes; dark `text-3` on `surface-3` is 4.9:1, kept off it for margin |
-| `border-strong` | `surface-0..3` | 3:1 | Passes; dark on `surface-3` is 3.05:1, at the limit |
-| `focus` | `surface-0..3` | 3:1 | Passes |
-| `accent` (as indicator) | `surface-0..3` | 3:1 | Passes |
-| `signal-*` | `surface-0..3` | 3:1 (4.5:1 when used as text) | Passes 3:1; light `signal-warning` is below 4.5:1 on `surface-2..3`, so warning text uses `text-1` with a warning icon |
-| `series-1..8` | plot background | 3:1 | See §6; the published palette does not pass on light surfaces |
+| `text-1`, `text-2` | `surface-0..3` | 4.5:1 | 7.01 · 7.21 · 12.54 · 13.17 (`text-2` on `surface-3`) |
+| `text-3` | `surface-0..2` (not used on `surface-3`) | 4.5:1 | 5.65 · 5.42 · 13.45 · 12.13 (on `surface-2`); dark `text-3` on `surface-3` would be 4.9:1, so it stays off it for margin |
+| `border-strong` | `surface-0..3` | 3:1 | 3.03 · 3.34 · 12.54 · 13.17 (on `surface-3`); dark is at the limit |
+| `focus` | `surface-0..3` | 3:1 | 8.41 · 5.43 · 12.39 · 6.81 |
+| `accent` (as indicator) | `surface-0..3` | 3:1 | 6.35 · 4.48 · 10.29 · 5.98 |
+| `signal-*` | `surface-0..3` | 3:1 (4.5:1 when used as text) | 4.72 · 3.55 · 7.33 · 4.70 (dark `signal-error`, light and high contrast light `signal-warning`, on `surface-3`). Light `signal-warning` is below 4.5:1 on every surface and light `signal-ok` on `surface-2..3`, so warning and success text uses `text-1` with an icon |
+| `series-1..8` | plot background | 3:1 | See §6; the published palette does not pass on light surfaces (B04) |
 
-The preliminary results are arithmetic on the proposed values, not a validation. B02 records the generator output as the validation, and any change to a threshold or token role is a finding in the [findings log](../research-paper/findings-log.md).
+The validation is the generator output ([F-131](../research-paper/findings-log.md)). Any change to a threshold or token role is a finding in the [findings log](../research-paper/findings-log.md).
 
-### 5.4 Forced colors and `prefers-contrast`
+### 5.4 Theme selection, forced colors and `prefers-contrast`
 
-- `forced-colors: active` (Windows High Contrast, via WebView2) maps tokens to system colours: surfaces → `Canvas`; text → `CanvasText`; disabled text → `GrayText`; borders → `CanvasText` or `ButtonBorder`; accent and selection → `Highlight` / `HighlightText`; focus → `Highlight` with the same 2 px geometry; buttons → `ButtonFace` / `ButtonText`.
+The tokens are CSS custom properties on the root element, in the `tokens` cascade layer. The app sets `data-theme` on the root element from the `theme` setting (`dark`, `light`, `highContrastDark`, `highContrastLight`). With `system`, or with no attribute, the OS decides:
+
+| `data-theme` | No OS preference | OS prefers light | OS prefers more contrast | Both |
+|---|---|---|---|---|
+| `system`, absent or unknown | dark | light | high contrast dark | high contrast light |
+| `dark` | dark | dark | high contrast dark | high contrast dark |
+| `light` | light | light | high contrast light | high contrast light |
+| `highContrastDark` / `highContrastLight` | that theme | that theme | that theme | that theme |
+
+The rules apply in order, so a webview without a media feature keeps the theme chosen so far (dark by default). Forced colours and reduced motion sit in a later sublayer (`tokens.system`) and so override every theme.
+
+- `forced-colors: active` (Windows High Contrast, via WebView2) maps tokens to system colours: surfaces → `Canvas`; text → `CanvasText`; disabled text → `GrayText`; borders → `CanvasText` or `ButtonBorder`; accent and selection → `Highlight` / `HighlightText`; focus → `Highlight` with the same 2 px geometry; buttons → `ButtonFace` / `ButtonText`. The generated tokens map surfaces to `Canvas`, text and both borders to `CanvasText`, accent, focus and the playhead to `Highlight`, the other signals to `CanvasText`, and the overlay shadow to `none`; `GrayText`, `HighlightText` and the button colours are for components (B02-T04).
 - Signals lose their hue under forced colours. That is safe only because every signal already carries an icon or text (DL-X08).
 - Canvas and WebGL content is not adjusted by the browser. Plots read the system colours with `getComputedStyle` and redraw: data in `CanvasText`, playhead and cursor in `Highlight`, series distinguished by dash and marker ([05 §5](../research/notes/05-desktop-frontend-stack.md)). `forced-color-adjust: none` is used only on the canvas element that does this.
 - `prefers-contrast: more` (macOS Increase Contrast) selects the high-contrast theme generated from the user's base theme.
@@ -255,7 +275,7 @@ A diverging map is not chosen yet; B04 selects one with the same CVD and percept
 
 | Token | Value | Use |
 |---|---|---|
-| `space-1` … `space-8` | 4, 8, 12, 16, 24, 32 px | All padding, gaps and margins are multiples of 4 px. |
+| `space-1` … `space-6` | 4, 8, 12, 16, 24, 32 px (0.25–2 rem) | All padding, gaps and margins are multiples of 4 px. Sizes that hold text (spacing, rows, bars, targets) are in rem so text scaling and zoom apply (A11Y-25); radii, hairlines and focus rings are in px. |
 | `row-compact` | 24 px | Tree rows, table rows, status bar. |
 | `row-default` | 28 px | Buttons, inputs, inspector rows. |
 | `bar-toolbar` | 40 px | Top toolbar. |
@@ -275,7 +295,7 @@ Nothing in the UI exceeds 4 px (DL-X03). Engine tiles are a brand mark, not UI c
 ## 8. Elevation and separators
 
 - Regions and panels are separated by 1 px `border` hairlines, not shadows. Separators are used where they group; Linear found that dividing lines "quietly proliferated" and softened them ([05 §8](../research/notes/05-desktop-frontend-stack.md)), so a separator that only decorates is removed.
-- Overlays (menus, popovers, tooltips, dialogs) are the only elevated layer: `surface-2`, a 1 px `border-strong` outline and one shadow token. No other element has a shadow.
+- Overlays (menus, popovers, tooltips, dialogs) are the only elevated layer: `surface-2`, a 1 px `border-strong` outline and one shadow token, `shadow-overlay` (proposal: `0 2px 8px` in black at 40 % opacity in dark, 15 % in light, none in high contrast and forced colours). No other element has a shadow; Stylelint allows `box-shadow` only as `none` or `var(--shadow-overlay)`.
 - Modal dialogs use an opaque scrim. No blur (DL-X02).
 
 ## 9. Motion
@@ -406,7 +426,7 @@ Use this list for every design review and for the B02 exit review. Each item cit
 
 | Item | Resolution path |
 |---|---|
-| Validate every token pair (§5.3) in all themes; generate the light high-contrast variant | Generator output committed; findings logged |
+| Validate every token pair (§5.3) in all themes; generate the light high-contrast variant | Done in B02-T01: generator output committed, every pair passes ([F-131](../research-paper/findings-log.md)) |
 | Verify Plex `tnum` and `zero` features per weight | Font test page in Storybook |
 | Forced colors in WKWebView and WebKitGTK | Manual test per webview; finding |
 | OS text scaling per webview | Manual test; finding |
@@ -420,3 +440,4 @@ Use this list for every design review and for the B02 exit review. Each item cit
 | Date | Change | By |
 |---|---|---|
 | 2026-10-18 | Baseline created from research notes 05 §8, §10, §11. | Kickoff |
+| 2026-10-25 | B02-T01: §5.2 and §5.3 replaced with the generator's output, including the light high-contrast theme; §5.4 theme selection; spacing tokens are `space-1` to `space-6`; the overlay shadow token. | AI agent (Claude Code), for review |

@@ -702,6 +702,17 @@ A05 (render engine, audio backends, export) uses F-050 to F-069.
 - **Evidence:** `crates/sonarithm-i18n/tests/contract.rs` and `packages/i18n/test/contract.test.ts` on `tests/fixtures/contract.json`, both passing on HW-01 (Windows 11, Rust 1.99.0, Node 25.9.0); the frontend CI job runs the TypeScript half on Node 24; fluent-bundle 0.16.0 `PluralOperands` from `FluentNumber` (source); PR for B02-T08 ([#207](https://github.com/DuhItzAniket/SONARITHM/issues/207))
 - **Evidence level / confidence:** EV-C / Moderate (24 cases in four English locales; CLDR versions in ICU4X and V8 can drift, which the contract test would catch)
 - **Affects:** NFR-09, A11Y-12, DL-P12 (one value, one formatter); 12 §5
+- **Papers:** none yet
+
+### F-131 · The generated OKLCH tokens meet every design-language contrast pair in four themes; two light signals stay below 4.5:1 for text
+
+- **Date:** 2026-10-25 · **Phase:** B02 · **Type:** accessibility · **Status:** new
+- **Statement:** All 156 pairs of design-language §5.3 pass WCAG 2.2: 39 pairs in each of the dark, light, high-contrast dark and high-contrast light themes, computed from the 8-bit sRGB colours a browser renders for the emitted OKLCH values. The lowest text ratio is 5.42:1 (light `text-3` on `surface-2`). The lowest non-text ratio is 3.03:1 (dark `border-strong` on `surface-3`, at the limit, as the baseline arithmetic predicted). No high-contrast pair is lower than its standard-theme pair. Seven recipe colours (light accent and focus, high-contrast dark warning and error, high-contrast light accent, warning and ok) were outside sRGB and were gamut-mapped with the CSS Color 4 algorithm, losing up to 0.022 chroma (high-contrast light accent, 0.095 to 0.0731). Light `signal-warning` (3.55–4.44:1) and light `signal-ok` on `surface-2` and `surface-3` (3.89–4.31:1) pass 3:1 as marks but not 4.5:1 as text; the baseline predicted only the warning case.
+- **Evidence:** `packages/ui/src/generated/tokens.json` (the pair list with ratios) and `packages/ui/test/tokens.test.ts`, which recomputes every ratio from the emitted CSS; the OKLab conversion matches the published OKLCH of the sRGB primaries to 1e-4 (`packages/ui/test/color.test.ts`); Node 25.9 on HW-01 and Node 24 in CI; PR for B02-T01 ([#200](https://github.com/DuhItzAniket/SONARITHM/issues/200))
+- **Evidence level / confidence:** EV-C / Strong for the ratios (deterministic arithmetic on the rendered colours); not a perceptual validation, which is B02-T09's design review and the owner's forced-colours checks per webview
+- **Affects:** A11Y-25, FR-117, DL-X07; design-language §5.2–§5.3 (signal text uses `text-1` with an icon for warning and success in the light theme)
+- **Papers:** none yet
+
 ### F-140 · A05's `Player` cannot move between threads, so the app core owns the thread that drives it
 
 - **Date:** 2026-10-21 · **Phase:** B01 · **Type:** engineering · **Status:** new

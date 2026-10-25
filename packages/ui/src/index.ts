@@ -5,6 +5,10 @@
  * `@sonarithm/ui`: design tokens and the React Aria Components wrappers that the
  * desktop app imports its primitives from (coding-standards §12.3, design-language.md).
  *
- * Placeholder created in A01; tokens and components arrive in B02.
+ * The tokens are CSS: import `@sonarithm/ui/tokens.css` once, before any component CSS. It
+ * defines the semantic colour, spacing, radius and motion custom properties in the `tokens`
+ * cascade layer; the host picks the theme with `data-theme` on the root element
+ * (design-language §5.4). `pnpm -C packages/ui tokens` regenerates it from `tokens/recipe.ts`.
+ * Components arrive in B02-T04.
  */
 export {};

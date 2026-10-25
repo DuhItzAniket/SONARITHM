@@ -259,11 +259,13 @@ jobs:
           node-version: 24
           cache: pnpm
       - run: pnpm install --frozen-lockfile
+      # ESLint and Prettier everywhere; Stylelint over @sonarithm/ui's CSS (B02-T01).
       - run: pnpm -r lint
       - run: pnpm -r typecheck
       # Package tests with node:test, including the Rust–TypeScript message contract and the
-      # pseudo-locale check of @sonarithm/i18n (B02-T08), and @sonarithm/ipc's client and
-      # binary reader against the generated protocol and a Rust-encoded view (B01-T02).
+      # pseudo-locale check of @sonarithm/i18n (B02-T08), @sonarithm/ipc's client and
+      # binary reader against the generated protocol and a Rust-encoded view (B01-T02), and
+      # @sonarithm/ui's token contrast, freshness and lint tests (B02-T01).
       - run: pnpm -r test
 
   # The examples gallery (examples/README.md): its datasets regenerate byte for byte from

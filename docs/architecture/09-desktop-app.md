@@ -87,7 +87,7 @@ The UI calls an `IpcTransport` interface (`invoke`, `subscribe`, `binary`). The 
 | Hot paths | Playhead and meters are drawn from `requestAnimationFrame` using refs and canvas or CSS transforms, **bypassing React reconciliation** |
 | Plots | uPlot for line and time series (canvas); a custom WebGL2 layer for dense, waveform and spectrogram views; WebGPU is optional. All downsampling happens in Rust |
 | Spec editor | CodeMirror 6 with the generated JSON Schema, diagnostics from Rust validation, and keyboard-accessible completion |
-| Styling | CSS Modules + cascade layers + CSS custom-property tokens generated in OKLCH; `forced-colors`, `prefers-contrast` and `prefers-reduced-motion` honoured |
+| Styling | CSS Modules + cascade layers + CSS custom-property tokens generated in OKLCH (`@sonarithm/ui/tokens.css`); the host sets `data-theme` on the root element from the `theme` setting, and `system` follows the OS ([design-language §5.4](../design/design-language.md#54-theme-selection-forced-colors-and-prefers-contrast)); `forced-colors`, `prefers-contrast` and `prefers-reduced-motion` honoured |
 | i18n | Fluent message IDs shared with Rust announcement templates |
 | Command palette | React Aria ComboBox + Menu (announced results), listing every action with its shortcut |
 

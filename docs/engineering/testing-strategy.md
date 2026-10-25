@@ -272,7 +272,7 @@ Source: [05-desktop-frontend-stack §9](../research/notes/05-desktop-frontend-st
 - Lint: jsx-a11y strict rules ([coding-standards §12.2](coding-standards.md#122-linting-and-formatting)) and `sonarithm/no-literal-ui-string` for hard-coded UI text ([coding-standards §12.7](coding-standards.md#127-strings-and-internationalisation)).
 - Localization: the pseudo-locale check (`en-XA`) over every catalogue message, in Rust and in `@sonarithm/i18n` (`pnpm -r test`), and the Rust–TypeScript message contract on shared cases ([12 §5](../architecture/12-cross-cutting-concerns.md#5-internationalization-and-localization)).
 - axe-core in Storybook and Playwright, failing on serious and critical violations.
-- Token tests assert WCAG 2.2 contrast for every theme pairing: 4.5:1 for text, 3:1 for non-text and focus indicators.
+- Token tests assert WCAG 2.2 contrast for every theme pairing: 4.5:1 for text, 3:1 for non-text and focus indicators (`packages/ui/test/tokens.test.ts`, from B02-T01). Seeded CSS shows that Stylelint rejects the detectable design-language anti-patterns (`packages/ui/test/stylelint.test.ts`).
 - Keyboard-only Playwright flows (no pointer events) assert focus order, no traps and visible focus.
 - Rust-side A11Y conformance tests (for example A11Y-14 mono survival, A11Y-16 announcement rate limits, A11Y-20 speech/sonification sequencing).
 
