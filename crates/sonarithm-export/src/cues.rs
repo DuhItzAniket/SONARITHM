@@ -7,10 +7,10 @@
 
 use std::fmt::Write as _;
 
-use sonarithm_core::{Score, ScoreEvent, Seconds};
+use sonarithm_core::{Score, ScoreEvent, Seconds, WordsPerMinute, spoken_duration};
 
-/// How long a cue stays on screen: 3 s, or until the Score ends. A05 provisional value;
-/// AUDAXIS sets cue timing with its announcement policy (B03).
+/// How long a short cue stays on screen: 3 s (A05 provisional value, 06 §7). A cue whose
+/// text takes longer to speak stays until its speech would end.
 pub const CUE_DURATION: Seconds = Seconds(3.0);
 
 /// One timed text cue.
@@ -26,17 +26,23 @@ pub struct Cue {
 }
 
 /// The cues of `score`: every speech event of every track and every marker, sorted by
-/// start time (ties keep track order, then markers).
+/// start time (ties keep track order, then markers), timed at the default speaking rate.
 #[must_use]
 pub fn cues(score: &Score) -> Vec<Cue> {
-    let duration = score.header.duration.0;
-    let cue = |t: Seconds, text: &str| {
-        let end = (t.0 + CUE_DURATION.0).min(duration).max(t.0 + 0.001);
-        Cue {
-            start: t,
-            end: Seconds(end),
-            text: text.to_owned(),
-        }
+    cues_at(score, WordsPerMinute::DEFAULT)
+}
+
+/// [`cues`] for speech at `rate`, with the announcement policy of AUDAXIS (08 §4, A11Y-20):
+/// speech is sequenced, never overlapped, so texts that start together share one cue and a
+/// cue ends when the next one starts. Otherwise
+/// a cue lasts [`CUE_DURATION`] or, when its text takes longer to speak, until its speech
+/// would end; never past the end of the Score, and always at least 1 ms.
+#[must_use]
+pub fn cues_at(score: &Score, rate: WordsPerMinute) -> Vec<Cue> {
+    let cue = |t: Seconds, text: &str| Cue {
+        start: t,
+        end: Seconds(t.0 + CUE_DURATION.0.max(spoken_duration(text, rate).0)),
+        text: text.to_owned(),
     };
     let speech = score.tracks.iter().flat_map(|track| {
         track.events.iter().filter_map(move |event| match event {
@@ -50,7 +56,29 @@ pub fn cues(score: &Score) -> Vec<Cue> {
         .map(|marker| cue(marker.t, &marker.label));
     let mut all: Vec<Cue> = speech.chain(markers).collect();
     all.sort_by(|a, b| a.start.total_cmp(&b.start));
-    all
+    // Speech that starts together is spoken one after the other: one cue, its texts on
+    // separate lines, as long as the longest.
+    let mut merged: Vec<Cue> = Vec::with_capacity(all.len());
+    for cue in all {
+        match merged.last_mut() {
+            Some(last) if last.start == cue.start => {
+                last.text.push('\n');
+                last.text.push_str(&cue.text);
+                last.end = Seconds(last.end.0.max(cue.end.0));
+            }
+            _ => merged.push(cue),
+        }
+    }
+    let duration = score.header.duration.0;
+    let starts: Vec<f64> = merged.iter().map(|cue| cue.start.0).collect();
+    for (cue, next) in merged
+        .iter_mut()
+        .zip(starts.iter().skip(1).map(Some).chain([None]))
+    {
+        let next = next.copied().unwrap_or(f64::INFINITY);
+        cue.end = Seconds(cue.end.0.min(next).min(duration).max(cue.start.0 + 0.001));
+    }
+    merged
 }
 
 /// A WebVTT timestamp, `HH:MM:SS.mmm`, rounded to the nearest millisecond.
@@ -183,6 +211,48 @@ mod tests {
             Seconds(13.0),
             "the marker cue is cut at the end"
         );
+    }
+
+    /// A11Y-20: cues are sequenced like speech: one ends when the next starts, and a cue
+    /// whose speech is longer than the display time lasts until its speech would end.
+    #[test]
+    fn a11y_20_cues_never_overlap_and_cover_their_speech() {
+        let mut score = score();
+        let long = "word ".repeat(30);
+        if let Some(track) = score.tracks.first_mut() {
+            track.events = vec![
+                ScoreEvent::Speech(Speech::new(Seconds(1.0), "First point")),
+                ScoreEvent::Speech(Speech::new(Seconds(1.5), "Second point")),
+                ScoreEvent::Speech(Speech::new(Seconds(20.0), long.clone())),
+            ];
+        }
+        let cues = cues_at(&score, WordsPerMinute(120.0));
+        assert_eq!(cues[0].end, Seconds(1.5), "cut at the next cue");
+        assert_eq!(cues[1].end, Seconds(4.5), "3 s display");
+        assert_eq!(cues[2].start, Seconds(12.25), "the marker");
+        assert_eq!(cues[2].end, Seconds(15.25));
+        assert_eq!(cues[3].end, Seconds(35.0), "30 words at 2 per second");
+        for pair in cues.windows(2) {
+            assert!(pair[0].end <= pair[1].start, "{pair:?}");
+        }
+    }
+
+    #[test]
+    fn a11y_20_speech_that_starts_together_shares_one_cue() {
+        let mut score = score();
+        if let Some(track) = score.tracks.first_mut() {
+            track.events = vec![
+                ScoreEvent::Speech(Speech::new(Seconds(0.0), "Legend")),
+                ScoreEvent::Speech(Speech::new(Seconds(0.0), "8.5")),
+                ScoreEvent::Speech(Speech::new(Seconds(1.0), "9.25")),
+            ];
+        }
+        score.markers.clear();
+        let cues = cues(&score);
+        assert_eq!(cues.len(), 2);
+        assert_eq!(cues[0].text, "Legend\n8.5");
+        assert_eq!(cues[0].end, Seconds(1.0));
+        assert!(webvtt(&cues).contains("\n00:00:00.000 --> 00:00:01.000\nLegend\n8.5\n"));
     }
 
     #[test]

@@ -37,6 +37,14 @@ impl Compiled {
         &self.inner.score
     }
 
+    /// The navigation tree built beside the Score (05 §8), when AUDAXIS is registered
+    /// ([`Builder::with_navigation`](crate::Builder::with_navigation)). It is not part of
+    /// the Score and never changes its hash.
+    #[must_use]
+    pub fn nav(&self) -> Option<&sonarithm_core::nav::NavTree> {
+        self.inner.nav.as_ref()
+    }
+
     /// The Score, consumed.
     #[must_use]
     pub fn into_score(self) -> Score {

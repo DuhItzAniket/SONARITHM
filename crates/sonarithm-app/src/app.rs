@@ -9,19 +9,26 @@ use std::sync::Arc;
 use std::time::Duration;
 
 use sonarithm::{Compiled, DataBundle, Datasets, Normalization, RenderOptions, Sonarithm, Spec};
+use sonarithm_audaxis::announce::{
+    Announcement, Composer, Settings as ComposerSettings, Verbosity as ComposerVerbosity,
+};
 use sonarithm_core::TableId;
+use sonarithm_core::nav::{NavKind, NavNodeId, NavTree};
 use sonarithm_data::{BundleId, ReadOptions, Table, TileCache, read_file};
+use sonarithm_i18n::Localizer;
+use sonarithm_speech::WordsPerMinute;
 
 use crate::codes;
 use crate::events::EventSink;
 use crate::history::History;
 use crate::ipc::{
     CompileReport, Counts, DatasetSummary, DeviceSummary, DiagnosticInfo, Event, ExportRequest,
-    ExportResult, FieldSummary, HistoryState, IpcError, JobKind, PROTOCOL_VERSION, Reply, Request,
-    ScoreInfo, SpecPatchResult, SpecState, TrackInfo,
+    ExportResult, FieldSummary, HistoryState, IpcError, JobKind, PROTOCOL_VERSION, PlaybackStatus,
+    Reply, Request, ScoreInfo, SpecPatchResult, SpecState, TrackInfo,
 };
 use crate::jobs::{Failure, JobQueue, Output, Work};
 use crate::settings::{Settings, SettingsStore};
+use crate::speech::{SequencerConfig, SpeakerSource};
 use crate::transport::{Action, AudioOutput, OutputConfig, Transport};
 
 mod projects;
@@ -36,6 +43,8 @@ pub struct AppConfig {
     pub audio: AudioOutput,
     /// The folder for autosaves: the OS app-data folder (09 §5); by default `config_dir`.
     pub data_dir: Option<PathBuf>,
+    /// Makes the self-voicing speaker, if this host offers self-voicing (A11Y-19).
+    pub speaker: Option<SpeakerSource>,
 }
 
 impl AppConfig {
@@ -46,7 +55,15 @@ impl AppConfig {
             config_dir: config_dir.into(),
             audio: AudioOutput::System,
             data_dir: None,
+            speaker: None,
         }
+    }
+
+    /// The same configuration with optional self-voicing through `speaker` (B03-T07).
+    #[must_use]
+    pub fn with_speaker(mut self, speaker: SpeakerSource) -> Self {
+        self.speaker = Some(speaker);
+        self
     }
 
     /// The same configuration with autosaves under `data_dir`.
@@ -79,6 +96,8 @@ struct Open {
 /// a host keeps it behind one lock. Its threads report through the [`EventSink`].
 pub struct App {
     snr: Sonarithm,
+    /// Formats announcements; `None` only if the embedded catalogue is broken.
+    localizer: Option<Localizer>,
     sink: Arc<dyn EventSink>,
     store: SettingsStore,
     settings: Settings,
@@ -120,6 +139,7 @@ impl App {
             config_dir,
             audio,
             data_dir,
+            speaker,
         } = config;
         let data_dir = data_dir.unwrap_or_else(|| config_dir.clone());
         let autosaves = crate::project::Autosaves::new(data_dir.join("autosave"));
@@ -129,10 +149,17 @@ impl App {
             sink.emit(Event::SettingsNotice { error });
         }
         let settings = loaded.settings;
-        let transport = Transport::spawn(audio, output(&settings), Arc::clone(&sink))?;
+        let transport = Transport::spawn(audio, output(&settings), Arc::clone(&sink), speaker)?;
         let jobs = JobQueue::new(Arc::clone(&sink));
+        // AUDAXIS builds the navigation tree that announcements describe (B03).
+        let snr = Sonarithm::builder()
+            .with_default_engines()
+            .with_navigation()
+            .build()
+            .unwrap_or_else(|_| Sonarithm::new());
         Ok(Self {
-            snr: Sonarithm::new(),
+            snr,
+            localizer: Localizer::new(LOCALE).ok(),
             sink,
             store,
             settings,
@@ -180,7 +207,7 @@ impl App {
             Request::Compile => self.compile(),
             Request::TransportState => self.act(Action::State),
             Request::TransportPlay => self.act(Action::Play),
-            Request::TransportPause => self.act(Action::Pause),
+            Request::TransportPause => self.pause(),
             Request::TransportStop => self.act(Action::Stop),
             Request::TransportSeek { seconds } => self.act(Action::Seek(seconds)),
             Request::TransportSetSpeed { speed } => self.act(Action::Speed(speed)),
@@ -198,6 +225,9 @@ impl App {
             Request::SettingsSet { settings } => self.settings_set(settings),
             Request::DevicesList => self.devices(),
             Request::DeviceSelect { id } => self.device_select(id),
+            Request::AnnounceRepeat => Ok(Reply::Announce {
+                queued: self.transport.repeat()?,
+            }),
             Request::ProjectNew => Ok(self.project_new()),
             Request::ProjectOpen { path } => self.project_open(Path::new(&path)),
             Request::ProjectOpenRecent { index } => self.project_open_recent(index),
@@ -226,6 +256,31 @@ impl App {
             self.changed();
         }
         Ok(reply)
+    }
+
+    /// Pauses, then announces the current value (A11Y-09, keyboard §9.2 item 3).
+    fn pause(&mut self) -> Result<Reply, IpcError> {
+        let reply = self.act(Action::Pause)?;
+        if let Reply::Transport(state) = &reply
+            && state.status == PlaybackStatus::Paused
+            && let Some(announcement) = self.current_value(state.position_s)
+        {
+            self.transport.announce(announcement);
+        }
+        Ok(reply)
+    }
+
+    /// "Paused, …" with the value of the point at the playhead, in the listener's verbosity.
+    fn current_value(&self, position_s: f64) -> Option<Announcement> {
+        let tree = self.compiled.as_ref()?.nav()?;
+        let localizer = self.localizer.as_ref()?;
+        let node = point_at(tree, position_s)?;
+        let mut settings = ComposerSettings::default();
+        settings.verbosity = match self.settings.verbosity {
+            crate::settings::Verbosity::Verbose => ComposerVerbosity::Verbose,
+            _ => ComposerVerbosity::Terse,
+        };
+        Composer::new(localizer, settings).paused(tree, node).ok()
     }
 
     /// Runs a command whose reply is a binary view (ADR-0017 §6): `view_get` and
@@ -616,11 +671,53 @@ fn hello(protocol: u32) -> Result<Reply, IpcError> {
 }
 
 fn output(settings: &Settings) -> OutputConfig {
+    let mut speech = SequencerConfig::default();
+    speech.route = settings.speech.route;
+    speech.duck_instead_of_pause = settings.speech.duck_instead_of_pause;
+    speech.rate = WordsPerMinute(settings.speech.rate_wpm);
     OutputConfig {
         device: settings.audio.device.clone(),
         buffer_frames: settings.audio.buffer_frames,
         volume_db: settings.audio.volume_db,
+        speech,
     }
+}
+
+/// The locale announcements are composed in until the UI language is a setting (12 §5).
+const LOCALE: &str = "en-US";
+
+/// The point of the first series that sounds at `position_s`: the last one starting at or
+/// before it, or the first point when the playhead is before them all.
+fn point_at(tree: &NavTree, position_s: f64) -> Option<NavNodeId> {
+    let series_of = |mut id: NavNodeId| loop {
+        let node = tree.node(id)?;
+        if matches!(node.kind, NavKind::Series(_)) {
+            return Some(id);
+        }
+        id = node.parent?;
+    };
+    let first_series = tree
+        .iter()
+        .find(|(_, node)| matches!(node.kind, NavKind::Series(_)))
+        .map(|(id, _)| id)?;
+    let mut first = None;
+    let mut best: Option<(NavNodeId, f64)> = None;
+    for (id, node) in tree.iter() {
+        let NavKind::Point(point) = &node.kind else {
+            continue;
+        };
+        if series_of(id) != Some(first_series) {
+            continue;
+        }
+        let Some(t) = point.t else {
+            continue;
+        };
+        first = first.or(Some(id));
+        if t.0 <= position_s && best.is_none_or(|(_, at)| t.0 >= at) {
+            best = Some((id, t.0));
+        }
+    }
+    best.map(|(id, _)| id).or(first)
 }
 
 fn unknown_dataset(id: &str) -> IpcError {

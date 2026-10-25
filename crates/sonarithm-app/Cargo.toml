@@ -16,11 +16,14 @@ serde.workspace = true
 sha2.workspace = true
 serde_json.workspace = true
 sonarithm.workspace = true
+sonarithm-audaxis.workspace = true
 sonarithm-audio.workspace = true
 sonarithm-core.workspace = true
 sonarithm-data = { workspace = true, features = ["fs"] }
+sonarithm-i18n.workspace = true
 sonarithm-render.workspace = true
 sonarithm-spec.workspace = true
+sonarithm-speech.workspace = true
 thiserror.workspace = true
 ts-rs.workspace = true
 # Project bundles (RFC-0002): deflate through flate2 with the pure-Rust zlib-rs backend.
@@ -30,6 +33,8 @@ zip = { workspace = true, features = ["deflate-flate2-zlib-rs"] }
 # Counts allocations in the project-memory test only (RFC-0002 §6, condition B).
 allocation-counter.workspace = true
 proptest.workspace = true
+# The cue sidecar of a narrated Score in the speech tests (B03-T07).
+sonarithm-export.workspace = true
 
 [lints]
 workspace = true

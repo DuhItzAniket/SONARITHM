@@ -9,23 +9,30 @@
 //! the first `play` (09 §7) and nothing ever starts sounding without a play command
 //! (A11Y-15): a new Score, a device change or a device failure leaves the transport
 //! paused.
+//!
+//! The same thread sequences speech with sonification (08 §4, B03-T07): it runs the
+//! [`Sequencer`] every tick, pauses or ducks playback for speech, and hands each
+//! announcement to the host's announcer or to the self-voicing speaker.
 
 use std::sync::Arc;
 use std::sync::mpsc::{self, Receiver, RecvTimeoutError, Sender};
 use std::thread::JoinHandle;
 use std::time::{Duration, Instant};
 
+use sonarithm_audaxis::announce::{Announcement, Delivery};
 use sonarithm_audio::{
     AudioBackend, CpalBackend, DeviceInfo, NullBackend, NullConfig, Player, PlayerEvent,
     StreamConfig,
 };
 use sonarithm_core::{Db, Frames, SampleRate, Score, Seconds};
 use sonarithm_render::graph::SPEED_RANGE;
-use sonarithm_render::{Command, GainTarget, LoopRange, PlanConfig};
+use sonarithm_render::{Command, DUCK_LEVEL, GainTarget, LoopRange, PlanConfig};
+use sonarithm_speech::Speaker;
 
 use crate::codes;
 use crate::events::EventSink;
 use crate::ipc::{ClockAnchor, Event, IpcError, LoopSpan, PlaybackStatus, TransportState};
+use crate::speech::{Output, Sequencer, SequencerConfig, SpeakerSource, SpeechRoute};
 
 /// How often the control thread services the player.
 const TICK: Duration = Duration::from_millis(10);
@@ -64,6 +71,7 @@ pub(crate) struct OutputConfig {
     pub(crate) device: Option<String>,
     pub(crate) buffer_frames: Option<u32>,
     pub(crate) volume_db: f64,
+    pub(crate) speech: SequencerConfig,
 }
 
 /// A transport command.
@@ -86,6 +94,8 @@ enum Message {
     Act(Action, Reply<TransportState>),
     Configure(OutputConfig, Reply<TransportState>),
     Devices(Reply<Vec<DeviceInfo>>),
+    Announce(Box<Announcement>),
+    Repeat(Reply<bool>),
     Unplug,
     Shutdown,
 }
@@ -102,18 +112,23 @@ impl Transport {
         output: AudioOutput,
         config: OutputConfig,
         sink: Arc<dyn EventSink>,
+        speaker: Option<SpeakerSource>,
     ) -> Result<Self, IpcError> {
         let (sender, receiver) = mpsc::channel();
         let spawned = std::thread::Builder::new()
             .name("sonarithm-transport".to_owned())
             .spawn(move || match output {
                 AudioOutput::System => {
-                    Control::new(CpalBackend::new, |_| {}, config, sink).run(&receiver);
+                    Control::new(CpalBackend::new, |_| {}, config, sink, speaker).run(&receiver);
                 }
-                AudioOutput::Null(null) => {
-                    Control::new(move || NullBackend::new(null), unplug_null, config, sink)
-                        .run(&receiver);
-                }
+                AudioOutput::Null(null) => Control::new(
+                    move || NullBackend::new(null),
+                    unplug_null,
+                    config,
+                    sink,
+                    speaker,
+                )
+                .run(&receiver),
             });
         match spawned {
             Ok(thread) => Ok(Self {
@@ -137,6 +152,16 @@ impl Transport {
 
     pub(crate) fn devices(&self) -> Result<Vec<DeviceInfo>, IpcError> {
         self.ask(Message::Devices)
+    }
+
+    /// Queues an announcement for the sequencer.
+    pub(crate) fn announce(&self, announcement: Announcement) {
+        let _ = self.sender.send(Message::Announce(Box::new(announcement)));
+    }
+
+    /// Queues the last announcement again; `false` when there is none.
+    pub(crate) fn repeat(&self) -> Result<bool, IpcError> {
+        self.ask(Message::Repeat)
     }
 
     /// Loads a new Score (or none). Playback pauses; it never continues into the new
@@ -203,11 +228,27 @@ struct Control<B: AudioBackend, F: Fn() -> B> {
     model: Model,
     seq: u64,
     last_anchor: Option<Instant>,
+    sequencer: Sequencer,
+    speaker_source: Option<SpeakerSource>,
+    /// The self-voicing speaker, made on first use; `Err` once making it failed.
+    speaker: Option<Result<Box<dyn Speaker>, ()>>,
+    /// The sequencer's clock.
+    epoch: Instant,
 }
 
 impl<B: AudioBackend, F: Fn() -> B> Control<B, F> {
-    fn new(make: F, unplug: fn(&mut B), config: OutputConfig, sink: Arc<dyn EventSink>) -> Self {
+    fn new(
+        make: F,
+        unplug: fn(&mut B),
+        config: OutputConfig,
+        sink: Arc<dyn EventSink>,
+        speaker_source: Option<SpeakerSource>,
+    ) -> Self {
         Self {
+            sequencer: Sequencer::new(config.speech),
+            speaker_source,
+            speaker: None,
+            epoch: Instant::now(),
             make,
             unplug,
             config,
@@ -233,6 +274,7 @@ impl<B: AudioBackend, F: Fn() -> B> Control<B, F> {
                 Err(RecvTimeoutError::Timeout) => {}
             }
             self.service();
+            self.speak();
         }
         // Dropping the player closes the stream.
         self.player = None;
@@ -279,6 +321,14 @@ impl<B: AudioBackend, F: Fn() -> B> Control<B, F> {
                 });
                 let _ = reply.send(devices);
             }
+            Message::Announce(announcement) => {
+                let now = self.now_ms();
+                self.sequencer.push(*announcement, now);
+            }
+            Message::Repeat(reply) => {
+                let now = self.now_ms();
+                let _ = reply.send(Ok(self.sequencer.repeat(now)));
+            }
             Message::Unplug => {
                 if let Some(player) = &mut self.player {
                     (self.unplug)(player.backend_mut());
@@ -321,6 +371,12 @@ impl<B: AudioBackend, F: Fn() -> B> Control<B, F> {
             || config.buffer_frames != self.config.buffer_frames;
         let volume = config.volume_db;
         let volume_changed = (volume - self.config.volume_db).abs() > f64::EPSILON;
+        self.sequencer.set_config(config.speech);
+        if config.speech.route != SpeechRoute::SelfVoicing
+            && let Some(Ok(speaker)) = &mut self.speaker
+        {
+            let _ = speaker.stop();
+        }
         self.config = config;
         if reopen && self.player.is_some() {
             // A changed device pauses playback (sound-design §12 HS-05).
@@ -352,6 +408,13 @@ impl<B: AudioBackend, F: Fn() -> B> Control<B, F> {
             Action::StopAll => {
                 self.refresh();
                 self.send(Command::StopAll);
+                // Stop all audio stops speech too (A11Y-15).
+                for output in self.sequencer.silence() {
+                    self.carry_out(output);
+                }
+                if let Some(Ok(speaker)) = &mut self.speaker {
+                    let _ = speaker.stop();
+                }
                 if self.model.status == PlaybackStatus::Playing {
                     self.model.status = PlaybackStatus::Paused;
                 }
@@ -593,6 +656,62 @@ impl<B: AudioBackend, F: Fn() -> B> Control<B, F> {
         {
             self.anchor();
         }
+    }
+
+    fn now_ms(&self) -> u64 {
+        u64::try_from(self.epoch.elapsed().as_millis()).unwrap_or(u64::MAX)
+    }
+
+    /// One step of the sequencer (08 §4).
+    fn speak(&mut self) {
+        let now = self.now_ms();
+        let playing = self.model.status == PlaybackStatus::Playing;
+        let speaking = match (&self.speaker, self.sequencer.config().route) {
+            (Some(Ok(speaker)), SpeechRoute::SelfVoicing) => speaker.is_speaking(),
+            _ => None,
+        };
+        for output in self.sequencer.poll(now, playing, speaking) {
+            self.carry_out(output);
+        }
+    }
+
+    fn carry_out(&mut self, output: Output) {
+        match output {
+            Output::Pause => {
+                if self.act(Action::Pause).is_ok() {
+                    self.anchor();
+                }
+            }
+            Output::Duck(on) => {
+                let level = if on { DUCK_LEVEL } else { Db(0.0) };
+                self.send(Command::SetGain(GainTarget::Duck, level));
+            }
+            Output::Deliver(delivery) => self.deliver(&delivery),
+        }
+    }
+
+    /// Speaks a delivery through self-voicing when that is the route and a speaker opens,
+    /// and always sends it to the host, which shows it and, unless it was self-voiced,
+    /// passes it to the screen reader.
+    fn deliver(&mut self, delivery: &Delivery) {
+        let mut self_voiced = false;
+        if self.sequencer.config().route == SpeechRoute::SelfVoicing {
+            if self.speaker.is_none() {
+                self.speaker = self
+                    .speaker_source
+                    .as_ref()
+                    .map(|source| source.make().map_err(|_| ()));
+            }
+            if let Some(Ok(speaker)) = &mut self.speaker {
+                self_voiced = speaker
+                    .speak(&delivery.announcement.speech, delivery.interrupt)
+                    .is_ok();
+            }
+        }
+        self.sink.emit(Event::Announcement(crate::speech::info(
+            delivery,
+            self_voiced,
+        )));
     }
 
     fn anchor(&mut self) {

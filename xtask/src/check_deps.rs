@@ -92,6 +92,8 @@ const LAYERS: &[(&str, &[&str])] = &[
             "sonarithm-audio",
             "sonarithm-export",
             "sonarithm-stream",
+            // Optional self-voicing (B03-T07, 08 §4).
+            "sonarithm-speech",
         ],
     ),
     (

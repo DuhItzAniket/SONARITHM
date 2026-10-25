@@ -130,6 +130,10 @@ pub fn typescript() -> String {
     declare::<Verbosity>(&mut out, &cfg);
     declare::<Modalities>(&mut out, &cfg);
     declare::<Consent>(&mut out, &cfg);
+    declare::<crate::settings::SpeechSettings>(&mut out, &cfg);
+    declare::<crate::speech::SpeechRoute>(&mut out, &cfg);
+    declare::<crate::ipc::AnnouncementInfo>(&mut out, &cfg);
+    declare::<crate::ipc::AnnouncementClass>(&mut out, &cfg);
     let trimmed = out.trim_end().len();
     out.truncate(trimmed);
     out.push('\n');

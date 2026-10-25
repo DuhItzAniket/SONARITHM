@@ -1,0 +1,25 @@
+[package]
+name = "sonarithm-speech"
+description = "SONARITHM optional self-voicing: a speaker interface over the platform's text-to-speech engine."
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+repository.workspace = true
+license.workspace = true
+# Not published until the desktop app needs it from crates.io.
+publish = false
+
+[features]
+# The platform speech engines through the `tts` crate (WinRT on Windows,
+# AVSpeechSynthesizer on macOS, speech-dispatcher on Linux). Off by default so headless
+# builds and CI need no speech engine; the desktop app enables it, and a Linux build with
+# it needs libspeechd-dev (dev-environment.md).
+system = ["dep:tts"]
+
+[dependencies]
+sonarithm-core.workspace = true
+thiserror.workspace = true
+tts = { workspace = true, optional = true }
+
+[lints]
+workspace = true

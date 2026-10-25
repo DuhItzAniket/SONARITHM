@@ -45,6 +45,7 @@ export const REPLY_KINDS = {
   project_recovery: "recovery",
   project_recover: "project",
   project_discard_recovery: "recovery",
+  announce_repeat: "announce",
 } as const;
 
 /** The channel that carries each event. */
@@ -56,6 +57,7 @@ export const EVENT_CHANNELS = {
   device_changed: "app",
   audio_failed: "app",
   settings_notice: "app",
+  announcement: "announcements",
 } as const;
 
 /** The commands whose reply is a binary view (ADR-0017 §6). */
@@ -205,7 +207,7 @@ embedData: boolean, } } | { "command": "project_recent" } | { "command": "projec
 /**
  * The autosave's ID from `project_recovery`.
  */
-id: number, } } | { "command": "project_discard_recovery" } | { "command": "view_get", "args": { 
+id: number, } } | { "command": "project_discard_recovery" } | { "command": "announce_repeat" } | { "command": "view_get", "args": { 
 /**
  * The dataset's ID.
  */
@@ -286,7 +288,11 @@ projects: Array<RecentProject>, } | { "reply": "recovery",
 /**
  * Newest first.
  */
-autosaves: Array<AutosaveInfo>, };
+autosaves: Array<AutosaveInfo>, } | { "reply": "announce", 
+/**
+ * `false` when there was nothing to repeat.
+ */
+queued: boolean, };
 
 /**
  * A command that could not run (ADR-0017 §3, 12 §1). Spec and data problems are not
@@ -337,7 +343,7 @@ error: IpcError, } | { "event": "settings_notice",
 /**
  * The notice.
  */
-error: IpcError, };
+error: IpcError, } | { "event": "announcement" } & AnnouncementInfo;
 
 /**
  * The event channels of ADR-0017 §4.
@@ -950,7 +956,11 @@ keymap: { [key in string]: string },
 /**
  * Consent for features that use the network (ADR-0012). `None` means not asked yet.
  */
-consent: Consent, };
+consent: Consent, 
+/**
+ * How announcements are spoken and sequenced with sonification (08 §4).
+ */
+speech: SpeechSettings, };
 
 /**
  * Audio output settings.
@@ -1008,3 +1018,71 @@ export type Consent = {
  * The anonymous update check (12 §7).
  */
 updateCheck: boolean | null, };
+
+/**
+ * How announcements are spoken (08 §4, keyboard-and-navigation §9.2; B03-T07).
+ */
+export type SpeechSettings = { 
+/**
+ * Where announcements are spoken: the screen reader (the default, A11Y-19) or
+ * SONARITHM's own voice.
+ */
+route: SpeechRoute, 
+/**
+ * A speaking command during playback ducks sonification 20 dB instead of pausing it
+ * (keyboard §9.2 item 4; A11Y-20).
+ */
+duckInsteadOfPause: boolean, 
+/**
+ * The speaking rate that sequencing estimates assume, in words per minute.
+ */
+rateWpm: number, };
+
+/**
+ * Where announcements are spoken (A11Y-19).
+ */
+export type SpeechRoute = "screenReader" | "selfVoicing";
+
+/**
+ * An announcement, sequenced with sonification (B03-T07). The host sends `speech` to the
+ * screen reader unless SONARITHM already spoke it (`selfVoiced`), and shows `display`.
+ */
+export type AnnouncementInfo = { 
+/**
+ * Its order.
+ */
+seq: number, 
+/**
+ * The text to speak, with spoken unit names.
+ */
+speech: string, 
+/**
+ * The text to show and to send to braille, with unit symbols.
+ */
+display: string, 
+/**
+ * Its class (keyboard §9.1).
+ */
+class: AnnouncementClass, 
+/**
+ * Errors, device loss and alarms only (08 §4); everything else is polite.
+ */
+assertive: boolean, 
+/**
+ * It cuts off speech in progress (navigation, responses, earcon text).
+ */
+interrupt: boolean, 
+/**
+ * SONARITHM spoke it through self-voicing: show it, but do not send it to the
+ * screen reader.
+ */
+selfVoiced: boolean, 
+/**
+ * The navigation node it describes, if any.
+ */
+node: number | null, };
+
+/**
+ * The class of an announcement (keyboard §9.1).
+ */
+export type AnnouncementClass = "navigation" | "response" | "status" | "stream" | "earconText";
