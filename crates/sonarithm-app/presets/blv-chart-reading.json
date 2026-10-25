@@ -1,0 +1,16 @@
+{
+  "format": "sonarithm-profile",
+  "formatVersion": "1.0",
+  "name": "BLV chart reading",
+  "sound": {
+    "timbre": "square",
+    "marks": "discrete",
+    "pace": { "pointsPerSecond": 3 },
+    "context": { "ticks": true, "referenceTone": true, "spokenLegend": true }
+  },
+  "interaction": {
+    "verbosity": "terse",
+    "modalities": { "sonification": true, "speech": true, "braille": false, "visual": true },
+    "speech": { "route": "screenReader" }
+  }
+}

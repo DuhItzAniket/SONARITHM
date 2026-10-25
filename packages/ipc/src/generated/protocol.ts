@@ -53,6 +53,15 @@ export const REPLY_KINDS = {
   stream_hide: "streams",
   stream_stop: "streams",
   stream_list: "streams",
+  profile_list: "profiles",
+  profile_get: "profile",
+  profile_activate: "profiles",
+  profile_save: "profiles",
+  profile_import: "profiles",
+  profile_export: "profiles",
+  profile_flip_polarity: "compile",
+  settings_effective: "effective",
+  spec_quick: "spec",
 } as const;
 
 /** The channel that carries each event. */
@@ -254,7 +263,51 @@ id: string, } } | { "command": "stream_stop", "args": {
 /**
  * The stream's ID.
  */
-id: string, } } | { "command": "stream_list" } | { "command": "view_get", "args": { 
+id: string, } } | { "command": "stream_list" } | { "command": "profile_list" } | { "command": "profile_get", "args": { 
+/**
+ * Its ID from `profile_list`.
+ */
+id: string, } } | { "command": "profile_activate", "args": { 
+/**
+ * Its ID, or `None` for no profile.
+ */
+id: string | null, } } | { "command": "profile_save", "args": { 
+/**
+ * The profile to replace, or `None` for a new one.
+ */
+id: string | null, 
+/**
+ * The profile.
+ */
+profile: Profile, } } | { "command": "profile_import", "args": { 
+/**
+ * The file, ending in `.json`.
+ */
+path: string, } } | { "command": "profile_export", "args": { 
+/**
+ * The profile's ID.
+ */
+id: string, 
+/**
+ * The file, ending in `.json`, in an existing folder.
+ */
+path: string, } } | { "command": "profile_flip_polarity", "args": { 
+/**
+ * The field mapped to pitch.
+ */
+field: string, } } | { "command": "settings_effective" } | { "command": "spec_quick", "args": { 
+/**
+ * The dataset's ID.
+ */
+dataset: string, 
+/**
+ * The x field; by default the template's choice.
+ */
+x: string | null, 
+/**
+ * The y field.
+ */
+y: string, } } | { "command": "view_get", "args": { 
 /**
  * The dataset's ID.
  */
@@ -343,7 +396,27 @@ queued: boolean, } | { "reply": "stream_offer" } & StreamOfferInfo | { "reply": 
 /**
  * In the order they were opened.
  */
-streams: Array<StreamInfo>, };
+streams: Array<StreamInfo>, } | { "reply": "profiles", 
+/**
+ * Presets first, then the user's by ID, then the project's.
+ */
+profiles: Array<ProfileInfo>, 
+/**
+ * Warnings from the last import or activation.
+ */
+warnings: Array<DiagnosticInfo>, } | { "reply": "profile", 
+/**
+ * Its ID.
+ */
+id: string, 
+/**
+ * The profile.
+ */
+profile: Profile, } | { "reply": "effective", 
+/**
+ * Each setting with its value and layer.
+ */
+settings: Array<EffectiveSetting>, };
 
 /**
  * A command that could not run (ADR-0017 §3, 12 §1). Spec and data problems are not
@@ -1011,7 +1084,11 @@ consent: Consent,
 /**
  * How announcements are spoken and sequenced with sonification (08 §4).
  */
-speech: SpeechSettings, };
+speech: SpeechSettings, 
+/**
+ * The active profile's ID (ADR-0020), if any.
+ */
+activeProfile?: string | null, };
 
 /**
  * Audio output settings.
@@ -1202,3 +1279,239 @@ export type StreamConnection = "connecting" | "connected" | "paused" | "reconnec
  * What happens to a stream's notices (A11Y-16).
  */
 export type StreamNotices = "active" | "paused" | "hidden";
+
+/**
+ * A profile in the list (ADR-0020).
+ */
+export type ProfileInfo = { 
+/**
+ * Its ID: `preset:…`, a user profile's, or `project`.
+ */
+id: string, 
+/**
+ * Its name.
+ */
+name: string, 
+/**
+ * A built-in preset: read-only, and a proposal until co-design (B07).
+ */
+preset: boolean, 
+/**
+ * Whether it is the active profile.
+ */
+active: boolean, };
+
+/**
+ * A listener profile (ADR-0020 §1).
+ */
+export type Profile = { 
+/**
+ * Always `sonarithm-profile`.
+ */
+format: string, 
+/**
+ * `MAJOR.MINOR`; this build writes `1.0`.
+ */
+formatVersion: string, 
+/**
+ * The name the listener sees.
+ */
+name: string, 
+/**
+ * How data sounds; each value fills only what a spec leaves unset.
+ */
+sound: SoundPrefs, 
+/**
+ * How the listener works with the app.
+ */
+interaction: InteractionPrefs, };
+
+/**
+ * Sound preferences (SDR-38).
+ */
+export type SoundPrefs = { 
+/**
+ * The pitch range of every pitch channel (SDR-08).
+ */
+pitchRange?: PitchRange | null, 
+/**
+ * The instrument of every track, such as `mallet` or `square` (SDR-29).
+ */
+timbre?: string | null, 
+/**
+ * Discrete or continuous marks where a spec leaves the choice (quick and templates).
+ */
+marks?: MarkPreference | null, 
+/**
+ * The overview rate (SDR-19).
+ */
+pace?: Pace | null, 
+/**
+ * Polarity by concept, and the one-key flips (SDR-15).
+ */
+polarity?: PolarityPrefs | null, 
+/**
+ * The context cues (SDR-16..18).
+ */
+context?: ContextPrefs | null, };
+
+/**
+ * A pitch range in hertz, low to high.
+ */
+export type PitchRange = { 
+/**
+ * Low and high, in Hz.
+ */
+hz: [number, number], };
+
+/**
+ * The overview rate.
+ */
+export type Pace = { 
+/**
+ * Data points per second.
+ */
+pointsPerSecond: number, };
+
+/**
+ * Discrete notes or continuous contours (SDR-38).
+ */
+export type MarkPreference = "discrete" | "continuous";
+
+/**
+ * A polarity direction.
+ */
+export type Direction = "positive" | "negative";
+
+/**
+ * Polarity preferences (SDR-15).
+ */
+export type PolarityPrefs = { 
+/**
+ * The direction `auto` takes for a concept, such as `cost`.
+ */
+concepts?: { [key in string]: Direction }, 
+/**
+ * Fields whose polarity the one-key flip inverts.
+ */
+flippedFields?: Array<string>, };
+
+/**
+ * Context cue preferences (SDR-16..18).
+ */
+export type ContextPrefs = { 
+/**
+ * The tick track.
+ */
+ticks?: boolean | null, 
+/**
+ * The dynamic reference tone.
+ */
+referenceTone?: boolean | null, 
+/**
+ * The spoken legend before playback.
+ */
+spokenLegend?: boolean | null, };
+
+/**
+ * Interaction preferences (A11Y-10, A11Y-12).
+ */
+export type InteractionPrefs = { 
+/**
+ * Terse or verbose announcements.
+ */
+verbosity?: Verbosity | null, 
+/**
+ * The order of announcement parts per verbosity (A11Y-12).
+ */
+partOrder?: PartOrder | null, 
+/**
+ * Which output modalities are on (A11Y-10).
+ */
+modalities?: ModalityPrefs | null, 
+/**
+ * How announcements are spoken.
+ */
+speech?: SpeechPrefs | null, 
+/**
+ * Keymap overrides: command ID → keys (keyboard-and-navigation §13).
+ */
+keymap?: { [key in string]: string }, };
+
+/**
+ * Announcement parts (AUDAXIS, A11Y-12).
+ */
+export type PartName = "series" | "x" | "value" | "position" | "level" | "tags" | "provenance" | "hint";
+
+/**
+ * The part order per verbosity.
+ */
+export type PartOrder = { 
+/**
+ * The terse order.
+ */
+terse: Array<PartName>, 
+/**
+ * The verbose order.
+ */
+verbose: Array<PartName>, };
+
+/**
+ * Modality switches; unset ones come from the layer below.
+ */
+export type ModalityPrefs = { 
+/**
+ * Sonification.
+ */
+sonification?: boolean | null, 
+/**
+ * Speech and text announcements.
+ */
+speech?: boolean | null, 
+/**
+ * Braille output.
+ */
+braille?: boolean | null, 
+/**
+ * The visual plot.
+ */
+visual?: boolean | null, };
+
+/**
+ * Speech preferences.
+ */
+export type SpeechPrefs = { 
+/**
+ * The screen reader or self-voicing (A11Y-19).
+ */
+route?: SpeechRoute | null, 
+/**
+ * Duck instead of pausing for speech during playback.
+ */
+duckInsteadOfPause?: boolean | null, 
+/**
+ * The speaking rate sequencing assumes, in words per minute.
+ */
+rateWpm?: number | null, };
+
+/**
+ * Where a setting's value came from (12 §3).
+ */
+export type Layer = "default" | "settings" | "profile" | "project" | "spec" | "session";
+
+/**
+ * One setting in the effective-settings view.
+ */
+export type EffectiveSetting = { 
+/**
+ * Its key, such as `interaction.verbosity` or `sound.polarity.temp`.
+ */
+key: string, 
+/**
+ * Its value (`null` when the compiler's default applies).
+ */
+value: unknown, 
+/**
+ * The layer it came from.
+ */
+layer: Layer, };

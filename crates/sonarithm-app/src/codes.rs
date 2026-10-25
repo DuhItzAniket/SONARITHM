@@ -302,6 +302,47 @@ pub const STREAM_CONNECT: CodeInfo = CodeInfo {
     status: CodeStatus::Active,
 };
 
+/// A profile is not valid: not JSON, not a profile, a value out of range, or a path
+/// (ADR-0020 §1).
+pub const PROFILE_INVALID: CodeInfo = CodeInfo {
+    code: "SNR-APP-080",
+    severity: Severity::Error,
+    summary: "The profile is not valid",
+    help: "Use a profile exported from SONARITHM, or fix the value the message names.",
+    rules: &["SDR-38"],
+    status: CodeStatus::Active,
+};
+
+/// A profile of a newer major version (ADR-0020 §1).
+pub const PROFILE_MAJOR: CodeInfo = CodeInfo {
+    code: "SNR-APP-081",
+    severity: Severity::Error,
+    summary: "The profile needs a newer SONARITHM",
+    help: "Update SONARITHM to use this profile; this version does not guess at newer formats.",
+    rules: &[],
+    status: CodeStatus::Active,
+};
+
+/// A profile of a newer minor version: what this version does not know was left out.
+pub const PROFILE_NEWER: CodeInfo = CodeInfo {
+    code: "SNR-APP-082",
+    severity: Severity::Warning,
+    summary: "Parts of the profile are unknown to this version",
+    help: "The profile works; saving it with this version drops what it does not know.",
+    rules: &[],
+    status: CodeStatus::Active,
+};
+
+/// No profile has this ID, or a preset was to be changed.
+pub const UNKNOWN_PROFILE: CodeInfo = CodeInfo {
+    code: "SNR-APP-083",
+    severity: Severity::Error,
+    summary: "No such profile",
+    help: "List the profiles with profile_list. Presets cannot be changed: save a copy.",
+    rules: &[],
+    status: CodeStatus::Active,
+};
+
 /// Every `SNR-APP` code, in ascending order.
 pub const CODES: CodeTable = CodeTable {
     area: Area::App,
@@ -335,6 +376,10 @@ pub const CODES: CodeTable = CodeTable {
         UNKNOWN_STREAM,
         STREAM_SOURCE,
         STREAM_CONNECT,
+        PROFILE_INVALID,
+        PROFILE_MAJOR,
+        PROFILE_NEWER,
+        UNKNOWN_PROFILE,
     ],
 };
 

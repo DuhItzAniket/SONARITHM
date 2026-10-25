@@ -9,9 +9,7 @@ use std::sync::Arc;
 use std::time::Duration;
 
 use sonarithm::{Compiled, DataBundle, Datasets, Normalization, RenderOptions, Sonarithm, Spec};
-use sonarithm_audaxis::announce::{
-    Announcement, Composer, Settings as ComposerSettings, Verbosity as ComposerVerbosity,
-};
+use sonarithm_audaxis::announce::{Announcement, Composer};
 use sonarithm_core::TableId;
 use sonarithm_core::nav::{NavKind, NavNodeId, NavTree};
 use sonarithm_data::{BundleId, ReadOptions, Table, TileCache, read_file};
@@ -33,6 +31,7 @@ use crate::speech::{SequencerConfig, SpeakerSource};
 use crate::streams::{self, StreamAction};
 use crate::transport::{Action, AudioOutput, OutputConfig, Transport};
 
+mod profiles;
 mod projects;
 
 /// How the app core starts.
@@ -100,6 +99,8 @@ pub struct App {
     snr: Sonarithm,
     /// Formats announcements; `None` only if the embedded catalogue is broken.
     localizer: Option<Localizer>,
+    /// Interaction choices made in this session: the explicit-UI-action layer (12 §3).
+    session_prefs: crate::profile::InteractionPrefs,
     /// Stream sources described to the user and not yet approved, by token.
     offers: BTreeMap<u64, sonarithm_stream::Endpoint>,
     next_offer: u64,
@@ -163,9 +164,10 @@ impl App {
             .with_navigation()
             .build()
             .unwrap_or_else(|_| Sonarithm::new());
-        Ok(Self {
+        let app = Self {
             snr,
             localizer: Localizer::new(LOCALE).ok(),
+            session_prefs: crate::profile::InteractionPrefs::default(),
             offers: BTreeMap::new(),
             next_offer: 1,
             next_stream: 1,
@@ -184,7 +186,10 @@ impl App {
             autosaves,
             jobs,
             transport,
-        })
+        };
+        // The active profile's speech preferences (ADR-0020 §3).
+        app.transport.configure(app.output_config())?;
+        Ok(app)
     }
 
     /// Ends the session cleanly: the autosaves go (RFC-0002 §8). Dropping the app without
@@ -258,6 +263,15 @@ impl App {
             Request::StreamList => Ok(Reply::Streams {
                 streams: self.transport.stream_list()?,
             }),
+            Request::ProfileList => Ok(self.profile_list(&[])),
+            Request::ProfileGet { id } => self.profile_get(&id),
+            Request::ProfileActivate { id } => self.profile_activate(id),
+            Request::ProfileSave { id, profile } => self.profile_save(id.as_deref(), &profile),
+            Request::ProfileImport { path } => self.profile_import(&path),
+            Request::ProfileExport { id, path } => self.profile_export(&id, &path),
+            Request::ProfileFlipPolarity { field } => self.profile_flip_polarity(&field),
+            Request::SettingsEffective => self.settings_effective(),
+            Request::SpecQuick { dataset, x, y } => self.spec_quick(&dataset, x, y),
             Request::ProjectNew => Ok(self.project_new()),
             Request::ProjectOpen { path } => self.project_open(Path::new(&path)),
             Request::ProjectOpenRecent { index } => self.project_open_recent(index),
@@ -342,6 +356,17 @@ impl App {
         })
     }
 
+    /// The transport's output configuration: the settings' device and volume, and the
+    /// effective speech preferences (ADR-0020 §3).
+    fn output_config(&self) -> OutputConfig {
+        let interaction = self.interaction();
+        let mut config = output(&self.settings);
+        config.speech.route = interaction.route;
+        config.speech.duck_instead_of_pause = interaction.duck_instead_of_pause;
+        config.speech.rate = WordsPerMinute(interaction.rate_wpm);
+        config
+    }
+
     /// Pauses, then announces the current value (A11Y-09, keyboard §9.2 item 3).
     fn pause(&mut self) -> Result<Reply, IpcError> {
         let reply = self.act(Action::Pause)?;
@@ -359,12 +384,9 @@ impl App {
         let tree = self.compiled.as_ref()?.nav()?;
         let localizer = self.localizer.as_ref()?;
         let node = point_at(tree, position_s)?;
-        let mut settings = ComposerSettings::default();
-        settings.verbosity = match self.settings.verbosity {
-            crate::settings::Verbosity::Verbose => ComposerVerbosity::Verbose,
-            _ => ComposerVerbosity::Terse,
-        };
-        Composer::new(localizer, settings).paused(tree, node).ok()
+        Composer::new(localizer, self.composer_settings())
+            .paused(tree, node)
+            .ok()
     }
 
     /// Runs a command whose reply is a binary view (ADR-0017 §6): `view_get` and
@@ -555,7 +577,9 @@ impl App {
             .spec
             .as_deref()
             .ok_or_else(|| IpcError::new(&codes::NO_SPEC, "The session has no spec to compile."))?;
-        let spec = Spec::from_json_str(text).map_err(|err| first_error(&err))?;
+        // The profile and project layers fill what the spec leaves unset (ADR-0020 §3).
+        let (effective, _) = self.effective_spec(text)?;
+        let spec = Spec::from_json_str(effective).map_err(|err| first_error(&err))?;
         let mut datasets = Datasets::new();
         for open in self.datasets.values() {
             datasets.insert(open.summary.id.clone(), open.bundle.clone());
@@ -665,7 +689,7 @@ impl App {
     fn settings_set(&mut self, settings: Settings) -> Result<Reply, IpcError> {
         self.store.save(&settings)?;
         self.settings = settings;
-        self.transport.configure(output(&self.settings))?;
+        self.transport.configure(self.output_config())?;
         Ok(Reply::Settings(self.settings.clone()))
     }
 
@@ -703,7 +727,7 @@ impl App {
         self.store.save(&settings)?;
         self.settings = settings;
         self.transport
-            .configure(output(&self.settings))
+            .configure(self.output_config())
             .map(Reply::Transport)
     }
 }

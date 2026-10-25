@@ -12,6 +12,7 @@ publish = false
 
 [dependencies]
 arrow-array.workspace = true
+schemars.workspace = true
 serde.workspace = true
 sha2.workspace = true
 serde_json.workspace = true
@@ -22,6 +23,7 @@ sonarithm-core.workspace = true
 sonarithm-data = { workspace = true, features = ["fs"] }
 sonarithm-i18n.workspace = true
 sonarithm-render.workspace = true
+sonarithm-numisona.workspace = true
 sonarithm-sonotrace.workspace = true
 sonarithm-spec.workspace = true
 sonarithm-speech.workspace = true

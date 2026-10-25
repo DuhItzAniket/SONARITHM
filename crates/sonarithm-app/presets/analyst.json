@@ -1,0 +1,14 @@
+{
+  "format": "sonarithm-profile",
+  "formatVersion": "1.0",
+  "name": "Analyst",
+  "sound": {
+    "timbre": "mallet",
+    "pace": { "pointsPerSecond": 4 },
+    "context": { "ticks": false, "referenceTone": false, "spokenLegend": false }
+  },
+  "interaction": {
+    "verbosity": "terse",
+    "modalities": { "sonification": true, "speech": false, "braille": false, "visual": true }
+  }
+}

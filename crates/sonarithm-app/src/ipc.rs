@@ -82,6 +82,15 @@ pub const COMMANDS: &[(&str, &str)] = &[
     ("stream_hide", "streams"),
     ("stream_stop", "streams"),
     ("stream_list", "streams"),
+    ("profile_list", "profiles"),
+    ("profile_get", "profile"),
+    ("profile_activate", "profiles"),
+    ("profile_save", "profiles"),
+    ("profile_import", "profiles"),
+    ("profile_export", "profiles"),
+    ("profile_flip_polarity", "compile"),
+    ("settings_effective", "effective"),
+    ("spec_quick", "spec"),
 ];
 
 /// The commands whose reply is a binary view (ADR-0017 §6), sent with
@@ -297,6 +306,62 @@ pub enum Request {
     },
     /// The open streams. Replies [`Reply::Streams`].
     StreamList,
+    /// The profiles: the presets, the user's, and the project's (ADR-0020). Replies
+    /// [`Reply::Profiles`].
+    ProfileList,
+    /// One profile. Replies [`Reply::Profile`].
+    ProfileGet {
+        /// Its ID from `profile_list`.
+        id: String,
+    },
+    /// Makes a profile active, or none. Replies [`Reply::Profiles`].
+    ProfileActivate {
+        /// Its ID, or `None` for no profile.
+        id: Option<String>,
+    },
+    /// Saves a user profile, or the project's (`id` `project`). Presets cannot be changed.
+    /// Replies [`Reply::Profiles`].
+    ProfileSave {
+        /// The profile to replace, or `None` for a new one.
+        #[serde(default)]
+        id: Option<String>,
+        /// The profile.
+        profile: Box<crate::profile::Profile>,
+    },
+    /// Imports a profile file the user chose as a new user profile. Replies
+    /// [`Reply::Profiles`] with any warnings.
+    ProfileImport {
+        /// The file, ending in `.json`.
+        path: String,
+    },
+    /// Exports a profile to a file the user chose. Replies [`Reply::Profiles`].
+    ProfileExport {
+        /// The profile's ID.
+        id: String,
+        /// The file, ending in `.json`, in an existing folder.
+        path: String,
+    },
+    /// The one-key polarity flip (SDR-15, FR-032): toggles `field` in the active profile
+    /// (a copy, when a preset or nothing is active), saves it and recompiles. Replies
+    /// [`Reply::Compile`].
+    ProfileFlipPolarity {
+        /// The field mapped to pitch.
+        field: String,
+    },
+    /// Every effective setting with the layer it came from (12 §3). Replies
+    /// [`Reply::Effective`].
+    SettingsEffective,
+    /// A quick spec over an open dataset: x along time, y as pitch, the marks the
+    /// profile prefers (11 §1, SDR-38). An undoable edit. Replies [`Reply::Spec`].
+    SpecQuick {
+        /// The dataset's ID.
+        dataset: String,
+        /// The x field; by default the template's choice.
+        #[serde(default)]
+        x: Option<String>,
+        /// The y field.
+        y: String,
+    },
     /// A downsampled view of two fields of a dataset for drawing (03 §7). Binary: a view of
     /// kind `m4Tile` or `lttbTile` with the columns `row`, `x` and `y` (ADR-0017 §6).
     ViewGet {
@@ -407,6 +472,15 @@ impl Request {
             Self::StreamHide { .. } => "stream_hide",
             Self::StreamStop { .. } => "stream_stop",
             Self::StreamList => "stream_list",
+            Self::ProfileList => "profile_list",
+            Self::ProfileGet { .. } => "profile_get",
+            Self::ProfileActivate { .. } => "profile_activate",
+            Self::ProfileSave { .. } => "profile_save",
+            Self::ProfileImport { .. } => "profile_import",
+            Self::ProfileExport { .. } => "profile_export",
+            Self::ProfileFlipPolarity { .. } => "profile_flip_polarity",
+            Self::SettingsEffective => "settings_effective",
+            Self::SpecQuick { .. } => "spec_quick",
             Self::ViewGet { .. } => "view_get",
             Self::TablePage { .. } => "table_page",
         }
@@ -490,6 +564,25 @@ pub enum Reply {
     Streams {
         /// In the order they were opened.
         streams: Vec<StreamInfo>,
+    },
+    /// The profiles.
+    Profiles {
+        /// Presets first, then the user's by ID, then the project's.
+        profiles: Vec<ProfileInfo>,
+        /// Warnings from the last import or activation.
+        warnings: Vec<DiagnosticInfo>,
+    },
+    /// One profile.
+    Profile {
+        /// Its ID.
+        id: String,
+        /// The profile.
+        profile: crate::profile::Profile,
+    },
+    /// The effective settings.
+    Effective {
+        /// Each setting with its value and layer.
+        settings: Vec<crate::profile::EffectiveSetting>,
     },
 }
 
@@ -654,6 +747,21 @@ pub struct StreamOfferInfo {
     pub target: String,
     /// The MQTT topic, if any.
     pub topic: Option<String>,
+}
+
+/// A profile in the list (ADR-0020).
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, TS)]
+#[serde(rename_all = "camelCase")]
+#[non_exhaustive]
+pub struct ProfileInfo {
+    /// Its ID: `preset:…`, a user profile's, or `project`.
+    pub id: String,
+    /// Its name.
+    pub name: String,
+    /// A built-in preset: read-only, and a proposal until co-design (B07).
+    pub preset: bool,
+    /// Whether it is the active profile.
+    pub active: bool,
 }
 
 /// An open stream (A11Y-16).
