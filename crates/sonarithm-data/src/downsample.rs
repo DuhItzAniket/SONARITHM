@@ -321,46 +321,22 @@ impl TileCache {
     }
 }
 
-#[cfg(test)]
-#[allow(
-    clippy::float_cmp,
+/// Test helpers shared with other crates' view tests (B04-T03 reuses A04's pixel-exactness
+/// property). Not part of the API.
+#[doc(hidden)]
+#[expect(
     clippy::cast_possible_truncation,
-    clippy::cast_precision_loss,
-    reason = "test oracles compare exact data values and index small vectors"
+    reason = "test helper on small canvases"
 )]
-mod tests {
+pub mod testing {
     use std::collections::BTreeSet;
 
-    use arrow_array::RecordBatch;
-    use arrow_schema::{DataType, Field, Schema};
-    use proptest::prelude::*;
-
-    use super::*;
-
-    /// The M4 query of the paper, executed literally: per column, every row whose y is the
-    /// column's minimum or maximum or whose x is its first or last.
-    fn reference_m4(x: &[f64], y: &[f64], range: XRange, width: u32) -> BTreeSet<u64> {
-        let mut stats: BTreeMap<u32, (f64, f64, f64, f64)> = BTreeMap::new();
-        for (xv, yv) in x.iter().zip(y) {
-            if let Some(k) = range.column(*xv, width) {
-                let e = stats.entry(k).or_insert((*xv, *xv, *yv, *yv));
-                *e = (e.0.min(*xv), e.1.max(*xv), e.2.min(*yv), e.3.max(*yv));
-            }
-        }
-        (0..x.len())
-            .filter(|&r| {
-                range.column(x[r], width).is_some_and(|k| {
-                    let (t_min, t_max, v_min, v_max) = stats[&k];
-                    x[r] == t_min || x[r] == t_max || y[r] == v_min || y[r] == v_max
-                })
-            })
-            .map(|r| r as u64)
-            .collect()
-    }
+    use super::XRange;
 
     /// Pixels of a polyline through `rows` (in order) on a `width × height` canvas, drawn
     /// with Bresenham segments between pixel-snapped points.
-    fn raster(
+    #[must_use]
+    pub fn raster(
         x: &[f64],
         y: &[f64],
         rows: &[u64],
@@ -415,6 +391,45 @@ mod tests {
             pixels.insert(*only);
         }
         pixels
+    }
+}
+
+#[cfg(test)]
+#[allow(
+    clippy::float_cmp,
+    clippy::cast_possible_truncation,
+    clippy::cast_precision_loss,
+    reason = "test oracles compare exact data values and index small vectors"
+)]
+mod tests {
+    use std::collections::BTreeSet;
+
+    use arrow_array::RecordBatch;
+    use arrow_schema::{DataType, Field, Schema};
+    use proptest::prelude::*;
+
+    use super::testing::raster;
+    use super::*;
+
+    /// The M4 query of the paper, executed literally: per column, every row whose y is the
+    /// column's minimum or maximum or whose x is its first or last.
+    fn reference_m4(x: &[f64], y: &[f64], range: XRange, width: u32) -> BTreeSet<u64> {
+        let mut stats: BTreeMap<u32, (f64, f64, f64, f64)> = BTreeMap::new();
+        for (xv, yv) in x.iter().zip(y) {
+            if let Some(k) = range.column(*xv, width) {
+                let e = stats.entry(k).or_insert((*xv, *xv, *yv, *yv));
+                *e = (e.0.min(*xv), e.1.max(*xv), e.2.min(*yv), e.3.max(*yv));
+            }
+        }
+        (0..x.len())
+            .filter(|&r| {
+                range.column(x[r], width).is_some_and(|k| {
+                    let (t_min, t_max, v_min, v_max) = stats[&k];
+                    x[r] == t_min || x[r] == t_max || y[r] == v_min || y[r] == v_max
+                })
+            })
+            .map(|r| r as u64)
+            .collect()
     }
 
     fn walk() -> impl Strategy<Value = (Vec<f64>, Vec<f64>)> {

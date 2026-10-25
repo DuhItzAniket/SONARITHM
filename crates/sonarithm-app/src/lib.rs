@@ -44,6 +44,7 @@ pub mod settings;
 #[doc(hidden)]
 pub mod testing;
 mod transport;
+mod views;
 
 pub use app::{App, AppConfig};
 pub use events::{CollectingSink, EventSink, NullSink};

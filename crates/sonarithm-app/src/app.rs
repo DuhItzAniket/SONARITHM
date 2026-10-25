@@ -9,7 +9,8 @@ use std::sync::Arc;
 use std::time::Duration;
 
 use sonarithm::{Compiled, DataBundle, Datasets, Normalization, RenderOptions, Sonarithm, Spec};
-use sonarithm_data::{ReadOptions, read_file};
+use sonarithm_core::TableId;
+use sonarithm_data::{BundleId, ReadOptions, Table, TileCache, read_file};
 
 use crate::codes;
 use crate::events::EventSink;
@@ -72,6 +73,7 @@ pub struct App {
     spec: Option<String>,
     compiled: Option<Compiled>,
     history: History<Option<String>>,
+    tiles: TileCache,
     // Dropped in this order: jobs finish or cancel before the transport stops.
     jobs: JobQueue,
     transport: Transport,
@@ -115,6 +117,7 @@ impl App {
             spec: None,
             compiled: None,
             history: History::default(),
+            tiles: TileCache::new(crate::views::TILE_CACHE),
             jobs,
             transport,
         })
@@ -159,7 +162,53 @@ impl App {
             Request::SettingsSet { settings } => self.settings_set(settings),
             Request::DevicesList => self.devices(),
             Request::DeviceSelect { id } => self.device_select(id),
+            Request::ViewGet { .. } | Request::TablePage { .. } => Err(IpcError::new(
+                &codes::BAD_REQUEST,
+                "This command returns a binary view; send it with dispatch_binary.",
+            )),
         }
+    }
+
+    /// Runs a command whose reply is a binary view (ADR-0017 §6): `view_get` and
+    /// `table_page`.
+    ///
+    /// # Errors
+    ///
+    /// `SNR-APP-009` for a command that replies in JSON, `SNR-APP-002` for an unknown
+    /// dataset, and the data layer's errors (`SNR-DATA-060` for a view that cannot be drawn).
+    pub fn dispatch_binary(&mut self, request: Request) -> Result<Vec<u8>, IpcError> {
+        match request {
+            Request::ViewGet {
+                dataset,
+                x,
+                y,
+                range,
+                px_width,
+                method,
+            } => {
+                let table = self.table(&dataset)?;
+                crate::views::tile(&table, &mut self.tiles, &x, &y, range, px_width, method)
+            }
+            Request::TablePage {
+                dataset,
+                offset,
+                limit,
+                sort,
+            } => crate::views::page(&self.table(&dataset)?, offset, limit, sort.as_ref()),
+            other => Err(IpcError::new(
+                &codes::BAD_REQUEST,
+                format!("{} replies in JSON; send it with dispatch.", other.name()),
+            )),
+        }
+    }
+
+    /// The primary table of an open dataset.
+    fn table(&self, id: &str) -> Result<Table, IpcError> {
+        self.datasets
+            .values()
+            .find(|open| open.summary.id == id)
+            .and_then(|open| open.bundle.primary().cloned())
+            .ok_or_else(|| unknown_dataset(id))
     }
 
     /// [`App::dispatch`] for a request as JSON text, returning the reply as JSON: what a
@@ -202,9 +251,12 @@ impl App {
 
     fn dataset_open(&mut self, path: &Path) -> Result<Reply, IpcError> {
         let path = data_file(path)?;
-        let loaded = read_file(&path, None, &ReadOptions::new())
-            .map_err(|err| IpcError::from_diagnostic(&err.to_diagnostic()))?;
         let number = self.next_dataset;
+        // Each dataset's table gets its own ID, so cached view tiles never mix datasets.
+        let ids = u32::try_from(number).unwrap_or(u32::MAX);
+        let options = ReadOptions::new().with_ids(BundleId(number), TableId(ids));
+        let loaded = read_file(&path, None, &options)
+            .map_err(|err| IpcError::from_diagnostic(&err.to_diagnostic()))?;
         self.next_dataset += 1;
         let id = format!("d{number}");
         let name = file_name(&path);
@@ -226,7 +278,13 @@ impl App {
             .find(|(_, open)| open.summary.id == id)
             .map(|(number, _)| *number)
             .ok_or_else(|| unknown_dataset(id))?;
-        self.datasets.remove(&number);
+        if let Some(open) = self.datasets.remove(&number)
+            && let Some(table) = open.bundle.primary()
+        {
+            // No generation is current any more: the dataset's tiles go.
+            self.tiles
+                .retain_generation(table.id(), sonarithm_core::Generation(u64::MAX));
+        }
         Ok(self.datasets())
     }
 

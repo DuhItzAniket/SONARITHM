@@ -43,6 +43,8 @@ pub const PROVENANCE_CLASSES: usize = 8;
 
 /// Directory flag: the column has a validity bitmap.
 pub const FLAG_VALIDITY: u16 = 1;
+/// The name of a table page's first column: each row's index in the table, for `RowRef`s.
+pub const ROW_COLUMN: &str = "__snr_row";
 
 /// Byte offsets of the header fields and directory entry fields.
 pub mod offset {

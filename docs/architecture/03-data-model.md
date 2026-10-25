@@ -177,6 +177,8 @@ Downsampling affects **only the visual view**. Sonification always reads the ful
 
 Implementation notes (A04, `sonarithm_data::downsample`): both algorithms return row indices, so every drawn point keeps its `RowRef`. M4 maps x to pixel columns with `floor(w · (x − start) / (end − start))` (the right edge in the last column), keeps the first and last x and the minimum and maximum y of each column, and is tested to give exactly the pixels of the full polyline (Bresenham rasterization, rows sorted by x) and a subset of the paper's reference query. The tile cache keys on (table, generation, fields, x range, width) and evicts the least recently used tile by a counter, not a clock.
 
+**Pages (B04-T03).** `sonarithm_data::view::table_page` returns rows `offset..offset + limit` (at most 10 000) in table order or stably sorted by one field with missing values last, with each row's index; columns become floats, integers, text (dates and timestamps as ISO 8601, dictionaries such as the provenance class as their text) or booleans. The app core sends tiles and pages as binary views ([ADR-0017 §6](../decisions/0017-ipc-protocol-v1.md)): a tile has the columns `row`, `x` and `y`; a page starts with `__snr_row`, and a page of a table with provenance carries `__snr_prov` as class codes and `__snr_conf` as confidences, the provenance data types of ADR-0017 §6, so the table view names every estimate (§4). Each open dataset's table has its own ID, so the tile cache never mixes datasets.
+
 ## 8. Streaming tables (SONOTRACE)
 
 A `StreamTable` is an append-only, ring-buffered sequence of record batches with a monotonically increasing sequence number:

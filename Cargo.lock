@@ -3209,6 +3209,7 @@ dependencies = [
 name = "sonarithm-app"
 version = "0.0.0"
 dependencies = [
+ "arrow-array",
  "proptest",
  "serde",
  "serde_json",

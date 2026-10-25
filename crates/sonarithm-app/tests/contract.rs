@@ -16,7 +16,8 @@ use std::sync::Arc;
 use std::time::Duration;
 
 use serde_json::{Value, json};
-use sonarithm_app::ipc::{COMMANDS, Request};
+use sonarithm_app::ipc::binary::View;
+use sonarithm_app::ipc::{BINARY_COMMANDS, COMMANDS, Request};
 use sonarithm_app::testing::TempDir;
 use sonarithm_app::{App, AppConfig, AudioOutput, CollectingSink};
 
@@ -97,4 +98,32 @@ fn every_command_answers_with_its_declared_reply_kind() {
     let all: BTreeSet<&str> = table.keys().copied().collect();
     assert_eq!(seen, all, "every command in COMMANDS is exercised");
     assert_eq!(table.len(), COMMANDS.len(), "no command is listed twice");
+
+    // The binary commands answer with views through their own entry point.
+    let csv = dir.path().join("t.csv");
+    let reopened = app
+        .dispatch_json(&json!({ "command": "dataset_open", "args": { "path": csv } }).to_string())
+        .unwrap();
+    let id = reopened["id"].as_str().unwrap();
+    let mut binary = BTreeSet::new();
+    for request in [
+        json!({ "command": "view_get", "args": { "dataset": id, "x": "day", "y": "temp",
+                "range": null, "pxWidth": 8, "method": "m4" } }),
+        json!({ "command": "table_page", "args": { "dataset": id, "offset": 0, "limit": 2,
+                "sort": null } }),
+    ] {
+        let parsed: Request = serde_json::from_value(request).unwrap();
+        let command = parsed.name();
+        assert!(
+            !table.contains_key(command),
+            "{command} is not a JSON command"
+        );
+        let bytes = app.dispatch_binary(parsed).unwrap();
+        assert!(View::decode(&bytes).is_ok(), "{command}");
+        binary.insert(command);
+    }
+    assert_eq!(
+        binary,
+        BINARY_COMMANDS.iter().copied().collect::<BTreeSet<_>>()
+    );
 }
