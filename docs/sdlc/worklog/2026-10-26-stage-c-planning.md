@@ -29,7 +29,7 @@
 |---|---|---|
 | One RFC (RFC-0004, spec v0.2) for `template`, `instruments` and `lint` and the chart calibration and correction shapes, before any code reads them | RFC-0001 reserves these keys; one RFC avoids three spec versions in a stage (R-31) | C01-T01; proposed in the PR body |
 | A licence check task at the start of each phase that adds dependencies | AGENTS.md rule 8; midly turned out to be `Unlicense`, which the allowlist does not contain | Plan §4.4; OD-21 |
-| Static chart parsing only: no script execution and no remote fetch | 12 §6 rules out script execution from files; ADR-0012 rules out network calls without consent | C01-T06; OD-25 (coordinator); proposed ADR-0021 |
+| Static chart parsing only: no script execution and no remote fetch | 12 §6 rules out script execution from files; ADR-0012 rules out network calls without consent | C01-T06; OD-25 (closed by the coordinator on 2026-10-26: option (a) for `v1.0.0`); proposed ADR-0021 |
 | A clean-room procedure before the raster digitizer's code | WebPlotDigitizer is AGPL; the plan re-implements its documented workflow | C02-T01; R-28; proposed ADR-0022 |
 | Office chart caches are `exact`, SVG and PDF geometry `vector` | 10 §3 and the roadmap's C01 exit; a `sonarithm-core` doc comment says otherwise and is fixed in C01-T03 | Plan §4.4 |
 | No network, `ml_estimate` or `cloud_estimate` work in Stage C | They are D04 scope; Stage C stays offline, OSC output is the only socket and it waits for a user action | Plan §4.1 |
@@ -53,6 +53,7 @@
 
 ## Next steps
 
-- [ ] Coordinator: decide OD-20 (start Lane R before Gate B) and OD-25 (static chart parsing); review RFC-0004 when C01-T01's PR opens.
+- [x] Coordinator: OD-20 closed (Lane R starts after B03-T08 and B06-T07, one builder at a time) and OD-25 closed (static parsing only for `v1.0.0`), both on 2026-10-26 under the owner's delegation; recorded in the same PR.
+- [ ] Coordinator: review RFC-0004 when C01-T01's PR opens.
 - [ ] Owner: the licence decisions OD-21 (MIDI file library), OD-22 (SoundFonts) and OD-23 (OCR model), and OD-24, OD-26 to OD-28 when their phases near (#129).
 - [ ] Sessions: one build-heavy session on PLOTSONA (C01-T02 onward) while the owner's other work runs; a light docs session for C01-T01 (RFC-0004), C02-T01 and C04-T01.
