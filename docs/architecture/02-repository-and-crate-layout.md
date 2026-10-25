@@ -101,6 +101,7 @@ SONARITHM/
 | `sonarithm-plugin-host` | wasmtime component host for engine plugins (compile-time only) | core, wasmtime | No | 1.96 (wasmtime) | D05 |
 | `sonarithm-wasm` | Browser build: compile + WebAudio render | facade, wasm-bindgen | Yes | 1.88 | D05 |
 | Engine crates (9) | One per engine (see [07-engines.md](07-engines.md)) | core, spec, data (+ dsp for Voice providers) | Yes (except stream-facing parts) | 1.88 | Per roadmap |
+| `sonarithm-plotsona` | Chart ingestion, exact first: container sniffing, input budgets, Office chart, chart JSON, SVG and vector PDF extractors, axis calibration, chart templates | core, spec, data, zip (Deflate only), roxmltree ([C01-T02](../engineering/supply-chain-and-licensing.md#c01-plotsonas-parsers-and-corpus-tools-c01-t02-checked-2026-10-26)) | Yes | 1.88 | C01 |
 | `sonarithm-plotsona-ml` | ML-assisted chart extraction | plotsona, tract-onnx; ort (feature) | No | ≥1.88 | D04 |
 | `sonarithm-axonote-live` | AXONOTE's live sinks: MIDI output ports and the OSC UDP socket, driven from the control thread, never the audio thread. The engine crate encodes; this crate only does device and socket I/O. The app core opens a socket only after an explicit user action (ADR-0012) | axonote, core, midir (feature `midi`); `std::net` (feature `osc`) | No | 1.88 | C04 |
 

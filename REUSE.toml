@@ -49,12 +49,17 @@ SPDX-License-Identifier = "MIT OR Apache-2.0"
 # cargo-fuzz harnesses (`fuzz/` in library crates, testing-strategy §7): lockfile and ignore
 # list; seed corpora are JSON and covered above.
 [[annotations]]
-path = ["crates/*/fuzz/Cargo.lock", "crates/*/fuzz/.gitignore"]
+path = [
+    "crates/*/fuzz/Cargo.lock",
+    "crates/*/fuzz/.gitignore",
+    "crates/engines/*/fuzz/Cargo.lock",
+    "crates/engines/*/fuzz/.gitignore",
+]
 precedence = "closest"
 SPDX-FileCopyrightText = "2026 SONARITHM contributors"
 SPDX-License-Identifier = "MIT OR Apache-2.0"
 
-# Test and fuzz corpora of the data layer and the project reader (synthetic files, no
+# Test and fuzz corpora of the data layer, the project reader and PLOTSONA (synthetic files, no
 # personal data): same licence as the code, like snapshots. CSV, spreadsheet, binary and
 # bundle files cannot carry SPDX headers.
 [[annotations]]
@@ -62,6 +67,8 @@ path = [
     "crates/sonarithm-data/tests/corpus/**",
     "crates/sonarithm-data/fuzz/corpus/**",
     "crates/sonarithm-app/fuzz/corpus/**",
+    "crates/engines/sonarithm-plotsona/fuzz/corpus/**",
+    "crates/engines/sonarithm-plotsona/tests/corpus/**",
 ]
 precedence = "closest"
 SPDX-FileCopyrightText = "2026 SONARITHM contributors"

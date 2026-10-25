@@ -93,6 +93,9 @@ pub enum SourceKind {
     Inline,
     /// Arrow data handed over in memory, for example from Python.
     Memory,
+    /// Data extracted from a chart file by PLOTSONA; the descriptor's extractor names the
+    /// tier, such as `sonarithm-plotsona/office` (10 §3).
+    Chart,
 }
 
 /// Unix time in milliseconds.

@@ -22,10 +22,13 @@ use serde::{Deserialize, Serialize};
 #[serde(rename_all = "snake_case")]
 #[non_exhaustive]
 pub enum ProvenanceClass {
-    /// Read directly from a data file. Absent provenance columns mean `exact` (03 §4 rule 1).
+    /// Read directly from a data file, or from the data a chart file carries: Office chart
+    /// caches and embedded workbooks, chart JSON (10 §3, tier 1). Absent provenance columns
+    /// mean `exact` (03 §4 rule 1).
     #[default]
     Exact,
-    /// Read from vector chart geometry (SVG, PDF vector, Office chart XML).
+    /// Read from vector chart geometry and calibrated against the chart's axes (SVG, vector
+    /// PDF; 10 §3, tier 2).
     Vector,
     /// Entered or corrected by a person.
     UserEdited,

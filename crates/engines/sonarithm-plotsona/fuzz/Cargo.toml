@@ -1,0 +1,30 @@
+# cargo-fuzz harness for sonarithm-plotsona (testing-strategy §7): every chart parser reads
+# untrusted files (12 §6). Not part of the main workspace: it needs the nightly toolchain.
+# Run from the parent crate with
+#   cargo +nightly fuzz run chart_extract -- -max_total_time=3600
+# CI runs every target in .github/workflows/nightly.yml.
+
+[package]
+name = "sonarithm-plotsona-fuzz"
+version = "0.0.0"
+edition = "2024"
+license = "MIT OR Apache-2.0"
+publish = false
+
+[package.metadata]
+cargo-fuzz = true
+
+[dependencies]
+libfuzzer-sys = "0.4.13"
+sonarithm-plotsona = { path = ".." }
+
+# A workspace of its own, so the main workspace (stable toolchain) never builds it.
+[workspace]
+members = ["."]
+
+[[bin]]
+name = "chart_extract"
+path = "fuzz_targets/chart_extract.rs"
+test = false
+doc = false
+bench = false

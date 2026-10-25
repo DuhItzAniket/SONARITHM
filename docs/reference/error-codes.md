@@ -172,6 +172,24 @@ Owner: `sonarithm-sonotrace`. Numbers SNR-ENG-200 to SNR-ENG-299.
 | `SNR-ENG-240` | warning | The soundscape is not available | Only the default soundscape exists until B06's evaluation chooses others; it plays            instead. | SDR-35 |
 | `SNR-ENG-241` | info | Experimental comfort budget | SDR-39 is an inference: the share of the session the soundscape is bright is            reported, not enforced, until an experiment validates a budget (H-12). | SDR-39 |
 
+Owner: `sonarithm-plotsona`. Numbers SNR-ENG-300 to SNR-ENG-399.
+
+| Code | Severity | Meaning | How to fix | Rules |
+|---|---|---|---|---|
+| `SNR-ENG-300` | error | The file is not a chart format PLOTSONA reads | PLOTSONA reads XLSX, PPTX and DOCX charts, Vega, Vega-Lite, Plotly and Highcharts JSON (also inside a local HTML file), SVG and PDF; PNG and JPEG need the raster tier. Save the chart in one of these formats, or load its data as a file source. | — |
+| `SNR-ENG-301` | error | The chart file is larger than the size limit | Chart files are untrusted input with a size budget (12 §6). Export a smaller chart, or raise the limit for a file you trust. | — |
+| `SNR-ENG-302` | error | The container exceeds a decompression limit | The file has too many parts, decompresses to too much data, or compresses far better than real documents do, as zip bombs do. PLOTSONA stopped before decompressing it. | — |
+| `SNR-ENG-303` | error | The XML declares a DTD, which is refused | Document type declarations can define entities that expand without end or point at other files. Office charts and SVG exports do not need them; export the chart again without a DOCTYPE. | — |
+| `SNR-ENG-304` | error | The file nests deeper than the limit | Real charts nest a few dozen levels at most. The file may be damaged or crafted. | — |
+| `SNR-ENG-305` | error | Extraction stopped at the work limit | Extraction counts its steps instead of reading a clock, so the same file always stops at the same point. Simplify the chart, or raise the limit for a file you trust. | — |
+| `SNR-ENG-306` | error | The chart has more content than the limit | The document has more XML nodes, or the chart more data points, than one extraction allows. Load the chart's data as a file source instead. | — |
+| `SNR-ENG-307` | error | The chart file is damaged | The file's container, XML or JSON could not be parsed. Open it in the program that made it and save it again. | — |
+| `SNR-ENG-308` | error | This kind of chart needs an extractor this build does not have | Raster images (PNG, JPEG) need the raster digitizer (C02) and model-based extraction needs the ML tier (D04). Use the chart's source file if you have it. | — |
+| `SNR-ENG-309` | error | No chart data was found | The file was read, but it holds no chart with data PLOTSONA can extract. | — |
+| `SNR-ENG-310` | error | The chosen extractor does not fit the file | Set `extractor` to `auto`, or to the extractor of the file's format. | — |
+| `SNR-ENG-311` | error | The chart file is encrypted | PLOTSONA does not decrypt files. Save an unprotected copy. | — |
+| `SNR-ENG-312` | error | The chart file cannot be read | Check that the path is relative to the spec's directory and the file exists. | — |
+
 Owner: `sonarithm-echometric`. Numbers SNR-ENG-600 to SNR-ENG-699.
 
 | Code | Severity | Meaning | How to fix | Rules |
