@@ -194,6 +194,47 @@ Notes for C02-T02, which adds them:
 - imageproc functions that draw random numbers are not used, or are seeded from the spec seed (AGENTS.md rule 3).
 - Decoding limits (decompression bombs) are set through image's own limits API, checked in C02-T02's tests.
 
+### C04: AXONOTE crates
+
+Checked on crates.io on 2026-10-26 (C04-T01). Where the crates go is in [02 §2](../architecture/02-repository-and-crate-layout.md#2-crate-catalogue): the engine crate `sonarithm-axonote` stays pure and builds for `wasm32`; live MIDI and the OSC socket live in the leaf crate `sonarithm-axonote-live`.
+
+| Crate | Version | Licence | Last release | For | Placement | Decision |
+|---|---|---|---|---|---|---|
+| rustysynth | 1.3.8 | MIT | 2026-10-20 | SoundFont (SF2) playback (C04-T04) | `sonarithm-axonote` | Allowed. No dependencies. Its loader is fuzzed (C04-T04) because SF2 files are untrusted input |
+| midir | 0.11.1 | MIT | 2026-10-10 | Live MIDI output (C04-T06) | `sonarithm-axonote-live`, feature `midi` | Allowed. Per-OS dependencies: alsa (Apache-2.0/MIT) and alsa-sys (MIT) on Linux, coremidi (MIT) on macOS, windows (MIT OR Apache-2.0) and parking_lot (MIT OR Apache-2.0) on Windows, log (MIT OR Apache-2.0); jack-sys (MIT OR Apache-2.0) only through its optional JACK feature, which stays off |
+| rosc | 0.11.4 | MIT/Apache-2.0 | 2025-03-23 | OSC message encoding (C04-T06) | `sonarithm-axonote` (encoding only; no sockets) | Allowed. Already in the workspace: `sonarithm-stream`'s default `osc` feature uses this version for OSC input, so `cargo deny check` on `main` already accepts it, including its old `MIT/Apache-2.0` licence form. Dependencies byteorder (Unlicense OR MIT) and nom (MIT). MSRV 1.67.1 |
+| midly | 0.5.3 | Unlicense | 2023-01-01 | Standard MIDI File writing (C04-T05) | `sonarithm-axonote` | **Not added: `Unlicense` is not on the allowlist. Owner decision [OD-21](../planning/open-decisions.md)** |
+
+Other Standard MIDI File candidates, for OD-21 (facts only; checked the same day):
+
+| Crate | Version | Licence | Last release | What it offers | Notes |
+|---|---|---|---|---|---|
+| midi-msg | 0.9.0 | MIT | 2026-05-08 | MIDI 1.0 messages; a default `file` feature that its README describes as Standard MIDI File support | Dependencies micromath (Apache-2.0 OR MIT) and, through default features, bstr (MIT OR Apache-2.0), strum (MIT) and log. Whether it **writes** SMF files, not only reads them, is TODO(verify) |
+| wmidi | 4.0.11 | MIT | 2026-04-19 | MIDI messages only | No file reading or writing; a writer for the file framing would be ours |
+| augmented-midi | 1.8.0 | MIT | 2024-08-26 | Describes itself as an "experimental MIDI file/event parser" | Dependencies nom (MIT), cookie-factory (MIT), audio-processor-traits (MIT). Experimental by its own description |
+| midi-reader-writer | 0.1.3 | MIT OR Apache-2.0 | 2025-05-12 | Conversions around midly | Depends on midly, so it does not avoid `Unlicense` |
+| nodi | 1.0.3 | MIT | 2025-01-01 | MIDI file playback | Depends on midly, so it does not avoid `Unlicense` |
+
+Notes for the C04 tasks that add these crates:
+
+- On Linux, midir (through alsa-sys) links the system ALSA library at run time, as cpal already does for audio (the alsa crate is already in `Cargo.lock` through cpal). That C library is not a Cargo dependency, so cargo-deny does not see it; its licence (LGPL-2.1 for alsa-lib, TODO(verify)) is met by dynamic linking to the system copy, which SONARITHM does not ship.
+- The SMF writer produces bytes in `sonarithm-axonote` whatever library OD-21 chooses; `sonarithm-export` or the app writes them to disk. A round-trip test needs a reader too: with options (b) or (c) of OD-21 that reader is a dev-dependency under an allowed licence.
+
+### Owner decisions for C04
+
+These are the owner's ([HP-18](../planning/implementation-plan.md#43-owner-and-human-paced-items)); sessions do not resolve them. The options are stated without a recommendation.
+
+| Decision | Options | What each means |
+|---|---|---|
+| [OD-21](../planning/open-decisions.md): Standard MIDI File library | (a) Add `Unlicense` to the allowlist and use midly | One PR changes `deny.toml` and this policy with a rationale. `Unlicense` is OSI-approved; whether it was left off the initial list for a reason is not recorded (notes 04 §12 listed it). midly's last release is 2023-01-01 |
+| | (b) An MIT library | midi-msg if it writes files (TODO(verify)); otherwise wmidi for messages plus a small file writer of our own. Policy unchanged |
+| | (c) SONARITHM's own minimal SMF writer | The format is small (header chunk, track chunks, variable-length delta times). More code to own and test; policy unchanged |
+| [OD-22](../planning/open-decisions.md): bundle a General MIDI SoundFont | (a) Bundle none | Users load their own SF2 files; tests use a self-made or CC0 fixture. SDR-29's presets need no SoundFont |
+| | (b) Bundle one whose licence allows redistribution | The file's licence and source are recorded under [Assets](#assets); installer size grows (PB-12 is ≤ 40 MB) by the file's size |
+| | (c) A small self-made SoundFont under CC0 | No third-party licence; making and checking it is owner or contributor time; quality is whatever is made |
+
+C04-T04 (SoundFont playback) does not wait for OD-22: it works with user-supplied files. C04-T05 (MIDI files) waits for OD-21.
+
 ## npm licence checking
 
 The frontend workspace (pnpm) uses the same allowlist, plus `OFL-1.1` for font packages.

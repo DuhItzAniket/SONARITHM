@@ -105,14 +105,14 @@ Each engine is one crate under `crates/engines/` and implements `Engine`. This p
 
 ## AXONOTE (`sonarithm-axonote`), C04
 
-**Registers:** Shaper `Quantize` (presentation only); VoiceProvider for the instrument library; Sinks for MIDI file, live MIDI and OSC.
+**Registers:** Shaper `Quantize` (presentation only); VoiceProvider for the instrument library; Sinks for MIDI file, live MIDI and OSC. The engine crate stays pure and builds for `wasm32`; live MIDI ports and OSC sockets live in the leaf crate `sonarithm-axonote-live` ([02 §2](02-repository-and-crate-layout.md#2-crate-catalogue), placement decided in C04-T01).
 
 | Module | Responsibility |
 |---|---|
 | `scales` | Scale and mode tables; tuning systems (12-TET, just intonation, custom cents); snapping with a reported resolution loss |
 | `instruments` | Synth presets (mallet, clarinet-like, sine, square-BLV per SDR-29, soft pad); SF2 via rustysynth |
-| `midi` | SMF export (midly); live out (midir); glide → pitch-bend or note policy |
-| `osc` | OSC out (rosc) with an address scheme `/sonarithm/<track>/<param>` |
+| `midi` | SMF export as bytes (the library [OD-21](../planning/open-decisions.md) chooses; midly is `Unlicense`); glide → pitch-bend or note policy. Live out (midir) is in `sonarithm-axonote-live` |
+| `osc` | OSC message encoding (rosc) with an address scheme `/sonarithm/<track>/<param>`. The UDP socket is in `sonarithm-axonote-live` and opens only after an explicit user action (ADR-0012) |
 | `guard` | Refuses to run in `analysis` mode (SDR-10), with an explicit diagnostic |
 
 **Tests:** quantization never runs in analysis mode (invariant); MIDI round-trip (export → parse → compare); OSC message snapshot.

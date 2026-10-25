@@ -43,6 +43,7 @@ SONARITHM/
 │       ├── sonarithm-plotsona-ml/    # Optional ML extraction (tract/ort), Stage D
 │       ├── sonarithm-curvasona/
 │       ├── sonarithm-axonote/
+│       ├── sonarithm-axonote-live/   # AXONOTE live sinks: MIDI ports, OSC socket (not wasm32), C04
 │       ├── sonarithm-echometric/
 │       ├── sonarithm-tonalens/
 │       └── sonarithm-resonum/
@@ -88,7 +89,7 @@ SONARITHM/
 | `sonarithm-dsp` | Oscillators, envelopes, filters, panners, granular, wavetable, modal nodes; ISO 226 compensation; EBU R128 meter | core, fundsp, rubato, realfft, ebur128 | Yes | 1.88 | A05 |
 | `sonarithm-render` | RenderGraph, Scheduler, `RenderPlan`, voice pool, transport, real-time-safe command and telemetry channels; offline driver | core, dsp, rtrb, triple_buffer, basedrop, atomic_float | Yes | 1.88 | A05 |
 | `sonarithm-audio` | `AudioBackend` trait; cpal backend; device enumeration and hot-plug; latency reporting | render, cpal | Via cpal WebAudio | 1.88 | A05 |
-| `sonarithm-export` | WAV/FLAC/MIDI writers; render manifest (`*.render.json`); speech/cue sidecar | core, render, hound, flacenc, midly, sha2 | Yes | 1.88 | A05 |
+| `sonarithm-export` | WAV/FLAC writers; writes the bytes of AXONOTE's `midi-file` sink to disk (C04); render manifest (`*.render.json`); speech/cue sidecar | core, render, hound, flacenc, sha2 | Yes | 1.88 | A05 |
 | `sonarithm-i18n` | Message catalogues (`locales/<locale>/*.ftl`, shared with `@sonarithm/i18n`), locale formatting of numbers and dates, spoken unit names, the `en-XA` pseudo-locale and its check (12 §5) | fluent-bundle, ICU4X (`icu_decimal`, `icu_datetime`) | Yes | 1.88 | B02 |
 | `sonarithm-stream` | Live source adapters with backpressure and reconnect | core, data, tokio, tokio-tungstenite, serialport, rumqttc, rosc | No | 1.88 | B06 |
 | `sonarithm-speech` | Optional self-voicing: the `Speaker` trait, a silent recorder, and the platform engine behind the opt-in `system` feature | core; tts (optional) | No | 1.88 | B03 |
@@ -101,6 +102,7 @@ SONARITHM/
 | `sonarithm-wasm` | Browser build: compile + WebAudio render | facade, wasm-bindgen | Yes | 1.88 | D05 |
 | Engine crates (9) | One per engine (see [07-engines.md](07-engines.md)) | core, spec, data (+ dsp for Voice providers) | Yes (except stream-facing parts) | 1.88 | Per roadmap |
 | `sonarithm-plotsona-ml` | ML-assisted chart extraction | plotsona, tract-onnx; ort (feature) | No | ≥1.88 | D04 |
+| `sonarithm-axonote-live` | AXONOTE's live sinks: MIDI output ports and the OSC UDP socket, driven from the control thread, never the audio thread. The engine crate encodes; this crate only does device and socket I/O. The app core opens a socket only after an explicit user action (ADR-0012) | axonote, core, midir (feature `midi`); `std::net` (feature `osc`) | No | 1.88 | C04 |
 
 ## 3. Dependency rules (enforced)
 
@@ -119,7 +121,8 @@ flowchart BT
   export[sonarithm-export] --> render
   stream[sonarithm-stream] --> data
   speech[sonarithm-speech] --> core
-  app[sonarithm-app] --> facade & compiler & audio & export & stream & speech
+  axlive[sonarithm-axonote-live] --> engines
+  app[sonarithm-app] --> facade & compiler & audio & export & stream & speech & axlive
   facade[sonarithm] --> compiler & render & export
   cli[apps/cli] --> app & facade
   desktop[apps/desktop/src-tauri] --> app
@@ -128,7 +131,7 @@ flowchart BT
 
 1. **`sonarithm-core` depends on nothing project-internal**, and on no async runtime, audio device, file system or network crate.
 2. **Engines never depend on each other.** They communicate only through core types (`DataBundle`, `Annotations`, `Score`). Where one engine consumes another's output (for example SONOTRACE running ECHOMETRIC detectors), the compiler wires them through the registry. Enforced by `cargo xtask check-deps` (A01).
-3. **Only `sonarithm-audio` may depend on `cpal` or `wasapi`** (the Windows backend of [ADR-0016](../decisions/0016-windows-low-latency-backend.md)). Only `sonarithm-stream`, `sonarithm-app` and app or binding crates may depend on `tokio`.
+3. **Only `sonarithm-audio` may depend on `cpal` or `wasapi`** (the Windows backend of [ADR-0016](../decisions/0016-windows-low-latency-backend.md)). **Only `sonarithm-axonote-live` may depend on `midir` or open sockets for OSC output** (C04-T01; `check-deps` enforces this from C04-T06). Only `sonarithm-stream`, `sonarithm-app` and app or binding crates may depend on `tokio`.
 4. **The compiler, engines, render and DSP crates must build for `wasm32-unknown-unknown`.** CI builds them (A01 onward).
 5. **Heavy or exotic dependencies live in leaf crates behind features:** ML runtimes, wasmtime, MQTT, SQL, LGPL codecs, and `allocation-counter`, whose counting global allocator stays in tests and in `sonarithm-audio`'s opt-in `count-allocations` feature (A05-T10). Default features stay permissively licensed (see [supply chain policy](../engineering/supply-chain-and-licensing.md)).
 6. **Apps contain no business logic.** If the CLI and the desktop app both need it, it goes in `sonarithm-app` or below.
@@ -146,6 +149,7 @@ flowchart BT
 | `sonarithm-export` | `opus`, `vorbis` | off | Lossy codecs that need C libraries |
 | `sonarithm-stream` | `mqtt`, `serial`, `websocket`, `osc` | websocket, osc on | Live source adapters |
 | `sonarithm-plotsona-ml` | `ort` | off | ONNX Runtime (load-dynamic) instead of tract |
+| `sonarithm-axonote-live` | `midi`, `osc` | both on | Live MIDI output (midir) and OSC output over UDP. The CLI and the app core enable them; neither runs without a user action |
 | `sonarithm` | `full` | off | Everything non-copyleft |
 
 ## 5. Naming conventions
