@@ -373,6 +373,16 @@ pub const PIE_SHARES: CodeInfo = CodeInfo {
     status: CodeStatus::Active,
 };
 
+/// A PDF has no vector drawing, only images.
+pub const PDF_NO_VECTOR: CodeInfo = CodeInfo {
+    code: "SNR-ENG-364",
+    severity: Severity::Error,
+    summary: "The PDF has no vector chart",
+    help: "The pages hold only images, so the chart must be read by the raster tier (C02),            as an estimate. Use the chart's source file or a vector export if you have one.",
+    rules: &[],
+    status: CodeStatus::Active,
+};
+
 /// Every PLOTSONA code, in ascending order.
 pub const CODES: CodeTable = CodeTable {
     area: Area::Eng,
@@ -412,6 +422,7 @@ pub const CODES: CodeTable = CodeTable {
         SVG_SCRIPT_IGNORED,
         AXIS_NOT_FOUND,
         PIE_SHARES,
+        PDF_NO_VECTOR,
     ],
 };
 

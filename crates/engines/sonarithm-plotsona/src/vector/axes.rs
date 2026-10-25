@@ -3,8 +3,8 @@
 
 //! Finding a chart's axes in its scene.
 //!
-//! Tick labels of the x axis share a baseline: they form the lowest **row** of two or more
-//! texts. Tick labels of the y axis share an alignment edge: they form the leftmost
+//! Tick labels of the x axis share a baseline: they form the fullest **row** of two or
+//! more texts (the lowest on a tie). Tick labels of the y axis share an alignment edge: they form the leftmost
 //! **column** of two or more texts. A label is drawn beside its tick, offset by a constant
 //! (a baseline shift, a rotation, a gap), so each label is snapped to the nearest tick or
 //! grid line after removing that offset: the lines give exact positions, the text only
@@ -126,17 +126,29 @@ pub(crate) fn find(scene: &Scene, diagnostics: &mut Vec<Diagnostic>) -> Axes {
     let candidates: Vec<usize> = (0..scene.texts.len())
         .filter(|i| scene.texts.get(*i).is_some_and(|t| !is_title(t)))
         .collect();
-    // x axis: the lowest row of at least two labels spread along x.
+    // x axis: a row of at least two labels spread along x.
+    // Rotated labels line up by one end: the anchor, or (for text measured from its
+    // glyphs, as in PDF) the end, so rows are formed by both.
     let mut rows: BTreeMap<i64, Vec<usize>> = BTreeMap::new();
     for i in &candidates {
         if let Some(t) = scene.texts.get(*i) {
             rows.entry(bucket(t.at.1)).or_default().push(*i);
         }
     }
+    let mut ends: BTreeMap<i64, Vec<usize>> = BTreeMap::new();
+    for i in &candidates {
+        if let Some(t) = scene.texts.get(*i).filter(|t| t.rotated) {
+            ends.entry(bucket(t.end.1)).or_default().push(*i);
+        }
+    }
+    // The x tick labels are the fullest row, the lowest one on a tie.
     let row = rows
-        .values()
-        .rev()
-        .find(|m| m.len() >= 2 && spread(scene, m, Dir::Horizontal) > 1.0);
+        .iter()
+        .chain(&ends)
+        .filter(|(_, m)| m.len() >= 2 && spread(scene, m, Dir::Horizontal) > 1.0)
+        .max_by_key(|(k, m)| (m.len(), **k))
+        .map(|(_, m)| m.clone());
+    let row = row.as_ref();
     if let Some(row) = row {
         axes.x = build(scene, row, Dir::Horizontal, diagnostics);
         if axes.x.is_some() {
@@ -144,19 +156,24 @@ pub(crate) fn find(scene: &Scene, diagnostics: &mut Vec<Diagnostic>) -> Axes {
         }
     }
     // y axis: the leftmost column of at least two labels spread along y, not used above.
-    let mut columns: BTreeMap<i64, Vec<usize>> = BTreeMap::new();
+    // Labels align by their end (right-aligned), anchor or start (left-aligned).
+    let mut columns: Vec<BTreeMap<i64, Vec<usize>>> = vec![BTreeMap::new(); 3];
     for i in &candidates {
         if axes.labels.contains(i) {
             continue;
         }
         if let Some(t) = scene.texts.get(*i) {
-            columns.entry(bucket(t.at.0)).or_default().push(*i);
+            for (map, x) in columns.iter_mut().zip([t.end.0, t.at.0, t.start.0]) {
+                map.entry(bucket(x)).or_default().push(*i);
+            }
         }
     }
     let column = columns
-        .values()
+        .iter()
+        .flat_map(BTreeMap::values)
         .filter(|m| m.len() >= 2 && spread(scene, m, Dir::Vertical) > 1.0)
-        // Prefer a numeric column: a legend's labels form a column too.
+        // Prefer a numeric column (a legend's labels form a column too), then the fullest,
+        // then the leftmost.
         .max_by_key(|m| {
             let numeric = m
                 .iter()
@@ -168,6 +185,7 @@ pub(crate) fn find(scene: &Scene, diagnostics: &mut Vec<Diagnostic>) -> Axes {
                 .count();
             (
                 numeric * 2 >= m.len(),
+                m.len(),
                 std::cmp::Reverse(bucket_x(scene, m)),
             )
         });
@@ -184,7 +202,7 @@ fn bucket_x(scene: &Scene, members: &[usize]) -> i64 {
     members
         .first()
         .and_then(|i| scene.texts.get(*i))
-        .map_or(0, |t| bucket(t.at.0))
+        .map_or(0, |t| bucket(t.end.0))
 }
 
 fn spread(scene: &Scene, members: &[usize], dir: Dir) -> f64 {

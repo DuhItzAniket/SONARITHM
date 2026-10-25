@@ -60,6 +60,7 @@ jobs:
           - { crate: engines/sonarithm-plotsona, target: chart_json }
           - { crate: engines/sonarithm-plotsona, target: html_page }
           - { crate: engines/sonarithm-plotsona, target: svg_chart }
+          - { crate: engines/sonarithm-plotsona, target: pdf_chart }
     env:
       FUZZ_SECONDS: ${{ github.event_name == 'pull_request' && '120' || inputs.seconds || '1800' }}
     steps:

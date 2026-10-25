@@ -13,6 +13,8 @@ arrow-array.workspace = true
 arrow-schema.workspace = true
 # An Office chart's workbook (C01-T05); the version sonarithm-data uses.
 calamine.workspace = true
+# `FlateDecode` PDF streams (C01-T02, C01-T08); the pure-Rust backend already in the tree.
+flate2.workspace = true
 libm.workspace = true
 roxmltree.workspace = true
 serde.workspace = true

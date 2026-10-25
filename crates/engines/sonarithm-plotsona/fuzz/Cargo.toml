@@ -57,3 +57,10 @@ path = "fuzz_targets/svg_chart.rs"
 test = false
 doc = false
 bench = false
+
+[[bin]]
+name = "pdf_chart"
+path = "fuzz_targets/pdf_chart.rs"
+test = false
+doc = false
+bench = false
