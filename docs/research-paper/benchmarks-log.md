@@ -54,6 +54,7 @@ No reference-class machine is available yet (risk R-22). Rows on HW-01 apply the
 | A05 (cross-OS golden) | 2026-10-21 | [#178](https://github.com/DuhItzAniket/SONARITHM/pull/178) | CI-LNX, CI-WIN, CI-MAC | 256-frame blocks @ 48 kHz (offline) | — | — | — | — | −240 (identical; the comparison's floor) against CI-LNX, all six cases | 0.0000 | yes | `golden-compare` in CI run 39509526921; PB-06 met (F-056) |
 | A05 | | | | | | | | | | | | |
 | A08 (replication gallery, end to end) | 2026-10-21 | A08-T02 branch `0103de8` (on `2af548f`); A08-T04 PR | HW-01; HW-01e | offline, 256-frame blocks @ 48 kHz, one thread | — | — | — | 131.7 (HW-01; 130.5–132.3), 70.9 (HW-01e; 70.3–71.3): compile + render + 24-bit WAV + loudness meter, 443.8 s of audio in 49 renders, 5 runs each | −∞ across CI-WIN, CI-LNX, CI-MAC (WAV SHA-256 identical) | 0 | yes (release-independent hashes) | `cargo run --release -p xtask -- replication --timings`; raw tables in [benchmarks/a08-replication-timings](benchmarks/a08-replication-timings/); [report](benchmark-report-a08.md); F-115, F-116 |
+| B (PB-03 rerun, #185) | 2026-10-25 | #185 PR | HW-01 / HW-01e | 256-frame blocks @ 48 kHz, 1 thread | — | — | — | **HW-01e: 59–64 (`render_speed`, 3 rounds), 60.4 (criterion, 0.99 s)**; A05 binary alternated with it: 40–41 and 39–40 (1.51–1.55 s). HW-01: 107 (`render_speed`), 87 (criterion, 689 ms); A05 binary: 72 and 62 (974 ms) | Identical to the A05 render (FNV-1a over the 60 s benchmark render) | — | yes | DS-006 benchmark Score. PB-03 met on the four-E-core stand-in. Another build session was using the machine during the measurements, so both sides of each A/B run below A05's 43–46× and 91×. F-134 |
 | A07 `v0.1.0-alpha` | | | | | | | | | | | | |
 | A08 `v0.2.0-alpha` | | | | | | | | | | | | |
 | B03 | | | | | | | | | | | | |
@@ -114,3 +115,4 @@ The A01 research hook records CI times as a baseline.
 | 2026-10-18 | Baseline tables and budgets from architecture overview §7 and roadmap exit criteria. | Research lead |
 | 2026-10-19 | A02 spike rows; hardware IDs HW-01, HW-01e, CI-LNX, CI-WIN and CI-MAC. | A02 session (AI agent), for review |
 | 2026-10-21 | A08 row: end-to-end export of the replication gallery; method note; [A08 report](benchmark-report-a08.md). | A08 session (AI agent), for review |
+| 2026-10-25 | PB-03 rerun after the voice-loop work (#185): met on HW-01e. | AI agent (Claude Code), for review |

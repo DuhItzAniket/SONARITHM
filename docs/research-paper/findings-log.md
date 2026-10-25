@@ -731,6 +731,30 @@ A05 (render engine, audio backends, export) uses F-050 to F-069.
 - **Affects:** ADR-0012 (no telemetry without consent), AGENTS rule 9; the supply-chain policy's npm checks (an install-script review belongs next to the licence check)
 - **Papers:** none yet
 
+### F-134 · Exact per-run voice loops render the benchmark Score at 60× real time on four E-cores, so PB-03 is met with bit-identical output
+
+- **Date:** 2026-10-25 · **Phase:** B (A05 follow-up, #185) · **Type:** benchmark · **Status:** new
+- **Statement:** Timing each DSP primitive on HW-01e put the DS-006 render's cost in three places:
+  - the polynomial sine (`sine_turns`, about 9 ns per call on an E-core), which the mallet calls twice per sample and every attack and release ramp once;
+  - the biquad's chain of dependent operations (6.7 ns per sample);
+  - per-sample dispatch in the oscillator and the envelope.
+
+  Three changes compute the same IEEE operations per sample, so the output is unchanged:
+  - `sine_turns_unit`: the same polynomial with a one-comparison reduction for turns in [0, 1.5), the range of oscillator phases and envelope ramps;
+  - the oscillator and the mallet compute a chunk of phases first, then the waveform for all of them, which the compiler can vectorize; the envelope works a stage at a time;
+  - filtered voices generate and filter in one loop, so the oscillator's arithmetic overlaps the filter's chain.
+
+  The 60 s benchmark render hashes to the A05 value at 256- and 61-frame blocks. Each A/B alternated the A05 and new binaries on the same machine, which another build session was using at the time:
+  - `render_speed` on HW-01e: 40–41× → 59–64× (three rounds);
+  - criterion `pb_03/render_benchmark_score_60s_256` on HW-01e: 1.51–1.55 s → 0.99 s (39–40× → 60×);
+  - HW-01: 72× → 107× (`render_speed`) and 974 → 689 ms (criterion).
+
+  Per-primitive costs on an E-core: mallet partials 22.7 → 14.9 ns per sample, envelope ramp 8.0 → 4.7 ns, square oscillator with biquad and gain 11.9 → 7.1 ns. No SIMD intrinsics or `unsafe` were needed, so the render graph's design is unchanged.
+- **Evidence:** `crates/sonarithm-render/tests/render_identity.rs` (`the_benchmark_render_is_bit_identical_to_the_a05_graph`: FNV-1a 4290137234021000538 over the 60 s render); the bit-for-bit unit tests `sine_turns_unit_matches_sine_turns_bit_for_bit`, `fills_match_the_per_sample_oscillator_bit_for_bit`, `apply_matches_next_level_bit_for_bit` and `the_mallet_fill_matches_its_per_sample_path_bit_for_bit`; `render_speed` and the criterion bench under `start /affinity F0000`; PR for [#185](https://github.com/DuhItzAniket/SONARITHM/issues/185)
+- **Evidence level / confidence:** EV-C / Moderate (one machine, under a background load that slowed both sides of each A/B: the A05 binary measured 40–41× here against 43–46× in A05's runs)
+- **Affects:** PB-03 (met on HW-01e; the A05 waiver is closed), 12 §8, F-053, ADR-0013 (unchanged output), NFR-01
+- **Papers:** P07
+
 ### F-140 · A05's `Player` cannot move between threads, so the app core owns the thread that drives it
 
 - **Date:** 2026-10-21 · **Phase:** B01 · **Type:** engineering · **Status:** new

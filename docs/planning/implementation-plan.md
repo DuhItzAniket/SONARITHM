@@ -266,7 +266,7 @@ These items run at the owner's pace, or need other people, hardware or calendar 
 
 | Issue | What | Stage B task that waits for it |
 |---|---|---|
-| [#185](https://github.com/DuhItzAniket/SONARITHM/issues/185) | PB-03: SIMD voice batching and a rerun on HW-01e; the owner's waiver covers `v0.1.0-alpha` only. Agent work, build-heavy | B07-T09 (`v0.5.0-beta`, Gate B) |
+| [#185](https://github.com/DuhItzAniket/SONARITHM/issues/185) | PB-03: SIMD voice batching and a rerun on HW-01e; the owner's waiver covers `v0.1.0-alpha` only. Agent work, build-heavy. **Done 2026-10-25:** met on HW-01e (F-134) | B07-T09 (`v0.5.0-beta`, Gate B) |
 | [#186](https://github.com/DuhItzAniket/SONARITHM/issues/186) | PB-01: settle key press → cue onset at B03 | B03-T12 |
 | [#187](https://github.com/DuhItzAniket/SONARITHM/issues/187) | PB-02: a 10-minute soak at 128-frame buffers on capable hardware (HP-06) | B07-T09 |
 | [#123](https://github.com/DuhItzAniket/SONARITHM/issues/123) | A05-T13's cable latency test and NVDA coexistence check (HP-05) | B03-T12, through #186 |
