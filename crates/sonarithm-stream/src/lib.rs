@@ -37,7 +37,9 @@ mod rows;
 pub mod schema;
 mod transports;
 
-pub use connection::{Connection, ConnectionState, ConnectionStatus, Options, connect};
+pub use connection::{
+    Connection, ConnectionState, ConnectionStatus, Options, TableReader, connect,
+};
 pub use endpoint::{Consent, DEFAULT_BAUD, Endpoint};
 pub use rows::RowBuffer;
 pub use schema::{FieldKind, MessageSchema};

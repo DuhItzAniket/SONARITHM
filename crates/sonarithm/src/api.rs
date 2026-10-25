@@ -8,9 +8,10 @@ use std::collections::BTreeMap;
 use sonarithm_audaxis::Audaxis;
 use sonarithm_compiler::{Compiler, Failure, Platform};
 use sonarithm_core::engine::{CancelToken, Engine, EngineManifest};
-use sonarithm_data::DataBundle;
+use sonarithm_data::{DataBundle, Snapshot};
 use sonarithm_numisona::Numisona;
 use sonarithm_numisona::polarity::PolarityProfile;
+use sonarithm_sonotrace::Sonotrace;
 
 use crate::compiled::Compiled;
 use crate::error::Error;
@@ -111,6 +112,38 @@ impl Sonarithm {
         datasets: &Datasets,
         cancel: &CancelToken,
     ) -> Result<Compiled, Error> {
+        self.compile_engines(spec, datasets, cancel, None)
+    }
+
+    /// [`Sonarithm::compile_with`] for a spec whose source is a live stream
+    /// (`{"kind": "stream", …}`): SONOTRACE reads `window`, a snapshot of the stream's rows
+    /// ([`StreamTable::snapshot`]), so the stream keeps receiving while this compiles
+    /// (B06-T07). Each call compiles one window; live monitoring calls it as rows arrive.
+    ///
+    /// # Errors
+    ///
+    /// As [`Sonarithm::compile_with`]; `SNR-ENG-200` never, since the window is given.
+    pub fn compile_stream(
+        &self,
+        spec: &Spec,
+        datasets: &Datasets,
+        window: &Snapshot,
+    ) -> Result<Compiled, Error> {
+        let sonotrace = Sonotrace::with_snapshot(window).map_err(|err| {
+            let mut one = sonarithm_core::Diagnostics::new();
+            one.push(err.to_diagnostic());
+            Error::Spec(one)
+        })?;
+        self.compile_engines(spec, datasets, &CancelToken::new(), Some(&sonotrace))
+    }
+
+    fn compile_engines(
+        &self,
+        spec: &Spec,
+        datasets: &Datasets,
+        cancel: &CancelToken,
+        stream: Option<&Sonotrace>,
+    ) -> Result<Compiled, Error> {
         let mut platform = spec
             .base_dir()
             .map_or_else(Platform::new, Platform::with_base_dir);
@@ -123,6 +156,9 @@ impl Sonarithm {
         }
         if let Some(audaxis) = &self.audaxis {
             engines.push(audaxis);
+        }
+        if let Some(sonotrace) = stream {
+            engines.push(sonotrace);
         }
         let compiler = Compiler::new(&engines).map_err(|diagnostic| {
             let mut one = sonarithm_core::Diagnostics::new();

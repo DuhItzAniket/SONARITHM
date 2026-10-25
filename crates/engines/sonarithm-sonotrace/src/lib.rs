@@ -32,7 +32,7 @@ use sonarithm_core::engine::{
 };
 use sonarithm_core::{Diagnostic, EngineId, EngineVersion, TableId};
 use sonarithm_data::bundle::SourceKind as DataSourceKind;
-use sonarithm_data::{BundleId, DataBundle, SourceDescriptor, StreamTable, Table};
+use sonarithm_data::{BundleId, DataBundle, Snapshot, SourceDescriptor, StreamTable, Table};
 
 /// The engine ID.
 pub const ENGINE: EngineId = EngineId::from_static("sonotrace");
@@ -60,7 +60,17 @@ impl Sonotrace {
     ///
     /// The data layer's error if the window cannot form a table.
     pub fn with_window(stream: &StreamTable) -> Result<Self, sonarithm_data::DataError> {
-        let table = stream.snapshot().to_table(WINDOW_TABLE)?;
+        Self::with_snapshot(&stream.snapshot())
+    }
+
+    /// The engine whose `stream` source returns the rows of `window`, a snapshot taken
+    /// earlier, so a live compile does not hold the stream (B06-T07).
+    ///
+    /// # Errors
+    ///
+    /// The data layer's error if the window cannot form a table.
+    pub fn with_snapshot(window: &Snapshot) -> Result<Self, sonarithm_data::DataError> {
+        let table = window.to_table(WINDOW_TABLE)?;
         Ok(Self {
             window: Some(Arc::new(table)),
         })

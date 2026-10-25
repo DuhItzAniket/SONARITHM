@@ -95,6 +95,38 @@ fn the_null_device_plays_the_graph() {
     assert!(captured.iter().all(|s| s.abs() < 0.05));
 }
 
+/// B06-T07: a Score swapped in while playing (live monitoring) keeps playing from the
+/// same position; the transport never restarts.
+#[test]
+fn a_swapped_score_keeps_playing_from_the_same_position() {
+    let mut player = Player::open(
+        null(false),
+        drone(4.0),
+        PlanConfig::new(sonarithm_core::SampleRate::HZ_48000),
+        StreamConfig::default(),
+        256,
+    )
+    .unwrap();
+    player.send(Command::Play);
+    tick_until(&mut player, |state| state.graph.position.0 >= 24_000);
+    let before = player.state().graph.position.0;
+    player.swap(drone(8.0)).unwrap();
+    tick_until(&mut player, |state| state.swaps >= 1);
+    let after = player.state();
+    assert!(after.graph.playing, "still playing");
+    assert!(
+        after.graph.position.0 >= before,
+        "kept the position: {} then {}",
+        before,
+        after.graph.position.0
+    );
+    tick_until(&mut player, |state| state.graph.position.0 >= 48_000 * 5);
+    assert!(
+        player.state().graph.playing,
+        "plays on into the longer Score"
+    );
+}
+
 /// 06 §11 and HS-05: after the device is unplugged, the player rebuilds on the default
 /// device, keeps the position and the levels, and stays paused.
 #[test]

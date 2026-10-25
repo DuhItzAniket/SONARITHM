@@ -5,7 +5,8 @@
 # OSC, lines) and the chart parsers (from C01).
 # Manual dispatch takes the seconds per target; use 3600 for an exit run. Pull requests that
 # touch a fuzzed crate run a two-minute smoke fuzz of every target. From A05: the 10-minute
-# allocation soak on the null device (testing-strategy §9.3). Not a required check.
+# allocation soak on the null device; from B06: the 10-minute stream soak (PB-11)
+# (testing-strategy §9.3). Not a required check.
 name: nightly
 
 on:
@@ -124,3 +125,40 @@ jobs:
         run: sudo apt-get update && sudo apt-get install --yes --no-install-recommends libasound2-dev
       - shell: bash
         run: cargo run --locked -p sonarithm-audio --features count-allocations --example soak -- --backend null --seconds "$SOAK_SECONDS" --strict
+
+  # PB-11 (B06-T07, testing-strategy §9.3): a 1 kHz synthetic stream played live through
+  # the app core for 10 minutes on the timer-driven null device. Memory stays bounded, no
+  # rows are lost and playback keeps up with the data; underruns are reported, not gated
+  # (the xrun check runs on reference hardware before releases). A PR that edits this
+  # workflow or the app core runs 60 s, too short to judge memory.
+  stream-soak:
+    name: stream-soak (${{ matrix.os }})
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    permissions:
+      contents: read
+    timeout-minutes: 60
+    env:
+      SOAK_SECONDS: ${{ github.event_name == 'pull_request' && '60' || '600' }}
+      SONARITHM_BACKEND: "null"
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - run: rustup toolchain install
+      - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
+        with:
+          save-if: ${{ github.ref == 'refs/heads/main' }}
+      - if: runner.os == 'Linux'
+        run: sudo apt-get update && sudo apt-get install --yes --no-install-recommends libasound2-dev
+      - shell: bash
+        run: cargo run --locked --release -p sonarithm-app --example stream_soak -- --seconds "$SOAK_SECONDS" --strict --report stream-soak.jsonl
+      - if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: stream-soak-${{ matrix.os }}
+          path: stream-soak.jsonl
+          if-no-files-found: ignore

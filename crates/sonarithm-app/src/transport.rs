@@ -13,6 +13,10 @@
 //! The same thread sequences speech with sonification (08 §4, B03-T07): it runs the
 //! [`Sequencer`] every tick, pauses or ducks playback for speech, and hands each
 //! announcement to the host's announcer or to the self-voicing speaker.
+//!
+//! In live mode (B06-T07) the Scores come from the live worker ([`LiveFeed`]): each is
+//! swapped in while playing, the playhead is kept within a band behind the newest data
+//! ([`crate::live::LAG`]), and playback does not stop at a Score's end.
 
 use std::sync::Arc;
 use std::sync::mpsc::{self, Receiver, RecvTimeoutError, Sender};
@@ -32,6 +36,7 @@ use sonarithm_speech::Speaker;
 use crate::codes;
 use crate::events::EventSink;
 use crate::ipc::{ClockAnchor, Event, IpcError, LoopSpan, PlaybackStatus, TransportState};
+use crate::live::LAG;
 use crate::speech::{Output, Sequencer, SequencerConfig, SpeakerSource, SpeechRoute};
 use crate::streams::{LiveStreams, StreamAction};
 
@@ -106,6 +111,10 @@ enum Message {
     ),
     StreamAct(String, StreamAction, Reply<Vec<crate::ipc::StreamInfo>>),
     StreamList(Reply<Vec<crate::ipc::StreamInfo>>),
+    StreamReader(String, Reply<sonarithm_stream::TableReader>),
+    Live(Option<u64>, Reply<TransportState>),
+    LiveScore(u64, Arc<Score>),
+    LiveNotice(u64, IpcError),
     Unplug,
     Shutdown,
 }
@@ -200,6 +209,27 @@ impl Transport {
         self.ask(Message::StreamList)
     }
 
+    /// A read handle on open stream `id`'s rows, for the live worker.
+    pub(crate) fn stream_reader(
+        &self,
+        id: String,
+    ) -> Result<sonarithm_stream::TableReader, IpcError> {
+        self.ask(|reply| Message::StreamReader(id, reply))
+    }
+
+    /// Enters live mode for worker `session`, or leaves it (`None`), which pauses.
+    pub(crate) fn live(&self, session: Option<u64>) -> Result<TransportState, IpcError> {
+        self.ask(|reply| Message::Live(session, reply))
+    }
+
+    /// The channel live worker `session` sends its Scores and notices through.
+    pub(crate) fn feed(&self, session: u64) -> LiveFeed {
+        LiveFeed {
+            sender: self.sender.clone(),
+            session,
+        }
+    }
+
     /// Loads a new Score (or none). Playback pauses; it never continues into the new
     /// Score on its own (A11Y-15).
     pub(crate) fn load(&self, score: Option<Arc<Score>>) {
@@ -221,6 +251,26 @@ impl Transport {
         };
         self.sender.send(message(reply)).map_err(|_| stopped())?;
         answer.recv_timeout(REPLY_LIMIT).map_err(|_| stopped())?
+    }
+}
+
+/// Where a live worker sends its Scores; the transport drops those of an old session.
+pub(crate) struct LiveFeed {
+    sender: Sender<Message>,
+    session: u64,
+}
+
+impl LiveFeed {
+    /// The newest window's Score, on the stream's timeline.
+    pub(crate) fn score(&self, score: Score) {
+        let _ = self
+            .sender
+            .send(Message::LiveScore(self.session, Arc::new(score)));
+    }
+
+    /// A problem to tell the user about (`SNR-APP-074`).
+    pub(crate) fn notice(&self, error: IpcError) {
+        let _ = self.sender.send(Message::LiveNotice(self.session, error));
     }
 }
 
@@ -247,6 +297,11 @@ struct Model {
     speed: f64,
     loop_range: Option<LoopSpan>,
     device: Option<String>,
+    /// The live worker session being followed.
+    live: Option<u64>,
+    /// Underruns reported by players already closed, and in all.
+    xruns_closed: u64,
+    xruns: u64,
 }
 
 struct Control<B: AudioBackend, F: Fn() -> B> {
@@ -334,6 +389,8 @@ impl<B: AudioBackend, F: Fn() -> B> Control<B, F> {
             loop_range: self.model.loop_range,
             loaded: self.score.is_some(),
             device: self.model.device.clone(),
+            live: self.model.live.is_some(),
+            xruns: self.model.xruns,
         }
     }
 
@@ -379,6 +436,27 @@ impl<B: AudioBackend, F: Fn() -> B> Control<B, F> {
             Message::StreamList(reply) => {
                 let _ = reply.send(Ok(self.streams.list()));
             }
+            Message::StreamReader(id, reply) => {
+                let _ = reply.send(self.streams.reader(&id));
+            }
+            Message::Live(session, reply) => {
+                self.model.live = session;
+                if session.is_none() {
+                    let _ = self.act(Action::Pause);
+                }
+                self.anchor();
+                let _ = reply.send(Ok(self.state()));
+            }
+            Message::LiveScore(session, score) => {
+                if self.model.live == Some(session) {
+                    self.live_score(score);
+                }
+            }
+            Message::LiveNotice(session, error) => {
+                if self.model.live == Some(session) {
+                    self.sink.emit(Event::LiveNotice { error });
+                }
+            }
             Message::Unplug => {
                 if let Some(player) = &mut self.player {
                     (self.unplug)(player.backend_mut());
@@ -391,7 +469,7 @@ impl<B: AudioBackend, F: Fn() -> B> Control<B, F> {
     /// Drops the player (closing the device) and pauses a playing transport.
     fn close(&mut self) {
         self.refresh();
-        self.player = None;
+        self.drop_player();
         if self.model.status == PlaybackStatus::Playing {
             self.model.status = PlaybackStatus::Paused;
         }
@@ -399,6 +477,7 @@ impl<B: AudioBackend, F: Fn() -> B> Control<B, F> {
 
     fn load(&mut self, score: Option<Arc<Score>>) {
         self.close();
+        self.model.live = None;
         self.score = score;
         let duration = self.duration();
         if self.score.is_none() {
@@ -497,8 +576,12 @@ impl<B: AudioBackend, F: Fn() -> B> Control<B, F> {
 
     fn play(&mut self) -> Result<(), IpcError> {
         self.require_score()?;
-        let restart = self.model.position_s >= self.duration() && self.model.loop_range.is_none();
-        if restart {
+        let live = self.live_target(self.model.position_s);
+        let restart = live.is_some()
+            || (self.model.position_s >= self.duration() && self.model.loop_range.is_none());
+        if let Some(target) = live {
+            self.model.position_s = target;
+        } else if restart {
             self.model.position_s = 0.0;
         }
         if self.player.is_none() {
@@ -669,7 +752,7 @@ impl<B: AudioBackend, F: Fn() -> B> Control<B, F> {
             }
             Ok(_) => {}
             Err(err) => {
-                self.player = None;
+                self.drop_player();
                 self.model.device = None;
                 if self.model.status == PlaybackStatus::Playing {
                     self.model.status = PlaybackStatus::Paused;
@@ -684,12 +767,14 @@ impl<B: AudioBackend, F: Fn() -> B> Control<B, F> {
                 return;
             }
         }
+        self.model.xruns = self.model.xruns_closed + player.state().xruns;
         if self.model.status != PlaybackStatus::Playing {
             return;
         }
         self.refresh();
         let duration = self.duration();
-        if self.model.loop_range.is_none() && self.model.position_s >= duration {
+        let live = self.model.live.is_some();
+        if !live && self.model.loop_range.is_none() && self.model.position_s >= duration {
             self.send(Command::Stop);
             self.model.status = PlaybackStatus::Stopped;
             self.model.position_s = 0.0;
@@ -704,6 +789,63 @@ impl<B: AudioBackend, F: Fn() -> B> Control<B, F> {
             .last_anchor
             .is_none_or(|at| at.elapsed() >= ANCHOR_PERIOD)
         {
+            self.anchor();
+        }
+    }
+
+    /// Closes the player, keeping its underrun count.
+    fn drop_player(&mut self) {
+        if let Some(player) = &mut self.player {
+            self.model.xruns = self.model.xruns_closed + player.state().xruns;
+        }
+        self.model.xruns_closed = self.model.xruns;
+        self.player = None;
+    }
+
+    /// In live mode, where the playhead belongs when `position` has left the band behind
+    /// the newest data, from `2 × LAG` to `LAG / 4` before the end: `LAG` before the end.
+    /// `None` inside the band or outside live mode.
+    fn live_target(&self, position: f64) -> Option<f64> {
+        self.model.live?;
+        let duration = self.duration();
+        let target = (duration - LAG).max(0.0);
+        let band = (duration - 2.0 * LAG).max(0.0)..=(duration - LAG / 4.0).max(0.0);
+        (!band.contains(&position)).then_some(target)
+    }
+
+    /// Takes the newest live window's Score: swapped in while the device is open, kept for
+    /// `play` otherwise. While playing, the playhead moves only when it has left the band
+    /// behind the newest data; a transport that is not playing waits at the live edge.
+    fn live_score(&mut self, score: Arc<Score>) {
+        if let Some(player) = &mut self.player {
+            match player.swap(Score::clone(&score)) {
+                Ok(()) => {}
+                // The next window comes within a second.
+                Err(sonarithm_audio::PlayerError::SwapBusy) => return,
+                Err(err) => {
+                    self.sink.emit(Event::LiveNotice {
+                        error: IpcError::new(
+                            &codes::LIVE_COMPILE,
+                            format!("A live window could not be planned: {err}."),
+                        ),
+                    });
+                    return;
+                }
+            }
+        }
+        self.score = Some(score);
+        self.refresh();
+        let target = if self.model.status == PlaybackStatus::Playing {
+            self.live_target(self.model.position_s)
+        } else {
+            Some((self.duration() - LAG).max(0.0))
+        };
+        if let Some(target) = target {
+            self.seek_engine(target);
+            self.model.position_s = target;
+            if self.model.status == PlaybackStatus::Stopped && target > 0.0 {
+                self.model.status = PlaybackStatus::Paused;
+            }
             self.anchor();
         }
     }

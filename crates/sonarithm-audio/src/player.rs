@@ -34,6 +34,9 @@ pub enum PlayerError {
     /// The device reports a sample rate of zero.
     #[error("the audio device reports no sample rate")]
     NoSampleRate,
+    /// Two Score swaps are already waiting for the audio thread.
+    #[error("two Score swaps are already waiting; try again after the next block")]
+    SwapBusy,
 }
 
 /// Something the user should hear about (the UI announces it, 06 §11).
@@ -113,6 +116,31 @@ impl<B: AudioBackend> Player<B> {
             replay: Replay::default(),
             last: EngineState::default(),
         })
+    }
+
+    /// Replaces the Score while it plays (live monitoring, B06-T07): the new plan swaps in
+    /// at the next block with a crossfade and keeps the transport (position, speed, loop,
+    /// play state and levels; 06 §5). Planning runs here, on the control thread; the audio
+    /// thread only adopts the finished graph. A device rebuilt after a loss plays the new
+    /// Score.
+    ///
+    /// # Errors
+    ///
+    /// [`PlayerError::Plan`] if the Score cannot be planned; [`PlayerError::SwapBusy`] if
+    /// two swaps are still waiting, in which case the Score in use stays.
+    pub fn swap(&mut self, score: Score) -> Result<(), PlayerError> {
+        let rate = self
+            .stream
+            .as_ref()
+            .and_then(|stream| SampleRate::new(stream.sample_rate()))
+            .unwrap_or(self.plan_config.sample_rate);
+        let plan = RenderPlan::build(&score, &self.plan_config.at_rate(rate))?.plan;
+        let graph = Graph::new(plan, GraphConfig::new(self.block));
+        self.controller
+            .swap(graph)
+            .map_err(|_| PlayerError::SwapBusy)?;
+        self.score = score;
+        Ok(())
     }
 
     /// Sends a transport or mixer command.

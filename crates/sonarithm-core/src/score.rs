@@ -153,6 +153,38 @@ impl Score {
             markers: Vec::new(),
         }
     }
+
+    /// Moves every event and marker `by` later and lengthens the Score by as much: the
+    /// Score of a live window placed on its stream's timeline, so each new window plays on
+    /// from the same position (B06-T07). The result is for playback; its header still
+    /// names the window's compile. A `by` that is not a positive number changes nothing.
+    pub fn offset(&mut self, by: Seconds) {
+        let by = by.0;
+        if !(by > 0.0 && by.is_finite()) {
+            return;
+        }
+        let shift = |t: &mut Seconds| t.0 += by;
+        for track in &mut self.tracks {
+            for event in &mut track.events {
+                match event {
+                    ScoreEvent::Note(note) => shift(&mut note.t),
+                    ScoreEvent::Glide(glide) => {
+                        shift(&mut glide.t0);
+                        shift(&mut glide.t1);
+                        for point in &mut glide.curve {
+                            shift(&mut point.t);
+                        }
+                    }
+                    ScoreEvent::Earcon(earcon) => shift(&mut earcon.t),
+                    ScoreEvent::Speech(speech) => shift(&mut speech.t),
+                }
+            }
+        }
+        for marker in &mut self.markers {
+            shift(&mut marker.t);
+        }
+        shift(&mut self.header.duration);
+    }
 }
 
 /// The Score header: everything needed to reproduce and attribute the Score (ADR-0013).

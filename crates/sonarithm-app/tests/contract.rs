@@ -34,6 +34,13 @@ fn requests(dir: &TempDir) -> Vec<Value> {
         "tracks": [{ "id": "t", "mark": "tone", "channels": { "pitch": { "field": "temp" } } }]
     })
     .to_string();
+    let live = json!({
+        "specVersion": "0.1",
+        "data": { "source": { "kind": "stream", "transport": "tail", "path": csv } },
+        "substrate": { "time": { "field": "day", "pace": { "secondsPerUnit": 1 } } },
+        "tracks": [{ "id": "t", "mark": "tone", "channels": { "pitch": { "field": "temp" } } }]
+    })
+    .to_string();
     let wav = dir.path().join("t.wav");
     let project = dir.path().join("t.sonarithm");
     let exported = dir.path().join("contract.json");
@@ -59,6 +66,10 @@ fn requests(dir: &TempDir) -> Vec<Value> {
         // The first offer's token.
         json!({ "command": "stream_connect", "args": { "token": 1 } }),
         json!({ "command": "stream_list" }),
+        json!({ "command": "spec_set", "args": { "text": live } }),
+        json!({ "command": "live_start", "args": { "stream": "s1" } }),
+        json!({ "command": "live_stop" }),
+        json!({ "command": "spec_set", "args": { "text": spec } }),
         json!({ "command": "stream_hide", "args": { "id": "s1" } }),
         json!({ "command": "stream_pause", "args": { "id": "s1" } }),
         json!({ "command": "stream_resume", "args": { "id": "s1" } }),

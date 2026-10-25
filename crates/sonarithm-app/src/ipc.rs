@@ -82,6 +82,8 @@ pub const COMMANDS: &[(&str, &str)] = &[
     ("stream_hide", "streams"),
     ("stream_stop", "streams"),
     ("stream_list", "streams"),
+    ("live_start", "transport"),
+    ("live_stop", "transport"),
     ("profile_list", "profiles"),
     ("profile_get", "profile"),
     ("profile_activate", "profiles"),
@@ -107,6 +109,7 @@ pub const EVENTS: &[(&str, &str)] = &[
     ("audio_failed", "app"),
     ("settings_notice", "app"),
     ("announcement", "announcements"),
+    ("live_notice", "app"),
 ];
 
 /// A command from the UI (09 §2.1).
@@ -306,6 +309,17 @@ pub enum Request {
     },
     /// The open streams. Replies [`Reply::Streams`].
     StreamList,
+    /// Plays an open stream live through the session's spec, whose source must be a
+    /// stream (B06-T07). About once a second the newest window is compiled and swapped in;
+    /// playback follows about 2 s behind the newest data and never stops at a window's
+    /// end. Nothing sounds until `transport_play` (A11Y-15). Replies [`Reply::Transport`].
+    LiveStart {
+        /// The stream's ID.
+        stream: String,
+    },
+    /// Stops following the stream; playback pauses on the last window. Replies
+    /// [`Reply::Transport`].
+    LiveStop,
     /// The profiles: the presets, the user's, and the project's (ADR-0020). Replies
     /// [`Reply::Profiles`].
     ProfileList,
@@ -472,6 +486,8 @@ impl Request {
             Self::StreamHide { .. } => "stream_hide",
             Self::StreamStop { .. } => "stream_stop",
             Self::StreamList => "stream_list",
+            Self::LiveStart { .. } => "live_start",
+            Self::LiveStop => "live_stop",
             Self::ProfileList => "profile_list",
             Self::ProfileGet { .. } => "profile_get",
             Self::ProfileActivate { .. } => "profile_activate",
@@ -671,6 +687,12 @@ pub enum Event {
     },
     /// Text for the announcer (08 §4), in the order it may be spoken.
     Announcement(AnnouncementInfo),
+    /// A live window did not compile (`SNR-APP-074`); playback goes on with the last one
+    /// that did. Sent once per distinct problem.
+    LiveNotice {
+        /// What happened.
+        error: IpcError,
+    },
 }
 
 impl Event {
@@ -683,7 +705,8 @@ impl Event {
             Self::PlaybackFinished { .. }
             | Self::DeviceChanged { .. }
             | Self::AudioFailed { .. }
-            | Self::SettingsNotice { .. } => Channel::App,
+            | Self::SettingsNotice { .. }
+            | Self::LiveNotice { .. } => Channel::App,
             Self::Announcement(_) => Channel::Announcements,
         }
     }
@@ -1038,6 +1061,10 @@ pub struct TransportState {
     pub loaded: bool,
     /// The output device's name once the device is open.
     pub device: Option<String>,
+    /// Whether playback follows a live stream (`live_start`).
+    pub live: bool,
+    /// Underruns the output reported since the session started (PB-02, PB-11).
+    pub xruns: u64,
 }
 
 /// A transport clock anchor (06 §9): the UI extrapolates the playhead from it.
@@ -1268,6 +1295,8 @@ mod tests {
             loop_range: None,
             loaded: true,
             device: None,
+            live: false,
+            xruns: 0,
         };
         let job = JobInfo {
             id: 1,
@@ -1301,7 +1330,9 @@ mod tests {
             Event::AudioFailed {
                 error: error.clone(),
             },
-            Event::SettingsNotice { error },
+            Event::SettingsNotice {
+                error: error.clone(),
+            },
             Event::Announcement(AnnouncementInfo {
                 seq: 1,
                 speech: "Paused. 12.5".into(),
@@ -1312,6 +1343,7 @@ mod tests {
                 self_voiced: false,
                 node: Some(7),
             }),
+            Event::LiveNotice { error },
         ];
         assert_eq!(events.len(), EVENTS.len());
         for (event, (name, channel)) in events.iter().zip(EVENTS) {
