@@ -155,6 +155,8 @@ Owner: `sonarithm-sonotrace`. Numbers SNR-ENG-200 to SNR-ENG-299.
 |---|---|---|---|---|
 | `SNR-ENG-200` | error | No stream is connected | Connect the stream first (a connection opens only on your command); the spec then compiles against the rows the stream holds. | A11Y-16 |
 | `SNR-ENG-201` | warning | Live mode skipped events without a data row | Live mode plays the events of new rows only. Context events such as ticks and earcons come from AUDAXIS in live mode instead. | — |
+| `SNR-ENG-240` | warning | The soundscape is not available | Only the default soundscape exists until B06's evaluation chooses others; it plays            instead. | SDR-35 |
+| `SNR-ENG-241` | info | Experimental comfort budget | SDR-39 is an inference: the share of the session the soundscape is bright is            reported, not enforced, until an experiment validates a budget (H-12). | SDR-39 |
 
 Owner: `sonarithm-echometric`. Numbers SNR-ENG-600 to SNR-ENG-699.
 

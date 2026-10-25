@@ -1,0 +1,144 @@
+{
+  "header": {
+    "ir_version": 1,
+    "spec_version": "0.1",
+    "spec_hash": "0000000000000000000000000000000000000000000000000000000000000000",
+    "data_fingerprint": "0000000000000000000000000000000000000000000000000000000000000000",
+    "seed": 35,
+    "mode": "monitoring",
+    "duration": 10.0,
+    "engines": {},
+    "shapers": []
+  },
+  "tracks": [
+    {
+      "id": "monitor-bed",
+      "role": "monitor",
+      "engine": "sonotrace",
+      "instrument": "triangle",
+      "gain": 0.0,
+      "pan": 0.0,
+      "pitch_range": null,
+      "events": [
+        {
+          "type": "glide",
+          "t0": 0.0,
+          "t1": 10.0,
+          "curve": [
+            {
+              "t": 0.0,
+              "pitch": -1200.0,
+              "gain": 0.0,
+              "pan": 0.0,
+              "brightness": 0.15
+            },
+            {
+              "t": 1.5,
+              "pitch": -1200.0,
+              "gain": 0.0,
+              "pan": 0.0,
+              "brightness": 0.15
+            },
+            {
+              "t": 1.75,
+              "pitch": -1200.0,
+              "gain": 0.0,
+              "pan": 0.0,
+              "brightness": 0.35
+            },
+            {
+              "t": 3.75,
+              "pitch": -1200.0,
+              "gain": 0.0,
+              "pan": 0.0,
+              "brightness": 0.15
+            },
+            {
+              "t": 4.0,
+              "pitch": -1200.0,
+              "gain": 0.0,
+              "pan": 0.0,
+              "brightness": 0.15
+            },
+            {
+              "t": 4.25,
+              "pitch": -1200.0,
+              "gain": 0.0,
+              "pan": 0.0,
+              "brightness": 0.55
+            },
+            {
+              "t": 6.25,
+              "pitch": -1200.0,
+              "gain": 0.0,
+              "pan": 0.0,
+              "brightness": 0.15
+            },
+            {
+              "t": 7.0,
+              "pitch": -1200.0,
+              "gain": 0.0,
+              "pan": 0.0,
+              "brightness": 0.15
+            },
+            {
+              "t": 7.25,
+              "pitch": -1200.0,
+              "gain": 0.0,
+              "pan": 0.0,
+              "brightness": 0.8
+            },
+            {
+              "t": 9.25,
+              "pitch": -1200.0,
+              "gain": 0.0,
+              "pan": 0.0,
+              "brightness": 0.15
+            },
+            {
+              "t": 10.0,
+              "pitch": -1200.0,
+              "gain": 0.0,
+              "pan": 0.0,
+              "brightness": 0.15
+            }
+          ],
+          "src": null
+        }
+      ]
+    },
+    {
+      "id": "monitor-events",
+      "role": "earcon",
+      "engine": "sonotrace",
+      "instrument": "sine",
+      "gain": 0.0,
+      "pan": 0.0,
+      "pitch_range": null,
+      "events": [
+        {
+          "type": "earcon",
+          "t": 1.5,
+          "kind": "stream",
+          "gain": 0.0,
+          "src": null
+        },
+        {
+          "type": "earcon",
+          "t": 4.0,
+          "kind": "stream",
+          "gain": 0.0,
+          "src": null
+        },
+        {
+          "type": "earcon",
+          "t": 7.0,
+          "kind": "alarm",
+          "gain": 0.0,
+          "src": null
+        }
+      ]
+    }
+  ],
+  "markers": []
+}
