@@ -799,3 +799,12 @@ A05 (render engine, audio backends, export) uses F-050 to F-069.
 - **Evidence level / confidence:** EV-C / Moderate (complete counts from GitHub; merges, not effort; sessions overlapped)
 - **Affects:** the Stage C re-estimate (roadmap §4, implementation plan §4.1); R-24, R-27, R-30; OD-20
 - **Papers:** P02 (development history)
+
+### F-160 · No pure-Rust PDF parser on crates.io fitted an engine crate's constraints, so PLOTSONA reads PDF objects itself
+
+- **Date:** 2026-10-26 · **Phase:** C01 · **Type:** engineering · **Status:** new
+- **Statement:** Of the two maintained pure-Rust PDF parsers checked for PLOTSONA's vector-PDF tier on 2026-10-26, `lopdf` 0.46.0 (MIT, MSRV 1.88) has non-optional `aes`, `cbc`, `md-5`, `rand`, `getrandom` and `log` dependencies, mostly for decryption, and `getrandom` needs an extra feature on `wasm32-unknown-unknown`; `hayro-syntax` 0.8.0 (`Apache-2.0 OR MIT`, few dependencies) declares MSRV 1.92, above the core MSRV of 1.88. Neither fits an engine crate that must build for wasm32 at MSRV 1.88 and refuses encrypted files anyway, so C01-T08 reads PDF objects, object streams and `FlateDecode` itself, on `flate2`, with its own budgets and fuzz target.
+- **Evidence:** crates.io API (`/api/v1/crates/lopdf/0.46.0/dependencies`, `/api/v1/crates/hayro-syntax`), 2026-10-26; the C01-T02 table in [supply-chain-and-licensing.md](../engineering/supply-chain-and-licensing.md#c01-plotsonas-parsers-and-corpus-tools-c01-t02-checked-2026-10-26)
+- **Evidence level / confidence:** EV-C / Strong (declared metadata, checked directly)
+- **Affects:** C01-T08, R-29 (untrusted chart parsers); revisit when the core MSRV reaches 1.92 (hayro-syntax would then replace the own reader)
+- **Papers:** none yet
