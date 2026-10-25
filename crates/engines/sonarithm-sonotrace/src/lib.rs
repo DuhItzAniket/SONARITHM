@@ -7,6 +7,7 @@
 //! |---|---|
 //! | [`live`] | Live encoding: encodes a [`StreamTable`]'s window with the track's encoder and emits the events of new rows only, by sequence number (05 §6) |
 //! | [`transport`] | Scrub grains that preview the value at the cursor (A11Y-09), and long-series windowing |
+//! | [`monitor`] | The monitoring soundscape: an ambient bed whose brightness follows detector events, `E-STREAM` and configured `E-ALARM` earcons, and the experimental comfort report (SDR-35, SDR-39) |
 //! | engine | The `stream` source: a spec's `{"kind": "stream", …}` reads the window of the stream the host connected |
 //!
 //! The network adapters that fill a stream live in `sonarithm-stream` (B06-T02), behind a
@@ -18,6 +19,7 @@
 
 pub mod codes;
 pub mod live;
+pub mod monitor;
 pub mod transport;
 
 use std::sync::Arc;
@@ -81,6 +83,8 @@ impl Engine<DataBundle> for Sonotrace {
     }
 
     fn register(&self, registrar: &mut Registrar<'_, DataBundle>) -> Result<(), RegistryError> {
+        // The monitoring soundscape (B06-T04): tracks only for `mode: "monitoring"`.
+        registrar.context(Arc::new(monitor::MonitorContext));
         registrar.source(
             SourceKind::Stream,
             Arc::new(StreamSource {

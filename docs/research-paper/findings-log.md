@@ -710,3 +710,12 @@ A05 (render engine, audio backends, export) uses F-050 to F-069.
 - **Evidence level / confidence:** EV-C / Strong (a compile-time property, checked by the scenarios)
 - **Affects:** ADR-0017 §1; 09 §1; B01-T03 (the Tauri host keeps `App` behind one lock)
 - **Papers:** none yet
+
+### F-143 · On the monitoring bed, event salience shows as a spectral-centroid rise of 39 %, 51 % and 97 % at constant level
+
+- **Date:** 2026-10-25 · **Phase:** B06 · **Type:** engineering · **Status:** new
+- **Statement:** The B06-T04 bed signals events by brightness, not level (sound-design §10.2, SDR-35). In the golden render of `monitoring-soundscape` (a 10 s triangle bed at A3 with events of low, medium and high salience at 1.5 s, 4 s and 7 s), the per-second spectral centroid is 272 Hz in the first second, rises to 378 Hz, 412 Hz and 538 Hz in the seconds of the three events (39 %, 51 % and 97 % above the first second), and falls back to 284–320 Hz between them, while the bed's gain stays at 0 dB throughout. Whether these steps are noticeable, and calm enough, in a dual task is H-09's question (EXP-008), not this measurement's.
+- **Evidence:** `tests/golden/monitoring-soundscape/case.json` (reference rendered on HW-01, identical at block sizes 64, 256 and 1024); `crates/engines/sonarithm-sonotrace/src/monitor/tests.rs` (`sdr_35_salience_changes_brightness_not_level`)
+- **Evidence level / confidence:** EV-C / Strong for the acoustic measurement; none yet for perception
+- **Affects:** SDR-35, H-09, sound-design §10, HP-11 (listening check)
+- **Papers:** none yet

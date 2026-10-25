@@ -32,11 +32,36 @@ pub const LIVE_EVENT_WITHOUT_ROW: CodeInfo = CodeInfo {
     status: CodeStatus::Active,
 };
 
+/// A spec names a monitoring soundscape this build does not have (sound-design §10.7).
+pub const SOUNDSCAPE_UNAVAILABLE: CodeInfo = CodeInfo {
+    code: "SNR-ENG-240",
+    severity: Severity::Warning,
+    summary: "The soundscape is not available",
+    help: "Only the default soundscape exists until B06's evaluation chooses others; it plays            instead.",
+    rules: &["SDR-35"],
+    status: CodeStatus::Active,
+};
+
+/// The experimental comfort report of a monitoring session (SDR-39, INFER).
+pub const COMFORT_BUDGET: CodeInfo = CodeInfo {
+    code: "SNR-ENG-241",
+    severity: Severity::Info,
+    summary: "Experimental comfort budget",
+    help: "SDR-39 is an inference: the share of the session the soundscape is bright is            reported, not enforced, until an experiment validates a budget (H-12).",
+    rules: &["SDR-39"],
+    status: CodeStatus::Active,
+};
+
 /// Every SONOTRACE code, in ascending order.
 pub const CODES: CodeTable = CodeTable {
     area: Area::Eng,
     owner: "sonarithm-sonotrace",
-    codes: &[STREAM_NOT_CONNECTED, LIVE_EVENT_WITHOUT_ROW],
+    codes: &[
+        STREAM_NOT_CONNECTED,
+        LIVE_EVENT_WITHOUT_ROW,
+        SOUNDSCAPE_UNAVAILABLE,
+        COMFORT_BUDGET,
+    ],
 };
 
 const _: () = assert!(validate(&CODES).is_ok(), "invalid SONOTRACE code table");

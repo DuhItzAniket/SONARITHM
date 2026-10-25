@@ -1,0 +1,35 @@
+{
+  "description": "The monitoring soundscape (B06-T04, SDR-35): a triangle bed on the monitor bus that brightens on three events of low, medium and high salience and settles back, with E-STREAM for the first two and E-ALARM for the configured high-salience alarm.",
+  "source": {
+    "kind": "score"
+  },
+  "sampleRate": 48000,
+  "blockSize": 256,
+  "tolerances": {
+    "nullResidualDbfs": -90.0,
+    "lufsDelta": 0.1,
+    "centroidRelative": 0.01
+  },
+  "reference": {
+    "platform": "windows-x86_64",
+    "sha256": "sha256:5af0ed02e8538930881996bde57edc3e3e3bf154cd4e182fd5bed80a60a739ce",
+    "frames": 480000,
+    "integratedLufs": -17.113,
+    "truePeakDbtp": -6.436,
+    "peakDbfs": -6.437,
+    "rmsDbfs": -19.394,
+    "centroidHz": [
+      272.4,
+      378.3,
+      295.7,
+      285.8,
+      411.8,
+      300.6,
+      284.3,
+      537.6,
+      320.4,
+      274.5
+    ]
+  },
+  "reason": "B06-T04 adds the monitoring soundscape case (new; no previous reference)"
+}

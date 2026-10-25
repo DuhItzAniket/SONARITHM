@@ -42,7 +42,7 @@
 | FR-049 | [08 §4](../architecture/08-interaction-and-accessibility.md#4-announcement-pipeline) | B03 | AT, CD | Planned |
 | FR-050 | [06 §5](../architecture/06-audio-engine.md#5-scheduler-and-transport) | A05, B01 | UT (sample-accurate dispatch), E2E | In progress: play, pause, stop, seek, loop and speed in `sonarithm_render::Graph`, with unit tests (A05-T04); the authoritative transport and stop all audio in `sonarithm-app` through the IPC protocol, with headless scenarios on the null device (`scenario_open_compile_play_seek_stop_export`, `a11y_15_playback_starts_only_on_a_play_command`, `stop_all_pauses_playback`, B01-T01); UI controls after Gate U |
 | FR-051 | [08 §4](../architecture/08-interaction-and-accessibility.md#4-announcement-pipeline) | B03 | AT | In progress (B03-T03, #213): `Composer::paused` announces the current value (snapshot); sequencing on pause in B03-T07 |
-| FR-052 | [07 SONOTRACE](../architecture/07-engines.md) | B06 | IT, CD; EXP for H-09 | Planned |
+| FR-052 | [07 SONOTRACE](../architecture/07-engines.md) | B06 | IT, CD; EXP for H-09 | In progress (B06-T04, #244): the monitoring soundscape (`sdr_35_salience_changes_brightness_not_level`, `sdr_35_only_configured_alarms_sound_urgent`, `sdr_35_the_soundscape_plays_only_in_monitoring_mode`, `sdr_39_the_comfort_budget_is_reported_as_experimental`, golden case `monitoring-soundscape`); rate-limited announcements in T05; H-09 needs EXP-008 |
 | FR-060 | [07 CURVASONA](../architecture/07-engines.md) | C03 | UT, CD (teacher pilot) | Planned |
 | FR-061 | [07 CURVASONA](../architecture/07-engines.md) | C03 | UT (round trip), GT | Planned |
 | FR-070 | [07 AXONOTE](../architecture/07-engines.md) | C04 | PT (never in analysis mode) | Planned |
