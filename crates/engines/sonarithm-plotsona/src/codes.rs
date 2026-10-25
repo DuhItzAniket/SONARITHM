@@ -283,6 +283,51 @@ pub const STALE_CACHE: CodeInfo = CodeInfo {
     status: CodeStatus::Active,
 };
 
+/// Data outside the file (a URL) was not fetched.
+pub const REMOTE_DATA: CodeInfo = CodeInfo {
+    code: "SNR-ENG-346",
+    severity: Severity::Error,
+    summary: "Remote data was not fetched",
+    help: "PLOTSONA reads only the data inside a chart file and never connects anywhere \
+           (ADR-0012, OD-25). Download the data and load it as a file source, or put it in \
+           the chart's JSON.",
+    rules: &[],
+    status: CodeStatus::Active,
+};
+
+/// Data that only a script would produce was not computed.
+pub const SCRIPT_DATA: CodeInfo = CodeInfo {
+    code: "SNR-ENG-347",
+    severity: Severity::Error,
+    summary: "Data built by a script was not run",
+    help: "Chart data made by a function, a signal or a generator needs its script, and \
+           PLOTSONA runs no scripts from files (OD-25). Export the chart's data or JSON.",
+    rules: &[],
+    status: CodeStatus::Active,
+};
+
+/// A data transform or encoding operation was not applied.
+pub const TRANSFORM_NOT_APPLIED: CodeInfo = CodeInfo {
+    code: "SNR-ENG-348",
+    severity: Severity::Warning,
+    summary: "A data transform was not applied",
+    help: "Transforms that need an expression language (filters, formulas, time units, \
+           bins) are not run, so the values are the stored data before them. Check them \
+           against the chart.",
+    rules: &[],
+    status: CodeStatus::Active,
+};
+
+/// Some values could not be read.
+pub const VALUE_UNREADABLE: CodeInfo = CodeInfo {
+    code: "SNR-ENG-349",
+    severity: Severity::Warning,
+    summary: "Some values could not be read",
+    help: "Values in a form PLOTSONA does not read are left out as gaps, never guessed.",
+    rules: &[],
+    status: CodeStatus::Active,
+};
+
 /// Every PLOTSONA code, in ascending order.
 pub const CODES: CodeTable = CodeTable {
     area: Area::Eng,
@@ -314,6 +359,10 @@ pub const CODES: CodeTable = CodeTable {
         WORKBOOK_UNREADABLE,
         VALUES_SOURCE,
         STALE_CACHE,
+        REMOTE_DATA,
+        SCRIPT_DATA,
+        TRANSFORM_NOT_APPLIED,
+        VALUE_UNREADABLE,
     ],
 };
 

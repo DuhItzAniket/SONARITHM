@@ -1,0 +1,39 @@
+{
+ "$schema": "https://vega.github.io/schema/vega-lite/v6.json",
+ "title": "Fruit sold",
+ "data": {
+  "values": [
+   {
+    "fruit": "apple",
+    "sold": 42.0
+   },
+   {
+    "fruit": "banana",
+    "sold": 57.0
+   },
+   {
+    "fruit": "cherry",
+    "sold": 18.0
+   },
+   {
+    "fruit": "date",
+    "sold": 33.0
+   },
+   {
+    "fruit": "fig",
+    "sold": 9.0
+   }
+  ]
+ },
+ "mark": "bar",
+ "encoding": {
+  "x": {
+   "field": "fruit",
+   "type": "nominal"
+  },
+  "y": {
+   "field": "sold",
+   "type": "quantitative"
+  }
+ }
+}

@@ -3426,6 +3426,7 @@ dependencies = [
  "sonarithm-export",
  "sonarithm-i18n",
  "sonarithm-numisona",
+ "sonarithm-plotsona",
  "sonarithm-render",
  "sonarithm-sonotrace",
  "sonarithm-spec",

@@ -1,0 +1,92 @@
+{
+ "$schema": "https://vega.github.io/schema/vega-lite/v6.json",
+ "title": "Rain, first quarter",
+ "datasets": {
+  "rain": [
+   {
+    "month": "Jan",
+    "region": "north",
+    "rain": 99.2
+   },
+   {
+    "month": "Jan",
+    "region": "south",
+    "rain": 49.2
+   },
+   {
+    "month": "Jan",
+    "region": "east",
+    "rain": 38.8
+   },
+   {
+    "month": "Feb",
+    "region": "north",
+    "rain": 94.9
+   },
+   {
+    "month": "Feb",
+    "region": "south",
+    "rain": 64.2
+   },
+   {
+    "month": "Feb",
+    "region": "east",
+    "rain": 45.4
+   },
+   {
+    "month": "Mar",
+    "region": "north",
+    "rain": 80.4
+   },
+   {
+    "month": "Mar",
+    "region": "south",
+    "rain": 60.9
+   },
+   {
+    "month": "Mar",
+    "region": "east",
+    "rain": 58.0
+   },
+   {
+    "month": "Apr",
+    "region": "north",
+    "rain": 71.8
+   },
+   {
+    "month": "Apr",
+    "region": "south",
+    "rain": 65.0
+   },
+   {
+    "month": "Apr",
+    "region": "east",
+    "rain": 67.5
+   }
+  ]
+ },
+ "data": {
+  "name": "rain"
+ },
+ "mark": "bar",
+ "encoding": {
+  "x": {
+   "field": "month",
+   "type": "ordinal",
+   "sort": null,
+   "title": "Month"
+  },
+  "y": {
+   "field": "rain",
+   "type": "quantitative",
+   "title": "Rain (mm)"
+  },
+  "xOffset": {
+   "field": "region"
+  },
+  "color": {
+   "field": "region",
+   "type": "nominal"
+  }
+ }
+}

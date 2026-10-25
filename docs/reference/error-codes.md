@@ -204,6 +204,10 @@ Owner: `sonarithm-plotsona`. Numbers SNR-ENG-300 to SNR-ENG-399.
 | `SNR-ENG-343` | warning | The chart's workbook could not be read | The values cached in the chart are used instead; they are what the chart shows. | — |
 | `SNR-ENG-344` | info | Values were read from the chart's workbook | The workbook is the data the chart was built from, so it is preferred to the            chart's cache. | — |
 | `SNR-ENG-345` | warning | The chart's cache differs from its workbook | The workbook's values were used. What the chart shows may be older until the            file is opened and saved in its program. | — |
+| `SNR-ENG-346` | error | Remote data was not fetched | PLOTSONA reads only the data inside a chart file and never connects anywhere (ADR-0012, OD-25). Download the data and load it as a file source, or put it in the chart's JSON. | — |
+| `SNR-ENG-347` | error | Data built by a script was not run | Chart data made by a function, a signal or a generator needs its script, and PLOTSONA runs no scripts from files (OD-25). Export the chart's data or JSON. | — |
+| `SNR-ENG-348` | warning | A data transform was not applied | Transforms that need an expression language (filters, formulas, time units, bins) are not run, so the values are the stored data before them. Check them against the chart. | — |
+| `SNR-ENG-349` | warning | Some values could not be read | Values in a form PLOTSONA does not read are left out as gaps, never guessed. | — |
 
 Owner: `sonarithm-echometric`. Numbers SNR-ENG-600 to SNR-ENG-699.
 
