@@ -17,9 +17,26 @@ fn network_probe_connects() {
     let Ok(address) = NOWHERE.parse::<SocketAddr>() else {
         return;
     };
-    // Both attempts are expected to fail (or be blocked); only the attempt matters.
-    let _ = TcpStream::connect_timeout(&address, Duration::from_millis(500));
+    // Both attempts are expected to fail (or be blocked); only the attempt matters. Each
+    // outcome is printed, so the harness can tell a sandbox's refusal (EPERM) from a
+    // timeout when the OS log is late (macOS).
+    let tcp = TcpStream::connect_timeout(&address, Duration::from_millis(500)).err();
+    println!("network-probe tcp: {}", outcome(tcp.as_ref()));
     if let Ok(socket) = UdpSocket::bind("0.0.0.0:0") {
-        let _ = socket.send_to(b"sonarithm network-deny probe", address);
+        let udp = socket
+            .send_to(b"sonarithm network-deny probe", address)
+            .err();
+        println!("network-probe udp: {}", outcome(udp.as_ref()));
+    }
+}
+
+/// `sent`, or the OS error number, such as `os error 1` for EPERM.
+fn outcome(err: Option<&std::io::Error>) -> String {
+    match err {
+        None => "sent".to_owned(),
+        Some(err) => err.raw_os_error().map_or_else(
+            || format!("{:?}", err.kind()),
+            |code| format!("os error {code}"),
+        ),
     }
 }
