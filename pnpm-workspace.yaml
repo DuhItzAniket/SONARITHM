@@ -15,6 +15,9 @@ catalog:
   eslint-plugin-jsx-a11y: ^6.10.2
   eslint-plugin-react-hooks: ^7.1.1
   prettier: ^3.9.10
+  # CSS lint: no hard-coded colours, spacing or durations, and the design-language
+  # anti-patterns (coding-standards §12.6; B02-T01).
+  stylelint: ^17.16.0
   # TypeScript stays on 6.0.x while typescript-eslint supports only TypeScript < 6.1.
   typescript: ~6.0.3
   typescript-eslint: ^8.71.2

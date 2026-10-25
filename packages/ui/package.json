@@ -6,15 +6,21 @@
   "license": "MIT OR Apache-2.0",
   "type": "module",
   "exports": {
-    ".": "./src/index.ts"
+    ".": "./src/index.ts",
+    "./tokens.css": "./src/generated/tokens.css",
+    "./stylelint-config": "./stylelint/config.js"
   },
   "scripts": {
-    "lint": "eslint --max-warnings 0 . && prettier --check .",
-    "typecheck": "tsc --noEmit"
+    "lint": "eslint --max-warnings 0 . && prettier --check . && stylelint --allow-empty-input \"**/*.css\"",
+    "typecheck": "tsc --noEmit",
+    "test": "node --test \"test/**/*.test.ts\"",
+    "tokens": "node tokens/generate.ts"
   },
   "devDependencies": {
+    "@types/node": "catalog:",
     "eslint": "catalog:",
     "prettier": "catalog:",
+    "stylelint": "catalog:",
     "typescript": "catalog:"
   }
 }

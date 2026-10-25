@@ -59,7 +59,7 @@
 | Framework | **React** + React Compiler | 19.2 | Adopt | MIT | B01 | |
 | Components | **React Aria Components** | RAC 1.17+ | Adopt | Apache-2.0 | B02 | Single primitive layer; Base UI only for trivial primitives if ever needed |
 | App state | Zustand; XState | —; v5 | Adopt | MIT | B01 | Rust is authoritative for session and transport |
-| Styling | CSS Modules + cascade layers + OKLCH token generator | — | Adopt | — | B02 | Tailwind v4 only with a fully custom theme (not planned) |
+| Styling | CSS Modules + cascade layers + OKLCH token generator (`packages/ui/tokens`, B02-T01) | — | Adopt | — | B02 | Tailwind v4 only with a fully custom theme (not planned) |
 | Plots | uPlot + custom WebGL2 layer | uPlot latest | Adopt | MIT | B04 | ECharts 6 Assess for breadth charts; WebGPU optional |
 | Spec editor | CodeMirror 6 | — | Adopt | MIT | B05 | Monaco rejected as heavier |
 | Layout | Fixed regions + splitters | — | Adopt | — | B02 | dockview's keyboard docking is Enterprise-only, hence fixed regions |
@@ -67,7 +67,7 @@
 | Fonts | IBM Plex Sans + IBM Plex Mono (WOFF2, bundled) | — | Adopt | OFL-1.1 | B02 | Alternative: Source Sans 3 + JetBrains Mono |
 | Package manager | pnpm (workspaces) | 12.x | Adopt | MIT | A01 | |
 | JS runtime (tooling and CI) | Node.js, an even-numbered **LTS** line | Node 24 LTS; move to Node 26 once it enters LTS (expected late Oct 2026; verify in A01) | Adopt | MIT | A01 | Odd lines (such as the Node 25 on the baseline dev machine) never become LTS. Range pinned in the `engines` field |
-| Lint and format (frontend) | ESLint + typescript-eslint + jsx-a11y (strict) + react-hooks; Prettier; Stylelint (no hard-coded colours or spacing) | — | Adopt | MIT | A01/B02 | Biome rejected: weaker accessibility rule coverage ([coding-standards §12.2](coding-standards.md#122-linting-and-formatting)) |
+| Lint and format (frontend) | ESLint + typescript-eslint + jsx-a11y (strict) + react-hooks; Prettier; Stylelint 17.16 (no hard-coded colours or spacing; design-language anti-patterns) | Stylelint 17.16 | Adopt | MIT | A01/B02 | Biome rejected: weaker accessibility rule coverage ([coding-standards §12.2](coding-standards.md#122-linting-and-formatting)) |
 | Python tooling | ruff (lint and format); mypy (stubs); pytest | — | Adopt | MIT | A07 | NumPy-style docstrings |
 
 ## 4. Quality, testing and supply chain
