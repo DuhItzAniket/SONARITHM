@@ -36,6 +36,7 @@ Write an ADR when a decision is hard to reverse, affects several crates or engin
 | [0017](0017-ipc-protocol-v1.md) | IPC protocol v1: one request type in the headless app core | accepted (2026-10-21, coordinator under owner delegation) | B01-T01, B01-T02, B04-T03 |
 | [0018](0018-project-format-v1.md) | Project format v1: `.sonarithm` bundles per RFC-0002 | accepted (2026-10-21, coordinator under owner delegation) | B05-T04 |
 | [0020](0020-profile-format-v1.md) | Profile format v1 and the layers of effective settings | accepted (2026-10-21, coordinator under owner delegation) | B03-T08 |
+| [0022](0022-clean-room-raster-digitizer.md) | Clean-room re-implementation of the raster digitizer | proposed | Accepted by the coordinator before C02-T03; every C02 raster PR lists its register sources |
 
 ## Process
 

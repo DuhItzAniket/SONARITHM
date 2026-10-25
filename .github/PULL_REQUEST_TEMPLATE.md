@@ -20,6 +20,17 @@ docs/planning/implementation-plan.md, the task ID (for example "Implements A06-T
 Write "none" for maintenance.
 -->
 
+## Clean-room sources
+
+<!--
+Raster digitizer code (PLOTSONA C02) only; otherwise write "N/A".
+List the register IDs used (docs/research/clean-room/raster-digitizer-sources.md), for example
+"CR-01, CR-03", and keep the statement below. Procedure: docs/engineering/supply-chain-and-licensing.md
+(Clean-room procedure, ADR-0022).
+-->
+
+N/A. <!-- or: Sources: CR-nn, CR-nn. I have not read WebPlotDigitizer's or Engauge Digitizer's source code. -->
+
 ## Type of change
 
 - [ ] `feat`: new capability

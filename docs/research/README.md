@@ -19,6 +19,7 @@ This folder holds the evidence base for SONARITHM: the kickoff research, the des
 | [notes/05-desktop-frontend-stack.md](notes/05-desktop-frontend-stack.md) | Desktop shell, frontend framework, accessible component libraries, visualization performance, editors, design language and frontend testing. |
 | [notes/06-chart-extraction-ai.md](notes/06-chart-extraction-ai.md) | Chart digitization and chart-to-table models, 2026 benchmarks and failure modes, local inference, exact extraction paths and LLM-assisted features. |
 | [notes/07-engineering-publication.md](notes/07-engineering-publication.md) | Engineering, release and governance practice; research-software practice (§6); publication venues, toolkit evaluation and ethics (§7); the publication plan (§9). |
+| [clean-room/raster-digitizer-sources.md](clean-room/raster-digitizer-sources.md) | The sources register for PLOTSONA's raster digitizer: every document and paper that may inform C02 code, under the clean-room procedure of [ADR-0022](../decisions/0022-clean-room-raster-digitizer.md). A living register, unlike the frozen notes. |
 
 ## How to update the research
 
