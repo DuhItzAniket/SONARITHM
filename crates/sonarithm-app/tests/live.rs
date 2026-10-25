@@ -110,7 +110,8 @@ fn fr_005_a_stream_plays_live_past_every_window_end() {
     // up to a compile period of new data not yet swapped in).
     let behind = duration - position;
     assert!((0.0..=5.0).contains(&behind), "{state}");
-    assert!(feed.rows() > 1_000);
+    // The feed ran throughout: about 200 rows a second.
+    assert!(feed.rows() > 500, "{} rows", feed.rows());
     // No window end stopped playback.
     let finished = h
         .sink

@@ -117,7 +117,7 @@ impl Sonarithm {
 
     /// [`Sonarithm::compile_with`] for a spec whose source is a live stream
     /// (`{"kind": "stream", …}`): SONOTRACE reads `window`, a snapshot of the stream's rows
-    /// ([`StreamTable::snapshot`]), so the stream keeps receiving while this compiles
+    /// ([`StreamTable::snapshot`](sonarithm_data::StreamTable::snapshot)), so the stream keeps receiving while this compiles
     /// (B06-T07). Each call compiles one window; live monitoring calls it as rows arrive.
     ///
     /// # Errors

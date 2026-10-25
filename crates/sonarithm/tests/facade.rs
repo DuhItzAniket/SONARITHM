@@ -383,8 +383,13 @@ const LIVE: &str = r#"{
 #[test]
 fn a_stream_spec_compiles_against_the_window_it_is_given() {
     let csv = "t,v\n0,1\n1,2\n2,3\n3,4\n";
-    let loaded = sonarithm::read_bytes(csv.as_bytes(), Format::Csv, "live.csv", &ReadOptions::default())
-        .unwrap();
+    let loaded = sonarithm::read_bytes(
+        csv.as_bytes(),
+        Format::Csv,
+        "live.csv",
+        &ReadOptions::default(),
+    )
+    .unwrap();
     let table = loaded.bundle.primary().unwrap();
     let mut stream = sonarithm::StreamTable::new(
         sonarithm_core::TableId(1),
@@ -399,7 +404,9 @@ fn a_stream_spec_compiles_against_the_window_it_is_given() {
     let spec = Spec::from_json_str(LIVE).unwrap();
     let snr = Sonarithm::new();
     let window = stream.snapshot();
-    let compiled = snr.compile_stream(&spec, &Datasets::new(), &window).unwrap();
+    let compiled = snr
+        .compile_stream(&spec, &Datasets::new(), &window)
+        .unwrap();
     assert_eq!(compiled.score().tracks[0].events.len(), 3);
     let recent = snr
         .compile_stream(&spec, &Datasets::new(), &window.within("t", 1.0))

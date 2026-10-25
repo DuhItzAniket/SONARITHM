@@ -85,6 +85,10 @@ impl Sample {
     }
 }
 
+#[expect(
+    clippy::too_many_lines,
+    reason = "the soak's steps read best in order: set up, run, drain, judge"
+)]
 fn main() -> ExitCode {
     let args: Vec<String> = std::env::args().skip(1).collect();
     let value = |flag: &str| {
@@ -269,7 +273,7 @@ fn window_compile_ms(file: &Path, rate: f64) -> Vec<f64> {
         .with_navigation()
         .build()
         .expect("the facade");
-    let spec = sonarithm::Spec::from_json_str(&soak_spec(file).to_string()).expect("the spec");
+    let spec = sonarithm::Spec::from_json_str(soak_spec(file).to_string()).expect("the spec");
     (0..20)
         .map(|_| {
             let start = Instant::now();

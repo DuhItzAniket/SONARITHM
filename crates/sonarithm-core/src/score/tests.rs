@@ -95,7 +95,10 @@ fn an_offset_moves_every_event_and_the_end() {
     let ScoreEvent::Glide(glide) = &after.tracks[0].events[4] else {
         unreachable!("the fixture ends with a glide")
     };
-    assert_eq!((glide.t1, glide.curve[1].t), (Seconds(11.75), Seconds(11.75)));
+    assert_eq!(
+        (glide.t1, glide.curve[1].t),
+        (Seconds(11.75), Seconds(11.75))
+    );
     assert_eq!(after.markers[0].t, Seconds(11.0));
     for nothing in [0.0, -1.0, f64::NAN, f64::INFINITY] {
         let mut same = before.clone();
