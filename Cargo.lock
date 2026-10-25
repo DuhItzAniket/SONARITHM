@@ -1264,7 +1264,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "39cab71617ae0d63f51a36d69f866391735b51691dbda63cf6f96d042b63efeb"
 dependencies = [
  "libc",
- "windows-sys 0.52.0",
+ "windows-sys 0.61.2",
 ]
 
 [[package]]
@@ -2961,6 +2961,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "roxmltree"
+version = "0.21.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "9da7f59328b09405b181fee1018925fad50f157afb43c0c0f5c522c256dd5907"
+dependencies = [
+ "memchr",
+]
+
+[[package]]
 name = "rtrb"
 version = "0.4.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3008,7 +3017,7 @@ dependencies = [
  "errno",
  "libc",
  "linux-raw-sys",
- "windows-sys 0.52.0",
+ "windows-sys 0.61.2",
 ]
 
 [[package]]
@@ -3617,6 +3626,23 @@ dependencies = [
 ]
 
 [[package]]
+name = "sonarithm-plotsona"
+version = "0.0.0"
+dependencies = [
+ "arrow-array",
+ "arrow-schema",
+ "insta",
+ "proptest",
+ "roxmltree",
+ "serde",
+ "serde_json",
+ "sonarithm-core",
+ "sonarithm-data",
+ "sonarithm-spec",
+ "zip",
+]
+
+[[package]]
 name = "sonarithm-py"
 version = "0.0.0"
 dependencies = [
@@ -3813,7 +3839,7 @@ dependencies = [
  "getrandom 0.4.3",
  "once_cell",
  "rustix",
- "windows-sys 0.52.0",
+ "windows-sys 0.61.2",
 ]
 
 [[package]]
@@ -4384,7 +4410,7 @@ version = "0.1.11"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "c2a7b1c03c876122aa43f3020e6c3c3ee5c05081c9a00739faf7503aeba10d22"
 dependencies = [
- "windows-sys 0.52.0",
+ "windows-sys 0.61.2",
 ]
 
 [[package]]
@@ -4778,6 +4804,7 @@ dependencies = [
  "sonarithm-echometric",
  "sonarithm-export",
  "sonarithm-numisona",
+ "sonarithm-plotsona",
  "sonarithm-render",
  "sonarithm-sonotrace",
  "sonarithm-spec",

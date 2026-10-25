@@ -89,6 +89,8 @@ Each engine is one crate under `crates/engines/` and implements `Engine`. This p
 
 **Tests:** extraction corpora with ground truth (exact ≤ 0.5% error; raster median ≤ 2%, C02 exit); fuzzing of every parser (untrusted input); provenance-class assertions.
 
+**As built (C01-T03).** `sonarithm-plotsona` registers the `chart` source (`Plotsona::with_base_dir`, paths relative to the spec) and exposes `extract(bytes, locator, options)`, which returns the chart (`ChartData`: series, points, provenance), a bundle and an `ExtractionReport` (container, tier, series with class, confidence and residual, points per class, diagnostics). `detect` sniffs the container from the bytes, never the extension: Office packages by their main part, PDF, PNG and JPEG by signature, SVG or HTML from the first 4 KiB of markup, and chart JSON by its keys (`$schema`, `mark`, `marks`, Plotly traces, Highcharts `series`). `Budgets` cap the file size, zip entries, each inflated part, the inflated total, the compression ratio of parts over 1 MiB (200:1), XML nodes, nesting depth (256), points and work steps; the work budget counts steps instead of reading a clock, so a file always stops at the same point (ADR-0013). XML refuses any DTD, so no entity expands and no external reference resolves. The long table has `series`, `x` (numbers, millisecond timestamps or labels) and `y`, and always keeps its provenance columns, even when every row is `exact`. Codes `SNR-ENG-300` to `312`. Until a tier's extractor lands, its files are still opened and parsed under the budgets and then reported as not available (`SNR-ENG-308`).
+
 ## CURVASONA (`sonarithm-curvasona`), C03
 
 **Registers:** Source `function`; Analyzer `critical-points`; Encoder `audify`; audifier VoiceProvider.
