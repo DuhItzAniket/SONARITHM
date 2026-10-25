@@ -37,7 +37,6 @@ function sampleArgs(style: string): MessageArgs {
     confidence: { number: 0.82 },
     key: "↓",
     kind: "point",
-    stream: "6",
     detail: "7",
     class: "cv_estimate",
     axis: "x",

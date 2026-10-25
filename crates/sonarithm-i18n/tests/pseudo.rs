@@ -39,7 +39,6 @@ fn sample_args(style: UnitStyle) -> Args {
         .number("confidence", 0.82)
         .text("key", "↓")
         .text("kind", "point")
-        .text("stream", "6")
         .text("detail", "7")
         .text("class", "cv_estimate")
         .text("axis", "x")
