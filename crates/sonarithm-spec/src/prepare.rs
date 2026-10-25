@@ -11,7 +11,7 @@ use sonarithm_core::digest::Sha256Digest;
 use crate::canonical::to_canonical;
 use crate::codes;
 use crate::defaults::apply_defaults;
-use crate::migrate::migrate;
+use crate::migrate::migrate_for_reading;
 use crate::parse::{one, parse_value, syntax};
 use crate::spec::Spec;
 use crate::validate::{FieldCatalog, validate};
@@ -50,7 +50,7 @@ pub fn prepare(text: &str, fields: Option<&FieldCatalog>) -> Result<Prepared, Di
 /// As for [`prepare`].
 pub fn prepare_value(value: Value, fields: Option<&FieldCatalog>) -> Result<Prepared, Diagnostics> {
     let mut diagnostics = Diagnostics::new();
-    let migrated = migrate(value).map_err(|diagnostic| one(*diagnostic))?;
+    let migrated = migrate_for_reading(value).map_err(|diagnostic| one(*diagnostic))?;
     if let [first, .., last] = migrated.path.as_slice() {
         diagnostics.push(Diagnostic::new(
             &codes::MIGRATED_VERSION,

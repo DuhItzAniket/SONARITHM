@@ -275,6 +275,62 @@ code!(
 );
 
 code!(
+    /// Unknown scale tonic or mode (RFC-0004 §7).
+    UNKNOWN_SCALE_NAME, "SNR-SPEC-043", Error,
+    "Unknown scale tonic or mode",
+    "Write the scale as a tonic and a mode, such as \"C major\" or \"D minor pentatonic\". Tonics are A to G with an optional # or b. Modes: major, minor, harmonic minor, melodic minor, dorian, phrygian, lydian, mixolydian, locrian, major pentatonic, minor pentatonic, blues, whole tone, chromatic. Or give custom cents: {\"tonic\": \"D\", \"cents\": [0, 200, …]}.",
+    ["SDR-10"]
+);
+
+code!(
+    /// Invalid tuning, or a tuning on a custom scale (RFC-0004 §7).
+    INVALID_TUNING, "SNR-SPEC-044", Error,
+    "Invalid tuning",
+    "Use \"12-TET\" or {\"cents\": [0, …]} with twelve strictly increasing values below 1200 (\"just\" waits for a cited ratio table, RFC-0004 Q13). A custom scale carries its own cents, so give it no tuning.",
+    ["SDR-10"]
+);
+
+code!(
+    /// A lint rule ID the lint does not implement (RFC-0004 §4).
+    UNKNOWN_LINT_RULE, "SNR-SPEC-045", Warning,
+    "Unknown lint rule",
+    "Lint rules are named by design-rule ID, such as SDR-17 or A11Y-14. This lint does not implement the rule, so the setting has no effect.",
+    []
+);
+
+code!(
+    /// A lint suppression without a reason (RFC-0004 §4).
+    SUPPRESSION_WITHOUT_REASON, "SNR-SPEC-046", Error,
+    "A lint suppression has no reason",
+    "Say why the rule does not apply in `reason`; the lint reports it whenever it would have warned.",
+    []
+);
+
+code!(
+    /// An invalid chart calibration (RFC-0004 §5).
+    INVALID_CALIBRATION, "SNR-SPEC-054", Error,
+    "Invalid chart calibration",
+    "Give `axes.x` and `axes.y`, each with a kind (linear, log, date, category) and at least two anchors {\"at\": [x, y], \"value\": …} at distinct points with distinct values; log values above zero, dates in ISO 8601.",
+    ["SDR-01"]
+);
+
+code!(
+    /// An invalid chart correction (RFC-0004 §6).
+    INVALID_CORRECTION, "SNR-SPEC-055", Error,
+    "Invalid chart correction",
+    "Write `corrections` as {\"edits\": [...]}; each edit has an `op` (add, move, delete, retype), the `series`, and for move, delete and retype the `point` index and the extracted value in `was`.",
+    ["SDR-01"]
+);
+
+code!(
+    /// `corrections.path` is reserved for RFC-0005 (RFC-0004 §6).
+    CORRECTION_FILE_RESERVED, "SNR-SPEC-056", Error,
+    "Correction files are not available yet",
+    "`corrections.path` is reserved for the correction file of RFC-0005; write the edits inline in `corrections.edits`.",
+    []
+);
+
+code!(
     /// A data-independent default was applied (05 §7: explain what you assumed).
     DEFAULT_APPLIED, "SNR-SPEC-080", Info,
     "Default applied",
@@ -310,10 +366,17 @@ pub const CODES: CodeTable = CodeTable {
         MUSIC_OUTSIDE_PRESENTATION,
         L4_DESCRIPTION,
         FLAGGED_CONCEPT,
+        UNKNOWN_SCALE_NAME,
+        INVALID_TUNING,
+        UNKNOWN_LINT_RULE,
+        SUPPRESSION_WITHOUT_REASON,
         INVALID_PACE,
         INVALID_SOURCE,
         ABSOLUTE_PATH,
         INVALID_TRANSFORM,
+        INVALID_CALIBRATION,
+        INVALID_CORRECTION,
+        CORRECTION_FILE_RESERVED,
         INVALID_OUTPUT,
         INVALID_PLAYBACK,
         UNKNOWN_FIELD,

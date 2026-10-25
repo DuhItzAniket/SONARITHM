@@ -306,11 +306,13 @@ pub struct Music {
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 #[non_exhaustive]
 pub struct Quantize {
-    /// The scale, such as `C major pentatonic`.
-    pub scale: String,
-    /// The tuning, such as `12-TET`.
+    /// The scale: a name such as `C major pentatonic`, or custom cents (RFC-0004 §7).
+    #[schemars(with = "crate::v02::ScaleSpec")]
+    pub scale: crate::json::JsonValue,
+    /// The tuning: `12-TET` (default for named scales), `just`, or custom cents.
     #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub tuning: Option<String>,
+    #[schemars(with = "Option<crate::v02::TuningSpec>")]
+    pub tuning: Option<crate::json::JsonValue>,
 }
 
 /// Tempo.

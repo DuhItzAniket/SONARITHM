@@ -2,8 +2,8 @@
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
 //! The `SNR-COMP` diagnostic codes. 010–019: engines and the registry (05 §3); 020–029:
-//! the compile pipeline and its budget. A released code is never reused
-//! (coding-standards §4.2).
+//! the compile pipeline and its budget; 030–039: spec v0.2 templates, instruments and
+//! corrections (RFC-0004 §8). A released code is never reused (coding-standards §4.2).
 
 use sonarithm_core::codes::{Area, CodeInfo, CodeStatus, CodeTable, validate};
 use sonarithm_core::diagnostic::Severity;
@@ -123,6 +123,24 @@ code!(
     "Provide the data under this ID (in Python, `data={\"main\": df}`), or use a `file` or `inline` source."
 );
 
+code!(
+    /// A `template` names an ID the registry does not have (RFC-0004 §2).
+    UNKNOWN_TEMPLATE,
+    "SNR-COMP-030",
+    "Unknown template",
+    "Use a template the registry lists (NUMISONA's and PLOTSONA's chart-type templates), or write `tracks`."
+);
+
+/// A chart correction was not applied (RFC-0004 §6).
+pub const CORRECTION_NOT_APPLIED: CodeInfo = CodeInfo {
+    severity: Severity::Warning,
+    ..code_info(
+        "SNR-COMP-036",
+        "A chart correction was not applied",
+        "An edit applies only to the point it was made on, checked by its `was` value; re-make the edit on the current extraction.",
+    )
+};
+
 const fn code_info(code: &'static str, summary: &'static str, help: &'static str) -> CodeInfo {
     CodeInfo {
         code,
@@ -152,6 +170,8 @@ pub const CODES: CodeTable = CodeTable {
         DATA_UNREADABLE,
         TRANSFORM_UNREADABLE,
         UNKNOWN_DATASET,
+        UNKNOWN_TEMPLATE,
+        CORRECTION_NOT_APPLIED,
     ],
 };
 

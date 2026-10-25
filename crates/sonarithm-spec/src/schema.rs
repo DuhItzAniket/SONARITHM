@@ -2,7 +2,9 @@
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
 //! The generated JSON Schema of the spec (04 §1). `cargo xtask codegen` writes it to
-//! `schemas/sonarithm-spec-0.1.schema.json`, and CI fails when the committed file is stale.
+//! `schemas/sonarithm-spec-0.2.schema.json`, and CI fails when the committed file is stale.
+//! The v0.1 schema stays committed beside it, unchanged, for editors of older files
+//! (RFC-0004 §9).
 
 use schemars::Schema;
 use schemars::generate::SchemaSettings;
@@ -12,7 +14,7 @@ use serde_json::Value;
 use crate::spec::Spec;
 
 /// Where the schema is committed, relative to the workspace root.
-pub const SCHEMA_PATH: &str = "schemas/sonarithm-spec-0.1.schema.json";
+pub const SCHEMA_PATH: &str = "schemas/sonarithm-spec-0.2.schema.json";
 
 /// The JSON Schema (draft 2020-12) of [`Spec`], pretty-printed with a trailing newline.
 #[must_use]
@@ -74,9 +76,14 @@ mod tests {
         assert_eq!(schema["additionalProperties"], false);
         assert!(schema["patternProperties"]["^x-"].is_object());
         let required = schema["required"].as_array().unwrap();
-        for key in ["specVersion", "data", "tracks"] {
+        for key in ["specVersion", "data"] {
             assert!(required.iter().any(|k| k == key), "{key} is required");
         }
+        // `tracks` or a `template` (v0.2).
+        assert_eq!(
+            schema["anyOf"],
+            serde_json::json!([{ "required": ["tracks"] }, { "required": ["template"] }])
+        );
     }
 
     #[test]

@@ -10,6 +10,8 @@
 //! factor. Channels a track does not write are not added; the encoder's channel defaults
 //! are pinned by its engine version in the Score header.
 
+use std::collections::BTreeMap;
+
 use sonarithm_core::diagnostic::{Diagnostic, Diagnostics, SpecPointer};
 use sonarithm_core::ids::RuleId;
 
@@ -104,7 +106,86 @@ pub fn apply_defaults(spec: &Spec) -> (Spec, Diagnostics) {
     tracks(&mut spec, &mut a);
     context(&mut spec, &mut a);
     rest(&mut spec, &mut a);
+    if spec.spec_version >= sonarithm_core::score::SpecVersion::V0_2 {
+        v0_2(&mut spec, &mut a);
+    }
     (spec, a.out)
+}
+
+/// The data-independent defaults of the sections v0.2 adds, filled only where a section is
+/// present (RFC-0004 §9). A v0.1 document gets none, so its canonical form and spec hash
+/// stay as they were.
+fn v0_2(spec: &mut Spec, a: &mut Applied) {
+    use crate::json::JsonValue;
+    use crate::v02::Instrument;
+
+    let root = SpecPointer::root();
+    for (name, instrument) in &mut spec.instruments {
+        let at = root.key("instruments").key(name);
+        match instrument {
+            Instrument::Soundfont { bank, program, .. } => {
+                a.fill(bank, 0, at.key("bank"), "bank 0", &[]);
+                a.fill(program, 0, at.key("program"), "program 0", &[]);
+            }
+        }
+    }
+    if let Some(lint) = &mut spec.lint {
+        let at = root.key("lint");
+        a.fill(
+            &mut lint.rules,
+            BTreeMap::new(),
+            at.key("rules"),
+            "every lint rule at its own level",
+            &[],
+        );
+        a.fill(
+            &mut lint.suppress,
+            Vec::new(),
+            at.key("suppress"),
+            "no lint suppressions",
+            &[],
+        );
+        a.fill(
+            &mut lint.experimental,
+            false,
+            at.key("experimental"),
+            "experimental lint rules off",
+            &[],
+        );
+    }
+    if let Some(quantize) = spec.music.as_mut().and_then(|m| m.quantize.as_mut())
+        && matches!(quantize.scale, JsonValue::String(_))
+    {
+        let at = root.key("music").key("quantize").key("tuning");
+        a.fill(
+            &mut quantize.tuning,
+            JsonValue::String("12-TET".to_owned()),
+            at,
+            "12-TET tuning",
+            &["SDR-10"],
+        );
+    }
+    if let crate::data::Source::Chart {
+        calibration: Some(JsonValue::Object(calibration)),
+        ..
+    } = &mut spec.data.source
+    {
+        let at = root.key("data").key("source").key("calibration");
+        for (key, value, what) in [
+            (
+                "system",
+                JsonValue::String("cartesian".to_owned()),
+                "a cartesian calibration",
+            ),
+            ("page", JsonValue::Number(1.0), "page 1"),
+        ] {
+            let mut slot = calibration.get(key).cloned();
+            a.fill(&mut slot, value, at.key(key), what, &["SDR-01"]);
+            if let Some(value) = slot {
+                calibration.insert(key.to_owned(), value);
+            }
+        }
+    }
 }
 
 /// Scale defaults for every mapped channel; range, space and polarity for pitch.

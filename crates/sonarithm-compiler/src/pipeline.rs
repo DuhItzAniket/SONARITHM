@@ -200,6 +200,33 @@ struct Run<'a, D> {
 
 impl<D: CompilerData> Run<'_, D> {
     fn stages(&mut self, spec: &Spec, spec_hash: Sha256Digest) -> Result<Finished, Stop> {
+        // Templates and chart corrections are spec v0.2 (RFC-0004); this compiler does not
+        // apply them yet, and says so rather than compiling something else.
+        if let Some(template) = &spec.template {
+            return Err(Stop::Error(Box::new(
+                Diagnostic::new(
+                    &codes::UNKNOWN_TEMPLATE,
+                    format!(
+                        "Template `{}` is not in this build's template registry; write `tracks` instead.",
+                        template.id
+                    ),
+                )
+                .at(SpecPointer::root().key("template").key("id")),
+            )));
+        }
+        if let sonarithm_spec::Source::Chart {
+            corrections: Some(_),
+            ..
+        } = &spec.data.source
+        {
+            self.diagnostics.push(
+                Diagnostic::new(
+                    &codes::CORRECTION_NOT_APPLIED,
+                    "This build does not apply chart corrections yet; the chart is used as extracted.",
+                )
+                .at(SpecPointer::root().key("data").key("source").key("corrections")),
+            );
+        }
         let mut data = self.resolve_source(spec)?;
         if !spec.transform.is_empty() {
             let at = SpecPointer::root().key("transform");

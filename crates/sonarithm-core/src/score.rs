@@ -48,6 +48,9 @@ pub struct SpecVersion {
 impl SpecVersion {
     /// `specVersion: "0.1"`, frozen by RFC-0001.
     pub const V0_1: Self = Self { major: 0, minor: 1 };
+    /// `specVersion: "0.2"`: `template`, `instruments`, `lint`, chart calibration and
+    /// corrections, and the quantize vocabularies (RFC-0004).
+    pub const V0_2: Self = Self { major: 0, minor: 2 };
 }
 
 impl fmt::Display for SpecVersion {

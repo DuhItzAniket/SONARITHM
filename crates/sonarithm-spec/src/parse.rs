@@ -10,7 +10,7 @@ use sonarithm_core::diagnostic::{Diagnostic, Diagnostics, SpecPointer};
 use sonarithm_core::score::SpecVersion;
 
 use crate::codes;
-use crate::spec::{SPEC_VERSION, Spec};
+use crate::spec::{READABLE_VERSIONS, SPEC_VERSION, Spec};
 
 /// Parses spec text: JSON syntax (layer 1) and the typed shape (layer 2). Semantic checks
 /// (layer 3) are [`crate::validate()`].
@@ -79,7 +79,7 @@ fn check_version(value: &Value) -> Result<(), Diagnostic> {
     };
     let parsed = version.as_str().map(str::parse::<SpecVersion>);
     match parsed {
-        Some(Ok(found)) if found == SPEC_VERSION => Ok(()),
+        Some(Ok(found)) if READABLE_VERSIONS.contains(&found) => Ok(()),
         Some(Ok(found)) => Err(Diagnostic::new(
             &codes::UNSUPPORTED_VERSION,
             format!(
@@ -110,7 +110,15 @@ fn shape_diagnostic(message: &str, at: SpecPointer) -> Diagnostic {
 
 /// Converts a `serde_path_to_error` path into an RFC 6901 pointer.
 fn pointer<'a>(segments: impl Iterator<Item = &'a Segment>) -> SpecPointer {
-    segments.fold(SpecPointer::root(), |pointer, segment| match segment {
+    extend(SpecPointer::root(), segments)
+}
+
+/// Extends `base` with a `serde_path_to_error` path.
+pub(crate) fn extend<'a>(
+    base: SpecPointer,
+    segments: impl Iterator<Item = &'a Segment>,
+) -> SpecPointer {
+    segments.fold(base, |pointer, segment| match segment {
         Segment::Seq { index } => pointer.index(*index),
         Segment::Map { key } => pointer.key(key),
         Segment::Enum { .. } | Segment::Unknown => pointer,
@@ -118,7 +126,7 @@ fn pointer<'a>(segments: impl Iterator<Item = &'a Segment>) -> SpecPointer {
 }
 
 /// Removes `serde_json`'s " at line L column C" suffix; positions come from the pointer.
-fn strip_position(message: &str) -> &str {
+pub(crate) fn strip_position(message: &str) -> &str {
     message
         .rfind(" at line ")
         .map_or(message, |index| &message[..index])
@@ -198,9 +206,13 @@ mod tests {
 
     #[test]
     fn snr_spec_005_other_versions_are_unsupported() {
-        let diagnostic = error(&VALID.replace("\"0.1\"", "\"0.2\""));
+        let diagnostic = error(&VALID.replace("\"0.1\"", "\"0.3\""));
         assert_eq!(diagnostic.code.as_str(), "SNR-SPEC-005");
         assert_eq!(diagnostic.location.unwrap().as_str(), "/specVersion");
         assert!(parse(VALID).is_ok());
+        assert!(
+            parse(&VALID.replace("\"0.1\"", "\"0.2\"")).is_ok(),
+            "0.2 is current"
+        );
     }
 }

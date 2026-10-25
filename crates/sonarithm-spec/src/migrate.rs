@@ -6,15 +6,19 @@
 //! A migration is a pure function on the JSON document that moves it one version step
 //! forward and rewrites `specVersion`. Migrations run in order, in memory; the compiler
 //! reports a `Warning` (`SNR-SPEC-006`) and never rewrites files. `sonarithm spec migrate`
-//! (A07) writes the result only when asked. v0.1 is the first version, so [`MIGRATIONS`] is
-//! empty; the framework is exercised by tests.
+//! (A07) writes the result only when asked.
+//!
+//! The 0.1 → 0.2 step is the identity (RFC-0004 §9): only `specVersion` changes. Because
+//! of that, the compiler reads 0.1 documents as they are ([`READABLE_VERSIONS`]), with no
+//! migration, no warning and an unchanged spec hash; the step runs only when a file is
+//! migrated on purpose.
 
 use serde_json::Value;
 use sonarithm_core::diagnostic::{Diagnostic, SpecPointer};
 use sonarithm_core::score::SpecVersion;
 
 use crate::codes;
-use crate::spec::SPEC_VERSION;
+use crate::spec::{READABLE_VERSIONS, SPEC_VERSION};
 
 /// One step from `from` to `to`.
 #[derive(Clone, Copy, Debug)]
@@ -28,8 +32,42 @@ pub struct Migration {
     pub apply: fn(&mut Value) -> Result<(), String>,
 }
 
-/// The migrations shipped with this crate, oldest first. Empty: v0.1 is the first version.
-pub const MIGRATIONS: &[Migration] = &[];
+/// The migrations shipped with this crate, oldest first.
+pub const MIGRATIONS: &[Migration] = &[Migration {
+    from: SpecVersion::V0_1,
+    to: SpecVersion::V0_2,
+    apply: v0_1_to_v0_2,
+}];
+
+/// 0.1 → 0.2 (RFC-0004 §9): nothing but `specVersion` changes, which the framework sets.
+#[expect(
+    clippy::unnecessary_wraps,
+    reason = "every migration step has this signature"
+)]
+fn v0_1_to_v0_2(_value: &mut Value) -> Result<(), String> {
+    Ok(())
+}
+
+/// Migrates `value` only when this crate cannot read its version as it is: documents of
+/// [`READABLE_VERSIONS`] come back unchanged, with a one-element path.
+///
+/// # Errors
+///
+/// As for [`migrate`].
+pub fn migrate_for_reading(value: Value) -> Result<Migrated, Box<Diagnostic>> {
+    let readable = value
+        .get("specVersion")
+        .and_then(Value::as_str)
+        .and_then(|text| text.parse::<SpecVersion>().ok())
+        .filter(|version| READABLE_VERSIONS.contains(version));
+    match readable {
+        Some(version) => Ok(Migrated {
+            value,
+            path: vec![version],
+        }),
+        None => migrate(value),
+    }
+}
 
 /// The result of migrating a document.
 #[derive(Clone, Debug, PartialEq)]
@@ -110,6 +148,27 @@ pub fn migrate_with(
 
 #[cfg(test)]
 mod tests {
+    /// RFC-0004 §9: the 0.1 → 0.2 step changes `specVersion` and nothing else, and reading
+    /// a 0.1 document does not migrate it.
+    #[test]
+    fn migrating_v0_1_changes_only_the_version_and_reading_does_not_migrate() {
+        let old =
+            serde_json::json!({ "specVersion": "0.1", "tracks": [{ "id": "a" }], "x-note": 1 });
+        let migrated = super::migrate(old.clone()).unwrap();
+        let mut expected = old.clone();
+        expected["specVersion"] = serde_json::json!("0.2");
+        assert_eq!(migrated.value, expected);
+        assert_eq!(
+            migrated.path,
+            [super::SpecVersion::V0_1, super::SpecVersion::V0_2]
+        );
+        let read = super::migrate_for_reading(old.clone()).unwrap();
+        assert_eq!(
+            (read.value, read.path),
+            (old, vec![super::SpecVersion::V0_1])
+        );
+    }
+
     use serde_json::json;
 
     use super::*;
@@ -153,11 +212,11 @@ mod tests {
 
     #[test]
     fn versions_without_a_chain_are_unsupported() {
-        let newer = json!({ "specVersion": "0.2" });
+        let newer = json!({ "specVersion": "0.3" });
         let err = migrate(newer).unwrap_err();
         assert_eq!(err.code.as_str(), "SNR-SPEC-005");
-        let current = json!({ "specVersion": "0.1" });
-        assert_eq!(migrate(current).unwrap().path, [SpecVersion::V0_1]);
+        let current = json!({ "specVersion": "0.2" });
+        assert_eq!(migrate(current).unwrap().path, [SpecVersion::V0_2]);
         assert_eq!(
             migrate(json!({})).unwrap_err().code.as_str(),
             "SNR-SPEC-003"

@@ -303,7 +303,7 @@ fn schema_prints_the_published_spec_schema() {
     assert_eq!(schema.code, 0);
     let published = std::fs::read_to_string(
         PathBuf::from(env!("CARGO_MANIFEST_DIR"))
-            .join("../../schemas/sonarithm-spec-0.1.schema.json"),
+            .join("../../schemas/sonarithm-spec-0.2.schema.json"),
     )
     .unwrap();
     assert_eq!(schema.stdout.trim_end(), published.trim_end());
@@ -311,7 +311,14 @@ fn schema_prints_the_published_spec_schema() {
 
 #[test]
 fn spec_migrate_reports_what_it_did() {
-    let current = run(&["--plain", "spec", "migrate", "temps.spec.json"]);
+    let current = run(&[
+        "--plain",
+        "spec",
+        "migrate",
+        "--to",
+        "0.1",
+        "temps.spec.json",
+    ]);
     assert_eq!(current.code, 0);
     assert_eq!(
         current.stdout,
@@ -322,10 +329,29 @@ fn spec_migrate_reports_what_it_did() {
         "{}",
         current.stderr
     );
-    let json = run(&["--json", "spec", "migrate", "--in-place", "temps.spec.json"]);
+    let json = run(&[
+        "--json",
+        "spec",
+        "migrate",
+        "--to",
+        "0.1",
+        "--in-place",
+        "temps.spec.json",
+    ]);
     assert_eq!(json.code, 0);
     assert_eq!(json.json()["changed"], false);
     assert_eq!(json.json()["written"], false);
+    // RFC-0004 §9: to the current version, only `specVersion` changes.
+    let migrated = run(&["--plain", "spec", "migrate", "temps.spec.json"]);
+    assert_eq!(migrated.code, 0);
+    let mut expected: serde_json::Value =
+        serde_json::from_str(&std::fs::read_to_string(fixtures().join("temps.spec.json")).unwrap())
+            .unwrap();
+    expected["specVersion"] = serde_json::json!("0.2");
+    assert_eq!(
+        serde_json::from_str::<serde_json::Value>(&migrated.stdout).unwrap(),
+        expected
+    );
     let unversioned = run(&["--plain", "spec", "migrate", "unversioned.spec.json"]);
     assert_eq!(unversioned.code, 1);
     snapshot!("migrate_unversioned", unversioned);

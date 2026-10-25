@@ -230,3 +230,48 @@ fn dataset_sources_read_what_the_host_provides() {
             .any(|d| d.code.as_str() == "SNR-COMP-010")
     );
 }
+
+/// RFC-0004: until a template registry exists (C01-T09), a template is reported as unknown
+/// rather than compiled into something else.
+#[test]
+fn snr_comp_030_templates_are_not_in_the_registry_yet() {
+    let template = format!(
+        r#"{{ "specVersion": "0.2", "data": {{ "source": {VALUES} }},
+            "template": {{ "id": "bar-discrete", "bind": {{ "value": "y" }} }} }}"#
+    );
+    let Err(Failure::Invalid(diagnostics)) = compile(&Platform::new(), &template) else {
+        panic!("a template cannot compile yet");
+    };
+    let unknown = diagnostics
+        .iter()
+        .find(|d| d.code.as_str() == "SNR-COMP-030")
+        .unwrap();
+    assert_eq!(
+        unknown
+            .location
+            .as_ref()
+            .map(sonarithm_core::SpecPointer::as_str),
+        Some("/template/id")
+    );
+}
+
+/// A v0.1 spec still compiles to the same Score under the v0.2 reader, and records its
+/// own version.
+#[test]
+fn v0_1_specs_compile_and_keep_their_version() {
+    let old = compile(&Platform::new(), &spec(VALUES, "[]")).unwrap();
+    let new = compile(
+        &Platform::new(),
+        &spec(VALUES, "[]").replacen("\"0.1\"", "\"0.2\"", 1),
+    )
+    .unwrap();
+    assert_eq!(old.score.tracks, new.score.tracks);
+    assert_eq!(
+        old.score.header.spec_version,
+        sonarithm_core::score::SpecVersion::V0_1
+    );
+    assert_eq!(
+        new.score.header.spec_version,
+        sonarithm_core::score::SpecVersion::V0_2
+    );
+}

@@ -94,7 +94,7 @@ fn track(index: usize) -> impl Strategy<Value = Value> {
 /// A JSON document that parses and validates without errors.
 pub fn valid_spec_json() -> impl Strategy<Value = Value> {
     (
-        1_usize..4,
+        (1_usize..4, any::<bool>(), 0_u8..=127),
         prop::sample::select(&["analysis", "presentation", "monitoring"][..]),
         0_u64..(1 << 53),
         0.5_f64..8.0,
@@ -102,11 +102,11 @@ pub fn valid_spec_json() -> impl Strategy<Value = Value> {
         4_u32..=13,
         vec((-1e6_f64..1e6, "[a-z]{1,6}"), 1..8),
     )
-        .prop_flat_map(|(tracks, mode, seed, pace, rate, block, rows)| {
+        .prop_flat_map(|((tracks, v0_2, program), mode, seed, pace, rate, block, rows)| {
             let tracks: Vec<_> = (0..tracks).map(track).collect();
-            (tracks, Just((mode, seed, pace, rate, block, rows)))
+            (tracks, Just((mode, seed, pace, rate, block, rows, v0_2, program)))
         })
-        .prop_map(|(tracks, (mode, seed, pace, rate, block, rows))| {
+        .prop_map(|(tracks, (mode, seed, pace, rate, block, rows, v0_2, program))| {
             let values: Vec<Value> = rows
                 .into_iter()
                 .map(|(v, g)| json!({ "v": v, "g": g }))
@@ -123,6 +123,15 @@ pub fn valid_spec_json() -> impl Strategy<Value = Value> {
             });
             if mode == "presentation" {
                 spec["music"] = json!({ "tempo": { "bpm": 96 } });
+            }
+            // Half the specs are v0.2 with its sections (RFC-0004 §11).
+            if v0_2 {
+                spec["specVersion"] = json!("0.2");
+                spec["instruments"] = json!({ "piano": { "kind": "soundfont", "path": "sounds/piano.sf2", "program": program } });
+                spec["lint"] = json!({ "rules": { "SDR-17": "off" }, "suppress": [{ "rule": "SDR-19", "reason": "generated" }] });
+                if mode == "presentation" {
+                    spec["music"]["quantize"] = json!({ "scale": "D minor pentatonic" });
+                }
             }
             spec
         })
@@ -169,11 +178,24 @@ mod tests {
             prop_assert_eq!(to_canonical(&again.resolved).unwrap(), prepared.canonical);
         }
 
-        /// testing-strategy §3: migrations are idempotent (a current document is unchanged).
+        /// testing-strategy §3 and RFC-0004 §9: migration changes `specVersion` only, and
+        /// migrating twice changes nothing more.
         #[test]
-        fn migrating_a_current_spec_changes_nothing(value in valid_spec_json()) {
+        fn migration_changes_only_the_version_and_is_idempotent(value in valid_spec_json()) {
             let migrated = migrate(value.clone()).unwrap();
-            prop_assert_eq!(migrated.value, value);
+            let mut expected = value;
+            expected["specVersion"] = json!("0.2");
+            prop_assert_eq!(&migrated.value, &expected);
+            prop_assert_eq!(migrate(migrated.value.clone()).unwrap().value, migrated.value);
+        }
+
+        /// RFC-0004 §9: a v0.1 document is read as it is, so its spec hash does not change.
+        #[test]
+        fn reading_v0_1_keeps_its_version_and_hash(value in valid_spec_json()) {
+            let text = value.to_string();
+            let prepared = prepare(&text, None).unwrap();
+            prop_assert_eq!(prepared.spec.spec_version.to_string(), value["specVersion"].as_str().unwrap());
+            prop_assert!(!prepared.diagnostics.iter().any(|d| d.code.as_str() == "SNR-SPEC-006"));
         }
     }
 }

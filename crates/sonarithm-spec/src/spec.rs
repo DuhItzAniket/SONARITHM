@@ -13,11 +13,16 @@ use crate::data::{DataSpec, Transform};
 use crate::json::JsonValue;
 use crate::sections::{Analysis, Context, Music, Output, Playback, Substrate};
 use crate::track::TrackSpec;
+use crate::v02::{Instrument, Lint, TemplateRef};
 
-/// The spec version this crate reads and writes.
-pub const SPEC_VERSION: SpecVersion = SpecVersion::V0_1;
+/// The spec version this crate writes, and the newest it reads.
+pub const SPEC_VERSION: SpecVersion = SpecVersion::V0_2;
 
-/// A SONARITHM sonification spec, version 0.1: data plus how it becomes sound (RFC-0001).
+/// The versions this crate reads as they are, without migrating them: 0.1 reads directly
+/// because the 0.1 → 0.2 migration is the identity (RFC-0004 §9).
+pub const READABLE_VERSIONS: &[SpecVersion] = &[SpecVersion::V0_1, SpecVersion::V0_2];
+
+/// A SONARITHM sonification spec: data plus how it becomes sound (RFC-0001, RFC-0004).
 ///
 /// Optional keys stay unset when the author omits them, so the spec records what was
 /// written; defaults are applied separately and reported as Info diagnostics. Unknown
@@ -27,7 +32,7 @@ pub const SPEC_VERSION: SpecVersion = SpecVersion::V0_1;
 #[schemars(title = "SONARITHM spec", transform = top_level_keys)]
 #[non_exhaustive]
 pub struct Spec {
-    /// The spec language version, `"0.1"`.
+    /// The spec language version, `"0.2"` (or `"0.1"`, read as it is).
     #[schemars(with = "String", extend("pattern" = "^(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)$"))]
     pub spec_version: SpecVersion,
     /// A title, spoken by the legend.
@@ -51,7 +56,8 @@ pub struct Spec {
     /// The temporal substrate.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub substrate: Option<Substrate>,
-    /// The tracks; at least one.
+    /// The tracks; at least one, unless `template` gives them.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub tracks: Vec<TrackSpec>,
     /// Context cues (AUDAXIS).
     #[serde(default, skip_serializing_if = "Option::is_none")]
@@ -68,6 +74,15 @@ pub struct Spec {
     /// Output settings.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub output: Option<Output>,
+    /// A template that designs the tracks and other sections (v0.2, RFC-0004 §2).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub template: Option<TemplateRef>,
+    /// Named instrument definitions (v0.2, RFC-0004 §3).
+    #[serde(default, skip_serializing_if = "BTreeMap::is_empty")]
+    pub instruments: BTreeMap<String, Instrument>,
+    /// Lint rule levels and suppressions (v0.2, RFC-0004 §4).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub lint: Option<Lint>,
     /// Other top-level keys. Only `x-` vendor keys are valid; they are preserved and
     /// ignored by the compiler.
     #[serde(flatten)]
@@ -99,6 +114,11 @@ impl From<Mode> for sonarithm_core::score::Mode {
 /// In the schema, only `x-` keys may appear beside the listed ones (RFC-0001 §1).
 fn top_level_keys(schema: &mut Schema) {
     schema.insert("additionalProperties".to_owned(), false.into());
+    // A spec has tracks, or a template that designs them (RFC-0004 §1).
+    schema.insert(
+        "anyOf".to_owned(),
+        serde_json::json!([{ "required": ["tracks"] }, { "required": ["template"] }]),
+    );
     schema.insert(
         "patternProperties".to_owned(),
         serde_json::json!({ "^x-": {} }),

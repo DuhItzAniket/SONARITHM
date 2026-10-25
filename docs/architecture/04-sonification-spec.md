@@ -1,6 +1,6 @@
-# 04 · Sonification Spec Language (v0.1)
+# 04 · Sonification Spec Language (v0.2)
 
-> **Status:** **Frozen as v0.1** by [RFC-0001](../rfcs/0001-spec-v0.1.md), accepted 2026-10-19 ([ADR-0015](../decisions/0015-spec-v0.1-frozen.md)). The RFC is normative: it holds the exact key set, defaults, validation codes and the 21 resolutions, and it wins wherever this overview is less precise. Changes follow the versioning rules in §7. **Spec v0.2** ([RFC-0004](../rfcs/0004-spec-v0.2.md), [ADR-0021](../decisions/0021-spec-v0.2.md), accepted 2026-10-26) adds `template`, `instruments`, `lint`, a typed chart calibration, chart corrections and AXONOTE's scale and tuning names; this document moves to v0.2 with its implementation (C01-T01).
+> **Status:** **Frozen as v0.1** by [RFC-0001](../rfcs/0001-spec-v0.1.md), accepted 2026-10-19 ([ADR-0015](../decisions/0015-spec-v0.1-frozen.md)). The RFC is normative: it holds the exact key set, defaults, validation codes and the 21 resolutions, and it wins wherever this overview is less precise. Changes follow the versioning rules in §7. **Spec v0.2** ([RFC-0004](../rfcs/0004-spec-v0.2.md), [ADR-0021](../decisions/0021-spec-v0.2.md), accepted 2026-10-26) adds `template`, `instruments`, `lint`, a typed chart calibration, chart corrections and AXONOTE's scale and tuning names. It is implemented (C01-T01), and this document describes v0.2; RFC-0004 is normative for what it adds.
 > **Decision:** [ADR-0005 Declarative spec and Score IR](../decisions/0005-declarative-spec-and-score-ir.md). **Owner:** Spec lead.
 > **Evidence:** [SDR-01..06](../research/design-rules.md#a-specification-and-reproducibility).
 
@@ -16,13 +16,13 @@
 | **Evidence-backed defaults; everything overridable** | Defaults from the design rules; user ownership | P7 |
 | **Human-writable JSON**, with a schema for editors | Authoring in the CodeMirror editor, CLI, notebooks | — |
 
-The canonical serialization is **JSON**. Builders exist in Rust and Python and produce the same JSON. The JSON Schema is generated from the Rust types (schemars) into `schemas/sonarithm-spec-0.1.schema.json`, and CI fails if it is stale.
+The canonical serialization is **JSON**. Builders exist in Rust and Python and produce the same JSON. The JSON Schema is generated from the Rust types (schemars) into `schemas/sonarithm-spec-0.2.schema.json`, and CI fails if it is stale. The v0.1 schema stays in `schemas/` for editors of older files.
 
 ## 2. Top-level structure
 
 ```jsonc
 {
-  "specVersion": "0.1",          // required; see §7
+  "specVersion": "0.2",          // required; see §7
   "name": "Global temperature anomaly",
   "description": "Optional free text, spoken as the title",
   "mode": "analysis",            // analysis | presentation | monitoring   (SDR-36)
@@ -30,12 +30,15 @@ The canonical serialization is **JSON**. Builders exist in Rust and Python and p
   "data": { },                   // §3
   "transform": [ ],              // §4
   "substrate": { },              // §5.1  time (and optional frequency) substrate
-  "tracks": [ ],                 // §5.2  marks + channels
+  "tracks": [ ],                 // §5.2  marks + channels (optional when `template` gives them)
   "context": { },                // §5.4  AUDAXIS: ticks, reference tones, legends, earcons
   "analysis": { },               // §5.5  ECHOMETRIC: detectors, cues, descriptions
   "music": { },                  // §5.6  AXONOTE: presentation-mode quantization, instruments
   "playback": { },               // §5.7  SONOTRACE: speed, loop, monitoring
-  "output": { }                  // §5.8  sample rate, channels, loudness target, sinks
+  "output": { },                 // §5.8  sample rate, channels, loudness target, sinks
+  "template": { },               // §5.9  v0.2: a reusable design bound to the data
+  "instruments": { },            // §5.10 v0.2: named instruments (SoundFonts)
+  "lint": { }                    // §5.11 v0.2: lint rule levels and suppressions
 }
 ```
 
@@ -58,12 +61,39 @@ Unknown top-level keys are an **error**. The exception is the `x-` vendor prefix
 |---|---|---|
 | `file` | platform | `path`, `format` (csv, tsv, json, ndjson, parquet, arrow, xlsx, ods), `sheet`, `options` |
 | `inline` | platform | `values` (array of records). For examples and tests |
-| `chart` | PLOTSONA | `path`, `extractor` (`auto`, `office`, `svg`, `vega`, `plotly`, `pdf-vector`, `raster`, `ml`), `calibration` |
+| `chart` | PLOTSONA | `path`, `extractor` (`auto`, `office`, `svg`, `vega`, `plotly`, `pdf-vector`, `raster`, `ml`), `calibration` (§3.1), `corrections` (§3.1, v0.2) |
 | `function` | CURVASONA | `expr`, `domain`, `samples` or `step`, `variables` |
 | `stream` | SONOTRACE | `transport` (`websocket`, `mqtt`, `serial`, `osc`, `tail`), `url`/`port`/`topic`, `schema`, `window` |
 | `dataset` | platform | A reference to a dataset the host already holds: a dataset loaded in a project (desktop/app core), or data handed to the facade or the Python package (A07) |
 
 `fields` overrides inference ([03-data-model.md §3](03-data-model.md#3-field-semantics)). Any field that is not mentioned keeps its inferred metadata.
+
+### 3.1 Chart calibration and corrections (v0.2)
+
+A chart source can carry the axis calibration a person confirmed and the corrections they made, so the same spec and chart file always give the same table (SDR-01, [RFC-0004 §5–§6](../rfcs/0004-spec-v0.2.md)):
+
+```jsonc
+"data": {
+  "source": {
+    "kind": "chart", "path": "figure3.png", "extractor": "raster",
+    "calibration": {
+      "system": "cartesian",                 // default; polar and ternary later
+      "axes": {                              // anchors: a point in the source's coordinates and its value
+        "x": { "kind": "linear", "anchors": [ { "at": [112, 940], "value": 0 }, { "at": [1210, 940], "value": 50 } ] },
+        "y": { "kind": "log",    "anchors": [ { "at": [112, 940], "value": 1 }, { "at": [112, 120],  "value": 1000 } ] }
+      }
+    },
+    "corrections": { "edits": [               // in data units; `was` guards the point the person saw
+      { "op": "move",   "series": "Series 1", "point": 12, "was": { "x": 24.1, "y": 210.4 }, "to": { "y": 230 } },
+      { "op": "delete", "series": "Series 1", "point": 30, "was": { "x": 48.7, "y": 3.2 } }
+    ] }
+  }
+}
+```
+
+- An axis `kind` is `linear`, `log` (values above 0), `date` (ISO 8601 strings) or `category` (labels), with at least two anchors at distinct points and values; more than two are fitted by least squares and the residual is reported. `page` (PDF, default 1) and `plotArea` (`{ "min": [x, y], "max": [x, y] }`) are optional. An invalid calibration is `SNR-SPEC-054`.
+- Without `calibration`, the extractor calibrates on its own and reports the calibration it used in this shape.
+- Edits are `add`, `move`, `delete` and `retype`, applied in order after extraction and before `transform`; edited rows become `user_edited` (03 §4). An edit whose `was` no longer matches is not applied and is reported (`SNR-COMP-036`). Shape errors are `SNR-SPEC-055`; `corrections.path`, a correction file, is reserved for RFC-0005 (`SNR-SPEC-056`).
 
 ## 4. `transform`
 
@@ -184,6 +214,8 @@ Allowed only when `mode` is `presentation` (SDR-10). In `analysis` mode it is a 
 "music": { "quantize": { "scale": "C major pentatonic", "tuning": "12-TET" }, "tempo": { "bpm": 96 }, "voicing": "none" }
 ```
 
+`scale` is a name, `"<tonic> <mode>"`: a tonic `A`–`G` with an optional `#` or `b`, and one of the modes `major`, `minor`, `harmonic minor`, `melodic minor`, `dorian`, `phrygian`, `lydian`, `mixolydian`, `locrian`, `major pentatonic`, `minor pentatonic`, `blues`, `whole tone`, `chromatic` (degrees in [RFC-0004 §7](../rfcs/0004-spec-v0.2.md)). Or it is custom: `{ "tonic": "D", "cents": [0, 150, 350, 500, 700, 850, 1050] }`, degrees in cents from 0, rising, below 1200. `tuning` applies to named scales: `12-TET` (default) or `{ "cents": [c0, …, c11] }`; `just` is reserved until AXONOTE cites its ratio table (RFC-0004 Q13). An unknown scale is `SNR-SPEC-043`; an invalid tuning, or a tuning on a custom scale, `SNR-SPEC-044`. Pitches snap to the nearest degree, ties to the lower one.
+
 ### 5.7 `playback` (SONOTRACE)
 
 ```jsonc
@@ -199,6 +231,36 @@ Allowed only when `mode` is `presentation` (SDR-10). In `analysis` mode it is a 
   "sinks": [{ "kind": "midi-file", "path": "out.mid" }, { "kind": "osc", "address": "127.0.0.1:57120" }]
 }
 ```
+
+### 5.9 `template` (v0.2)
+
+A template is a reusable design bound to the dataset's fields (SDR-03): NUMISONA's six (`line-overview`, `bar-discrete`, `scatter-xy`, `histogram`, `box-five-number`, `heatmap-rowscan`) and PLOTSONA's chart-type templates. With `template`, `tracks` is optional.
+
+```jsonc
+"template": { "id": "bar-discrete", "bind": { "category": "quarter", "value": "revenue" } }   // unnamed slots bind by role, then by kind
+```
+
+A section written in the spec replaces the template's section of the same name, as a whole; the spec's `transform` runs before the template's. The compiler reports the binding and which sections came from the template ([RFC-0004 §2](../rfcs/0004-spec-v0.2.md)). An unknown template is `SNR-COMP-030`.
+
+### 5.10 `instruments` (v0.2)
+
+```jsonc
+"instruments": { "piano": { "kind": "soundfont", "path": "sounds/piano.sf2", "bank": 0, "program": 0 } }   // a track's "instrument": "piano" plays it
+```
+
+`path` is relative to the spec; `bank` is 0 … 16383 and `program` 0 … 127 (both default 0). A defined name that equals a built-in preset hides it, with an `Info`. Instruments are allowed in every mode; the default instrument stays mallet (SDR-29).
+
+### 5.11 `lint` (v0.2)
+
+```jsonc
+"lint": {
+  "rules": { "SDR-19": "error" },                                      // off | info | warning | error
+  "suppress": [ { "rule": "SDR-17", "reason": "The 0 °C line is the reference the class is learning." } ],
+  "experimental": false                                                // INFER rules (SDR-26, SDR-28, SDR-39) when true
+}
+```
+
+Rules are named by design-rule ID; one the lint does not implement is a warning (`SNR-SPEC-045`). A suppression needs a reason (`SNR-SPEC-046`) and may name a `track`. Turning a rule off is always reported. Validation errors (such as `music` outside Presentation, SDR-10) and hearing safety are not lint and cannot be turned off.
 
 ## 6. Complete examples
 
@@ -253,6 +315,15 @@ The compiler fills in the substrate from `role=x` (or row order), pace 3 points/
 }
 ```
 
+### 6.5 From a template (v0.2)
+
+```json
+{ "specVersion": "0.2",
+  "data": { "source": { "kind": "file", "path": "sales.csv" } },
+  "template": { "id": "bar-discrete", "bind": { "category": "quarter", "value": "revenue" } },
+  "lint": { "suppress": [ { "rule": "SDR-17", "reason": "Quarterly totals have no reference level." } ] } }
+```
+
 ## 7. Versioning and compatibility
 
 | Rule | Detail |
@@ -262,6 +333,7 @@ The compiler fills in the substrate from `role=x` (or row order), pace 3 points/
 | Major bump | Renames, removes or changes semantics. Needs an RFC and a migration |
 | RFC scope | An RFC is required for a major bump, a new top-level section, a new substrate, mark or channel kind, or any reinterpretation of existing fields. Adding an optional field or enum value inside an existing construct needs only a normal PR with schema regeneration |
 | Migrations | `sonarithm spec migrate` rewrites documents explicitly. The compiler may read old versions through in-memory migration, with a `Warning` diagnostic. It never silently rewrites files |
+| v0.1 and v0.2 | The 0.1 → 0.2 migration changes `specVersion` only, so a v0.2 reader reads `"0.1"` documents **as they are**: no migration, no warning, and their canonical form and spec hash do not change ([RFC-0004 §9](../rfcs/0004-spec-v0.2.md)). A v0.2 key in a `"0.1"` document is unknown (`SNR-SPEC-004`). v0.2 defaults (instrument bank and program, lint settings, the `12-TET` tuning, the calibration's `system` and `page`) fill only v0.2 documents |
 | Pre-1.0 | Until SONARITHM 1.0, `0.x` minor versions may break, with a migration provided |
 | Canonical form | For hashing, specs are canonicalized per RFC 8785 (JSON Canonicalization Scheme) after the data-independent defaults are applied. The **spec hash** in manifests is SHA-256 of that form ([ADR-0013](../decisions/0013-determinism-and-provenance.md)). Implemented by `sonarithm_spec::prepare` (A03-T08); every applied default is reported as `SNR-SPEC-080` (Info) with its rule ID |
 

@@ -45,12 +45,12 @@ def codes(diagnostics: list[dict]) -> list[str]:
 
 def test_versions_and_typing_marker():
     assert snr.__version__.count(".") == 2
-    assert snr.SPEC_VERSION == "0.1"
+    assert snr.SPEC_VERSION == "0.2"
     assert importlib.resources.files("sonarithm").joinpath("py.typed").is_file()
 
 
 def test_the_schema_is_the_published_one():
-    published = json.loads((ROOT / "schemas" / "sonarithm-spec-0.1.schema.json").read_text("utf-8"))
+    published = json.loads((ROOT / "schemas" / "sonarithm-spec-0.2.schema.json").read_text("utf-8"))
     assert snr.schema() == published
     with pytest.raises(ValueError):
         snr.schema("profile")
