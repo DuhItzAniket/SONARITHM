@@ -1,6 +1,6 @@
 # 04 · Sonification Spec Language (v0.1)
 
-> **Status:** **Frozen as v0.1** by [RFC-0001](../rfcs/0001-spec-v0.1.md), accepted 2026-10-19 ([ADR-0015](../decisions/0015-spec-v0.1-frozen.md)). The RFC is normative: it holds the exact key set, defaults, validation codes and the 21 resolutions, and it wins wherever this overview is less precise. Changes follow the versioning rules in §7.
+> **Status:** **Frozen as v0.1** by [RFC-0001](../rfcs/0001-spec-v0.1.md), accepted 2026-10-19 ([ADR-0015](../decisions/0015-spec-v0.1-frozen.md)). The RFC is normative: it holds the exact key set, defaults, validation codes and the 21 resolutions, and it wins wherever this overview is less precise. Changes follow the versioning rules in §7. **Spec v0.2** ([RFC-0004](../rfcs/0004-spec-v0.2.md), [ADR-0021](../decisions/0021-spec-v0.2.md), accepted 2026-10-26) adds `template`, `instruments`, `lint`, a typed chart calibration, chart corrections and AXONOTE's scale and tuning names; this document moves to v0.2 with its implementation (C01-T01).
 > **Decision:** [ADR-0005 Declarative spec and Score IR](../decisions/0005-declarative-spec-and-score-ir.md). **Owner:** Spec lead.
 > **Evidence:** [SDR-01..06](../research/design-rules.md#a-specification-and-reproducibility).
 

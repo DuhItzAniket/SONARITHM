@@ -77,4 +77,4 @@ Every accepted RFC produces an ADR. Many ADRs have no RFC: a decision that does 
 |---|---|---|---|---|
 | [0001](0001-spec-v0.1.md) | Spec v0.1 freeze | Accepted (2026-10-19) | [ADR-0005](../decisions/0005-declarative-spec-and-score-ir.md), [ADR-0015](../decisions/0015-spec-v0.1-frozen.md) | A03 |
 | [0002](0002-project-format-v1.md) | Project format v1 (`.sonarithm` bundles) | Accepted (2026-10-21, coordinator under owner delegation; FCP waived) | [ADR-0018](../decisions/0018-project-format-v1.md) | B05 |
-| [0004](0004-spec-v0.2.md) | Spec v0.2: `template`, `instruments`, `lint`, chart calibration and corrections, AXONOTE vocabularies | In discussion (2026-10-26) | (on acceptance) | C01 |
+| [0004](0004-spec-v0.2.md) | Spec v0.2: `template`, `instruments`, `lint`, chart calibration and corrections, AXONOTE vocabularies | Accepted (2026-10-26, coordinator under owner delegation; FCP waived; three amendments) | [ADR-0021](../decisions/0021-spec-v0.2.md) | C01 |
