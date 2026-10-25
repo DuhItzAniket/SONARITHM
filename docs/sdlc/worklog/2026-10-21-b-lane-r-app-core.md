@@ -20,6 +20,7 @@
 - B01-T01: `sonarithm-app` with datasets, the spec and its undo history, compile reports, the transport on its own control thread, export jobs, settings and devices; 16 headless scenarios on the null device, including one that no reply, error or event holds an absolute path (ADR-0017 §7).
 - B05-T04: `.sonarithm` project bundles per RFC-0002 (accepted with conditions A and B) and ADR-0018: reader and writer, autosaves and recovery, the `project_*` commands, a memory test for condition B (F-141) and the `project_open` fuzz target.
 - B03-T07: speech and sonification sequencing in the app core (`speech::Sequencer` on the control thread), the −20 dB ducker in the render graph, `sonarithm-speech` with the opt-in `tts` engine, sequenced WebVTT cues, `announce_repeat` and the `announcement` event.
+- B06-T05: `sonotrace::rate_limit` and the stream commands of the app core (offer, connect with the approval's token, pause, resume, hide, stop, list), with notices from a new `stream.ftl` catalogue.
 
 ## Decisions
 
@@ -35,6 +36,7 @@
 | Self-voicing is an opt-in `system` feature of `sonarithm-speech` | Headless builds and CI need no speech engine; Linux needs libspeechd-dev only where self-voicing ships | 02 §2 |
 | The app core registers AUDAXIS through a facade opt-in, not as a facade default | The default changes every Score's header (F-142); making it the default is B03's decision | F-142 |
 | Speech durations are estimated at 180 words per minute unless the listener sets a rate | No documented rate; estimates err long, so speech is not talked over | TODO(verify) in B07 |
+| A stream connects only with a one-time token from `stream_offer` | ADR-0012's per-action consent through the protocol: the host can only connect what the user was shown | 07 as built |
 
 ## Problems and how they were solved
 

@@ -6,6 +6,7 @@
 //! | Module | Responsibility |
 //! |---|---|
 //! | [`live`] | Live encoding: encodes a [`StreamTable`]'s window with the track's encoder and emits the events of new rows only, by sequence number (05 §6) |
+//! | [`rate_limit`] | Stream announcements: one per stream every 5 s, coalesced, stale after 10 s; errors and alarms never dropped; pause, hide and stop (A11Y-16) |
 //! | [`transport`] | Scrub grains that preview the value at the cursor (A11Y-09), and long-series windowing |
 //! | [`monitor`] | The monitoring soundscape: an ambient bed whose brightness follows detector events, `E-STREAM` and configured `E-ALARM` earcons, and the experimental comfort report (SDR-35, SDR-39) |
 //! | engine | The `stream` source: a spec's `{"kind": "stream", …}` reads the window of the stream the host connected |
@@ -20,6 +21,7 @@
 pub mod codes;
 pub mod live;
 pub mod monitor;
+pub mod rate_limit;
 pub mod transport;
 
 use std::sync::Arc;

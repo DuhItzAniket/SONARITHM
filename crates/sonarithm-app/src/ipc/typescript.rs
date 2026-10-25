@@ -134,6 +134,10 @@ pub fn typescript() -> String {
     declare::<crate::speech::SpeechRoute>(&mut out, &cfg);
     declare::<crate::ipc::AnnouncementInfo>(&mut out, &cfg);
     declare::<crate::ipc::AnnouncementClass>(&mut out, &cfg);
+    declare::<crate::ipc::StreamOfferInfo>(&mut out, &cfg);
+    declare::<crate::ipc::StreamInfo>(&mut out, &cfg);
+    declare::<crate::ipc::StreamConnection>(&mut out, &cfg);
+    declare::<crate::ipc::StreamNotices>(&mut out, &cfg);
     let trimmed = out.trim_end().len();
     out.truncate(trimmed);
     out.push('\n');
