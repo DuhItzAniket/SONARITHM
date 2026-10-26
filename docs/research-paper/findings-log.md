@@ -906,4 +906,11 @@ A05 (render engine, audio backends, export) uses F-050 to F-069.
 - **Evidence:** source read of `tauri` 2.12.4, `tauri-runtime-wry` 2.12.2 and `wry` 0.57.0 (no `browser_accelerator_keys` outside wry); the `desktop` CI job's smoke report (`browserAccelerators`)
 - **Evidence level / confidence:** EV-C / Strong for the API gap; which keys a page can block in WebView2 is not measured, TODO(verify) during the NVDA walkthrough
 - **Affects:** B01-T03, KB-04, A11Y-05, keyboard §12.3, ADR-0025
+### F-166 · MAIDR's data schema states no version and leaves stacked bars undocumented
+
+- **Date:** 2026-10-26 · **Phase:** C01 · **Type:** engineering · **Status:** new
+- **Statement:** MAIDR's published data schema (`docs/SCHEMA.md` in `xability/maidr`, main branch, read 2026-10-26) gives the shape of `data` for bar, line, step, point, box, heat, hist, dodged_bar, pie, smooth and candlestick layers but states no schema version; the package was the TypeScript rewrite (4.x), and the README's example writes axis labels as strings (`axes: { x: 'Quarter' }`) where the schema writes objects (`{ x: { label } }`). The `stacked_bar` and `stacked_normalized_bar` layers are listed as stable without a data example; their selector grid suggests the `dodged_bar` shape (one list per series), which the C01-T10 importer assumes. A MAIDR document therefore cannot say which schema it follows, so an importer must accept both label forms and flag the version it was written against.
+- **Evidence:** `sonarithm_plotsona::import::maidr` module docs; `crates/engines/sonarithm-plotsona/tests/import/maidr/`; the C01-T10 PR
+- **Evidence level / confidence:** EV-C / Moderate: one reading of the documentation; no MAIDR-produced file was checked, TODO(verify) against files MAIDR's Python binding writes
+- **Affects:** C01-T10, FR-027, 04 §9
 - **Papers:** none yet

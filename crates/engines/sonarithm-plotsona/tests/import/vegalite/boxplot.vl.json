@@ -1,0 +1,162 @@
+{
+  "$schema": "https://vega.github.io/schema/vega-lite/v5.json",
+  "data": {
+    "values": [
+      {
+        "site": "A",
+        "ms": 200
+      },
+      {
+        "site": "A",
+        "ms": 237
+      },
+      {
+        "site": "A",
+        "ms": 274
+      },
+      {
+        "site": "A",
+        "ms": 221
+      },
+      {
+        "site": "A",
+        "ms": 258
+      },
+      {
+        "site": "A",
+        "ms": 205
+      },
+      {
+        "site": "A",
+        "ms": 242
+      },
+      {
+        "site": "A",
+        "ms": 279
+      },
+      {
+        "site": "A",
+        "ms": 226
+      },
+      {
+        "site": "A",
+        "ms": 263
+      },
+      {
+        "site": "A",
+        "ms": 210
+      },
+      {
+        "site": "A",
+        "ms": 247
+      },
+      {
+        "site": "B",
+        "ms": 240
+      },
+      {
+        "site": "B",
+        "ms": 277
+      },
+      {
+        "site": "B",
+        "ms": 314
+      },
+      {
+        "site": "B",
+        "ms": 261
+      },
+      {
+        "site": "B",
+        "ms": 298
+      },
+      {
+        "site": "B",
+        "ms": 245
+      },
+      {
+        "site": "B",
+        "ms": 282
+      },
+      {
+        "site": "B",
+        "ms": 319
+      },
+      {
+        "site": "B",
+        "ms": 266
+      },
+      {
+        "site": "B",
+        "ms": 303
+      },
+      {
+        "site": "B",
+        "ms": 250
+      },
+      {
+        "site": "B",
+        "ms": 287
+      },
+      {
+        "site": "C",
+        "ms": 280
+      },
+      {
+        "site": "C",
+        "ms": 317
+      },
+      {
+        "site": "C",
+        "ms": 354
+      },
+      {
+        "site": "C",
+        "ms": 301
+      },
+      {
+        "site": "C",
+        "ms": 338
+      },
+      {
+        "site": "C",
+        "ms": 285
+      },
+      {
+        "site": "C",
+        "ms": 322
+      },
+      {
+        "site": "C",
+        "ms": 359
+      },
+      {
+        "site": "C",
+        "ms": 306
+      },
+      {
+        "site": "C",
+        "ms": 343
+      },
+      {
+        "site": "C",
+        "ms": 290
+      },
+      {
+        "site": "C",
+        "ms": 327
+      }
+    ]
+  },
+  "mark": "boxplot",
+  "encoding": {
+    "x": {
+      "field": "site",
+      "type": "nominal"
+    },
+    "y": {
+      "field": "ms",
+      "type": "quantitative"
+    }
+  }
+}

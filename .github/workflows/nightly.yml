@@ -61,6 +61,8 @@ jobs:
           - { crate: engines/sonarithm-plotsona, target: html_page }
           - { crate: engines/sonarithm-plotsona, target: svg_chart }
           - { crate: engines/sonarithm-plotsona, target: pdf_chart }
+          - { crate: engines/sonarithm-plotsona, target: vegalite_import }
+          - { crate: engines/sonarithm-plotsona, target: maidr_import }
     env:
       FUZZ_SECONDS: ${{ github.event_name == 'pull_request' && '120' || inputs.seconds || '1800' }}
     steps:

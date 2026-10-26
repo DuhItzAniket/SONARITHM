@@ -393,6 +393,46 @@ pub const EXPERIMENTAL_TEMPLATE: CodeInfo = CodeInfo {
     status: CodeStatus::Active,
 };
 
+/// An importer left a construct out (C01-T10).
+pub const IMPORT_UNMAPPED: CodeInfo = CodeInfo {
+    code: "SNR-ENG-381",
+    severity: Severity::Warning,
+    summary: "A chart construct was not imported",
+    help: "SONARITHM has no equivalent for it; the note says what to write by hand. The            pointer is in the imported document.",
+    rules: &["SDR-05"],
+    status: CodeStatus::Active,
+};
+
+/// An importer mapped a construct approximately (C01-T10).
+pub const IMPORT_APPROXIMATED: CodeInfo = CodeInfo {
+    code: "SNR-ENG-382",
+    severity: Severity::Info,
+    summary: "A chart construct was imported approximately",
+    help: "The note says how the sound differs from the picture.",
+    rules: &["SDR-05"],
+    status: CodeStatus::Active,
+};
+
+/// A document is not a chart the importer reads (C01-T10).
+pub const IMPORT_UNREADABLE: CodeInfo = CodeInfo {
+    code: "SNR-ENG-383",
+    severity: Severity::Error,
+    summary: "The document cannot be imported",
+    help: "Check that it is a Vega-Lite or MAIDR document of a supported chart type, or            write the spec's tracks by hand.",
+    rules: &[],
+    status: CodeStatus::Active,
+};
+
+/// An imported chart has no data SONARITHM can read (C01-T10).
+pub const IMPORT_NO_DATA: CodeInfo = CodeInfo {
+    code: "SNR-ENG-384",
+    severity: Severity::Error,
+    summary: "The imported chart has no readable data",
+    help: "Give the chart inline values or a local data file; SONARITHM never fetches data            from the network (ADR-0012).",
+    rules: &[],
+    status: CodeStatus::Active,
+};
+
 /// Every PLOTSONA code, in ascending order.
 pub const CODES: CodeTable = CodeTable {
     area: Area::Eng,
@@ -434,6 +474,10 @@ pub const CODES: CodeTable = CodeTable {
         PIE_SHARES,
         PDF_NO_VECTOR,
         EXPERIMENTAL_TEMPLATE,
+        IMPORT_UNMAPPED,
+        IMPORT_APPROXIMATED,
+        IMPORT_UNREADABLE,
+        IMPORT_NO_DATA,
     ],
 };
 

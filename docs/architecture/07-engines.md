@@ -88,6 +88,7 @@ Each engine is one crate under `crates/engines/` and implements `Engine`. This p
 | `raster` | Axis calibration (linear/log/date), colour masks, line tracing, bar and point detection → `cv_estimate` + confidence |
 | `ml` (crate `-ml`) | tract/ort models; self-consistency confidence; `ml_estimate` |
 | `templates` | `chart_type → spec` (line, bar, grouped/stacked, scatter, histogram, box, heat map, pie): `chart-line`, `chart-bar`, `chart-stacked-bar` and `chart-pie`, plus NUMISONA's `scatter-xy`, `box-five-number` and `heatmap-rowscan` (`template_for`) |
+| `import` | Vega-Lite and MAIDR documents → a v0.2 spec with the chart's data and its chart-type template, with a report of unmapped constructs (C01-T10, [04 §9](04-sonification-spec.md#9-importers)) |
 
 **Tests:** extraction corpora with ground truth (exact ≤ 0.5% error; raster median ≤ 2%, C02 exit); fuzzing of every parser (untrusted input); provenance-class assertions.
 

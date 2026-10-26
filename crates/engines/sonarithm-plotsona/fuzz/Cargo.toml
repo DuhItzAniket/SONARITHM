@@ -64,3 +64,17 @@ path = "fuzz_targets/pdf_chart.rs"
 test = false
 doc = false
 bench = false
+
+[[bin]]
+name = "vegalite_import"
+path = "fuzz_targets/vegalite_import.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "maidr_import"
+path = "fuzz_targets/maidr_import.rs"
+test = false
+doc = false
+bench = false

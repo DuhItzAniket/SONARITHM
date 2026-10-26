@@ -37,6 +37,7 @@ mod container;
 #[cfg(test)]
 mod corpus;
 pub mod detect;
+pub mod import;
 pub mod model;
 mod office;
 mod pdf;

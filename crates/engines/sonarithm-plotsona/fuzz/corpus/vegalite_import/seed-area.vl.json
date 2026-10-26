@@ -1,0 +1,81 @@
+{
+  "$schema": "https://vega.github.io/schema/vega-lite/v5.json",
+  "data": {
+    "values": [
+      {
+        "month": "2025-01-01",
+        "city": "Oslo",
+        "temp": 2.0
+      },
+      {
+        "month": "2025-02-01",
+        "city": "Oslo",
+        "temp": 3.1
+      },
+      {
+        "month": "2025-03-01",
+        "city": "Oslo",
+        "temp": 6.0
+      },
+      {
+        "month": "2025-04-01",
+        "city": "Oslo",
+        "temp": 10.0
+      },
+      {
+        "month": "2025-05-01",
+        "city": "Oslo",
+        "temp": 14.0
+      },
+      {
+        "month": "2025-06-01",
+        "city": "Oslo",
+        "temp": 16.9
+      },
+      {
+        "month": "2025-07-01",
+        "city": "Oslo",
+        "temp": 18.0
+      },
+      {
+        "month": "2025-08-01",
+        "city": "Oslo",
+        "temp": 16.9
+      },
+      {
+        "month": "2025-09-01",
+        "city": "Oslo",
+        "temp": 14.0
+      },
+      {
+        "month": "2025-10-01",
+        "city": "Oslo",
+        "temp": 10.0
+      },
+      {
+        "month": "2025-11-01",
+        "city": "Oslo",
+        "temp": 6.0
+      },
+      {
+        "month": "2025-12-01",
+        "city": "Oslo",
+        "temp": 3.1
+      }
+    ]
+  },
+  "mark": {
+    "type": "area",
+    "line": true
+  },
+  "encoding": {
+    "x": {
+      "field": "month",
+      "type": "temporal"
+    },
+    "y": {
+      "field": "temp",
+      "type": "quantitative"
+    }
+  }
+}

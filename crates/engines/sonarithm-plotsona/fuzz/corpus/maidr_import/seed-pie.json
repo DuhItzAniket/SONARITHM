@@ -1,0 +1,40 @@
+{
+  "id": "chart",
+  "subplots": [
+    [
+      {
+        "id": "plot",
+        "layers": [
+          {
+            "id": "0",
+            "type": "pie",
+            "startAngle": 0,
+            "direction": "clockwise",
+            "axes": {
+              "x": {
+                "label": "Fruit"
+              },
+              "y": {
+                "label": "Units"
+              }
+            },
+            "data": [
+              {
+                "x": "Apples",
+                "y": 30
+              },
+              {
+                "x": "Bananas",
+                "y": 50
+              },
+              {
+                "x": "Cherries",
+                "y": 20
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  ]
+}

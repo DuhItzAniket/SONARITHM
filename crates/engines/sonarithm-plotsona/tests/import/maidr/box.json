@@ -1,0 +1,41 @@
+{
+  "id": "chart",
+  "subplots": [
+    [
+      {
+        "id": "plot",
+        "layers": [
+          {
+            "id": "0",
+            "type": "box",
+            "orientation": "vert",
+            "data": [
+              {
+                "lowerOutliers": [],
+                "min": 71.4,
+                "q1": 92.6,
+                "q2": 99.6,
+                "q3": 107.7,
+                "max": 118.2,
+                "upperOutliers": [
+                  150.0
+                ],
+                "fill": "Group 1"
+              },
+              {
+                "lowerOutliers": [],
+                "min": 65.0,
+                "q1": 80.5,
+                "q2": 88.1,
+                "q3": 95.0,
+                "max": 110.3,
+                "upperOutliers": [],
+                "fill": "Group 2"
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  ]
+}

@@ -1,0 +1,36 @@
+{
+  "$schema": "https://vega.github.io/schema/vega-lite/v5.json",
+  "data": {
+    "values": [
+      {
+        "quarter": "Q1",
+        "sales": 10
+      },
+      {
+        "quarter": "Q2",
+        "sales": 13
+      },
+      {
+        "quarter": "Q3",
+        "sales": 16
+      },
+      {
+        "quarter": "Q4",
+        "sales": 19
+      }
+    ]
+  },
+  "mark": "bar",
+  "encoding": {
+    "y": {
+      "field": "quarter",
+      "type": "nominal",
+      "title": "Quarter"
+    },
+    "x": {
+      "field": "sales",
+      "type": "quantitative",
+      "title": "Sales"
+    }
+  }
+}

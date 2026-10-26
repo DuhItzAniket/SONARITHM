@@ -1,0 +1,24 @@
+---
+source: crates/engines/sonarithm-plotsona/tests/importers.rs
+expression: "lines.join(\"\\n\")"
+---
+area.vl.json: "chart-line" {"x":"month","y":"temp"}; 12 notes
+bar.vl.json: "chart-bar" {"category":"quarter","value":"sales"}; 4 notes
+boxplot.vl.json: "box-five-number" {"group":"site","value":"ms"}; 15 notes
+filtered.vl.json: "scatter-xy" {"x":"height","y":"weight"}; 12 notes
+  - unmapped params at /params: selections and parameters are interactive; sound navigation replaces them
+  - unmapped transform.calculate at /transform/1: this transform has no SONARITHM equivalent; later fields it creates will be missing
+grouped-bar.vl.json: "chart-bar" {"category":"quarter","series":"region","value":"sales"}; 12 notes
+heatmap.vl.json: "heatmap-rowscan" {"column":"quarter","row":"region","value":"sum_sales"}; 12 notes
+histogram.vl.json: "chart-bar" {"category":"bin_minutes","value":"count"}; 8 notes
+  - approximated encoding.x.bin at /encoding/x/bin: Vega-Lite picks nice bin edges; SONARITHM uses 8 equal-width bins
+horizontal-bar.vl.json: "chart-bar" {"category":"quarter","value":"sales"}; 4 notes
+layered.vl.json: "chart-line" {"x":"month","y":"temp"}; 12 notes
+  - unmapped layer at /layer/1: only the first view is imported; add a track for view 1 by hand
+mean-bar.vl.json: "chart-bar" {"category":"region","value":"mean_sales"}; 3 notes
+multi-line.vl.json: "chart-line" {"series":"city","x":"month","y":"temp"}; 24 notes
+pie.vl.json: "chart-pie" {"slice":"fruit","value":"units"}; 3 notes
+scatter.vl.json: "scatter-xy" {"series":"group","x":"height","y":"weight"}; 16 notes
+  - unmapped encoding.size at /encoding/size: SONARITHM's default design maps x, y and colour; map this field to another channel by hand
+  - unmapped encoding.tooltip at /encoding/tooltip: SONARITHM's default design maps x, y and colour; map this field to another channel by hand
+stacked-bar.vl.json: "chart-stacked-bar" {"category":"quarter","series":"region","value":"sum_sales"}; 12 notes

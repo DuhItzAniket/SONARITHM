@@ -221,6 +221,10 @@ Owner: `sonarithm-plotsona`. Numbers SNR-ENG-300 to SNR-ENG-399.
 | `SNR-ENG-363` | info | Pie values are shares in percent | A pie's geometry holds each slice's share of the whole, not the numbers behind it. The shares are exact to the drawing's precision. | — |
 | `SNR-ENG-364` | error | The PDF has no vector chart | The pages hold only images, so the chart must be read by the raster tier (C02),            as an estimate. Use the chart's source file or a vector export if you have one. | — |
 | `SNR-ENG-380` | warning | Experimental chart template | No design rule covers this chart type's sound design yet (pie and stacked bar), so            it may change when a study supports one. Write `tracks` to choose the design            yourself. | SDR-03 |
+| `SNR-ENG-381` | warning | A chart construct was not imported | SONARITHM has no equivalent for it; the note says what to write by hand. The            pointer is in the imported document. | SDR-05 |
+| `SNR-ENG-382` | info | A chart construct was imported approximately | The note says how the sound differs from the picture. | SDR-05 |
+| `SNR-ENG-383` | error | The document cannot be imported | Check that it is a Vega-Lite or MAIDR document of a supported chart type, or            write the spec's tracks by hand. | — |
+| `SNR-ENG-384` | error | The imported chart has no readable data | Give the chart inline values or a local data file; SONARITHM never fetches data            from the network (ADR-0012). | — |
 
 Owner: `sonarithm-echometric`. Numbers SNR-ENG-600 to SNR-ENG-699.
 

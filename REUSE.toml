@@ -69,6 +69,8 @@ path = [
     "crates/sonarithm-app/fuzz/corpus/**",
     "crates/engines/sonarithm-plotsona/fuzz/corpus/**",
     "crates/engines/sonarithm-plotsona/tests/corpus/**",
+    # Vega-Lite and MAIDR importer examples, written by the project (C01-T10).
+    "crates/engines/sonarithm-plotsona/tests/import/**",
 ]
 precedence = "closest"
 SPDX-FileCopyrightText = "2026 SONARITHM contributors"
