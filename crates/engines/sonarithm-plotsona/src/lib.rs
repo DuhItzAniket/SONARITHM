@@ -18,6 +18,7 @@
 //! | [`model`] | The extracted chart (series, points, provenance) and its long table |
 //! | `chartjson` | Tier 1: Vega-Lite, Vega, Plotly and Highcharts JSON, also from a local HTML page's scripts, read statically (`exact`) |
 //! | `office` | Tier 1: XLSX, PPTX and DOCX chart parts, from the chart's workbook or its caches (`exact`) |
+//! | `svg` | Tier 2: SVG geometry calibrated through its axes' tick labels and lines (`vector`, with the residual) |
 //! | [`report`] | The extraction report: container, tier, series, provenance mix, diagnostics |
 //! | engine | The `chart` source: a spec's `{"kind": "chart", "path": …}` |
 //!
@@ -38,6 +39,7 @@ pub mod detect;
 pub mod model;
 mod office;
 pub mod report;
+mod svg;
 mod xml;
 
 use std::path::{Path, PathBuf};
@@ -185,7 +187,8 @@ fn read_chart(
             return Ok((chart, json_extractor(found)));
         }
         Container::Svg => {
-            xml::parse(bytes, "SVG image", budgets, work)?;
+            let chart = svg::extract(bytes, budgets, work, diagnostics)?;
+            return Ok((chart, "sonarithm-plotsona/svg"));
         }
         _ => {}
     }
@@ -386,7 +389,7 @@ impl ChartSource {
 pub mod fuzzing {
     use sonarithm_core::Diagnostic;
 
-    use crate::{Budgets, ChartData, Container, Work, chartjson, detect, office};
+    use crate::{Budgets, ChartData, Container, Work, chartjson, detect, office, svg};
 
     /// Reads `xml` as an Office chart part from its caches, as the Office extractor does.
     ///
@@ -420,6 +423,16 @@ pub mod fuzzing {
         let mut diagnostics = Vec::new();
         let mut cx = chartjson::Cx::new(budgets, &mut work, &mut diagnostics);
         chartjson::extract(container, &value, &mut cx)
+    }
+
+    /// Reads `bytes` as an SVG chart: scene, axes, calibration and marks.
+    ///
+    /// # Errors
+    ///
+    /// The extractor's diagnostic.
+    pub fn svg_chart(bytes: &[u8], budgets: &Budgets) -> Result<ChartData, Box<Diagnostic>> {
+        let mut work = Work::new(budgets.max_work);
+        svg::extract(bytes, budgets, &mut work, &mut Vec::new())
     }
 
     /// Reads `html` as a page whose scripts hold a chart.

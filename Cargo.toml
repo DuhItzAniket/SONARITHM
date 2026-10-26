@@ -187,6 +187,8 @@ ts-rs = { version = "12.0.1", default-features = false, features = ["serde-compa
 # XML for Office chart parts and SVG (PLOTSONA, C01-T02): it refuses DTDs by default, so no
 # entity expansion or external reference, and it caps the node count.
 roxmltree = "0.21.2"
+# SVG path data, transforms, lengths and colours (PLOTSONA's SVG tier, C01-T02, C01-T07).
+svgtypes = "0.16.1"
 # TOML for engine data tables (NUMISONA's concepts.toml, 03 §3.3); parsing only, no writer.
 toml = { version = "1.1.8", default-features = false, features = ["std", "parse", "serde"] }
 

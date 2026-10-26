@@ -835,3 +835,21 @@ A05 (render engine, audio backends, export) uses F-050 to F-069.
 - **Evidence level / confidence:** EV-C / Strong for plotly.py 6.7.0; other Plotly writers (R, Julia, plotly.js's own export) not checked, TODO(verify)
 - **Affects:** C01-T06, C01-T11, DS-007, notes/06 §6 (errata)
 - **Papers:** none yet
+
+### F-163 · Calibrated SVG extraction reads Vega-Lite, Plotly and D3 renders within 0.15 % of the largest value, limited by half-pixel tick offsets
+
+- **Date:** 2026-10-26 · **Phase:** C01 · **Type:** benchmark · **Status:** new
+- **Statement:** On 12 SVG renders of DS-001 to DS-004 (line, bar, scatter, area and pie charts; Vega-Lite through vl-convert 1.9.0, Plotly through Kaleido 1.5.0, D3 7.9.0 in jsdom), PLOTSONA's SVG tier recovered every series with a worst absolute error of 0.147 % of the chart's largest value (Vega-Lite area); Plotly renders were within 0.002 %, bars and pies within 0.0003 %. The Vega-Lite and D3 errors, about 0.1 %, are a constant half-pixel shift: both draw tick lines offset by 0.5 units for crisp edges (d3-axis's offset when the device pixel ratio is 1), and labels are snapped to those lines. All are well inside the C01 target of 0.5 %.
+- **Evidence:** `svg::tests::corpus_charts_extract_within_half_a_percent` (prints per-chart errors); `crates/engines/sonarithm-plotsona/tests/corpus/svg/`; the C01-T07 PR
+- **Evidence level / confidence:** EV-C / Strong for these renders; renders at other sizes, other libraries and hand-made SVGs not measured; benchmarks-log row pending with C01-T11's harness
+- **Affects:** C01-T07, C01-T11, DS-007, 10 §3 (tier 2 "near-exact")
+- **Papers:** none yet
+
+### F-164 · Vega's SVG export labels each mark with its data values for assistive technology
+
+- **Date:** 2026-10-26 · **Phase:** C01 · **Type:** accessibility · **Status:** new
+- **Statement:** SVGs exported by Vega 6 through vl-convert 1.9.0 carry an `aria-label` on every data mark, such as `"month: Jan; rain: 99.2; region: north"`, with the values as Vega formats them, beside `role="graphics-symbol"`. A chart file can therefore hold its values twice: in geometry (tier 2) and in text written for screen readers. PLOTSONA's SVG tier reads only the geometry; reading such labels would be a separate, exact-but-formatted path (values rounded by the format, field names from the spec), which needs a decision before use.
+- **Evidence:** `crates/engines/sonarithm-plotsona/tests/corpus/svg/vl-line.svg` and the other Vega-Lite SVGs
+- **Evidence level / confidence:** EV-C / Strong for vl-convert 1.9.0; other Vega renderers not checked
+- **Affects:** C01-T07; a possible later extractor (open question, not filed as an OD yet); A11Y research on chart exports
+- **Papers:** none yet

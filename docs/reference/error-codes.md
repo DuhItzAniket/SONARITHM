@@ -210,6 +210,10 @@ Owner: `sonarithm-plotsona`. Numbers SNR-ENG-300 to SNR-ENG-399.
 | `SNR-ENG-347` | error | Data built by a script was not run | Chart data made by a function, a signal or a generator needs its script, and PLOTSONA runs no scripts from files (OD-25). Export the chart's data or JSON. | — |
 | `SNR-ENG-348` | warning | A data transform was not applied | Transforms that need an expression language (filters, formulas, time units, bins) are not run, so the values are the stored data before them. Check them against the chart. | — |
 | `SNR-ENG-349` | warning | Some values could not be read | Values in a form PLOTSONA does not read are left out as gaps, never guessed. | — |
+| `SNR-ENG-360` | warning | References outside the SVG were not followed | Images, styles or uses that point outside the file are never loaded (12 §6). Only what the SVG draws itself is read. | — |
+| `SNR-ENG-361` | warning | Scripts in the SVG were ignored | PLOTSONA never runs scripts from files (OD-25). A chart that a script draws after loading has nothing to read; export it after it is drawn. | — |
+| `SNR-ENG-362` | error | No axes with tick labels were found | Vector charts are read through their axes' tick labels (10 §3.1). If the labels are drawn as outlines rather than text, enter the axes' anchors in `calibration`. | — |
+| `SNR-ENG-363` | info | Pie values are shares in percent | A pie's geometry holds each slice's share of the whole, not the numbers behind it. The shares are exact to the drawing's precision. | — |
 
 Owner: `sonarithm-echometric`. Numbers SNR-ENG-600 to SNR-ENG-699.
 

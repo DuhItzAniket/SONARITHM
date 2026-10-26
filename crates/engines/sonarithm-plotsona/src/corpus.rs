@@ -6,7 +6,9 @@
 //! Each chart `name.ext` has a `name.truth.json` beside it with the chart type, title,
 //! provenance class, the kind of x (`category`, `number` or `date`) and the series with
 //! their x and y values. A chart passes when every series, name, x and class matches and
-//! every y is within `tolerance` relative error (0 for exact tiers).
+//! every y is within `tolerance` relative error (0 for exact tiers). For calibrated tiers
+//! the error of a value is taken relative to the largest absolute value of the chart's
+//! ground truth, as digitizing errors are measured against the axis rather than each value.
 
 use std::path::{Path, PathBuf};
 
@@ -85,6 +87,11 @@ pub(crate) fn check(dir: &Path, tolerance: f64) -> Vec<(String, f64)> {
             "{name}: series"
         );
         let mut worst = 0.0_f64;
+        let y_scale = series
+            .iter()
+            .flat_map(|s| s["y"].as_array().into_iter().flatten())
+            .filter_map(Value::as_f64)
+            .fold(0.0_f64, |m, v| m.max(v.abs()));
         for (found, expected) in chart.series.iter().zip(series) {
             assert_eq!(
                 sonarithm_data::provenance::class_name(found.provenance.class),
@@ -122,10 +129,11 @@ pub(crate) fn check(dir: &Path, tolerance: f64) -> Vec<(String, f64)> {
                 }
                 let y = y.as_f64().expect("y");
                 let found_y = point.y.unwrap_or(f64::NAN);
-                let error = if y == 0.0 {
+                let scale = if tolerance > 0.0 { y_scale } else { y.abs() };
+                let error = if scale == 0.0 {
                     found_y.abs()
                 } else {
-                    ((found_y - y) / y).abs()
+                    ((found_y - y) / scale).abs()
                 };
                 worst = worst.max(if error.is_nan() { f64::INFINITY } else { error });
             }

@@ -20,6 +20,7 @@ serde_json.workspace = true
 sonarithm-core.workspace = true
 sonarithm-data.workspace = true
 sonarithm-spec.workspace = true
+svgtypes.workspace = true
 # Office containers (XLSX, PPTX, DOCX): Deflate only, pure Rust (C01-T02).
 zip = { workspace = true, features = ["deflate-flate2-zlib-rs"] }
 

@@ -328,6 +328,51 @@ pub const VALUE_UNREADABLE: CodeInfo = CodeInfo {
     status: CodeStatus::Active,
 };
 
+/// An SVG refers to content outside the file; it was not followed.
+pub const SVG_EXTERNAL_REF: CodeInfo = CodeInfo {
+    code: "SNR-ENG-360",
+    severity: Severity::Warning,
+    summary: "References outside the SVG were not followed",
+    help: "Images, styles or uses that point outside the file are never loaded (12 §6). \
+           Only what the SVG draws itself is read.",
+    rules: &[],
+    status: CodeStatus::Active,
+};
+
+/// An SVG holds scripts; they were ignored.
+pub const SVG_SCRIPT_IGNORED: CodeInfo = CodeInfo {
+    code: "SNR-ENG-361",
+    severity: Severity::Warning,
+    summary: "Scripts in the SVG were ignored",
+    help: "PLOTSONA never runs scripts from files (OD-25). A chart that a script draws \
+           after loading has nothing to read; export it after it is drawn.",
+    rules: &[],
+    status: CodeStatus::Active,
+};
+
+/// No axes with readable tick labels were found.
+pub const AXIS_NOT_FOUND: CodeInfo = CodeInfo {
+    code: "SNR-ENG-362",
+    severity: Severity::Error,
+    summary: "No axes with tick labels were found",
+    help: "Vector charts are read through their axes' tick labels (10 §3.1). If the labels \
+           are drawn as outlines rather than text, enter the axes' anchors in \
+           `calibration`.",
+    rules: &[],
+    status: CodeStatus::Active,
+};
+
+/// Pie slices give shares, not values.
+pub const PIE_SHARES: CodeInfo = CodeInfo {
+    code: "SNR-ENG-363",
+    severity: Severity::Info,
+    summary: "Pie values are shares in percent",
+    help: "A pie's geometry holds each slice's share of the whole, not the numbers behind \
+           it. The shares are exact to the drawing's precision.",
+    rules: &[],
+    status: CodeStatus::Active,
+};
+
 /// Every PLOTSONA code, in ascending order.
 pub const CODES: CodeTable = CodeTable {
     area: Area::Eng,
@@ -363,6 +408,10 @@ pub const CODES: CodeTable = CodeTable {
         SCRIPT_DATA,
         TRANSFORM_NOT_APPLIED,
         VALUE_UNREADABLE,
+        SVG_EXTERNAL_REF,
+        SVG_SCRIPT_IGNORED,
+        AXIS_NOT_FOUND,
+        PIE_SHARES,
     ],
 };
 
