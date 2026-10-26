@@ -153,6 +153,76 @@ pub const FILE_UNREADABLE: CodeInfo = CodeInfo {
     status: CodeStatus::Active,
 };
 
+/// An axis has too few usable anchors to calibrate.
+pub const CALIBRATION_ANCHORS: CodeInfo = CodeInfo {
+    code: "SNR-ENG-320",
+    severity: Severity::Error,
+    summary: "The axis has too few anchors to calibrate",
+    help: "Calibration needs at least two ticks or anchors with different positions and            values. Enter two anchors by hand in `calibration` if the labels cannot be read.",
+    rules: &[],
+    status: CodeStatus::Active,
+};
+
+/// A logarithmic axis has a value that is zero or negative.
+pub const LOG_NOT_POSITIVE: CodeInfo = CodeInfo {
+    code: "SNR-ENG-321",
+    severity: Severity::Error,
+    summary: "A logarithmic axis has a value that is not above zero",
+    help: "Log axes place only positive values. Check the axis type and the tick labels.",
+    rules: &[],
+    status: CodeStatus::Active,
+};
+
+/// Tick values do not change monotonically along the axis.
+pub const TICKS_NOT_MONOTONIC: CodeInfo = CodeInfo {
+    code: "SNR-ENG-322",
+    severity: Severity::Error,
+    summary: "The axis ticks are not monotonic",
+    help: "Tick values must rise (or fall) steadily along the axis (10 §3.1). Labels may            have been read from the wrong ticks; enter the anchors by hand.",
+    rules: &[],
+    status: CodeStatus::Active,
+};
+
+/// The axis was read with one scale but its ticks fit the other far better.
+pub const SCALE_MISMATCH: CodeInfo = CodeInfo {
+    code: "SNR-ENG-323",
+    severity: Severity::Warning,
+    summary: "The axis scale does not match its tick spacing",
+    help: "A log axis read as linear, or the reverse, distorts every value (10 §3.1). Set            the axis kind in `calibration`.",
+    rules: &[],
+    status: CodeStatus::Active,
+};
+
+/// Points lie outside the plot area.
+pub const POINTS_OUTSIDE_PLOT: CodeInfo = CodeInfo {
+    code: "SNR-ENG-324",
+    severity: Severity::Warning,
+    summary: "Some points lie outside the plot area",
+    help: "Their values are extrapolated beyond the ticks and may belong to a legend or an            annotation rather than the data (10 §3.1).",
+    rules: &[],
+    status: CodeStatus::Active,
+};
+
+/// The calibration residual is larger than the accuracy target.
+pub const CALIBRATION_RESIDUAL: CodeInfo = CodeInfo {
+    code: "SNR-ENG-325",
+    severity: Severity::Warning,
+    summary: "The axis calibration is imprecise",
+    help: "The ticks sit more than 0.5 % of the axis away from the fitted scale, so values            read through it carry that error. Their confidence is lowered to match.",
+    rules: &[],
+    status: CodeStatus::Active,
+};
+
+/// Some tick labels could not be read as values.
+pub const TICK_LABEL_UNREAD: CodeInfo = CodeInfo {
+    code: "SNR-ENG-326",
+    severity: Severity::Warning,
+    summary: "Some tick labels could not be read",
+    help: "Unread labels are skipped, never guessed; the axis is calibrated from the rest.",
+    rules: &[],
+    status: CodeStatus::Active,
+};
+
 /// Every PLOTSONA code, in ascending order.
 pub const CODES: CodeTable = CodeTable {
     area: Area::Eng,
@@ -171,6 +241,13 @@ pub const CODES: CodeTable = CodeTable {
         EXTRACTOR_MISMATCH,
         ENCRYPTED,
         FILE_UNREADABLE,
+        CALIBRATION_ANCHORS,
+        LOG_NOT_POSITIVE,
+        TICKS_NOT_MONOTONIC,
+        SCALE_MISMATCH,
+        POINTS_OUTSIDE_PLOT,
+        CALIBRATION_RESIDUAL,
+        TICK_LABEL_UNREAD,
     ],
 };
 

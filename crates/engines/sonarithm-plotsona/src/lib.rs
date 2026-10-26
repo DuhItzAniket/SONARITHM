@@ -14,6 +14,7 @@
 //! |---|---|
 //! | [`detect`](mod@detect) | Container sniffing from the bytes: XLSX, PPTX, DOCX, chart JSON, HTML, SVG, PDF, PNG, JPEG; the tier of each |
 //! | [`budget`] | Size, decompression, ratio, depth, node, point and work budgets |
+//! | [`calibrate`] | Axis calibration for the vector and raster tiers: linear, log and date fits from anchors or tick labels, residuals, the sanity checks of 10 §3.1, category axes |
 //! | [`model`] | The extracted chart (series, points, provenance) and its long table |
 //! | [`report`] | The extraction report: container, tier, series, provenance mix, diagnostics |
 //! | engine | The `chart` source: a spec's `{"kind": "chart", "path": …}` |
@@ -25,6 +26,7 @@
 #![deny(missing_docs)]
 
 pub mod budget;
+pub mod calibrate;
 pub mod codes;
 mod container;
 pub mod detect;

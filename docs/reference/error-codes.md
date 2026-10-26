@@ -191,6 +191,13 @@ Owner: `sonarithm-plotsona`. Numbers SNR-ENG-300 to SNR-ENG-399.
 | `SNR-ENG-310` | error | The chosen extractor does not fit the file | Set `extractor` to `auto`, or to the extractor of the file's format. | — |
 | `SNR-ENG-311` | error | The chart file is encrypted | PLOTSONA does not decrypt files. Save an unprotected copy. | — |
 | `SNR-ENG-312` | error | The chart file cannot be read | Check that the path is relative to the spec's directory and the file exists. | — |
+| `SNR-ENG-320` | error | The axis has too few anchors to calibrate | Calibration needs at least two ticks or anchors with different positions and            values. Enter two anchors by hand in `calibration` if the labels cannot be read. | — |
+| `SNR-ENG-321` | error | A logarithmic axis has a value that is not above zero | Log axes place only positive values. Check the axis type and the tick labels. | — |
+| `SNR-ENG-322` | error | The axis ticks are not monotonic | Tick values must rise (or fall) steadily along the axis (10 §3.1). Labels may            have been read from the wrong ticks; enter the anchors by hand. | — |
+| `SNR-ENG-323` | warning | The axis scale does not match its tick spacing | A log axis read as linear, or the reverse, distorts every value (10 §3.1). Set            the axis kind in `calibration`. | — |
+| `SNR-ENG-324` | warning | Some points lie outside the plot area | Their values are extrapolated beyond the ticks and may belong to a legend or an            annotation rather than the data (10 §3.1). | — |
+| `SNR-ENG-325` | warning | The axis calibration is imprecise | The ticks sit more than 0.5 % of the axis away from the fitted scale, so values            read through it carry that error. Their confidence is lowered to match. | — |
+| `SNR-ENG-326` | warning | Some tick labels could not be read | Unread labels are skipped, never guessed; the axis is calibrated from the rest. | — |
 
 Owner: `sonarithm-echometric`. Numbers SNR-ENG-600 to SNR-ENG-699.
 
