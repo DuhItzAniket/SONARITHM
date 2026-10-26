@@ -6,9 +6,12 @@
 //!
 //! A template is a sonification design with named **slots** (an x field, a value field, a
 //! category field, …). Binding the slots to a dataset's fields and applying the template
-//! gives a spec v0.1 document, so any dataset with a compatible schema gets the same design.
-//! Spec v0.1 reserves a `template` key (RFC-0001 Q12), so templates live here as spec
-//! builders until a spec version adds it.
+//! gives a spec document, so any dataset with a compatible schema gets the same design.
+//! Since spec v0.2 a spec names one with its `template` key (RFC-0004 §2): NUMISONA
+//! registers each template with the compiler ([`TemplateSet`]), which binds the slots with
+//! the shared rules of [`sonarithm_data::slots`] and merges the sections the template
+//! designs ([`Template::sections`]). [`Template::apply`] still writes a whole v0.1 spec for
+//! callers that build one (`sonarithm.quick`).
 //!
 //! | Template | Slots | Design |
 //! |---|---|---|
@@ -25,44 +28,23 @@
 //! writes them as inline values marked `derived` (03 §4); its notes point at those summary
 //! rows, not at the original data.
 
+use std::borrow::Borrow;
 use std::collections::BTreeMap;
 
 use serde_json::{Map, Value, json};
-use sonarithm_data::{DataBundle, FieldType, Role, Table};
+use sonarithm_core::engine::{
+    CompileContext, CompileError, SpecFragment, TemplateExpansion, TemplateProvider,
+};
+use sonarithm_data::slots::{self, SlotError};
+use sonarithm_data::{DataBundle, Role, Table};
+use sonarithm_spec::v02::TemplateRef;
+
+pub use sonarithm_data::slots::{Bindings, FieldKind, Slot};
 
 use crate::encode::columns::{numbers_of, texts_of};
 
-/// What a slot accepts.
-#[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord)]
-pub enum FieldKind {
-    /// Quantitative or temporal fields: numbers.
-    Number,
-    /// Nominal or ordinal fields: categories.
-    Category,
-    /// Either.
-    Any,
-}
-
-/// One slot of a template.
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub struct Slot {
-    /// The slot name, such as `x`.
-    pub name: &'static str,
-    /// What the slot accepts.
-    pub kind: FieldKind,
-    /// The field role that binds to the slot first (03 §3.4).
-    pub role: Option<Role>,
-    /// Whether the template works without it.
-    pub optional: bool,
-}
-
 const fn slot(name: &'static str, kind: FieldKind, role: Option<Role>) -> Slot {
-    Slot {
-        name,
-        kind,
-        role,
-        optional: false,
-    }
+    Slot::new(name, kind, role)
 }
 
 /// A template.
@@ -74,16 +56,6 @@ pub struct Template {
     pub description: &'static str,
     /// The slots, in binding order.
     pub slots: &'static [Slot],
-}
-
-/// Slot name → field name.
-pub type Bindings = BTreeMap<String, String>;
-
-/// A field a slot may bind.
-struct Candidate {
-    name: String,
-    kind: Option<FieldKind>,
-    role: Option<Role>,
 }
 
 /// Why a template cannot be applied.
@@ -144,12 +116,7 @@ pub const TEMPLATES: [Template; 6] = [
         slots: &[
             slot("x", FieldKind::Number, Some(Role::X)),
             slot("y", FieldKind::Number, Some(Role::Y)),
-            Slot {
-                name: "series",
-                kind: FieldKind::Category,
-                role: Some(Role::Series),
-                optional: true,
-            },
+            slot("series", FieldKind::Category, Some(Role::Series)).optional(),
         ],
     },
     Template {
@@ -188,94 +155,40 @@ pub fn template(id: &str) -> Result<&'static Template, TemplateError> {
         .ok_or_else(|| TemplateError::Unknown(id.to_owned()))
 }
 
-/// The kind of a table's field: its declared type, else its Arrow type.
-fn field_kind(table: &Table, field: &str) -> Option<FieldKind> {
-    let meta = table.field_meta(field).ok()?;
-    match meta.ftype {
-        Some(FieldType::Quantitative | FieldType::Temporal) => Some(FieldKind::Number),
-        Some(FieldType::Nominal | FieldType::Ordinal) => Some(FieldKind::Category),
-        _ => {
-            let column = table.column(field).ok()?;
-            if numbers_of(&column).is_some() {
-                Some(FieldKind::Number)
-            } else {
-                texts_of(&column).map(|_| FieldKind::Category)
-            }
-        }
-    }
-}
-
-fn accepts(slot: FieldKind, field: FieldKind) -> bool {
-    slot == FieldKind::Any || slot == field
-}
-
-fn kind_name(kind: FieldKind) -> &'static str {
-    match kind {
-        FieldKind::Number => "numeric",
-        FieldKind::Category => "categorical",
-        FieldKind::Any => "",
-    }
-}
-
 impl Template {
-    /// Binds the slots to `table`'s fields. First every slot with a role takes an unused
-    /// field with that role (03 §3.4); then each remaining slot, in order, takes the first
-    /// unused field of its kind, preferring fields without a role, in schema order.
-    /// Reserved `__snr_` columns are never bound.
+    /// Binds the slots to `table`'s fields with the shared rules of
+    /// [`sonarithm_data::slots::bind`]: every slot with a role takes an unused field with
+    /// that role (03 §3.4); then each remaining slot, in order, takes the first unused field
+    /// of its kind, preferring fields without a role, in schema order. Reserved `__snr_`
+    /// columns are never bound.
     ///
     /// # Errors
     ///
     /// [`TemplateError::Unbound`] when a required slot finds no field; the dataset is then
     /// not compatible with the template.
     pub fn bind(&self, table: &Table) -> Result<Bindings, TemplateError> {
-        let fields: Vec<Candidate> = table
-            .schema()
-            .fields()
-            .iter()
-            .map(|f| f.name().clone())
-            .filter(|name| !name.starts_with("__snr_"))
-            .map(|name| {
-                let kind = field_kind(table, &name);
-                let role = table.field_meta(&name).ok().and_then(|meta| meta.role);
-                Candidate { name, kind, role }
-            })
-            .collect();
-        let mut bindings = Bindings::new();
-        let free = |bindings: &Bindings, slot: &Slot, field: &Candidate| {
-            !bindings.values().any(|v| *v == field.name)
-                && field.kind.is_some_and(|k| accepts(slot.kind, k))
-        };
-        for slot in self.slots.iter().filter(|s| s.role.is_some()) {
-            if let Some(field) = fields
-                .iter()
-                .find(|f| free(&bindings, slot, f) && f.role == slot.role)
-            {
-                bindings.insert(slot.name.to_owned(), field.name.clone());
-            }
+        slots::bind(self.slots, table, &Bindings::new()).map_err(|err| self.error(err))
+    }
+
+    fn error(&self, err: SlotError) -> TemplateError {
+        match err {
+            SlotError::Unbound { slot, kind } => TemplateError::Unbound {
+                template: self.id,
+                slot,
+                kind: kind.adjective(),
+            },
+            SlotError::BadBinding {
+                slot,
+                field,
+                reason,
+            } => TemplateError::BadBinding {
+                template: self.id,
+                slot,
+                field,
+                reason,
+            },
+            _ => TemplateError::Unknown(self.id.to_owned()),
         }
-        for slot in self.slots {
-            if bindings.contains_key(slot.name) {
-                continue;
-            }
-            let candidate = fields
-                .iter()
-                .filter(|f| free(&bindings, slot, f))
-                .min_by_key(|f| f.role.is_some());
-            match candidate {
-                Some(field) => {
-                    bindings.insert(slot.name.to_owned(), field.name.clone());
-                }
-                None if slot.optional => {}
-                None => {
-                    return Err(TemplateError::Unbound {
-                        template: self.id,
-                        slot: slot.name,
-                        kind: kind_name(slot.kind),
-                    });
-                }
-            }
-        }
-        Ok(bindings)
     }
 
     /// Checks explicit bindings against `table`.
@@ -297,8 +210,9 @@ impl Template {
                 .iter()
                 .find(|s| s.name == slot_name)
                 .ok_or_else(|| bad("the template has no such slot"))?;
-            let kind = field_kind(table, field).ok_or_else(|| bad("the data has no such field"))?;
-            if !accepts(slot.kind, kind) {
+            let kind =
+                slots::field_kind(table, field).ok_or_else(|| bad("the data has no such field"))?;
+            if !slot.kind.accepts(kind) {
                 return Err(bad("the field is of the wrong kind"));
             }
         }
@@ -307,7 +221,7 @@ impl Template {
                 return Err(TemplateError::Unbound {
                     template: self.id,
                     slot: slot.name,
-                    kind: kind_name(slot.kind),
+                    kind: slot.kind.adjective(),
                 });
             }
         }
@@ -327,13 +241,57 @@ impl Template {
         bindings: &Bindings,
         source: &Value,
     ) -> Result<Value, TemplateError> {
-        let table = bundle.primary().ok_or(TemplateError::NoTable)?;
-        self.check(table, bindings)?;
-        let field = |slot: &str| bindings.get(slot).cloned().unwrap_or_default();
+        let design = self.design(bundle, bindings)?;
         let mut spec = Map::new();
         spec.insert("specVersion".to_owned(), json!("0.1"));
         spec.insert("name".to_owned(), json!(self.id));
         spec.insert("description".to_owned(), json!(self.description));
+        let data = match design.computed {
+            Some(values) => json!({ "source": { "kind": "inline", "values": values } }),
+            None => json!({ "source": source }),
+        };
+        spec.insert("data".to_owned(), data);
+        if !design.transform.is_empty() {
+            spec.insert("transform".to_owned(), Value::Array(design.transform));
+        }
+        spec.insert("substrate".to_owned(), design.substrate);
+        spec.insert("tracks".to_owned(), json!([design.track]));
+        Ok(Value::Object(spec))
+    }
+
+    /// The spec sections the template designs for `bindings` (RFC-0004 §2): `transform`
+    /// when it has one, `substrate`, `tracks`, and for `box-five-number` a computed
+    /// `data.source` of `derived` summary rows.
+    ///
+    /// # Errors
+    ///
+    /// As [`Template::check`], and [`TemplateError::NoTable`].
+    pub fn sections(
+        &self,
+        bundle: &DataBundle,
+        bindings: &Bindings,
+    ) -> Result<Value, TemplateError> {
+        let design = self.design(bundle, bindings)?;
+        let mut sections = Map::new();
+        if let Some(values) = design.computed {
+            sections.insert(
+                "data".to_owned(),
+                json!({ "source": { "kind": "inline", "values": values } }),
+            );
+        }
+        if !design.transform.is_empty() {
+            sections.insert("transform".to_owned(), Value::Array(design.transform));
+        }
+        sections.insert("substrate".to_owned(), design.substrate);
+        sections.insert("tracks".to_owned(), json!([design.track]));
+        Ok(Value::Object(sections))
+    }
+
+    fn design(&self, bundle: &DataBundle, bindings: &Bindings) -> Result<Design, TemplateError> {
+        let table = bundle.primary().ok_or(TemplateError::NoTable)?;
+        self.check(table, bindings)?;
+        let field = |slot: &str| bindings.get(slot).cloned().unwrap_or_default();
+        let source = Value::Null;
         let (data, transform, substrate, track) = match self.id {
             "line-overview" => (
                 json!({ "source": source }),
@@ -381,7 +339,7 @@ impl Template {
                 )
             }
             "box-five-number" => (
-                json!({ "source": { "kind": "inline", "values": five_numbers(table, &field("group"), &field("value")) } }),
+                Value::Array(five_numbers(table, &field("group"), &field("value"))),
                 json!([]),
                 json!({ "time": { "pace": { "pointsPerSecond": 3 } } }),
                 json!({ "id": "boxes", "mark": "tone", "channels": { "pitch": { "field": "value" } } }),
@@ -396,13 +354,68 @@ impl Template {
                 json!({ "id": "cells", "mark": "tone", "channels": { "pitch": { "field": field("value") } } }),
             ),
         };
-        spec.insert("data".to_owned(), data);
-        if transform.as_array().is_some_and(|t| !t.is_empty()) {
-            spec.insert("transform".to_owned(), transform);
-        }
-        spec.insert("substrate".to_owned(), substrate);
-        spec.insert("tracks".to_owned(), json!([track]));
-        Ok(Value::Object(spec))
+        Ok(Design {
+            computed: match data {
+                Value::Array(values) => Some(values),
+                _ => None,
+            },
+            transform: match transform {
+                Value::Array(steps) => steps,
+                _ => Vec::new(),
+            },
+            substrate,
+            track,
+        })
+    }
+}
+
+/// What a template designs for one binding.
+struct Design {
+    /// Summary rows the template computed from the data, which replace it.
+    computed: Option<Vec<Value>>,
+    transform: Vec<Value>,
+    substrate: Value,
+    track: Value,
+}
+
+/// NUMISONA's templates as the compiler's template provider (RFC-0004 §2).
+#[derive(Clone, Copy, Debug, Default)]
+pub struct TemplateSet;
+
+impl<D: Borrow<DataBundle>> TemplateProvider<D> for TemplateSet {
+    fn expand(
+        &self,
+        request: &SpecFragment,
+        data: &D,
+        _cx: &mut CompileContext,
+    ) -> Result<TemplateExpansion, CompileError> {
+        let reference: TemplateRef = request.parse()?;
+        let template = template(&reference.id).map_err(|err| CompileError::Engine {
+            engine: crate::encode::ENGINE,
+            message: err.to_string(),
+        })?;
+        let binding = |error| CompileError::Binding {
+            template: template.id.to_owned(),
+            error,
+        };
+        let bundle = data.borrow();
+        let table = bundle.primary().ok_or_else(|| CompileError::Engine {
+            engine: crate::encode::ENGINE,
+            message: "the data has no table to bind the template to".to_owned(),
+        })?;
+        let bindings = slots::bind(template.slots, table, &reference.bind)
+            .map_err(|err| binding(err.into()))?;
+        let sections =
+            template
+                .sections(bundle, &bindings)
+                .map_err(|err| CompileError::Engine {
+                    engine: crate::encode::ENGINE,
+                    message: err.to_string(),
+                })?;
+        Ok(TemplateExpansion::new(
+            bindings,
+            SpecFragment::new(request.pointer().clone(), &sections)?,
+        ))
     }
 }
 

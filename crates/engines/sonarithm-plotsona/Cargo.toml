@@ -29,6 +29,11 @@ zip = { workspace = true, features = ["deflate-flate2-zlib-rs"] }
 [dev-dependencies]
 insta = { workspace = true, features = ["json"] }
 proptest.workspace = true
+sonarithm-compiler.workspace = true
+# Tests compile the chart-type templates through NUMISONA (C01-T09). A dev-dependency
+# only: engines never depend on each other in shipped code (02 §3 rule 2), and check-deps
+# skips dev-dependencies.
+sonarithm-numisona.workspace = true
 
 [lints]
 workspace = true

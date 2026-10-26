@@ -19,6 +19,7 @@ pub mod fingerprint;
 mod infer;
 pub mod meta;
 pub mod provenance;
+pub mod slots;
 pub mod source;
 pub mod stream;
 pub mod table;

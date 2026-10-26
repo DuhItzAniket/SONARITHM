@@ -64,6 +64,13 @@ code!(
     "Two engines register the same shaper stage",
     "Each shaper stage (quantize, loudness, spatial, lint) belongs to one engine."
 );
+code!(
+    /// Two engines register the same template ID (RFC-0004 §2).
+    DUPLICATE_TEMPLATE,
+    "SNR-COMP-016",
+    "Two engines register the same template",
+    "A template ID belongs to one engine; rename one of them."
+);
 
 code!(
     /// The compiled Score breaks an invariant of 05 §4.2: an engine bug.
@@ -131,6 +138,42 @@ code!(
     "Use a template the registry lists (NUMISONA's and PLOTSONA's chart-type templates), or write `tracks`."
 );
 
+code!(
+    /// `template.bind` names an unknown slot or field, or a field of the wrong kind
+    /// (RFC-0004 §2).
+    INVALID_BINDING,
+    "SNR-COMP-031",
+    "Invalid template binding",
+    "Bind each slot to a field the data has, of the kind the slot takes (numeric or categorical)."
+);
+code!(
+    /// A required template slot has no field (RFC-0004 §2).
+    UNBOUND_SLOT,
+    "SNR-COMP-032",
+    "Template slot has no field",
+    "Name a field for the slot in `template.bind`, or use data with a compatible field."
+);
+
+/// The template binding used (RFC-0004 §2).
+pub const TEMPLATE_BINDING: CodeInfo = CodeInfo {
+    severity: Severity::Info,
+    ..code_info(
+        "SNR-COMP-033",
+        "Template binding used",
+        "Name slots in `template.bind` to choose other fields.",
+    )
+};
+
+/// Sections taken from, or replaced in, a template (RFC-0004 §2).
+pub const TEMPLATE_SECTIONS: CodeInfo = CodeInfo {
+    severity: Severity::Info,
+    ..code_info(
+        "SNR-COMP-034",
+        "Sections taken from a template",
+        "A section written in the spec replaces the template's section of the same name; the spec's `transform` runs before the template's.",
+    )
+};
+
 /// A chart correction was not applied (RFC-0004 §6).
 pub const CORRECTION_NOT_APPLIED: CodeInfo = CodeInfo {
     severity: Severity::Warning,
@@ -163,6 +206,7 @@ pub const CODES: CodeTable = CodeTable {
         DUPLICATE_ANALYZER,
         CONFLICTING_ENCODER,
         DUPLICATE_SHAPER,
+        DUPLICATE_TEMPLATE,
         INVARIANT_BROKEN,
         BUDGET_EXCEEDED,
         TRANSFORMS_NOT_APPLIED,
@@ -171,6 +215,10 @@ pub const CODES: CodeTable = CodeTable {
         TRANSFORM_UNREADABLE,
         UNKNOWN_DATASET,
         UNKNOWN_TEMPLATE,
+        INVALID_BINDING,
+        UNBOUND_SLOT,
+        TEMPLATE_BINDING,
+        TEMPLATE_SECTIONS,
         CORRECTION_NOT_APPLIED,
     ],
 };

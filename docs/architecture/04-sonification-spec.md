@@ -234,13 +234,13 @@ Allowed only when `mode` is `presentation` (SDR-10). In `analysis` mode it is a 
 
 ### 5.9 `template` (v0.2)
 
-A template is a reusable design bound to the dataset's fields (SDR-03): NUMISONA's six (`line-overview`, `bar-discrete`, `scatter-xy`, `histogram`, `box-five-number`, `heatmap-rowscan`) and PLOTSONA's chart-type templates. With `template`, `tracks` is optional.
+A template is a reusable design bound to the dataset's fields (SDR-03): NUMISONA's six (`line-overview`, `bar-discrete`, `scatter-xy`, `histogram`, `box-five-number`, `heatmap-rowscan`) and PLOTSONA's chart-type templates (`chart-line`, `chart-bar`, and the experimental `chart-stacked-bar` and `chart-pie`; [07 PLOTSONA](07-engines.md#plotsona-sonarithm-plotsona--optional-sonarithm-plotsona-ml-c01c02-ml-in-d04)). With `template`, `tracks` is optional.
 
 ```jsonc
 "template": { "id": "bar-discrete", "bind": { "category": "quarter", "value": "revenue" } }   // unnamed slots bind by role, then by kind
 ```
 
-A section written in the spec replaces the template's section of the same name, as a whole; the spec's `transform` runs before the template's. The compiler reports the binding and which sections came from the template ([RFC-0004 §2](../rfcs/0004-spec-v0.2.md)). An unknown template is `SNR-COMP-030`.
+A section written in the spec replaces the template's section of the same name, as a whole; the spec's `transform` runs before the template's. The compiler reports the binding (`SNR-COMP-033`) and which sections came from the template (`SNR-COMP-034`) ([RFC-0004 §2](../rfcs/0004-spec-v0.2.md)). An unknown template is `SNR-COMP-030`; a binding to an unknown slot or field, or a field of the wrong kind, is `SNR-COMP-031`; a required slot no field fits is `SNR-COMP-032`. A template that computes values from the data (`box-five-number`'s quartiles) replaces the data read with those `derived` rows.
 
 ### 5.10 `instruments` (v0.2)
 

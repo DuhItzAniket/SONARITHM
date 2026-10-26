@@ -8,8 +8,8 @@
 //! 1. A track's `engine` selects its encoder. Without one, the default encoder for the
 //!    track's mark is used: the engine that claimed the default with
 //!    [`Registrar::default_encoder`], or else the first engine that registered the mark.
-//! 2. Two engines may not register the same [`SourceKind`], [`AnalyzerId`] or
-//!    [`ShaperStage`], nor both claim the default encoder of a [`MarkKind`]. Registration
+//! 2. Two engines may not register the same [`SourceKind`], [`AnalyzerId`],
+//!    [`ShaperStage`] or template ID, nor both claim the default encoder of a [`MarkKind`]. Registration
 //!    fails fast with a [`RegistryError`], which the compiler reports as `SNR-COMP-0xx`.
 //!
 //! Every map is a `BTreeMap` and context providers keep registration order, so lookups and
@@ -21,7 +21,7 @@ use std::sync::Arc;
 
 use super::{
     Analyzer, ContextProvider, Encoder, Engine, EngineManifest, MarkKind, Shaper, Source,
-    SourceKind,
+    SourceKind, TemplateProvider,
 };
 use crate::ids::{AnalyzerId, EngineId};
 use crate::score::ShaperStage;
@@ -85,6 +85,16 @@ pub enum RegistryError {
         /// The engine registered second.
         second: EngineId,
     },
+    /// A template ID was registered twice.
+    #[error("template `{id}` is registered by `{first}` and again by `{second}`")]
+    DuplicateTemplate {
+        /// The template ID.
+        id: String,
+        /// The engine registered first.
+        first: EngineId,
+        /// The engine registered second (the same engine for a repeat).
+        second: EngineId,
+    },
 }
 
 /// A capability and the engine that registered it.
@@ -103,6 +113,7 @@ pub struct Registry<D> {
     default_encoder: BTreeMap<MarkKind, EngineId>,
     context: Vec<Entry<dyn ContextProvider<D>>>,
     shapers: BTreeMap<ShaperStage, Entry<dyn Shaper>>,
+    templates: BTreeMap<String, Entry<dyn TemplateProvider<D>>>,
 }
 
 impl<D> Default for Registry<D> {
@@ -124,6 +135,7 @@ impl<D> Registry<D> {
             default_encoder: BTreeMap::new(),
             context: Vec::new(),
             shapers: BTreeMap::new(),
+            templates: BTreeMap::new(),
         }
     }
 
@@ -203,6 +215,23 @@ impl<D> Registry<D> {
         self.shapers
             .iter()
             .map(|(stage, entry)| (*stage, &entry.engine, &*entry.capability))
+    }
+}
+
+impl<D> Registry<D> {
+    /// The template provider for `id`, with its engine (RFC-0004 §2).
+    #[must_use]
+    pub fn template(&self, id: &str) -> Option<(&EngineId, &dyn TemplateProvider<D>)> {
+        self.templates
+            .get(id)
+            .map(|entry| (&entry.engine, &*entry.capability))
+    }
+
+    /// The registered template IDs in order, with their engines.
+    pub fn templates(&self) -> impl Iterator<Item = (&str, &EngineId)> {
+        self.templates
+            .iter()
+            .map(|(id, entry)| (id.as_str(), &entry.engine))
     }
 }
 
@@ -340,6 +369,29 @@ impl<D> Registrar<'_, D> {
         }
         let entry = self.entry(shaper);
         self.registry.shapers.insert(stage, entry);
+        Ok(())
+    }
+
+    /// Registers `provider` for the template `id` (lowercase kebab-case, RFC-0004 §2). An
+    /// engine with several templates registers each ID, usually with the same provider.
+    ///
+    /// # Errors
+    ///
+    /// [`RegistryError::DuplicateTemplate`] if `id` is already registered.
+    pub fn template(
+        &mut self,
+        id: &str,
+        provider: Arc<dyn TemplateProvider<D>>,
+    ) -> Result<(), RegistryError> {
+        if let Some(first) = self.registry.templates.get(id) {
+            return Err(RegistryError::DuplicateTemplate {
+                id: id.to_owned(),
+                first: first.engine.clone(),
+                second: self.engine.clone(),
+            });
+        }
+        let entry = self.entry(provider);
+        self.registry.templates.insert(id.to_owned(), entry);
         Ok(())
     }
 

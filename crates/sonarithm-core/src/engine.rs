@@ -5,7 +5,7 @@
 //!
 //! The nine engines are capability providers inside one compiler. Each implements
 //! [`Engine`], whose [`Engine::register`] adds capability objects (sources, analyzers,
-//! encoders, context providers, shapers) to a [`Registry`]. The registry is a plain value,
+//! encoders, context providers, shapers, templates) to a [`Registry`]. The registry is a plain value,
 //! not a global, so tests, Python and WASM builds construct their own.
 //!
 //! Per ADR-0014 the traits are generic over the data type `D` the compiler passes around
@@ -18,6 +18,7 @@ pub mod registry;
 #[cfg(test)]
 mod tests;
 
+use std::collections::BTreeMap;
 use std::fmt;
 
 use serde::de::DeserializeOwned;
@@ -278,6 +279,14 @@ pub enum CompileError {
         /// The parser's message.
         message: String,
     },
+    /// A template's slots could not be bound to the data (RFC-0004 §2).
+    #[error("template `{template}`: {error}")]
+    Binding {
+        /// The template ID.
+        template: String,
+        /// What went wrong.
+        error: BindingError,
+    },
     /// An engine failed for a reason that is not the user's to fix.
     #[error("engine {engine} failed: {message}")]
     Engine {
@@ -376,6 +385,73 @@ pub trait ContextProvider<D>: Send + Sync {
         let _ = (spec, score, data, annotations, cx);
         Ok(None)
     }
+}
+
+/// Why a template's slots could not be bound (RFC-0004 §2). The compiler reports
+/// [`BindingError::Invalid`] as `SNR-COMP-031` and [`BindingError::Unbound`] as
+/// `SNR-COMP-032`.
+#[derive(Clone, Debug, PartialEq, Eq, thiserror::Error)]
+#[non_exhaustive]
+pub enum BindingError {
+    /// `bind` names a slot the template does not have, a field the data does not have, or a
+    /// field of the wrong kind.
+    #[error("slot `{slot}` cannot take field `{field}`: {reason}")]
+    Invalid {
+        /// The slot.
+        slot: String,
+        /// The field.
+        field: String,
+        /// Why, as a short clause.
+        reason: String,
+    },
+    /// A required slot found no field.
+    #[error("slot `{slot}` needs a {kind} field, and the data has none left")]
+    Unbound {
+        /// The slot.
+        slot: String,
+        /// What it needs, such as `numeric`.
+        kind: String,
+    },
+}
+
+/// What a template expands to (RFC-0004 §2).
+#[derive(Clone, Debug, PartialEq, Eq)]
+#[non_exhaustive]
+pub struct TemplateExpansion {
+    /// Slot name → field name, as bound.
+    pub bindings: BTreeMap<String, String>,
+    /// A JSON object of the top-level spec sections the template designs: some of
+    /// `transform`, `substrate`, `tracks` and `context`, and `data` holding `fields` or a
+    /// computed `source` (values derived from the data, marked `derived`).
+    pub sections: SpecFragment,
+}
+
+impl TemplateExpansion {
+    /// An expansion.
+    #[must_use]
+    pub const fn new(bindings: BTreeMap<String, String>, sections: SpecFragment) -> Self {
+        Self { bindings, sections }
+    }
+}
+
+/// Expands a spec's `template` into the sections it designs (NUMISONA, PLOTSONA; RFC-0004
+/// §2). Designs are data-agnostic (SDR-03): a template never names a field until it is
+/// bound.
+pub trait TemplateProvider<D>: Send + Sync {
+    /// Binds the template's slots to `data`'s fields and returns its sections. `template`
+    /// is the spec's `template` object (`id`, `bind`); `data` has had the spec's own
+    /// `transform` applied.
+    ///
+    /// # Errors
+    ///
+    /// [`CompileError::Binding`] when the slots cannot be bound, or another
+    /// [`CompileError`].
+    fn expand(
+        &self,
+        template: &SpecFragment,
+        data: &D,
+        cx: &mut CompileContext,
+    ) -> Result<TemplateExpansion, CompileError>;
 }
 
 /// Transforms the merged Score in a fixed slot: quantize, loudness, spatial, lint (05 §2).

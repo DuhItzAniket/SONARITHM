@@ -24,7 +24,8 @@ flowchart TB
   S[Spec JSON] --> V[validate + migrate]
   V --> R[resolve source<br/>Source capability]
   R --> T[transforms]
-  T --> A[Analyzers<br/>ECHOMETRIC, CURVASONA]
+  T --> TP[template expansion<br/>NUMISONA, PLOTSONA]
+  TP --> A[Analyzers<br/>ECHOMETRIC, CURVASONA]
   A --> E[Encoders per track<br/>NUMISONA, TONALENS, CURVASONA]
   A --> C[Context providers<br/>AUDAXIS]
   E --> M[merge tracks]
@@ -37,6 +38,8 @@ flowchart TB
 ```
 
 **Skeleton (A03-T09).** `sonarithm_compiler::Compiler<D>` runs these stages over whatever engines are registered: `sonarithm_spec::prepare` (validate, migrate, defaults, spec hash), then source, analyzers, encoders, context, shapers and the header stamp, checking cancellation between stages and the budget on every track. A capability nobody registered gives `SNR-COMP-010` naming the engine that would provide it; transforms run through `CompilerData::transform`, which the data layer's `DataBundle` implements with `sonarithm_data::apply_all` (A06; a data type without it gives warning `SNR-COMP-022`); a missing context provider gives `SNR-COMP-023`; the budget gives `SNR-COMP-021`; and a Score that breaks an invariant after compilation is reported as an engine bug (`SNR-COMP-020`, and a debug assertion). The compiler's data type implements `CompilerData` (its fingerprint for the header, and transforms). `sonarithm_compiler::Platform` is the platform data engine: it reads `inline` sources, and `file` sources relative to a base directory, into a `DataBundle` (A06), and `dataset` sources from bundles the host provides by ID (`Platform::with_dataset`, A07; an unknown ID is `SNR-COMP-026`).
+
+**Template expansion (C01-T09, [RFC-0004 §2](../rfcs/0004-spec-v0.2.md)).** When the spec names a `template`, the compiler runs it after the source and the spec's own `transform`. The registered `TemplateProvider` for the ID binds the slots to the data and returns the sections it designs as a `SpecFragment`. The compiler merges them into the spec **as written** (before defaults): a section the spec writes replaces the template's as a whole; the template's transforms run after the spec's; in `data`, the template's `fields` fill in only when the spec declares none, and a computed `source` replaces the data read. The merged spec, without `template`, is validated and given its defaults again (diagnostics already reported are not repeated), and the rest of the pipeline compiles it. The Score keeps the hash of the spec as written, since `template` stays symbolic in the canonical form. Codes: unknown template `SNR-COMP-030`; binding errors `031` and `032` (from `CompileError::Binding`); `Info` `033` (the binding) and `034` (sections taken or kept).
 
 **Shaper order is fixed and documented.** Quantization runs before loudness compensation, because compensation depends on the final pitch. Spatial placement runs before lint, so lint can see pan. Lint always runs last and never mutates the Score.
 
@@ -90,13 +93,13 @@ pub trait Sink: Send + Sync {                      // MIDI file, OSC, …
 }
 ```
 
-**Implemented in A03** (`sonarithm_core::engine`, A03-T04) with the signatures of [ADR-0014](../decisions/0014-capability-trait-signatures.md): the traits and `Registry<D>` are generic over the compiler's data type `D`, spec input arrives as a `SpecFragment` (compact JSON plus its pointer), analyzer and shaper IDs are given at registration, and `Engine::register` returns a `Result`. `Sink` and `VoiceProvider` are added with their first implementations (A05, C04); `ContextProvider::nav_tree` joined in B03-T01, with a default that builds no tree. From B03-T05, `context_tracks` receives the whole resolved spec (pointer `""`) rather than `/context`, because ticks need the time field, the tracks and the field semantics; the signature is unchanged.
+**Implemented in A03** (`sonarithm_core::engine`, A03-T04) with the signatures of [ADR-0014](../decisions/0014-capability-trait-signatures.md): the traits and `Registry<D>` are generic over the compiler's data type `D`, spec input arrives as a `SpecFragment` (compact JSON plus its pointer), analyzer and shaper IDs are given at registration, and `Engine::register` returns a `Result`. `Sink` and `VoiceProvider` are added with their first implementations (A05, C04); `ContextProvider::nav_tree` joined in B03-T01, with a default that builds no tree. `TemplateProvider` joined in C01-T09 for RFC-0004's `template` key: `expand(template, data, cx)` returns a `TemplateExpansion` (the binding and the sections), registered per template ID with `Registrar::template`; slot binding is shared through `sonarithm_data::slots`. From B03-T05, `context_tracks` receives the whole resolved spec (pointer `""`) rather than `/context`, because ticks need the time field, the tracks and the field semantics; the signature is unchanged.
 
 **Resolution rules.**
 
 1. A track's `engine` field selects its Encoder. If it is absent, the default is the first Encoder that registered the track's `mark` (NUMISONA for `tone` and `glide`).
 2. A spec key owned by an engine that is not registered gives a validation error: `SNR-COMP-010 engine 'resonum' not available in this build`.
-3. Two engines may not register the same `SourceKind`, `AnalyzerId`, `MarkKind` default or `ShaperStage` slot. Registration fails fast with `SNR-COMP-011` … `015`. This is how the "nine engines, one compiler" boundary stays clean ([ADR-0007](../decisions/0007-engines-as-pipeline-capabilities.md)). A mark's default is the engine that claims it explicitly, or else the first engine that registered the mark.
+3. Two engines may not register the same `SourceKind`, `AnalyzerId`, `MarkKind` default, `ShaperStage` slot or template ID. Registration fails fast with `SNR-COMP-011` … `016`. This is how the "nine engines, one compiler" boundary stays clean ([ADR-0007](../decisions/0007-engines-as-pipeline-capabilities.md)). A mark's default is the engine that claims it explicitly, or else the first engine that registered the mark.
 
 **`CompileContext`** provides:
 - `rng(track_id)`: a deterministic RNG derived as `seed ⊕ hash(track_id)` (SDR-02);

@@ -110,6 +110,8 @@ The concept table is **data, not code**. It lives in `crates/engines/sonarithm-n
 
 `x`, `y`, `series`, `category`, `weight`, `id`, `label`, `time`, `lower`/`upper` (intervals, error bars). Chart-type templates (PLOTSONA) and default specs use roles to pick encodings.
 
+Templates bind their slots with one shared rule (`sonarithm_data::slots`, C01-T09): the slots the spec's `template.bind` names first; then each slot with a role takes an unused field with that role; then each remaining slot, in order, takes the first unused field of its kind (numeric or categorical, from the declared type or else the Arrow type), preferring fields without a role, in schema order. Reserved `__snr_` columns are never bound.
+
 ## 4. Provenance and confidence
 
 Every table may carry two reserved columns:

@@ -153,3 +153,124 @@ fn box_plots_play_five_derived_numbers_per_group() {
     let compiled = compile(&spec.to_string(), None);
     assert_eq!(support::notes(&compiled.score).len(), 15);
 }
+
+/// RFC-0004 §2 (C01-T09): a spec that names a template with `template` compiles to the same
+/// tracks as the spec the template writes out, for every template and every compatible
+/// example dataset, so the template round-trips through the spec.
+#[test]
+fn the_template_key_compiles_like_the_written_spec() {
+    let datasets = examples::all().unwrap();
+    let mut checked = 0;
+    for template in &TEMPLATES {
+        for (name, bundle) in &datasets {
+            let Ok(bindings) = template.bind(bundle.primary().unwrap()) else {
+                continue;
+            };
+            let written = template.apply(bundle, &bindings, &source(name)).unwrap();
+            let keyed = json!({
+                "specVersion": "0.2",
+                "data": { "source": source(name) },
+                "template": { "id": template.id },
+            });
+            let a = compile(&written.to_string(), Some(bundle.clone()));
+            let b = compile(&keyed.to_string(), Some(bundle.clone()));
+            assert_eq!(a.score.tracks, b.score.tracks, "{} × {name}", template.id);
+            let info: Vec<&str> = b
+                .diagnostics
+                .iter()
+                .map(|d| d.code.as_str())
+                .filter(|c| c.starts_with("SNR-COMP-03"))
+                .collect();
+            assert_eq!(
+                info,
+                ["SNR-COMP-033", "SNR-COMP-034"],
+                "{} × {name}",
+                template.id
+            );
+            checked += 1;
+        }
+    }
+    assert!(checked >= 12, "only {checked} template × dataset pairs");
+}
+
+/// RFC-0004 §2: bindings by name, a section written in the spec replacing the template's,
+/// and the spec's `transform` running before the template's.
+#[test]
+fn bindings_and_written_sections_shape_the_template() {
+    let bundle = examples::waiting_times().unwrap();
+    let field = bundle.primary().unwrap().schema().field(0).name().clone();
+    let base = |extra: Value| {
+        let mut spec = json!({
+            "specVersion": "0.2",
+            "data": { "source": source("waiting") },
+            "template": { "id": "histogram", "bind": { "value": field } },
+        });
+        for (key, value) in extra.as_object().unwrap() {
+            spec[key] = value.clone();
+        }
+        compile(&spec.to_string(), Some(bundle.clone()))
+    };
+    let plain = base(json!({}));
+    let slow = base(
+        json!({ "substrate": { "time": { "field": "bin", "pace": { "pointsPerSecond": 1 } } } }),
+    );
+    let notes = |c: &sonarithm_compiler::Compiled| support::notes(&c.score);
+    assert_eq!(notes(&plain).len(), notes(&slow).len());
+    assert!(notes(&slow).last().unwrap().t.0 > notes(&plain).last().unwrap().t.0);
+    assert!(
+        slow.diagnostics
+            .iter()
+            .any(|d| d.code.as_str() == "SNR-COMP-034"
+                && d.message.contains("keeps its own substrate")),
+        "the replaced section is reported"
+    );
+    // The spec's filter runs before the template's bin and count: after them the value
+    // field no longer exists, so this filter compiles only because it runs first.
+    let filtered =
+        base(json!({ "transform": [{ "op": "filter", "expr": format!("{field} < 3") }] }));
+    assert_ne!(filtered.score.tracks, plain.score.tracks);
+}
+
+/// RFC-0004 §2: a binding to an unknown field is `SNR-COMP-031` at its slot, and a slot no
+/// field fits is `SNR-COMP-032`; an unknown template is `SNR-COMP-030`.
+#[test]
+fn snr_comp_031_032_030_bad_templates_are_located_errors() {
+    let bundle = examples::fruit().unwrap();
+    let failure = |template: Value| {
+        let spec = json!({
+            "specVersion": "0.2",
+            "data": { "source": source("fruit") },
+            "template": template,
+        });
+        match support::compile_with(
+            &spec.to_string(),
+            Some(bundle.clone()),
+            &sonarithm_numisona::Numisona::new(),
+        ) {
+            Err(sonarithm_compiler::Failure::Invalid(diagnostics)) => diagnostics
+                .iter()
+                .filter(|d| d.is_error())
+                .map(|d| {
+                    format!(
+                        "{} {}",
+                        d.code,
+                        d.location.as_ref().map_or("", |l| l.as_str())
+                    )
+                })
+                .collect::<Vec<_>>(),
+            other => panic!("expected errors, got {other:?}"),
+        }
+    };
+    assert_eq!(
+        failure(json!({ "id": "bar-discrete", "bind": { "value": "nope" } })),
+        ["SNR-COMP-031 /template/bind/value"]
+    );
+    assert_eq!(
+        failure(json!({ "id": "heatmap-rowscan" })),
+        ["SNR-COMP-032 /template/bind"]
+    );
+    assert_eq!(
+        failure(json!({ "id": "radar" })),
+        ["SNR-COMP-030 /template/id"]
+    );
+}
