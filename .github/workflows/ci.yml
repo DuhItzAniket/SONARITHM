@@ -458,9 +458,37 @@ jobs:
           path: uia-workspace.txt
           if-no-files-found: ignore
 
+  # The C01 exit criterion (C01-T11, DS-007, FR-006): every corpus chart extracts with the
+  # right provenance class, within 0.5 % relative error and with an RMS-F1 of at least
+  # 0.99. The per-chart report is uploaded.
+  chart-accuracy:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    timeout-minutes: 20
+    env:
+      SONARITHM_ACCURACY_REPORT: ${{ github.workspace }}/target/chart-accuracy.md
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - run: rustup toolchain install
+      - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
+        with:
+          save-if: ${{ github.ref == 'refs/heads/main' }}
+      - run: mkdir -p target
+      - run: cargo test --locked -p sonarithm-plotsona --lib accuracy -- --nocapture
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        if: always()
+        with:
+          name: chart-accuracy
+          path: target/chart-accuracy.md
+          retention-days: 30
+          if-no-files-found: error
+
   all-checks-pass:
     if: always()
-    needs: [fmt, clippy-test, doc, deny, check-deps, msrv, wasm32, golden, golden-compare, no-alloc, frontend, frontend-browser, gallery, network-deny, desktop]
+    needs: [fmt, clippy-test, doc, deny, check-deps, msrv, wasm32, golden, golden-compare, no-alloc, frontend, frontend-browser, gallery, network-deny, desktop, chart-accuracy]
     runs-on: ubuntu-latest
     permissions: {}
     timeout-minutes: 5

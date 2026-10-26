@@ -1,0 +1,82 @@
+---
+source: crates/engines/sonarithm-plotsona/src/accuracy.rs
+expression: text
+---
+# C01 chart accuracy (DS-007)
+
+| Chart | Tier | Class | Points | Max error | RMS-F1 | Curve error |
+|---|---|---|---|---|---|---|
+| docx-area.docx | office | exact | 20 | 0.0000 % | 1.0000 | — |
+| docx-bar.docx | office | exact | 5 | 0.0000 % | 1.0000 | — |
+| docx-grouped-bar.docx | office | exact | 12 | 0.0000 % | 1.0000 | — |
+| docx-line.docx | office | exact | 36 | 0.0000 % | 1.0000 | — |
+| docx-pie.docx | office | exact | 5 | 0.0000 % | 1.0000 | — |
+| docx-scatter.docx | office | exact | 60 | 0.0000 % | 1.0000 | — |
+| docx-stacked-bar.docx | office | exact | 36 | 0.0000 % | 1.0000 | — |
+| pptx-area.pptx | office | exact | 20 | 0.0000 % | 1.0000 | — |
+| pptx-bar.pptx | office | exact | 5 | 0.0000 % | 1.0000 | — |
+| pptx-grouped-bar.pptx | office | exact | 12 | 0.0000 % | 1.0000 | — |
+| pptx-line.pptx | office | exact | 36 | 0.0000 % | 1.0000 | — |
+| pptx-pie.pptx | office | exact | 5 | 0.0000 % | 1.0000 | — |
+| pptx-scatter.pptx | office | exact | 60 | 0.0000 % | 1.0000 | — |
+| pptx-stacked-bar.pptx | office | exact | 36 | 0.0000 % | 1.0000 | — |
+| xlsx-area.xlsx | office | exact | 20 | 0.0000 % | 1.0000 | — |
+| xlsx-bar.xlsx | office | exact | 5 | 0.0000 % | 1.0000 | — |
+| xlsx-date-line.xlsx | office | exact | 20 | 0.0000 % | 1.0000 | 0.0000 % |
+| xlsx-grouped-bar.xlsx | office | exact | 12 | 0.0000 % | 1.0000 | — |
+| xlsx-line.xlsx | office | exact | 36 | 0.0000 % | 1.0000 | — |
+| xlsx-pie.xlsx | office | exact | 5 | 0.0000 % | 1.0000 | — |
+| xlsx-scatter.xlsx | office | exact | 60 | 0.0000 % | 1.0000 | — |
+| xlsx-stacked-bar.xlsx | office | exact | 36 | 0.0000 % | 1.0000 | — |
+| highcharts-line.json | chart JSON | exact | 36 | 0.0000 % | 1.0000 | — |
+| highcharts-page.html | chart JSON | exact | 20 | 0.0000 % | 1.0000 | 0.0000 % |
+| highcharts-pie.json | chart JSON | exact | 5 | 0.0000 % | 1.0000 | — |
+| highcharts-scatter.json | chart JSON | exact | 60 | 0.0000 % | 1.0000 | — |
+| highcharts-stacked-column.json | chart JSON | exact | 36 | 0.0000 % | 1.0000 | — |
+| plotly-area.json | chart JSON | exact | 20 | 0.0000 % | 1.0000 | 0.0000 % |
+| plotly-horizontal-bar.json | chart JSON | exact | 5 | 0.0000 % | 1.0000 | — |
+| plotly-line.json | chart JSON | exact | 36 | 0.0000 % | 1.0000 | — |
+| plotly-page.html | chart JSON | exact | 36 | 0.0000 % | 1.0000 | — |
+| plotly-pie.json | chart JSON | exact | 5 | 0.0000 % | 1.0000 | — |
+| plotly-scatter.json | chart JSON | exact | 60 | 0.0000 % | 1.0000 | — |
+| plotly-stacked-bar.json | chart JSON | exact | 36 | 0.0000 % | 1.0000 | — |
+| vega-bar.json | chart JSON | exact | 5 | 0.0000 % | 1.0000 | — |
+| vega-line.json | chart JSON | exact | 36 | 0.0000 % | 1.0000 | — |
+| vega-pie.json | chart JSON | exact | 5 | 0.0000 % | 1.0000 | — |
+| vega-scatter.json | chart JSON | exact | 60 | 0.0000 % | 1.0000 | — |
+| vl-bar.json | chart JSON | exact | 5 | 0.0000 % | 1.0000 | — |
+| vl-embed.html | chart JSON | exact | 36 | 0.0000 % | 1.0000 | — |
+| vl-grouped-bar.json | chart JSON | exact | 12 | 0.0000 % | 1.0000 | — |
+| vl-line.json | chart JSON | exact | 36 | 0.0000 % | 1.0000 | — |
+| vl-pie.json | chart JSON | exact | 5 | 0.0000 % | 1.0000 | — |
+| vl-scatter.json | chart JSON | exact | 60 | 0.0000 % | 1.0000 | — |
+| vl-stacked-bar.json | chart JSON | exact | 36 | 0.0000 % | 1.0000 | — |
+| vl-temporal.json | chart JSON | exact | 20 | 0.0000 % | 1.0000 | 0.0000 % |
+| d3-bar.svg | SVG | vector | 5 | 0.0000 % | 1.0000 | — |
+| d3-line.svg | SVG | vector | 36 | 0.1070 % | 0.9989 | — |
+| d3-scatter.svg | SVG | vector | 60 | 0.1015 % | 0.9990 | — |
+| plotly-bar.svg | SVG | vector | 5 | 0.0003 % | 1.0000 | — |
+| plotly-line.svg | SVG | vector | 36 | 0.0015 % | 1.0000 | — |
+| plotly-pie.svg | SVG | vector | 5 | 0.0000 % | 1.0000 | — |
+| plotly-scatter.svg | SVG | vector | 60 | 0.0011 % | 1.0000 | — |
+| vl-area.svg | SVG | vector | 20 | 0.1467 % | 0.9986 | 0.2060 % |
+| vl-bar.svg | SVG | vector | 5 | 0.0000 % | 1.0000 | — |
+| vl-line.svg | SVG | vector | 36 | 0.1355 % | 0.9988 | — |
+| vl-pie.svg | SVG | vector | 5 | 0.0001 % | 1.0000 | — |
+| vl-scatter.svg | SVG | vector | 60 | 0.1079 % | 0.9989 | — |
+| plotly-bar.pdf | PDF | vector | 5 | 0.0003 % | 1.0000 | — |
+| plotly-line.pdf | PDF | vector | 36 | 0.0015 % | 1.0000 | — |
+| plotly-pie.pdf | PDF | vector | 5 | 0.0000 % | 1.0000 | — |
+| plotly-scatter.pdf | PDF | vector | 60 | 0.0011 % | 1.0000 | — |
+| vl-area.pdf | PDF | vector | 20 | 0.1467 % | 0.9986 | 0.2060 % |
+| vl-bar.pdf | PDF | vector | 5 | 0.0000 % | 1.0000 | — |
+| vl-line.pdf | PDF | vector | 36 | 0.1355 % | 0.9988 | — |
+| vl-pie.pdf | PDF | vector | 5 | 0.0001 % | 1.0000 | — |
+| vl-scatter.pdf | PDF | vector | 60 | 0.1079 % | 0.9989 | — |
+
+| Tier | Charts | Points | Worst error | Lowest RMS-F1 | Worst curve error |
+|---|---|---|---|---|---|
+| office | 22 | 542 | 0.0000 % | 1.0000 | 0.0000 % |
+| chart JSON | 24 | 671 | 0.0000 % | 1.0000 | 0.0000 % |
+| SVG | 12 | 333 | 0.1467 % | 0.9986 | 0.2060 % |
+| PDF | 9 | 232 | 0.1467 % | 0.9986 | 0.2060 % |
