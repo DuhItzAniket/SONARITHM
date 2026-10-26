@@ -223,6 +223,66 @@ pub const TICK_LABEL_UNREAD: CodeInfo = CodeInfo {
     status: CodeStatus::Active,
 };
 
+/// The file holds several charts; only the first was read.
+pub const OTHER_CHARTS: CodeInfo = CodeInfo {
+    code: "SNR-ENG-340",
+    severity: Severity::Warning,
+    summary: "Only the first of several charts was read",
+    help: "A chart source reads one chart. Save the chart you want in a file of its own.",
+    rules: &[],
+    status: CodeStatus::Active,
+};
+
+/// A series has neither cached values nor a readable workbook range.
+pub const NO_CACHE: CodeInfo = CodeInfo {
+    code: "SNR-ENG-341",
+    severity: Severity::Error,
+    summary: "A chart series has no stored values",
+    help: "Office charts keep a cache of the values they show. Open the file in the            program that made it and save it again to rebuild the cache.",
+    rules: &[],
+    status: CodeStatus::Active,
+};
+
+/// The chart's data links outside the file; the link was not followed.
+pub const EXTERNAL_LINK: CodeInfo = CodeInfo {
+    code: "SNR-ENG-342",
+    severity: Severity::Warning,
+    summary: "An external data link was not followed",
+    help: "PLOTSONA never opens files or addresses a document points to (12 §6). The values            cached in the chart are used.",
+    rules: &[],
+    status: CodeStatus::Active,
+};
+
+/// The chart's workbook could not be read; its cache was used.
+pub const WORKBOOK_UNREADABLE: CodeInfo = CodeInfo {
+    code: "SNR-ENG-343",
+    severity: Severity::Warning,
+    summary: "The chart's workbook could not be read",
+    help: "The values cached in the chart are used instead; they are what the chart shows.",
+    rules: &[],
+    status: CodeStatus::Active,
+};
+
+/// The values came from the chart's workbook.
+pub const VALUES_SOURCE: CodeInfo = CodeInfo {
+    code: "SNR-ENG-344",
+    severity: Severity::Info,
+    summary: "Values were read from the chart's workbook",
+    help: "The workbook is the data the chart was built from, so it is preferred to the            chart's cache.",
+    rules: &[],
+    status: CodeStatus::Active,
+};
+
+/// The chart's cache differs from its workbook.
+pub const STALE_CACHE: CodeInfo = CodeInfo {
+    code: "SNR-ENG-345",
+    severity: Severity::Warning,
+    summary: "The chart's cache differs from its workbook",
+    help: "The workbook's values were used. What the chart shows may be older until the            file is opened and saved in its program.",
+    rules: &[],
+    status: CodeStatus::Active,
+};
+
 /// Every PLOTSONA code, in ascending order.
 pub const CODES: CodeTable = CodeTable {
     area: Area::Eng,
@@ -248,6 +308,12 @@ pub const CODES: CodeTable = CodeTable {
         POINTS_OUTSIDE_PLOT,
         CALIBRATION_RESIDUAL,
         TICK_LABEL_UNREAD,
+        OTHER_CHARTS,
+        NO_CACHE,
+        EXTERNAL_LINK,
+        WORKBOOK_UNREADABLE,
+        VALUES_SOURCE,
+        STALE_CACHE,
     ],
 };
 

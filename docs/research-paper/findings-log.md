@@ -808,3 +808,12 @@ A05 (render engine, audio backends, export) uses F-050 to F-069.
 - **Evidence level / confidence:** EV-C / Strong (declared metadata, checked directly)
 - **Affects:** C01-T08, R-29 (untrusted chart parsers); revisit when the core MSRV reaches 1.92 (hayro-syntax would then replace the own reader)
 - **Papers:** none yet
+
+### F-161 · Chart writers cache categories with a different type from their cells, so a chart cache is not a reliable type signal
+
+- **Date:** 2026-10-26 · **Phase:** C01 · **Type:** engineering · **Status:** new
+- **Statement:** In charts written by XlsxWriter 3.3.0, text categories that look numeric (the strings `"0"` to `"19"`) are cached as numbers (`c:numCache`, format `General`) while the cells hold text, and date categories on a date axis (`c:dateAx`) are cached as serial numbers with format `General` rather than a date format. PLOTSONA therefore compares a cache with its workbook by value, not by storage type, and treats numeric categories on a date axis as dates; with both rules, all 22 Office charts of the C01 corpus extract with zero error and no stale-cache warning.
+- **Evidence:** `crates/engines/sonarithm-plotsona/tests/corpus/office/xlsx-area.xlsx` and `xlsx-date-line.xlsx` (`xl/charts/chart1.xml` against `xl/worksheets/sheet1.xml`); `office::tests::corpus_charts_extract_with_zero_error`; the C01-T05 PR
+- **Evidence level / confidence:** EV-C / Strong for these files; other writers (Excel, LibreOffice) not yet checked, TODO(verify) with real Office files in C01-T11
+- **Affects:** C01-T05, C01-T11, DS-007
+- **Papers:** none yet

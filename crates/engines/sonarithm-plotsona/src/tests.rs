@@ -149,25 +149,9 @@ fn hostile_fixtures_fail_within_budget_with_registered_codes() {
 }
 
 #[test]
-fn office_packages_without_charts_and_charts_awaiting_their_extractor() {
+fn office_packages_without_charts_have_no_chart() {
     use crate::container::tests::package;
 
     let empty = package(&[("word/document.xml", b"<d/>")]);
     assert_eq!(code(&empty), "SNR-ENG-309");
-    let chart = package(&[
-        ("xl/workbook.xml", b"<workbook/>"),
-        ("xl/charts/chart1.xml", b"<c:chartSpace xmlns:c=\"c\"/>"),
-        ("xl/charts/colors1.xml", b"<not-a-chart/>"),
-    ]);
-    assert_eq!(code(&chart), "SNR-ENG-308");
-    assert_eq!(
-        chart_parts(&[
-            "xl/charts/chart12.xml".to_owned(),
-            "xl/charts/chartEx1.xml".to_owned(),
-            "xl/charts/colors1.xml".to_owned(),
-            "word/charts/chart1.xml".to_owned(),
-            "xl/charts/chart.xml".to_owned(),
-        ]),
-        ["xl/charts/chart12.xml", "word/charts/chart1.xml"]
-    );
 }

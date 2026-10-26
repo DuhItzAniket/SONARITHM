@@ -8,7 +8,7 @@
 //! dropping a deep document does not recurse. Depth is checked once after parsing, in one
 //! linear pass.
 
-use roxmltree::{Document, Error, ParsingOptions};
+use roxmltree::{Document, Error, Node, ParsingOptions};
 use sonarithm_core::Diagnostic;
 
 use crate::budget::{Budget, Budgets, Work, len64, over};
@@ -83,6 +83,21 @@ fn check_depth(
         budgets.check_depth(usize::try_from(depth).unwrap_or(usize::MAX))?;
     }
     Ok(())
+}
+
+/// The first child element of `node` with local name `name`, in any namespace.
+pub(crate) fn child<'a, 'input>(node: Node<'a, 'input>, name: &str) -> Option<Node<'a, 'input>> {
+    node.children()
+        .find(|child| child.is_element() && child.tag_name().name() == name)
+}
+
+/// The child elements of `node` with local name `name`, in any namespace.
+pub(crate) fn children<'a, 'input: 'a>(
+    node: Node<'a, 'input>,
+    name: &'a str,
+) -> impl Iterator<Item = Node<'a, 'input>> + 'a {
+    node.children()
+        .filter(move |child| child.is_element() && child.tag_name().name() == name)
 }
 
 #[cfg(test)]
