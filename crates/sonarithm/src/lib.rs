@@ -83,7 +83,8 @@ pub use sonarithm_core::{Diagnostic, Diagnostics, Score, Severity};
 #[cfg(feature = "fs")]
 pub use sonarithm_data::read_file;
 pub use sonarithm_data::{
-    DataBundle, DataError, Format, ReadOptions, Table, read_batches, read_bytes,
+    Capacity, DataBundle, DataError, Format, ReadOptions, Snapshot, StreamTable, Table,
+    read_batches, read_bytes,
 };
 pub use sonarithm_numisona::polarity::PolarityProfile;
 pub use sonarithm_spec::{Mark, SPEC_VERSION};

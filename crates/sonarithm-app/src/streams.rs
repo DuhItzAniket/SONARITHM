@@ -26,7 +26,8 @@ use sonarithm_stream::{Connection, ConnectionState, Endpoint};
 use crate::codes;
 use crate::ipc::{IpcError, StreamConnection, StreamInfo, StreamNotices};
 
-/// Rows a stream keeps until its spec's window sets the capacity (B06-T07).
+/// Rows a stream keeps: memory stays bounded at any rate (PB-11), and at 1 kHz this is
+/// 100 s of history. Live playback compiles only the spec's `window` of it (B06-T07).
 pub(crate) const STREAM_ROWS: u64 = 100_000;
 
 /// The transport name and target of `endpoint` as the protocol shows them: a file by its
@@ -172,6 +173,19 @@ impl LiveStreams {
             }
         }
         Ok(())
+    }
+
+    /// A read handle on stream `id`'s rows (B06-T07).
+    pub(crate) fn reader(&self, id: &str) -> Result<sonarithm_stream::TableReader, IpcError> {
+        self.streams
+            .get(id)
+            .map(|live| live.connection.reader())
+            .ok_or_else(|| {
+                IpcError::new(
+                    &codes::UNKNOWN_STREAM,
+                    format!("No open stream has the ID {id}."),
+                )
+            })
     }
 
     /// Stops every stream (shutdown).

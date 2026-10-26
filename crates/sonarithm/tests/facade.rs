@@ -370,3 +370,51 @@ fn the_schema_is_the_published_one() {
         published.trim_end()
     );
 }
+
+const LIVE: &str = r#"{
+    "specVersion": "0.1",
+    "data": { "source": { "kind": "stream", "transport": "websocket", "url": "ws://localhost:9000" } },
+    "substrate": { "time": { "field": "t" } },
+    "tracks": [{ "id": "live", "mark": "tone", "channels": { "pitch": { "field": "v" } } }]
+}"#;
+
+/// A stream spec compiles against the window it is given (B06-T07): the newest rows the
+/// stream holds, not the rows it has seen.
+#[test]
+fn a_stream_spec_compiles_against_the_window_it_is_given() {
+    let csv = "t,v\n0,1\n1,2\n2,3\n3,4\n";
+    let loaded = sonarithm::read_bytes(
+        csv.as_bytes(),
+        Format::Csv,
+        "live.csv",
+        &ReadOptions::default(),
+    )
+    .unwrap();
+    let table = loaded.bundle.primary().unwrap();
+    let mut stream = sonarithm::StreamTable::new(
+        sonarithm_core::TableId(1),
+        "live",
+        table.schema().clone(),
+        sonarithm::Capacity::rows(3),
+    )
+    .unwrap();
+    for batch in table.batches() {
+        stream.append(batch.clone()).unwrap();
+    }
+    let spec = Spec::from_json_str(LIVE).unwrap();
+    let snr = Sonarithm::new();
+    let window = stream.snapshot();
+    let compiled = snr
+        .compile_stream(&spec, &Datasets::new(), &window)
+        .unwrap();
+    assert_eq!(compiled.score().tracks[0].events.len(), 3);
+    let recent = snr
+        .compile_stream(&spec, &Datasets::new(), &window.within("t", 1.0))
+        .unwrap();
+    assert_eq!(recent.score().tracks[0].events.len(), 2);
+
+    let Err(Error::Spec(diagnostics)) = snr.compile_with(&spec, &Datasets::new()) else {
+        panic!("a stream spec needs a window")
+    };
+    assert!(!diagnostics.is_empty());
+}

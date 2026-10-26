@@ -40,6 +40,7 @@ mod events;
 mod history;
 pub mod ipc;
 mod jobs;
+mod live;
 pub mod patch;
 pub mod profile;
 pub mod project;

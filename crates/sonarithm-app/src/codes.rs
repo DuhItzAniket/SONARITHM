@@ -302,6 +302,27 @@ pub const STREAM_CONNECT: CodeInfo = CodeInfo {
     status: CodeStatus::Active,
 };
 
+/// The spec cannot play live: its source is not a stream, or its pace is a total
+/// duration (B06-T07).
+pub const LIVE_SPEC: CodeInfo = CodeInfo {
+    code: "SNR-APP-073",
+    severity: Severity::Error,
+    summary: "The spec cannot play live",
+    help: "Give the spec a stream source and a pace of secondsPerUnit or pointsPerSecond,            then start live playback again.",
+    rules: &[],
+    status: CodeStatus::Active,
+};
+
+/// A live window did not compile; playback goes on with the last window that did.
+pub const LIVE_COMPILE: CodeInfo = CodeInfo {
+    code: "SNR-APP-074",
+    severity: Severity::Warning,
+    summary: "A live window did not compile",
+    help: "Playback goes on with the last window that compiled. Check the stream's fields            against the spec.",
+    rules: &[],
+    status: CodeStatus::Active,
+};
+
 /// A profile is not valid: not JSON, not a profile, a value out of range, or a path
 /// (ADR-0020 §1).
 pub const PROFILE_INVALID: CodeInfo = CodeInfo {
@@ -376,6 +397,8 @@ pub const CODES: CodeTable = CodeTable {
         UNKNOWN_STREAM,
         STREAM_SOURCE,
         STREAM_CONNECT,
+        LIVE_SPEC,
+        LIVE_COMPILE,
         PROFILE_INVALID,
         PROFILE_MAJOR,
         PROFILE_NEWER,

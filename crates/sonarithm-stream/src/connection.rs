@@ -94,6 +94,25 @@ pub struct ConnectionStatus {
     pub last_error: Option<String>,
 }
 
+/// A read-only handle on a connection's stream table ([`Connection::reader`]).
+#[derive(Clone)]
+pub struct TableReader {
+    shared: Arc<Shared>,
+}
+
+impl TableReader {
+    /// Runs `read` on the stream table, once the first rows have arrived.
+    pub fn read<R>(&self, read: impl FnOnce(&StreamTable) -> R) -> Option<R> {
+        lock(&self.shared.table).as_ref().map(read)
+    }
+}
+
+impl std::fmt::Debug for TableReader {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("TableReader").finish_non_exhaustive()
+    }
+}
+
 /// One open stream. Dropping it stops the thread.
 pub struct Connection {
     endpoint: Endpoint,
@@ -166,6 +185,15 @@ impl Connection {
     /// Runs `read` on the stream table, once the first rows have arrived.
     pub fn read<R>(&self, read: impl FnOnce(&StreamTable) -> R) -> Option<R> {
         lock(&self.shared.table).as_ref().map(read)
+    }
+
+    /// A read-only handle on the stream table for another thread, such as the app core's
+    /// live compiler (B06-T07). It reads what the connection appends and never connects.
+    #[must_use]
+    pub fn reader(&self) -> TableReader {
+        TableReader {
+            shared: Arc::clone(&self.shared),
+        }
     }
 
     /// Keeps the connection but discards messages until [`Connection::resume`] (A11Y-16).

@@ -78,6 +78,35 @@ fn fixture_satisfies_the_invariants() {
 /// Invariant 6 (H-08): the canonical bytes, and so this hash, are the same on every OS.
 /// CI runs this test on Linux, macOS and Windows. A change here is a determinism bug or an
 /// intentional format change that bumps `IR_VERSION`.
+/// B06-T07: a live window's Score moves onto its stream's timeline whole, and stays valid.
+#[test]
+fn an_offset_moves_every_event_and_the_end() {
+    let before = fixture();
+    let mut after = before.clone();
+    after.offset(Seconds(10.0));
+    assert_eq!(after.check(), Ok(()));
+    assert_eq!(after.header.duration, Seconds(12.0));
+    let starts = |score: &Score| -> Vec<f64> {
+        score.tracks[0].events.iter().map(|e| e.start().0).collect()
+    };
+    for (a, b) in starts(&before).iter().zip(starts(&after)) {
+        assert!((b - a - 10.0).abs() < 1e-12);
+    }
+    let ScoreEvent::Glide(glide) = &after.tracks[0].events[4] else {
+        unreachable!("the fixture ends with a glide")
+    };
+    assert_eq!(
+        (glide.t1, glide.curve[1].t),
+        (Seconds(11.75), Seconds(11.75))
+    );
+    assert_eq!(after.markers[0].t, Seconds(11.0));
+    for nothing in [0.0, -1.0, f64::NAN, f64::INFINITY] {
+        let mut same = before.clone();
+        same.offset(Seconds(nothing));
+        assert_eq!(same, before);
+    }
+}
+
 #[test]
 fn canonical_hash_is_identical_on_every_platform() {
     let score = fixture();

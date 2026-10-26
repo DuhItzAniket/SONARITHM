@@ -116,6 +116,27 @@ fn a_time_window_keeps_the_last_seconds() {
 }
 
 #[test]
+fn a_snapshot_narrows_to_the_last_seconds() {
+    let schema = schema(false);
+    let mut s = stream(Capacity::rows(100), false);
+    for start in [0, 4, 8] {
+        s.append(batch(&schema, start, 4)).unwrap();
+    }
+    let all = s.snapshot();
+    assert_eq!(all.time_span("t"), Some((0.0, 11.0)));
+    // Newest t is 11: rows with t >= 6.5 stay, from the middle of the second batch.
+    let recent = all.within("t", 4.5);
+    assert_eq!(values(&recent), [7.0, 8.0, 9.0, 10.0, 11.0]);
+    assert_eq!((recent.first_seq(), recent.num_rows()), (7, 5));
+    assert_eq!(recent.next_seq(), all.next_seq());
+    assert_eq!(recent.to_table(TableId(0)).unwrap().num_rows(), 5);
+    // A wide window keeps everything; a field without times keeps everything too.
+    assert_eq!(values(&all.within("t", 100.0)), values(&all));
+    assert_eq!(all.time_span("missing"), None);
+    assert_eq!(values(&all.within("missing", 1.0)), values(&all));
+}
+
+#[test]
 fn invalid_streams_and_batches_are_refused() {
     let schema = schema(false);
     let new = |capacity| StreamTable::new(TableId(1), "s", Arc::clone(&schema), capacity);

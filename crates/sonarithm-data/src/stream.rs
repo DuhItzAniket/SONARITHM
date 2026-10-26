@@ -403,6 +403,55 @@ impl Snapshot {
         &self.schema
     }
 
+    /// The earliest and latest time in `field`, in seconds (numbers as seconds; timestamps,
+    /// dates and durations converted, as for [`Capacity::window`]); `None` without times.
+    #[must_use]
+    pub fn time_span(&self, field: &str) -> Option<(f64, f64)> {
+        self.batches
+            .iter()
+            .flat_map(|batch| times(batch, field))
+            .flatten()
+            .fold(None, |span, t| match span {
+                None => Some((t, t)),
+                Some((lo, hi)) => Some((f64::min(lo, t), f64::max(hi, t))),
+            })
+    }
+
+    /// The rows within `seconds` of the newest time in `field`: the window a live spec
+    /// compiles (B06-T07). Rows arrive in time order, as [`Capacity::window`] assumes, so
+    /// only rows at the front are dropped; without times every row stays.
+    #[must_use]
+    pub fn within(&self, field: &str, seconds: f64) -> Self {
+        let Some((_, newest)) = self.time_span(field) else {
+            return self.clone();
+        };
+        let cutoff = newest - seconds;
+        let mut dropped = 0_u64;
+        let mut batches = Vec::with_capacity(self.batches.len());
+        for batch in &self.batches {
+            if !batches.is_empty() {
+                batches.push(batch.clone());
+                continue;
+            }
+            let old = times(batch, field)
+                .iter()
+                .take_while(|t| t.is_some_and(|t| t < cutoff))
+                .count();
+            dropped += u64::try_from(old).unwrap_or(u64::MAX);
+            if old < batch.num_rows() {
+                batches.push(batch.slice(old, batch.num_rows() - old));
+            }
+        }
+        Self {
+            schema: Arc::clone(&self.schema),
+            name: self.name.clone(),
+            first: self.first + dropped,
+            rows: self.rows - dropped,
+            skipped: self.skipped,
+            batches,
+        }
+    }
+
     /// The rows as a [`Table`] with `id`, for compiling and viewing.
     ///
     /// # Errors

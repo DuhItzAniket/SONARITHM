@@ -1,0 +1,9 @@
+window compile (10 s, 10000 rows): median 8.2 ms, max 10.0 ms over 20 compiles
+stream soak: 3600 s at 1000 rows/s on the null output
+window compile (10 s, 10000 rows): median 8.2 ms, max 10.0 ms over 20 compiles
+notices: 0 (SNR-APP-074 and audio failures)
+memory: peak 26.1 MiB from 900 s to 1800 s, 26.2 MiB after: bounded
+rows: 3601204 written, 3601204 received, 0 invalid: none lost
+live: timeline at most 0.56 s behind the data, playhead at most 2.04 s behind the timeline, playing throughout: kept up
+xruns: 148
+PB-11 soak: pass

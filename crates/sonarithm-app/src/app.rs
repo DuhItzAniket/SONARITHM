@@ -118,7 +118,10 @@ pub struct App {
     data_dir: PathBuf,
     project: projects::ProjectState,
     autosaves: crate::project::Autosaves,
-    // Dropped in this order: jobs finish or cancel before the transport stops.
+    /// The live worker while playback follows a stream (B06-T07).
+    live: Option<crate::live::LiveWorker>,
+    next_live: u64,
+    // Dropped in this order: the live worker and jobs stop before the transport.
     jobs: JobQueue,
     transport: Transport,
 }
@@ -184,6 +187,8 @@ impl App {
             data_dir,
             project: projects::ProjectState::new(),
             autosaves,
+            live: None,
+            next_live: 1,
             jobs,
             transport,
         };
@@ -263,6 +268,11 @@ impl App {
             Request::StreamList => Ok(Reply::Streams {
                 streams: self.transport.stream_list()?,
             }),
+            Request::LiveStart { stream } => self.live_start(stream),
+            Request::LiveStop => {
+                self.live = None;
+                Ok(Reply::Transport(self.transport.live(None)?))
+            }
             Request::ProfileList => Ok(self.profile_list(&[])),
             Request::ProfileGet { id } => self.profile_get(&id),
             Request::ProfileActivate { id } => self.profile_activate(id),
@@ -348,6 +358,37 @@ impl App {
         Ok(Reply::Streams {
             streams: self.transport.stream_list()?,
         })
+    }
+
+    /// Plays stream `stream` live through the session's spec (B06-T07): a worker compiles
+    /// the newest window about once a second and the transport swaps it in.
+    fn live_start(&mut self, stream: String) -> Result<Reply, IpcError> {
+        let text = self.spec.as_deref().ok_or_else(|| {
+            IpcError::new(&codes::NO_SPEC, "The session has no spec to play live.")
+        })?;
+        let (effective, _) = self.effective_spec(text)?;
+        let plan = crate::live::plan(&effective)?;
+        let reader = self.transport.stream_reader(stream)?;
+        self.live = None;
+        let session = self.next_live;
+        self.next_live += 1;
+        let feed = self.transport.feed(session);
+        self.transport.live(Some(session))?;
+        let worker = crate::live::LiveWorker::spawn(
+            self.snr.clone(),
+            plan,
+            self.open_datasets(),
+            reader,
+            feed,
+        );
+        match worker {
+            Ok(worker) => self.live = Some(worker),
+            Err(err) => {
+                let _ = self.transport.live(None);
+                return Err(err);
+            }
+        }
+        self.act(Action::State)
     }
 
     fn stream_act(&mut self, id: String, action: StreamAction) -> Result<Reply, IpcError> {
@@ -572,6 +613,15 @@ impl App {
         }))
     }
 
+    /// The open datasets, by ID, as a compile reads them.
+    fn open_datasets(&self) -> Datasets {
+        let mut datasets = Datasets::new();
+        for open in self.datasets.values() {
+            datasets.insert(open.summary.id.clone(), open.bundle.clone());
+        }
+        datasets
+    }
+
     fn compile(&mut self) -> Result<Reply, IpcError> {
         let text = self
             .spec
@@ -580,10 +630,9 @@ impl App {
         // The profile and project layers fill what the spec leaves unset (ADR-0020 §3).
         let (effective, _) = self.effective_spec(text)?;
         let spec = Spec::from_json_str(effective).map_err(|err| first_error(&err))?;
-        let mut datasets = Datasets::new();
-        for open in self.datasets.values() {
-            datasets.insert(open.summary.id.clone(), open.bundle.clone());
-        }
+        let datasets = self.open_datasets();
+        // A compile replaces a live stream's Scores; the transport leaves live mode.
+        self.live = None;
         match self.snr.compile_with(&spec, &datasets) {
             Ok(compiled) => {
                 let report = report(true, compiled.diagnostics().iter(), Some(&compiled));
@@ -836,7 +885,8 @@ fn unknown_dataset(id: &str) -> IpcError {
 }
 
 /// The first error of a facade error, as an IPC error.
-fn first_error(err: &sonarithm::Error) -> IpcError {
+/// The first error diagnostic of a failed compile, or the failure itself.
+pub(crate) fn first_error(err: &sonarithm::Error) -> IpcError {
     let diagnostics = err.diagnostics();
     diagnostics.iter().find(|d| d.is_error()).map_or_else(
         || IpcError::new(&codes::COMPILE_FAILED, err.to_string()),

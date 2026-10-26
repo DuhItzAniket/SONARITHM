@@ -3403,6 +3403,7 @@ dependencies = [
  "sonarithm-export",
  "sonarithm-numisona",
  "sonarithm-render",
+ "sonarithm-sonotrace",
  "sonarithm-spec",
  "thiserror 2.0.21",
 ]

@@ -53,6 +53,8 @@ export const REPLY_KINDS = {
   stream_hide: "streams",
   stream_stop: "streams",
   stream_list: "streams",
+  live_start: "transport",
+  live_stop: "transport",
   profile_list: "profiles",
   profile_get: "profile",
   profile_activate: "profiles",
@@ -74,6 +76,7 @@ export const EVENT_CHANNELS = {
   audio_failed: "app",
   settings_notice: "app",
   announcement: "announcements",
+  live_notice: "app",
 } as const;
 
 /** The commands whose reply is a binary view (ADR-0017 §6). */
@@ -263,7 +266,11 @@ id: string, } } | { "command": "stream_stop", "args": {
 /**
  * The stream's ID.
  */
-id: string, } } | { "command": "stream_list" } | { "command": "profile_list" } | { "command": "profile_get", "args": { 
+id: string, } } | { "command": "stream_list" } | { "command": "live_start", "args": { 
+/**
+ * The stream's ID.
+ */
+stream: string, } } | { "command": "live_stop" } | { "command": "profile_list" } | { "command": "profile_get", "args": { 
 /**
  * Its ID from `profile_list`.
  */
@@ -467,7 +474,11 @@ error: IpcError, } | { "event": "settings_notice",
 /**
  * The notice.
  */
-error: IpcError, } | { "event": "announcement" } & AnnouncementInfo;
+error: IpcError, } | { "event": "announcement" } & AnnouncementInfo | { "event": "live_notice", 
+/**
+ * What happened.
+ */
+error: IpcError, };
 
 /**
  * The event channels of ADR-0017 §4.
@@ -778,7 +789,15 @@ loaded: boolean,
 /**
  * The output device's name once the device is open.
  */
-device: string | null, };
+device: string | null, 
+/**
+ * Whether playback follows a live stream (`live_start`).
+ */
+live: boolean, 
+/**
+ * Underruns the output reported since the session started (PB-02, PB-11).
+ */
+xruns: number, };
 
 /**
  * A transport clock anchor (06 §9): the UI extrapolates the playhead from it.

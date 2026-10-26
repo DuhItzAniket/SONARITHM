@@ -791,6 +791,15 @@ A05 (render engine, audio backends, export) uses F-050 to F-069.
 - **Affects:** SDR-35, H-09, sound-design §10, HP-11 (listening check)
 - **Papers:** none yet
 
+### F-144 · A 1 kHz stream played live for an hour keeps memory flat at about 26 MiB and loses no rows; a full window compiles in 8.2 ms
+
+- **Date:** 2026-10-25 · **Phase:** B06 · **Type:** engineering · **Status:** new
+- **Statement:** The B06-T07 soak plays a synthetic 1 kHz stream live through the app core for an hour (3,600 s): a `tail` stream of a file written in 10 ms bursts, a monitoring spec with a glide over the newest 10 s, compiled about once a second and swapped in while playing on the timer-driven null device. Resident memory rises while the stream fills its 100,000 rows and then stays flat: peak 26.1 MiB from 900 s to 1,800 s and 26.2 MiB after (PB-11's bound: 10 % + 8 MiB). 3,601,204 rows were written and all were received, none invalid. After the warm-up the timeline was at most 0.56 s behind the data and the playhead at most 2.04 s behind the timeline, playing throughout. Compiling a full 10 s window (10,000 rows) takes 8.2 ms median and 10.0 ms at most, so whole-window encoding keeps up with room to spare (B06-T03's open question). The null device counted 148 late blocks over the hour; they are timer misses of a software device under other load (F-055 saw 153–194 per 10 min at 128 frames), not PB-11's device underruns, which need a real device (owner step).
+- **Evidence:** `cargo run -p sonarithm-app --example stream_soak --release -- --seconds 3600 --strict` on HW-01 (Windows 11, Rust 1.99.0), release build; three full `cargo xtask ci` runs of other branches ran during the hour, and the late blocks cluster in them (up to 54 per 5 minutes, against 0 to 4 when the machine was otherwise idle); the samples every 10 s and the verdict in [benchmarks/b06-stream-soak](benchmarks/b06-stream-soak/); the benchmarks log row "B06 (1-hour stream)"
+- **Evidence level / confidence:** EV-C / Moderate (one run on one machine, the null device; the device run is pending)
+- **Affects:** PB-11, NFR-01, FR-005; 07 SONOTRACE (no `encode_incremental`); B06-T07
+- **Papers:** none yet
+
 ### F-150 · Stage B's Rust lane closed 21 of its 23 tasks on two calendar days, about four to five tasks per session-day
 
 - **Date:** 2026-10-26 · **Phase:** Stage C planning · **Type:** engineering · **Status:** new

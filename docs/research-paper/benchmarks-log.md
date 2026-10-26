@@ -58,7 +58,7 @@ No reference-class machine is available yet (risk R-22). Rows on HW-01 apply the
 | A07 `v0.1.0-alpha` | | | | | | | | | | | | |
 | A08 `v0.2.0-alpha` | | | | | | | | | | | | |
 | B03 | | | | | | | | | | | | |
-| B06 (1-hour stream) | | | | | | | | | | | | |
+| B06 (1-hour stream) | 2026-10-25 | B06-T07 PR | HW-01 | 256-frame blocks @ 48 kHz, timer-driven null device | — | — | 148 late blocks on the null device (1 h; not device underruns) | — | — | — | — | PB-11 on the null device: memory flat after the warm-up (26.1 → 26.2 MiB peak), 3,601,204 rows written and received, playback kept up; a 10 s, 10,000-row window compiles in 8.2 ms median (F-144); samples in [benchmarks/b06-stream-soak](benchmarks/b06-stream-soak/). The device xrun run is an owner step (#129) |
 | Gate B `v0.5.0-beta` | | | | | | | | | | | | |
 | Gate C `v1.0.0` | | | | | | | | | | | | |
 
@@ -116,3 +116,4 @@ The A01 research hook records CI times as a baseline.
 | 2026-10-19 | A02 spike rows; hardware IDs HW-01, HW-01e, CI-LNX, CI-WIN and CI-MAC. | A02 session (AI agent), for review |
 | 2026-10-21 | A08 row: end-to-end export of the replication gallery; method note; [A08 report](benchmark-report-a08.md). | A08 session (AI agent), for review |
 | 2026-10-25 | PB-03 rerun after the voice-loop work (#185): met on HW-01e. | AI agent (Claude Code), for review |
+| 2026-10-25 | B06 row: the 1-hour stream soak on the null device (PB-11 memory and throughput; F-144). | Lane R session (AI agent), for review |
