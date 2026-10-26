@@ -11,6 +11,7 @@ use sonarithm_core::engine::{CancelToken, Engine, EngineManifest};
 use sonarithm_data::{DataBundle, Snapshot};
 use sonarithm_numisona::Numisona;
 use sonarithm_numisona::polarity::PolarityProfile;
+use sonarithm_plotsona::Plotsona;
 use sonarithm_sonotrace::Sonotrace;
 
 use crate::compiled::Compiled;
@@ -53,7 +54,7 @@ impl Default for Sonarithm {
 }
 
 impl Sonarithm {
-    /// SONARITHM with the default engines (the data platform and NUMISONA).
+    /// SONARITHM with the default engines (the data platform, NUMISONA and PLOTSONA).
     #[must_use]
     pub fn new() -> Self {
         Self {
@@ -73,6 +74,7 @@ impl Sonarithm {
         let mut engines = vec![Platform::new().manifest()];
         if let Some(numisona) = &self.numisona {
             engines.push(Engine::<DataBundle>::manifest(numisona));
+            engines.push(Plotsona::manifest());
         }
         if let Some(audaxis) = &self.audaxis {
             engines.push(Engine::<DataBundle>::manifest(audaxis));
@@ -81,7 +83,7 @@ impl Sonarithm {
     }
 
     /// Compiles a spec whose data comes from its own source (`inline` records, or `file`
-    /// sources relative to [`Spec::base_dir`]).
+    /// and `chart` sources relative to [`Spec::base_dir`]).
     ///
     /// # Errors
     ///
@@ -150,9 +152,13 @@ impl Sonarithm {
         for (id, bundle) in &datasets.0 {
             platform = platform.with_dataset(id.clone(), bundle.clone());
         }
+        let plotsona = spec
+            .base_dir()
+            .map_or_else(Plotsona::new, Plotsona::with_base_dir);
         let mut engines: Vec<&dyn Engine<DataBundle>> = vec![&platform];
         if let Some(numisona) = &self.numisona {
             engines.push(numisona);
+            engines.push(&plotsona);
         }
         if let Some(audaxis) = &self.audaxis {
             engines.push(audaxis);
@@ -190,7 +196,8 @@ pub struct Builder {
 }
 
 impl Builder {
-    /// Registers the default engines: NUMISONA (parameter mapping). The data platform
+    /// Registers the default engines: NUMISONA (parameter mapping and its templates) and
+    /// PLOTSONA (`chart` sources and chart-type templates, C01). The data platform
     /// (`inline`, `file` and `dataset` sources) is always registered.
     pub fn with_default_engines(mut self) -> Self {
         self.default_engines = true;
@@ -228,9 +235,11 @@ impl Builder {
         let snr = Sonarithm { numisona, audaxis };
         // Registering once here surfaces conflicts at build time, not at the first compile.
         let platform = Platform::new();
+        let plotsona = Plotsona::new();
         let mut engines: Vec<&dyn Engine<DataBundle>> = vec![&platform];
         if let Some(numisona) = &snr.numisona {
             engines.push(numisona);
+            engines.push(&plotsona);
         }
         if let Some(audaxis) = &snr.audaxis {
             engines.push(audaxis);

@@ -34,7 +34,10 @@ sonarithm-core.workspace = true
 sonarithm-data.workspace = true
 sonarithm-dsp.workspace = true
 sonarithm-export.workspace = true
+sonarithm-i18n.workspace = true
 sonarithm-numisona.workspace = true
+# Chart sources, chart-type templates and `read_chart` (C01-T12).
+sonarithm-plotsona.workspace = true
 sonarithm-render.workspace = true
 sonarithm-sonotrace.workspace = true
 sonarithm-spec.workspace = true

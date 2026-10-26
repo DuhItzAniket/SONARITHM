@@ -337,6 +337,55 @@ fn datasets_open_list_and_close() {
     }
 }
 
+/// C01-T12: the open-dataset path accepts a chart file. The reply carries the chart's long
+/// table and the summary sentence of 10 §5 (`SNR-ENG-385`); a spec with a `dataset` source
+/// plays it through its chart-type template; a chart file with no chart is refused.
+#[test]
+fn a_chart_opens_as_a_dataset_headless() {
+    let mut h = Harness::new("chart");
+    let corpus = Path::new(env!("CARGO_MANIFEST_DIR"))
+        .join("../engines/sonarithm-plotsona/tests/corpus/svg/vl-line.svg");
+    let svg = h.dir.path().join("rain.svg");
+    std::fs::copy(corpus, &svg).unwrap();
+    let opened = h.ok(&json!({ "command": "dataset_open", "args": { "path": svg } }));
+    assert_eq!(opened["name"], "rain.svg");
+    assert_eq!(opened["rows"], 36);
+    let fields: Vec<&str> = opened["fields"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .filter_map(|f| f["name"].as_str())
+        .collect();
+    assert_eq!(fields, ["series", "x", "y"]);
+    let summary = opened["diagnostics"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .find(|d| d["code"] == "SNR-ENG-385")
+        .unwrap_or_else(|| panic!("{opened}"));
+    assert!(
+        summary["message"]
+            .as_str()
+            .unwrap()
+            .starts_with("rain.svg: 36 points: 0 exact, 36 calibrated, 0 estimated"),
+        "{summary}"
+    );
+    let spec = json!({
+        "specVersion": "0.2",
+        "data": { "source": { "kind": "dataset", "id": "d1" } },
+        "template": { "id": "chart-line" }
+    });
+    h.ok(&json!({ "command": "spec_set", "args": { "text": spec.to_string() } }));
+    let report = h.ok(&json!({ "command": "compile" }));
+    assert_eq!(report["ok"], true, "{report}");
+    let broken = h.dir.path().join("broken.svg");
+    std::fs::write(&broken, "not a chart").unwrap();
+    let err = h
+        .send(&json!({ "command": "dataset_open", "args": { "path": broken } }))
+        .unwrap_err();
+    assert!(err.code.starts_with("SNR-ENG-3"), "{err}");
+}
+
 #[test]
 fn malformed_requests_and_versions_fail_fast() {
     let mut h = Harness::new("protocol");

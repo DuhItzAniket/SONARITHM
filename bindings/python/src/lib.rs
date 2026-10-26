@@ -426,6 +426,65 @@ fn quick(
     Ok((Spec { inner: spec }, Compiled { inner: compiled }))
 }
 
+/// A chart's data as PLOTSONA extracted it (C01-T12): the report, the summary sentence and
+/// the spec that plays it.
+#[pyclass(frozen, module = "sonarithm._core")]
+struct Chart {
+    inner: sonarithm::Chart,
+}
+
+#[pymethods]
+impl Chart {
+    /// The extraction report as a dict: `locator`, `container`, `tier`, `extractor`,
+    /// `chart_type`, `series` (each with `class`, `confidence`, `residual`), `points`,
+    /// `provenance` and `diagnostics`; the same as `sonarithm inspect --json`.
+    fn report<'py>(&self, py: Python<'py>) -> PyResult<Bound<'py, PyAny>> {
+        serialized(py, self.inner.report())
+    }
+
+    /// The summary sentence, such as "36 points: 0 exact, 36 calibrated, 0 estimated,
+    /// median confidence 0.99".
+    #[getter]
+    fn summary(&self) -> String {
+        self.inner.summary()
+    }
+
+    /// The chart-type template its type calls for, or `None`.
+    #[getter]
+    fn template(&self) -> Option<&'static str> {
+        self.inner.template()
+    }
+
+    /// The spec that plays the chart through its template, or `None`.
+    fn spec(&self) -> Option<Spec> {
+        self.inner.spec().map(|inner| Spec { inner })
+    }
+
+    /// The chart's long table (`series`, `x`, `y`, with provenance) as a dataset.
+    fn dataset(&self) -> Dataset {
+        Dataset {
+            bundle: self.inner.bundle().clone(),
+        }
+    }
+
+    fn __repr__(&self) -> String {
+        format!("Chart({:?})", self.inner.summary())
+    }
+}
+
+/// Extracts the chart in a file (Office, chart JSON, an HTML page holding one, SVG or
+/// vector PDF), recognised by its contents. Nothing is fetched and no script runs.
+#[pyfunction]
+#[expect(
+    clippy::needless_pass_by_value,
+    reason = "PyO3 extracts arguments by value"
+)]
+fn read_chart(py: Python<'_>, path: PathBuf) -> PyResult<Chart> {
+    py.detach(|| sonarithm::read_chart(&path))
+        .map(|inner| Chart { inner })
+        .map_err(|err| facade_error(py, &err))
+}
+
 /// The JSON Schema of `kind` (`spec`).
 #[pyfunction]
 #[pyo3(signature = (kind = "spec"))]
@@ -446,6 +505,8 @@ fn _core(module: &Bound<'_, PyModule>) -> PyResult<()> {
     module.add_class::<Dataset>()?;
     module.add_class::<Spec>()?;
     module.add_class::<Compiled>()?;
+    module.add_class::<Chart>()?;
+    module.add_function(wrap_pyfunction!(read_chart, module)?)?;
     module.add_function(wrap_pyfunction!(compile, module)?)?;
     module.add_function(wrap_pyfunction!(quick, module)?)?;
     module.add_function(wrap_pyfunction!(schema, module)?)?;

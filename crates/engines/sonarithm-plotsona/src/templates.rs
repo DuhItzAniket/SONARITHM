@@ -117,6 +117,23 @@ pub fn template_for(chart_type: Option<ChartType>) -> Option<&'static str> {
     })
 }
 
+/// A v0.2 spec that plays the chart file at `path` (relative to the spec) through the
+/// template its type calls for ([`template_for`]), or `None` for a chart type with no
+/// template. `name` becomes the spec's name.
+#[must_use]
+pub fn spec_for(chart_type: Option<ChartType>, path: &str, name: Option<&str>) -> Option<Value> {
+    let id = template_for(chart_type)?;
+    let mut spec = json!({
+        "specVersion": "0.2",
+        "data": { "source": { "kind": "chart", "path": path } },
+        "template": { "id": id },
+    });
+    if let Some(name) = name.filter(|n| !n.trim().is_empty()) {
+        spec["name"] = json!(name.trim());
+    }
+    Some(spec)
+}
+
 impl ChartTemplate {
     /// Binds the slots to `table`'s fields, starting from `given` (the spec's
     /// `template.bind`), with the shared rules of [`sonarithm_data::slots::bind`].

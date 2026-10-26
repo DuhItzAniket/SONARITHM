@@ -31,6 +31,7 @@ from ._core import SPEC_VERSION, Dataset, SonarithmError, __version__
 
 __all__ = [
     "SPEC_VERSION",
+    "Chart",
     "Compiled",
     "Dataset",
     "SonarithmError",
@@ -39,6 +40,7 @@ __all__ = [
     "compile",
     "dataset",
     "quick",
+    "read_chart",
     "schema",
 ]
 
@@ -313,6 +315,63 @@ def quick(
         name=name,
     )
     return Compiled(compiled, Spec(spec))
+
+
+class Chart:
+    """A chart's data as PLOTSONA extracted it from a chart file (C01-T12).
+
+    ``summary`` is the sentence the app speaks when the chart opens, such as
+    ``"36 points: 0 exact, 36 calibrated, 0 estimated, median confidence 0.99"``;
+    ``report()`` has the details (tier, series, provenance per point, diagnostics).
+    """
+
+    __slots__ = ("_inner",)
+
+    def __init__(self, inner: _core.Chart) -> None:
+        self._inner = inner
+
+    @property
+    def summary(self) -> str:
+        """How many values were read exactly, calibrated from the drawing, or estimated."""
+        return self._inner.summary
+
+    @property
+    def template(self) -> str | None:
+        """The chart-type template the chart's type calls for, or ``None``."""
+        return self._inner.template
+
+    def report(self) -> dict[str, Any]:
+        """The extraction report, as ``sonarithm inspect --json`` prints it."""
+        return self._inner.report()
+
+    def spec(self) -> Spec | None:
+        """A spec that plays the chart file through its template, or ``None``."""
+        inner = self._inner.spec()
+        return None if inner is None else Spec(inner)
+
+    def dataset(self) -> Dataset:
+        """The chart's data as a long table: ``series``, ``x``, ``y``, with provenance."""
+        return self._inner.dataset()
+
+    def compile(self) -> Compiled:
+        """Compiles the chart through its template."""
+        spec = self.spec()
+        if spec is None:
+            raise SonarithmError("no chart-type template plays this chart yet")
+        return compile(spec)
+
+    def __repr__(self) -> str:
+        return f"Chart({self.summary!r})"
+
+
+def read_chart(path: PathLike) -> Chart:
+    """Extracts the chart in a file: Office (XLSX, PPTX, DOCX), Vega, Vega-Lite, Plotly or
+    Highcharts JSON, an HTML page holding one, SVG or vector PDF. The file is recognised by
+    its contents. Nothing is fetched and no script runs.
+
+    Raises ``SonarithmError`` with ``diagnostics`` when the file is not a chart it reads.
+    """
+    return Chart(_core.read_chart(os.fspath(path)))
 
 
 def schema(kind: str = "spec") -> dict[str, Any]:

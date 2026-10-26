@@ -515,18 +515,24 @@ impl App {
         let number = self.next_dataset;
         // Each dataset's table gets its own ID, so cached view tiles never mix datasets.
         let ids = u32::try_from(number).unwrap_or(u32::MAX);
-        let options = ReadOptions::new().with_ids(BundleId(number), TableId(ids));
-        let loaded = read_file(&path, None, &options)
-            .map_err(|err| IpcError::from_diagnostic(&err.to_diagnostic()))?;
+        let name = file_name(&path);
+        let chart = open_chart(&path, &name, BundleId(number), TableId(ids))?;
+        let (bundle, diagnostics) = if let Some(chart) = chart {
+            chart
+        } else {
+            let options = ReadOptions::new().with_ids(BundleId(number), TableId(ids));
+            let loaded = read_file(&path, None, &options)
+                .map_err(|err| IpcError::from_diagnostic(&err.to_diagnostic()))?;
+            (loaded.bundle, loaded.diagnostics)
+        };
         self.next_dataset += 1;
         let id = format!("d{number}");
-        let name = file_name(&path);
-        let summary = summarize(&id, &name, &loaded.bundle, &loaded.diagnostics);
+        let summary = summarize(&id, &name, &bundle, &diagnostics);
         self.datasets.insert(
             number,
             Open {
                 summary: summary.clone(),
-                bundle: loaded.bundle,
+                bundle,
                 origin: Some(path.clone()),
             },
         );
@@ -933,6 +939,53 @@ const DATA_EXTENSIONS: [&str; 8] = [
     "csv", "tsv", "json", "ndjson", "parquet", "arrow", "xlsx", "ods",
 ];
 
+/// The extensions of files that hold only charts (C01-T12). A `.json` file may hold a
+/// chart (Vega-Lite, Vega, Plotly, Highcharts) or data; an XLSX workbook opens as data, its
+/// cells being the chart's data.
+const CHART_EXTENSIONS: [&str; 6] = ["pptx", "docx", "svg", "pdf", "html", "htm"];
+
+/// The chart in `path` as a dataset, with the extraction's diagnostics and its summary
+/// sentence (`SNR-ENG-385`, 10 §5), or `None` for a data file. A file with a chart
+/// extension that holds no chart is an error; a `.json` file that holds none is data.
+fn open_chart(
+    path: &Path,
+    name: &str,
+    bundle: BundleId,
+    table: TableId,
+) -> Result<Option<(DataBundle, sonarithm_core::Diagnostics)>, IpcError> {
+    let extension = path
+        .extension()
+        .and_then(|ext| ext.to_str())
+        .map(str::to_ascii_lowercase)
+        .unwrap_or_default();
+    let chart_only = CHART_EXTENSIONS.contains(&extension.as_str());
+    if !chart_only && extension != "json" {
+        return Ok(None);
+    }
+    let bytes = std::fs::read(path).map_err(|_| {
+        IpcError::new(
+            &codes::FILE_REFUSED,
+            format!("`{name}` cannot be opened: it does not exist or cannot be read."),
+        )
+    })?;
+    let options = sonarithm::ExtractOptions::new().with_ids(bundle, table);
+    match sonarithm::read_chart_bytes(&bytes, name, &options) {
+        Ok(chart) => {
+            let mut diagnostics = sonarithm_core::Diagnostics::new();
+            diagnostics.push(sonarithm::summary_diagnostic(&chart));
+            for diagnostic in &chart.report().diagnostics {
+                diagnostics.push(diagnostic.clone());
+            }
+            Ok(Some((chart.into_bundle(), diagnostics)))
+        }
+        Err(err) if chart_only => Err(err.diagnostics().iter().next().map_or_else(
+            || IpcError::new(&codes::FILE_REFUSED, format!("`{name}` holds no chart.")),
+            IpcError::from_diagnostic,
+        )),
+        Err(_) => Ok(None),
+    }
+}
+
 /// Checks a UI-supplied data file: it exists, is a regular file (not a directory, device or
 /// pipe) and has a data extension. Returns its canonical path (ADR-0017 §7). Errors name
 /// the file only, never its folder.
@@ -945,7 +998,7 @@ fn data_file(path: &Path) -> Result<PathBuf, IpcError> {
         .map(str::to_ascii_lowercase);
     if !extension
         .as_deref()
-        .is_some_and(|ext| DATA_EXTENSIONS.contains(&ext))
+        .is_some_and(|ext| DATA_EXTENSIONS.contains(&ext) || CHART_EXTENSIONS.contains(&ext))
     {
         return Err(refuse("is not a data file SONARITHM reads."));
     }

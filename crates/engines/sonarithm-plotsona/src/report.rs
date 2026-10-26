@@ -34,6 +34,23 @@ pub struct SeriesReport {
     pub residual: Option<f64>,
 }
 
+/// A report's points by how they were obtained (10 §5).
+#[derive(Clone, Copy, Debug, Default, PartialEq, Serialize)]
+pub struct ClassCounts {
+    /// Every point.
+    pub points: usize,
+    /// Points read exactly (`exact`, or `user_edited`).
+    pub exact: usize,
+    /// Points calibrated from a vector drawing (`vector`).
+    pub calibrated: usize,
+    /// Estimated points (`cv_estimate`, `ml_estimate`, `cloud_estimate` and other
+    /// non-exact classes).
+    pub estimated: usize,
+    /// The median confidence over the points that have one; absent when every point is
+    /// exact.
+    pub median_confidence: Option<f64>,
+}
+
 /// The report of one extraction.
 #[derive(Clone, Debug, PartialEq, Serialize)]
 pub struct ExtractionReport {
@@ -101,6 +118,41 @@ impl ExtractionReport {
         }
     }
 
+    /// The points by how they were obtained, and the median confidence of the points that
+    /// have one, for the summary sentence of 10 §5 ("146 points: 0 exact, 146 estimated,
+    /// median confidence 0.82").
+    #[must_use]
+    pub fn counts(&self) -> ClassCounts {
+        let mut counts = ClassCounts {
+            points: self.points,
+            ..ClassCounts::default()
+        };
+        let mut confidences: Vec<(f32, usize)> = Vec::new();
+        for series in &self.series {
+            match series.class {
+                ProvenanceClass::Exact | ProvenanceClass::UserEdited => {
+                    counts.exact += series.points;
+                }
+                ProvenanceClass::Vector => counts.calibrated += series.points,
+                _ => counts.estimated += series.points,
+            }
+            if let Some(confidence) = series.confidence {
+                confidences.push((confidence, series.points));
+            }
+        }
+        confidences.sort_by(|a, b| a.0.total_cmp(&b.0));
+        let weighted: usize = confidences.iter().map(|c| c.1).sum();
+        let mut seen = 0;
+        for (confidence, points) in confidences {
+            seen += points;
+            if seen * 2 >= weighted && weighted > 0 {
+                counts.median_confidence = Some(f64::from(confidence));
+                break;
+            }
+        }
+        counts
+    }
+
     /// The number of points whose class is an estimate.
     #[must_use]
     pub fn estimated(&self) -> usize {
@@ -156,6 +208,17 @@ mod tests {
         assert_eq!(report.series.first().map(|s| s.missing), Some(1));
         assert_eq!(report.provenance.get("exact"), Some(&2));
         assert_eq!(report.provenance.get("cv_estimate"), Some(&3));
+        // 10 §5: the summary counts, with the median confidence of the estimated points.
+        assert_eq!(
+            report.counts(),
+            ClassCounts {
+                points: 5,
+                exact: 2,
+                calibrated: 0,
+                estimated: 3,
+                median_confidence: Some(0.5),
+            }
+        );
         insta::assert_json_snapshot!(report);
     }
 }

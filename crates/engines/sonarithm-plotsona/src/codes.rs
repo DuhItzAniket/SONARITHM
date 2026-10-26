@@ -433,6 +433,16 @@ pub const IMPORT_NO_DATA: CodeInfo = CodeInfo {
     status: CodeStatus::Active,
 };
 
+/// A chart was extracted; the message is the summary sentence of 10 §5 (C01-T12).
+pub const CHART_EXTRACTED: CodeInfo = CodeInfo {
+    code: "SNR-ENG-385",
+    severity: Severity::Info,
+    summary: "Chart extracted",
+    help: "The message counts the points by how they were obtained: exact, calibrated from            the drawing, or estimated. Estimated values are announced as estimates.",
+    rules: &[],
+    status: CodeStatus::Active,
+};
+
 /// Every PLOTSONA code, in ascending order.
 pub const CODES: CodeTable = CodeTable {
     area: Area::Eng,
@@ -478,6 +488,7 @@ pub const CODES: CodeTable = CodeTable {
         IMPORT_APPROXIMATED,
         IMPORT_UNREADABLE,
         IMPORT_NO_DATA,
+        CHART_EXTRACTED,
     ],
 };
 

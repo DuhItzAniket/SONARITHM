@@ -73,7 +73,7 @@ macro_rules! snapshot {
     ($name:expr, $run:expr) => {
         insta::with_settings!({
             filters => vec![
-                (r"(sonarithm|numisona|platform)( |\x22: \x22)\d+\.\d+\.\d+(-[0-9A-Za-z.]+)?", "$1$2[version]"),
+                (r"(sonarithm|numisona|platform|plotsona)( |\x22: \x22)\d+\.\d+\.\d+(-[0-9A-Za-z.]+)?", "$1$2[version]"),
                 (r"(Score hash: |\x22score_hash\x22: \x22)[0-9a-f]{64}", "$1[score hash]"),
             ],
         }, {
@@ -164,6 +164,47 @@ fn unreadable_files_exit_with_1_and_name_no_directories() {
     let json = run(&["--json", "inspect", "absent.spec.json"]);
     assert_eq!(json.code, 1);
     assert_eq!(json.json()["ok"], false);
+}
+
+/// C01-T12: `inspect` on a chart file prints its extraction report, the summary sentence
+/// of 10 §5 (from the catalogue) and the Score of its chart-type template; `--json` gives
+/// the report; a file with a chart extension that is no chart fails with PLOTSONA's code.
+#[test]
+fn inspect_reads_a_chart_file() {
+    let corpus = "../../../../crates/engines/sonarithm-plotsona/tests/corpus";
+    let plain = run(&["--plain", "inspect", &format!("{corpus}/svg/vl-line.svg")]);
+    assert_eq!(plain.code, 0, "{}", plain.transcript());
+    assert_linear(&plain);
+    assert!(
+        plain
+            .stdout
+            .contains("36 points: 0 exact, 36 calibrated, 0 estimated, median confidence")
+    );
+    snapshot!("inspect_chart", plain);
+    let json = run(&[
+        "--json",
+        "inspect",
+        &format!("{corpus}/office/xlsx-pie.xlsx"),
+    ]);
+    assert_eq!(json.code, 0, "{}", json.transcript());
+    let value = json.json();
+    assert_eq!(
+        value["summary"],
+        "5 points: 5 exact, 0 calibrated, 0 estimated"
+    );
+    assert_eq!(value["template"], "chart-pie");
+    assert_eq!(value["report"]["provenance"]["exact"], 5);
+    snapshot!("inspect_chart_json", json);
+    let dir = PathBuf::from(env!("CARGO_TARGET_TMPDIR")).join("cli-chart");
+    std::fs::create_dir_all(&dir).unwrap();
+    std::fs::write(dir.join("broken.svg"), "not a chart").unwrap();
+    let broken = run_in(&dir, &["--plain", "inspect", "broken.svg"], None);
+    assert_eq!(broken.code, 1, "{}", broken.transcript());
+    assert!(
+        broken.stderr.contains("cannot be read as a chart"),
+        "{}",
+        broken.transcript()
+    );
 }
 
 #[test]

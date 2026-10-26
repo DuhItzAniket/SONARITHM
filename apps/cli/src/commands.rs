@@ -183,6 +183,9 @@ struct Inspected<'a> {
 
 fn inspect(args: &Inspect, out: Out) -> Exit {
     let checked = &args.checked;
+    if let Some(chart) = chart_file(&checked.spec) {
+        return inspect_chart(args, chart, out);
+    }
     let source = match read_source(&checked.spec) {
         Ok(source) => source,
         Err(message) => return unreadable(out, &file_name(&checked.spec), &message),
@@ -228,6 +231,136 @@ fn inspect(args: &Inspect, out: Out) -> Exit {
         )),
     }
     out.diagnostics(&source.name, &source.text, &diagnostics, checked.verbose);
+    hint_verbose(out, &diagnostics, checked.verbose);
+    exit
+}
+
+/// File extensions that hold charts and never specs.
+const CHART_EXTENSIONS: [&str; 7] = ["xlsx", "pptx", "docx", "svg", "pdf", "html", "htm"];
+
+/// The chart in `path`, when it is a chart file rather than a spec (C01-T12): a file with a
+/// chart extension, or any other file PLOTSONA reads that is not a JSON spec.
+fn chart_file(path: &Path) -> Option<Result<sonarithm::Chart, sonarithm::Error>> {
+    if path == Path::new("-") {
+        return None;
+    }
+    let extension = path
+        .extension()
+        .and_then(|e| e.to_str())
+        .map(str::to_ascii_lowercase)
+        .unwrap_or_default();
+    if CHART_EXTENSIONS.contains(&extension.as_str()) {
+        return Some(sonarithm::read_chart(path));
+    }
+    let bytes = std::fs::read(path).ok()?;
+    if let Ok(Value::Object(object)) = serde_json::from_slice::<Value>(&bytes)
+        && object.contains_key("specVersion")
+    {
+        return None;
+    }
+    sonarithm::read_chart(path).ok().map(Ok)
+}
+
+#[derive(Serialize)]
+struct InspectedChart<'a> {
+    chart: &'a str,
+    ok: bool,
+    summary: String,
+    template: Option<&'static str>,
+    report: &'a sonarithm::ExtractionReport,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    score: Option<sonarithm::Summary>,
+    counts: Counts,
+    diagnostics: &'a Diagnostics,
+}
+
+/// `inspect` for a chart file: the extraction report, the summary sentence of 10 §5 from the
+/// catalogue, and the Score its chart-type template gives.
+fn inspect_chart(
+    args: &Inspect,
+    chart: Result<sonarithm::Chart, sonarithm::Error>,
+    out: Out,
+) -> Exit {
+    let checked = &args.checked;
+    let name = file_name(&checked.spec);
+    let chart = match chart {
+        Ok(chart) => chart,
+        Err(err) => {
+            let diagnostics = err.diagnostics();
+            if out.json() {
+                json_value(&json!({
+                    "chart": name, "ok": false, "error": err.to_string(), "diagnostics": diagnostics,
+                }));
+            } else {
+                error(&format!("`{name}` cannot be read as a chart."));
+                out.diagnostics(&name, "", &diagnostics, checked.verbose);
+            }
+            return Exit::Errors;
+        }
+    };
+    let report = chart.report();
+    let mut diagnostics = Diagnostics::new();
+    for diagnostic in &report.diagnostics {
+        diagnostics.push(diagnostic.clone());
+    }
+    let compiled = chart.spec().map(|spec| Sonarithm::new().compile(&spec));
+    match &compiled {
+        Some(Ok(compiled)) => diagnostics.extend(compiled.diagnostics().clone()),
+        Some(Err(err)) => diagnostics.extend(err.diagnostics()),
+        None => {}
+    }
+    let exit = Exit::of(&diagnostics, checked.deny_warnings);
+    let compiled = compiled.and_then(Result::ok);
+    if out.json() {
+        json_value(&InspectedChart {
+            chart: &name,
+            ok: true,
+            summary: chart.summary(),
+            template: chart.template(),
+            report,
+            score: compiled.as_ref().map(Compiled::summary),
+            counts: Counts::of(&diagnostics),
+            diagnostics: &diagnostics,
+        });
+        return exit;
+    }
+    let kind = report
+        .chart_type
+        .and_then(|t| serde_json::to_value(t).ok())
+        .and_then(|t| t.as_str().map(|t| format!(", a {t} chart")))
+        .unwrap_or_default();
+    line(format!(
+        "{name}: {}{kind}, read by {}.",
+        report.container.name(),
+        report.extractor
+    ));
+    line(format!("{}.", chart.summary()));
+    for series in &report.series {
+        let class = serde_json::to_value(series.class)
+            .ok()
+            .and_then(|c| c.as_str().map(str::to_owned))
+            .unwrap_or_default();
+        let mut text = format!("Series {}: {} points, {class}", series.name, series.points);
+        if series.missing > 0 {
+            let _ = write!(text, ", {} missing", series.missing);
+        }
+        if let Some(confidence) = series.confidence {
+            let _ = write!(text, ", confidence {confidence:.2}");
+        }
+        if let Some(residual) = series.residual {
+            let _ = write!(text, ", residual {:.3} %", residual * 100.0);
+        }
+        line(format!("{text}."));
+    }
+    match (chart.template(), &compiled) {
+        (Some(template), Some(compiled)) => {
+            line(format!("Template: {template}."));
+            print_summary(compiled);
+        }
+        (Some(template), None) => line(format!("Template: {template}; it did not compile.")),
+        (None, _) => line("No chart-type template plays this chart yet; write a spec's tracks."),
+    }
+    out.diagnostics(&name, "", &diagnostics, checked.verbose);
     hint_verbose(out, &diagnostics, checked.verbose);
     exit
 }

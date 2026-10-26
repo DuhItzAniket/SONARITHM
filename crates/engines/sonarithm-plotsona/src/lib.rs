@@ -64,7 +64,7 @@ use sonarithm_spec::data::Extractor;
 pub use budget::{Budgets, Work};
 pub use detect::{Container, Tier, detect};
 pub use model::{ChartData, ChartType, Point, Series, XValue};
-pub use report::{ExtractionReport, SeriesReport};
+pub use report::{ClassCounts, ExtractionReport, SeriesReport};
 
 use crate::budget::{Budget, len64, over};
 
@@ -82,6 +82,9 @@ pub struct ExtractOptions {
     pub budgets: Budgets,
     /// The extractor the spec asks for; `auto` picks one from the container.
     pub extractor: Extractor,
+    /// The bundle and table IDs of the result; a host that keeps several datasets gives
+    /// each its own (default `BundleId(0)` and [`CHART_TABLE`]).
+    pub ids: (BundleId, TableId),
 }
 
 impl ExtractOptions {
@@ -91,7 +94,15 @@ impl ExtractOptions {
         Self {
             budgets: Budgets::DEFAULT,
             extractor: Extractor::Auto,
+            ids: (BundleId(0), CHART_TABLE),
         }
+    }
+
+    /// The same options with other bundle and table IDs.
+    #[must_use]
+    pub const fn with_ids(mut self, bundle: BundleId, table: TableId) -> Self {
+        self.ids = (bundle, table);
+        self
     }
 
     /// The same options with other budgets.
@@ -157,7 +168,15 @@ pub fn extract(
     }
     let mut diagnostics = Vec::new();
     let (chart, extractor) = read_chart(&sniffed, bytes, budgets, &mut work, &mut diagnostics)?;
-    finish(locator, container, extractor, chart, diagnostics, budgets)
+    finish(
+        locator,
+        container,
+        extractor,
+        chart,
+        diagnostics,
+        budgets,
+        options.ids,
+    )
 }
 
 /// Runs the extractor of the sniffed container and names it.
@@ -224,6 +243,7 @@ fn finish(
     chart: ChartData,
     diagnostics: Vec<Diagnostic>,
     budgets: &Budgets,
+    ids: (BundleId, TableId),
 ) -> Result<Extraction, Box<Diagnostic>> {
     let points = len64(chart.points());
     if points > budgets.max_points {
@@ -236,14 +256,15 @@ fn finish(
         )));
     }
     let report = ExtractionReport::new(locator, container, extractor, &chart, diagnostics);
+    let (bundle_id, table_id) = ids;
     let table = chart
-        .to_table(CHART_TABLE, "chart")
+        .to_table(table_id, "chart")
         .map_err(|err| Box::new(err.to_diagnostic()))?;
     let mut source = SourceDescriptor::new(DataSourceKind::Chart, locator, "chart");
     extractor.clone_into(&mut source.extractor);
     env!("CARGO_PKG_VERSION").clone_into(&mut source.extractor_version);
     Ok(Extraction {
-        bundle: DataBundle::single(BundleId(0), source, table),
+        bundle: DataBundle::single(bundle_id, source, table),
         chart,
         report,
     })

@@ -225,6 +225,7 @@ Owner: `sonarithm-plotsona`. Numbers SNR-ENG-300 to SNR-ENG-399.
 | `SNR-ENG-382` | info | A chart construct was imported approximately | The note says how the sound differs from the picture. | SDR-05 |
 | `SNR-ENG-383` | error | The document cannot be imported | Check that it is a Vega-Lite or MAIDR document of a supported chart type, or            write the spec's tracks by hand. | — |
 | `SNR-ENG-384` | error | The imported chart has no readable data | Give the chart inline values or a local data file; SONARITHM never fetches data            from the network (ADR-0012). | — |
+| `SNR-ENG-385` | info | Chart extracted | The message counts the points by how they were obtained: exact, calibrated from            the drawing, or estimated. Estimated values are announced as estimates. | — |
 
 Owner: `sonarithm-echometric`. Numbers SNR-ENG-600 to SNR-ENG-699.
 
