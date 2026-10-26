@@ -3,91 +3,21 @@
 
 use std::path::PathBuf;
 
-use serde_json::Value;
-use sonarithm_core::ProvenanceClass;
-
 use super::*;
 use crate::calibrate::ticks::parse_date;
 use crate::container::tests::package;
 use crate::{ExtractOptions, extract};
 
 fn corpus() -> PathBuf {
-    PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("tests/corpus/office")
+    crate::corpus::folder("office")
 }
 
 /// Every Office chart of the corpus extracts with zero error, with `exact` provenance, in
 /// XLSX, PPTX and DOCX (C01-T05 acceptance).
 #[test]
 fn corpus_charts_extract_with_zero_error() {
-    let mut checked = 0;
-    let mut files: Vec<PathBuf> = std::fs::read_dir(corpus())
-        .unwrap()
-        .map(|e| e.unwrap().path())
-        .filter(|p| p.to_string_lossy().ends_with(".truth.json"))
-        .collect();
-    files.sort();
-    for truth_path in files {
-        let name = truth_path
-            .file_name()
-            .unwrap()
-            .to_string_lossy()
-            .replace(".truth.json", "");
-        let kind = name.split('-').next().unwrap();
-        let chart_path = corpus().join(format!("{name}.{kind}"));
-        let truth: Value =
-            serde_json::from_str(&std::fs::read_to_string(&truth_path).unwrap()).unwrap();
-        let bytes = std::fs::read(&chart_path).unwrap();
-        let extraction = extract(&bytes, &name, &ExtractOptions::new());
-        assert!(extraction.is_ok(), "{name}: {:?}", extraction.err());
-        let extraction = extraction.unwrap();
-        let chart = &extraction.chart;
-        let expected_type = truth["chart_type"].as_str().unwrap();
-        let found_type = serde_json::to_value(chart.chart_type).unwrap();
-        assert_eq!(
-            found_type.as_str(),
-            Some(expected_type),
-            "{name}: chart type"
-        );
-        assert_eq!(
-            chart.title.as_deref(),
-            truth["title"].as_str(),
-            "{name}: title"
-        );
-        let series = truth["series"].as_array().unwrap();
-        assert_eq!(chart.series.len(), series.len(), "{name}: series count");
-        for (found, expected) in chart.series.iter().zip(series) {
-            assert_eq!(found.name, expected["name"].as_str().unwrap(), "{name}");
-            assert_eq!(found.provenance.class, ProvenanceClass::Exact, "{name}");
-            let ys: Vec<f64> = expected["y"]
-                .as_array()
-                .unwrap()
-                .iter()
-                .map(|v| v.as_f64().unwrap())
-                .collect();
-            let found_ys: Vec<f64> = found.points.iter().map(|p| p.y.unwrap()).collect();
-            assert_eq!(found_ys, ys, "{name}: values, zero error");
-            let xs = expected["x"].as_array().unwrap();
-            for (point, x) in found.points.iter().zip(xs) {
-                let expected_x = match truth["x_kind"].as_str().unwrap() {
-                    "number" => XValue::Number(x.as_f64().unwrap()),
-                    "date" => XValue::Time(parse_date(x.as_str().unwrap()).unwrap()),
-                    _ => XValue::Category(x.as_str().unwrap().to_owned()),
-                };
-                assert_eq!(point.x, expected_x, "{name}: x");
-            }
-        }
-        assert!(
-            extraction
-                .report
-                .diagnostics
-                .iter()
-                .all(|d| d.severity != sonarithm_core::Severity::Warning),
-            "{name}: {:?}",
-            extraction.report.diagnostics
-        );
-        checked += 1;
-    }
-    assert_eq!(checked, 22, "the Office corpus has 22 charts");
+    let checked = crate::corpus::check(&corpus(), 0.0);
+    assert_eq!(checked.len(), 22, "the Office corpus has 22 charts");
 }
 
 #[test]

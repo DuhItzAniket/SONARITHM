@@ -1,0 +1,258 @@
+{
+ "$schema": "https://vega.github.io/schema/vega/v6.json",
+ "title": "Rain by region",
+ "width": 500,
+ "height": 200,
+ "data": [
+  {
+   "name": "table",
+   "values": [
+    {
+     "month": "Jan",
+     "region": "north",
+     "rain": 99.2
+    },
+    {
+     "month": "Jan",
+     "region": "south",
+     "rain": 49.2
+    },
+    {
+     "month": "Jan",
+     "region": "east",
+     "rain": 38.8
+    },
+    {
+     "month": "Feb",
+     "region": "north",
+     "rain": 94.9
+    },
+    {
+     "month": "Feb",
+     "region": "south",
+     "rain": 64.2
+    },
+    {
+     "month": "Feb",
+     "region": "east",
+     "rain": 45.4
+    },
+    {
+     "month": "Mar",
+     "region": "north",
+     "rain": 80.4
+    },
+    {
+     "month": "Mar",
+     "region": "south",
+     "rain": 60.9
+    },
+    {
+     "month": "Mar",
+     "region": "east",
+     "rain": 58.0
+    },
+    {
+     "month": "Apr",
+     "region": "north",
+     "rain": 71.8
+    },
+    {
+     "month": "Apr",
+     "region": "south",
+     "rain": 65.0
+    },
+    {
+     "month": "Apr",
+     "region": "east",
+     "rain": 67.5
+    },
+    {
+     "month": "May",
+     "region": "north",
+     "rain": 57.9
+    },
+    {
+     "month": "May",
+     "region": "south",
+     "rain": 53.0
+    },
+    {
+     "month": "May",
+     "region": "east",
+     "rain": 77.6
+    },
+    {
+     "month": "Jun",
+     "region": "north",
+     "rain": 56.6
+    },
+    {
+     "month": "Jun",
+     "region": "south",
+     "rain": 44.7
+    },
+    {
+     "month": "Jun",
+     "region": "east",
+     "rain": 83.8
+    },
+    {
+     "month": "Jul",
+     "region": "north",
+     "rain": 63.1
+    },
+    {
+     "month": "Jul",
+     "region": "south",
+     "rain": 27.4
+    },
+    {
+     "month": "Jul",
+     "region": "east",
+     "rain": 79.3
+    },
+    {
+     "month": "Aug",
+     "region": "north",
+     "rain": 66.4
+    },
+    {
+     "month": "Aug",
+     "region": "south",
+     "rain": 15.4
+    },
+    {
+     "month": "Aug",
+     "region": "east",
+     "rain": 74.8
+    },
+    {
+     "month": "Sep",
+     "region": "north",
+     "rain": 81.3
+    },
+    {
+     "month": "Sep",
+     "region": "south",
+     "rain": 10.2
+    },
+    {
+     "month": "Sep",
+     "region": "east",
+     "rain": 57.8
+    },
+    {
+     "month": "Oct",
+     "region": "north",
+     "rain": 87.9
+    },
+    {
+     "month": "Oct",
+     "region": "south",
+     "rain": 17.4
+    },
+    {
+     "month": "Oct",
+     "region": "east",
+     "rain": 51.2
+    },
+    {
+     "month": "Nov",
+     "region": "north",
+     "rain": 98.8
+    },
+    {
+     "month": "Nov",
+     "region": "south",
+     "rain": 32.3
+    },
+    {
+     "month": "Nov",
+     "region": "east",
+     "rain": 40.4
+    },
+    {
+     "month": "Dec",
+     "region": "north",
+     "rain": 100.9
+    },
+    {
+     "month": "Dec",
+     "region": "south",
+     "rain": 37.1
+    },
+    {
+     "month": "Dec",
+     "region": "east",
+     "rain": 34.6
+    }
+   ]
+  }
+ ],
+ "scales": [
+  {
+   "name": "x",
+   "type": "point",
+   "range": "width",
+   "domain": {
+    "data": "table",
+    "field": "month"
+   }
+  },
+  {
+   "name": "y",
+   "type": "linear",
+   "range": "height",
+   "domain": {
+    "data": "table",
+    "field": "rain"
+   }
+  },
+  {
+   "name": "color",
+   "type": "ordinal",
+   "range": "category",
+   "domain": {
+    "data": "table",
+    "field": "region"
+   }
+  }
+ ],
+ "marks": [
+  {
+   "type": "group",
+   "from": {
+    "facet": {
+     "name": "series",
+     "data": "table",
+     "groupby": "region"
+    }
+   },
+   "marks": [
+    {
+     "type": "line",
+     "from": {
+      "data": "series"
+     },
+     "encode": {
+      "enter": {
+       "x": {
+        "scale": "x",
+        "field": "month"
+       },
+       "y": {
+        "scale": "y",
+        "field": "rain"
+       },
+       "stroke": {
+        "scale": "color",
+        "field": "region"
+       }
+      }
+     }
+    }
+   ]
+  }
+ ]
+}

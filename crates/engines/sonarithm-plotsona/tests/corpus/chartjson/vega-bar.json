@@ -1,0 +1,93 @@
+{
+ "$schema": "https://vega.github.io/schema/vega/v6.json",
+ "title": "Fruit sold",
+ "width": 400,
+ "height": 200,
+ "data": [
+  {
+   "name": "table",
+   "values": [
+    {
+     "category": "apple",
+     "amount": 42.0
+    },
+    {
+     "category": "banana",
+     "amount": 57.0
+    },
+    {
+     "category": "cherry",
+     "amount": 18.0
+    },
+    {
+     "category": "date",
+     "amount": 33.0
+    },
+    {
+     "category": "fig",
+     "amount": 9.0
+    }
+   ]
+  }
+ ],
+ "scales": [
+  {
+   "name": "xscale",
+   "type": "band",
+   "domain": {
+    "data": "table",
+    "field": "category"
+   },
+   "range": "width"
+  },
+  {
+   "name": "yscale",
+   "domain": {
+    "data": "table",
+    "field": "amount"
+   },
+   "nice": true,
+   "range": "height"
+  }
+ ],
+ "axes": [
+  {
+   "orient": "bottom",
+   "scale": "xscale",
+   "title": "Fruit"
+  },
+  {
+   "orient": "left",
+   "scale": "yscale",
+   "title": "Sold"
+  }
+ ],
+ "marks": [
+  {
+   "type": "rect",
+   "from": {
+    "data": "table"
+   },
+   "encode": {
+    "enter": {
+     "x": {
+      "scale": "xscale",
+      "field": "category"
+     },
+     "width": {
+      "scale": "xscale",
+      "band": 1
+     },
+     "y": {
+      "scale": "yscale",
+      "field": "amount"
+     },
+     "y2": {
+      "scale": "yscale",
+      "value": 0
+     }
+    }
+   }
+  }
+ ]
+}

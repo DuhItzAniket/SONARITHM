@@ -1,0 +1,83 @@
+{
+ "$schema": "https://vega.github.io/schema/vega/v6.json",
+ "title": "Fruit sold",
+ "width": 200,
+ "height": 200,
+ "data": [
+  {
+   "name": "table",
+   "values": [
+    {
+     "id": "apple",
+     "field": 42.0
+    },
+    {
+     "id": "banana",
+     "field": 57.0
+    },
+    {
+     "id": "cherry",
+     "field": 18.0
+    },
+    {
+     "id": "date",
+     "field": 33.0
+    },
+    {
+     "id": "fig",
+     "field": 9.0
+    }
+   ],
+   "transform": [
+    {
+     "type": "pie",
+     "field": "field"
+    }
+   ]
+  }
+ ],
+ "scales": [
+  {
+   "name": "color",
+   "type": "ordinal",
+   "domain": {
+    "data": "table",
+    "field": "id"
+   },
+   "range": {
+    "scheme": "category20"
+   }
+  }
+ ],
+ "marks": [
+  {
+   "type": "arc",
+   "from": {
+    "data": "table"
+   },
+   "encode": {
+    "enter": {
+     "fill": {
+      "scale": "color",
+      "field": "id"
+     },
+     "x": {
+      "signal": "width / 2"
+     },
+     "y": {
+      "signal": "height / 2"
+     },
+     "startAngle": {
+      "field": "startAngle"
+     },
+     "endAngle": {
+      "field": "endAngle"
+     },
+     "outerRadius": {
+      "signal": "width / 2"
+     }
+    }
+   }
+  }
+ ]
+}

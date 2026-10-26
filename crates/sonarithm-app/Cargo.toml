@@ -39,6 +39,9 @@ allocation-counter.workspace = true
 proptest.workspace = true
 # The cue sidecar of a narrated Score in the speech tests (B03-T07).
 sonarithm-export.workspace = true
+# Chart files with remote data and HTML pages, read under the network-deny harness
+# (C01-T06); the app core opens charts itself from C01-T12.
+sonarithm-plotsona.workspace = true
 
 [lints]
 workspace = true

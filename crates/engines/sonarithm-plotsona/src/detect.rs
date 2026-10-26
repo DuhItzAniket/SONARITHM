@@ -127,10 +127,12 @@ impl Tier {
     }
 }
 
-/// What sniffing found.
+/// What sniffing found: the container, and for chart JSON the parsed document, so it is
+/// parsed once.
 #[derive(Debug)]
 pub(crate) struct Sniffed {
     pub(crate) container: Container,
+    pub(crate) json: Option<Value>,
 }
 
 /// The container of a chart file.
@@ -151,7 +153,12 @@ pub(crate) fn sniff(
     work: &mut Work,
 ) -> Result<Sniffed, Box<Diagnostic>> {
     budgets.check_input(crate::budget::len64(bytes.len()))?;
-    let found = |container| Ok(Sniffed { container });
+    let found = |container| {
+        Ok(Sniffed {
+            container,
+            json: None,
+        })
+    };
     if bytes.starts_with(b"PK\x03\x04") {
         return found(office(bytes, budgets)?);
     }
@@ -187,7 +194,10 @@ pub(crate) fn sniff(
                      plain data as a file source instead",
                 )
             })?;
-            Ok(Sniffed { container })
+            Ok(Sniffed {
+                container,
+                json: Some(json),
+            })
         }
         _ => Err(unknown("not a chart format PLOTSONA reads")),
     }
@@ -229,7 +239,10 @@ fn markup(text: &[u8]) -> Result<Sniffed, Box<Diagnostic>> {
         (_, Some(_)) => Container::Html,
         (None, None) => return Err(unknown("XML that is neither SVG nor HTML")),
     };
-    Ok(Sniffed { container })
+    Ok(Sniffed {
+        container,
+        json: None,
+    })
 }
 
 /// Parses JSON with the parser's recursion limit (128 levels) and the depth budget.

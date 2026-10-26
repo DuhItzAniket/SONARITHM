@@ -16,6 +16,7 @@
 //! | [`budget`] | Size, decompression, ratio, depth, node, point and work budgets |
 //! | [`calibrate`] | Axis calibration for the vector and raster tiers: linear, log and date fits from anchors or tick labels, residuals, the sanity checks of 10 §3.1, category axes |
 //! | [`model`] | The extracted chart (series, points, provenance) and its long table |
+//! | `chartjson` | Tier 1: Vega-Lite, Vega, Plotly and Highcharts JSON, also from a local HTML page's scripts, read statically (`exact`) |
 //! | `office` | Tier 1: XLSX, PPTX and DOCX chart parts, from the chart's workbook or its caches (`exact`) |
 //! | [`report`] | The extraction report: container, tier, series, provenance mix, diagnostics |
 //! | engine | The `chart` source: a spec's `{"kind": "chart", "path": …}` |
@@ -28,8 +29,11 @@
 
 pub mod budget;
 pub mod calibrate;
+mod chartjson;
 pub mod codes;
 mod container;
+#[cfg(test)]
+mod corpus;
 pub mod detect;
 pub mod model;
 mod office;
@@ -165,12 +169,37 @@ fn read_chart(
             let chart = office::extract(bytes, is_xlsx, budgets, work, diagnostics)?;
             return Ok((chart, "sonarithm-plotsona/office"));
         }
+        Container::VegaLite | Container::Vega | Container::Plotly | Container::Highcharts => {
+            let json = sniffed
+                .json
+                .as_ref()
+                .ok_or_else(|| not_available(container))?;
+            let mut cx = chartjson::Cx::new(budgets, work, diagnostics);
+            let chart = chartjson::extract(container, json, &mut cx)?;
+            return Ok((chart, json_extractor(container)));
+        }
+        Container::Html => {
+            let mut cx = chartjson::Cx::new(budgets, work, diagnostics);
+            let (found, json) = chartjson::html::find_chart(bytes, &mut cx)?;
+            let chart = chartjson::extract(found, &json, &mut cx)?;
+            return Ok((chart, json_extractor(found)));
+        }
         Container::Svg => {
             xml::parse(bytes, "SVG image", budgets, work)?;
         }
         _ => {}
     }
     Err(not_available(container))
+}
+
+/// The extractor name of a chart-JSON library.
+fn json_extractor(container: Container) -> &'static str {
+    match container {
+        Container::Vega => "sonarithm-plotsona/vega",
+        Container::Plotly => "sonarithm-plotsona/plotly",
+        Container::Highcharts => "sonarithm-plotsona/highcharts",
+        _ => "sonarithm-plotsona/vega-lite",
+    }
 }
 
 /// Checks the result and builds the bundle and report.
@@ -357,7 +386,7 @@ impl ChartSource {
 pub mod fuzzing {
     use sonarithm_core::Diagnostic;
 
-    use crate::{Budgets, ChartData, Work, office};
+    use crate::{Budgets, ChartData, Container, Work, chartjson, detect, office};
 
     /// Reads `xml` as an Office chart part from its caches, as the Office extractor does.
     ///
@@ -367,6 +396,43 @@ pub mod fuzzing {
     pub fn office_chart_part(xml: &[u8], budgets: &Budgets) -> Result<ChartData, Box<Diagnostic>> {
         let mut work = Work::new(budgets.max_work);
         office::chart_part(xml, budgets, &mut work, &mut Vec::new())
+    }
+
+    /// Reads `json` as a chart of one library, chosen by `library` modulo 4 (Vega-Lite,
+    /// Vega, Plotly, Highcharts), whatever its keys say, so every reader sees every input.
+    ///
+    /// # Errors
+    ///
+    /// The extractor's diagnostic.
+    pub fn chart_json(
+        library: u8,
+        json: &[u8],
+        budgets: &Budgets,
+    ) -> Result<ChartData, Box<Diagnostic>> {
+        let mut work = Work::new(budgets.max_work);
+        let value = detect::parse_json(json, budgets, &mut work)?;
+        let container = match library % 4 {
+            0 => Container::VegaLite,
+            1 => Container::Vega,
+            2 => Container::Plotly,
+            _ => Container::Highcharts,
+        };
+        let mut diagnostics = Vec::new();
+        let mut cx = chartjson::Cx::new(budgets, &mut work, &mut diagnostics);
+        chartjson::extract(container, &value, &mut cx)
+    }
+
+    /// Reads `html` as a page whose scripts hold a chart.
+    ///
+    /// # Errors
+    ///
+    /// The extractor's diagnostic.
+    pub fn html_page(html: &[u8], budgets: &Budgets) -> Result<ChartData, Box<Diagnostic>> {
+        let mut work = Work::new(budgets.max_work);
+        let mut diagnostics = Vec::new();
+        let mut cx = chartjson::Cx::new(budgets, &mut work, &mut diagnostics);
+        let (container, json) = chartjson::html::find_chart(html, &mut cx)?;
+        chartjson::extract(container, &json, &mut cx)
     }
 }
 

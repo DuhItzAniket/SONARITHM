@@ -817,3 +817,12 @@ A05 (render engine, audio backends, export) uses F-050 to F-069.
 - **Evidence level / confidence:** EV-C / Strong for these files; other writers (Excel, LibreOffice) not yet checked, TODO(verify) with real Office files in C01-T11
 - **Affects:** C01-T05, C01-T11, DS-007
 - **Papers:** none yet
+
+### F-162 · plotly.py 6 writes NumPy data as base64 typed arrays and ships prototype traces in every figure's template
+
+- **Date:** 2026-10-26 · **Phase:** C01 · **Type:** engineering · **Status:** new
+- **Statement:** `fig.to_json()` in plotly 6.7.0 encodes NumPy arrays as `{"dtype": "f8", "bdata": "<base64>"}` (little-endian; `i4`, `f4` and the other widths likewise) instead of JSON arrays, and the default template puts prototype traces under `layout.template.data` (about 10 KB per figure). A static reader that expects JSON arrays reads no values from such figures, and one that scans for any `data` array reads the prototypes as series. PLOTSONA decodes typed arrays and reads only the figure's top-level `data`; all 7 Plotly charts of the C01 corpus, one with typed arrays, extract with zero error.
+- **Evidence:** plotly.py 6.7.0 output (`go.Figure([go.Scatter(x=np.arange(4), …)]).to_json()`, 2026-10-26); `crates/engines/sonarithm-plotsona/tests/corpus/chartjson/plotly-scatter.json`; `chartjson::tests::corpus_charts_extract_with_zero_error`, `plotly_templates_are_never_read_as_traces`; the C01-T06 PR
+- **Evidence level / confidence:** EV-C / Strong for plotly.py 6.7.0; other Plotly writers (R, Julia, plotly.js's own export) not checked, TODO(verify)
+- **Affects:** C01-T06, C01-T11, DS-007, notes/06 §6 (errata)
+- **Papers:** none yet

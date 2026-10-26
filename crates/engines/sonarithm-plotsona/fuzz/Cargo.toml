@@ -36,3 +36,17 @@ path = "fuzz_targets/office_chart.rs"
 test = false
 doc = false
 bench = false
+
+[[bin]]
+name = "chart_json"
+path = "fuzz_targets/chart_json.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "html_page"
+path = "fuzz_targets/html_page.rs"
+test = false
+doc = false
+bench = false

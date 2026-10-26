@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html>
+<head>
+<script src="https://code.highcharts.com/highcharts.js"></script>
+</head>
+<body>
+<div id="container"></div>
+<script>
+Highcharts.chart('container', {
+    chart: { type: 'area' },
+    title: { text: 'Weekly price' },
+    xAxis: { type: 'datetime' },
+    yAxis: { title: { text: 'Price ($)' } },
+    plotOptions: { series: { pointStart: Date.UTC(2026, 0, 5), pointInterval: 604800000 } },
+    series: [{
+        name: 'Price',
+        data: [52.56, 52.54, 53.51, 56.46, 57.46, 58.82, 58.35, 60.09, 61.14, 64.2, 63.22, 62.31, 62.57, 62.99, 61.65, 61.34, 61.57, 61.43, 60.92, 60.12],
+    }],
+});
+</script>
+</body>
+</html>

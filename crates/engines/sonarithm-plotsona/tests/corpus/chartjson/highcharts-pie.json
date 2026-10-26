@@ -1,0 +1,35 @@
+{
+ "chart": {
+  "type": "pie"
+ },
+ "title": {
+  "text": "Fruit sold"
+ },
+ "series": [
+  {
+   "name": "Sold",
+   "data": [
+    {
+     "name": "apple",
+     "y": 42.0
+    },
+    {
+     "name": "banana",
+     "y": 57.0
+    },
+    {
+     "name": "cherry",
+     "y": 18.0
+    },
+    {
+     "name": "date",
+     "y": 33.0
+    },
+    {
+     "name": "fig",
+     "y": 9.0
+    }
+   ]
+  }
+ ]
+}

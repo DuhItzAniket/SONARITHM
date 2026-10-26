@@ -1,0 +1,25 @@
+{
+ "chart_type": "pie",
+ "title": "Fruit sold",
+ "provenance": "exact",
+ "x_kind": "category",
+ "series": [
+  {
+   "name": "field",
+   "x": [
+    "apple",
+    "banana",
+    "cherry",
+    "date",
+    "fig"
+   ],
+   "y": [
+    42.0,
+    57.0,
+    18.0,
+    33.0,
+    9.0
+   ]
+  }
+ ]
+}
