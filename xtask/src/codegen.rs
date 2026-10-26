@@ -6,7 +6,7 @@
 //! | Output | Generator |
 //! |---|---|
 //! | `docs/reference/error-codes.md` | [`crate::codes`] (A03-T02) |
-//! | `schemas/sonarithm-spec-0.1.schema.json` | `sonarithm_spec::json_schema` (A03-T06) |
+//! | `schemas/sonarithm-spec-0.2.schema.json` | `sonarithm_spec::json_schema` (A03-T06, RFC-0004); the 0.1 file stays as written for older editors |
 //! | `schemas/sonarithm-render-manifest-1.schema.json` | `sonarithm_export::manifest::json_schema` (A05-T08) |
 //! | `schemas/sonarithm-profile-1.schema.json` | `sonarithm_app::profile::json_schema` (B03-T08, ADR-0020) |
 //! | `packages/ipc/src/generated/protocol.ts` | `sonarithm_app::ipc::typescript` with ts-rs (B01-T02, ADR-0011, ADR-0017) |

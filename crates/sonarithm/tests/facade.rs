@@ -187,11 +187,21 @@ fn validation_reports_problems_and_defaults() {
 }
 
 #[test]
-fn migration_of_a_current_spec_changes_nothing() {
+fn migration_changes_only_the_version_and_a_current_spec_not_at_all() {
+    // RFC-0004 §9: 0.1 → 0.2 rewrites `specVersion` and nothing else.
     let migration = temps().migrate().unwrap();
-    assert!(!migration.changed);
-    assert_eq!(migration.text, TEMPS);
-    assert_eq!(migration.from, sonarithm::SPEC_VERSION);
+    assert!(migration.changed);
+    assert_eq!(migration.from, sonarithm::SpecVersion::V0_1);
+    let migrated: serde_json::Value = serde_json::from_str(&migration.text).unwrap();
+    let mut expected: serde_json::Value = serde_json::from_str(TEMPS).unwrap();
+    expected["specVersion"] = serde_json::json!("0.2");
+    assert_eq!(migrated, expected);
+    let again = Spec::from_json_str(&migration.text)
+        .unwrap()
+        .migrate()
+        .unwrap();
+    assert!(!again.changed);
+    assert_eq!(again.from, sonarithm::SPEC_VERSION);
     let Err(Error::Spec(diagnostics)) = Spec::from_json_str("{}").unwrap().migrate() else {
         panic!("expected an error")
     };
@@ -352,7 +362,7 @@ fn quick_explains_what_it_cannot_map() {
 fn the_schema_is_the_published_one() {
     let published = std::fs::read_to_string(
         PathBuf::from(env!("CARGO_MANIFEST_DIR"))
-            .join("../../schemas/sonarithm-spec-0.1.schema.json"),
+            .join("../../schemas/sonarithm-spec-0.2.schema.json"),
     )
     .unwrap();
     assert_eq!(

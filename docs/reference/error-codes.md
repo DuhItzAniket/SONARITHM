@@ -63,6 +63,8 @@ Owner: `sonarithm-compiler`.
 | `SNR-COMP-024` | error | Data file cannot be read | Check the path (relative to the spec) and the format. | — |
 | `SNR-COMP-025` | error | Transform cannot run | Check the transform's parameters against RFC-0001 §4. | — |
 | `SNR-COMP-026` | error | Dataset not provided | Provide the data under this ID (in Python, `data={"main": df}`), or use a `file` or `inline` source. | — |
+| `SNR-COMP-030` | error | Unknown template | Use a template the registry lists (NUMISONA's and PLOTSONA's chart-type templates), or write `tracks`. | — |
+| `SNR-COMP-036` | warning | A chart correction was not applied | An edit applies only to the point it was made on, checked by its `was` value; re-make the edit on the current extraction. | — |
 
 ## SNR-DATA
 
@@ -242,10 +244,17 @@ Owner: `sonarithm-spec`.
 | `SNR-SPEC-040` | error | `music` outside Presentation mode | Set `"mode": "presentation"` or remove `music`; Analysis mode keeps pitch unquantized. | SDR-10 |
 | `SNR-SPEC-041` | error | Interpretive (L4) description requested | Use levels L1 to L3; interpretation is never automatic. | A11Y-02 |
 | `SNR-SPEC-042` | warning | Flagged concept with automatic polarity | Set `polarity` explicitly; listeners disagree on the direction for this concept. | SDR-13, SDR-14, SDR-41 |
+| `SNR-SPEC-043` | error | Unknown scale tonic or mode | Write the scale as a tonic and a mode, such as "C major" or "D minor pentatonic". Tonics are A to G with an optional # or b. Modes: major, minor, harmonic minor, melodic minor, dorian, phrygian, lydian, mixolydian, locrian, major pentatonic, minor pentatonic, blues, whole tone, chromatic. Or give custom cents: {"tonic": "D", "cents": [0, 200, …]}. | SDR-10 |
+| `SNR-SPEC-044` | error | Invalid tuning | Use "12-TET" or {"cents": [0, …]} with twelve strictly increasing values below 1200 ("just" waits for a cited ratio table, RFC-0004 Q13). A custom scale carries its own cents, so give it no tuning. | SDR-10 |
+| `SNR-SPEC-045` | warning | Unknown lint rule | Lint rules are named by design-rule ID, such as SDR-17 or A11Y-14. This lint does not implement the rule, so the setting has no effect. | — |
+| `SNR-SPEC-046` | error | A lint suppression has no reason | Say why the rule does not apply in `reason`; the lint reports it whenever it would have warned. | — |
 | `SNR-SPEC-050` | error | Invalid pace | Use a positive, finite pace with exactly one of `pointsPerSecond`, `duration` or `secondsPerUnit`. | — |
 | `SNR-SPEC-051` | error | Invalid data source parameters | Fix the source parameters the message names (RFC-0001 §4). | — |
 | `SNR-SPEC-052` | warning | Absolute path in the spec | Use a path relative to the spec, so the spec carries no user paths and stays portable. | — |
 | `SNR-SPEC-053` | error | Invalid transform parameters | Fix the transform parameters the message names (RFC-0001 §4). | — |
+| `SNR-SPEC-054` | error | Invalid chart calibration | Give `axes.x` and `axes.y`, each with a kind (linear, log, date, category) and at least two anchors {"at": [x, y], "value": …} at distinct points with distinct values; log values above zero, dates in ISO 8601. | SDR-01 |
+| `SNR-SPEC-055` | error | Invalid chart correction | Write `corrections` as {"edits": [...]}; each edit has an `op` (add, move, delete, retype), the `series`, and for move, delete and retype the `point` index and the extracted value in `was`. | SDR-01 |
+| `SNR-SPEC-056` | error | Correction files are not available yet | `corrections.path` is reserved for the correction file of RFC-0005; write the edits inline in `corrections.edits`. | — |
 | `SNR-SPEC-060` | error | Invalid output parameters | Use a sample rate from 8000 to 384000 Hz, 1 to 64 channels, and a power-of-two block size from 16 to 8192. | — |
 | `SNR-SPEC-061` | error | Invalid playback parameters | Use a positive, finite playback speed. | — |
 | `SNR-SPEC-070` | error | Unknown field | Name a field of the data, or declare it in `data.fields`. | — |

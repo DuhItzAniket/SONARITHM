@@ -7,6 +7,7 @@
 
 mod channels;
 mod sections;
+mod v02;
 
 use std::collections::{BTreeMap, BTreeSet};
 
@@ -116,6 +117,7 @@ pub fn validate(spec: &Spec, fields: Option<&FieldCatalog>) -> Diagnostics {
         channels::track(spec, track, &root.key("tracks").index(index), &mut out);
     }
     sections::context(spec, &ids, &mut out);
+    v02::check(spec, &ids, &mut out);
     sections::analysis(spec, &mut out);
     if spec.music.is_some() && spec.mode.unwrap_or(Mode::Analysis) != Mode::Presentation {
         out.push(
@@ -136,11 +138,11 @@ pub fn validate(spec: &Spec, fields: Option<&FieldCatalog>) -> Diagnostics {
 /// Checks track IDs (010–012) and returns the valid, unique ones.
 fn track_ids(spec: &Spec, out: &mut Diagnostics) -> BTreeSet<String> {
     let tracks = SpecPointer::root().key("tracks");
-    if spec.tracks.is_empty() {
+    if spec.tracks.is_empty() && spec.template.is_none() {
         out.push(
             Diagnostic::new(
                 &codes::NO_TRACKS,
-                "The spec has no tracks. Add at least one track.",
+                "The spec has no tracks. Add at least one track, or a `template` (spec v0.2).",
             )
             .at(tracks.clone()),
         );

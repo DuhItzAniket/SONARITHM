@@ -1,0 +1,169 @@
+{
+  "specVersion": "0.2",
+  "name": "Every v0.2 section",
+  "mode": "presentation",
+  "seed": 3,
+  "data": {
+    "source": {
+      "kind": "chart",
+      "path": "figure3.png",
+      "extractor": "raster",
+      "calibration": {
+        "system": "cartesian",
+        "page": 1,
+        "plotArea": {
+          "min": [
+            100,
+            100
+          ],
+          "max": [
+            1220,
+            950
+          ]
+        },
+        "axes": {
+          "x": {
+            "kind": "date",
+            "anchors": [
+              {
+                "at": [
+                  112,
+                  940
+                ],
+                "value": "2024-01"
+              },
+              {
+                "at": [
+                  1210,
+                  940
+                ],
+                "value": "2024-12-31T00:00Z"
+              }
+            ]
+          },
+          "y": {
+            "kind": "log",
+            "anchors": [
+              {
+                "at": [
+                  112,
+                  940
+                ],
+                "value": 1
+              },
+              {
+                "at": [
+                  112,
+                  120
+                ],
+                "value": 1000
+              }
+            ]
+          }
+        }
+      },
+      "corrections": {
+        "edits": [
+          {
+            "op": "add",
+            "series": "Series 1",
+            "to": {
+              "x": "2024-06",
+              "y": 12
+            }
+          },
+          {
+            "op": "move",
+            "series": "Series 1",
+            "point": 12,
+            "was": {
+              "x": 24.1,
+              "y": 210.4
+            },
+            "to": {
+              "y": 230
+            }
+          },
+          {
+            "op": "delete",
+            "series": "Series 1",
+            "point": 30,
+            "was": {
+              "x": 48.7,
+              "y": 3.2
+            }
+          },
+          {
+            "op": "retype",
+            "series": "Series 1",
+            "point": 2,
+            "was": {
+              "y": 1
+            },
+            "to": {
+              "series": "Series 2"
+            }
+          }
+        ]
+      }
+    }
+  },
+  "tracks": [
+    {
+      "id": "y",
+      "mark": "tone",
+      "instrument": "piano",
+      "channels": {
+        "pitch": {
+          "field": "y"
+        }
+      }
+    }
+  ],
+  "music": {
+    "quantize": {
+      "scale": "D minor pentatonic",
+      "tuning": {
+        "cents": [
+          0,
+          100,
+          200,
+          300,
+          400,
+          500,
+          600,
+          700,
+          800,
+          900,
+          1000,
+          1100
+        ]
+      }
+    },
+    "tempo": {
+      "bpm": 96
+    }
+  },
+  "instruments": {
+    "piano": {
+      "kind": "soundfont",
+      "path": "sounds/piano.sf2",
+      "bank": 0,
+      "program": 0
+    }
+  },
+  "lint": {
+    "rules": {
+      "SDR-19": "error",
+      "A11Y-14": "warning"
+    },
+    "suppress": [
+      {
+        "rule": "SDR-17",
+        "track": "y",
+        "reason": "A fixed reference is the point of this chart."
+      }
+    ],
+    "experimental": true
+  }
+}

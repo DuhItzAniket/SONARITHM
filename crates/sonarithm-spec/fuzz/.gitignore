@@ -1,6 +1,6 @@
 target/
 corpus/*/*
 !corpus/*/doc-example-*.json
-!corpus/*/every-section.json
+!corpus/*/every-section*.json
 artifacts/
 coverage/

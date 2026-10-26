@@ -57,9 +57,14 @@ pub enum Source {
         /// The extractor; default `auto`.
         #[serde(default, skip_serializing_if = "Option::is_none")]
         extractor: Option<Extractor>,
-        /// Axis calibration.
+        /// Axis calibration (typed in v0.2, RFC-0004 §5; read with [`crate::v02::read`]).
         #[serde(default, skip_serializing_if = "Option::is_none")]
-        calibration: Option<JsonObject>,
+        #[schemars(with = "Option<crate::v02::Calibration>")]
+        calibration: Option<JsonValue>,
+        /// Corrections a person made to the extracted chart (v0.2, RFC-0004 §6).
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        #[schemars(with = "Option<crate::v02::Corrections>")]
+        corrections: Option<JsonValue>,
     },
     /// A sampled function (CURVASONA). Produces fields `x`, `y` and `dy`.
     Function {

@@ -21,7 +21,11 @@ fn every_seed_prepares_and_is_a_canonical_fixed_point() {
         .filter(|path| path.extension().is_some_and(|ext| ext == "json"))
         .collect();
     seeds.sort();
-    assert_eq!(seeds.len(), 5, "4 examples from 04 plus every-section.json");
+    assert_eq!(
+        seeds.len(),
+        6,
+        "4 examples from 04 plus every-section.json and every-section-0.2.json"
+    );
     for seed in seeds {
         let text = std::fs::read_to_string(&seed).unwrap();
         let prepared = sonarithm_spec::prepare(&text, None)
