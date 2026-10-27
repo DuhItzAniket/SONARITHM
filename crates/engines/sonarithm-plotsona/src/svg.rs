@@ -284,6 +284,31 @@ fn text_of(node: Node<'_, '_>, style: &Style) -> Option<Text> {
     })
 }
 
+/// The largest arc radius a path may have. The path simplifier turns an arc into cubic
+/// segments eagerly, and their number grows with the radius: a radius of 10^48 made it
+/// allocate gigabytes before PLOTSONA saw one segment (F-169). No drawing has an arc a
+/// billion units across.
+const MAX_ARC_RADIUS: f64 = 1e9;
+
+/// Refuses a path whose arcs are too large to simplify (or not numbers).
+fn check_arcs(d: &str) -> Result<(), Box<Diagnostic>> {
+    for segment in svgtypes::PathParser::from(d) {
+        let Ok(segment) = segment else { break };
+        if let svgtypes::PathSegment::EllipticalArc { rx, ry, .. } = segment
+            && !(rx.abs() <= MAX_ARC_RADIUS && ry.abs() <= MAX_ARC_RADIUS)
+        {
+            return Err(Box::new(Diagnostic::new(
+                &codes::MALFORMED,
+                format!(
+                    "An SVG path draws an arc with a radius of {}, beyond any drawing; the file cannot be read.",
+                    rx.abs().max(ry.abs())
+                ),
+            )));
+        }
+    }
+    Ok(())
+}
+
 fn shape_of(
     node: Node<'_, '_>,
     name: &str,
@@ -340,6 +365,7 @@ fn shape_of(
         _ => {
             let d = node.attribute("d").unwrap_or_default();
             work.spend(crate::budget::len64(d.len()))?;
+            check_arcs(d)?;
             for segment in SimplifyingPathParser::from(d) {
                 let Ok(segment) = segment else { break };
                 match segment {

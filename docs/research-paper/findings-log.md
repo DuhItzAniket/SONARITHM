@@ -871,3 +871,11 @@ A05 (render engine, audio backends, export) uses F-050 to F-069.
 - **Affects:** C01-T06, NFR-05 (untrusted input), 12 §6
 - **Papers:** none yet
 
+### F-169 · An SVG arc with an enormous radius made the path simplifier allocate gigabytes
+
+- **Date:** 2026-10-27 · **Phase:** C01 · **Type:** engineering (security) · **Status:** new
+- **Statement:** The `svg_chart` fuzz target, run on the C01 fix PR, found a 7 KB Plotly pie whose slice path has an arc radius of about 2.4 × 10⁴⁸. `svgtypes`' simplifying path parser converts an arc to cubic Béziers eagerly, and the number of segments grows with the radius, so the conversion used 2.4 GB before PLOTSONA saw a segment (libFuzzer's out-of-memory at 2,048 MB). PLOTSONA now scans each path's arcs first and refuses a radius above 10⁹ units, or one that is not a number, with `SNR-ENG-307`; no drawing has an arc that size. The input is committed as the fuzz seed `seed-regression-arc-radius-oom.svg` and replayed by a unit test.
+- **Evidence:** `chartjson::tests::fuzz_regressions_read_without_panicking` (the SVG seed); the fix PR
+- **Evidence level / confidence:** EV-C / Strong for arcs; other `svgtypes` conversions (smooth curves, quadratics) are one segment each and bounded by the work budget
+- **Affects:** C01-T07, NFR-05 (untrusted input), 12 §6; a possible upstream report to `svgtypes` (a radius limit or a lazy conversion)
+- **Papers:** none yet
