@@ -862,3 +862,12 @@ A05 (render engine, audio backends, export) uses F-050 to F-069.
 - **Evidence level / confidence:** EV-C / Strong for these two exporters; other PDF producers (matplotlib, Office, LaTeX) not yet checked, TODO(verify) in C01-T11
 - **Affects:** C01-T08, C01-T11, C02 (OCR-free tick reading in vector PDFs)
 - **Papers:** none yet
+### F-168 · A chart page's `Date.UTC` with an out-of-range argument overflowed the literal reader
+
+- **Date:** 2026-10-27 · **Phase:** C01 · **Type:** engineering (security) · **Status:** new
+- **Statement:** The nightly `html_page` fuzz target (run 40289971584) found a 645-byte page whose Highcharts options call `Date.UTC(1013, -5666…6)` with a 77-digit month. PLOTSONA's script-free literal reader computed the time in `i64` and panicked on overflow (a debug-build abort; release builds would have wrapped to a wrong date). JavaScript itself gives `NaN` for any time beyond ±8.64 × 10¹⁵ ms (its `TimeClip`, about ±275,000 years). The reader now rejects arguments and carried years past that range, sums in `i128`, and gives `null` (a gap) for an out-of-range time, as a chart drawn by JavaScript would show nothing there. The crash input is committed as the fuzz seed `seed-regression-date-utc-overflow.html` and replayed by a unit test.
+- **Evidence:** `chartjson::literal::tests::dates_outside_javascripts_range_are_gaps_not_overflows`, `chartjson::tests::fuzz_regressions_read_without_panicking`; the fix PR
+- **Evidence level / confidence:** EV-C / Strong for this path; other arithmetic on parsed numbers in the extractors is bounded by the point and work budgets, and the nightly fuzz targets keep running on it
+- **Affects:** C01-T06, NFR-05 (untrusted input), 12 §6
+- **Papers:** none yet
+

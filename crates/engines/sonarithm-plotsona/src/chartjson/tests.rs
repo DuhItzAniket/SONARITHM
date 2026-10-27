@@ -159,3 +159,33 @@ fn plotly_templates_are_never_read_as_traces() {
     assert_eq!(read.chart.series.len(), 1);
     assert_eq!(read.chart.points(), 1);
 }
+
+/// Every input the fuzzers ever crashed on stays a plain result (F-168): the committed
+/// `seed-regression-*` files of the chart-JSON and HTML fuzz corpora.
+#[test]
+fn fuzz_regressions_read_without_panicking() {
+    let fuzz = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("fuzz/corpus");
+    let mut checked = 0;
+    for target in ["html_page", "chart_json"] {
+        let Ok(entries) = std::fs::read_dir(fuzz.join(target)) else {
+            continue;
+        };
+        for entry in entries.flatten() {
+            let name = entry.file_name().to_string_lossy().into_owned();
+            if !name.starts_with("seed-regression-") {
+                continue;
+            }
+            let bytes = std::fs::read(entry.path()).unwrap_or_default();
+            let result = if target == "html_page" {
+                crate::fuzzing::html_page(&bytes, &crate::Budgets::DEFAULT)
+            } else {
+                crate::fuzzing::chart_json(0, &bytes, &crate::Budgets::DEFAULT)
+            };
+            if let Err(diagnostic) = result {
+                assert!(diagnostic.code.as_str().starts_with("SNR-ENG-3"), "{name}");
+            }
+            checked += 1;
+        }
+    }
+    assert!(checked >= 1, "no regression seeds found");
+}

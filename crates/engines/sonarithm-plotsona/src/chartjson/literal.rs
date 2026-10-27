@@ -14,6 +14,13 @@ use serde_json::{Map, Number, Value};
 
 use crate::calibrate::ticks::civil_ms;
 
+/// The largest time JavaScript's `Date` holds, in milliseconds from the epoch (`TimeClip`).
+const MAX_TIME_MS: f64 = 8.64e15;
+
+/// A carried year beyond this is outside JavaScript's time range whatever the other
+/// arguments are (8.64e15 ms is about 273,790 years).
+const MAX_YEARS: i128 = 300_000;
+
 /// Why a literal could not be read.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub(crate) enum LiteralError {
@@ -216,6 +223,9 @@ impl Reader<'_> {
 
     /// `Date.UTC(year, monthIndex, day, hours, minutes, seconds, ms)` with number literals:
     /// milliseconds since the epoch, months counted from 0 and carried as JavaScript does.
+    /// A time outside JavaScript's range (±8.64 × 10¹⁵ ms, about ±275,000 years) is `NaN`
+    /// there and `null`, a gap, here; the sum is taken in `i128`, so no argument can
+    /// overflow it (F-168).
     fn date_utc(&mut self) -> Result<Value, LiteralError> {
         let mut args = Vec::new();
         loop {
@@ -239,22 +249,38 @@ impl Reader<'_> {
             }
         }
         let arg = |i: usize, default: f64| args.get(i).copied().unwrap_or(default);
-        let (year, month) = (arg(0, f64::NAN), arg(1, 0.0));
+        let year = arg(0, f64::NAN);
         if !year.is_finite() || args.iter().any(|a| !a.is_finite() || a.fract() != 0.0) {
             return Err(LiteralError::NeedsScript(self.at));
         }
-        #[expect(clippy::cast_possible_truncation, reason = "integral checked above")]
-        let (year, month) = (year as i64, month as i64);
-        let carried_year = year + month.div_euclid(12);
-        let month = month.rem_euclid(12) + 1;
-        #[expect(clippy::cast_possible_truncation, reason = "integral checked above")]
-        let ms = civil_ms(carried_year, month, 1)
-            + ((arg(2, 1.0) as i64 - 1) * 86_400_000)
-            + (arg(3, 0.0) as i64) * 3_600_000
-            + (arg(4, 0.0) as i64) * 60_000
-            + (arg(5, 0.0) as i64) * 1000
-            + arg(6, 0.0) as i64;
-        Ok(Value::Number(Number::from(ms)))
+        // Every argument within ±8.64e15 fits i64 exactly enough for the range check below;
+        // anything larger is already outside JavaScript's time range.
+        if args.iter().any(|a| a.abs() > MAX_TIME_MS) {
+            return Ok(Value::Null);
+        }
+        #[expect(
+            clippy::cast_possible_truncation,
+            reason = "integral and within ±8.64e15, checked above"
+        )]
+        let int = |i: usize, default: f64| i128::from(arg(i, default) as i64);
+        let carried_year = int(0, f64::NAN) + int(1, 0.0).div_euclid(12);
+        if carried_year.abs() > MAX_YEARS {
+            return Ok(Value::Null);
+        }
+        let month = int(1, 0.0).rem_euclid(12) + 1;
+        let (Ok(year), Ok(month)) = (i64::try_from(carried_year), i64::try_from(month)) else {
+            return Ok(Value::Null);
+        };
+        let ms = i128::from(civil_ms(year, month, 1))
+            + (int(2, 1.0) - 1) * 86_400_000
+            + int(3, 0.0) * 3_600_000
+            + int(4, 0.0) * 60_000
+            + int(5, 0.0) * 1000
+            + int(6, 0.0);
+        if ms.abs() > 8_640_000_000_000_000 {
+            return Ok(Value::Null);
+        }
+        Ok(i64::try_from(ms).map_or(Value::Null, |ms| Value::Number(Number::from(ms))))
     }
 
     fn number(&mut self) -> Result<Value, LiteralError> {
@@ -400,6 +426,29 @@ mod tests {
         assert_eq!(value["quoted-key"], "plain template");
         // Month 13 carries into February of the next year, as in JavaScript.
         assert_eq!(value["when"], json!(civil_ms(2021, 2, 1)));
+    }
+
+    #[test]
+    fn dates_outside_javascripts_range_are_gaps_not_overflows() {
+        // The nightly `html_page` fuzz input (F-168): a month of 10^76 overflowed i64.
+        let value = read(
+            "{ a: Date.UTC(1013, -56666666666666666666666666666666666666666666666666666666666666666666666666666),                b: Date.UTC(2025, 0, 9007199254740991), c: Date.UTC(275761, 0, 1),                d: Date.UTC(275760, 8, 13), e: Date.UTC(-271821, 3, 20), f: Date.UTC(1970, 0, 1, 0, 0, 0, -1) }",
+        )
+        .unwrap();
+        assert_eq!(value["a"], Value::Null);
+        assert_eq!(value["b"], Value::Null);
+        assert_eq!(value["c"], Value::Null, "past the largest JavaScript time");
+        assert_eq!(
+            value["d"],
+            json!(8_640_000_000_000_000_i64),
+            "the largest JavaScript time"
+        );
+        assert_eq!(
+            value["e"],
+            json!(-8_640_000_000_000_000_i64),
+            "the smallest"
+        );
+        assert_eq!(value["f"], json!(-1));
     }
 
     #[test]
