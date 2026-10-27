@@ -5,9 +5,9 @@
 //!
 //! An SVG holds a chart's geometry, not its data. PLOTSONA flattens the document into a
 //! [`Scene`] of shapes and texts in one coordinate system (every `transform` applied,
-//! fill and stroke inherited, `style` attributes read), finds the axes from their tick
-//! labels and tick or grid lines ([`axes`]), calibrates them through
-//! [`calibrate`](crate::calibrate), and reads the marks back into values ([`marks`]):
+//! fill and stroke inherited, `style` attributes read); the shared [`vector`] reader then
+//! finds the axes from their tick labels and tick or grid lines, calibrates them through
+//! [`calibrate`](crate::calibrate), and reads the marks back into values:
 //! open stroked paths are line series, filled outlines areas, axis-aligned rectangles
 //! bars, small repeated glyphs scatter markers, and arc sectors pie slices. Series are
 //! named from the legend, matched by colour.
@@ -17,9 +17,6 @@
 //! Definitions (`<defs>`, clip paths, masks, markers, patterns, symbols) draw nothing
 //! by themselves and are skipped.
 
-mod axes;
-mod marks;
-
 use roxmltree::Node;
 use sonarithm_core::Diagnostic;
 use svgtypes::{SimplePathSegment, SimplifyingPathParser, Transform};
@@ -27,65 +24,8 @@ use svgtypes::{SimplePathSegment, SimplifyingPathParser, Transform};
 use crate::budget::{Budgets, Work};
 use crate::codes;
 use crate::model::ChartData;
+use crate::vector::{self, Pt, Rgb, Scene, Shape, Text};
 use crate::xml;
-
-/// An RGB colour.
-pub(crate) type Rgb = (u8, u8, u8);
-
-/// A point in the document's user space.
-pub(crate) type Pt = (f64, f64);
-
-/// A text element: its anchor point, content and classes.
-#[derive(Clone, Debug)]
-pub(crate) struct Text {
-    pub(crate) at: Pt,
-    pub(crate) content: String,
-    pub(crate) classes: String,
-    /// Whether the text is rotated (axis titles on a y axis, slanted tick labels).
-    pub(crate) rotated: bool,
-}
-
-/// A drawn shape in user space.
-#[derive(Clone, Debug)]
-pub(crate) struct Shape {
-    /// Segment end points, in drawing order.
-    pub(crate) points: Vec<Pt>,
-    pub(crate) closed: bool,
-    pub(crate) curved: bool,
-    pub(crate) fill: Option<Rgb>,
-    pub(crate) stroke: Option<Rgb>,
-    /// The shape's local origin in user space: the centre of a symbol drawn about it.
-    pub(crate) origin: Pt,
-    /// The largest absolute local coordinate: small for a symbol drawn about its origin.
-    pub(crate) local_extent: f64,
-    pub(crate) classes: String,
-}
-
-impl Shape {
-    pub(crate) fn bbox(&self) -> (f64, f64, f64, f64) {
-        self.points.iter().fold(
-            (
-                f64::INFINITY,
-                f64::INFINITY,
-                f64::NEG_INFINITY,
-                f64::NEG_INFINITY,
-            ),
-            |(x0, y0, x1, y1), (x, y)| (x0.min(*x), y0.min(*y), x1.max(*x), y1.max(*y)),
-        )
-    }
-
-    pub(crate) fn center(&self) -> Pt {
-        let (x0, y0, x1, y1) = self.bbox();
-        (x0.midpoint(x1), y0.midpoint(y1))
-    }
-}
-
-/// Every shape and text of a document, in drawing order.
-#[derive(Debug, Default)]
-pub(crate) struct Scene {
-    pub(crate) shapes: Vec<Shape>,
-    pub(crate) texts: Vec<Text>,
-}
 
 /// Inherited presentation state.
 #[derive(Clone, Debug)]
@@ -161,7 +101,7 @@ pub(crate) fn extract(
             ),
         ));
     }
-    marks::read(&scene, budgets, work, diagnostics)
+    vector::read(&scene, budgets, work, diagnostics)
 }
 
 #[derive(Debug, Default)]
@@ -336,6 +276,8 @@ fn text_of(node: Node<'_, '_>, style: &Style) -> Option<Text> {
     let t = &style.transform;
     Some(Text {
         at,
+        start: at,
+        end: at,
         content,
         classes: style.classes.clone(),
         rotated: t.b.abs() > 1e-6 || t.c.abs() > 1e-6,

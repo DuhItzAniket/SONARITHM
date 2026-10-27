@@ -36,10 +36,6 @@ impl Plot {
         x >= self.x.0 && x <= self.x.1 && y >= self.y.0 && y <= self.y.1
     }
 
-    fn area(&self) -> f64 {
-        (self.x.1 - self.x.0) * (self.y.1 - self.y.0)
-    }
-
     fn diagonal(&self) -> f64 {
         (self.x.1 - self.x.0).hypot(self.y.1 - self.y.0)
     }
@@ -56,6 +52,26 @@ fn plot_area(scene: &Scene, xa: &Axis, ya: &Axis) -> Plot {
     let (mut x, mut y) = (sorted(xa.span()), sorted(ya.span()));
     if xa.dir() == Dir::Vertical {
         std::mem::swap(&mut x, &mut y);
+    }
+    // The tightest rectangle around the ticks, if not much larger than their span, is the
+    // plot frame or background (PDF has no class names to say so).
+    let ticks = (x, y);
+    let frame = scene
+        .shapes
+        .iter()
+        .filter(|shape| shape.closed && shape.points.len() == 4)
+        .map(Shape::bbox)
+        .filter(|(x0, y0, x1, y1)| {
+            let covers =
+                *x0 <= ticks.0.0 && *x1 >= ticks.0.1 && *y0 <= ticks.1.0 && *y1 >= ticks.1.1;
+            let snug = (x1 - x0) <= (ticks.0.1 - ticks.0.0) * 1.5
+                && (y1 - y0) <= (ticks.1.1 - ticks.1.0) * 1.5;
+            covers && snug
+        })
+        .min_by(|a, b| ((a.2 - a.0) * (a.3 - a.1)).total_cmp(&((b.2 - b.0) * (b.3 - b.1))));
+    if let Some((x0, y0, x1, y1)) = frame {
+        x = (x.0.min(x0), x.1.max(x1));
+        y = (y.0.min(y0), y.1.max(y1));
     }
     for shape in &scene.shapes {
         let c = shape.classes.to_ascii_lowercase();
@@ -131,8 +147,12 @@ pub(crate) fn read(
             continue;
         }
         if let Some(rect) = rectangle(shape) {
+            // A background spans most of the plot's width and height; a bar does not.
+            let (x0, y0, x1, y1) = rect;
+            let background = (x1 - x0) >= (plot.x.1 - plot.x.0) * 0.8
+                && (y1 - y0) >= (plot.y.1 - plot.y.0) * 0.5;
             if let Some(color) = shape.fill
-                && rect_area(rect) < plot.area() * 0.5
+                && !background
             {
                 bars.push((color, rect));
             }
@@ -254,7 +274,7 @@ pub(crate) fn read(
     if series.is_empty() {
         return Err(Box::new(Diagnostic::new(
             &codes::NO_CHART,
-            "The SVG's axes were found, but no lines, bars, areas or markers inside them.",
+            "The chart's axes were found, but no lines, bars, areas or markers inside them.",
         )));
     }
     let (x_title, y_title) = axis_titles(scene);
@@ -319,10 +339,6 @@ fn rectangle(shape: &Shape) -> Option<(f64, f64, f64, f64)> {
             && ((y - y0).abs() < 1e-6 || (y - y1).abs() < 1e-6)
     };
     (corners.iter().all(on_corner) && x1 > x0 && y1 > y0).then_some((x0, y0, x1, y1))
-}
-
-fn rect_area((x0, y0, x1, y1): (f64, f64, f64, f64)) -> f64 {
-    (x1 - x0) * (y1 - y0)
 }
 
 /// A circle, or a small curved outline: a scatter marker.

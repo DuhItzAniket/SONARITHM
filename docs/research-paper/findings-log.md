@@ -853,3 +853,12 @@ A05 (render engine, audio backends, export) uses F-050 to F-069.
 - **Evidence level / confidence:** EV-C / Strong for vl-convert 1.9.0; other Vega renderers not checked
 - **Affects:** C01-T07; a possible later extractor (open question, not filed as an OD yet); A11Y research on chart exports
 - **Papers:** none yet
+
+### F-165 · Chart PDF exporters split words into separate text showings, so labels must be rejoined before they can be read
+
+- **Date:** 2026-10-26 · **Phase:** C01 · **Type:** engineering · **Status:** new
+- **Statement:** In the 9 corpus PDFs, vl-convert 1.9.0 (through svg2pdf) writes every glyph of a tick label in its own `BT … ET` block with its own text matrix, and Kaleido 1.5.0 (Chrome's Skia) splits labels at kerning pairs (`<0029> Tj 6.6 0 Td <00480045> Tj` for "Feb"). Read showing by showing, "apple" becomes five one-letter labels and "Feb" becomes "F" and "eb", so no axis or legend is found. Joining a showing to the previous one when it starts within 0.6 em after it on the same baseline (0.2 em across) restores every label, and with it all 9 charts, within 0.147 % of the largest value, the same accuracy as the SVG renders of the same charts (F-163).
+- **Evidence:** `crates/engines/sonarithm-plotsona/tests/corpus/pdf/`; `pdf::tests::corpus_charts_extract_within_half_a_percent`; the C01-T08 PR
+- **Evidence level / confidence:** EV-C / Strong for these two exporters; other PDF producers (matplotlib, Office, LaTeX) not yet checked, TODO(verify) in C01-T11
+- **Affects:** C01-T08, C01-T11, C02 (OCR-free tick reading in vector PDFs)
+- **Papers:** none yet

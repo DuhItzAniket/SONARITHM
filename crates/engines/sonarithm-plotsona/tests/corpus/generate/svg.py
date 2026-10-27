@@ -1,6 +1,7 @@
 # SPDX-FileCopyrightText: 2026 SONARITHM contributors
 # SPDX-License-Identifier: MIT OR Apache-2.0
-"""Generates the SVG part of PLOTSONA's exact-source chart corpus (DS-007, C01-T07).
+"""Generates the SVG and vector-PDF parts of PLOTSONA's exact-source chart corpus (DS-007,
+C01-T07 and C01-T08).
 
 The same known data drawn by three renderers, each with a ground-truth JSON file:
 
@@ -11,8 +12,12 @@ The same known data drawn by three renderers, each with a ground-truth JSON file
 Data: DS-001 to DS-004 (CC BY 4.0, examples/data). Values are in data units; pie charts
 give each slice's share in percent, the only number a pie's geometry holds.
 
+With `--pdf`, the Vega-Lite and Plotly charts are exported as vector PDF instead (vl-convert
+converts through svg2pdf; Kaleido through Chrome's Skia PDF backend) into `pdf/`.
+
 Run from the repository root with the d3 environment's node_modules folder:
   python crates/engines/sonarithm-plotsona/tests/corpus/generate/svg.py <node_modules>
+  python crates/engines/sonarithm-plotsona/tests/corpus/generate/svg.py --pdf
 """
 
 import csv
@@ -27,6 +32,7 @@ import vl_convert
 
 ROOT = Path(__file__).resolve().parents[6]
 DATA = ROOT / "examples" / "data"
+FORMAT = "svg"
 OUT = Path(__file__).resolve().parents[1] / "svg"
 HERE = Path(__file__).resolve().parent
 MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
@@ -56,34 +62,41 @@ def shares(pairs):
     return [v / total * 100.0 for _, v in pairs]
 
 
-def write(name, svg, t):
+def write(name, data, t):
     OUT.mkdir(parents=True, exist_ok=True)
-    (OUT / f"{name}.svg").write_text(svg if svg.endswith("\n") else svg + "\n", encoding="utf-8", newline="\n")
+    if FORMAT == "pdf":
+        (OUT / f"{name}.pdf").write_bytes(data)
+    else:
+        (OUT / f"{name}.svg").write_text(data if data.endswith("\n") else data + "\n", encoding="utf-8", newline="\n")
     (OUT / f"{name}.truth.json").write_text(json.dumps(t, indent=1) + "\n", encoding="utf-8", newline="\n")
+
+
+def render_vl(spec):
+    return vl_convert.vegalite_to_pdf(spec) if FORMAT == "pdf" else vl_convert.vegalite_to_svg(spec)
 
 
 def vega_lite():
     size = {"width": 800, "height": 480}
     region_rows = [{"month": MONTHS[int(r["month"]) - 1], "region": r["region"], "rain": float(r["rain"])} for r in REGIONS]
-    write("vl-line", vl_convert.vegalite_to_svg({
+    write("vl-line", render_vl({
         "$schema": VL, **size, "title": "Rain by region", "data": {"values": region_rows}, "mark": "line",
         "encoding": {"x": {"field": "month", "type": "ordinal", "sort": None},
                      "y": {"field": "rain", "type": "quantitative"}, "color": {"field": "region", "type": "nominal"}},
     }), truth("line", "Rain by region", "category", [(k, MONTHS, RAIN[k]) for k in sorted(REGION_NAMES)]))
     fruit = sorted(FRUIT)
-    write("vl-bar", vl_convert.vegalite_to_svg({
+    write("vl-bar", render_vl({
         "$schema": VL, **size, "title": "Fruit sold", "data": {"values": [{"fruit": f, "sold": s} for f, s in FRUIT]},
         "mark": "bar", "encoding": {"x": {"field": "fruit", "type": "nominal"}, "y": {"field": "sold", "type": "quantitative"}},
     }), truth("bar", "Fruit sold", "category", [("Series 1", [f for f, _ in fruit], [s for _, s in fruit])]))
-    write("vl-scatter", vl_convert.vegalite_to_svg({
+    write("vl-scatter", render_vl({
         "$schema": VL, **size, "title": "Daily temperature", "data": {"values": [{"day": d, "temp": t} for d, t in TEMPS]},
         "mark": "point", "encoding": {"x": {"field": "day", "type": "quantitative"}, "y": {"field": "temp", "type": "quantitative"}},
     }), truth("scatter", "Daily temperature", "number", [("Series 1", [d for d, _ in TEMPS], [t for _, t in TEMPS])]))
-    write("vl-area", vl_convert.vegalite_to_svg({
+    write("vl-area", render_vl({
         "$schema": VL, **size, "title": "Weekly price", "data": {"values": [{"week": w, "price": p} for w, p in PRICES]},
         "mark": "area", "encoding": {"x": {"field": "week", "type": "quantitative"}, "y": {"field": "price", "type": "quantitative"}},
     }), truth("area", "Weekly price", "number", [("Series 1", [w for w, _ in PRICES], [p for _, p in PRICES])]))
-    write("vl-pie", vl_convert.vegalite_to_svg({
+    write("vl-pie", render_vl({
         "$schema": VL, "width": 480, "height": 480, "title": "Fruit sold",
         "data": {"values": [{"fruit": f, "sold": s} for f, s in FRUIT]},
         "mark": "arc", "encoding": {"theta": {"field": "sold", "type": "quantitative"}, "color": {"field": "fruit", "type": "nominal"}},
@@ -94,7 +107,8 @@ def plotly_svgs():
     layout = {"width": 1000, "height": 640}
 
     def svg(fig):
-        return fig.to_image(format="svg").decode("utf-8")
+        image = fig.to_image(format=FORMAT)
+        return image if FORMAT == "pdf" else image.decode("utf-8")
 
     lines = go.Figure([go.Scatter(x=MONTHS, y=RAIN[k], mode="lines", name=k.title()) for k in REGION_NAMES],
                       layout={**layout, "title": {"text": "Rain by region"}})
@@ -132,12 +146,16 @@ def d3_svgs(modules):
 
 
 def main():
+    global FORMAT, OUT
+    if sys.argv[1:] == ["--pdf"]:
+        FORMAT = "pdf"
+        OUT = OUT.parent / "pdf"
     vega_lite()
     plotly_svgs()
-    if len(sys.argv) > 1:
+    if FORMAT == "svg" and len(sys.argv) > 1:
         d3_svgs(sys.argv[1])
     count = len(list(OUT.glob("*.truth.json")))
-    print(f"{count} SVG charts in {OUT.relative_to(ROOT)}", file=sys.stderr)
+    print(f"{count} {FORMAT.upper()} charts in {OUT.relative_to(ROOT)}", file=sys.stderr)
 
 
 if __name__ == "__main__":

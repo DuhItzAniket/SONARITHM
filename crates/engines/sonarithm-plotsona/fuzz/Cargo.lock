@@ -1278,6 +1278,7 @@ dependencies = [
  "arrow-array",
  "arrow-schema",
  "calamine",
+ "flate2",
  "libm",
  "roxmltree",
  "serde",
