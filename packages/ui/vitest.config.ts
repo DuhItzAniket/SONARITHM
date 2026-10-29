@@ -6,40 +6,49 @@ import react from "@vitejs/plugin-react";
 import { playwright } from "@vitest/browser-playwright";
 import { defineConfig } from "vitest/config";
 
-// Browser tests (B02-T03; testing-strategy §12). `storybook`: every story renders and passes
-// axe in Chromium (the seeded stories run only with SNR_SEEDED=1, for the negative test).
+import { THEMES } from "./src/foundations/themes.ts";
+
+// Browser tests (B02-T03; testing-strategy §12). `storybook-<theme>`: every story renders and
+// passes axe in Chromium, once per theme (the seeded stories run only with SNR_SEEDED=1, for the negative test).
 // `visual`: screenshot baselines, taken only in CI's pinned Linux Chromium image so font
 // rendering matches (`.github/workflows/ci.yml`, job `frontend-browser`). The Node unit tests
 // stay on `node --test`.
 const seeded = process.env.SNR_SEEDED === "1";
 
-const browser = {
-  enabled: true,
-  headless: true,
-  provider: playwright(),
-  instances: [{ browser: "chromium" as const }],
-};
+/** A fresh browser config per project: Vitest names (mutates) the instances it is given. */
+function browser() {
+  return {
+    enabled: true,
+    headless: true,
+    provider: playwright(),
+    instances: [{ browser: "chromium" as const }],
+  };
+}
 
 export default defineConfig({
   test: {
     projects: [
-      {
-        extends: true,
+      // One project per theme, so every story passes axe in all four (B02-T04).
+      ...THEMES.map((theme) => ({
+        extends: true as const,
+        define: { __SNR_THEME__: JSON.stringify(theme) },
+        // Own dependency cache: parallel projects sharing one race on Windows (EPERM).
+        cacheDir: `node_modules/.cache/vitest-storybook-${theme}`,
         plugins: [
           storybookTest({
             configDir: ".storybook",
             tags: seeded ? { include: ["seeded"] } : { exclude: ["seeded"] },
           }),
         ],
-        test: { name: "storybook", browser },
-      },
+        test: { name: `storybook-${theme}`, browser: browser() },
+      })),
       {
         extends: true,
         plugins: [react()],
         test: {
           name: "visual",
           include: ["test/visual/**/*.test.tsx"],
-          browser: { ...browser, viewport: { width: 1024, height: 768 } },
+          browser: { ...browser(), viewport: { width: 1024, height: 768 } },
         },
       },
     ],

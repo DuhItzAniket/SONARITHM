@@ -208,3 +208,27 @@ test("only the generated token file is exempt", async () => {
   // The raw values there would fail the rules anywhere else.
   assert.ok((withoutIgnore.results[0]?.warnings.length ?? 0) > 0);
 });
+
+test("dl_x11 a hover style needs a focus-visible style for the same element", async () => {
+  assert.deepEqual(await broken(".b:hover { background: var(--surface-2); }"), [
+    "sonarithm/hover-focus-visible",
+  ]);
+  assert.deepEqual(
+    await broken(
+      ".b[data-hovered] { background: var(--surface-2); } .c[data-focus-visible] { outline: none; }",
+    ),
+    ["sonarithm/hover-focus-visible"],
+  );
+  assert.deepEqual(
+    await broken(
+      ".b[data-hovered], .b[data-focus-visible] { background: var(--surface-2); }",
+    ),
+    [],
+  );
+  assert.deepEqual(
+    await broken(
+      ".b:hover { background: var(--surface-2); } .b:focus-visible { outline-color: var(--focus); }",
+    ),
+    [],
+  );
+});

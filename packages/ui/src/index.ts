@@ -11,6 +11,58 @@
  * `data-theme` on the root element (design-language §5.4). `fonts.css` loads the bundled IBM
  * Plex files and defines the `snr-numeric` class for readouts (§7.1, DL-X10).
  * `@sonarithm/ui/licenses.json` holds the font notices for the licences view (12 §9).
- * `pnpm -C packages/ui tokens` regenerates all three. Components arrive in B02-T04.
+ * `pnpm -C packages/ui tokens` regenerates all three.
+ *
+ * Components take every user-facing string as a prop, already formatted from the Fluent
+ * catalogues by the caller (coding-standards §12.7); none formats text itself.
  */
-export {};
+export {
+  Button,
+  type ButtonProps,
+  IconButton,
+  type IconButtonProps,
+} from "./components/Button.tsx";
+export {
+  DialogActions,
+  DialogTrigger,
+  ModalDialog,
+  type ModalDialogProps,
+} from "./components/Dialog.tsx";
+export {
+  Disclosure,
+  DisclosureGroup,
+  type DisclosureGroupProps,
+  type DisclosureProps,
+} from "./components/Disclosure.tsx";
+export {
+  MenuButton,
+  type MenuButtonProps,
+  MenuItem,
+  type MenuItemProps,
+  MenuSeparator,
+  Submenu,
+  type SubmenuProps,
+} from "./components/Menu.tsx";
+export {
+  Tab,
+  TabList,
+  type TabListProps,
+  TabPanel,
+  type TabPanelProps,
+  type TabProps,
+  Tabs,
+  type TabsProps,
+} from "./components/Tabs.tsx";
+export {
+  ToggleButton,
+  ToggleButtonGroup,
+  type ToggleButtonGroupProps,
+  type ToggleButtonProps,
+} from "./components/ToggleButton.tsx";
+export { Toolbar, type ToolbarProps } from "./components/Toolbar.tsx";
+export {
+  Tooltip,
+  type TooltipProps,
+  TooltipTrigger,
+} from "./components/Tooltip.tsx";
+export { THEMES, type Theme } from "./foundations/themes.ts";

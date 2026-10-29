@@ -1,0 +1,114 @@
+/* SPDX-FileCopyrightText: 2026 SONARITHM contributors */
+/* SPDX-License-Identifier: MIT OR Apache-2.0 */
+
+/* Overlays are the only elevated layer (design-language §8): surface-2, a border-strong
+   hairline, radius-2 and the one overlay shadow. Modals sit on an opaque scrim, never blur. */
+
+.tooltip,
+.popover,
+.dialog {
+  box-sizing: border-box;
+  border: var(--border-width) solid var(--border-strong);
+  border-radius: var(--radius-2);
+  background: var(--surface-2);
+  box-shadow: var(--shadow-overlay);
+  color: var(--text-1);
+  font-family: var(--font-sans);
+}
+
+.tooltip {
+  max-inline-size: 20rem;
+  padding: var(--space-1) var(--space-2);
+  font-size: var(--type-12-size);
+  line-height: var(--type-12-line);
+}
+
+.popover {
+  min-inline-size: 12rem;
+  padding: var(--space-1);
+  outline: none;
+}
+
+.menu {
+  outline: none;
+}
+
+.item {
+  display: flex;
+  gap: var(--space-4);
+  align-items: center;
+  justify-content: space-between;
+  min-block-size: var(--row-default);
+  padding-inline: var(--space-3) var(--space-2);
+  border-radius: var(--radius-1);
+  outline: none;
+  font-size: var(--type-13-size);
+  line-height: var(--type-13-line);
+  cursor: default;
+}
+
+.item[data-hovered],
+.item[data-focused],
+.item[data-focus-visible] {
+  background: var(--surface-3);
+}
+
+.item[data-focus-visible] {
+  outline: var(--focus-ring-width) solid var(--focus);
+  outline-offset: calc(-1 * var(--focus-ring-width));
+}
+
+.item[data-disabled] {
+  color: var(--text-3);
+}
+
+.shortcut {
+  color: var(--text-2);
+  font-family: var(--font-mono);
+  font-size: var(--type-12-size);
+}
+
+.separator {
+  block-size: 0;
+  margin-block: var(--space-1);
+  border: none;
+  border-block-start: var(--border-width) solid var(--border);
+}
+
+.scrim {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--surface-0);
+}
+
+.dialog {
+  max-inline-size: 32rem;
+  padding: var(--space-5);
+  outline: none;
+}
+
+.title {
+  margin: 0 0 var(--space-3);
+  font-size: var(--type-15-size);
+  font-weight: var(--weight-semibold);
+  line-height: var(--type-15-line);
+}
+
+.actions {
+  display: flex;
+  gap: var(--space-2);
+  justify-content: flex-end;
+  margin-block-start: var(--space-4);
+}
+
+@media (forced-colors: active) {
+  .item[data-hovered],
+  .item[data-focused],
+  .item[data-focus-visible] {
+    background: Highlight;
+    color: HighlightText;
+  }
+}

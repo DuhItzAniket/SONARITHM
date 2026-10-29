@@ -31,6 +31,12 @@
 | Playwright E2E | 5 tests pass | HW-01, Chromium only (WebKit and Firefox in CI) | not a budget |
 | UIA tree check | 22 elements, 3 expected found | HW-01, WebView2 156 | not a budget |
 
+## B02-T04: core components (same day)
+
+- `@sonarithm/ui` components on React Aria Components 1.22: Button, IconButton, ToggleButton, ToggleButtonGroup, Toolbar, MenuButton (MenuItem, Submenu, MenuSeparator), ModalDialog with DialogTrigger and DialogActions, Tabs, Tooltip, Disclosure and DisclosureGroup. Every string is a prop; 26 new `ui-*` messages for commands and controls.
+- The story tests now run once per theme. Each project has its own Vite cache folder, because parallel projects that share one fail on Windows with EPERM.
+- Locally: 60 story tests (15 stories × 4 themes) pass axe and their keyboard tests; the IconButton type test and the DL-X11 Stylelint rule pass.
+
 ## Next steps
 
 - [ ] Commit the screenshot baselines from the first CI run's `visual-baselines` artifact.

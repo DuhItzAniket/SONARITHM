@@ -1,0 +1,67 @@
+/* SPDX-FileCopyrightText: 2026 SONARITHM contributors */
+/* SPDX-License-Identifier: MIT OR Apache-2.0 */
+
+.tabs {
+  display: flex;
+  flex-direction: column;
+  font-family: var(--font-sans);
+}
+
+.list {
+  display: flex;
+  gap: var(--space-1);
+  border-block-end: var(--border-width) solid var(--border);
+}
+
+.tab {
+  min-block-size: var(--row-default);
+  padding-inline: var(--space-3);
+  border-block-end: var(--focus-ring-width) solid transparent;
+  outline: none;
+  color: var(--text-2);
+  font-size: var(--type-13-size);
+  font-weight: var(--weight-regular);
+  line-height: var(--type-13-line);
+  cursor: default;
+  display: flex;
+  align-items: center;
+}
+
+.tab[data-hovered],
+.tab[data-focus-visible] {
+  color: var(--text-1);
+}
+
+.tab[data-selected] {
+  border-block-end-color: var(--accent);
+  color: var(--text-1);
+  font-weight: var(--weight-semibold);
+}
+
+.tab[data-focus-visible] {
+  outline: var(--focus-ring-width) solid var(--focus);
+  outline-offset: calc(-1 * var(--focus-ring-width));
+}
+
+.tab[data-disabled] {
+  color: var(--text-3);
+}
+
+.panel {
+  padding: var(--space-3) 0;
+  outline: none;
+  color: var(--text-1);
+  font-size: var(--type-13-size);
+  line-height: var(--type-13-line);
+}
+
+.panel[data-focus-visible] {
+  outline: var(--focus-ring-width) solid var(--focus);
+  outline-offset: var(--focus-ring-offset);
+}
+
+@media (forced-colors: active) {
+  .tab[data-selected] {
+    border-block-end-color: Highlight;
+  }
+}
