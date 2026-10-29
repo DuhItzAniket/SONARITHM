@@ -167,14 +167,14 @@ The chart is the baseline v1 and is re-baselined at Gate A. Stage A's code was c
 
 - At most two build-heavy agent sessions run at once on the owner's 16 GB laptop.
 - Most of Stage B is UI work whose acceptance needs people: screen-reader runs, co-design sessions and listening checks.
-- The [A02 gate](../sdlc/reviews/A02-prototype-gate.md#decision) holds the shell and UI work (Lane U) until the owner's Windows walkthroughs are done and ADR-0002 and ADR-0003 are confirmed for Windows ("Gate U", [OD-15](open-decisions.md#closed-decisions)). Linux and macOS confirmation is due by B03's exit. The Rust work (Lane R) can start now.
+- The [A02 gate](../sdlc/reviews/A02-prototype-gate.md#decision) held the shell and UI work (Lane U) until the owner's Windows walkthroughs were done and ADR-0002 and ADR-0003 confirmed for Windows ("Gate U", [OD-15](open-decisions.md#closed-decisions)). On 2026-10-29 the owner opened Gate U provisionally; the walkthroughs follow at a checkpoint (R-33). Linux and macOS confirmation is due by B03's exit. The Rust work (Lane R) started at once.
 
 **Estimate.** Agent-paced work in session-days (one agent session on the phase), from Stage A's one to two days per phase of 9–13 tasks:
 
 | Phase | Tasks | Lane R (starts now) | Agent estimate | Owner and human-paced items |
 |---|---|---|---|---|
 | B01 | 9 | T01, T02, T06 | ≈ 2 session-days | Gate U; HP-03 (App Nap) |
-| B02 | 11 | T01, T02, T08 | ≈ 2–3 | Gate U; HP-07 (component checks), HP-16 (OD-03) |
+| B02 | 11 | T01, T02, T08 | ≈ 2–3 | Gate U; HP-01 (Narrator before T10), HP-07 (component checks), HP-16 (OD-03) |
 | B03 | 14 | T01–T03, T05–T08, T11 | ≈ 3–4 | Gate U; HP-02 and HP-03 (exit); HP-01 (OD-05), HP-05 ([#123](https://github.com/DuhItzAniket/SONARITHM/issues/123), [#186](https://github.com/DuhItzAniket/SONARITHM/issues/186)), HP-08 (task suite), HP-14 |
 | B04 | 8 | T03 | ≈ 2 | Gate U; HP-02, HP-03 (real webviews) |
 | B05 | 8 | T01, T04 | ≈ 2–3 | Gate U; HP-14; the project-format RFC |
@@ -184,7 +184,7 @@ The chart is the baseline v1 and is re-baselined at Gate A. Stage A's code was c
 
 **What sets Gate B's date: the human-paced items, not the engineering.**
 
-- **Gate U:** HP-01 and HP-04 ([OD-15](open-decisions.md#closed-decisions), closed 2026-10-21). HP-02, the Linux session with Orca, is a B03 exit criterion.
+- **Gate U:** open provisionally since 2026-10-29 ([OD-15](open-decisions.md#closed-decisions), amended by the owner). HP-01 (NVDA by the coordinator through desktop control, Narrator by the owner before B02-T10) and HP-04 make it final. HP-02, the Linux session with Orca, is a B03 exit criterion.
 - **Screen-reader runs:** the B03 task suite (HP-08) and the full matrix (HP-10). Access to JAWS and a braille display is not arranged yet (R-25).
 - **Co-design round 1:** it needs RV University's policy confirmed in writing, a compensation budget and recruited participants (HP-09). [OD-16](open-decisions.md) covers the case where it cannot run.
 - **JOSS:** P02 eligibility is calendar-gated: six months of public history, about 2027-04-18 at the earliest, TODO(verify) ([OD-17](open-decisions.md)).
@@ -205,7 +205,7 @@ Gate B's date stays TODO(verify) until HP-09's lead time is known. The HP items 
 |---|---|
 | **Deliverables** | `@sonarithm/ui`: OKLCH token generator (dark, light, high-contrast; `forced-colors` honoured), IBM Plex Sans/Mono, React Aria-based components (Button, ToggleButton, Slider with unit announcements, Tree, Table, Toolbar, Menu, Dialog, ComboBox, Tabs); fixed regions with F6 cycling; command palette; Storybook with the a11y addon; Vitest browser-mode visual tests. Follows [design-language.md](../design/design-language.md). |
 | **Exit criteria** | Every component passes axe and a manual NVDA/VoiceOver check. A design review against the anti-pattern list has zero violations. High-contrast theme is complete. |
-| **Size** | M (baseline ≈4 weeks). Re-estimate 2026-10-21: ≈ 2–3 agent session-days. Owner gates: Gate U, HP-07, HP-16 |
+| **Size** | M (baseline ≈4 weeks). Re-estimate 2026-10-21: ≈ 2–3 agent session-days. Owner gates: Gate U, HP-01 (Narrator before T10), HP-07, HP-16 |
 
 ### B03 · AUDAXIS v1: navigation, context and speech
 
@@ -282,7 +282,7 @@ Gate B's date stays TODO(verify) until HP-09's lead time is known. The HP items 
 
 **Calendar.** With one build-heavy session at a time, Lane R is about three weeks of daily sessions, or less once two can run; TODO(verify) against the next phase review. Lane U follows Gate U and the Stage B screens it extends.
 
-**What sets Gate C's date: the human-paced items, not the engineering.** Gate U (HP-01, HP-04) and Gate B come first. Then the teacher pilot (HP-19), co-design round 2 (HP-24, the same route as HP-09), the signing route (HP-23, OD-02), the external security review (HP-25) and the full matrix with JAWS and braille (HP-26, R-25). The CHI 2028 deadline for P05 (est. early–mid September 2027) is a fixed point if the owner keeps P05 (OD-26). Gate C's date stays TODO(verify).
+**What sets Gate C's date: the human-paced items, not the engineering.** Gate U (open provisionally since 2026-10-29; HP-01 and HP-04 make it final) and Gate B come first. Then the teacher pilot (HP-19), co-design round 2 (HP-24, the same route as HP-09), the signing route (HP-23, OD-02), the external security review (HP-25) and the full matrix with JAWS and braille (HP-26, R-25). The CHI 2028 deadline for P05 (est. early–mid September 2027) is a fixed point if the owner keeps P05 (OD-26). Gate C's date stays TODO(verify).
 
 The baseline Gantt above is unchanged; it is re-baselined at Gate B.
 
