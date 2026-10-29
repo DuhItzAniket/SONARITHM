@@ -105,7 +105,7 @@ Work runs in a separate agent session in parallel with A03. The spikes are throw
 | A02-T04 Offline determinism across OSes | **Done** (merged in #104) | #104: bit-identical on Linux, Windows, macOS AArch64 (F-039) |
 | A02-T05 Tauri 2.12 Channel and binary IPC | **Done** on Windows and CI (merged in #101); real macOS and Linux hardware pending (owner, #129) | #101: 1 MB p95 11.5–11.8 ms on HW-01, 7–8 ms on all CI runners (F-040). Real macOS and Linux hardware pending |
 | A02-T06 WebGL2 1M-point waveform and spectrogram | **Done** in WebView2 (merged in #102); WKWebView and WebKitGTK pending (owner, #129) | #102: 60 fps in WebView2 on both GPUs (F-043). WKWebView and WebKitGTK pending |
-| A02-T07 React Aria prototype, screen-reader walkthroughs, OD-05 prototype | Prototype **done** (merged in #107); screen-reader walkthroughs pending (owner, #129) | #107: prototype, UIA smoke test (F-045) and walkthrough scripts. NVDA, Narrator, Orca and VoiceOver runs are owner or volunteer tasks |
+| A02-T07 React Aria prototype, screen-reader walkthroughs, OD-05 prototype | Prototype **done** (merged in #107); NVDA walkthrough **done** 2026-10-29 (agent-driven); Narrator, Orca and VoiceOver pending (owner, #129) | #107: prototype, UIA smoke test (F-045) and walkthrough scripts. NVDA 2026.3: 16 pass, 2 partial, 1 fail (the native UIA route is silent), 1 skipped (F-046). Narrator, Orca and VoiceOver runs are owner or volunteer tasks |
 | A02-T08 Gate report; ADR-0002/0003/0004 recommendations | Gate report merged (#108, #112); ADR-0004 confirmed and ADR-0016 accepted (#109); ADR-0002/0003 provisional until the walkthroughs (OD-15) | Gate report draft; ADR-0004 amend; ADR-0002 and ADR-0003 stay provisional until the manual steps |
 
 ### A03 tasks
@@ -345,3 +345,4 @@ Maturity scale: `Designed` → `Prototype` → `Alpha` → `Beta` → `Stable` �
 | 2026-10-26 | C01-T08: the vector-PDF tier (own object reader, content-stream interpreter) and 9 corpus PDFs, within 0.15 % |
 | 2026-10-29 | Gate U opened provisionally by the owner (OD-15 amended): Lane U starts now; the NVDA walkthrough (coordinator, desktop control) and the owner's Narrator walkthrough follow at a checkpoint, Narrator before B02-T10; 28 issues unblocked; R-33 opened |
 | 2026-10-26 | C01-T09: the `template` key compiles; NUMISONA's six and PLOTSONA's chart-type templates are registered |
+| 2026-10-29 | A02 NVDA walkthrough (steps 1–19, agent-driven through desktop control): 16 pass, 2 partial, 1 fail, 1 skipped. Live regions behave as designed. NVDA speaks nothing from the native UIA route (F-046). OD-05 reading recorded in the gate report; Narrator still pending |
