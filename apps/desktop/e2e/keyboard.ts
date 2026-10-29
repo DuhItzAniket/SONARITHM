@@ -1,0 +1,89 @@
+// SPDX-FileCopyrightText: 2026 SONARITHM contributors
+// SPDX-License-Identifier: MIT OR Apache-2.0
+
+import type { Page } from "@playwright/test";
+
+/** One stop in the Tab order. */
+export interface FocusStop {
+  /** Tag, ID and text, for messages. */
+  readonly label: string;
+}
+
+/** Some tabbable elements cannot be reached with Tab: a focus trap (WCAG 2.1.2, A11Y-05). */
+export class FocusTrapError extends Error {
+  override readonly name = "FocusTrapError";
+}
+
+/** A focused element shows no focus indicator (WCAG 2.4.7). */
+export class FocusNotVisibleError extends Error {
+  override readonly name = "FocusNotVisibleError";
+}
+
+const TABBABLE = [
+  "a[href]",
+  "button:not([disabled])",
+  'input:not([disabled]):not([type="hidden"])',
+  "select:not([disabled])",
+  "textarea:not([disabled])",
+  "[tabindex]",
+  '[contenteditable="true"]',
+].join(", ");
+
+/**
+ * A keyboard-only flow (testing-strategy §13.1): presses Tab from the start of the page,
+ * with no pointer event, until every tabbable element has had focus or twice their number
+ * of presses has passed. Throws {@link FocusTrapError} if an element was never reached and
+ * {@link FocusNotVisibleError} if a focused element showed no indicator. Returns the stops
+ * in order.
+ */
+export async function tabThrough(page: Page): Promise<FocusStop[]> {
+  const count = await page.evaluate((selector) => {
+    const all = [...document.querySelectorAll<HTMLElement>(selector)].filter(
+      (el) => el.tabIndex >= 0 && el.getClientRects().length > 0,
+    );
+    all.forEach((el, i) => {
+      el.dataset.snrTab = String(i);
+    });
+    if (document.activeElement instanceof HTMLElement) {
+      document.activeElement.blur();
+    }
+    return all.length;
+  }, TABBABLE);
+  const reached = new Set<string>();
+  const stops: FocusStop[] = [];
+  for (let press = 0; press < count * 2 + 2 && reached.size < count; press++) {
+    await page.keyboard.press("Tab");
+    const stop = await page.evaluate(() => {
+      const el = document.activeElement;
+      if (!(el instanceof HTMLElement) || el === document.body) {
+        return null;
+      }
+      const style = getComputedStyle(el);
+      const visible =
+        (style.outlineStyle !== "none" && style.outlineWidth !== "0px") ||
+        style.boxShadow !== "none";
+      const text = el.getAttribute("aria-label") ?? el.textContent;
+      return {
+        tab: el.dataset.snrTab ?? null,
+        label: `${el.tagName.toLowerCase()}#${el.id} "${text.trim()}"`,
+        visible,
+      };
+    });
+    if (stop === null) {
+      continue;
+    }
+    if (!stop.visible) {
+      throw new FocusNotVisibleError(`no visible focus on ${stop.label}`);
+    }
+    if (stop.tab !== null) {
+      reached.add(stop.tab);
+    }
+    stops.push({ label: stop.label });
+  }
+  if (reached.size < count) {
+    throw new FocusTrapError(
+      `${String(count - reached.size)} of ${String(count)} tabbable elements were never reached`,
+    );
+  }
+  return stops;
+}

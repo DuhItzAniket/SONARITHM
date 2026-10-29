@@ -1,0 +1,30 @@
+<!doctype html>
+<!-- SPDX-FileCopyrightText: 2026 SONARITHM contributors -->
+<!-- SPDX-License-Identifier: MIT OR Apache-2.0 -->
+<!-- Seeded failures for the negative tests of the keyboard and axe gates (B02-T03): Tab
+     cycles between the first two buttons, so the third is unreachable; the last button has
+     no accessible name. Test fixture only, not UI text. -->
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Seeded focus trap</title>
+  </head>
+  <body>
+    <main>
+      <div id="trap">
+        <button id="a" type="button">First</button>
+        <button id="b" type="button">Second</button>
+      </div>
+      <button id="c" type="button">Unreachable</button>
+      <button id="unnamed" type="button"></button>
+    </main>
+    <script>
+      document.getElementById("trap").addEventListener("keydown", (event) => {
+        if (event.key !== "Tab") return;
+        event.preventDefault();
+        const next = document.activeElement.id === "a" ? "b" : "a";
+        document.getElementById(next).focus();
+      });
+    </script>
+  </body>
+</html>

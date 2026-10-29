@@ -265,6 +265,18 @@ The headless app core (`sonarithm-app`, B01) holds all non-UI desktop behaviour,
 
 Source: [05-desktop-frontend-stack §9](../research/notes/05-desktop-frontend-stack.md#9-frontend-testing-vitest-playwright-tauri-webdriver-per-os-axe-core-storybook-vs-ladle-visual-regression).
 
+**How it runs (B02-T03).** CI's `frontend-browser` job runs in the `mcr.microsoft.com/playwright` image whose tag matches the `playwright` version in `pnpm-workspace.yaml`:
+
+| Command | What it checks |
+|---|---|
+| `pnpm -C packages/ui test:stories` | Every Storybook story (`packages/ui/src/**/*.stories.tsx`) renders in Chromium and passes axe; Storybook's `a11y.test: "error"` turns any violation into a failed test |
+| `pnpm -C packages/ui test:seeded` | Negative test: only the stories tagged `seeded` run, and the command succeeds only if each failed with its axe rule (`button-name`) |
+| `pnpm -C packages/ui test:visual` | `toMatchScreenshot` baselines in `packages/ui/test/visual/__screenshots__`, taken in the CI image only. Without committed baselines the job writes them, uploads them as the `visual-baselines` artifact and fails, so a person reviews them before they are committed |
+| `pnpm -C apps/desktop test:e2e` | Playwright in Chromium, WebKit and Firefox against `e2e.html`: the real UI with Tauri's `mockIPC` answering from `@sonarithm/ipc`'s in-memory host. `e2e/axe.ts` (serious and critical WCAG 2.2 A and AA violations) and `e2e/keyboard.ts` (`tabThrough`: Tab only, every tabbable element reached, focus visible at each stop), each with a seeded negative test (`e2e/gates.spec.ts`) |
+| `apps/desktop/scripts/uia-check.ps1` | In the Windows `desktop` job: the A02 UI Automation tree dump (F-045) of the real app in WebView2, failing on a missing expected role and name (`apps/desktop/test/uia/*.json`) or an unnamed interactive element. The dump is uploaded as `uia-tree-windows` |
+
+Locally, `pnpm -C packages/ui storybook` opens the workbench; the browser tests need `pnpm exec playwright install chromium` once. Screenshot tests do not run locally, because fonts render differently per OS.
+
 ## 13. Accessibility testing
 
 ### 13.1 Automated (every PR)

@@ -18,6 +18,22 @@ catalog:
   react-aria-components: 1.22.1
   react-dom: 19.3.1
   vite: 8.3.4
+  # Frontend test infrastructure (B02-T03; testing-strategy §12, §13.1). Storybook 10 with
+  # its accessibility (axe-core) and Vitest addons; Vitest 4 browser mode on Playwright's
+  # Chromium; Playwright for cross-engine E2E with axe. The CI container image tag
+  # (mcr.microsoft.com/playwright) must match the playwright version.
+  "@axe-core/playwright": 4.14.0
+  "@playwright/test": 1.64.1
+  "@storybook/addon-a11y": 10.6.5
+  "@storybook/addon-vitest": 10.6.5
+  "@storybook/react-vite": 10.6.5
+  "@vitest/browser": 4.1.12
+  "@vitest/browser-playwright": 4.1.12
+  axe-core: 4.14.0
+  playwright: 1.64.1
+  storybook: 10.6.5
+  vitest: 4.1.12
+  vitest-browser-react: 2.3.0
   # Node types for package tests run with `node --test` (Node 24, the CI line).
   "@types/node": ^24.19.2
   # ESLint stays on 9.x until eslint-plugin-jsx-a11y supports ESLint 10 (its peer range ends at ^9).
@@ -32,3 +48,9 @@ catalog:
   # TypeScript stays on 6.0.x while typescript-eslint supports only TypeScript < 6.1.
   typescript: ~6.0.3
   typescript-eslint: ^8.71.2
+
+# Dependency install scripts, reviewed one by one (pnpm 12 fails the install on an unreviewed
+# one, F-133). esbuild (Storybook) gets its binary from an optional per-platform package;
+# its script only re-checks that binary, so it stays off.
+allowBuilds:
+  esbuild: false

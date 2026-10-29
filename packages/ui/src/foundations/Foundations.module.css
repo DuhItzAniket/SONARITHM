@@ -1,0 +1,61 @@
+/* SPDX-FileCopyrightText: 2026 SONARITHM contributors */
+/* SPDX-License-Identifier: MIT OR Apache-2.0 */
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-3);
+  padding: var(--space-4);
+  background: var(--surface-0);
+  font-family: var(--font-sans);
+}
+
+.surface {
+  padding: var(--space-4);
+  border: var(--border-width) solid var(--border);
+  border-radius: var(--radius-1);
+}
+
+.surface[data-surface="surface-0"] {
+  background: var(--surface-0);
+}
+
+.surface[data-surface="surface-1"] {
+  background: var(--surface-1);
+}
+
+.surface[data-surface="surface-2"] {
+  background: var(--surface-2);
+}
+
+.surface[data-surface="surface-3"] {
+  background: var(--surface-3);
+}
+
+.name {
+  margin: 0 0 var(--space-2);
+  color: var(--text-1);
+  font-family: var(--font-mono);
+  font-size: var(--type-12-size);
+  line-height: var(--type-12-line);
+}
+
+.text1,
+.text2,
+.text3 {
+  margin: 0;
+  font-size: var(--type-13-size);
+  line-height: var(--type-13-line);
+}
+
+.text1 {
+  color: var(--text-1);
+}
+
+.text2 {
+  color: var(--text-2);
+}
+
+.text3 {
+  color: var(--text-3);
+}

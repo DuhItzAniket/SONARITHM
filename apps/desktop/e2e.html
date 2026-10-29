@@ -1,0 +1,17 @@
+<!doctype html>
+<!-- SPDX-FileCopyrightText: 2026 SONARITHM contributors -->
+<!-- SPDX-License-Identifier: MIT OR Apache-2.0 -->
+<!-- The UI with an in-memory host, for Playwright (B02-T03). Served by the Vite dev server
+     only; `vite build` bundles index.html alone, so this page never ships. -->
+<html lang="en-US">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>SONARITHM</title>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/e2e/mock-host.ts"></script>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>

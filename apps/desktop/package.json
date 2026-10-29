@@ -11,7 +11,8 @@
     "tauri": "tauri",
     "lint": "eslint --max-warnings 0 . && prettier --check . && stylelint --allow-empty-input \"src/**/*.css\"",
     "typecheck": "tsc --noEmit",
-    "test": "node --test \"test/**/*.test.ts\""
+    "test": "node --test \"test/**/*.test.ts\"",
+    "test:e2e": "playwright test"
   },
   "dependencies": {
     "@sonarithm/i18n": "workspace:*",
@@ -23,6 +24,8 @@
     "react-dom": "catalog:"
   },
   "devDependencies": {
+    "@axe-core/playwright": "catalog:",
+    "@playwright/test": "catalog:",
     "@tauri-apps/cli": "catalog:",
     "@types/node": "catalog:",
     "@types/react": "catalog:",

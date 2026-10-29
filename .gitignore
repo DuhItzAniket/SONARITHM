@@ -38,6 +38,7 @@ dist/
 storybook-static/
 playwright-report/
 test-results/
+.vitest-attachments/
 blob-report/
 npm-debug.log*
 pnpm-debug.log*

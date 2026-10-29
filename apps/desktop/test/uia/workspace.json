@@ -1,0 +1,9 @@
+{
+  "description": "UI Automation elements the empty workspace must expose in WebView2 (B02-T03, OD-15): the document, the named workspace region and its heading.",
+  "ready": "No dataset is open.",
+  "expect": [
+    { "localizedType": "document", "name": "SONARITHM" },
+    { "localizedType": "main", "name": "Workspace" },
+    { "localizedType": "heading", "name": "Workspace" }
+  ]
+}
