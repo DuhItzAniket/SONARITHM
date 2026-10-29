@@ -231,10 +231,10 @@ fn dataset_sources_read_what_the_host_provides() {
     );
 }
 
-/// RFC-0004: until a template registry exists (C01-T09), a template is reported as unknown
-/// rather than compiled into something else.
+/// RFC-0004 §2: a template no registered engine provides (here no engine registers any) is
+/// reported as unknown rather than compiled into something else.
 #[test]
-fn snr_comp_030_templates_are_not_in_the_registry_yet() {
+fn snr_comp_030_unregistered_templates_are_unknown() {
     let template = format!(
         r#"{{ "specVersion": "0.2", "data": {{ "source": {VALUES} }},
             "template": {{ "id": "bar-discrete", "bind": {{ "value": "y" }} }} }}"#

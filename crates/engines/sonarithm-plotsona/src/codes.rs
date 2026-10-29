@@ -383,6 +383,16 @@ pub const PDF_NO_VECTOR: CodeInfo = CodeInfo {
     status: CodeStatus::Active,
 };
 
+/// A chart-type template has no design rule behind it yet (C01-T09).
+pub const EXPERIMENTAL_TEMPLATE: CodeInfo = CodeInfo {
+    code: "SNR-ENG-380",
+    severity: Severity::Warning,
+    summary: "Experimental chart template",
+    help: "No design rule covers this chart type's sound design yet (pie and stacked bar), so            it may change when a study supports one. Write `tracks` to choose the design            yourself.",
+    rules: &["SDR-03"],
+    status: CodeStatus::Active,
+};
+
 /// Every PLOTSONA code, in ascending order.
 pub const CODES: CodeTable = CodeTable {
     area: Area::Eng,
@@ -423,6 +433,7 @@ pub const CODES: CodeTable = CodeTable {
         AXIS_NOT_FOUND,
         PIE_SHARES,
         PDF_NO_VECTOR,
+        EXPERIMENTAL_TEMPLATE,
     ],
 };
 

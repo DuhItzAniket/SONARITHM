@@ -39,7 +39,7 @@ use arrow_schema::{DataType, Field, Schema};
 use sonarithm_core::diagnostic::{Diagnostic, Diagnostics, SpecPointer};
 use sonarithm_core::engine::{
     Annotation, CompileContext, CompileError, Encoder, Engine, EngineManifest, MarkKind, Registrar,
-    RegistryError, SpecFragment, TrackRequest,
+    RegistryError, SpecFragment, TemplateProvider, TrackRequest,
 };
 use sonarithm_core::ids::{EngineId, RowRange};
 use sonarithm_core::provenance::Confidence;
@@ -173,7 +173,12 @@ impl<D: Borrow<DataBundle> + 'static> Engine<D> for Numisona {
         registrar.encoder(&[MarkKind::Tone, MarkKind::Glide, MarkKind::Auto], &encoder)?;
         registrar.default_encoder(MarkKind::Tone)?;
         registrar.default_encoder(MarkKind::Glide)?;
-        registrar.default_encoder(MarkKind::Auto)
+        registrar.default_encoder(MarkKind::Auto)?;
+        let templates: Arc<dyn TemplateProvider<D>> = Arc::new(crate::templates::TemplateSet);
+        for template in &crate::templates::TEMPLATES {
+            registrar.template(template.id, Arc::clone(&templates))?;
+        }
+        Ok(())
     }
 }
 

@@ -15,6 +15,7 @@ pub mod codes;
 pub mod data;
 pub mod pipeline;
 pub mod registry;
+mod template;
 
 pub use data::Platform;
 pub use pipeline::{Compiled, Compiler, CompilerData, Failure};

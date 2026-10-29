@@ -1,0 +1,71 @@
+---
+source: crates/engines/sonarithm-plotsona/tests/templates.rs
+expression: "matrix.join(\"\\n\")"
+---
+docx-area.docx → chart-line: Template `chart-line` binds series = `series`, x = `x`, y = `y`. 20 notes
+docx-bar.docx → chart-bar: Template `chart-bar` binds category = `x`, series = `series`, value = `y`. 5 notes
+docx-grouped-bar.docx → chart-bar: Template `chart-bar` binds category = `x`, series = `series`, value = `y`. 12 notes
+docx-line.docx → chart-line: Template `chart-line` binds series = `series`, x = `x`, y = `y`. 36 notes
+docx-pie.docx → chart-pie: Template `chart-pie` binds slice = `x`, value = `y`. 5 notes
+docx-scatter.docx → scatter-xy: Template `scatter-xy` binds series = `series`, x = `x`, y = `y`. 60 notes
+docx-stacked-bar.docx → chart-stacked-bar: Template `chart-stacked-bar` binds category = `x`, series = `series`, value = `y`. 36 notes
+pptx-area.pptx → chart-line: Template `chart-line` binds series = `series`, x = `x`, y = `y`. 20 notes
+pptx-bar.pptx → chart-bar: Template `chart-bar` binds category = `x`, series = `series`, value = `y`. 5 notes
+pptx-grouped-bar.pptx → chart-bar: Template `chart-bar` binds category = `x`, series = `series`, value = `y`. 12 notes
+pptx-line.pptx → chart-line: Template `chart-line` binds series = `series`, x = `x`, y = `y`. 36 notes
+pptx-pie.pptx → chart-pie: Template `chart-pie` binds slice = `x`, value = `y`. 5 notes
+pptx-scatter.pptx → scatter-xy: Template `scatter-xy` binds series = `series`, x = `x`, y = `y`. 60 notes
+pptx-stacked-bar.pptx → chart-stacked-bar: Template `chart-stacked-bar` binds category = `x`, series = `series`, value = `y`. 36 notes
+xlsx-area.xlsx → chart-line: Template `chart-line` binds series = `series`, x = `x`, y = `y`. 20 notes
+xlsx-bar.xlsx → chart-bar: Template `chart-bar` binds category = `x`, series = `series`, value = `y`. 5 notes
+xlsx-date-line.xlsx → chart-line: Template `chart-line` binds series = `series`, x = `x`, y = `y`. 20 notes
+xlsx-grouped-bar.xlsx → chart-bar: Template `chart-bar` binds category = `x`, series = `series`, value = `y`. 12 notes
+xlsx-line.xlsx → chart-line: Template `chart-line` binds series = `series`, x = `x`, y = `y`. 36 notes
+xlsx-pie.xlsx → chart-pie: Template `chart-pie` binds slice = `x`, value = `y`. 5 notes
+xlsx-scatter.xlsx → scatter-xy: Template `scatter-xy` binds series = `series`, x = `x`, y = `y`. 60 notes
+xlsx-stacked-bar.xlsx → chart-stacked-bar: Template `chart-stacked-bar` binds category = `x`, series = `series`, value = `y`. 36 notes
+highcharts-line.json → chart-line: Template `chart-line` binds series = `series`, x = `x`, y = `y`. 36 notes
+highcharts-page.html → chart-line: Template `chart-line` binds series = `series`, x = `x`, y = `y`. 20 notes
+highcharts-pie.json → chart-pie: Template `chart-pie` binds slice = `x`, value = `y`. 5 notes
+highcharts-scatter.json → scatter-xy: Template `scatter-xy` binds series = `series`, x = `x`, y = `y`. 60 notes
+highcharts-stacked-column.json → chart-stacked-bar: Template `chart-stacked-bar` binds category = `x`, series = `series`, value = `y`. 36 notes
+plotly-area.json → chart-line: Template `chart-line` binds series = `series`, x = `x`, y = `y`. 20 notes
+plotly-horizontal-bar.json → chart-bar: Template `chart-bar` binds category = `x`, series = `series`, value = `y`. 5 notes
+plotly-line.json → chart-line: Template `chart-line` binds series = `series`, x = `x`, y = `y`. 36 notes
+plotly-page.html → chart-line: Template `chart-line` binds series = `series`, x = `x`, y = `y`. 36 notes
+plotly-pie.json → chart-pie: Template `chart-pie` binds slice = `x`, value = `y`. 5 notes
+plotly-scatter.json → scatter-xy: Template `scatter-xy` binds series = `series`, x = `x`, y = `y`. 60 notes
+plotly-stacked-bar.json → chart-stacked-bar: Template `chart-stacked-bar` binds category = `x`, series = `series`, value = `y`. 36 notes
+vega-bar.json → chart-bar: Template `chart-bar` binds category = `x`, series = `series`, value = `y`. 5 notes
+vega-line.json → chart-line: Template `chart-line` binds series = `series`, x = `x`, y = `y`. 36 notes
+vega-pie.json → chart-pie: Template `chart-pie` binds slice = `x`, value = `y`. 5 notes
+vega-scatter.json → scatter-xy: Template `scatter-xy` binds series = `series`, x = `x`, y = `y`. 60 notes
+vl-bar.json → chart-bar: Template `chart-bar` binds category = `x`, series = `series`, value = `y`. 5 notes
+vl-embed.html → chart-line: Template `chart-line` binds series = `series`, x = `x`, y = `y`. 36 notes
+vl-grouped-bar.json → chart-bar: Template `chart-bar` binds category = `x`, series = `series`, value = `y`. 12 notes
+vl-line.json → chart-line: Template `chart-line` binds series = `series`, x = `x`, y = `y`. 36 notes
+vl-pie.json → chart-pie: Template `chart-pie` binds slice = `x`, value = `y`. 5 notes
+vl-scatter.json → scatter-xy: Template `scatter-xy` binds series = `series`, x = `x`, y = `y`. 60 notes
+vl-stacked-bar.json → chart-stacked-bar: Template `chart-stacked-bar` binds category = `x`, series = `series`, value = `y`. 36 notes
+vl-temporal.json → chart-line: Template `chart-line` binds series = `series`, x = `x`, y = `y`. 20 notes
+d3-bar.svg → chart-bar: Template `chart-bar` binds category = `x`, series = `series`, value = `y`. 5 notes
+d3-line.svg → chart-line: Template `chart-line` binds series = `series`, x = `x`, y = `y`. 36 notes
+d3-scatter.svg → scatter-xy: Template `scatter-xy` binds series = `series`, x = `x`, y = `y`. 60 notes
+plotly-bar.svg → chart-bar: Template `chart-bar` binds category = `x`, series = `series`, value = `y`. 5 notes
+plotly-line.svg → chart-line: Template `chart-line` binds series = `series`, x = `x`, y = `y`. 36 notes
+plotly-pie.svg → chart-pie: Template `chart-pie` binds slice = `x`, value = `y`. 5 notes
+plotly-scatter.svg → scatter-xy: Template `scatter-xy` binds series = `series`, x = `x`, y = `y`. 60 notes
+vl-area.svg → chart-line: Template `chart-line` binds series = `series`, x = `x`, y = `y`. 20 notes
+vl-bar.svg → chart-bar: Template `chart-bar` binds category = `x`, series = `series`, value = `y`. 5 notes
+vl-line.svg → chart-line: Template `chart-line` binds series = `series`, x = `x`, y = `y`. 36 notes
+vl-pie.svg → chart-pie: Template `chart-pie` binds slice = `x`, value = `y`. 5 notes
+vl-scatter.svg → scatter-xy: Template `scatter-xy` binds series = `series`, x = `x`, y = `y`. 60 notes
+plotly-bar.pdf → chart-bar: Template `chart-bar` binds category = `x`, series = `series`, value = `y`. 5 notes
+plotly-line.pdf → chart-line: Template `chart-line` binds series = `series`, x = `x`, y = `y`. 36 notes
+plotly-pie.pdf → chart-pie: Template `chart-pie` binds slice = `x`, value = `y`. 5 notes
+plotly-scatter.pdf → scatter-xy: Template `scatter-xy` binds series = `series`, x = `x`, y = `y`. 60 notes
+vl-area.pdf → chart-line: Template `chart-line` binds series = `series`, x = `x`, y = `y`. 20 notes
+vl-bar.pdf → chart-bar: Template `chart-bar` binds category = `x`, series = `series`, value = `y`. 5 notes
+vl-line.pdf → chart-line: Template `chart-line` binds series = `series`, x = `x`, y = `y`. 36 notes
+vl-pie.pdf → chart-pie: Template `chart-pie` binds slice = `x`, value = `y`. 5 notes
+vl-scatter.pdf → scatter-xy: Template `scatter-xy` binds series = `series`, x = `x`, y = `y`. 60 notes

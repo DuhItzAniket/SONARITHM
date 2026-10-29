@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
 //! The compile pipeline (05 §2): validate and migrate, resolve the source, transform,
-//! analyze, encode each track, add context, run the shapers in their fixed order, then
+//! expand a template (RFC-0004 §2), analyze, encode each track, add context, run the shapers in their fixed order, then
 //! stamp the header with provenance.
 //!
 //! The pipeline is synchronous and deterministic: stages run in a fixed order, tracks in
@@ -24,10 +24,12 @@ use sonarithm_core::score::{EngineVersion, Score, ScoreHeader, ShaperStage};
 use sonarithm_core::units::Seconds;
 use sonarithm_spec::data::Source;
 use sonarithm_spec::sections::Detector;
-use sonarithm_spec::{Prepared, Spec, prepare};
+use sonarithm_spec::v02::TemplateRef;
+use sonarithm_spec::{Prepared, Spec, Transform, prepare};
 
 use crate::codes;
 use crate::registry::build_registry;
+use crate::template;
 
 /// What the compiler needs from its data type beyond what engines use.
 pub trait CompilerData {
@@ -139,6 +141,7 @@ impl<D: CompilerData> Compiler<D> {
         prepared: Prepared,
         cancel: &CancelToken,
     ) -> Result<Compiled, Failure> {
+        let written = &prepared.spec;
         let spec = &prepared.resolved;
         let mut run = Run {
             registry: &self.registry,
@@ -146,7 +149,7 @@ impl<D: CompilerData> Compiler<D> {
             used: BTreeMap::new(),
             diagnostics: prepared.diagnostics.clone(),
         };
-        match run.stages(spec, prepared.hash) {
+        match run.stages(written, spec, prepared.hash) {
             Ok(Finished {
                 score,
                 provenance,
@@ -166,6 +169,11 @@ impl<D: CompilerData> Compiler<D> {
                 })
             }
             Err(Stop::Cancelled) => Err(Failure::Cancelled),
+            Err(Stop::Reported) => {
+                let mut diagnostics = run.diagnostics;
+                diagnostics.extend(run.cx.take_diagnostics());
+                Err(Failure::Invalid(diagnostics))
+            }
             Err(Stop::Error(diagnostic)) => {
                 let mut diagnostics = run.diagnostics;
                 diagnostics.extend(run.cx.take_diagnostics());
@@ -187,6 +195,8 @@ struct Finished {
 enum Stop {
     Cancelled,
     Error(Box<Diagnostic>),
+    /// The errors are already in the run's diagnostics.
+    Reported,
 }
 
 /// One compile in progress.
@@ -199,21 +209,17 @@ struct Run<'a, D> {
 }
 
 impl<D: CompilerData> Run<'_, D> {
-    fn stages(&mut self, spec: &Spec, spec_hash: Sha256Digest) -> Result<Finished, Stop> {
-        // Templates and chart corrections are spec v0.2 (RFC-0004); this compiler does not
-        // apply them yet, and says so rather than compiling something else.
-        if let Some(template) = &spec.template {
-            return Err(Stop::Error(Box::new(
-                Diagnostic::new(
-                    &codes::UNKNOWN_TEMPLATE,
-                    format!(
-                        "Template `{}` is not in this build's template registry; write `tracks` instead.",
-                        template.id
-                    ),
-                )
-                .at(SpecPointer::root().key("template").key("id")),
-            )));
-        }
+    /// The stages. `written` is the spec as written, which a template merges with;
+    /// `resolved` has its defaults.
+    fn stages(
+        &mut self,
+        written: &Spec,
+        resolved: &Spec,
+        spec_hash: Sha256Digest,
+    ) -> Result<Finished, Stop> {
+        let spec = resolved;
+        // Chart corrections are spec v0.2 (RFC-0004 §6); this compiler does not apply them
+        // yet, and says so rather than compiling something else.
         if let sonarithm_spec::Source::Chart {
             corrections: Some(_),
             ..
@@ -228,22 +234,19 @@ impl<D: CompilerData> Run<'_, D> {
             );
         }
         let mut data = self.resolve_source(spec)?;
-        if !spec.transform.is_empty() {
-            let at = SpecPointer::root().key("transform");
-            match data.transform(&spec.transform, &at) {
-                Some(Ok(diagnostics)) => self.diagnostics.extend(diagnostics),
-                Some(Err(diagnostic)) => return Err(Stop::Error(diagnostic)),
-                // Reported, never dropped silently.
-                None => self.diagnostics.push(
-                    Diagnostic::new(
-                        &codes::TRANSFORMS_NOT_APPLIED,
-                        "This compiler's data type cannot apply `transform`; the data is used as loaded.",
-                    )
-                    .at(at),
-                ),
+        self.run_transforms(
+            &mut data,
+            &spec.transform,
+            SpecPointer::root().key("transform"),
+        )?;
+        let expanded;
+        let spec = match &written.template {
+            Some(template) => {
+                expanded = self.expand(written, template, &mut data)?;
+                &expanded
             }
-            self.cx.check_cancelled().map_err(stop)?;
-        }
+            None => spec,
+        };
         let annotations = self.analyze(spec, &data)?;
         let mut header = ScoreHeader::new(
             spec.spec_version,
@@ -277,6 +280,82 @@ impl<D: CompilerData> Run<'_, D> {
             score,
             nav,
         })
+    }
+
+    /// Applies `transforms`, located at `at`, to `data`.
+    fn run_transforms(
+        &mut self,
+        data: &mut D,
+        transforms: &[Transform],
+        at: SpecPointer,
+    ) -> Result<(), Stop> {
+        if transforms.is_empty() {
+            return Ok(());
+        }
+        match data.transform(transforms, &at) {
+            Some(Ok(diagnostics)) => self.diagnostics.extend(diagnostics),
+            Some(Err(diagnostic)) => return Err(Stop::Error(diagnostic)),
+            // Reported, never dropped silently.
+            None => self.diagnostics.push(
+                Diagnostic::new(
+                    &codes::TRANSFORMS_NOT_APPLIED,
+                    "This compiler's data type cannot apply `transform`; the data is used as loaded.",
+                )
+                .at(at),
+            ),
+        }
+        self.cx.check_cancelled().map_err(stop)
+    }
+
+    /// Expands `template` against `data` (RFC-0004 §2) and returns the merged spec with
+    /// its defaults. A computed source replaces `data`; the template's transforms then run.
+    fn expand(
+        &mut self,
+        written: &Spec,
+        template: &TemplateRef,
+        data: &mut D,
+    ) -> Result<Spec, Stop> {
+        let registry = self.registry;
+        let Some((engine, provider)) = registry.template(&template.id) else {
+            let known: Vec<&str> = registry.templates().map(|(id, _)| id).collect();
+            return Err(Stop::Error(Box::new(template::unknown(template, &known))));
+        };
+        self.use_engine(&engine.clone());
+        let request = fragment(SpecPointer::root().key("template"), template)?;
+        let expansion = provider
+            .expand(&request, data, &mut self.cx)
+            .map_err(stop)?;
+        let merged = template::merge(written, template, &expansion).map_err(Stop::Error)?;
+        for diagnostic in merged.diagnostics {
+            self.diagnostics.push(diagnostic);
+        }
+        let prepared = match sonarithm_spec::prepare::prepare_value(merged.value, None) {
+            Ok(prepared) => prepared,
+            Err(diagnostics) => {
+                self.report_new(&diagnostics);
+                return Err(Stop::Reported);
+            }
+        };
+        self.report_new(&prepared.diagnostics);
+        if merged.computed_source {
+            *data = self.resolve_source(&prepared.resolved)?;
+        }
+        self.run_transforms(
+            data,
+            &merged.transforms,
+            SpecPointer::root().key("template"),
+        )?;
+        Ok(prepared.resolved)
+    }
+
+    /// Adds the diagnostics not already reported (the merged spec repeats the warnings of
+    /// the sections written in the spec).
+    fn report_new(&mut self, diagnostics: &Diagnostics) {
+        for diagnostic in diagnostics {
+            if !self.diagnostics.iter().any(|seen| seen == diagnostic) {
+                self.diagnostics.push(diagnostic.clone());
+            }
+        }
     }
 
     /// Resolves `data.source` through the registered source for its kind.
@@ -492,6 +571,10 @@ fn stop(error: CompileError) -> Stop {
     match error {
         CompileError::Cancelled => Stop::Cancelled,
         CompileError::Diagnostic(diagnostic) => Stop::Error(diagnostic),
+        error @ CompileError::Binding { .. } => Stop::Error(Box::new(
+            template::binding_diagnostic(&error)
+                .unwrap_or_else(|| Diagnostic::new(&codes::INVALID_BINDING, format!("{error}."))),
+        )),
         CompileError::Budget(exceeded) => Stop::Error(Box::new(Diagnostic::new(
             &codes::BUDGET_EXCEEDED,
             format!(

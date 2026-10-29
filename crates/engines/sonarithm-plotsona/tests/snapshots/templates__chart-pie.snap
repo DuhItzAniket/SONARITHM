@@ -1,0 +1,132 @@
+---
+source: crates/engines/sonarithm-plotsona/tests/templates.rs
+expression: review
+---
+{
+  "header": {
+    "data_fingerprint": "af6726397edb0039e4da698bcce215c382ced246604960881b6762dd9f04750f",
+    "duration": 2.131579,
+    "engines": {
+      "numisona": "*",
+      "plotsona": "*"
+    },
+    "ir_version": 1,
+    "mode": "analysis",
+    "seed": 0,
+    "shapers": [],
+    "spec_hash": "7c420b3e8d3652258ed4c98513009a1450e98c65e629404584f09af945140935",
+    "spec_version": "0.2"
+  },
+  "markers": [],
+  "tracks": [
+    {
+      "engine": "numisona",
+      "events": [
+        {
+          "conf": null,
+          "dur": 0.247368,
+          "gain": -18.0,
+          "pan": 0.0,
+          "pitch": 1433.08,
+          "src": {
+            "generation": 0,
+            "row": 0,
+            "table": 0
+          },
+          "t": 0.0,
+          "taps": 1,
+          "timbre": {
+            "brightness": 0.5,
+            "preset": null
+          },
+          "type": "note"
+        },
+        {
+          "conf": null,
+          "dur": 0.3,
+          "gain": -18.0,
+          "pan": 0.0,
+          "pitch": 2003.82,
+          "src": {
+            "generation": 0,
+            "row": 1,
+            "table": 0
+          },
+          "t": 0.5,
+          "taps": 1,
+          "timbre": {
+            "brightness": 0.5,
+            "preset": null
+          },
+          "type": "note"
+        },
+        {
+          "conf": null,
+          "dur": 0.163158,
+          "gain": -18.0,
+          "pan": 0.0,
+          "pitch": 519.89,
+          "src": {
+            "generation": 0,
+            "row": 2,
+            "table": 0
+          },
+          "t": 1.0,
+          "taps": 1,
+          "timbre": {
+            "brightness": 0.5,
+            "preset": null
+          },
+          "type": "note"
+        },
+        {
+          "conf": null,
+          "dur": 0.215789,
+          "gain": -18.0,
+          "pan": 0.0,
+          "pitch": 1090.63,
+          "src": {
+            "generation": 0,
+            "row": 3,
+            "table": 0
+          },
+          "t": 1.5,
+          "taps": 1,
+          "timbre": {
+            "brightness": 0.5,
+            "preset": null
+          },
+          "type": "note"
+        },
+        {
+          "conf": null,
+          "dur": 0.131579,
+          "gain": -18.0,
+          "pan": 0.0,
+          "pitch": 177.44,
+          "src": {
+            "generation": 0,
+            "row": 4,
+            "table": 0
+          },
+          "t": 2.0,
+          "taps": 1,
+          "timbre": {
+            "brightness": 0.5,
+            "preset": null
+          },
+          "type": "note"
+        }
+      ],
+      "gain": 0.0,
+      "id": "slices",
+      "instrument": "mallet",
+      "pan": 0.0,
+      "pitch_range": {
+        "high": 2003.82,
+        "low": -165.0
+      },
+      "role": "data"
+    }
+  ]
+}

@@ -42,6 +42,7 @@ mod office;
 mod pdf;
 pub mod report;
 mod svg;
+pub mod templates;
 mod vector;
 mod xml;
 
@@ -50,7 +51,7 @@ use std::sync::Arc;
 
 use sonarithm_core::engine::{
     CompileContext, CompileError, Engine, EngineManifest, Registrar, RegistryError, Source,
-    SourceKind, SpecFragment,
+    SourceKind, SpecFragment, TemplateProvider,
 };
 use sonarithm_core::{Diagnostic, EngineId, EngineVersion, TableId};
 use sonarithm_data::bundle::SourceKind as DataSourceKind;
@@ -325,7 +326,12 @@ impl Engine<DataBundle> for Plotsona {
                 base: self.base.clone(),
                 budgets: self.budgets,
             }),
-        )
+        )?;
+        let templates: Arc<dyn TemplateProvider<DataBundle>> = Arc::new(templates::ChartTemplates);
+        for template in &templates::TEMPLATES {
+            registrar.template(template.id, Arc::clone(&templates))?;
+        }
+        Ok(())
     }
 }
 

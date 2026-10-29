@@ -58,6 +58,7 @@ Owner: `sonarithm-compiler`.
 | `SNR-COMP-013` | error | Two engines register the same analyzer | Each analyzer ID belongs to one engine; remove one of the registrations. | — |
 | `SNR-COMP-014` | error | Conflicting encoder registration | Register one encoder per engine and mark, and let only one engine claim each mark's default. | — |
 | `SNR-COMP-015` | error | Two engines register the same shaper stage | Each shaper stage (quantize, loudness, spatial, lint) belongs to one engine. | — |
+| `SNR-COMP-016` | error | Two engines register the same template | A template ID belongs to one engine; rename one of them. | — |
 | `SNR-COMP-020` | error | The compiled Score breaks an invariant | This is a bug in an engine; please report it with the spec that triggered it. | — |
 | `SNR-COMP-021` | error | Compile budget exceeded | Use less data, a slower pace or a shorter duration, or raise the budget. | — |
 | `SNR-COMP-022` | warning | Transforms are not applied | Compile with the data layer's `DataBundle`, which applies transforms (03 §6); otherwise the data is used as loaded. | — |
@@ -66,6 +67,10 @@ Owner: `sonarithm-compiler`.
 | `SNR-COMP-025` | error | Transform cannot run | Check the transform's parameters against RFC-0001 §4. | — |
 | `SNR-COMP-026` | error | Dataset not provided | Provide the data under this ID (in Python, `data={"main": df}`), or use a `file` or `inline` source. | — |
 | `SNR-COMP-030` | error | Unknown template | Use a template the registry lists (NUMISONA's and PLOTSONA's chart-type templates), or write `tracks`. | — |
+| `SNR-COMP-031` | error | Invalid template binding | Bind each slot to a field the data has, of the kind the slot takes (numeric or categorical). | — |
+| `SNR-COMP-032` | error | Template slot has no field | Name a field for the slot in `template.bind`, or use data with a compatible field. | — |
+| `SNR-COMP-033` | info | Template binding used | Name slots in `template.bind` to choose other fields. | — |
+| `SNR-COMP-034` | info | Sections taken from a template | A section written in the spec replaces the template's section of the same name; the spec's `transform` runs before the template's. | — |
 | `SNR-COMP-036` | warning | A chart correction was not applied | An edit applies only to the point it was made on, checked by its `was` value; re-make the edit on the current extraction. | — |
 
 ## SNR-DATA
@@ -215,6 +220,7 @@ Owner: `sonarithm-plotsona`. Numbers SNR-ENG-300 to SNR-ENG-399.
 | `SNR-ENG-362` | error | No axes with tick labels were found | Vector charts are read through their axes' tick labels (10 §3.1). If the labels are drawn as outlines rather than text, enter the axes' anchors in `calibration`. | — |
 | `SNR-ENG-363` | info | Pie values are shares in percent | A pie's geometry holds each slice's share of the whole, not the numbers behind it. The shares are exact to the drawing's precision. | — |
 | `SNR-ENG-364` | error | The PDF has no vector chart | The pages hold only images, so the chart must be read by the raster tier (C02),            as an estimate. Use the chart's source file or a vector export if you have one. | — |
+| `SNR-ENG-380` | warning | Experimental chart template | No design rule covers this chart type's sound design yet (pie and stacked bar), so            it may change when a study supports one. Write `tracks` to choose the design            yourself. | SDR-03 |
 
 Owner: `sonarithm-echometric`. Numbers SNR-ENG-600 to SNR-ENG-699.
 
