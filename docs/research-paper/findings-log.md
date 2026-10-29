@@ -407,6 +407,21 @@ A05 (render engine, audio backends, export) uses F-050 to F-069.
 - **Affects:** ADR-0003; OD-05; A11Y-17; 08 §4–5; B02 tree component
 - **Papers:** none yet
 
+### F-046 · NVDA 2026.3 speaks the managed live regions as designed but nothing from the host's UI Automation notifications
+
+- **Date:** 2026-10-29 · **Phase:** A02 · **Type:** accessibility · **Status:** new
+- **Statement:** An agent ran the A02 NVDA walkthrough (steps 1–19) on HW-01 with NVDA 2026.3 and WebView2 156. It read the Speech Viewer, and nobody listened. What it found:
+  - **Live-region route.** Each announcement was spoken once. Ten updates sent within 1 ms gave only "Rapid update 10 of 10", and ten chart steps over 314 ms gave only the last point (supersede, A11Y-17). The assertive alert was spoken.
+  - **Native route.** `UiaRaiseNotificationEvent` on the top-level window's host provider returned success for every call, but NVDA spoke none of them. With both routes on, the text was spoken once.
+  - **Tree.** React Aria's Tree is announced as a "table", with "not selected" on every row. The doubled row name of F-045 appears in browse mode only.
+  - **Chart explorer.** The `role="application"` explorer gives focus mode and stale-point dropping, but NVDA does not speak the role.
+
+  One likely cause for the silent native route: NVDA drops notifications whose sender is not a native UIA element. TODO(verify), for example with NVDA's debug log or a different sender element.
+- **Evidence:** `spikes/tauri-webview/results/a11y-windows-nvda.json`; [gate report, Spike 5](../sdlc/reviews/A02-prototype-gate.md#nvda-agent-driven-speech-viewer-transcript)
+- **Evidence level / confidence:** EV-C / Moderate (one screen reader, one machine; a Speech Viewer transcript with no timing, no listener)
+- **Affects:** OD-05; ADR-0003; A11Y-17; 08 §4–5; B02 tree component; B03 announcer
+- **Papers:** none yet
+
 ### F-070 · CSV ingest of 1M rows × 5 columns takes about 0.51 s on the development laptop and 0.91 s on four E-cores, inside PB-05
 
 - **Date:** 2026-10-19 · **Phase:** A04 · **Type:** benchmark · **Status:** new

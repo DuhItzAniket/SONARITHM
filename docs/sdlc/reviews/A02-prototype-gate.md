@@ -79,7 +79,7 @@ Conditions (conditional go):
 | (6) / A02-T04 determinism | Null residual and ΔLUFS against PB-06 | Pass: bit-identical (owned and Firewheel); `f32::sin` variant −144.5 dBFS | Pass: bit-identical; `f32::sin` variant −150.5 dBFS | Reference | **Pass** |
 | (3) / A02-T05 Tauri IPC | PB-09 on all 3 OSes | Pass: 1 MB p95 11.5–11.8 ms on HW-01, 15.7–20.7 ms on HW-01e, 7.8 ms on CI-WIN | Pass on CI-MAC (VM): p95 8 ms; real Mac pending | Pass on CI-LNX (VM, Xvfb): p95 7 ms; real hardware pending | **Pass** on CI and HW-01; real macOS and Linux hardware pending |
 | (4) / A02-T06 WebGL2 | fps and frame-time distributions (PB-08) in WebView2, WKWebView, WebKitGTK (Intel/AMD/NVIDIA) | Pass on Intel UHD and RTX 4050: 60 fps, ≤ 0.6 ms script (recommended path) | Pending | Pending (owner live USB: Intel, discrete GPU; no AMD GPU available) | **Pass** (WebView2); pending elsewhere |
-| (5) / A02-T07 screen readers | Pass/fail matrix per AT; OD-05 recommendation | Prototype built, UIA smoke test done (F-045); NVDA and Narrator pending | VoiceOver pending | Orca pending | **Pending** |
+| (5) / A02-T07 screen readers | Pass/fail matrix per AT; OD-05 recommendation | Prototype built, UIA smoke test done (F-045). NVDA 2026.3 (agent-driven, 2026-10-29): 16 pass, 2 partial, 1 fail (native route silent, F-046), 1 skipped. Narrator pending | VoiceOver pending | Orca pending | **Pending** (NVDA done) |
 | A02-T08 gate report | Report merged; ADR confirmations recorded; risks updated | This report (draft); proposed risk changes below | — | — | **In review** |
 
 **Gate Definition of Done** (the A02 subset):
@@ -217,7 +217,59 @@ The exclusive-mode accessibility cost (it can silence the screen reader's speech
   - `SliderOutput` is a live region;
   - React Aria adds live regions of its own.
 
-**Verdict: pending.** No screen reader was run. The step-by-step scripts with expected results are in `spikes/tauri-webview/WALKTHROUGH.md`: NVDA and Narrator, Orca, VoiceOver.
+**Verdict: NVDA done (agent-driven); Narrator, Orca and VoiceOver pending.** The step-by-step scripts with expected results are in `spikes/tauri-webview/WALKTHROUGH.md`.
+
+### NVDA (agent-driven, Speech Viewer transcript)
+
+**Setup.** 2026-10-29, HW-01, Windows 11 build 26300:
+
+- NVDA 2026.3 (2026.3.0.58174), installed copy, default settings;
+- WebView2 Runtime 156.0.4314.50;
+- the prototype binary built from the spike (Tauri 2.12.4 in its `Cargo.lock`).
+
+**Method.** The coordinator's agent drove the prototype through desktop control (injected keys and clicks). It read NVDA's Speech Viewer by screenshot after each step, so the "spoken" column is the Speech Viewer text, transcribed by hand. Nobody listened. Evidence: `spikes/tauri-webview/results/a11y-windows-nvda.json`, with the page's announcement log. The prototype's `--out` wrote nothing, because `a11y.html` never calls the host's `report` command.
+
+**Limits.**
+
+- NVDA runs with UI Access, and it ignores injected input to its own windows, so the owner opened the Speech Viewer by hand. The NVDA key could not be pressed.
+- Injected key-downs do not auto-repeat. Step 17's held key was approximated with 10 presses about 35 ms apart.
+- The Speech Viewer has no timing. Interruption, delay and the focus-mode sound are marked "needs owner listening".
+
+| Step | NVDA 2026.3 + WebView2 156.0.4314.50 | What was spoken (Speech Viewer) | Notes |
+|---|---|---|---|
+| 1 | Pass | "SONARITHM A02 spike" · "SONARITHM A02 spike: accessibility prototype clickable banner landmark heading level 1" · "A02 accessibility prototype" · "Throwaway prototype for the screen-reader walkthroughs." … | Browse mode; NVDA began a say-all. In it, tree rows read "Collapse temps.csv, 20 rows temps.csv, 20 rows", "Expand Fields Fields" |
+| 2 | Pass | "Announcement route region Announcement route heading level 2", then Dataset, Transport, Announcement tests, Chart explorer, Announcement log (each "… region … heading level 2"), "no next heading"; `Shift+H`: "Chart explorer region Chart explorer heading level 2" | The level-1 heading is read at `Ctrl+Home` ("banner landmark heading level 1 A02 accessibility prototype"). Each section's name is read twice: region, then heading |
+| 3 | Pass | "main landmark Announcement route region …", "Dataset region …", Transport, Announcement tests, Chart explorer, Announcement log, "no next landmark" | Banner at `Ctrl+Home`; main and its first region share one stop |
+| 4 | Pass | "Announcement route grouping" · "ARIA live region radio button checked 1 of 3"; `Down`: "Native notification (Windows UI Automation) radio button checked 2 of 3" | `Down` changed the selection, so focus mode was on. The focus-mode sound: needs owner listening |
+| 5 | Partial | "Dataset region" · "Dataset table" · "level 1 temps.csv, 20 rows not selected expanded 1 of 1" | The tree is announced as a **table** (tree grid, F-045), not a tree view. The name is not doubled on focus, only in browse mode (step 1). Filed as [#383](https://github.com/DuhItzAniket/SONARITHM/issues/383) (B02-T05, R-33) |
+| 6 | Pass | "level 2 Fields not selected collapsed 1 of 2" · "level 1 temps.csv, 20 rows not selected expanded 1 of 1" · "expanded" · "collapsed" · "Opened fields" | "not selected" on every row (`selectionMode="single"`) |
+| 7 | Pass | "Transport region" · "Transport tool bar" · "Play button"; `Right`: "Stop button", "Loop toggle button not pressed"; `Left`: "Stop button"; `Tab`: "Playback speed, times real time slider 1" | Arrows stay inside the toolbar; `Tab` leaves it |
+| 8 | Pass | "pressed" · "Loop on" · "not pressed" · "Loop off" | |
+| 9 | Pass | "Playing" | Next focus reads "Pause button" |
+| 10 | Pass | "Playback speed, times real time grouping" · "… slider 1" · "1.25" · "1.5" · "1.75" | No double reading from the `<output>` live region |
+| 11 | Pass | "Compiled 4 tracks in 120 milliseconds" | Live route. Once |
+| 12 | Pass | "Rapid update 10 of 10" | Live route. Once: the page sent 10 updates within 1 ms; 1–9 were superseded |
+| 13 | Pass | (a) `Enter` 0.3 s after focus: "Assertive alert button" · "Audio device lost. Playback stopped."; (b) mouse click during "Compiled 4 tracks …": "… Compiled 4 tracks in 120 milliseconds" · "Assertive alert button" · "Audio device lost. Playback stopped." | Live route. Spoken in both variants, after the focus speech. Whether it cut off the earlier speech: needs owner listening. In (a), NVDA's own speech interrupt on `Enter` also stops speech |
+| 14 | **Fail** | Only the focus speech ("Announce once button", "Announce 10 rapid updates button", "Assertive alert button"); **none of the three texts** | Native route. Nothing spoken, after waits of 5–9 s. The page log shows every `announce_native` call succeeded. The 10 rapid notifications were all raised, with no supersede, and the log lists them out of order (F-046). Filed as [#382](https://github.com/DuhItzAniket/SONARITHM/issues/382) (R-33) |
+| 15 | Pass | "Compiled 4 tracks in 120 milliseconds", once | Both routes. Not doubled, but only because the native half is silent in NVDA |
+| 16 | Partial | "Chart explorer: temperature over time" · "Temperature in March, 20 points. Focus the chart, then use Left and Right arrows, Home and End. Press H for help." | Name and description read, and the arrows reach the page (focus mode). The role "application" is not spoken. A note for B04's chart explorer; no issue yet |
+| 17 | Pass | "2 March, 13.4 degrees Celsius, point 2 of 20" through "6 March, 19.5 …, point 6 of 20"; after 10 quick presses only "17 March, 13.3 degrees Celsius, point 17 of 20" | The page sent points 8–17 in 314 ms; stale points were dropped, not queued. A held key (auto-repeat): needs owner |
+| 18 | Pass | "1 March, 12.1 degrees Celsius, point 1 of 20" · "20 March, 19.9 …, point 20 of 20" · "Chart explorer. Left and Right arrows move by one point, …" | |
+| 19 | Pass | `Tab`: the whole announcement log, read as one block; `Shift+H`: "Announcement log heading level 2"; `Shift+Tab`: "Chart explorer: temperature over time" + description; `Left`: "19 March, 18.1 …, point 19 of 20" | Browse mode returned (quick navigation worked), and focus mode returned on re-entry. `Tab` landed on the scrollable log list, which Chromium makes focusable (prototype only) |
+| 20 | Skipped | — | System setting (Windows contrast theme): owner to check |
+
+**Tally:** 16 pass, 2 partial (5, 16), 1 fail (14), 1 skipped (20).
+
+**Reading for OD-05 (steps 11–15).** With NVDA 2026.3 in WebView2 156, the live-region route met every live-region criterion:
+
+- each announcement was spoken once;
+- the rapid burst and the fast chart steps were superseded down to the last value (A11Y-17);
+- the assertive alert was delivered;
+- nothing was dropped that should have been spoken, and nothing was doubled.
+
+The native route, `UiaRaiseNotificationEvent` on the top-level window's host provider, was not spoken at all, although every call returned success. So "Both" behaves like live regions alone, and a hybrid as built adds nothing for NVDA users. One likely cause is that NVDA drops UI Automation notifications whose sender is not a native UIA element; that is TODO(verify), and a different sender element might behave differently. On this evidence the NVDA half supports **live regions only**. The hybrid case still rests on Narrator, the reference consumer of UIA notifications (WALKTHROUGH.md §2, owner). Two things remain unjudged and need the owner listening: timing, and whether the assertive alert cut speech short.
+
+**Decision (2026-10-29, coordinator under the owner's delegation).** [OD-05](../../planning/open-decisions.md) is decided provisionally: live regions are the default route. The native route stays behind the announcer interface (B03-T04), off by default, and is re-evaluated after the Narrator run; the final decision follows Narrator. The two failed or partial steps that affect components are filed under R-33: step 14 as [#382](https://github.com/DuhItzAniket/SONARITHM/issues/382) and step 5 as [#383](https://github.com/DuhItzAniket/SONARITHM/issues/383).
 
 ## Spike 6: determinism (A02-T04)
 
@@ -248,8 +300,8 @@ The exclusive-mode accessibility cost (it can silence the screen reader's speech
 | ADR | Recommendation | Reason |
 |---|---|---|
 | [ADR-0004](../../decisions/0004-audio-backend-and-render-graph.md) own render graph over a cpal-backed `AudioBackend` | **Amend**: confirm the owned graph and record the A02 evidence. Amend the backend part: cpal 0.18 in WASAPI shared mode cannot meet PB-01 on the development laptop, so A05 adds a WASAPI backend option (RAW stream, exclusive mode via `wasapi`) and a per-device latency calibration behind the same `AudioBackend` trait. Also record that the `RenderGraph` contract has a control half and an RT processor | F-030 to F-036, F-039 |
-| [ADR-0002](../../decisions/0002-desktop-shell-tauri.md) Tauri 2 shell | **Keep provisional; no amendment yet.** Its Confirmation section now sets the timing (OD-15): Windows evidence gates B01, and Linux and macOS are due by B03's exit. The Windows evidence supports it (PB-08, PB-09), and IPC passes on all CI runners. The deciding Linux evidence (WebKitGTK frame rates on real GPUs, Orca) is pending; the Electron trigger is not evaluated | F-040 to F-044 |
-| [ADR-0003](../../decisions/0003-frontend-react-and-react-aria.md) React + React Aria Components | **Keep provisional.** The prototype is built and the UI Automation tree is as expected; the screen-reader walkthroughs, which are the confirmation the ADR names, are pending | F-045 |
+| [ADR-0002](../../decisions/0002-desktop-shell-tauri.md) Tauri 2 shell | **Keep provisional; no amendment yet.** Its Confirmation section now sets the timing (OD-15): Windows evidence gates B01, and Linux and macOS are due by B03's exit. The Windows evidence supports it (PB-08, PB-09), and IPC passes on all CI runners. Windows screen-reader evidence: the NVDA walkthrough of 2026-10-29 (16 pass, 2 partial, 1 fail, 1 skipped); it stays provisional until the Narrator run. The deciding Linux evidence (WebKitGTK frame rates on real GPUs, Orca) is pending; the Electron trigger is not evaluated | F-040 to F-044, F-046 |
+| [ADR-0003](../../decisions/0003-frontend-react-and-react-aria.md) React + React Aria Components | **Keep provisional.** The prototype is built and the UI Automation tree is as expected; Windows NVDA evidence (2026-10-29): 16 pass, 2 partial, 1 fail, 1 skipped, with the failures filed as [#382](https://github.com/DuhItzAniket/SONARITHM/issues/382) and [#383](https://github.com/DuhItzAniket/SONARITHM/issues/383). It stays provisional until the Narrator run; Orca and VoiceOver are pending | F-045, F-046 |
 
 Recorded (the coordinator reviews these with the approval the owner delegated):
 
@@ -284,7 +336,7 @@ Everything below is scripted in `spikes/tauri-webview/WALKTHROUGH.md`, which has
 
 | # | Step | Who | Where | Covers |
 |---|---|---|---|---|
-| P1 | NVDA walkthrough, steps 1–20 | Owner | HW-01 | ADR-0003, OD-05, R-02 |
+| P1 | NVDA walkthrough, steps 1–20. **Done 2026-10-29 (steps 1–19, agent-driven, [Spike 5](#nvda-agent-driven-speech-viewer-transcript)).** Left for the owner: step 20, and listening checks on steps 4, 13 and 17 | Coordinator (desktop control); owner for step 20 and the listening checks | HW-01 | ADR-0003, OD-05, R-02 |
 | P2 | Narrator walkthrough, steps 1–19 | Owner | HW-01 | OD-05 (the native route), R-02 |
 | P3 | Ubuntu live USB: IPC (L1), WebGL2 on Intel (L2), the discrete GPU via `DRI_PRIME` (L3), without DMABUF (L4), X11 (L5) | Owner | HW-01 | ADR-0002 Linux trigger, PB-08, PB-09, R-01 |
 | P4 | Orca walkthrough | Owner | HW-01 live USB | ADR-0002 Linux trigger, R-01, R-02 |
