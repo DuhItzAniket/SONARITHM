@@ -23,7 +23,7 @@
 | Decision | Why | Record |
 |---|---|---|
 | Four generic commands instead of one per request | ADR-0017 left the shape to B01-T03; generic handlers keep the command list in the app core, so an Electron host repeats nothing | 09 §2 |
-| `unsafe` COM calls in the host for the accelerator setting | Tauri 2.12 does not expose it (F-170) | [ADR-0023](../../decisions/0023-unsafe-register-desktop-host.md), proposed |
+| `unsafe` COM calls in the host for the accelerator setting | Tauri 2.12 does not expose it (F-170) | [ADR-0025](../../decisions/0025-unsafe-register-desktop-host.md), accepted by the coordinator |
 | The host stays out of the existing Rust CI jobs and gets its own | WebKitGTK and the UI build are only needed there; the other jobs stay as fast as before | ci.yml comments |
 
 ## Findings to log
@@ -32,6 +32,6 @@
 
 ## Next steps
 
-- [ ] Coordinator: accept or amend ADR-0023.
+- [x] Coordinator: ADR-0025 accepted (2026-10-29; numbered 0025, since 0023 and 0024 are reserved).
 - [ ] B02-T03 (frontend test infrastructure), then B02-T04 and T05, then B03-T04.
 - [ ] Owner: the NVDA and Narrator walkthroughs on a nightly build (B01-T09) before any component sign-off.

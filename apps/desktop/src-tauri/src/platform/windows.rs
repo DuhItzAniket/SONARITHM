@@ -2,11 +2,11 @@
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
 //! WebView2 COM calls, the only `unsafe` code in this crate (coding-standards §5 register,
-//! ADR-0023). Invariants: every call is made on the window's thread from Tauri's
+//! ADR-0025). Invariants: every call is made on the window's thread from Tauri's
 //! `with_webview`, on a controller Tauri created and keeps alive for the call; each COM
 //! method returns an `HRESULT` that is checked; interface pointers are reference-counted by
 //! `windows-core` and released when they go out of scope.
-#![expect(unsafe_code, reason = "WebView2 COM methods are unsafe fns (ADR-0023)")]
+#![expect(unsafe_code, reason = "WebView2 COM methods are unsafe fns (ADR-0025)")]
 
 use webview2_com::Microsoft::Web::WebView2::Win32::{
     ICoreWebView2Controller, ICoreWebView2Settings3,

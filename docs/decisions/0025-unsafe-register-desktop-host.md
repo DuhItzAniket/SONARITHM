@@ -1,11 +1,11 @@
 ---
-status: proposed
+status: accepted
 date: 2026-10-29
 decision-makers: ["@DuhItzAniket"]
 consulted: ["coordinator agent (Claude Code), under the owner's delegation of ADR approvals"]
 ---
 
-# 0023 · `sonarithm-desktop` joins the unsafe register for WebView2 and UI Automation calls
+# 0025 · `sonarithm-desktop` joins the unsafe register for WebView2 and UI Automation calls
 
 ## Context and problem statement
 
@@ -29,8 +29,13 @@ windows-rs generates every COM method as an `unsafe fn`. [coding-standards §5](
 
 Chosen option: **A**. The scope is narrow, and the result is checked on every Windows CI run.
 
-* **Scope.** Windows-only COM calls on the webview's controller and window, in `apps/desktop/src-tauri/src/platform/windows.rs`: WebView2 settings Tauri does not expose (now `AreBrowserAcceleratorKeysEnabled`) and, from B03-T04, `UiaRaiseNotificationEvent`. Nothing else in the crate may use `unsafe`. The module carries `#![expect(unsafe_code)]` with this ADR as its reason, so the workspace's `unsafe_code = "deny"` still guards the rest of the crate.
-* **Rules.** The module's doc comment states its invariants: calls run on the window's thread from `with_webview`, on a live controller, and every `HRESULT` is checked. Each call sits in its own block with a `// SAFETY:` comment (§5 rules 1–3).
+* **Scope.** Exactly two Windows-only operations, in the private module `apps/desktop/src-tauri/src/platform/windows.rs` behind a safe API, `#[cfg(windows)]`:
+  1. `ICoreWebView2Settings3::SetAreBrowserAcceleratorKeysEnabled(false)` (B01-T03), with the COM lookups it needs (`ICoreWebView2Controller::CoreWebView2`, `ICoreWebView2::Settings`) and the read-back `AreBrowserAcceleratorKeysEnabled` that the smoke test checks;
+  2. `UiaRaiseNotificationEvent` (B03-T04), with `UiaHostProviderFromHwnd` for the window's provider.
+
+  Any other `unsafe` call widens the scope and needs an update of this ADR.
+* **The rest of the crate.** `main.rs` keeps `#![deny(unsafe_code)]`; only the module carries `#![expect(unsafe_code)]`, with this ADR as its reason.
+* **Rules.** The module's doc comment states its invariants: calls run on the window's thread from `with_webview`, on a valid interface pointer Tauri created and keeps alive, and every `HRESULT` is checked. Each call sits in its own `unsafe` block with a `// SAFETY:` comment (§5 rules 1–3). Failures come back as errors, never as panics or unwraps.
 * **Verification.** Miri does not cover FFI. The Windows `desktop` CI job runs the real app and reads the setting back; the smoke test fails if the keys are still on. B03-T04 adds a UIA notification smoke test on Windows. The page-level key guard stays as defence in depth and covers WKWebView and WebKitGTK.
 
 ### Consequences
@@ -42,7 +47,9 @@ Chosen option: **A**. The scope is narrow, and the result is checked on every Wi
 
 ### Confirmation
 
-The `desktop (windows-latest)` CI job's smoke report must show `browserAccelerators: "disabled"`. The coordinator reviews the register row in coding-standards §5 with this ADR.
+The `desktop (windows-latest)` CI job's smoke report must show `browserAccelerators: "disabled"`; B03-T04 adds a UIA notification smoke test on the Windows runner. The register row in coding-standards §5 points here.
+
+Accepted on 2026-10-29 by the coordinator under the owner's delegation of ADR approvals, with the scope limited to the two operations above, the rest of the crate under `deny(unsafe_code)`, and the page-level guard kept as defence in depth. Numbered 0025 because 0023 and 0024 are reserved in implementation-plan §4 (OD-25's static-parsing rule, the C06-T10 support policy).
 
 ## Pros and cons of the options
 

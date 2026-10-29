@@ -10,6 +10,8 @@
 //! Command line: `--smoke <report.json>` runs the CI smoke test (`smoke.rs`) and exits.
 
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
+// Only `platform/windows.rs` may use `unsafe` (coding-standards §5, ADR-0025).
+#![deny(unsafe_code)]
 
 mod channels;
 mod commands;

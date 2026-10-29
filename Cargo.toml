@@ -82,7 +82,7 @@ sonarithm-plotsona = { path = "crates/engines/sonarithm-plotsona", version = "0.
 # the A02 prototype measured; @tauri-apps/api and @tauri-apps/cli match its minor version.
 tauri = "2.12.4"
 tauri-build = "2.7.3"
-# WebView2's COM interfaces for the settings Tauri does not expose (ADR-0023); the version
+# WebView2's COM interfaces for the settings Tauri does not expose (ADR-0025); the version
 # Tauri's own wry uses.
 webview2-com = "0.39.1"
 anyhow = "1.0.100"          # apps/* and xtask only (coding-standards §4.1)
