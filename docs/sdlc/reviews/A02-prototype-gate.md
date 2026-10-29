@@ -37,7 +37,7 @@ Conditions (conditional go):
 
 | Condition | Owner | Due | Issue |
 |---|---|---|---|
-| NVDA and Narrator walkthroughs on HW-01 (WALKTHROUGH.md §1–2); OD-05 recommendation from steps 11–15 | Owner | Before B01 starts | to open |
+| NVDA and Narrator walkthroughs on HW-01 (WALKTHROUGH.md §1–2); OD-05 recommendation from steps 11–15 | Coordinator (NVDA, through desktop control), owner (Narrator) | Checkpoint (OD-15, 2026-10-29): NVDA early; Narrator before B02-T10; was before B01 | to open |
 | Ubuntu live-USB session on HW-01: WebKitGTK IPC and WebGL2 on the Intel and discrete GPUs, Orca walkthrough (WALKTHROUGH.md §3). A Linux failure that cannot be fixed within one week triggers the Electron fallback (ADR-0002) | Owner | By B03's exit (OD-15, 2026-10-21; was before B01) | to open |
 | macOS session (lab Mac or volunteer): WKWebView IPC and WebGL2, App Nap check, VoiceOver walkthrough (WALKTHROUGH.md §4) | Owner (arranges access) | By B03 (R-22) | to open |
 | A latency plan for PB-01 in A05: a WASAPI RAW or exclusive-mode backend option, a per-device latency calibration, and an acoustic or cable confirmation of the A02 numbers | Audio lead | A05 planning | to open |
@@ -49,6 +49,14 @@ Conditions (conditional go):
 - The Ubuntu live-USB session moves to B03's exit criteria.
 - The macOS session keeps its due date.
 - The Tauri host stays a thin adapter over `sonarithm-app`, so a late Linux failure costs only the host.
+
+**Amended 2026-10-29 ([OD-15](../../planning/open-decisions.md#closed-decisions), owner decision).**
+
+- Gate U is open provisionally: Lane U started before the walkthrough evidence.
+- The NVDA walkthrough runs as a checkpoint. The coordinator drives it through desktop control, with NVDA's Speech Viewer as the transcript.
+- The owner's Narrator walkthrough comes before B02-T10 and before any component is signed off.
+- ADR-0002 and ADR-0003 stay provisional until those results are recorded here. A failure opens rework issues (R-33).
+- Conditions: the thin host; the announcer behind one interface for both OD-05 routes; axe, keyboard tests and this report's UI Automation tree dump in CI for every component.
 
 ## Go/no-go criteria
 

@@ -51,6 +51,8 @@ The **A02 prototype gate** measures:
 
 **Timing (2026-10-21, [OD-15](../planning/open-decisions.md#closed-decisions)).** The Windows evidence gates B01: the WebView2 measurements and the NVDA and Narrator walkthroughs. Confirmation on Linux (WebKitGTK, Orca) and macOS (WKWebView, VoiceOver) is due by B03's exit, and the Electron trigger above applies when the Linux check runs. The Tauri host stays a thin adapter: all logic lives in `sonarithm-app` behind the IPC protocol, so a late switch to Electron replaces only the host, not the app logic or the React code. The decision itself is unchanged.
 
+**Provisional opening (2026-10-29, [OD-15](../planning/open-decisions.md#closed-decisions) amended by the owner).** B01's shell and UI work started before the Windows walkthroughs. The NVDA walkthrough runs as a checkpoint (the coordinator, through desktop control, with NVDA's Speech Viewer as the transcript), and the owner's Narrator walkthrough comes before the first component sign-off (B02-T10). This ADR stays provisional until that evidence is in. A failure leads to rework issues (R-33), not a change of shell, unless the Electron trigger above applies.
+
 ## Pros and cons of the options
 
 ### Electron 44

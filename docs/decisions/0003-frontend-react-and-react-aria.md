@@ -43,6 +43,8 @@ The A02 spike (5) confirms RAC Tree, Slider and Toolbar behaviour with NVDA, Voi
 
 **For the record (2026-10-21):** the A02 prototype ran React 19.3 with React Aria Components 1.22, newer than the React 19.2 named above. The confirmation records the versions it confirms. Confirmation follows the timing in [ADR-0002](0002-desktop-shell-tauri.md#confirmation) ([OD-15](../planning/open-decisions.md#closed-decisions)): Windows first, then VoiceOver and Orca by B03's exit.
 
+**Provisional opening (2026-10-29, [OD-15](../planning/open-decisions.md#closed-decisions) amended by the owner).** Components are built on React Aria before the Windows walkthroughs. Each one ships with axe and keyboard tests, and the A02 UI Automation tree dump (F-045) runs in CI. This ADR stays provisional until the walkthroughs confirm it; a failure leads to rework issues (R-33).
+
 ## Pros and cons of the options
 
 ### Radix / Base UI
