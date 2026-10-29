@@ -13,6 +13,13 @@
 //! is on the wire, and rejects a collection that declares more elements than the bytes
 //! left could hold, so its work stays linear in the input size. Page headers are read
 //! only inside their column chunk, the byte range parquet reads page by page.
+//!
+//! parquet reads a page header's fields by their IDs, whatever wire type the bytes give:
+//! a field 6 (`index_page_header`, a struct) sent as a boolean made it read the next bytes
+//! as a struct, find a huge collection there and spend seconds on a 2 KB file, while this
+//! walk had skipped the same bytes as one boolean (F-169). So the fields parquet.thrift
+//! gives a page header and the structs inside it must carry their declared wire type here;
+//! a mismatch is malformed.
 
 use super::to_u64;
 
@@ -37,6 +44,87 @@ const MAX_DEPTH: u8 = 64;
 
 /// `PageHeader.compressed_page_size` in parquet.thrift.
 const COMPRESSED_PAGE_SIZE: i16 = 3;
+
+/// A field of a parquet.thrift struct whose wire type the walk checks: its ID, its type
+/// code, and for a struct the fields of that struct.
+struct Field {
+    id: i16,
+    kind: u8,
+    fields: &'static [Field],
+}
+
+const fn field(id: i16, kind: u8) -> Field {
+    Field {
+        id,
+        kind,
+        fields: &[],
+    }
+}
+
+const fn struct_field(id: i16, fields: &'static [Field]) -> Field {
+    Field {
+        id,
+        kind: STRUCT,
+        fields,
+    }
+}
+
+/// `Statistics`.
+const STATISTICS: &[Field] = &[
+    field(1, BINARY),
+    field(2, BINARY),
+    field(3, I64),
+    field(4, I64),
+    field(5, BINARY),
+    field(6, BINARY),
+    field(7, BOOL_TRUE),
+    field(8, BOOL_TRUE),
+];
+
+/// `DataPageHeader`.
+const DATA_PAGE_HEADER: &[Field] = &[
+    field(1, I32),
+    field(2, I32),
+    field(3, I32),
+    field(4, I32),
+    struct_field(5, STATISTICS),
+];
+
+/// `DictionaryPageHeader`.
+const DICTIONARY_PAGE_HEADER: &[Field] = &[field(1, I32), field(2, I32), field(3, BOOL_TRUE)];
+
+/// `DataPageHeaderV2`.
+const DATA_PAGE_HEADER_V2: &[Field] = &[
+    field(1, I32),
+    field(2, I32),
+    field(3, I32),
+    field(4, I32),
+    field(5, I32),
+    field(6, I32),
+    field(7, BOOL_TRUE),
+    struct_field(8, STATISTICS),
+];
+
+/// `PageHeader`; `IndexPageHeader` (field 6) has no fields.
+const PAGE_HEADER: &[Field] = &[
+    field(1, I32),
+    field(2, I32),
+    field(COMPRESSED_PAGE_SIZE, I32),
+    field(4, I32),
+    struct_field(5, DATA_PAGE_HEADER),
+    struct_field(6, &[]),
+    struct_field(7, DICTIONARY_PAGE_HEADER),
+    struct_field(8, DATA_PAGE_HEADER_V2),
+];
+
+/// Whether wire type `kind` is the declared type `expected` (either boolean code for a
+/// boolean).
+fn same_type(kind: u8, expected: u8) -> bool {
+    match expected {
+        BOOL_TRUE | BOOL_FALSE => matches!(kind, BOOL_TRUE | BOOL_FALSE),
+        _ => kind == expected,
+    }
+}
 
 /// The magic bytes that end a Parquet file with a plaintext footer.
 const PARQUET_MAGIC: &[u8] = b"PAR1";
@@ -83,7 +171,7 @@ pub(super) fn check_column_chunk(file: &[u8], start: i64, length: i64) -> Result
     let mut input = Input::new(chunk);
     while input.remaining() > 0 {
         let size = input
-            .structure(MAX_DEPTH, Some(COMPRESSED_PAGE_SIZE))
+            .typed(MAX_DEPTH, Some(COMPRESSED_PAGE_SIZE), PAGE_HEADER)
             .map_err(|reason| format!("a page header is malformed: {reason}"))?
             .ok_or_else(|| "a page header has no compressed size".to_owned())?;
         let size = u64::try_from(size).map_err(|_| "a page has a negative size".to_owned())?;
@@ -98,7 +186,7 @@ pub(super) fn check_column_chunk(file: &[u8], start: i64, length: i64) -> Result
 /// a larger window.
 pub(super) fn page_header(window: &[u8]) -> Result<Option<(usize, u64)>, String> {
     let mut input = Input::new(window);
-    match input.structure(MAX_DEPTH, Some(COMPRESSED_PAGE_SIZE)) {
+    match input.typed(MAX_DEPTH, Some(COMPRESSED_PAGE_SIZE), PAGE_HEADER) {
         Ok(size) => {
             let size = size.ok_or_else(|| "a page header has no compressed size".to_owned())?;
             let size = u64::try_from(size).map_err(|_| "a page has a negative size".to_owned())?;
@@ -167,6 +255,18 @@ impl<'a> Input<'a> {
     /// Walks a struct up to its stop byte. When `wanted` names an `i32` field, returns its
     /// last value.
     fn structure(&mut self, depth: u8, wanted: Option<i16>) -> Result<Option<i64>, String> {
+        self.typed(depth, wanted, &[])
+    }
+
+    /// [`Input::structure`] for a struct whose `fields` must carry their declared wire
+    /// types; fields it does not list are skipped by their wire type, as parquet skips
+    /// fields it does not know.
+    fn typed(
+        &mut self,
+        depth: u8,
+        wanted: Option<i16>,
+        fields: &'static [Field],
+    ) -> Result<Option<i64>, String> {
         if depth == 0 {
             return Err(too_deep());
         }
@@ -185,8 +285,19 @@ impl<'a> Input<'a> {
                     .checked_add(i16::from(delta))
                     .ok_or_else(|| "a field id is out of range".to_owned())?,
             };
+            let declared = fields.iter().find(|f| f.id == id);
+            if let Some(declared) = declared
+                && !same_type(kind, declared.kind)
+            {
+                return Err(format!(
+                    "field {id} has wire type {kind}, not its declared type {}",
+                    declared.kind
+                ));
+            }
             if Some(id) == wanted && kind == I32 {
                 found = Some(self.zigzag()?);
+            } else if let Some(declared) = declared.filter(|d| d.kind == STRUCT) {
+                self.typed(depth - 1, None, declared.fields)?;
             } else {
                 self.value(kind, depth - 1, false)?;
             }
@@ -345,6 +456,39 @@ mod tests {
         assert!(check_column_chunk(&page, -1, 2).is_err());
         let no_size = [0x10 | I32, 4, STOP];
         assert!(check_column_chunk(&no_size, 0, 3).is_err());
+    }
+
+    #[test]
+    fn page_header_fields_must_carry_their_declared_wire_types() {
+        // F-169: field 6 (`index_page_header`, a struct) sent as a boolean. parquet would
+        // read the following bytes as that struct; the walk refuses the mismatch.
+        let page = [0x30 | I32, 4, 0x30 | BOOL_TRUE, STOP, 0xaa, 0xbb];
+        let err = check_column_chunk(&page, 0, 6).unwrap_err();
+        assert!(err.contains("field 6 has wire type 1"), "{err}");
+        // A boolean nested in the statistics struct may carry either boolean code, and a
+        // field the schema does not list (id 20, long form) is skipped by its wire type.
+        let page = [
+            0x10 | I32,
+            0, // type: DATA_PAGE
+            0x10 | I32,
+            2, // uncompressed_page_size: 1
+            0x10 | I32,
+            4,             // compressed_page_size: 2
+            0x20 | STRUCT, // data_page_header
+            0x10 | I32,
+            2,                 // num_values: 1
+            0x40 | STRUCT,     // statistics
+            0x70 | BOOL_FALSE, // is_max_value_exact: false
+            STOP,
+            STOP,
+            I32,
+            0x28,
+            0, // field 20: i32 0
+            STOP,
+            0xaa,
+            0xbb,
+        ];
+        assert_eq!(check_column_chunk(&page, 0, 19), Ok(()));
     }
 
     #[test]
