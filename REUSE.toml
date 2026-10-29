@@ -90,6 +90,14 @@ precedence = "closest"
 SPDX-FileCopyrightText = "2026 SONARITHM contributors"
 SPDX-License-Identifier = "MIT OR Apache-2.0"
 
+# The desktop app's icons (B01-T03): rendered from icons/icon.svg by `pnpm tauri icon`;
+# binary images cannot carry SPDX headers.
+[[annotations]]
+path = ["apps/desktop/src-tauri/icons/*.png", "apps/desktop/src-tauri/icons/*.icns", "apps/desktop/src-tauri/icons/*.ico"]
+precedence = "closest"
+SPDX-FileCopyrightText = "2026 SONARITHM contributors"
+SPDX-License-Identifier = "MIT OR Apache-2.0"
+
 # A02 spikes (spikes/, throwaway; roadmap A02). Source files carry SPDX headers. These cover
 # lockfiles and binary assets (code licence) and measurement results (data licence, ADR-0010).
 [[annotations]]

@@ -1,0 +1,11 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    // Node runs the tests on the TypeScript sources (type stripping), which needs explicit
+    // `.ts` extensions in imports; Vite accepts them too.
+    "allowImportingTsExtensions": true,
+    "erasableSyntaxOnly": true,
+    "types": ["node", "vite/client"]
+  },
+  "include": ["src", "test", "vite.config.ts"]
+}

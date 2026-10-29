@@ -14,6 +14,7 @@ yanked = "deny"
 ignore = [
     # { id = "RUSTSEC-YYYY-NNNN", reason = "why, and a link to the tracking issue" },
     { id = "RUSTSEC-2026-0249", reason = "smartstring is unmaintained (not a vulnerability); it comes only through rhai, which evaluates sandboxed transform expressions at compile time. Tracked in https://github.com/DuhItzAniket/SONARITHM/issues/115" },
+    { id = "RUSTSEC-2024-0370", reason = "proc-macro-error is unmaintained (not a vulnerability); a compile-time proc macro reached only through Tauri's Linux GTK 3 bindings (glib-macros 0.18). Tracked in https://github.com/DuhItzAniket/SONARITHM/issues/378" },
 ]
 
 [licenses]

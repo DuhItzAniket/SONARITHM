@@ -1,12 +1,23 @@
 # pnpm workspace for the frontend (docs/architecture/02-repository-and-crate-layout.md §1).
-# apps/desktop joins in B01.
 packages:
+  - "apps/desktop"
   - "packages/*"
 
 # One version of each tool for the whole workspace; packages refer to it as "catalog:".
 catalog:
   # Fluent messages in the UI (@sonarithm/i18n); the Rust side is fluent-bundle (12 §5).
   "@fluent/bundle": ^0.19.1
+  # The desktop shell (B01-T03): the versions the A02 prototype ran (ADR-0002, ADR-0003).
+  # The Tauri packages match the `tauri` crate's minor version.
+  "@tauri-apps/api": 2.12.4
+  "@tauri-apps/cli": 2.12.4
+  "@types/react": 19.3.0
+  "@types/react-dom": 19.3.0
+  "@vitejs/plugin-react": 6.1.2
+  react: 19.3.1
+  react-aria-components: 1.22.1
+  react-dom: 19.3.1
+  vite: 8.3.4
   # Node types for package tests run with `node --test` (Node 24, the CI line).
   "@types/node": ^24.19.2
   # ESLint stays on 9.x until eslint-plugin-jsx-a11y supports ESLint 10 (its peer range ends at ^9).

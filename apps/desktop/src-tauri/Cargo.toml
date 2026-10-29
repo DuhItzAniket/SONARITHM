@@ -1,0 +1,35 @@
+[package]
+name = "sonarithm-desktop"
+description = "SONARITHM desktop host: a thin Tauri 2 adapter over the sonarithm-app IPC protocol."
+version.workspace = true
+edition.workspace = true
+# Tauri's own minimum (02 §2); the core crates keep the workspace MSRV.
+rust-version = "1.90"
+repository.workspace = true
+license.workspace = true
+# Shipped as installers (B01-T09), never as a crate.
+publish = false
+
+[[bin]]
+name = "sonarithm-desktop"
+path = "src/main.rs"
+
+[build-dependencies]
+tauri-build.workspace = true
+
+[dependencies]
+serde.workspace = true
+serde_json.workspace = true
+# The host only translates IPC (OD-15): no crate below sonarithm-app except sonarithm-core
+# types (`cargo xtask check-deps`).
+sonarithm-app.workspace = true
+tauri.workspace = true
+
+# Turns off WebView2's browser accelerator keys (keyboard §12.3); the only `unsafe` in this
+# crate, in `src/platform/windows.rs` (coding-standards §5, ADR-0025).
+[target.'cfg(windows)'.dependencies]
+webview2-com.workspace = true
+windows.workspace = true
+
+[lints]
+workspace = true

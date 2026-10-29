@@ -38,6 +38,7 @@ Write an ADR when a decision is hard to reverse, affects several crates or engin
 | [0020](0020-profile-format-v1.md) | Profile format v1 and the layers of effective settings | accepted (2026-10-21, coordinator under owner delegation) | B03-T08 |
 | [0021](0021-spec-v0.2.md) | Spec v0.2 per RFC-0004 | accepted (2026-10-26, coordinator under owner delegation) | C01-T01's code half: types, 0.2 schema, migration, doc 04, corpus and doc-example tests |
 | [0022](0022-clean-room-raster-digitizer.md) | Clean-room re-implementation of the raster digitizer | accepted (2026-10-26, coordinator under owner delegation) | Accepted by the coordinator before C02-T03; every C02 raster PR lists its register sources |
+| [0025](0025-unsafe-register-desktop-host.md) | `sonarithm-desktop` joins the unsafe register for WebView2 and UI Automation calls | accepted (2026-10-29, coordinator under owner delegation) | B01-T03 (browser accelerator keys), B03-T04 (UIA notifications) |
 
 ## Process
 

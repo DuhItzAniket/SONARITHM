@@ -1,0 +1,5 @@
+# SPDX-FileCopyrightText: 2026 SONARITHM contributors
+# SPDX-License-Identifier: MIT OR Apache-2.0
+# Tauri's generated schemas and build output.
+src-tauri/
+dist/

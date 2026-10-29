@@ -112,6 +112,12 @@ const LAYERS: &[(&str, &[&str])] = &[
     ),
 ];
 
+/// Hosts that are thin adapters over the app core (02 §3 rule 6, OD-15): their only
+/// workspace dependencies are these, so another host (Electron, a test harness) replaces
+/// only the host. The layering graph would allow anything below `sonarithm-app`.
+const THIN_HOSTS: &[(&str, &[&str])] =
+    &[("sonarithm-desktop", &["sonarithm-app", "sonarithm-core"])];
+
 /// Crates `sonarithm-core` must not reach (§3 rule 1): async runtimes, audio I/O,
 /// file-system and network crates. Extend the list when a new crate of these kinds is
 /// considered anywhere in the workspace.
@@ -240,6 +246,8 @@ pub(crate) enum Rule {
     Three,
     /// Rule 5: heavy dependencies live in leaf crates behind features.
     Five,
+    /// Rule 6: a host only translates IPC (OD-15).
+    Six,
     /// The layering graph.
     Layering,
 }
@@ -251,6 +259,7 @@ impl fmt::Display for Rule {
             Self::Two => "02 §3 rule 2",
             Self::Three => "02 §3 rule 3",
             Self::Five => "02 §3 rule 5",
+            Self::Six => "02 §3 rule 6",
             Self::Layering => "02 §3 graph",
         })
     }
@@ -405,6 +414,7 @@ pub(crate) fn check(crates: &[CrateDeps]) -> Vec<Violation> {
         core_isolation(krate, &mut findings);
         engine_independence(krate, &mut findings);
         restricted_crates(krate, &mut findings);
+        thin_host(krate, &mut findings);
     }
     for krate in crates {
         layering(krate, &mut findings);
@@ -541,6 +551,23 @@ fn restricted_crates(krate: &CrateDeps, findings: &mut Findings) {
                     "{} must be an optional dependency behind a non-default feature",
                     restricted.name
                 ),
+            );
+        }
+    }
+}
+
+fn thin_host(krate: &CrateDeps, findings: &mut Findings) {
+    let Some((_, allowed)) = THIN_HOSTS.iter().find(|(name, _)| *name == krate.name) else {
+        return;
+    };
+    for dep in krate.declared.iter().filter(|dep| dep.workspace) {
+        if !allowed.contains(&dep.name.as_str()) {
+            findings.add(
+                &krate.name,
+                Some(&dep.name),
+                Rule::Six,
+                "a host depends only on sonarithm-app and sonarithm-core types; move the                  logic into sonarithm-app (OD-15)"
+                    .to_owned(),
             );
         }
     }
@@ -862,6 +889,33 @@ mod tests {
         assert_eq!(
             rules_broken(&crates),
             vec![broken("sonarithm-dsp", "sonarithm-render", Rule::Layering)]
+        );
+    }
+
+    #[test]
+    fn od_15_the_desktop_host_may_use_the_app_core_and_core_types() {
+        let crates = [
+            krate("sonarithm-desktop")
+                .internal("sonarithm-app")
+                .internal("sonarithm-core"),
+            krate("sonarithm-app"),
+            krate("sonarithm-core"),
+        ];
+        assert_eq!(rules_broken(&crates), vec![]);
+    }
+
+    #[test]
+    fn od_15_the_desktop_host_depending_below_the_app_core_fails() {
+        let crates = [
+            krate("sonarithm-desktop")
+                .internal("sonarithm-app")
+                .internal("sonarithm-render"),
+            krate("sonarithm-app"),
+            krate("sonarithm-render"),
+        ];
+        assert_eq!(
+            rules_broken(&crates),
+            vec![broken("sonarithm-desktop", "sonarithm-render", Rule::Six)]
         );
     }
 
