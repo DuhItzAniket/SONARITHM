@@ -1,0 +1,37 @@
+{
+  "name": "@sonarithm/desktop",
+  "version": "0.0.0",
+  "private": true,
+  "description": "The SONARITHM desktop app: the Tauri host (src-tauri, crate sonarithm-desktop) and the React UI (src)",
+  "license": "MIT OR Apache-2.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc --noEmit && vite build",
+    "tauri": "tauri",
+    "lint": "eslint --max-warnings 0 . && prettier --check . && stylelint --allow-empty-input \"src/**/*.css\"",
+    "typecheck": "tsc --noEmit",
+    "test": "node --test \"test/**/*.test.ts\""
+  },
+  "dependencies": {
+    "@sonarithm/i18n": "workspace:*",
+    "@sonarithm/ipc": "workspace:*",
+    "@sonarithm/ui": "workspace:*",
+    "@tauri-apps/api": "catalog:",
+    "react": "catalog:",
+    "react-aria-components": "catalog:",
+    "react-dom": "catalog:"
+  },
+  "devDependencies": {
+    "@tauri-apps/cli": "catalog:",
+    "@types/node": "catalog:",
+    "@types/react": "catalog:",
+    "@types/react-dom": "catalog:",
+    "@vitejs/plugin-react": "catalog:",
+    "eslint": "catalog:",
+    "prettier": "catalog:",
+    "stylelint": "catalog:",
+    "typescript": "catalog:",
+    "vite": "catalog:"
+  }
+}

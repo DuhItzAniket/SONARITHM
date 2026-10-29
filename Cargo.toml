@@ -24,6 +24,7 @@ members = [
     "crates/engines/sonarithm-sonotrace",
     "crates/engines/sonarithm-plotsona",
     "apps/cli",
+    "apps/desktop/src-tauri",
     "bindings/python",
     "xtask",
 ]
@@ -77,6 +78,13 @@ sonarithm-plotsona = { path = "crates/engines/sonarithm-plotsona", version = "0.
 
 # Third-party crates. Each addition needs a justification in its PR and must pass
 # `cargo deny check` (docs/engineering/supply-chain-and-licensing.md).
+# The desktop host (B01-T03, ADR-0002): only sonarithm-desktop. Tauri 2.12 is the version
+# the A02 prototype measured; @tauri-apps/api and @tauri-apps/cli match its minor version.
+tauri = "2.12.4"
+tauri-build = "2.7.3"
+# WebView2's COM interfaces for the settings Tauri does not expose (ADR-0023); the version
+# Tauri's own wry uses.
+webview2-com = "0.39.1"
 anyhow = "1.0.100"          # apps/* and xtask only (coding-standards §4.1)
 # CLI argument parsing (11 §2). No `color` feature: help and errors stay plain text for
 # screen readers (A11Y), and no terminal-detection dependencies.

@@ -135,7 +135,7 @@ flowchart BT
 3. **Only `sonarithm-audio` may depend on `cpal` or `wasapi`** (the Windows backend of [ADR-0016](../decisions/0016-windows-low-latency-backend.md)). **Only `sonarithm-axonote-live` may depend on `midir` or open sockets for OSC output** (C04-T01; `check-deps` enforces this from C04-T06). Only `sonarithm-stream`, `sonarithm-app` and app or binding crates may depend on `tokio`.
 4. **The compiler, engines, render and DSP crates must build for `wasm32-unknown-unknown`.** CI builds them (A01 onward).
 5. **Heavy or exotic dependencies live in leaf crates behind features:** ML runtimes, wasmtime, MQTT, SQL, LGPL codecs, and `allocation-counter`, whose counting global allocator stays in tests and in `sonarithm-audio`'s opt-in `count-allocations` feature (A05-T10). Default features stay permissively licensed (see [supply chain policy](../engineering/supply-chain-and-licensing.md)).
-6. **Apps contain no business logic.** If the CLI and the desktop app both need it, it goes in `sonarithm-app` or below.
+6. **Apps contain no business logic.** If the CLI and the desktop app both need it, it goes in `sonarithm-app` or below. The desktop host is a thin adapter (OD-15): `cargo xtask check-deps` fails if `sonarithm-desktop` depends on any workspace crate other than `sonarithm-app` and `sonarithm-core` (B01-T03).
 7. **`xtask` never ships.** It may depend on the compiler, `sonarithm-export`, `sonarithm-app` and the crates below them, to read code tables and generate schemas and IPC types (A03, A05, B01); no crate depends on it.
 
 ## 4. Feature flags (planned)

@@ -150,6 +150,7 @@ Format: `SNR-<AREA>-<NNN>`, for example `SNR-SPEC-012`. Lint diagnostics also ca
 | `sonarithm-render` | Real-time primitives not covered by `rtrb`, `triple_buffer`, `basedrop` or `atomic_float` | Miri, plus shuttle or loom for concurrent code |
 | `sonarithm-dsp` | SIMD kernels behind safe wrappers, each with a scalar reference implementation | Miri on the scalar path and on wrappers; equivalence property tests |
 | `sonarithm-audio` | Platform FFI not covered by cpal (for example a future WASAPI exclusive-mode path) | Integration tests on each OS; Miri does not cover FFI |
+| `sonarithm-desktop` | Windows COM calls in `src/platform/windows.rs` only: WebView2 settings Tauri does not expose, and UI Automation notifications (B03-T04). Proposed in [ADR-0023](../decisions/0023-unsafe-register-desktop-host.md) | The Windows `desktop` CI smoke test reads each setting back; Miri does not cover FFI |
 | `sonarithm-py` | FFI at the Arrow C Data Interface boundary where the safe API cannot express the transfer | pytest round-trip tests; Miri does not cover FFI |
 
 `sonarithm-core`, `sonarithm-spec`, `sonarithm-data`, `sonarithm-compiler` and all engine crates never contain `unsafe`.

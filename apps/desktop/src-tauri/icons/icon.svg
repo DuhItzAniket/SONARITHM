@@ -1,0 +1,14 @@
+<!-- SPDX-FileCopyrightText: 2026 SONARITHM contributors -->
+<!-- SPDX-License-Identifier: MIT OR Apache-2.0 -->
+<!-- Placeholder app icon until the engine identity work (B02-T11, OD-03): five bars of a
+     sound level on a flat ground, no gradient or shadow (design-language §3). -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024">
+  <rect width="1024" height="1024" rx="160" fill="#1d2430"/>
+  <g fill="#e8edf5">
+    <rect x="212" y="452" width="80" height="120" rx="16"/>
+    <rect x="352" y="332" width="80" height="360" rx="16"/>
+    <rect x="492" y="212" width="80" height="600" rx="16"/>
+    <rect x="632" y="372" width="80" height="280" rx="16"/>
+    <rect x="772" y="482" width="80" height="60" rx="16"/>
+  </g>
+</svg>

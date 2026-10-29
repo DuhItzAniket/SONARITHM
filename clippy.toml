@@ -4,3 +4,5 @@ allow-unwrap-in-tests = true
 allow-expect-in-tests = true
 allow-dbg-in-tests = true
 allow-print-in-tests = true
+# Webview product names in the desktop host's docs (B01-T03), plus clippy's defaults.
+doc-valid-idents = ["WebView2", "WKWebView", "WebKitGTK", ".."]

@@ -43,6 +43,8 @@ Tauri offers three primitives with very different performance ([notes/05 §1](..
 
 **Rules.** No JSON events on hot paths. No per-frame IPC: the playhead is extrapolated in the UI ([06 §9](06-audio-engine.md#9-latency-and-clock-synchronization)). Every payload type is generated from Rust (ts-rs), so the frontend never hand-writes protocol types.
 
+**Handler shape (B01-T03, as ADR-0017 left to it).** The host has four generic commands, not one per request: `ipc_dispatch` (a JSON `Request` to `App::dispatch`), `ipc_binary` (to `App::dispatch_binary`, replying with a raw `ipc::Response`), `ipc_subscribe` (a Tauri channel for one ADR-0017 channel; returns an ID) and `ipc_unsubscribe`. A request that is not a protocol message fails with the app core's `SNR-APP-009`. Commands run on Tauri's worker pool, never on the window's thread. The UI side is `createTauriTransport` in `apps/desktop/src/ipc/`; it rejects a binary reply that arrives as JSON (F-042). Tauri's per-command permissions therefore cannot tell requests apart (ADR-0017, consequences); the capability allows only these commands and no plugin.
+
 ### 2.1 Command surface (initial)
 
 | Command | Returns | Phase |
@@ -97,7 +99,9 @@ The UI calls an `IpcTransport` interface (`invoke`, `subscribe`, `binary`). The 
 
 | Control | Setting |
 |---|---|
-| Content Security Policy | `default-src 'self'`; no remote scripts or styles; `connect-src` limited to the IPC origin; no `unsafe-eval` |
+| Content Security Policy | `default-src 'self'`; no remote scripts or styles; `connect-src` limited to the IPC origins (`ipc: http://ipc.localhost`, without which binary IPC silently falls back to JSON, F-042); no `unsafe-eval` or `unsafe-inline`; `object-src`, `base-uri`, `form-action` and `frame-ancestors` closed (`apps/desktop/src-tauri/tauri.conf.json`) |
+| Navigation | The host refuses every navigation away from the bundled UI's origin (`navigation.rs`, NFR-04 tests) |
+| Browser accelerator keys | Off: WebView2's `AreBrowserAcceleratorKeysEnabled` is set to false and read back in the smoke test ([ADR-0023](../decisions/0023-unsafe-register-desktop-host.md)); a page-level guard covers every webview (keyboard §12.3) |
 | Remote content | None. The app never loads remote URLs in the webview |
 | Tauri capabilities | Minimal permission sets per window. **No shell plugin.** File system access only through user-initiated dialogs, and only for paths the user chose |
 | IPC validation | Every command validates its inputs in Rust and returns typed errors. No path traversal from UI-supplied strings |

@@ -883,3 +883,12 @@ A05 (render engine, audio backends, export) uses F-050 to F-069.
 - **Evidence level / confidence:** EV-C / Strong for these paths. The Parquet footer is walked without a schema, so a wire-type mismatch there would still reach parquet; no fuzz input has shown one yet, TODO(verify) with a schema for `FileMetaData`. Other `svgtypes` conversions (smooth curves, quadratics) emit one segment each and are bounded by the work budget
 - **Affects:** C01-T07, A04 (Parquet source), NFR-05 (untrusted input), 12 §6; possible upstream reports to `svgtypes` (a lazy or bounded arc conversion) and `parquet` (type-checked field reads)
 - **Papers:** none yet
+
+### F-170 · Tauri 2.12 cannot turn off WebView2's browser accelerator keys, although wry can
+
+- **Date:** 2026-10-29 · **Phase:** B01 · **Type:** engineering (accessibility) · **Status:** new
+- **Statement:** WebView2 enables browser accelerator keys by default: F5 and Ctrl+R reload, Ctrl+F finds, F7 offers caret browsing, Alt+Left goes back, and F12 opens developer tools when they are enabled. Each of these would take the UI away from a keyboard or screen-reader user (keyboard §12.3). wry 0.57 has `with_browser_accelerator_keys(false)`, but Tauri 2.12.4's `WebviewWindowBuilder` and its runtime do not pass the option through, so the host sets `ICoreWebView2Settings3::AreBrowserAcceleratorKeysEnabled` itself through `with_webview` and reads it back. That needs `unsafe` COM calls ([ADR-0023](../decisions/0023-unsafe-register-desktop-host.md)). Tauri's `zoom_hotkeys_enabled` is already off by default. A page-level guard that calls `preventDefault` covers WKWebView and WebKitGTK too, but on its own it cannot be trusted for keys WebView2 handles before the page sees them.
+- **Evidence:** source read of `tauri` 2.12.4, `tauri-runtime-wry` 2.12.2 and `wry` 0.57.0 (no `browser_accelerator_keys` outside wry); the `desktop` CI job's smoke report (`browserAccelerators`)
+- **Evidence level / confidence:** EV-C / Strong for the API gap; which keys a page can block in WebView2 is not measured, TODO(verify) during the NVDA walkthrough
+- **Affects:** B01-T03, KB-04, A11Y-05, keyboard §12.3, ADR-0023
+- **Papers:** none yet
