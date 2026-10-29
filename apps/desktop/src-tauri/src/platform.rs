@@ -13,11 +13,19 @@ use serde::Serialize;
 #[serde(rename_all = "camelCase")]
 pub(crate) enum Accelerators {
     /// Turned off, and read back as off (WebView2).
+    #[cfg_attr(
+        all(not(windows), not(test)),
+        expect(dead_code, reason = "only WebView2 has the setting")
+    )]
     Disabled,
     /// This webview has no browser accelerator keys (WKWebView, WebKitGTK).
     #[cfg_attr(windows, expect(dead_code, reason = "only WKWebView and WebKitGTK"))]
     None,
     /// WebView2 refused the setting.
+    #[cfg_attr(
+        all(not(windows), not(test)),
+        expect(dead_code, reason = "only WebView2 has the setting")
+    )]
     Failed,
 }
 
