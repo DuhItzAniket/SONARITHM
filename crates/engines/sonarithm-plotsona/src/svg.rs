@@ -284,6 +284,58 @@ fn text_of(node: Node<'_, '_>, style: &Style) -> Option<Text> {
     })
 }
 
+/// The largest arc a path may draw. The path simplifier turns an arc into cubic segments
+/// eagerly, and their number grows with the arc's size: its radius, or, when the radius is
+/// too small to reach the end point, half the distance to it, which SVG scales the radius up
+/// to. A radius of 10^48 made it allocate gigabytes, and an end point 10^35 away ran for
+/// minutes, before PLOTSONA saw one segment (F-169). Bounding the radius and both ends of
+/// every arc by a billion units, more than any drawing, bounds the work.
+const MAX_ARC: f64 = 1e9;
+
+/// Refuses a path with an arc too large to simplify (or not numbers). The current point is
+/// tracked through relative commands, so an arc's start is checked as well as its end.
+fn check_arcs(d: &str) -> Result<(), Box<Diagnostic>> {
+    use svgtypes::PathSegment as S;
+    let within = |v: f64| v.abs() <= MAX_ARC;
+    let (mut cur, mut start) = ((0.0_f64, 0.0_f64), (0.0_f64, 0.0_f64));
+    for segment in svgtypes::PathParser::from(d) {
+        let Ok(segment) = segment else { break };
+        let to = |abs: bool, x: f64, y: f64| if abs { (x, y) } else { (cur.0 + x, cur.1 + y) };
+        let next = match segment {
+            S::MoveTo { abs, x, y } => {
+                start = to(abs, x, y);
+                start
+            }
+            S::LineTo { abs, x, y }
+            | S::CurveTo { abs, x, y, .. }
+            | S::SmoothCurveTo { abs, x, y, .. }
+            | S::Quadratic { abs, x, y, .. }
+            | S::SmoothQuadratic { abs, x, y } => to(abs, x, y),
+            S::HorizontalLineTo { abs, x } => (if abs { x } else { cur.0 + x }, cur.1),
+            S::VerticalLineTo { abs, y } => (cur.0, if abs { y } else { cur.1 + y }),
+            S::ClosePath { .. } => start,
+            S::EllipticalArc {
+                abs, rx, ry, x, y, ..
+            } => {
+                let end = to(abs, x, y);
+                let ok = within(rx)
+                    && within(ry)
+                    && [cur.0, cur.1, end.0, end.1].into_iter().all(within);
+                if !ok {
+                    return Err(Box::new(Diagnostic::new(
+                        &codes::MALFORMED,
+                        "An SVG path draws an arc more than a billion units across, beyond any \
+                         drawing; the file cannot be read.",
+                    )));
+                }
+                end
+            }
+        };
+        cur = next;
+    }
+    Ok(())
+}
+
 fn shape_of(
     node: Node<'_, '_>,
     name: &str,
@@ -340,6 +392,7 @@ fn shape_of(
         _ => {
             let d = node.attribute("d").unwrap_or_default();
             work.spend(crate::budget::len64(d.len()))?;
+            check_arcs(d)?;
             for segment in SimplifyingPathParser::from(d) {
                 let Ok(segment) = segment else { break };
                 match segment {

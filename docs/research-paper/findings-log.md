@@ -862,3 +862,24 @@ A05 (render engine, audio backends, export) uses F-050 to F-069.
 - **Evidence level / confidence:** EV-C / Strong for these two exporters; other PDF producers (matplotlib, Office, LaTeX) not yet checked, TODO(verify) in C01-T11
 - **Affects:** C01-T08, C01-T11, C02 (OCR-free tick reading in vector PDFs)
 - **Papers:** none yet
+
+### F-168 · A chart page's `Date.UTC` with an out-of-range argument overflowed the literal reader
+
+- **Date:** 2026-10-27 · **Phase:** C01 · **Type:** engineering (security) · **Status:** new
+- **Statement:** The nightly `html_page` fuzz target (run 40289971584) found a 645-byte page whose Highcharts options call `Date.UTC(1013, -5666…6)` with a 77-digit month. PLOTSONA's script-free literal reader computed the time in `i64` and panicked on overflow (a debug-build abort; release builds would have wrapped to a wrong date). JavaScript itself gives `NaN` for any time beyond ±8.64 × 10¹⁵ ms (its `TimeClip`, about ±275,000 years). The reader now rejects arguments and carried years past that range, sums in `i128`, and gives `null` (a gap) for an out-of-range time, as a chart drawn by JavaScript would show nothing there. The crash input is committed as the fuzz seed `seed-regression-date-utc-overflow.html` and replayed by a unit test.
+- **Evidence:** `chartjson::literal::tests::dates_outside_javascripts_range_are_gaps_not_overflows`, `chartjson::tests::fuzz_regressions_read_without_panicking`; the fix PR
+- **Evidence level / confidence:** EV-C / Strong for this path; other arithmetic on parsed numbers in the extractors is bounded by the point and work budgets, and the nightly fuzz targets keep running on it
+- **Affects:** C01-T06, NFR-05 (untrusted input), 12 §6
+- **Papers:** none yet
+
+### F-169 · Fuzzing found two decoders that trusted what the input declared: SVG arc sizes and Parquet page-header wire types
+
+- **Date:** 2026-10-27, extended 2026-10-29 · **Phase:** C01 · **Type:** engineering (security) · **Status:** new
+- **Statement:** Two cases, each fixed by checking the input before a third-party decoder sees it:
+  - **SVG arcs.** The `svg_chart` fuzz target found Plotly pie slices whose arcs were enormous: once a radius of about 2.4 × 10⁴⁸ (2.4 GB allocated, over libFuzzer's 2,048 MB limit), and once a normal radius with an end point about 10³⁵ away, which SVG enlarges the radius to reach (over the 10 s timeout). `svgtypes`' simplifying path parser converts an arc to cubic Béziers eagerly, and the segment count grows with the arc's size. PLOTSONA now scans each path first, tracking the current point through relative commands, and refuses an arc whose radius or either end lies beyond 10⁹ units, or is not a number (`SNR-ENG-307`).
+  - **Parquet page headers.** The `columnar_read` target found a 2 KB file that kept parquet busy for about 1.7 s in a release build (over the timeout with sanitizers). One data page header sent field 6 (`index_page_header`, a struct) with a boolean wire type. The data layer's Thrift walk (#146, F-071) skipped it as a one-byte boolean, but parquet reads a known field by its ID whatever the wire type, so it parsed the following bytes as a struct and ran into a huge collection. The walk now checks the declared wire type of every field parquet.thrift gives a page header and the structs inside it (data page v1 and v2, dictionary page, statistics), and refuses a mismatch as malformed, in 0.2 ms.
+  - Each input is a committed `seed-regression-*` fuzz seed, replayed by a test (`chartjson::tests::fuzz_regressions_read_without_panicking` in PLOTSONA, `fuzz_regressions` in `sonarithm-data`).
+- **Evidence:** the tests above; `source::thrift::tests::page_header_fields_must_carry_their_declared_wire_types`; nightly run 40845510574; the fix PR
+- **Evidence level / confidence:** EV-C / Strong for these paths. The Parquet footer is walked without a schema, so a wire-type mismatch there would still reach parquet; no fuzz input has shown one yet, TODO(verify) with a schema for `FileMetaData`. Other `svgtypes` conversions (smooth curves, quadratics) emit one segment each and are bounded by the work budget
+- **Affects:** C01-T07, A04 (Parquet source), NFR-05 (untrusted input), 12 §6; possible upstream reports to `svgtypes` (a lazy or bounded arc conversion) and `parquet` (type-checked field reads)
+- **Papers:** none yet
