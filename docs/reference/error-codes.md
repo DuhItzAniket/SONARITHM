@@ -297,3 +297,8 @@ Owner: `sonarithm-spec`.
 | `SNR-SPEC-070` | error | Unknown field | Name a field of the data, or declare it in `data.fields`. | — |
 | `SNR-SPEC-071` | error | Field type not compatible with the channel | Map nominal fields to timbre and quantitative fields to pitch, duration or rate. | SDR-25 |
 | `SNR-SPEC-080` | info | Default applied | The compiler filled in a default; write the key to choose another value. | — |
+| `SNR-SPEC-090` | error | Not a correction file this version reads | A correction file has `"format": "sonarithm-corrections"` and a version this SONARITHM reads (1.x). A file from a newer major version needs a newer SONARITHM. | — |
+| `SNR-SPEC-091` | error | The correction file is malformed | Fix the key at the reported pointer. Every edit has an `id` (e1, e2, …, unique), an `op`, a `series`, and `point` and `was` for move, delete and retype; `+e<n>` refers to an `add` earlier in the file. | — |
+| `SNR-SPEC-092` | error | The correction file is too large | A correction file holds at most 16 MiB, 100 000 edits, 1 000-character notes and a 4 MiB image; split the corrections or leave the image out. | — |
+| `SNR-SPEC-093` | error | The correction file path is not allowed | Name the correction file by a path relative to the spec, without `..` past the spec's folder, a drive letter or a URL, so the spec carries no user paths. | — |
+| `SNR-SPEC-094` | warning | The correction file is from a newer version | Keys this version does not know were ignored; saving writes this version and drops them. | — |

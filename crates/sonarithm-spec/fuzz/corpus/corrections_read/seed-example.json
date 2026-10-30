@@ -1,0 +1,15 @@
+{
+  "format": "sonarithm-corrections",
+  "version": "1.0",
+  "chart": {
+    "sha256": "9f2c000000000000000000000000000000000000000000000000000000e41a00",
+    "name": "rain.png",
+    "extractor": "sonarithm-plotsona/raster",
+    "extractorVersion": "0.1.0"
+  },
+  "edits": [
+    { "op": "move", "id": "e1", "series": "Series 2", "point": 4, "was": { "x": "May", "y": 61.2 }, "to": { "y": 64 }, "before": { "class": "cv_estimate", "confidence": 0.41 } },
+    { "op": "add", "id": "e2", "series": "Series 1", "to": { "x": "Jun", "y": 12.5 } },
+    { "op": "delete", "id": "e3", "series": "Series 1", "point": "+e2", "was": { "x": "Jun", "y": 12.5 }, "before": { "class": "user_edited" }, "note": "legend swatch" }
+  ]
+}
