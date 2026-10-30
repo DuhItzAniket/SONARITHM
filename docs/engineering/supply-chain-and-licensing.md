@@ -298,6 +298,7 @@ Applies from D04 (ML extraction and AI assist) ([notes 06](../research/notes/06-
 | Fonts (IBM Plex Sans and Mono) | `OFL-1.1` | Ship the licence and copyright notice with the fonts; do not sell the fonts alone; check the Reserved Font Name clause before shipping modified or subset files. Since B02-T02, IBM's unmodified WOFF2 files and licence file are in `packages/ui/fonts/`, the only `OFL-1.1` files in `REUSE.toml`; tests check their upstream SHA-256. IBM's npm packages are not dependencies: their `postinstall` script sends telemetry to IBM ([F-133](../research-paper/findings-log.md)) |
 | Icons (Lucide) | `ISC`; icons derived from Feather are also `MIT` | Include both the Lucide ISC notice and the Feather MIT notice in the app's About → Licenses view and the third-party notices ([lucide.dev/license](https://lucide.dev/license)) |
 | Example datasets (`examples/`) | CC BY 4.0, separately from code | A per-dataset source and attribution file; no personal data |
+| Colormaps viridis and magma (`@sonarithm/viz`, B04-T01) | `CC0-1.0` (Smith, van der Walt and Firing, [BIDS/colormap](https://github.com/BIDS/colormap)) | None required. The authors ask for credit, given in the source file and the third-party notices. cividis waits on OD-29 |
 | Earcons and instrument samples (`assets/`) | Self-made, `CC0-1.0` or CC BY | Record source and licence for each file |
 | SoundFonts (AXONOTE) | Varies by file | Check each file's licence before bundling |
 | HRTF datasets (SOFA, D03) | Varies by database | Check each database's licence before bundling |

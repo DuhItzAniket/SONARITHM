@@ -975,6 +975,18 @@ A05 (render engine, audio backends, export) uses F-050 to F-069.
 - **Evidence:** `crates/engines/sonarithm-plotsona/src/raster/extract/tests.rs` (`raster_bar_charts_read_within_two_percent`, `raster_scatter_charts_report_their_markers`, which print each render's figures); `raster/marks/tests.rs`; the C02-T04 PR
 - **Evidence level / confidence:** EV-C / Moderate. Clean renders of synthetic data, well-separated markers and five bars; overlapping markers in dense scatters, stacked and grouped bars, horizontal bars, JPEG artefacts and anchors clicked by people are not measured (C02-T08)
 - **Affects:** C02 exit, FR-007, FR-008, DS-007, F-180, 10 §3
+
+### F-174 · Okabe–Ito keeps 3:1 and stays apart under CVD only if light themes darken its warm hues to browns
+
+- **Date:** 2026-10-30 · **Phase:** B04 · **Type:** accessibility · **Status:** new
+- **Statement:** Taken as published, four Okabe–Ito colours fall below 3:1 on the light surfaces (orange, sky blue, yellow and reddish purple; §6), and black fails on dark. Darkening each colour only to 3:1 makes the light palette's lightness so uniform that, under deuteranopia, series 4 (yellow) and 6 (vermillion) come within ΔE_OK 0.011 of each other, about half a just-noticeable difference. The derivation in `packages/ui/tokens/series.ts` changes only OKLCH lightness, and darkens one member of the closest pair until every pair is at least 0.03 apart under protanopia, deuteranopia and tritanopia. The result:
+  - Closest pairs: light 0.031, high contrast light 0.031, dark 0.075, high contrast dark 0.051.
+  - The light theme's orange, yellow and vermillion become #6C4200, #443E00 and #762300: they lose the identity their names suggest.
+  - 0.04 is not reachable on light: the loop pushes colours to black.
+  - Achromatopsia is not reachable at all for eight hues at 3:1, so the dash pattern, marker and label of every series carry it (§6).
+- **Evidence:** `packages/ui/test/series.test.ts` (`dl_x08 the series stay apart under every dichromacy`, `a11y_25 the series meet 3 to 1 …`, `the recipe's series are what the derivation gives`); `node packages/ui/tokens/series-print.ts`; the cvd.ts simulation of F-173
+- **Evidence level / confidence:** EV-C / Moderate. A simulation, not a test with viewers; the 0.03 threshold (1.5 just-noticeable differences) is a proposal, flagged INFER in the code
+- **Affects:** B04-T01, design-language §6, DL-X08, A11Y-25; legends and direct labels (B04), a lighter light-theme plot background if the browns are judged unacceptable
 - **Papers:** none yet
 
 ### F-175 · The Windows network-deny harness blamed a test binary for the probe's attempts, through a reused process ID
