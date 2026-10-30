@@ -256,6 +256,21 @@ Engine colours are identity, not semantics. They appear only in small chips and 
 | Selection in plots | Accent as a band or outline | Data marks are never recoloured to show selection. |
 | Estimates | Hollow marker plus "estimated" in the readout | DL-P13. |
 
+**As built (B04-T01).**
+
+- **Series tokens.** `series-1..8` are tokens in every theme. Each is Okabe–Ito with only OKLCH lightness changed, by the derivation in `packages/ui/tokens/series.ts`:
+  - Every series reaches 3:1 on `surface-0` and `surface-1` (4.5:1 in high contrast, never less than in the standard theme).
+  - While two series are nearer than ΔE_OK 0.03 under protanopia, deuteranopia or tritanopia, one of them moves further from the background.
+  - Black is the theme's `text-2` in every theme (DL-X07).
+  - The hue order holds; the largest hue drift is 8.6°, from the gamut mapping's final clip.
+  - Closest pairs: dark 0.075, light 0.031, high contrast dark 0.051, high contrast light 0.031.
+  - On light surfaces orange, yellow and vermillion become dark brown, olive and red-brown ([F-174](../research-paper/findings-log.md)).
+  - In forced colours every series is `CanvasText`, and dash patterns tell them apart.
+- **Plot.** `@sonarithm/viz`'s `Plot` draws the series in their tokens, each with its own dash pattern, plus a legend of line samples.
+  - It is one image named by the summary's L1 and described by its L2 (A11Y-01).
+  - It is not focusable, and it has no hover readout.
+- **Colormaps.** viridis and magma ship as 256-entry lookup tables (CC0). cividis waits on OD-29.
+
 A diverging map is not chosen yet; B04 selects one with the same CVD and perceptual-uniformity criteria.
 
 ## 7. Typography, spacing and shape

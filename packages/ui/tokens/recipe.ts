@@ -47,7 +47,19 @@ export const SIGNALS = [
   "signal-ok",
 ] as const;
 
-/** The semantic colour tokens of design-language §5.2, in table order. */
+/** The categorical series colours of design-language §6, in Okabe–Ito order. */
+export const SERIES = [
+  "series-1",
+  "series-2",
+  "series-3",
+  "series-4",
+  "series-5",
+  "series-6",
+  "series-7",
+  "series-8",
+] as const;
+
+/** The semantic colour tokens of design-language §5.2, in table order, then the series (§6). */
 export const COLOR_TOKENS = [
   ...SURFACES,
   "text-1",
@@ -58,6 +70,7 @@ export const COLOR_TOKENS = [
   "accent",
   "focus",
   ...SIGNALS,
+  ...SERIES,
 ] as const;
 
 export type ColorToken = (typeof COLOR_TOKENS)[number];
@@ -189,6 +202,65 @@ export const RECIPE: Readonly<
     highContrastDark: fixed(0.86, 0.16, 150),
     highContrastLight: fixed(0.46, 0.13, 150),
   },
+  // Series (§6, B04-T01): Okabe–Ito with only lightness changed, written out by
+  // `node tokens/series-print.ts` (the derivation in `series.ts`, checked by a test): at least 3:1 on the plot
+  // backgrounds (4.5:1 in high contrast) and apart under every dichromacy.
+  // Okabe–Ito orange.
+  "series-1": {
+    dark: fixed(0.753, 0.1576, 76.77),
+    light: fixed(0.418, 0.1576, 76.77),
+    highContrastDark: fixed(0.753, 0.1576, 76.77),
+    highContrastLight: fixed(0.418, 0.1576, 76.77),
+  },
+  // Okabe–Ito sky blue.
+  "series-2": {
+    dark: fixed(0.735, 0.1174, 236.18),
+    light: fixed(0.64, 0.1174, 236.18),
+    highContrastDark: fixed(0.735, 0.1174, 236.18),
+    highContrastLight: fixed(0.56, 0.1174, 236.18),
+  },
+  // Okabe–Ito bluish green.
+  "series-3": {
+    dark: fixed(0.62, 0.1295, 165.46),
+    light: fixed(0.62, 0.1295, 165.46),
+    highContrastDark: fixed(0.62, 0.1295, 165.46),
+    highContrastLight: fixed(0.535, 0.1295, 165.46),
+  },
+  // Okabe–Ito yellow.
+  "series-4": {
+    dark: fixed(0.902, 0.1721, 105.04),
+    light: fixed(0.357, 0.1721, 105.04),
+    highContrastDark: fixed(0.902, 0.1721, 105.04),
+    highContrastLight: fixed(0.352, 0.1721, 105.04),
+  },
+  // Okabe–Ito blue.
+  "series-5": {
+    dark: fixed(0.532, 0.1313, 244.05),
+    light: fixed(0.532, 0.1313, 244.05),
+    highContrastDark: fixed(0.572, 0.1313, 244.05),
+    highContrastLight: fixed(0.512, 0.1313, 244.05),
+  },
+  // Okabe–Ito vermillion.
+  "series-6": {
+    dark: fixed(0.621, 0.1705, 47.51),
+    light: fixed(0.381, 0.1705, 47.51),
+    highContrastDark: fixed(0.621, 0.1705, 47.51),
+    highContrastLight: fixed(0.376, 0.1705, 47.51),
+  },
+  // Okabe–Ito reddish purple.
+  "series-7": {
+    dark: fixed(0.679, 0.1177, 346.32),
+    light: fixed(0.659, 0.1177, 346.32),
+    highContrastDark: fixed(0.679, 0.1177, 346.32),
+    highContrastLight: fixed(0.579, 0.1177, 346.32),
+  },
+  // Okabe–Ito black, as the theme's neutral text-2 (DL-X07).
+  "series-8": {
+    dark: fixed(0.79, 0.0036, 67.77),
+    light: fixed(0.399, 0.0043, 67.7),
+    highContrastDark: fixed(0.949, 0, 89.88),
+    highContrastLight: fixed(0.222, 0, 89.88),
+  },
 };
 
 /**
@@ -224,6 +296,12 @@ export const PAIRS: readonly PairRule[] = [
   { foregrounds: ["accent"], backgrounds: SURFACES, minimum: 3 },
   // Signals are drawn as marks with an icon or text; signal text uses text-1 (§5.3).
   { foregrounds: SIGNALS, backgrounds: SURFACES, minimum: 3 },
+  // Series marks on the plot backgrounds (§6; WCAG 1.4.11). High contrast aims at 4.5:1.
+  {
+    foregrounds: SERIES,
+    backgrounds: ["surface-0", "surface-1"],
+    minimum: 3,
+  },
 ];
 
 /**
@@ -246,6 +324,15 @@ export const FORCED_COLORS: Readonly<Record<ColorToken, string>> = {
   "signal-warning": "CanvasText",
   "signal-error": "CanvasText",
   "signal-ok": "CanvasText",
+  // Plots in forced colours tell series apart by dash, marker and label (§6).
+  "series-1": "CanvasText",
+  "series-2": "CanvasText",
+  "series-3": "CanvasText",
+  "series-4": "CanvasText",
+  "series-5": "CanvasText",
+  "series-6": "CanvasText",
+  "series-7": "CanvasText",
+  "series-8": "CanvasText",
 };
 
 /**
