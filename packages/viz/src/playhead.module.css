@@ -1,0 +1,14 @@
+/* SPDX-FileCopyrightText: 2026 SONARITHM contributors */
+/* SPDX-License-Identifier: MIT OR Apache-2.0 */
+
+/* The playhead (B04-T04): a 2 px line in the playhead signal colour on its own compositor
+   layer, moved by transform only, so a frame repaints nothing under it. */
+.playhead {
+  position: absolute;
+  inset-block: 0;
+  inset-inline-start: 0;
+  inline-size: var(--focus-ring-width);
+  background: var(--signal-playhead);
+  visibility: hidden;
+  will-change: transform;
+}

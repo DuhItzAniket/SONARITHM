@@ -87,6 +87,12 @@
 - **perf project.** The test was run once locally to check the plumbing, and its numbers are not recorded. CI reports them; the trace is written to `packages/ui/.perf/`, which git ignores.
 - **F-044 GPU setting.** Asked the coordinator to approve a `gpu` settings field; this PR holds that part.
 
+## B04-T04: playhead, UI side (2026-10-30)
+
+- `PlayheadClock` and `Playhead` in `@sonarithm/viz`. The anchor's `hostTimeS` is on the device clock (cpal), which the page cannot map onto `performance.now()`, so the clock works on receive times with a minimum-delay filter.
+- The jump threshold is 50 ms of position: a 250 ms draft would have ignored a short backward seek while playing.
+- The latency field on the anchor waits on the coordinator's approval; the B04-T04 PR carries both halves.
+
 ## Next steps
 
 - [ ] Commit the screenshot baselines from the first CI run's `visual-baselines` artifact.
