@@ -76,6 +76,6 @@
 - [ ] Owner: the first-release steps in release-process.md (crates.io first publish and trusted publishers, PyPI and TestPyPI pending publishers, the `release` environment, the GitHub App, Zenodo, author names and ORCID), then the tag v0.1.0-alpha (#84, #129).
 - [ ] Owner: the three-person quickstart test (NFR-12) and the screen-reader checks of the CLI and the notebook display (#129).
 - [ ] After the first DOI: the concept DOI in `CITATION.cff` and the README.
-- [ ] Owner: OD-14 (cargo-binstall inside release-plz/action is GPL-3.0) before the first release PR from release-plz.
-- [ ] OD-11 (Python API docs tool) was not decided in A07: the package documents its API with typed stubs, docstrings and its README for the alpha.
+- [x] OD-14 (cargo-binstall inside release-plz/action is GPL-3.0): closed by replacing the action (#184).
+- [x] OD-11 (Python API docs tool) deferred to C06 (open-decisions); the package documents its API with typed stubs, docstrings and its README for the alpha.
 - [ ] `cargo clean` in this worktree after the phase lands (dev-environment "Disk usage").

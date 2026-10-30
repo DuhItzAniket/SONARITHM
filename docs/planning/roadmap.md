@@ -345,12 +345,14 @@ Code signing (Windows Artifact Signing or alternative; Apple Developer ID + nota
 
 | Version | Gate / phase | Channel | Contents |
 |---|---|---|---|
-| `0.1.0-alpha` | A07 | crates.io, PyPI, GitHub | Core, NUMISONA, CLI, Python |
+| `0.1.0-alpha` | A07 | crates.io, PyPI, GitHub | Core, NUMISONA, CLI, Python; as released, also ECHOMETRIC and four experimental crates (note below) |
 | `0.2.0-alpha` | A08 | same | + ECHOMETRIC harness v0, replication gallery |
 | `0.3.0`–`0.4.0` | B03, B05 | + desktop nightly | Desktop app preview |
 | `0.5.0-beta` | Gate B | + desktop beta (signed only if certificates are ready by B07; signing is a C06 deliverable) | AUDAXIS, SONOTRACE, tutorial, ACR v0 |
 | `1.0.0` | Gate C | stable | PLOTSONA, CURVASONA, AXONOTE, ECHOMETRIC v1 |
 | `1.x` / `2.0.0` | Stage D | stable | Research engines, plugins (2.0 if the plugin API forces breaking changes) |
+
+**Note (2026-10-30): `0.1.0-alpha` carries more than planned.** The owner chose to release `v0.1.0-alpha` from main of 2026-10-30 instead of a Stage A snapshot. That way the release includes the fixes merged since Stage A, among them the fuzzing fixes for untrusted chart and Parquet input (#374). By then the facade `sonarithm` depended on `sonarithm-audaxis`, `sonarithm-sonotrace`, `sonarithm-plotsona` and `sonarithm-i18n`, and crates.io refuses a crate whose dependencies are not published. So those four are published too, as experimental crates: their APIs can change in any release before 1.0. `sonarithm-echometric` is also published, because the CLI's `study` commands need it (A08-T03). The desktop app, `sonarithm-app`, `sonarithm-speech` and `sonarithm-stream` are not published. The later rows still mark when each engine is declared ready: AUDAXIS and SONOTRACE at Gate B, PLOTSONA at Gate C. Record: [A07 phase review](../sdlc/reviews/A07-phase-review.md), [release process](../engineering/release-process.md).
 
 ## 7. How to change this roadmap
 

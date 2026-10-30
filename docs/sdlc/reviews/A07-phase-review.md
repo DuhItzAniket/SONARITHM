@@ -1,6 +1,6 @@
 # A07 phase review: CLI, Python package and first release
 
-> **Status:** Final for the code (2026-10-21); the release itself waits for the owner. **Phase:** A07. **Author:** A07 agent session (Claude Code) for the project lead. **Reviewers:** coordinator session (owner's delegate), @DuhItzAniket.
+> **Status:** Final for the code (2026-10-21; release scope updated 2026-10-30); the release itself waits for the owner. **Phase:** A07. **Author:** A07 agent session (Claude Code) for the project lead. **Reviewers:** coordinator session (owner's delegate), @DuhItzAniket.
 > **Related:** [reviews README](README.md) · [roadmap A07](../../planning/roadmap.md#a07--cli-python-package-and-first-release) · [worklog: A07](../worklog/2026-10-21-a07-cli-python-release.md) · [11 bindings, CLI](../../architecture/11-bindings-cli-plugins.md) · [release process](../../engineering/release-process.md)
 
 ## Summary
@@ -53,6 +53,18 @@ Waivers requested: none. Criteria 1 (upload) and 2 depend on the publish, which 
 | Wheels | 3 OSes × Python 3.10 and 3.14 | 6 of 6 test jobs green | GitHub-hosted runners | Met |
 | Dry-run release | succeeds | `cargo publish --workspace --dry-run --locked` packaged and verify-built all 11 publishable crates | HW-01; CI `release-plz / dry-run` (green from #182) | Met |
 
+### Release scope: what v0.1.0-alpha publishes (2026-10-30)
+
+The roadmap's release table plans `0.1.0-alpha` as the core, NUMISONA, the CLI and the Python package. On 2026-10-30 the owner chose to release from that day's main instead of a Stage A snapshot. That way the release includes the fixes merged since Stage A, such as the fuzzing fixes for untrusted chart and Parquet input (#374). On that main the facade depends on `sonarithm-audaxis`, `sonarithm-sonotrace`, `sonarithm-plotsona` and `sonarithm-i18n`, and crates.io refuses a crate whose dependencies are not published. So the release publishes 16 crates:
+
+| | Crates |
+|---|---|
+| Published, stable for the alpha | `sonarithm`, `sonarithm-core`, `sonarithm-spec`, `sonarithm-data`, `sonarithm-compiler`, `sonarithm-dsp`, `sonarithm-render`, `sonarithm-audio`, `sonarithm-export`, `sonarithm-numisona`, `sonarithm-echometric` (the CLI's `study` commands need it), `sonarithm-cli` |
+| Published, **experimental** (APIs may change in any release before 1.0) | `sonarithm-audaxis`, `sonarithm-sonotrace`, `sonarithm-plotsona`, `sonarithm-i18n` |
+| Not published | `sonarithm-app`, `sonarithm-desktop`, `sonarithm-speech`, `sonarithm-stream`, `sonarithm-py` (PyPI wheels instead), `xtask` |
+
+No published crate depends on an unpublished one (`cargo metadata`). The changelog section marks the experimental code, and says that the desktop app is not in the release. A dated note in the roadmap's release table records the deviation.
+
 ### Release gate: performance budgets
 
 The owner decided the budgets that A05 left open in the coordinator session on 2026-10-21: "Accept A05's recommendations for v0.1.0-alpha: defer PB-01 to B03, waive PB-03 for alpha with a follow-up before Gate B, accept PB-02 with a 128-frame rerun later, and accept PB-06." The measurements are A05's ([A05 phase review](A05-phase-review.md)).
@@ -92,14 +104,14 @@ The owner decided the budgets that A05 left open in the coordinator session on 2
 | Data-point steps in `play` | Steps are one second until navigation exists | B03 | — |
 | The perceptual lint behind `sonarithm lint` | ECHOMETRIC | C05 | — |
 | Wheels for Linux aarch64 and macOS x86_64 | Untestable on hosted runners without emulation; the three tested platforms first | B07 | — |
-| OD-11: the Python API docs tool (pdoc or Sphinx) | The alpha documents the API with typed stubs, docstrings and the package README; a generated reference belongs with the documentation site (OD-13) | Owner's choice; proposed C06 | — |
+| OD-11: the Python API docs tool (pdoc or Sphinx) | The alpha documents the API with typed stubs, docstrings and the package README; a generated reference belongs with the documentation site (OD-13) | C06 (deferred 2026-10-21) | — |
 
 ## Decisions
 
 | ADR / RFC | Title | Status |
 |---|---|---|
 | — | No new ADR. Contract-relevant choices stayed additive: the `dataset` source kind exists in spec v0.1 (RFC-0001); `Compiled.provenance` and `CompilerData::provenance_mix` are additive; no IR, manifest or IPC change | — |
-| OD-14 | cargo-binstall (GPL-3.0) inside release-plz/action: accept for CI tools, or replace the action with the dry run's checksum-verified download | Open (owner) |
+| OD-14 | cargo-binstall (GPL-3.0) inside release-plz/action | Closed 2026-10-21: the action was replaced with the checksum-verified download in every job (#184); allowing GPL build tools would be the owner's licensing decision |
 
 Local decisions are in the worklog (PyO3 0.29, in-memory layout normalization, release-plz layout, CLI archives without dist).
 
@@ -142,8 +154,7 @@ Local decisions are in the worklog (PyO3 0.29, in-memory layout normalization, r
 | Screen-reader check of the CLI and the notebook display | Owner | Gate A | #129 |
 | Fill in author names and ORCID in `CITATION.cff` and `.zenodo.json` | Owner | before the tag | #129 |
 | Add the concept DOI to `CITATION.cff` and the README after the first DOI | Owner or agent | after the release | — |
-| Decide OD-14 (cargo-binstall in release-plz/action) | Owner | before the first release PR from release-plz | — |
-| Decide OD-11 (Python API docs tool) or move its date | Owner | C06 | — |
+| Choose the Python API docs tool (OD-11, deferred to C06 on 2026-10-21) | Core lead | C06 | — |
 
 ## Sign-off
 
