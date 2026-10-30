@@ -15,6 +15,7 @@ import { KeyboardReference } from "../commands/KeyboardReference.tsx";
 import type { Scope } from "../commands/scopes.ts";
 import { activeScopes } from "../commands/scopes.ts";
 import { useLocalizer } from "../i18n.ts";
+import { Preferences } from "../preferences/Preferences.tsx";
 import { TransportBar } from "../transport/TransportBar.tsx";
 import { useTransport } from "../transport/useTransport.ts";
 import styles from "./App.module.css";
@@ -55,9 +56,14 @@ export function App({
   useCommand("help.keyboard", () => {
     setReferenceScopes(activeScopes(document.activeElement).scopes);
   });
-  // Stop all audio from any scope (A11Y-15); B01-T08 adds earcons and self-voicing.
+  // Stop all audio from any scope, even in a dialog (A11Y-15, T-13): sonification,
+  // earcons and self-voicing, through the app core's `stop_all` (B01-T08).
   useCommand("transport.stopAll", () => {
-    void client?.call({ command: "transport_stop" }).catch(() => undefined);
+    void client?.call({ command: "stop_all" }).catch(() => undefined);
+  });
+  const [preferencesOpen, setPreferencesOpen] = useState(false);
+  useCommand("app.preferences", () => {
+    setPreferencesOpen(true);
   });
 
   useEffect(() => {
@@ -128,6 +134,11 @@ export function App({
             </TabPanel>
           </Tabs>
         }
+      />
+      <Preferences
+        client={client}
+        isOpen={preferencesOpen}
+        onOpenChange={setPreferencesOpen}
       />
       <CommandPalette
         isOpen={paletteOpen}

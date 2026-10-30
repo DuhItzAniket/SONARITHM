@@ -163,6 +163,13 @@ The UI calls an `IpcTransport` interface (`invoke`, `subscribe`, `binary`). The 
 3. If autosave exists, recovery is offered. Otherwise the app opens the last project or an **empty workspace** with keyboard focus in the data tree. There is no splash screen and no marketing panel ([design-language](../design/design-language.md)).
 4. The first-run experience offers the built-in tutorial (B07) as a single, dismissible, accessible prompt.
 
+**As built (B01-T08): devices, volume and stop all audio.**
+
+- **Stop all audio.** `transport.stopAll` (Ctrl+Period, Cmd+Period) calls `stop_all` from every region and inside dialogs; it stops sonification, earcons and self-voicing, and never moves the focus. In the render graph it acts in the next block and fades over 20 ms (sound-design §5). Output is silent after one block, the fade and the limiter's 2.1 ms look-ahead, about 28 ms at 48 kHz and 256 frames: inside T-13's interaction budget, though the plan's "within one audio block" wording is stricter.
+- **Preferences.** `app.preferences` (Ctrl+Comma, Cmd+Comma) opens a Preferences dialog. Its Audio section picks the output device (`devices_list`, `device_select`) and sets the sonification volume from −60 to 0 dB (`settings_set`), said in decibels.
+- **The volume is SONARITHM's own level.** It is the render graph's master gain, and no audio backend has a system-volume API; the dialog says so in words.
+- **Device messages.** Device changes and losses are app-core announcements (Fluent `announce-audio-device-changed`, `announce-audio-lost`), so the existing announcement feed speaks and logs them.
+
 **As built (B01-T07).**
 
 - **Start-up never waits for a driver.** The app core loads its settings and answers requests without calling the audio driver; the device opens on the first play. A scenario checks this with a null driver that takes 2 s per call: start-up and the first requests finish sooner, and only the first play waits.

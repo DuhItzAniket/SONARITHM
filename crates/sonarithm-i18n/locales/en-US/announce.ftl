@@ -200,3 +200,17 @@ announce-legend-cues =
                *[no] No context cues
             }
     }
+
+## Audio output (B01-T08, HS-05): the device changed or failed. $device is the new device's
+## name; $detail is the system's message; $paused is yes when playback was paused by it.
+
+announce-audio-device-changed =
+    { $paused ->
+        [yes] Audio device changed to { $device }. Playback is paused.
+       *[no] Audio device changed to { $device }.
+    }
+announce-audio-lost =
+    { $paused ->
+        [yes] Audio output stopped: { $detail }. Playback is paused.
+       *[no] Audio output stopped: { $detail }.
+    }

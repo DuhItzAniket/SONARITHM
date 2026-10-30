@@ -1,0 +1,25 @@
+/* SPDX-FileCopyrightText: 2026 SONARITHM contributors */
+/* SPDX-License-Identifier: MIT OR Apache-2.0 */
+
+/* The Preferences dialog (B01-T08): one section per area, fields stacked. */
+.section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  min-inline-size: 20rem;
+}
+
+.heading {
+  margin: 0;
+  color: var(--text-1);
+  font-size: var(--type-13-size);
+  font-weight: var(--weight-semibold);
+  line-height: var(--type-13-line);
+}
+
+.note {
+  margin: 0;
+  color: var(--text-2);
+  font-size: var(--type-12-size);
+  line-height: var(--type-12-line);
+}
