@@ -29,6 +29,8 @@
 #![forbid(unsafe_code)]
 #![deny(missing_docs)]
 
+#[cfg(test)]
+mod accuracy;
 pub mod budget;
 pub mod calibrate;
 mod chartjson;
