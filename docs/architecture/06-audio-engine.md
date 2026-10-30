@@ -204,7 +204,7 @@ The **Score IR is the strict artifact** (byte-identical). Audio is compared with
 
 | Failure | Behaviour |
 |---|---|
-| Device lost or changed | The stream stops. The control thread rebuilds on the new default device and keeps the transport position. The UI announces "Audio device changed to …" |
+| Device lost or changed | The stream stops. The control thread rebuilds on the new default device and keeps the transport position. The app core announces "Audio device changed to …" (or "Audio output stopped: …"), assertively, through the sequencer, so it is spoken and logged in words (B01-T08, HS-05) |
 | xrun | Counted in engine state. Repeated xruns trigger a diagnostic suggesting a larger buffer |
 | Panic in RT code | Policy: RT code is panic-free by construction (no indexing without proof, no `unwrap`). The backend callback wrapper catches unwinds, outputs silence, sets a fatal flag, and the control thread tears the stream down and reports it |
 | Plan build failure | The previous plan keeps playing; a diagnostic is shown |

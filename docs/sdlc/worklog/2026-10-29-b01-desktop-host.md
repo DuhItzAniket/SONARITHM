@@ -57,6 +57,16 @@
 - `wfp_lines` now requires the application file name too, with a regression test using the run's own lines. F-175. Not compiled locally (the Rust slot was PLOTSONA's); CI verifies.
 - Open: no test drives the real OS voice under the harness (F-175's TODO).
 
+## B01-T08: devices, volume, stop all audio (2026-10-30)
+
+- **App core.** Device change and loss announcements in words (Fluent, assertive, through the sequencer). The pseudo-locale sample arguments gained `device` and `paused` in TypeScript and Rust.
+- **Render tests.** Stop all is silent once the 20 ms fade and the limiter's look-ahead pass, and the volume is graph gain. The benchmark fixture engages the limiter at 0 dB, so the volume test compares −12 against −32 dB.
+- **UI.**
+  - `transport.stopAll` now calls `stop_all`.
+  - The Preferences dialog: an output-device Select and a volume Slider. React Aria 1.22 deprecates `selectedKey`, so the Select uses `value` and `onChange`.
+  - Mock-host handlers for settings, devices and stop_all, and an E2E spec.
+- **Gap.** The plan's T-13 wording ("within one audio block") is stricter than the conformance plan's interaction budget and sound-design §5's 20 ms fade. The fade stays: changing it needs evidence (AGENTS.md rule 5).
+
 ## Next steps
 
 - [x] Coordinator: ADR-0025 accepted (2026-10-29; numbered 0025, since 0023 and 0024 are reserved).

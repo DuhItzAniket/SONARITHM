@@ -6,6 +6,7 @@ import type {
   Event,
   MockHandlers,
   Request,
+  Settings,
   TransportState,
 } from "@sonarithm/ipc";
 import { createMockTransport, EVENT_CHANNELS } from "@sonarithm/ipc";
@@ -37,7 +38,59 @@ function reply(next: TransportState) {
   return { reply: "transport" as const, ...next };
 }
 
+/** The mock settings (B01-T08): the app core's defaults. */
+let settings: Settings = {
+  settingsVersion: 1,
+  audio: { device: null, bufferFrames: null, volumeDb: 0 },
+  theme: "system",
+  verbosity: "terse",
+  modalities: {
+    sonification: true,
+    speech: true,
+    braille: false,
+    visual: true,
+  },
+  keymap: {},
+  consent: { updateCheck: null },
+  speech: {
+    route: "screenReader",
+    duckInsteadOfPause: false,
+    rateWpm: 180,
+    announcer: "liveRegion",
+  },
+};
+
+const DEVICES = [
+  { id: "speakers", name: "Speakers", isDefault: true },
+  { id: "headphones", name: "Headphones", isDefault: false },
+];
+
 const handlers: MockHandlers = {
+  stop_all: () =>
+    reply(
+      transport.status === "playing"
+        ? { ...transport, status: "paused" }
+        : transport,
+    ),
+  settings_get: () => ({ reply: "settings" as const, ...settings }),
+  settings_set: (request) => {
+    settings = request.args.settings;
+    return { reply: "settings" as const, ...settings };
+  },
+  devices_list: () => ({
+    reply: "devices" as const,
+    devices: DEVICES.map((device) => ({
+      ...device,
+      selected: device.id === (settings.audio.device ?? "speakers"),
+    })),
+  }),
+  device_select: (request) => {
+    settings = {
+      ...settings,
+      audio: { ...settings.audio, device: request.args.id },
+    };
+    return reply({ ...transport, device: request.args.id ?? "Speakers" });
+  },
   transport_state: () => reply(transport),
   transport_play: () =>
     reply({ ...transport, status: "playing", device: "Mock output" }),
@@ -111,4 +164,12 @@ Reflect.set(window, "__SONARITHM_MOCK__", {
     emit({ event: "clock", transport, hostTimeS: null, seq: 1 });
   },
   emit,
+  /** The commands the UI sent through `ipc_dispatch`, oldest first. */
+  commands(): string[] {
+    return host.requests.map((request) => request.command);
+  },
+  /** The settings as the UI last saved them. */
+  settings(): Settings {
+    return settings;
+  },
 });

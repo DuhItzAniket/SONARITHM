@@ -29,6 +29,7 @@ use sonarithm_audio::{
     StreamConfig,
 };
 use sonarithm_core::{Db, Frames, SampleRate, Score, Seconds};
+use sonarithm_i18n::{Args, Localizer};
 use sonarithm_render::graph::SPEED_RANGE;
 use sonarithm_render::{Command, DUCK_LEVEL, GainTarget, LoopRange, PlanConfig};
 use sonarithm_speech::Speaker;
@@ -355,6 +356,8 @@ struct Control<B: AudioBackend, F: Fn() -> B> {
     speaker_source: Option<SpeakerSource>,
     /// The self-voicing speaker, made on first use; `Err` once making it failed.
     speaker: Option<Result<Box<dyn Speaker>, ()>>,
+    /// Words for device changes and losses (HS-05); `None` if the catalogue failed to load.
+    localizer: Option<Localizer>,
     /// The sequencer's clock.
     epoch: Instant,
 }
@@ -373,6 +376,7 @@ impl<B: AudioBackend, F: Fn() -> B> Control<B, F> {
             speaker_source,
             speaker: None,
             epoch: Instant::now(),
+            localizer: Localizer::new("en-US").ok(),
             make,
             unplug,
             config,
@@ -771,7 +775,8 @@ impl<B: AudioBackend, F: Fn() -> B> Control<B, F> {
         match player.tick() {
             Ok(Some(PlayerEvent::DeviceChanged { device })) => {
                 // The player rebuilt the stream paused (HS-05); the model follows.
-                if self.model.status == PlaybackStatus::Playing {
+                let was_playing = self.model.status == PlaybackStatus::Playing;
+                if was_playing {
                     self.model.status = PlaybackStatus::Paused;
                 }
                 if let Some(rate) = player
@@ -781,7 +786,11 @@ impl<B: AudioBackend, F: Fn() -> B> Control<B, F> {
                     self.rate = rate;
                 }
                 self.model.device = Some(device.clone());
+                let args = Args::new()
+                    .text("device", device.clone())
+                    .text("paused", if was_playing { "yes" } else { "no" });
                 self.sink.emit(Event::DeviceChanged { device });
+                self.announce_audio("announce-audio-device-changed", &args);
                 self.anchor();
                 return;
             }
@@ -789,9 +798,14 @@ impl<B: AudioBackend, F: Fn() -> B> Control<B, F> {
             Err(err) => {
                 self.drop_player();
                 self.model.device = None;
-                if self.model.status == PlaybackStatus::Playing {
+                let was_playing = self.model.status == PlaybackStatus::Playing;
+                if was_playing {
                     self.model.status = PlaybackStatus::Paused;
                 }
+                let args = Args::new()
+                    .text("detail", err.to_string())
+                    .text("paused", if was_playing { "yes" } else { "no" });
+                self.announce_audio("announce-audio-lost", &args);
                 self.sink.emit(Event::AudioFailed {
                     error: IpcError::new(
                         &codes::AUDIO_UNAVAILABLE,
@@ -916,6 +930,21 @@ impl<B: AudioBackend, F: Fn() -> B> Control<B, F> {
             }
             self.anchor();
         }
+    }
+
+    /// Speaks and logs a device change or loss in words (HS-05). Device loss is one of the
+    /// few assertive announcements (08 §4), and an error announcement is never dropped.
+    fn announce_audio(&mut self, key: &str, args: &Args) {
+        let Some(text) = self
+            .localizer
+            .as_ref()
+            .and_then(|localizer| localizer.format(key, args).ok())
+        else {
+            return;
+        };
+        let now = self.now_ms();
+        self.sequencer
+            .push(Announcement::error(text.clone(), text), now);
     }
 
     fn now_ms(&self) -> u64 {
