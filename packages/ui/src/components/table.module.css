@@ -1,0 +1,78 @@
+/* SPDX-FileCopyrightText: 2026 SONARITHM contributors */
+/* SPDX-License-Identifier: MIT OR Apache-2.0 */
+
+.scroller {
+  block-size: 18rem;
+  overflow: auto;
+  border: var(--border-width) solid var(--border);
+}
+
+.table {
+  inline-size: 100%;
+  outline: none;
+  color: var(--text-1);
+  font-family: var(--font-sans);
+  font-size: var(--type-12-size);
+  line-height: var(--type-12-line);
+}
+
+.table[data-focus-visible] {
+  outline: var(--focus-ring-width) solid var(--focus);
+  outline-offset: calc(-1 * var(--focus-ring-width));
+}
+
+.header {
+  background: var(--surface-2);
+}
+
+.column,
+.cell {
+  box-sizing: border-box;
+  padding-inline: var(--space-2);
+  outline: none;
+  block-size: var(--row-compact);
+  text-align: start;
+  vertical-align: middle;
+}
+
+.column {
+  border-block-end: var(--border-width) solid var(--border-strong);
+  color: var(--text-2);
+  font-weight: var(--weight-medium);
+}
+
+.numeric {
+  font-family: var(--font-mono);
+  font-variant-numeric: var(--numeric);
+  text-align: end;
+}
+
+.row {
+  outline: none;
+}
+
+.row[data-hovered],
+.row[data-focus-visible] {
+  background: var(--surface-3);
+}
+
+.row[data-focus-visible],
+.cell[data-focus-visible],
+.column[data-focus-visible] {
+  outline: var(--focus-ring-width) solid var(--focus);
+  outline-offset: calc(-1 * var(--focus-ring-width));
+}
+
+.row[data-selected] {
+  border-inline-start: var(--focus-ring-width) solid var(--accent);
+  background: var(--surface-3);
+}
+
+@media (forced-colors: active) {
+  .row[data-selected],
+  .row[data-hovered],
+  .row[data-focus-visible] {
+    background: Highlight;
+    color: HighlightText;
+  }
+}

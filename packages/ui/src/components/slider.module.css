@@ -1,0 +1,89 @@
+/* SPDX-FileCopyrightText: 2026 SONARITHM contributors */
+/* SPDX-License-Identifier: MIT OR Apache-2.0 */
+
+.slider {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  min-inline-size: 12rem;
+  font-family: var(--font-sans);
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+}
+
+.label {
+  color: var(--text-2);
+  font-size: var(--type-12-size);
+  font-weight: var(--weight-medium);
+  line-height: var(--type-12-line);
+}
+
+.value {
+  color: var(--text-1);
+  font-family: var(--font-mono);
+  font-size: var(--type-12-size);
+  font-variant-numeric: var(--numeric);
+  line-height: var(--type-12-line);
+}
+
+/* The track is a 24 px target (A11Y-26) with a 2 px line drawn by its border. */
+.track {
+  position: relative;
+  block-size: var(--target-min);
+}
+
+.track::before {
+  content: "";
+  position: absolute;
+  inset-block-start: 50%;
+  inset-inline: 0;
+  border-block-start: var(--focus-ring-width) solid var(--border-strong);
+}
+
+.thumb {
+  position: absolute;
+  inset-block-start: 50%;
+  translate: -50% -50%;
+  box-sizing: border-box;
+  inline-size: var(--space-4);
+  block-size: var(--space-4);
+  border: var(--focus-ring-width) solid var(--text-1);
+  border-radius: var(--radius-2);
+  background: var(--surface-2);
+}
+
+.thumb[data-hovered],
+.thumb[data-focus-visible] {
+  background: var(--surface-3);
+}
+
+.thumb[data-dragging] {
+  background: var(--accent);
+}
+
+.thumb[data-focus-visible] {
+  outline: var(--focus-ring-width) solid var(--focus);
+  outline-offset: var(--focus-ring-offset);
+}
+
+.slider[data-disabled] .thumb {
+  border-color: var(--border);
+}
+
+.slider[data-disabled] .value {
+  color: var(--text-3);
+}
+
+@media (forced-colors: active) {
+  .thumb {
+    border-color: ButtonText;
+    background: ButtonFace;
+  }
+
+  .track::before {
+    border-color: CanvasText;
+  }
+}

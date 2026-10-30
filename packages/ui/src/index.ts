@@ -23,6 +23,12 @@ export {
   type IconButtonProps,
 } from "./components/Button.tsx";
 export {
+  type DataColumn,
+  type DataRow,
+  DataTable,
+  type DataTableProps,
+} from "./components/DataTable.tsx";
+export {
   DialogActions,
   DialogTrigger,
   ModalDialog,
@@ -35,6 +41,18 @@ export {
   type DisclosureProps,
 } from "./components/Disclosure.tsx";
 export {
+  ComboBox,
+  type ComboBoxProps,
+  ListBox,
+  type ListBoxProps,
+  NumberField,
+  type NumberFieldProps,
+  Option,
+  type OptionProps,
+  Select,
+  type SelectProps,
+} from "./components/Fields.tsx";
+export {
   MenuButton,
   type MenuButtonProps,
   MenuItem,
@@ -43,6 +61,14 @@ export {
   Submenu,
   type SubmenuProps,
 } from "./components/Menu.tsx";
+export {
+  moveBy,
+  type ReorderableItem,
+  ReorderableList,
+  type ReorderableListProps,
+  type ReorderLabels,
+} from "./components/ReorderableList.tsx";
+export { Slider, type SliderProps } from "./components/Slider.tsx";
 export {
   Tab,
   TabList,
@@ -65,4 +91,10 @@ export {
   type TooltipProps,
   TooltipTrigger,
 } from "./components/Tooltip.tsx";
+export {
+  Tree,
+  TreeItem,
+  type TreeItemProps,
+  type TreeProps,
+} from "./components/Tree.tsx";
 export { THEMES, type Theme } from "./foundations/themes.ts";

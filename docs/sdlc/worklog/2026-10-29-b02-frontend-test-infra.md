@@ -37,6 +37,13 @@
 - The story tests now run once per theme. Each project has its own Vite cache folder, because parallel projects that share one fail on Windows with EPERM.
 - Locally: 60 story tests (15 stories × 4 themes) pass axe and their keyboard tests; the IconButton type test and the DL-X11 Stylelint rule pass.
 
+## B02-T05: data components (2026-10-30)
+
+- Tree, DataTable (virtualized), Slider (React Aria hooks), NumberField, Select, ComboBox, ListBox and ReorderableList; 23 new `ui-*` messages; `react-aria` 3.53.1 and `react-stately` 3.51.0 added as direct dependencies at the versions React Aria Components already uses.
+- #383 fixed on the DOM side (F-172). Of F-045's three points: the tree row name and the `SliderOutput` live region are resolved; React Aria's own announcer is filed for B03-T04 (#388).
+- The story runs crashed and hung on Windows: four parallel theme projects shared Storybook's dependency cache, and the failed runs left 53 headless browsers running, which hurts on the shared 16 GB laptop. The themes now run one after another (`test/run-stories.ts`), and a run ends by checking that no browser is left. That fix and the Menu and Dialog focus waits reached main with this PR, since #386 merged first.
+- Locally: 104 story tests (26 stories × 4 themes), the seeded negative test and the package tests pass.
+
 ## Next steps
 
 - [ ] Commit the screenshot baselines from the first CI run's `visual-baselines` artifact.

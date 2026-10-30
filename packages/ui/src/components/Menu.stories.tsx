@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
 import type { Meta, StoryObj } from "@storybook/react-vite";
-import { expect, userEvent, within } from "storybook/test";
+import { expect, userEvent, waitFor, within } from "storybook/test";
 
 import { storyLocalizer } from "../../.storybook/localizer.ts";
 import { MenuButton, MenuItem, MenuSeparator, Submenu } from "./Menu.tsx";
@@ -72,7 +72,8 @@ export const File: StoryObj<typeof meta> = {
     ).toHaveFocus();
     await userEvent.keyboard("{ArrowLeft}");
     await userEvent.keyboard("{Escape}");
-    await expect(page.queryByRole("menu")).toBeNull();
-    await expect(trigger).toHaveFocus();
+    // Focus returns once the popover has closed, a frame after Escape.
+    await waitFor(() => expect(page.queryByRole("menu")).toBeNull());
+    await waitFor(() => expect(trigger).toHaveFocus());
   },
 };
