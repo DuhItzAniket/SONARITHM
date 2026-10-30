@@ -155,6 +155,8 @@ impl App {
         project.active_spec.clone_from(&self.project.active_spec);
         project.datasets = datasets;
         project.reserved.clone_from(&self.project.reserved);
+        // Each chart's corrections (RFC-0005 §7), in the reserved annotations folder.
+        self.corrections_into(&mut project.reserved);
         Ok(project)
     }
 
@@ -185,6 +187,8 @@ impl App {
             let source =
                 SourceDescriptor::new(SourceKind::File(Format::Parquet), &dataset.name, "project");
             let bundle = DataBundle::single(BundleId(*number), source, table);
+            // Corrections come back with their history, read-only until the chart is opened.
+            let chart = super::corrections::from_member(&state.reserved, &dataset.id);
             let summary = summarize(
                 &dataset.id,
                 &dataset.name,
@@ -197,6 +201,7 @@ impl App {
                     summary,
                     bundle,
                     origin: dataset.origin,
+                    chart,
                 },
             );
         }
