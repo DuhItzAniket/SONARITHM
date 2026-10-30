@@ -252,7 +252,7 @@ fn read_chart(
                     ),
                 )));
             };
-            let chart = raster::extract::read_lines(&raster, calibration, work)?;
+            let chart = raster::extract::read_raster(&raster, calibration, work)?;
             Ok((chart, "sonarithm-plotsona/raster"))
         }
     }
@@ -508,7 +508,7 @@ pub mod fuzzing {
         chartjson::extract(container, &value, &mut cx)
     }
 
-    /// Decodes `bytes` as a PNG (`png`) or JPEG, finds its axes and reads its lines through a
+    /// Decodes `bytes` as a PNG (`png`) or JPEG, finds its axes and reads its marks through a
     /// calibration spanning the image: the raster tier.
     ///
     /// # Errors
@@ -538,7 +538,7 @@ pub mod fuzzing {
                 err.to_string(),
             ))
         })?;
-        crate::raster::extract::read_lines(&raster, &calibration, &mut work)
+        crate::raster::extract::read_raster(&raster, &calibration, &mut work)
     }
 
     /// Reads `bytes` as an SVG chart: scene, axes, calibration and marks.

@@ -296,6 +296,11 @@ fn raster_line_charts_read_within_two_percent() {
                 ExtractOptions::new().with_calibration(serde_json::from_value(hand).unwrap());
             let read = extract(&bytes, &label, &options).unwrap();
             assert_eq!(read.report.extractor, "sonarithm-plotsona/raster");
+            assert_eq!(
+                read.chart.chart_type,
+                Some(crate::ChartType::Line),
+                "{label}"
+            );
             assert_eq!(read.chart.series.len(), series.len(), "{label}: series");
             for found in &read.chart.series {
                 assert_eq!(found.provenance.class, ProvenanceClass::CvEstimate);
@@ -324,6 +329,125 @@ fn raster_line_charts_read_within_two_percent() {
     }
 }
 
+/// A raster corpus chart read with its hand calibration, its truth series and the largest
+/// absolute truth value.
+fn read_corpus(name: &str, scale: u32) -> (crate::Extraction, Vec<Value>, f64) {
+    let svg = folder("svg");
+    let drawing = std::fs::read(svg.join(format!("{name}.svg"))).unwrap();
+    let truth: Value = serde_json::from_str(
+        &std::fs::read_to_string(svg.join(format!("{name}.truth.json"))).unwrap(),
+    )
+    .unwrap();
+    let series = truth["series"].as_array().unwrap().clone();
+    let top = series
+        .iter()
+        .flat_map(|s| s["y"].as_array().unwrap().iter().filter_map(Value::as_f64))
+        .fold(0.0_f64, |m, y| m.max(y.abs()));
+    let label = format!("{name}@{scale}x");
+    let bytes = std::fs::read(folder("raster").join(format!("{label}.png"))).unwrap();
+    let hand = crate::svg::hand_calibration(&drawing, f64::from(scale)).unwrap();
+    let options = ExtractOptions::new().with_calibration(serde_json::from_value(hand).unwrap());
+    let read = extract(&bytes, &label, &options).unwrap();
+    for found in &read.chart.series {
+        assert_eq!(
+            found.provenance.class,
+            ProvenanceClass::CvEstimate,
+            "{label}"
+        );
+        assert!(found.provenance.confidence.is_some(), "{label}");
+        assert_eq!(found.confidences.len(), found.points.len(), "{label}");
+    }
+    (read, series, top)
+}
+
+/// C02-T04 acceptance (FR-008): the raster bar charts of DS-007 (Vega-Lite, Plotly, D3 at
+/// 1x and 2x) are read as bar charts with every category, a median error of at most 2 % of
+/// the axis, and the `cv_estimate` class with a confidence on every value.
+#[test]
+fn raster_bar_charts_read_within_two_percent() {
+    for name in ["vl-bar", "plotly-bar", "d3-bar"] {
+        for scale in [1_u32, 2] {
+            let (read, truth, top) = read_corpus(name, scale);
+            let label = format!("{name}@{scale}x");
+            assert_eq!(
+                read.chart.chart_type,
+                Some(crate::ChartType::Bar),
+                "{label}"
+            );
+            assert_eq!(read.chart.series.len(), 1, "{label}");
+            let errors = errors(&read.chart.series[0], &truth, top);
+            assert_eq!(
+                errors.len(),
+                truth[0]["x"].as_array().unwrap().len(),
+                "{label}"
+            );
+            let median = median(&errors);
+            let worst = errors.iter().copied().fold(0.0, f64::max);
+            println!("{label}: median error {median:.4}, worst {worst:.4}");
+            assert!(median <= 0.02, "{label}: median error {median}");
+        }
+    }
+}
+
+/// C02-T04 acceptance: the raster scatter charts of DS-007 report their markers' count and
+/// positions; each truth point's nearest marker is within 2 % of each axis at the median.
+#[test]
+fn raster_scatter_charts_report_their_markers() {
+    for name in ["vl-scatter", "plotly-scatter", "d3-scatter"] {
+        for scale in [1_u32, 2] {
+            let (read, truth, top) = read_corpus(name, scale);
+            let label = format!("{name}@{scale}x");
+            assert_eq!(
+                read.chart.chart_type,
+                Some(crate::ChartType::Scatter),
+                "{label}"
+            );
+            let found: Vec<(f64, f64)> = read.chart.series[0]
+                .points
+                .iter()
+                .filter_map(|p| match p.x {
+                    XValue::Number(x) => Some((x, p.y?)),
+                    _ => None,
+                })
+                .collect();
+            let xs: Vec<f64> = truth[0]["x"]
+                .as_array()
+                .unwrap()
+                .iter()
+                .filter_map(Value::as_f64)
+                .collect();
+            let ys: Vec<f64> = truth[0]["y"]
+                .as_array()
+                .unwrap()
+                .iter()
+                .filter_map(Value::as_f64)
+                .collect();
+            let x_span = xs.iter().copied().fold(f64::NEG_INFINITY, f64::max)
+                - xs.iter().copied().fold(f64::INFINITY, f64::min);
+            let (mut dx, mut dy) = (Vec::new(), Vec::new());
+            for (x, y) in xs.iter().zip(&ys) {
+                let nearest = found
+                    .iter()
+                    .min_by(|a, b| {
+                        let d = |p: &&(f64, f64)| ((p.0 - x) / x_span).hypot((p.1 - y) / top);
+                        d(a).total_cmp(&d(b))
+                    })
+                    .unwrap();
+                dx.push((nearest.0 - x).abs() / x_span);
+                dy.push((nearest.1 - y).abs() / top);
+            }
+            let (mx, my) = (median(&dx), median(&dy));
+            println!(
+                "{label}: {} markers for {} points, median error x {mx:.4}, y {my:.4}",
+                found.len(),
+                xs.len()
+            );
+            assert!(found.len() == xs.len(), "{label}: {} markers", found.len());
+            assert!(mx <= 0.02 && my <= 0.02, "{label}: {mx} {my}");
+        }
+    }
+}
+
 #[test]
 fn a_blank_image_with_a_calibration_has_no_chart() {
     let calibration = json!({ "axes": {
@@ -331,7 +455,7 @@ fn a_blank_image_with_a_calibration_has_no_chart() {
         "y": { "kind": "linear", "anchors": [{ "at": [0, 35], "value": 0 }, { "at": [0, 5], "value": 1 }] },
     }});
     let raster = Raster::from_rgb(50, 40, vec![[255; 3]; 2000]).unwrap();
-    let err = super::read_lines(
+    let err = super::read_raster(
         &raster,
         &serde_json::from_value(calibration).unwrap(),
         &mut Work::new(u64::MAX),

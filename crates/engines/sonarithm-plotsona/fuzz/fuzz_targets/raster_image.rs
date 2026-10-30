@@ -1,9 +1,9 @@
 // SPDX-FileCopyrightText: 2026 SONARITHM contributors
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
-//! Fuzzes the raster tier (C02-T02, C02-T03): PNG or JPEG decoding under the pixel budget,
-//! the axis-line search, then colour detection and line reading through a calibration that
-//! spans the image. The first byte picks the format. Every error is a registered code.
+//! Fuzzes the raster tier (C02-T02 to T04): PNG or JPEG decoding under the pixel budget,
+//! the axis-line search, then colour detection and reading lines, bars and points through
+//! a calibration that spans the image. The first byte picks the format. Every error is a registered code.
 
 #![no_main]
 

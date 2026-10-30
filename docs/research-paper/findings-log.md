@@ -967,3 +967,12 @@ A05 (render engine, audio backends, export) uses F-050 to F-069.
 - **Evidence level / confidence:** EV-C / Strong for this case
 - **Affects:** C02-T03, C02-T04 (bars use the same colours), 10 §3
 - **Papers:** none yet
+
+### F-182 · Raster bars and scatter markers read within 0.11 % with every marker counted
+
+- **Date:** 2026-10-30 · **Phase:** C02 · **Type:** benchmark · **Status:** new
+- **Statement:** On DS-007's raster part (vl-convert 1.9.0 renders at 1x and 2x, anchors entered on the outermost ticks and category labels), C02-T04 classifies every bar and scatter render correctly. The bar charts (Vega-Lite, Plotly, D3; five categories) read with a median error of 0 % to 0.11 % of the largest value, the worst bar 0.11 %. The scatter plots (60 points each) report exactly 60 markers in all six renders, with each truth point's nearest marker at a median of at most 0.07 % of the x span and 0.11 % of the y span. Before fragments were joined, Vega-Lite's hollow circles gave 62 markers: anti-aliasing broke one ring into three arcs. As with lines (F-180), the anchors' half-pixel placement, not the detector, sets the error on clean renders.
+- **Evidence:** `crates/engines/sonarithm-plotsona/src/raster/extract/tests.rs` (`raster_bar_charts_read_within_two_percent`, `raster_scatter_charts_report_their_markers`, which print each render's figures); `raster/marks/tests.rs`; the C02-T04 PR
+- **Evidence level / confidence:** EV-C / Moderate. Clean renders of synthetic data, well-separated markers and five bars; overlapping markers in dense scatters, stacked and grouped bars, horizontal bars, JPEG artefacts and anchors clicked by people are not measured (C02-T08)
+- **Affects:** C02 exit, FR-007, FR-008, DS-007, F-180, 10 §3
+- **Papers:** none yet

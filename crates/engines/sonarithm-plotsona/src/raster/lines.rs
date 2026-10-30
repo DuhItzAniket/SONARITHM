@@ -45,7 +45,7 @@ pub struct Search<'a> {
 
 impl Search<'_> {
     /// The closeness of pixel `(x, y)`, if it is data.
-    fn keep(&self, x: u32, y: u32) -> Option<f64> {
+    pub(crate) fn closeness(&self, x: u32, y: u32) -> Option<f64> {
         if !self.mask.is_empty() && !self.mask.contains(x, y) {
             return None;
         }
@@ -59,7 +59,7 @@ impl Search<'_> {
         let mut found = Vec::new();
         for x in x0.max(ax0)..x1.min(ax1) {
             for y in y0..y1 {
-                if let Some(c) = self.keep(x, y) {
+                if let Some(c) = self.closeness(x, y) {
                     found.push((f64::from(x) + 0.5, f64::from(y) + 0.5, c));
                 }
             }
