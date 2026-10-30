@@ -58,6 +58,12 @@
 - `cargo xtask network-deny --app <exe> -- <args>` runs the installed app with `--smoke`. On Windows and macOS it checks only the app's own process; the webview's processes are a known gap, written down in testing-strategy §10.
 - No cargo build locally: PLOTSONA held the Rust slot. `rustfmt` only, and the PR's dry run is the first build of the new code.
 
+## #409: network-deny on Windows (2026-10-30)
+
+- The `speech` binary's two "attempts" were the self-test probe's: same PID (6916, reused), the probe's application path, and the probe's 192.0.2.1:9 destination. The speech path is not changed.
+- `wfp_lines` now requires the application file name too, with a regression test using the run's own lines. F-175. Not compiled locally (the Rust slot was PLOTSONA's); CI verifies.
+- Open: no test drives the real OS voice under the harness (F-175's TODO).
+
 ## Next steps
 
 - [x] Coordinator: ADR-0025 accepted (2026-10-29; numbered 0025, since 0023 and 0024 are reserved).

@@ -235,7 +235,7 @@ The headless app core (`sonarithm-app`, B01) holds all non-UI desktop behaviour,
   |---|---|---|
   | Linux | `strace -f -e trace=connect,sendto,sendmsg,sendmmsg` | A traced call with an `AF_INET` or `AF_INET6` address (Unix sockets do not count) |
   | macOS | `sandbox-exec` with `(deny network-outbound (remote ip "*:*"))`, so attempts also fail | A kernel `deny(1) network-outbound` line for the process in `log show` |
-  | Windows | Windows Filtering Platform connection auditing (`auditpol`, needs an elevated shell, as CI runners have) | An outbound 5156 or 5157 event for the process in the Security log |
+  | Windows | Windows Filtering Platform connection auditing (`auditpol`, needs an elevated shell, as CI runners have) | An outbound 5156 or 5157 event in the Security log whose process ID and application file name are both the executable's: Windows reuses process IDs, and an ID alone once blamed a test binary for the probe's attempts (F-175, #409) |
 
   `--app <exe> [-- <args>]` runs one executable instead of the tests. `desktop-nightly.yml` uses it on the installed desktop app with `--smoke` (B01-T09). There, Linux's strace follows the webview's processes, but on Windows and macOS only the app's own process is checked: WebView2's and WebKit's processes are not.
 
