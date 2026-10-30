@@ -45,6 +45,9 @@ pub struct Budgets {
     pub max_points: u64,
     /// The most work steps one extraction may take (see the module documentation).
     pub max_work: u64,
+    /// The most pixels a raster image may have (width × height), checked from its header
+    /// before any pixel is decoded (C02-T02).
+    pub max_pixels: u64,
 }
 
 impl Budgets {
@@ -59,6 +62,8 @@ impl Budgets {
         max_nodes: 20_000_000,
         max_points: 50_000_000,
         max_work: 4_000_000_000,
+        // 50 megapixels: a 7,000 × 7,000 scan, far above a chart screenshot.
+        max_pixels: 50_000_000,
     };
 
     /// Parts at or below this size are never refused for their compression ratio, since
@@ -77,6 +82,7 @@ impl Budgets {
         max_nodes: u32::MAX,
         max_points: u64::MAX,
         max_work: u64::MAX,
+        max_pixels: u64::MAX,
     };
 
     /// Checks the size of the whole input.
@@ -127,6 +133,7 @@ pub(crate) enum Budget {
     Ratio,
     Nodes,
     Points,
+    Pixels,
 }
 
 impl fmt::Display for Budget {
@@ -139,6 +146,7 @@ impl fmt::Display for Budget {
             Self::Ratio => "compression ratio",
             Self::Nodes => "number of XML nodes",
             Self::Points => "number of data points",
+            Self::Pixels => "number of pixels",
         })
     }
 }
@@ -151,7 +159,7 @@ pub(crate) fn over(budget: Budget, value: u64, max: u64) -> Box<Diagnostic> {
         Budget::Entries | Budget::PartBytes | Budget::InflatedBytes | Budget::Ratio => {
             &codes::CONTAINER_BUDGET
         }
-        Budget::Nodes | Budget::Points => &codes::CONTENT_BUDGET,
+        Budget::Nodes | Budget::Points | Budget::Pixels => &codes::CONTENT_BUDGET,
     };
     Box::new(Diagnostic::new(
         code,

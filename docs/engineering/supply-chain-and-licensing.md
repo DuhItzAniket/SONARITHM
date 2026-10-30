@@ -228,9 +228,9 @@ Transitive crates reached by those features, with their declared licences: png (
 
 Notes for C02-T02, which adds them:
 
-- imageproc depends on getrandom when built for `wasm32`. Whether the engine crate still builds for `wasm32-unknown-unknown` without extra configuration is TODO(verify) with `cargo xtask wasm-check` when the crate is added.
+- imageproc depends on getrandom when built for `wasm32`. Whether the engine crate still builds for `wasm32-unknown-unknown` without extra configuration is TODO(verify) with `cargo xtask wasm-check` when the crate is added. C02-T02 added `image` only (PNG and JPEG decoders), and `sonarithm-plotsona` builds for `wasm32-unknown-unknown` with it; imageproc is not needed yet.
 - imageproc functions that draw random numbers are not used, or are seeded from the spec seed (AGENTS.md rule 3).
-- Decoding limits (decompression bombs) are set through image's own limits API, checked in C02-T02's tests.
+- Decoding limits (decompression bombs) are set through image's own limits API, checked in C02-T02's tests (`raster::tests::bombs_fail_within_budget`), after PLOTSONA checks the header's size against its pixel budget.
 
 ### C04: AXONOTE crates
 

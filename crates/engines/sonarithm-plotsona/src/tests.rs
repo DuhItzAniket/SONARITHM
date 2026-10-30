@@ -81,9 +81,10 @@ fn a_named_extractor_must_fit_the_container() {
     let options = ExtractOptions::new().with_extractor(Extractor::Office);
     let err = extract(svg, "chart.svg", &options).expect_err("mismatch");
     assert_eq!(err.code.as_str(), "SNR-ENG-310");
+    // A truncated PNG is decoded by the raster core (C02-T02) and reported as unreadable.
     let png = b"\x89PNG\r\n\x1A\n\0\0\0\rIHDR";
     let err = extract(png, "chart.png", &ExtractOptions::new()).expect_err("raster");
-    assert_eq!(err.code.as_str(), "SNR-ENG-308");
+    assert_eq!(err.code.as_str(), "SNR-ENG-327");
 }
 
 #[test]
