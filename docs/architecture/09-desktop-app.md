@@ -121,6 +121,15 @@ The UI calls an `IpcTransport` interface (`invoke`, `subscribe`, `binary`). The 
 - Play/Pause, Stop and Loop are commands (`transport.playPause`, `transport.stop` with Escape in the explorer, and `transport.loop`, unbound), so the palette reaches them.
 - Seek and speed are intents of the machine; their controls come with the explorer (B03-T09) and the rate steps of keyboard §5.3.
 
+**As built (B04-T02): the dense layer.**
+
+- `@sonarithm/viz`'s `DenseLayer` draws three kinds of scene: waveforms (one min/max span per pixel column, from the app core's M4 tiles), spectrograms (dB bytes through a colormap texture) and lines of a million points or more.
+- **WebGL2 first, Canvas2D otherwise.** WebGL2 is probed once on a throwaway canvas: a context opens and the shaders compile. A canvas that took a WebGL2 context cannot give a 2D one, so the real canvas asks for the context that works. The Canvas2D fallback reduces dense lines to M4 per pixel column, and `forceCanvas` takes it anyway.
+- **Drawn once.** Positions are normalized to [0, 1] on upload, so 32-bit floats keep full precision. The data is drawn when the scene, size or theme changes, never per frame. What moves, such as the playhead (B04-T04), goes in the layer's overlay.
+- **Accessible as one image.** Like `Plot`, the layer is named by the summary's L1, described by its L2, and not focusable.
+- **PB-08.** The `perf` Vitest project records the script time of 60 zoom redraws of a million-point line. CI's frontend-browser job reports it without gating (SwiftShader on a shared runner). HW-01 and the three webviews are B04-T08's.
+- **Pending.** The discrete-GPU option (F-044) waits on the coordinator's approval of a `gpu` setting.
+
 ## 4. Security model
 
 | Control | Setting |
