@@ -89,3 +89,39 @@ ui-tab-diagnostics = Diagnostics
 ui-no-announcements = No announcements yet.
 ui-no-diagnostics = No diagnostics.
 ui-inspector-empty = Nothing is selected.
+
+## Commands (B02-T07; keyboard-and-navigation §5). Names say what the command does.
+
+command-app-palette = Show the command palette
+command-file-new = New project
+command-file-open = Open a project or data file
+command-file-save = Save the project
+command-file-save-as = Save the project as
+command-file-export = Export audio
+command-edit-undo = Undo
+command-edit-redo = Redo
+command-edit-find = Find in this region
+command-app-preferences = Preferences
+command-help-context = Help for the focused element
+command-help-keyboard = Keyboard shortcuts here
+command-view-zoom-in = Zoom in
+command-view-zoom-out = Zoom out
+command-view-zoom-reset = Reset zoom
+command-view-focus-explorer = Go to the chart explorer
+command-view-announcements = Show the announcement history
+command-transport-play-pause = Play or pause
+command-transport-stop-all = Stop all audio
+command-view-next-region = Next region
+command-view-prev-region = Previous region
+command-view-menu-bar = Go to the menu bar
+command-view-context-menu = Context menu
+command-view-toggle-region = Collapse or expand this region
+# The palette's result count, announced as it filters; $count is a number.
+command-results =
+    { $count ->
+        [one] { $count } command
+       *[other] { $count } commands
+    }
+command-no-results = No commands match.
+keyboard-reference-title = Keyboard shortcuts
+keyboard-no-binding = No shortcut

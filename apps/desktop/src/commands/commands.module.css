@@ -1,0 +1,97 @@
+/* SPDX-FileCopyrightText: 2026 SONARITHM contributors */
+/* SPDX-License-Identifier: MIT OR Apache-2.0 */
+
+.search {
+  display: flex;
+  margin-block-end: var(--space-2);
+}
+
+.input {
+  flex: 1;
+  box-sizing: border-box;
+  min-inline-size: 24rem;
+  min-block-size: var(--row-default);
+  padding-inline: var(--space-2);
+  border: var(--border-width) solid var(--border-strong);
+  border-radius: var(--radius-1);
+  outline: none;
+  background: var(--surface-1);
+  color: var(--text-1);
+  font-family: var(--font-sans);
+  font-size: var(--type-13-size);
+  line-height: var(--type-13-line);
+}
+
+.input[data-focused] {
+  outline: var(--focus-ring-width) solid var(--focus);
+  outline-offset: var(--focus-ring-offset);
+}
+
+.results {
+  max-block-size: 24rem;
+  overflow: auto;
+  outline: none;
+}
+
+.item {
+  display: flex;
+  gap: var(--space-4);
+  align-items: center;
+  justify-content: space-between;
+  min-block-size: var(--row-default);
+  padding-inline: var(--space-3) var(--space-2);
+  border-radius: var(--radius-1);
+  outline: none;
+  font-size: var(--type-13-size);
+  line-height: var(--type-13-line);
+  cursor: default;
+}
+
+.item[data-hovered],
+.item[data-focused],
+.item[data-focus-visible] {
+  background: var(--surface-3);
+}
+
+.item[data-focus-visible] {
+  outline: var(--focus-ring-width) solid var(--focus);
+  outline-offset: calc(-1 * var(--focus-ring-width));
+}
+
+.binding {
+  color: var(--text-2);
+  font-family: var(--font-mono);
+  font-size: var(--type-12-size);
+}
+
+.empty {
+  margin: 0;
+  padding: var(--space-2) var(--space-3);
+  color: var(--text-2);
+}
+
+.reference {
+  margin: 0;
+  min-inline-size: 24rem;
+}
+
+.row {
+  display: flex;
+  gap: var(--space-4);
+  justify-content: space-between;
+  padding-block: var(--space-1);
+  border-block-end: var(--border-width) solid var(--border);
+}
+
+.row dd {
+  margin: 0;
+}
+
+@media (forced-colors: active) {
+  .item[data-focused],
+  .item[data-hovered],
+  .item[data-focus-visible] {
+    background: Highlight;
+    color: HighlightText;
+  }
+}

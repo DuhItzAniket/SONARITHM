@@ -64,9 +64,14 @@ export interface MenuItemProps extends Omit<
 export function MenuItem({ children, shortcut, ...props }: MenuItemProps) {
   return (
     <AriaMenuItem {...props} textValue={children} className={cx(overlays.item)}>
-      <Text slot="label">{children}</Text>
+      {children}
       {shortcut !== undefined && (
-        <Keyboard className={cx(overlays.shortcut)}>{shortcut}</Keyboard>
+        // The shortcut is the item's description (aria-describedby). It is hidden from
+        // the name, which comes from the content, so the name is the command alone
+        // (WCAG 2.5.3).
+        <span aria-hidden="true">
+          <Keyboard className={cx(overlays.shortcut)}>{shortcut}</Keyboard>
+        </span>
       )}
     </AriaMenuItem>
   );

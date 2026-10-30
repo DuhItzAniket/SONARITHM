@@ -14,6 +14,10 @@ import {
 import { mountLiveRegions } from "./announcer/live-regions.ts";
 import { tauriNativeAnnouncer } from "./announcer/native.ts";
 import { App } from "./app/App.tsx";
+import { currentPlatform } from "./commands/chords.ts";
+import { CommandsContext } from "./commands/context.tsx";
+import { DEFAULT_KEYMAP } from "./commands/keymap.ts";
+import { CommandRegistry } from "./commands/registry.ts";
 import { LocalizerContext, uiLocalizer } from "./i18n.ts";
 import { tauriTransport } from "./ipc/tauri-core.ts";
 import { installAcceleratorGuard } from "./keyboard/accelerators.ts";
@@ -27,12 +31,28 @@ const announcer = createRoutedAnnouncer({
   live: createLiveRegionAnnouncer(mountLiveRegions(document)),
   native: tauriNativeAnnouncer(),
 });
+// The command registry (B02-T07): the v0 keymap; user remapping arrives with profiles.
+const registry = new CommandRegistry(
+  DEFAULT_KEYMAP,
+  currentPlatform(navigator.userAgent),
+);
+if (import.meta.env.DEV) {
+  // For the E2E tests: which commands are registered, and which one ran last.
+  Reflect.set(window, "__SONARITHM_COMMANDS__", () =>
+    registry.available().map(({ spec }) => spec.id),
+  );
+  registry.onRun((id) => {
+    document.documentElement.dataset.lastCommand = id;
+  });
+}
 const root = document.getElementById("root");
 if (root !== null) {
   createRoot(root).render(
     <StrictMode>
       <LocalizerContext value={uiLocalizer()}>
-        <App transport={transport} announcer={announcer} />
+        <CommandsContext value={registry}>
+          <App transport={transport} announcer={announcer} />
+        </CommandsContext>
       </LocalizerContext>
     </StrictMode>,
   );

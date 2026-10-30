@@ -58,6 +58,13 @@
 - #388 decided: React Aria's widget announcements stay; documented in 08 §4 and added to the Narrator walkthrough (WALKTHROUGH.md §2).
 - Built while free RAM stayed near 0.5–1.2 GB (the owner's other work): the TypeScript was written and unit-tested first, and the Rust build and browser tests waited for at least 2 GB free.
 
+## B02-T07: command registry and palette (2026-10-30)
+
+- `apps/desktop/src/commands`: chords (letters by character, punctuation by physical key, KB-08), the v0 keymap as data, the lint, scopes, the registry and dispatcher, the palette and the Shift+F1 reference; 31 new messages. The frame's F6 handling moved into the registry.
+- React Aria's Autocomplete must do the filtering itself (its `filter` prop). With an externally filtered list, its active result pointed at a removed option and arrows stopped working.
+- axe's `label-content-name-mismatch` flagged menu items whose visible shortcut was not in their name, because React Aria labels the item from its label slot. Items are now named from their content, with the shortcut hidden from the name and kept as the description. This also applies to `@sonarithm/ui`'s `MenuItem`.
+- Stacked on #393 (the announcer), whose announcer the palette uses for the result count.
+
 ## Next steps
 
 - [ ] Commit the screenshot baselines from the first CI run's `visual-baselines` artifact.
