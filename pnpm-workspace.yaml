@@ -35,7 +35,7 @@ catalog:
   vitest: 4.1.12
   vitest-browser-react: 2.3.0
   # Node types for package tests run with `node --test` (Node 24, the CI line).
-  "@types/node": ^24.19.2
+  "@types/node": ^26.6.5
   # ESLint stays on 9.x until eslint-plugin-jsx-a11y supports ESLint 10 (its peer range ends at ^9).
   "@eslint/js": ^9.39.5
   eslint: ^9.39.5
