@@ -127,7 +127,8 @@ jobs:
       - name: Launch the installed app (smoke test)
         timeout-minutes: 10
         run: |
-          ${DISPLAY_WRAP:-} "$APP" --smoke smoke.json
+          # Absolute report paths: the AppImage's AppRun changes the working directory.
+          ${DISPLAY_WRAP:-} "$APP" --smoke "$GITHUB_WORKSPACE/smoke.json"
           echo '### Installed nightly smoke test (${{ runner.os }})' >> "$GITHUB_STEP_SUMMARY"
           { echo '```json'; cat smoke.json; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
       - if: failure() && hashFiles('smoke.json') != ''
@@ -136,7 +137,7 @@ jobs:
       # ci.yml network-deny job shows on every PR that each mechanism sees a deliberate one.
       - name: Network-deny harness on the installed app
         timeout-minutes: 30
-        run: ${DISPLAY_WRAP:-} cargo xtask network-deny --app "$APP" -- --smoke smoke-network-deny.json
+        run: ${DISPLAY_WRAP:-} cargo xtask network-deny --app "$APP" -- --smoke "$GITHUB_WORKSPACE/smoke-network-deny.json"
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: ${{ env.ARTIFACT }}
