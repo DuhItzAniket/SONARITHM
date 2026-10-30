@@ -1,0 +1,24 @@
+---
+source: apps/cli/tests/cli.rs
+expression: plain.transcript()
+---
+exit code: 0
+--- stdout
+vl-line.svg: SVG image, a line chart, read by sonarithm-plotsona/svg.
+36 points: 0 exact, 36 calibrated, 0 estimated, median confidence 0.99.
+Series east: 12 points, vector, confidence 0.99, residual 0.055 %.
+Series north: 12 points, vector, confidence 0.99, residual 0.055 %.
+Series south: 12 points, vector, confidence 0.99, residual 0.055 %.
+Template: chart-line.
+vl-line.svg.spec.json: spec version 0.2, analysis mode, seed 0.
+Duration: 11.917 seconds.
+Engines: numisona [version], plotsona [version].
+Track line: data track, 36 events (36 notes), 0.000 to 11.917 seconds, pitch 400.00 to 1400.00 Hz, 36 from estimated data, instrument mallet.
+Score hash: [score hash].
+Diagnostics: 0 errors, 1 warning, 40 applied defaults and choices.
+--- stderr
+Context cues (ticks, reference tone, legend, earcons) are not available in this build; AUDAXIS arrives in B03.
+    Diagnostic severity: warning
+diagnostic code: SNR-COMP-023
+
+note: --verbose lists the applied defaults and automatic choices.

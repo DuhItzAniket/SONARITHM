@@ -62,6 +62,7 @@
 #![deny(missing_docs)]
 
 mod api;
+mod chart;
 mod compiled;
 mod error;
 mod quick;
@@ -69,11 +70,17 @@ mod render;
 mod spec;
 
 pub use api::{Builder, Datasets, Sonarithm};
+#[cfg(feature = "fs")]
+pub use chart::read_chart;
+pub use chart::{Chart, read_chart_bytes, summary_diagnostic, summary_sentence};
 pub use compiled::{Compiled, Description, DiagnosticCounts, Summary, TrackSummary};
 pub use error::Error;
 pub use quick::{QUICK_DATASET, Quick};
 pub use render::{
     AudioFormat, Normalization, RenderManifest, RenderOptions, Rendered, WavEncoding,
+};
+pub use sonarithm_plotsona::{
+    ChartData, ChartType, ClassCounts, ExtractOptions, ExtractionReport, SeriesReport,
 };
 pub use spec::{Migration, Spec};
 

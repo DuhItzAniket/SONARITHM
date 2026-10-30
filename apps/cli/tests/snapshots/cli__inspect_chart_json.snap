@@ -1,0 +1,441 @@
+---
+source: apps/cli/tests/cli.rs
+expression: json.transcript()
+---
+exit code: 0
+--- stdout
+{
+  "chart": "xlsx-pie.xlsx",
+  "ok": true,
+  "summary": "5 points: 5 exact, 0 calibrated, 0 estimated",
+  "template": "chart-pie",
+  "report": {
+    "locator": "xlsx-pie.xlsx",
+    "container": "xlsx",
+    "tier": "exact",
+    "extractor": "sonarithm-plotsona/office",
+    "chart_type": "pie",
+    "series": [
+      {
+        "name": "Sold",
+        "points": 5,
+        "missing": 0,
+        "class": "exact"
+      }
+    ],
+    "points": 5,
+    "provenance": {
+      "exact": 5
+    },
+    "diagnostics": [
+      {
+        "severity": "info",
+        "code": "SNR-ENG-344",
+        "rules": [],
+        "message": "Values were read from the chart's workbook, the data the chart was built from.",
+        "location": null,
+        "data": null
+      }
+    ]
+  },
+  "score": {
+    "spec": "xlsx-pie.xlsx.spec.json",
+    "spec_version": "0.2",
+    "ir_version": 1,
+    "mode": "analysis",
+    "seed": 0,
+    "duration_s": 2.131579,
+    "spec_hash": "c32292324f67509b038a86e1e7d84b8d482a488760d5021a14c42cc3112eca3e",
+    "data_fingerprint": "af6726397edb0039e4da698bcce215c382ced246604960881b6762dd9f04750f",
+    "score_hash": "[score hash]",
+    "engines": {
+      "numisona": "[version]",
+      "plotsona": "[version]"
+    },
+    "tracks": [
+      {
+        "id": "slices",
+        "role": "data",
+        "engine": "numisona",
+        "instrument": "mallet",
+        "events": 5,
+        "notes": 5,
+        "glides": 0,
+        "earcons": 0,
+        "speech": 0,
+        "estimated": 0,
+        "start_s": 0.0,
+        "end_s": 2.131579,
+        "pitch_range_hz": [
+          400.0,
+          1400.0
+        ],
+        "gain_db": 0.0,
+        "pan": 0.0
+      }
+    ],
+    "markers": 0,
+    "diagnostics": {
+      "errors": 0,
+      "warnings": 2,
+      "info": 35
+    }
+  },
+  "counts": {
+    "errors": 0,
+    "warnings": 2,
+    "info": 36
+  },
+  "diagnostics": [
+    {
+      "severity": "info",
+      "code": "SNR-ENG-344",
+      "rules": [],
+      "message": "Values were read from the chart's workbook, the data the chart was built from.",
+      "location": null,
+      "data": null
+    },
+    {
+      "severity": "info",
+      "code": "SNR-SPEC-080",
+      "rules": [
+        "SDR-36",
+        "SDR-10"
+      ],
+      "message": "Assumed Analysis mode.",
+      "location": "/mode",
+      "data": null
+    },
+    {
+      "severity": "info",
+      "code": "SNR-SPEC-080",
+      "rules": [
+        "SDR-02"
+      ],
+      "message": "Assumed seed 0.",
+      "location": "/seed",
+      "data": null
+    },
+    {
+      "severity": "info",
+      "code": "SNR-SPEC-080",
+      "rules": [],
+      "message": "Assumed silence for missing values.",
+      "location": "/data/missing",
+      "data": null
+    },
+    {
+      "severity": "info",
+      "code": "SNR-SPEC-080",
+      "rules": [
+        "SDR-19"
+      ],
+      "message": "Assumed a pace of 3 points per second.",
+      "location": "/substrate/time/pace",
+      "data": null
+    },
+    {
+      "severity": "info",
+      "code": "SNR-SPEC-080",
+      "rules": [
+        "SDR-16"
+      ],
+      "message": "Assumed ticks on the x axis.",
+      "location": "/context/ticks/axis",
+      "data": null
+    },
+    {
+      "severity": "info",
+      "code": "SNR-SPEC-080",
+      "rules": [
+        "SDR-16"
+      ],
+      "message": "Assumed no minor ticks.",
+      "location": "/context/ticks/minor",
+      "data": null
+    },
+    {
+      "severity": "info",
+      "code": "SNR-SPEC-080",
+      "rules": [
+        "SDR-16"
+      ],
+      "message": "Assumed ticks for discrete marks only.",
+      "location": "/context/ticks/enabled",
+      "data": null
+    },
+    {
+      "severity": "info",
+      "code": "SNR-SPEC-080",
+      "rules": [
+        "SDR-17"
+      ],
+      "message": "Assumed a dynamic-extreme reference tone on the first track.",
+      "location": "/context/reference",
+      "data": null
+    },
+    {
+      "severity": "info",
+      "code": "SNR-SPEC-080",
+      "rules": [
+        "SDR-18"
+      ],
+      "message": "Assumed a spoken legend before playback.",
+      "location": "/context/legend/speak",
+      "data": null
+    },
+    {
+      "severity": "info",
+      "code": "SNR-SPEC-080",
+      "rules": [
+        "SDR-18"
+      ],
+      "message": "Assumed a legend with title, ranges, units and polarity.",
+      "location": "/context/legend/parts",
+      "data": null
+    },
+    {
+      "severity": "info",
+      "code": "SNR-SPEC-080",
+      "rules": [
+        "A11Y-08"
+      ],
+      "message": "Assumed boundary earcons.",
+      "location": "/context/earcons/boundary",
+      "data": null
+    },
+    {
+      "severity": "info",
+      "code": "SNR-SPEC-080",
+      "rules": [
+        "A11Y-08"
+      ],
+      "message": "Assumed landmark earcons.",
+      "location": "/context/earcons/landmarks",
+      "data": null
+    },
+    {
+      "severity": "info",
+      "code": "SNR-SPEC-080",
+      "rules": [],
+      "message": "Assumed stereo output.",
+      "location": "/context/spatial",
+      "data": null
+    },
+    {
+      "severity": "info",
+      "code": "SNR-SPEC-080",
+      "rules": [
+        "A11Y-08"
+      ],
+      "message": "Assumed earcon cues.",
+      "location": "/analysis/cue",
+      "data": null
+    },
+    {
+      "severity": "info",
+      "code": "SNR-SPEC-080",
+      "rules": [
+        "A11Y-02"
+      ],
+      "message": "Assumed L1 and L2 descriptions.",
+      "location": "/analysis/describe/levels",
+      "data": null
+    },
+    {
+      "severity": "info",
+      "code": "SNR-SPEC-080",
+      "rules": [],
+      "message": "Assumed playback speed 1.",
+      "location": "/playback/speed",
+      "data": null
+    },
+    {
+      "severity": "info",
+      "code": "SNR-SPEC-080",
+      "rules": [],
+      "message": "Assumed no looping.",
+      "location": "/playback/loop",
+      "data": null
+    },
+    {
+      "severity": "info",
+      "code": "SNR-SPEC-080",
+      "rules": [],
+      "message": "Assumed 48000 Hz output.",
+      "location": "/output/sampleRate",
+      "data": null
+    },
+    {
+      "severity": "info",
+      "code": "SNR-SPEC-080",
+      "rules": [],
+      "message": "Assumed 2 output channels.",
+      "location": "/output/channels",
+      "data": null
+    },
+    {
+      "severity": "info",
+      "code": "SNR-SPEC-080",
+      "rules": [],
+      "message": "Assumed 256-frame blocks.",
+      "location": "/output/blockSize",
+      "data": null
+    },
+    {
+      "severity": "info",
+      "code": "SNR-SPEC-080",
+      "rules": [],
+      "message": "Assumed an export target of -16 LUFS (proposed).",
+      "location": "/output/loudness/targetLufs",
+      "data": null
+    },
+    {
+      "severity": "info",
+      "code": "SNR-SPEC-080",
+      "rules": [],
+      "message": "Assumed a true-peak limit of -1 dBTP (proposed).",
+      "location": "/output/loudness/truePeakDbtp",
+      "data": null
+    },
+    {
+      "severity": "info",
+      "code": "SNR-COMP-033",
+      "rules": [],
+      "message": "Template `chart-pie` binds slice = `x`, value = `y`.",
+      "location": "/template/bind",
+      "data": null
+    },
+    {
+      "severity": "info",
+      "code": "SNR-COMP-034",
+      "rules": [],
+      "message": "The spec takes substrate, tracks from the template.",
+      "location": "/template",
+      "data": null
+    },
+    {
+      "severity": "info",
+      "code": "SNR-SPEC-080",
+      "rules": [],
+      "message": "Assumed a linear scale.",
+      "location": "/tracks/0/channels/pitch/scale/type",
+      "data": null
+    },
+    {
+      "severity": "info",
+      "code": "SNR-SPEC-080",
+      "rules": [],
+      "message": "Assumed no domain rounding.",
+      "location": "/tracks/0/channels/pitch/scale/nice",
+      "data": null
+    },
+    {
+      "severity": "info",
+      "code": "SNR-SPEC-080",
+      "rules": [
+        "SDR-08"
+      ],
+      "message": "Assumed a pitch range of 400 to 1400 Hz.",
+      "location": "/tracks/0/channels/pitch/range",
+      "data": null
+    },
+    {
+      "severity": "info",
+      "code": "SNR-SPEC-080",
+      "rules": [
+        "SDR-09"
+      ],
+      "message": "Assumed log-frequency pitch.",
+      "location": "/tracks/0/channels/pitch/space",
+      "data": null
+    },
+    {
+      "severity": "info",
+      "code": "SNR-SPEC-080",
+      "rules": [
+        "SDR-12",
+        "SDR-13",
+        "SDR-14"
+      ],
+      "message": "Assumed polarity from the field concept.",
+      "location": "/tracks/0/channels/pitch/polarity",
+      "data": null
+    },
+    {
+      "severity": "warning",
+      "code": "SNR-COMP-023",
+      "rules": [],
+      "message": "Context cues (ticks, reference tone, legend, earcons) are not available in this build; AUDAXIS arrives in B03.",
+      "location": "/context",
+      "data": null
+    },
+    {
+      "severity": "info",
+      "code": "SNR-ENG-344",
+      "rules": [],
+      "message": "Values were read from the chart's workbook, the data the chart was built from.",
+      "location": "/data/source/path",
+      "data": null
+    },
+    {
+      "severity": "warning",
+      "code": "SNR-ENG-380",
+      "rules": [
+        "SDR-03"
+      ],
+      "message": "PLOTSONA: template `chart-pie` is experimental; no design rule covers it yet.",
+      "location": "/template/id",
+      "data": null
+    },
+    {
+      "severity": "info",
+      "code": "SNR-ENG-001",
+      "rules": [],
+      "message": "NUMISONA: track `slices`: time follows field `x`, which has role x (RFC-0001 §5).",
+      "location": "/substrate/time/field",
+      "data": null
+    },
+    {
+      "severity": "info",
+      "code": "SNR-ENG-002",
+      "rules": [
+        "SDR-29"
+      ],
+      "message": "NUMISONA: track `slices`: the instrument is `mallet`, the harmonic mallet-like default (SDR-29).",
+      "location": "/tracks/0/instrument",
+      "data": null
+    },
+    {
+      "severity": "info",
+      "code": "SNR-ENG-020",
+      "rules": [
+        "SDR-12"
+      ],
+      "message": "NUMISONA: field `y` has no concept, so its polarity is positive, the generic default: higher values sound higher (SDR-12).",
+      "location": "/tracks/0/channels/pitch/polarity",
+      "data": null
+    },
+    {
+      "severity": "info",
+      "code": "SNR-ENG-004",
+      "rules": [
+        "SDR-23"
+      ],
+      "message": "NUMISONA: track `slices`: loudness is constant at -18 dB, so pitch alone carries the data (SDR-23).",
+      "location": "/tracks/0/channels/loudness",
+      "data": null
+    },
+    {
+      "severity": "info",
+      "code": "SNR-ENG-007",
+      "rules": [
+        "A11Y-13"
+      ],
+      "message": "NUMISONA: track `slices`: duration also encodes the pitch field, from 0.1 s to 0.3 s (A11Y-13; the range is a sound-design proposal, F-082).",
+      "location": "/tracks/0/redundant",
+      "data": null
+    }
+  ]
+}
+--- stderr

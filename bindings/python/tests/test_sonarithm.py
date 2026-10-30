@@ -232,3 +232,28 @@ def test_the_notebook_display_is_text_first():
     assert "Pitch follows temp, 400 to 1400 Hz" in page
     escaped = dict(TEMPS, name="<b>Temps</b>")
     assert "&lt;b&gt;" in snr.compile(escaped)._repr_html_()
+
+
+CORPUS = ROOT / "crates" / "engines" / "sonarithm-plotsona" / "tests" / "corpus"
+
+
+def test_a_chart_file_reads_with_its_report_and_plays():
+    """C01-T12: a chart's report, its summary sentence and the spec of its template."""
+    chart = snr.read_chart(CORPUS / "svg" / "vl-line.svg")
+    assert chart.summary.startswith("36 points: 0 exact, 36 calibrated, 0 estimated, median confidence")
+    report = chart.report()
+    assert report["tier"] == "vector"
+    assert report["provenance"] == {"vector": 36}
+    assert [s["class"] for s in report["series"]] == ["vector"] * 3
+    assert chart.template == "chart-line"
+    assert chart.dataset().fields[:3] == ["series", "x", "y"]
+    compiled = chart.compile()
+    assert compiled.summary()["tracks"][0]["notes"] == 36
+
+
+def test_a_file_that_is_no_chart_raises_with_a_code(tmp_path):
+    path = tmp_path / "notes.svg"
+    path.write_text("not a chart", encoding="utf-8")
+    with pytest.raises(snr.SonarithmError) as raised:
+        snr.read_chart(path)
+    assert raised.value.diagnostics[0]["code"].startswith("SNR-ENG-3")

@@ -45,6 +45,9 @@ pub enum Error {
     /// Rendering failed: an unsupported output path, or a file that cannot be written.
     #[error("the render failed: {0}")]
     Render(String),
+    /// A chart file could not be extracted: PLOTSONA's diagnostic (`SNR-ENG-3xx`).
+    #[error("the chart cannot be read: {0}")]
+    Chart(Box<Diagnostic>),
     /// The Score could not be written in its canonical form (a non-finite number).
     #[error("the Score has no canonical form: {0}")]
     Canonical(String),
@@ -60,6 +63,11 @@ impl Error {
             Self::Data(err) => {
                 let mut one = Diagnostics::new();
                 one.push(err.to_diagnostic());
+                one
+            }
+            Self::Chart(diagnostic) => {
+                let mut one = Diagnostics::new();
+                one.push((**diagnostic).clone());
                 one
             }
             _ => Diagnostics::new(),
