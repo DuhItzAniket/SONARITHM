@@ -96,7 +96,7 @@ pub(crate) fn run(root: &Path, rest: &[String]) -> Result<()> {
             let log = mechanism.read_log(started)?;
             for run in &mut runs {
                 if let Some(pid) = run.pid {
-                    run.attempts = mechanism.lines(&log, pid);
+                    run.attempts = mechanism.lines(&log, pid, &run.name);
                 }
             }
             if runs.iter().all(|run| !run.attempts.is_empty()) {
@@ -344,11 +344,11 @@ impl Mechanism {
     }
 
     /// The attempts of process `pid` in `log`.
-    fn lines(self, log: &str, pid: u32) -> Vec<String> {
+    fn lines(self, log: &str, pid: u32, exe: &str) -> Vec<String> {
         match self {
             Self::Strace => Vec::new(),
             Self::Sandbox => sandbox_lines(log, pid),
-            Self::Wfp => wfp_lines(log, pid),
+            Self::Wfp => wfp_lines(log, pid, exe),
         }
     }
 }
@@ -416,12 +416,21 @@ fn sandbox_lines(log: &str, pid: u32) -> Vec<String> {
 
 /// Outbound WFP connection events (`%%14593`) of the process `pid`. Each line is
 /// `id \t pid \t direction \t destination \t application`.
-fn wfp_lines(log: &str, pid: u32) -> Vec<String> {
+fn wfp_lines(log: &str, pid: u32, exe: &str) -> Vec<String> {
     let pid = pid.to_string();
+    // Windows reuses process IDs, and the log is read back over a window that reaches
+    // before this run (the self-test's probe runs one step earlier). An event counts only if
+    // its application is this executable too (#409: the probe's attempts were pinned on the
+    // `speech` tests, which had the probe's old PID). WFP reports a lower-case device path.
+    let exe = exe.to_lowercase();
     log.lines()
         .filter(|line| {
             let fields: Vec<&str> = line.split('\t').collect();
-            fields.get(1) == Some(&pid.as_str()) && fields.get(2) == Some(&"%%14593")
+            let application = fields.get(4).map(|path| path.to_lowercase());
+            fields.get(1) == Some(&pid.as_str())
+                && fields.get(2) == Some(&"%%14593")
+                && application
+                    .is_some_and(|path| path.rsplit(['\\', '/']).next() == Some(exe.as_str()))
         })
         .map(str::to_owned)
         .collect()
@@ -467,6 +476,22 @@ mod tests {
 5156\t4242\t%%14593\t192.0.2.1:9\t\\device\\harddiskvolume2\\t\\network_probe.exe
 5156\t4242\t%%14592\t127.0.0.1:50000\t\\device\\harddiskvolume2\\t\\network_probe.exe
 5157\t77\t%%14593\t10.0.0.1:443\t\\device\\harddiskvolume2\\other.exe";
-        assert_eq!(wfp_lines(log, 4242).len(), 1);
+        assert_eq!(wfp_lines(log, 4242, "network_probe.exe").len(), 1);
+    }
+
+    #[test]
+    fn wfp_events_of_an_earlier_process_with_the_same_pid_do_not_count() {
+        // #409: the self-test's probe ran as PID 6916; the `speech` tests later ran as 6916
+        // too, and the log window still held the probe's two deliberate attempts.
+        let log = "\
+5156\t6916\t%%14593\t192.0.2.1:9\t\\device\\harddiskvolume4\\a\\target\\debug\\deps\\network_probe-3f77.exe
+5156\t6916\t%%14593\t192.0.2.1:9\t\\device\\harddiskvolume4\\a\\target\\debug\\deps\\network_probe-3f77.exe";
+        assert_eq!(
+            wfp_lines(log, 6916, "speech-c7bd.exe"),
+            Vec::<String>::new()
+        );
+        assert_eq!(wfp_lines(log, 6916, "network_probe-3f77.exe").len(), 2);
+        // The file name is matched without regard to case, as WFP lower-cases the path.
+        assert_eq!(wfp_lines(log, 6916, "Network_Probe-3F77.exe").len(), 2);
     }
 }
