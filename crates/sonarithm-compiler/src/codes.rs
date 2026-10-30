@@ -174,9 +174,11 @@ pub const TEMPLATE_SECTIONS: CodeInfo = CodeInfo {
     )
 };
 
-/// A chart correction was not applied (RFC-0004 §6).
+/// A chart correction was not applied (RFC-0004 §6). **Retired:** PLOTSONA applies chart
+/// corrections and reports this as `SNR-ENG-386` (RFC-0005 amendment 3).
 pub const CORRECTION_NOT_APPLIED: CodeInfo = CodeInfo {
     severity: Severity::Warning,
+    status: CodeStatus::Retired,
     ..code_info(
         "SNR-COMP-036",
         "A chart correction was not applied",

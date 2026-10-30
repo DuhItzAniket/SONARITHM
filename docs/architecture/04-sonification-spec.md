@@ -93,7 +93,7 @@ A chart source can carry the axis calibration a person confirmed and the correct
 
 - An axis `kind` is `linear`, `log` (values above 0), `date` (ISO 8601 strings) or `category` (labels), with at least two anchors at distinct points and values; more than two are fitted by least squares and the residual is reported. `page` (PDF, default 1) and `plotArea` (`{ "min": [x, y], "max": [x, y] }`) are optional. An invalid calibration is `SNR-SPEC-054`.
 - Without `calibration`, the extractor calibrates on its own and reports the calibration it used in this shape.
-- Edits are `add`, `move`, `delete` and `retype`, applied in order after extraction and before `transform`; edited rows become `user_edited` (03 §4). An edit whose `was` no longer matches is not applied and is reported (`SNR-COMP-036`). Shape errors are `SNR-SPEC-055`; `corrections.path`, a correction file, is reserved for RFC-0005 (`SNR-SPEC-056`).
+- Edits are `add`, `move`, `delete` and `retype`, applied in order after extraction and before `transform`; edited rows become `user_edited` (03 §4). An edit whose `was` no longer matches is not applied and is reported (`SNR-ENG-386`). Shape errors are `SNR-SPEC-055`; `corrections.path`, a correction file, is reserved for RFC-0005 (`SNR-SPEC-056`).
 
 ## 4. `transform`
 

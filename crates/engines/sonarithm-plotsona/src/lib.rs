@@ -38,6 +38,7 @@ pub mod codes;
 mod container;
 #[cfg(test)]
 mod corpus;
+pub mod corrections;
 pub mod detect;
 pub mod import;
 pub mod model;
@@ -64,6 +65,7 @@ use sonarithm_spec::data::Extractor;
 use sonarithm_spec::v02::Calibration as SpecCalibration;
 
 pub use budget::{Budgets, Work};
+pub use corrections::{CorrectionRecord, CorrectionSet};
 pub use detect::{Container, Tier, detect};
 pub use model::{ChartData, ChartType, Point, Series, XValue};
 pub use report::{ClassCounts, ExtractionReport, SeriesReport};
@@ -90,6 +92,8 @@ pub struct ExtractOptions {
     /// The axis calibration the user entered (`data.source.calibration`), which the raster
     /// tier needs.
     pub calibration: Option<SpecCalibration>,
+    /// Corrections to apply after extraction (C02-T06): inline edits or a correction file.
+    pub corrections: Option<CorrectionSet>,
 }
 
 impl ExtractOptions {
@@ -101,6 +105,7 @@ impl ExtractOptions {
             extractor: Extractor::Auto,
             ids: (BundleId(0), CHART_TABLE),
             calibration: None,
+            corrections: None,
         }
     }
 
@@ -122,6 +127,13 @@ impl ExtractOptions {
     #[must_use]
     pub const fn with_extractor(mut self, extractor: Extractor) -> Self {
         self.extractor = extractor;
+        self
+    }
+
+    /// The same options with corrections to apply after extraction.
+    #[must_use]
+    pub fn with_corrections(mut self, corrections: CorrectionSet) -> Self {
+        self.corrections = Some(corrections);
         self
     }
 
@@ -180,8 +192,11 @@ pub fn extract(
         return Err(not_available(container));
     }
     let mut diagnostics = Vec::new();
-    let (chart, extractor) = read_chart(&sniffed, bytes, options, &mut work, &mut diagnostics)?;
-    finish(
+    let (mut chart, extractor) = read_chart(&sniffed, bytes, options, &mut work, &mut diagnostics)?;
+    let history = options.corrections.as_ref().map_or_else(Vec::new, |set| {
+        corrections::apply(&mut chart, set, bytes, extractor, &mut diagnostics)
+    });
+    let mut extraction = finish(
         locator,
         container,
         extractor,
@@ -189,7 +204,9 @@ pub fn extract(
         diagnostics,
         budgets,
         options.ids,
-    )
+    )?;
+    extraction.report.corrections = history;
+    Ok(extraction)
 }
 
 /// Runs the extractor of the sniffed container and names it.
@@ -409,6 +426,7 @@ impl Source<DataBundle> for ChartSource {
             path,
             extractor,
             calibration,
+            corrections,
             ..
         } = parsed
         else {
@@ -434,6 +452,13 @@ impl Source<DataBundle> for ChartSource {
             })?;
             options = options.with_calibration(typed);
         }
+        if let Some(corrections) = &corrections {
+            let at = source.pointer().key("corrections");
+            let set = self
+                .corrections(corrections)
+                .map_err(|d| CompileError::from(d.at(at)))?;
+            options = options.with_corrections(set);
+        }
         let extraction =
             extract(&bytes, &path, &options).map_err(|d| CompileError::from(d.at(at.clone())))?;
         for diagnostic in extraction.report.diagnostics {
@@ -444,6 +469,44 @@ impl Source<DataBundle> for ChartSource {
 }
 
 impl ChartSource {
+    /// The corrections of a chart source: inline edits, or the correction file
+    /// `corrections.path` names (relative to the base directory, RFC-0005 §7).
+    fn corrections(
+        &self,
+        value: &sonarithm_spec::JsonValue,
+    ) -> Result<CorrectionSet, Box<Diagnostic>> {
+        let unreadable = |reason: String| {
+            Box::new(Diagnostic::new(
+                &codes::FILE_UNREADABLE,
+                format!("The corrections cannot be read: {reason}."),
+            ))
+        };
+        let json = sonarithm_spec::v02::to_json(value);
+        let Some(path) = json.get("path").and_then(serde_json::Value::as_str) else {
+            let inline =
+                sonarithm_spec::v02::read(value).map_err(|err| unreadable(err.to_string()))?;
+            return Ok(CorrectionSet::Inline(inline));
+        };
+        let safe = !path.is_empty()
+            && !path.contains(':')
+            && !path.starts_with(['/', '\\'])
+            && !path.split(['/', '\\']).any(|part| part == "..");
+        if !safe {
+            return Err(unreadable(format!(
+                "`{path}` is not a path relative to the spec"
+            )));
+        }
+        let bytes = self.read(path)?;
+        let (file, _) = sonarithm_spec::correction_file::read(&bytes).map_err(|errors| {
+            let first = errors
+                .iter()
+                .next()
+                .map_or_else(String::new, |d| d.message.clone());
+            unreadable(first)
+        })?;
+        Ok(CorrectionSet::File(Box::new(file)))
+    }
+
     /// Reads the chart file, checking its size before reading it.
     fn read(&self, path: &str) -> Result<Vec<u8>, Box<Diagnostic>> {
         let unreadable = |reason: String| {

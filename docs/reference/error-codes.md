@@ -71,7 +71,7 @@ Owner: `sonarithm-compiler`.
 | `SNR-COMP-032` | error | Template slot has no field | Name a field for the slot in `template.bind`, or use data with a compatible field. | — |
 | `SNR-COMP-033` | info | Template binding used | Name slots in `template.bind` to choose other fields. | — |
 | `SNR-COMP-034` | info | Sections taken from a template | A section written in the spec replaces the template's section of the same name; the spec's `transform` runs before the template's. | — |
-| `SNR-COMP-036` | warning | A chart correction was not applied | An edit applies only to the point it was made on, checked by its `was` value; re-make the edit on the current extraction. | — |
+| `SNR-COMP-036` | warning | RETIRED: A chart correction was not applied | An edit applies only to the point it was made on, checked by its `was` value; re-make the edit on the current extraction. | — |
 
 ## SNR-DATA
 
@@ -228,6 +228,8 @@ Owner: `sonarithm-plotsona`. Numbers SNR-ENG-300 to SNR-ENG-399.
 | `SNR-ENG-383` | error | The document cannot be imported | Check that it is a Vega-Lite or MAIDR document of a supported chart type, or            write the spec's tracks by hand. | — |
 | `SNR-ENG-384` | error | The imported chart has no readable data | Give the chart inline values or a local data file; SONARITHM never fetches data            from the network (ADR-0012). | — |
 | `SNR-ENG-385` | info | Chart extracted | The message counts the points by how they were obtained: exact, calibrated from            the drawing, or estimated. Estimated values are announced as estimates. | — |
+| `SNR-ENG-386` | warning | A chart correction was not applied | An edit applies only to the point it was made on, checked by its `was` value; the            point is gone or now has another value. Re-make the edit on the current extraction. | — |
+| `SNR-ENG-387` | warning | The corrections were made on another chart | A correction file is bound to its chart by the chart's SHA-256 and the extractor;            this chart differs, so no edit was applied. Open the chart the file was made for. | — |
 
 Owner: `sonarithm-echometric`. Numbers SNR-ENG-600 to SNR-ENG-699.
 
