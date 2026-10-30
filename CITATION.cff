@@ -21,9 +21,10 @@ abstract: >-
   Renders carry provenance (engine version, spec hash and data fingerprint) so
   that results can be reproduced.
 authors:
-  # TODO(owner): add given-names, family-names and orcid (https://orcid.org/...) here, and the
-  # same person as "Family, Given" with "orcid" in .zenodo.json creators, before the first tag.
+  # TODO(owner): add given-names and family-names here, and the same person as "Family, Given"
+  # in .zenodo.json creators (which already carries the ORCID), before the first tag.
   - alias: "DuhItzAniket"
+    orcid: "https://orcid.org/0009-0003-8589-8859"
 url: "https://github.com/DuhItzAniket/SONARITHM"
 repository-code: "https://github.com/DuhItzAniket/SONARITHM"
 keywords:
