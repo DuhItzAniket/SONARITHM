@@ -1,0 +1,149 @@
+# Desktop nightly bundles for testers (B01-T09; docs/engineering/ci-cd.md#workflow-inventory).
+# Every night, unsigned installers for Windows (NSIS), macOS (DMG) and Linux (AppImage) are
+# built from main, installed, launched with the smoke test and checked with the network-deny
+# harness. They are workflow artifacts named by commit, never GitHub Releases. Kept apart
+# from nightly.yml so pull requests that touch the app core do not build three release
+# bundles; a pull request that edits this workflow, the nightly Tauri configuration or the
+# harness runs it as a dry run. Not a required check.
+name: desktop-nightly
+
+on:
+  schedule:
+    - cron: "17 3 * * *"
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - ".github/workflows/desktop-nightly.yml"
+      - "apps/desktop/src-tauri/tauri.nightly.conf.json"
+      - "xtask/src/network_deny.rs"
+
+permissions: {}
+
+concurrency:
+  group: desktop-nightly-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  # B01-T09 (A11Y-32, NFR-04): unsigned desktop bundles for testers, so the owner and
+  # volunteers can run screen-reader checks on a real build. Each runner builds a release
+  # bundle with apps/desktop/src-tauri/tauri.nightly.conf.json (bundling on, no updater
+  # artifacts; macOS ad-hoc signed so it runs on Apple silicon), installs it, launches it
+  # with the smoke test, and runs the network-deny harness against the installed app.
+  # No signing secret or updater key is used (signing is C06). Bundles are workflow
+  # artifacts named by commit, never GitHub Releases (release-process §2).
+  desktop-nightly:
+    name: desktop-nightly (${{ matrix.os }})
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: windows-latest
+            bundle: nsis
+          - os: macos-latest
+            bundle: dmg
+          - os: ubuntu-24.04
+            bundle: appimage
+    runs-on: ${{ matrix.os }}
+    permissions:
+      contents: read
+      id-token: write
+      attestations: write
+    timeout-minutes: 90
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Linux build dependencies (WebKitGTK 4.1, ALSA), Xvfb and strace
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install --yes --no-install-recommends libwebkit2gtk-4.1-dev libgtk-3-dev librsvg2-dev libxdo-dev libasound2-dev xvfb strace file
+      - name: No signing secret or updater key is present
+        env:
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+        run: test -z "$TAURI_SIGNING_PRIVATE_KEY"
+      - run: rustup toolchain install
+      - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
+        with:
+          key: desktop-nightly
+          save-if: ${{ github.ref == 'refs/heads/main' }}
+      - uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 24
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Build the ${{ matrix.bundle }} bundle (release, unsigned)
+        run: pnpm -C apps/desktop tauri build --config src-tauri/tauri.nightly.conf.json --bundles ${{ matrix.bundle }} -- --locked
+      - name: Collect the bundle
+        env:
+          BUNDLE: ${{ matrix.bundle }}
+        run: |
+          mkdir -p nightly
+          case "$BUNDLE" in
+            nsis) cp target/release/bundle/nsis/*-setup.exe nightly/ ;;
+            dmg) cp target/release/bundle/dmg/*.dmg nightly/ ;;
+            appimage) cp target/release/bundle/appimage/*.AppImage nightly/ ;;
+          esac
+          ls -l nightly
+          echo "ARTIFACT=sonarithm-desktop-nightly-${GITHUB_SHA::12}-${{ runner.os }}" >> "$GITHUB_ENV"
+      # Install as a tester would: NSIS silently per user, the DMG's app copied to
+      # ~/Applications, the AppImage extracted (no FUSE on the runner).
+      - name: Install (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          $installer = Get-ChildItem nightly/*-setup.exe | Select-Object -First 1
+          $dir = Join-Path $env:RUNNER_TEMP 'sonarithm-nightly'
+          Start-Process -FilePath $installer.FullName -ArgumentList '/S', "/D=$dir" -Wait
+          $exe = Get-ChildItem (Join-Path $dir '*.exe') | Where-Object { $_.Name -notlike 'uninstall*' } | Select-Object -First 1
+          if (-not $exe) { throw "No installed executable in $dir" }
+          # Forward slashes, so the bash steps can run the path as it is.
+          $path = $exe.FullName.Replace([string][char]92, '/')
+          "APP=$path" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
+      - name: Install (macOS)
+        if: runner.os == 'macOS'
+        run: |
+          mount="$RUNNER_TEMP/sonarithm-dmg"
+          hdiutil attach nightly/*.dmg -nobrowse -mountpoint "$mount"
+          mkdir -p "$HOME/Applications"
+          cp -R "$mount"/*.app "$HOME/Applications/"
+          hdiutil detach "$mount"
+          app=$(ls -d "$HOME"/Applications/*.app | head -n 1)
+          exe=$(/usr/libexec/PlistBuddy -c 'Print :CFBundleExecutable' "$app/Contents/Info.plist")
+          echo "APP=$app/Contents/MacOS/$exe" >> "$GITHUB_ENV"
+      - name: Install (Linux)
+        if: runner.os == 'Linux'
+        run: |
+          appimage=$(ls "$PWD"/nightly/*.AppImage | head -n 1)
+          chmod +x "$appimage"
+          mkdir -p "$RUNNER_TEMP/sonarithm-nightly"
+          (cd "$RUNNER_TEMP/sonarithm-nightly" && "$appimage" --appimage-extract > /dev/null)
+          echo "APP=$RUNNER_TEMP/sonarithm-nightly/squashfs-root/AppRun" >> "$GITHUB_ENV"
+          echo "DISPLAY_WRAP=xvfb-run -a" >> "$GITHUB_ENV"
+      - name: Launch the installed app (smoke test)
+        timeout-minutes: 10
+        run: |
+          ${DISPLAY_WRAP:-} "$APP" --smoke smoke.json
+          echo '### Installed nightly smoke test (${{ runner.os }})' >> "$GITHUB_STEP_SUMMARY"
+          { echo '```json'; cat smoke.json; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
+      - if: failure() && hashFiles('smoke.json') != ''
+        run: cat smoke.json
+      # NFR-04: the installed app makes no network connection without a consent gate. The
+      # ci.yml network-deny job shows on every PR that each mechanism sees a deliberate one.
+      - name: Network-deny harness on the installed app
+        timeout-minutes: 30
+        run: ${DISPLAY_WRAP:-} cargo xtask network-deny --app "$APP" -- --smoke smoke-network-deny.json
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: ${{ env.ARTIFACT }}
+          path: nightly/*
+          if-no-files-found: error
+          retention-days: ${{ github.event_name == 'pull_request' && 7 || 30 }}
+      - if: github.event_name != 'pull_request'
+        uses: actions/attest-build-provenance@4d101475d8b20a2381f78447822ac1eab6504dd8 # v4.2.2
+        with:
+          subject-path: nightly/*

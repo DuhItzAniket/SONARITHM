@@ -44,6 +44,12 @@
 - `transport` machine with a status region driven only by app-core reports, and a request region with "newest waiting intent wins". The model-based test runs every sequence of three intents (343) against a small Rust-like reducer, and checks that the machine never showed a status the fake host did not report.
 - The toolbar's Stop stays enabled while a Score is loaded: disabling the focused button after a press would drop the keyboard focus.
 - No cargo build (PLOTSONA held the slot). The Playwright spec was not run locally (free RAM 2.9 GB, under the 3 GB floor); CI runs it.
+## B01-T09: nightly bundles (2026-10-30)
+
+- `desktop-nightly.yml`, a workflow of its own: `nightly.yml` also runs on app-core pull requests, and three release bundles on each would cost about an hour of runner time.
+- `tauri.nightly.conf.json` turns bundling on (`bundle.active` stays off in the main config, so CI and dev builds stay unbundled), with no updater artifacts and ad-hoc macOS signing.
+- `cargo xtask network-deny --app <exe> -- <args>` runs the installed app with `--smoke`. On Windows and macOS it checks only the app's own process; the webview's processes are a known gap, written down in testing-strategy §10.
+- No cargo build locally: PLOTSONA held the Rust slot. `rustfmt` only, and the PR's dry run is the first build of the new code.
 
 ## Next steps
 

@@ -237,6 +237,8 @@ The headless app core (`sonarithm-app`, B01) holds all non-UI desktop behaviour,
   | macOS | `sandbox-exec` with `(deny network-outbound (remote ip "*:*"))`, so attempts also fail | A kernel `deny(1) network-outbound` line for the process in `log show` |
   | Windows | Windows Filtering Platform connection auditing (`auditpol`, needs an elevated shell, as CI runners have) | An outbound 5156 or 5157 event for the process in the Security log |
 
+  `--app <exe> [-- <args>]` runs one executable instead of the tests. `desktop-nightly.yml` uses it on the installed desktop app with `--smoke` (B01-T09). There, Linux's strace follows the webview's processes, but on Windows and macOS only the app's own process is checked: WebView2's and WebKit's processes are not.
+
   `--self-test` is the negative test: an ignored probe (`network_probe_connects`) connects to 192.0.2.1 (TEST-NET-1) over TCP and UDP, and the harness fails unless it sees those attempts, so a mechanism that stops working cannot pass silently. The self-test reads the OS log for up to about a minute, because the unified log and the Security log persist entries late on busy runners. On macOS, if the log still has no entry, the probe's own report that the sandbox refused its connections (EPERM) counts, since that shows the sandbox is enforcing. B01-T09 runs the same mechanisms against the packaged app.
 - **Project round trip (B05)**: a saved project reopens bit-identically; every inspector edit round-trips through the spec without loss.
 - **IPC contract**: ts-rs types are regenerated in CI and must produce no diff; Tauri command handlers are tested with typed payloads; frontend tests use the same generated types through `mockIPC`.
