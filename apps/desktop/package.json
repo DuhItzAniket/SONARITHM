@@ -21,7 +21,8 @@
     "@tauri-apps/api": "catalog:",
     "react": "catalog:",
     "react-aria-components": "catalog:",
-    "react-dom": "catalog:"
+    "react-dom": "catalog:",
+    "xstate": "catalog:"
   },
   "devDependencies": {
     "@axe-core/playwright": "catalog:",

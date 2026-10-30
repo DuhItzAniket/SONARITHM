@@ -1,7 +1,13 @@
 // SPDX-FileCopyrightText: 2026 SONARITHM contributors
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
-import type { Channel, Event, MockHandlers, Request } from "@sonarithm/ipc";
+import type {
+  Channel,
+  Event,
+  MockHandlers,
+  Request,
+  TransportState,
+} from "@sonarithm/ipc";
 import { createMockTransport, EVENT_CHANNELS } from "@sonarithm/ipc";
 import { mockIPC } from "@tauri-apps/api/mocks";
 
@@ -13,7 +19,39 @@ import { mockIPC } from "@tauri-apps/api/mocks";
  * Tests push app-core events with `window.__SONARITHM_MOCK__.emit(event)`: each goes to
  * the Tauri channels subscribed to its ADR-0017 channel, as the host's router does.
  */
-const handlers: MockHandlers = {};
+/** The mock transport: no Score until a test loads one, so nothing is playable at start. */
+let transport: TransportState = {
+  status: "stopped",
+  positionS: 0,
+  durationS: 0,
+  speed: 1,
+  loopRange: null,
+  loaded: false,
+  device: null,
+  live: false,
+  xruns: 0,
+};
+
+function reply(next: TransportState) {
+  transport = next;
+  return { reply: "transport" as const, ...next };
+}
+
+const handlers: MockHandlers = {
+  transport_state: () => reply(transport),
+  transport_play: () =>
+    reply({ ...transport, status: "playing", device: "Mock output" }),
+  transport_pause: () =>
+    reply(
+      transport.status === "playing"
+        ? { ...transport, status: "paused" }
+        : transport,
+    ),
+  transport_stop: () =>
+    reply({ ...transport, status: "stopped", positionS: 0 }),
+  transport_set_loop: (request) =>
+    reply({ ...transport, loopRange: request.args.range }),
+};
 const host = createMockTransport(handlers);
 
 /** A Tauri channel as the mock receives it: its handler is readable. */
@@ -56,13 +94,21 @@ mockIPC(async (command, payload) => {
   }
 });
 
-Reflect.set(window, "__SONARITHM_MOCK__", {
-  emit(event: Event) {
-    const channel = EVENT_CHANNELS[event.event];
-    for (const { channel: wanted, to } of subscribers.values()) {
-      if (wanted === channel) {
-        to.onmessage(event);
-      }
+/** Sends an event to the Tauri channels subscribed to its channel, as the host's router does. */
+function emit(event: Event): void {
+  const channel = EVENT_CHANNELS[event.event];
+  for (const { channel: wanted, to } of subscribers.values()) {
+    if (wanted === channel) {
+      to.onmessage(event);
     }
+  }
+}
+
+Reflect.set(window, "__SONARITHM_MOCK__", {
+  /** Loads a Score of `durationS` seconds and reports it, as a compile would. */
+  loadScore(durationS: number) {
+    transport = { ...transport, loaded: true, durationS };
+    emit({ event: "clock", transport, hostTimeS: null, seq: 1 });
   },
+  emit,
 });

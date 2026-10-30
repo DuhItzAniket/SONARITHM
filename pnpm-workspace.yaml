@@ -21,6 +21,9 @@ catalog:
   react-aria: 3.53.1
   react-stately: 3.51.0
   react-dom: 19.3.1
+  # UI state machines (09 §3): the transport machine mirrors the Rust transport (B01-T05).
+  # Pinned: 5.33.3 was under two weeks old when this was added.
+  xstate: 5.33.2
   vite: 8.3.4
   # Frontend test infrastructure (B02-T03; testing-strategy §12, §13.1). Storybook 10 with
   # its accessibility (axe-core) and Vitest addons; Vitest 4 browser mode on Playwright's

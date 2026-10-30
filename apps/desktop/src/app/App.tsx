@@ -3,7 +3,7 @@
 
 import type { Client, IpcTransport } from "@sonarithm/ipc";
 import { connect } from "@sonarithm/ipc";
-import { Button, Tab, TabList, TabPanel, Tabs, Toolbar } from "@sonarithm/ui";
+import { Tab, TabList, TabPanel, Tabs } from "@sonarithm/ui";
 import { useEffect, useState } from "react";
 
 import type { RoutedAnnouncer } from "../announcer/announcer.ts";
@@ -15,6 +15,8 @@ import { KeyboardReference } from "../commands/KeyboardReference.tsx";
 import type { Scope } from "../commands/scopes.ts";
 import { activeScopes } from "../commands/scopes.ts";
 import { useLocalizer } from "../i18n.ts";
+import { TransportBar } from "../transport/TransportBar.tsx";
+import { useTransport } from "../transport/useTransport.ts";
 import styles from "./App.module.css";
 import { Frame } from "./frame/Frame.tsx";
 
@@ -25,9 +27,9 @@ type Start =
 
 /**
  * The app: connects to the app core, which checks the protocol version first (09 §2.2),
- * inside the application frame (B02-T06). The regions hold placeholders until their tasks:
- * transport (B01-T05), project tree (B03), plot and table (B04) and inspector (B05). The
- * Status region shows the announcement log (B03-T04).
+ * inside the application frame (B02-T06). The top bar holds the transport (B01-T05); the
+ * other regions hold placeholders until their tasks: project tree (B03), plot and table
+ * (B04) and inspector (B05). The Status region shows the announcement log (B03-T04).
  */
 export function App({
   transport,
@@ -40,6 +42,7 @@ export function App({
   const [start, setStart] = useState<Start>({ state: "starting" });
   const client = start.state === "ready" ? start.client : null;
   const log = useAnnouncementFeed(client, announcer);
+  const transportView = useTransport(client);
   const registry = useCommands();
   useKeymap(registry);
   const [paletteOpen, setPaletteOpen] = useState(false);
@@ -91,17 +94,7 @@ export function App({
   return (
     <>
       <Frame
-        top={
-          // The transport commands are wired with the transport machine (B01-T05).
-          <Toolbar label={t.format("ui-transport")}>
-            <Button variant="quiet" isDisabled>
-              {t.format("ui-play")}
-            </Button>
-            <Button variant="quiet" isDisabled>
-              {t.format("ui-stop")}
-            </Button>
-          </Toolbar>
-        }
+        top={<TransportBar transport={transportView} />}
         project={
           <p className={styles.status}>{t.format("ui-workspace-empty")}</p>
         }
