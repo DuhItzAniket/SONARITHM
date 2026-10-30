@@ -32,7 +32,9 @@ on:
 permissions: {}
 
 concurrency:
-  group: wheels-${{ github.ref }}
+  # Manual runs (the TestPyPI rehearsal) get their own group, so a push to main cannot
+  # replace one that is still waiting for a runner.
+  group: wheels-${{ github.ref }}-${{ github.event_name }}
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
