@@ -30,6 +30,14 @@
 
 - F-170: Tauri 2.12 cannot turn off WebView2's browser accelerator keys, although wry can.
 
+## B01-T04: hot paths (2026-10-30)
+
+- **Meters.** `sonarithm-render` has a meter window: the peak of each 50 ms window, published in `GraphStats::meter` with no allocation, so a 30 Hz reader misses nothing. `sonarithm-app` has `MeterFrame` (32 bytes, `SNRM`), `EventSink::meters` and a 30 Hz pacer on the control thread. The host sends the frames raw on `meters`. `@sonarithm/ipc` has `readMeterFrame` and `IpcTransport.meters`.
+- **Anchors.** The existing behaviour (on change and every 2 s) moved into a `Pacer` with unit tests, plus a scenario: no anchor in 500 ms without a change, and exactly one on a seek.
+- **PB-09.** The smoke run times 30 round trips of a cached 1.2 MB M4 view and reports p50, p95 and max. It does not gate, because CI runs a debug build on shared runners. No number was measured locally: no benchmarks run on the shared laptop.
+- **Contract.** The meter frame layout is an ADR-0017 §4 amendment and was sent to the coordinator for approval. Auto-merge stays off until it is approved.
+- **Tooling note.** The shell collapsed backslash escapes passed through it into Rust and TypeScript sources: a string-continuation escape and a Unicode escape were lost. Code with escapes now goes through the editor tool.
+
 ## Next steps
 
 - [x] Coordinator: ADR-0025 accepted (2026-10-29; numbered 0025, since 0023 and 0024 are reserved).

@@ -32,6 +32,7 @@ use crate::settings::Settings;
 pub const PROTOCOL_VERSION: u32 = 1;
 
 pub mod binary;
+pub mod meters;
 pub mod typescript;
 
 /// Every command with the [`Reply`] variant it answers with, in [`Request`] order. The

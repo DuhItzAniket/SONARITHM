@@ -6,10 +6,11 @@ import type {
   Event,
   IpcError,
   IpcTransport,
+  MeterFrame,
   Reply,
   Request,
 } from "@sonarithm/ipc";
-import { IpcFailure } from "@sonarithm/ipc";
+import { IpcFailure, MeterFrameError, readMeterFrame } from "@sonarithm/ipc";
 
 /**
  * The parts of Tauri's JavaScript API the transport uses, injected so tests run without a
@@ -17,8 +18,11 @@ import { IpcFailure } from "@sonarithm/ipc";
  */
 export interface TauriCore {
   invoke(command: string, args: Record<string, unknown>): Promise<unknown>;
-  /** A Tauri `Channel` whose messages go to `onMessage`. */
-  channel(onMessage: (message: Event) => void): unknown;
+  /**
+   * A Tauri `Channel` whose messages go to `onMessage`: a parsed JSON event, or an
+   * `ArrayBuffer` for a binary frame.
+   */
+  channel(onMessage: (message: unknown) => void): unknown;
 }
 
 /** The host's commands (`src-tauri/src/commands.rs`). */
@@ -63,28 +67,55 @@ export function createTauriTransport(core: TauriCore): IpcTransport {
       return body;
     },
     subscribe(channel: Channel, handler: (event: Event) => void): () => void {
-      let active = true;
-      const onEvent = core.channel((event) => {
-        if (active) {
-          handler(event);
+      // JSON events only: binary frames have their own readers (`meters`).
+      return listen(channel, (message) => {
+        if (!(message instanceof ArrayBuffer)) {
+          handler(message as Event);
         }
       });
-      const id = core
-        .invoke(COMMANDS.subscribe, { channel, onEvent })
-        .then((value) => (typeof value === "number" ? value : null))
-        .catch(() => null);
-      return () => {
-        active = false;
-        void id.then((value) =>
-          value === null
-            ? undefined
-            : core
-                .invoke(COMMANDS.unsubscribe, { id: value })
-                .catch(() => undefined),
-        );
-      };
+    },
+    meters(handler: (frame: MeterFrame) => void): () => void {
+      return listen("meters", (message) => {
+        if (!(message instanceof ArrayBuffer)) {
+          return;
+        }
+        try {
+          handler(readMeterFrame(message));
+        } catch (error) {
+          // A frame of another layout version is dropped, never guessed at (ADR-0017 §6).
+          if (!(error instanceof MeterFrameError)) {
+            throw error;
+          }
+        }
+      });
     },
   };
+
+  function listen(
+    channel: Channel,
+    deliver: (message: unknown) => void,
+  ): () => void {
+    let active = true;
+    const onEvent = core.channel((message) => {
+      if (active) {
+        deliver(message);
+      }
+    });
+    const id = core
+      .invoke(COMMANDS.subscribe, { channel, onEvent })
+      .then((value) => (typeof value === "number" ? value : null))
+      .catch(() => null);
+    return () => {
+      active = false;
+      void id.then((value) =>
+        value === null
+          ? undefined
+          : core
+              .invoke(COMMANDS.unsubscribe, { id: value })
+              .catch(() => undefined),
+      );
+    };
+  }
 }
 
 /** The app core's typed error, or the host's own refusal as `SNR-APP-009`. */

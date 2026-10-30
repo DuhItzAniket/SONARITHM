@@ -72,6 +72,8 @@ Spec and data problems are results, not errors: `compile` replies with a `Compil
 | `app` | Rare app-wide notices: device changed or lost, settings recovered | Rare |
 | `meters` | Binary meter frames (B01-T04) | 30 Hz, batched |
 
+**Meter frames (B01-T04, 2026-10-30).** A meter frame is not an `Event`. The app core hands it to `EventSink::meters`, and the host sends it on `meters` as 32 raw little-endian bytes, so it can never travel as JSON. The bytes are: magic `SNRM`, a u16 layout version (`1`), u16 flags (bit 0: the master limiter engaged), a u64 sequence number, the f64 transport position in seconds, and the left and right peaks as linear f32. Each peak is the maximum over the render graph's last complete 50 ms window. Frames are sent at most every 1/30 s, and only while playing. Readers are strict, as for views (§6): a frame with another magic, version or length is dropped with `SNR-APP-050`. A layout change increments the layout version; adding this frame kind does not change `PROTOCOL_VERSION` (§5). Layout: `crates/sonarithm-app/src/ipc/meters.rs`; TypeScript constants: the generated `METERS`.
+
 ### 5. Versioning
 
 `PROTOCOL_VERSION` is one integer, `1` for this ADR. The UI's first request is `hello { protocol }`. A different number fails with `SNR-APP-001` and a message naming both versions and the fix (build host and UI from the same commit). Host and UI ship together, so a mismatch only happens in development.

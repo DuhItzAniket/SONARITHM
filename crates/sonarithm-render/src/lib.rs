@@ -23,6 +23,7 @@ pub mod codes;
 mod earcon;
 pub mod fixtures;
 pub mod graph;
+mod meter;
 pub mod offline;
 pub mod plan;
 pub mod rt;
@@ -30,6 +31,7 @@ mod voice;
 
 pub use earcon::EarconSound;
 pub use graph::{Command, Cue, DUCK_LEVEL, GainTarget, Graph, GraphConfig, GraphStats, LoopRange};
+pub use meter::{METER_WINDOW, MeterLevels};
 pub use offline::OfflineRender;
 pub use plan::{
     Bus, EventKind, GlideRef, Instrument, PlanConfig, PlanError, Planned, PlannedBreakpoint,

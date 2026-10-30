@@ -99,6 +99,15 @@ export async function runSmoke(
     return `${String(buffer.byteLength)} bytes, ${String(view.rows)} rows`;
   });
 
+  // PB-09 (B01-T04): a 1 MB binary view, request to ArrayBuffer, p95 over repeated calls.
+  // Reported, not enforced here: CI runs a debug build on shared runners, so the number is
+  // an upper bound. The benchmarks log records the release-build runs (HW-01).
+  let pb09: Pb09 | null = null;
+  await check("pb-09-binary-view", async () => {
+    pb09 = await measurePb09(transport, config);
+    return `p95 ${pb09.p95Ms.toFixed(1)} ms over ${String(pb09.samples)} calls of ${String(pb09.bytes)} bytes (budget ${String(PB09_BUDGET_MS)} ms)`;
+  });
+
   // B03-T04: the native announcer route raises a UI Automation notification on Windows
   // (`UiaRaiseNotificationEvent` returns success); other hosts refuse, and the announcer
   // falls back to live regions.
@@ -121,8 +130,74 @@ export async function runSmoke(
     return "UI Automation notification raised";
   });
 
-  const results = { ok: checks.every((c) => c.ok), checks };
+  const results = { ok: checks.every((c) => c.ok), checks, pb09 };
   await invoke("smoke_report", { results });
+}
+
+/** PB-09: 30 ms p95 for a 1 MB binary view (12 §8). */
+const PB09_BUDGET_MS = 30;
+/** Timed calls after one warm-up call. */
+const PB09_SAMPLES = 30;
+
+/** The PB-09 measurement the smoke report carries. */
+interface Pb09 {
+  readonly bytes: number;
+  readonly samples: number;
+  readonly p50Ms: number;
+  readonly p95Ms: number;
+  readonly maxMs: number;
+  readonly budgetMs: number;
+  readonly withinBudget: boolean;
+}
+
+/**
+ * Times `view_get` round trips of an M4 view of every fixture row (4 rows per pixel), about
+ * 1.2 MB. M4 tiles are cached in the app core after the warm-up call, so the timed calls
+ * measure encoding, the IPC transfer and the arrival as an `ArrayBuffer`.
+ */
+async function measurePb09(
+  transport: IpcTransport,
+  config: SmokeConfig,
+): Promise<Pb09> {
+  const client = await connect(transport);
+  const dataset = await client.call({
+    command: "dataset_open",
+    args: { path: config.dataset },
+  });
+  const request = {
+    command: "view_get",
+    args: {
+      dataset: dataset.id,
+      x: "x",
+      y: "y",
+      range: null,
+      pxWidth: Math.ceil(config.rows / 4),
+      method: "m4",
+    },
+  } as const;
+  let bytes = (await client.binary(request)).byteLength;
+  if (bytes < BINARY_BYTES) {
+    throw new Error(`the view is only ${String(bytes)} bytes`);
+  }
+  const times: number[] = [];
+  for (let i = 0; i < PB09_SAMPLES; i += 1) {
+    const start = performance.now();
+    bytes = (await client.binary(request)).byteLength;
+    times.push(performance.now() - start);
+  }
+  times.sort((a, b) => a - b);
+  const at = (q: number) =>
+    times[Math.min(times.length - 1, Math.ceil(q * times.length) - 1)] ?? 0;
+  const p95Ms = at(0.95);
+  return {
+    bytes,
+    samples: times.length,
+    p50Ms: at(0.5),
+    p95Ms,
+    maxMs: times.at(-1) ?? 0,
+    budgetMs: PB09_BUDGET_MS,
+    withinBudget: p95Ms <= PB09_BUDGET_MS,
+  };
 }
 
 /** Resolves with `find()`'s element once it exists; rejects after 10 s. */

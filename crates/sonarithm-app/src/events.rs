@@ -6,6 +6,7 @@
 use std::sync::{Arc, Mutex, PoisonError};
 
 use crate::ipc::Event;
+use crate::ipc::meters::MeterFrame;
 
 /// Receives events from the app core's threads. The Tauri host forwards each to the
 /// channel [`Event::channel`] names; a test collects them.
@@ -15,6 +16,13 @@ use crate::ipc::Event;
 pub trait EventSink: Send + Sync {
     /// Delivers one event.
     fn emit(&self, event: Event);
+
+    /// Delivers one meter frame for the `meters` channel (B01-T04). Meters are a hot path,
+    /// so the host sends [`MeterFrame::encode`]'s bytes, never JSON (09 §2). By default the
+    /// frame is dropped.
+    fn meters(&self, frame: MeterFrame) {
+        let _ = frame;
+    }
 }
 
 /// Drops every event: for hosts without a UI, such as a batch export.
@@ -27,7 +35,10 @@ impl EventSink for NullSink {
 
 /// Keeps every event in order, for tests and for the CLI's `--json` log.
 #[derive(Clone, Debug, Default)]
-pub struct CollectingSink(Arc<Mutex<Vec<Event>>>);
+pub struct CollectingSink {
+    events: Arc<Mutex<Vec<Event>>>,
+    meters: Arc<Mutex<Vec<MeterFrame>>>,
+}
 
 impl CollectingSink {
     /// An empty collector.
@@ -39,7 +50,7 @@ impl CollectingSink {
     /// Every event so far, oldest first.
     #[must_use]
     pub fn events(&self) -> Vec<Event> {
-        self.0
+        self.events
             .lock()
             .unwrap_or_else(PoisonError::into_inner)
             .clone()
@@ -48,15 +59,31 @@ impl CollectingSink {
     /// Removes and returns every event so far.
     #[must_use]
     pub fn take(&self) -> Vec<Event> {
-        std::mem::take(&mut *self.0.lock().unwrap_or_else(PoisonError::into_inner))
+        std::mem::take(&mut *self.events.lock().unwrap_or_else(PoisonError::into_inner))
+    }
+
+    /// Every meter frame so far, oldest first.
+    #[must_use]
+    pub fn meter_frames(&self) -> Vec<MeterFrame> {
+        self.meters
+            .lock()
+            .unwrap_or_else(PoisonError::into_inner)
+            .clone()
     }
 }
 
 impl EventSink for CollectingSink {
     fn emit(&self, event: Event) {
-        self.0
+        self.events
             .lock()
             .unwrap_or_else(PoisonError::into_inner)
             .push(event);
+    }
+
+    fn meters(&self, frame: MeterFrame) {
+        self.meters
+            .lock()
+            .unwrap_or_else(PoisonError::into_inner)
+            .push(frame);
     }
 }

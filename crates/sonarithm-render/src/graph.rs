@@ -23,6 +23,7 @@ use sonarithm_dsp::smooth::SMOOTHING_TIME;
 use sonarithm_dsp::{LinearSmoother, PanGains, TruePeakLimiter};
 
 use crate::earcon::{EarconSound, splitmix};
+use crate::meter::{MeterLevels, MeterWindow};
 use crate::plan::{Bus, EventKind, Instrument, PlannedEvent, RenderPlan, Tone, TrackPlan};
 use crate::voice::{Start, VoicePool};
 
@@ -140,6 +141,9 @@ pub struct GraphStats {
     pub active_voices: u32,
     /// Peak absolute sample of the last block, left and right.
     pub peak: [f32; 2],
+    /// The master's level over the last complete meter window, for the UI's meters
+    /// (B01-T04): unlike [`peak`](Self::peak), it misses no block between two reads.
+    pub meter: MeterLevels,
     /// Frames rendered since the graph was built.
     pub rendered: u64,
 }
@@ -248,6 +252,7 @@ pub struct Graph {
     duck_gain: LinearSmoother,
     startup: Option<StartupRamp>,
     limiter: TruePeakLimiter,
+    meter: MeterWindow,
     playing: bool,
     /// Score frame at the anchor.
     anchor: f64,
@@ -317,6 +322,7 @@ impl Graph {
             duck_gain: LinearSmoother::new(1.0, SMOOTHING_TIME, rate),
             startup: config.startup_ramp.then(|| StartupRamp::new(rate)),
             limiter: TruePeakLimiter::new(rate),
+            meter: MeterWindow::new(rate),
             plan,
             rate,
             max_block,
@@ -601,6 +607,11 @@ impl Graph {
             + self.cues.active()
             + self.earcons.active();
         self.stats.peak = peak;
+        self.stats.meter = self.meter.push(
+            u64::try_from(frames.len()).unwrap_or(u64::MAX),
+            peak,
+            self.limiter.engaged_frames(),
+        );
         self.stats.active_voices = u32::try_from(active).unwrap_or(u32::MAX);
         self.stats.playing = self.playing;
         self.stats.speed = self.speed;

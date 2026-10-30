@@ -45,6 +45,19 @@ Tauri offers three primitives with very different performance ([notes/05 §1](..
 
 **Handler shape (B01-T03, as ADR-0017 left to it).** The host has four generic commands, not one per request: `ipc_dispatch` (a JSON `Request` to `App::dispatch`), `ipc_binary` (to `App::dispatch_binary`, replying with a raw `ipc::Response`), `ipc_subscribe` (a Tauri channel for one ADR-0017 channel; returns an ID) and `ipc_unsubscribe`. A request that is not a protocol message fails with the app core's `SNR-APP-009`. Commands run on Tauri's worker pool, never on the window's thread. The UI side is `createTauriTransport` in `apps/desktop/src/ipc/`; it rejects a binary reply that arrives as JSON (F-042). Tauri's per-command permissions therefore cannot tell requests apart (ADR-0017, consequences); the capability allows only these commands and no plugin.
 
+**As built (B01-T04): hot paths.**
+
+- **Clock anchors** are JSON on `clock`: one on every change (play, pause, stop, seek, speed, loop, device change, end of playback) and one every 2 s while playing, which a change restarts. A `Pacer` in `sonarithm-app/src/transport.rs` times both anchors and meters, and the unit tests drive it with synthetic instants.
+- **Meters** are binary and never JSON. The render graph keeps the master's peak over 50 ms windows (`sonarithm_render::METER_WINDOW`) and publishes the last complete one in `GraphStats::meter`, with no allocation. A window lasts longer than the gap between two reads, so a 30 Hz reader misses no peak. While playing, the control thread sends one `MeterFrame` at most every 1/30 s through `EventSink::meters`, which is not part of the `Event` enum. The host sends its 32 bytes raw on the `meters` channel. Tauri hands frames under 1 KiB to the page as an `ArrayBuffer`, and `IpcTransport.meters` reads them with `readMeterFrame`. That reader is strict: another magic or version is dropped with `SNR-APP-050`, never guessed at. The layout is in `crates/sonarithm-app/src/ipc/meters.rs`, and its constants are generated as `METERS`:
+  - magic `SNRM`;
+  - a u16 version;
+  - u16 flags (bit 0: the limiter engaged);
+  - a u64 sequence number;
+  - the f64 position in seconds;
+  - two f32 linear peaks.
+- **The rest.** Job progress stays at 10 per second per job (B01-T01), and announcements are paced by the sequencer (08 §4). The host sends no Tauri events at all: a test checks its source.
+- **PB-09.** The desktop smoke run times 30 `view_get` calls of a cached 1.2 MB M4 view, from request to `ArrayBuffer`, on the three CI operating systems, and reports p50, p95 and max. CI runs a debug build on shared runners, so it reports the number but does not gate on it. The [benchmarks log](../research-paper/benchmarks-log.md) records release-build runs on HW-01.
+
 ### 2.1 Command surface (initial)
 
 | Command | Returns | Phase |

@@ -590,3 +590,67 @@ fn adr_0017_no_reply_error_or_event_holds_an_absolute_path() {
         assert!(!text.contains(&folder), "a folder leaked: {text}");
     }
 }
+
+fn anchors(h: &Harness) -> usize {
+    h.sink
+        .events()
+        .iter()
+        .filter(|event| matches!(event, Event::Clock(_)))
+        .count()
+}
+
+#[test]
+fn b01_t04_anchors_come_on_changes_not_on_every_tick() {
+    let mut h = Harness::new("anchors");
+    h.open_and_compile();
+    h.ok(&json!({ "command": "transport_set_loop", "args": { "range": { "startS": 0.0, "endS": 1.0 } } }));
+    h.ok(&json!({ "command": "transport_play" }));
+    let after_play = anchors(&h);
+    // Nothing changes for half a second, well inside the 2 s period: no anchor.
+    std::thread::sleep(Duration::from_millis(500));
+    assert_eq!(anchors(&h), after_play);
+    // A seek is a change: exactly one anchor.
+    h.ok(&json!({ "command": "transport_seek", "args": { "seconds": 0.25 } }));
+    assert_eq!(anchors(&h), after_play + 1);
+}
+
+#[test]
+fn b01_t04_meters_are_binary_frames_at_most_30_a_second_while_playing() {
+    let mut h = Harness::new("meters");
+    h.open_and_compile();
+    h.ok(&json!({ "command": "transport_set_loop", "args": { "range": { "startS": 0.0, "endS": 1.0 } } }));
+    let start = Instant::now();
+    h.ok(&json!({ "command": "transport_play" }));
+    std::thread::sleep(Duration::from_millis(700));
+    h.ok(&json!({ "command": "transport_pause" }));
+    let elapsed = start.elapsed().as_secs_f64();
+    let frames = h.sink.meter_frames();
+    #[expect(clippy::cast_precision_loss, reason = "a handful of frames")]
+    let count = frames.len() as f64;
+    assert!(
+        count <= elapsed * 30.0 + 1.0,
+        "{count} frames in {elapsed} s"
+    );
+    assert!(frames.len() >= 5, "{} frames", frames.len());
+    assert!(frames.windows(2).all(|w| w[0].seq < w[1].seq));
+    assert!(
+        frames.iter().any(|frame| frame.peak[0] > 0.0),
+        "the tones are metered"
+    );
+    // Every frame survives its binary encoding; none travels as a JSON event (09 §2).
+    for frame in &frames {
+        assert_eq!(
+            sonarithm_app::ipc::meters::MeterFrame::decode(&frame.encode()),
+            Some(*frame)
+        );
+    }
+    assert!(
+        h.sink
+            .events()
+            .iter()
+            .all(|event| event.channel() != sonarithm_app::ipc::Channel::Meters)
+    );
+    // Paused: no more frames.
+    std::thread::sleep(Duration::from_millis(200));
+    assert_eq!(h.sink.meter_frames().len(), frames.len());
+}
