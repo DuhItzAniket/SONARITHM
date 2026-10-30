@@ -29,26 +29,53 @@ const TABBABLE = [
   '[contenteditable="true"]',
 ].join(", ");
 
+/** Widgets that are one Tab stop with arrow keys inside (APG composite widgets). */
+const COMPOSITE = [
+  "toolbar",
+  "radiogroup",
+  "tablist",
+  "grid",
+  "treegrid",
+  "tree",
+  "listbox",
+  "menu",
+  "menubar",
+]
+  .map((role) => `[role="${role}"]`)
+  .join(", ");
+
 /**
  * A keyboard-only flow (testing-strategy §13.1): presses Tab from the start of the page,
- * with no pointer event, until every tabbable element has had focus or twice their number
- * of presses has passed. Throws {@link FocusTrapError} if an element was never reached and
+ * with no pointer event, until every Tab stop has had focus (a composite widget such as a
+ * toolbar counts once) or twice their number of presses has passed. Throws {@link FocusTrapError} if an element was never reached and
  * {@link FocusNotVisibleError} if a focused element showed no indicator. Returns the stops
  * in order.
  */
 export async function tabThrough(page: Page): Promise<FocusStop[]> {
-  const count = await page.evaluate((selector) => {
-    const all = [...document.querySelectorAll<HTMLElement>(selector)].filter(
-      (el) => el.tabIndex >= 0 && el.getClientRects().length > 0,
-    );
-    all.forEach((el, i) => {
-      el.dataset.snrTab = String(i);
-    });
-    if (document.activeElement instanceof HTMLElement) {
-      document.activeElement.blur();
-    }
-    return all.length;
-  }, TABBABLE);
+  const count = await page.evaluate(
+    ({ selector, composite }) => {
+      const all = [...document.querySelectorAll<HTMLElement>(selector)].filter(
+        (el) => el.tabIndex >= 0 && el.getClientRects().length > 0,
+      );
+      // A composite widget is one Tab stop; arrows move inside it (APG).
+      const keys = new Map<Element, string>();
+      all.forEach((el, i) => {
+        const group = el.closest(composite);
+        if (group === null) {
+          el.dataset.snrTab = String(i);
+        } else {
+          const key = keys.get(group) ?? `g${String(keys.size)}`;
+          keys.set(group, key);
+          el.dataset.snrTab = key;
+        }
+      });
+      if (document.activeElement instanceof HTMLElement) {
+        document.activeElement.blur();
+      }
+      return new Set(all.map((el) => el.dataset.snrTab)).size;
+    },
+    { selector: TABBABLE, composite: COMPOSITE },
+  );
   const reached = new Set<string>();
   const stops: FocusStop[] = [];
   for (let press = 0; press < count * 2 + 2 && reached.size < count; press++) {
@@ -81,8 +108,18 @@ export async function tabThrough(page: Page): Promise<FocusStop[]> {
     stops.push({ label: stop.label });
   }
   if (reached.size < count) {
+    const missed = await page.evaluate(
+      (seen) =>
+        [...document.querySelectorAll<HTMLElement>("[data-snr-tab]")]
+          .filter((el) => !seen.includes(el.dataset.snrTab ?? ""))
+          .map(
+            (el) =>
+              `${el.tagName.toLowerCase()} "${(el.getAttribute("aria-label") ?? el.textContent).trim()}"`,
+          ),
+      [...reached],
+    );
     throw new FocusTrapError(
-      `${String(count - reached.size)} of ${String(count)} tabbable elements were never reached`,
+      `${String(count - reached.size)} of ${String(count)} tabbable elements were never reached: ${missed.join(", ")}`,
     );
   }
   return stops;

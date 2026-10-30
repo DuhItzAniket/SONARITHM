@@ -69,6 +69,7 @@ export {
   type ReorderLabels,
 } from "./components/ReorderableList.tsx";
 export { Slider, type SliderProps } from "./components/Slider.tsx";
+export { Splitter, type SplitterProps } from "./components/Splitter.tsx";
 export {
   Tab,
   TabList,

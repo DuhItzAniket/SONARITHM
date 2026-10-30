@@ -1,0 +1,38 @@
+/* SPDX-FileCopyrightText: 2026 SONARITHM contributors */
+/* SPDX-License-Identifier: MIT OR Apache-2.0 */
+
+/* A splitter is a hairline in a target at least 4 px wide that grows to the minimum target
+   size on hover and focus (A11Y-26, WCAG 2.5.8 allows the spacing exception for the rest). */
+
+.splitter {
+  flex: none;
+  box-sizing: border-box;
+  inline-size: var(--space-1);
+  border-inline: var(--border-width) solid transparent;
+  outline: none;
+  background: var(--border);
+  background-clip: content-box;
+  cursor: col-resize;
+  touch-action: none;
+}
+
+.splitter[data-hovered],
+.splitter[data-focus-visible] {
+  background: var(--accent);
+}
+
+.splitter[data-focus-visible] {
+  outline: var(--focus-ring-width) solid var(--focus);
+  outline-offset: var(--focus-ring-offset);
+}
+
+@media (forced-colors: active) {
+  .splitter {
+    background: CanvasText;
+  }
+
+  .splitter[data-hovered],
+  .splitter[data-focus-visible] {
+    background: Highlight;
+  }
+}

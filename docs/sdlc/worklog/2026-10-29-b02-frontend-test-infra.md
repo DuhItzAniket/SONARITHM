@@ -44,6 +44,14 @@
 - The story runs crashed and hung on Windows: four parallel theme projects shared Storybook's dependency cache, and the failed runs left 53 headless browsers running, which hurts on the shared 16 GB laptop. The themes now run one after another (`test/run-stories.ts`), and a run ends by checking that no browser is left. That fix and the Menu and Dialog focus waits reached main with this PR, since #386 merged first.
 - Locally: 104 story tests (26 stories × 4 themes), the seeded negative test and the package tests pass.
 
+## B02-T06: application frame (2026-10-30)
+
+- `apps/desktop/src/app/frame`: regions, F6 cycle, region focus memory, Medium and Narrow layouts; `@sonarithm/ui` `Splitter`; 11 new `ui-*` messages. The region placeholders say which task fills them.
+- `e2e/keyboard.ts` `tabThrough` now counts a composite widget (toolbar, radio group, tab list, grid, tree, listbox, menu) as one Tab stop, as APG intends, and names any element it never reached.
+- The `hidden` attribute lost to the regions' own `display`, so Narrow first showed every region. A CSS rule restores it.
+- Decision: native menus on every OS (09 §3); built with the command registry (B02-T07).
+- Locally: 19 Playwright tests in Chromium (landmarks, F6 order, no trap, axe at three widths, splitter keyboard, collapse and expand, Narrow F6) and the Splitter story pass.
+
 ## Next steps
 
 - [ ] Commit the screenshot baselines from the first CI run's `visual-baselines` artifact.

@@ -94,6 +94,8 @@ The UI calls an `IpcTransport` interface (`invoke`, `subscribe`, `binary`). The 
 | Styling | CSS Modules + cascade layers + CSS custom-property tokens generated in OKLCH (`@sonarithm/ui/tokens.css`); the host sets `data-theme` on the root element from the `theme` setting, and `system` follows the OS ([design-language §5.4](../design/design-language.md#54-theme-selection-forced-colors-and-prefers-contrast)); `forced-colors`, `prefers-contrast` and `prefers-reduced-motion` honoured |
 | i18n | Fluent message IDs shared with Rust announcement templates |
 | Command palette | React Aria ComboBox + Menu (announced results), listing every action with its shortcut |
+| Application frame | `apps/desktop/src/app/frame` (B02-T06): five landmark regions in the F6 order of design-language §4.1, keyboard splitters (`@sonarithm/ui` `Splitter`, APG window splitter), collapsed regions as an "Expand" control in the F6 cycle, and the Medium and Narrow layouts of §4.3 |
+| Menu bar | **Native menus on every OS** (decided in B02-T06): the system menu bar on macOS, and the window's native menu bar on Windows and Linux, built with Tauri's menu API. React Aria Components has no menubar pattern, and native menus are what NVDA, Narrator, JAWS, VoiceOver and Orca already read. The menu lists commands from the command registry (B02-T07). Menu events reach the UI as commands, so the host keeps no command logic; if this needs a host command or an event channel beyond ADR-0017, B02-T07 proposes it to the coordinator first. Until then the app has no menu bar, and every command stays reachable from the palette (DL-P06) |
 
 ## 4. Security model
 

@@ -72,3 +72,20 @@ ui-move-down = Move { $name } down
 ui-reorder = Reorder { $name }
 # A number outside its field's range; $low and $high are the limits with their unit.
 ui-error-out-of-range = Enter a value from { $low } to { $high }.
+
+## Application frame (B02-T06; design-language §4, keyboard-and-navigation §3).
+
+ui-region-inspector = Inspector
+ui-region-status = Status
+ui-region-switcher = Regions
+# A collapsed region's only control, kept in the F6 cycle; $name is the region.
+ui-expand-region = Expand { $name }
+# A window splitter's name; $name is the region it resizes.
+ui-resize-region = Resize { $name }
+# A splitter's value; $value is a width in CSS pixels.
+ui-width-pixels = { $value } pixels
+ui-tab-announcements = Announcements
+ui-tab-diagnostics = Diagnostics
+ui-no-announcements = No announcements yet.
+ui-no-diagnostics = No diagnostics.
+ui-inspector-empty = Nothing is selected.
