@@ -15,6 +15,7 @@ export {
   readView,
 } from "./binary.ts";
 export { type Client, ProtocolMismatchError, connect } from "./client.ts";
+export { type MeterFrame, MeterFrameError, readMeterFrame } from "./meters.ts";
 export {
   type MockHandlers,
   type MockOptions,

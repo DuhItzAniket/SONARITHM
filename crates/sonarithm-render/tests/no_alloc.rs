@@ -131,6 +131,21 @@ fn a_scripted_session_never_allocates_on_the_audio_thread() {
 
 /// Control: the checker is live, so an allocation inside a measured block fails the check.
 #[test]
+fn b01_t04_the_meter_window_never_allocates_and_reaches_the_control_side() {
+    // The meter window (B01-T04) runs inside `Graph::process` on the audio thread; its
+    // levels reach the control thread through the engine state's triple buffer, with no
+    // lock.
+    let (mut control, mut audio) = realtime(graph(6.0));
+    let mut out = vec![0.0; 512];
+    control.send(Command::Play);
+    // 400 blocks of 256 frames: about 2 s, many complete 50 ms windows.
+    blocks(&mut audio, &mut out, 400, "metering");
+    let meter = control.state().graph.meter;
+    assert!(meter.peak[0] > 0.0 && meter.peak[1] > 0.0, "{meter:?}");
+    assert!(meter.peak[0] <= 1.0 && meter.peak[1] <= 1.0, "{meter:?}");
+}
+
+#[test]
 #[should_panic(expected = "allocating block")]
 fn an_allocation_in_the_measured_block_fails_the_check() {
     let (_control, mut audio) = realtime(graph(1.0));

@@ -13,6 +13,7 @@ import type {
   RequestFor,
 } from "./generated/protocol.ts";
 import { EVENT_CHANNELS, PROTOCOL_VERSION } from "./generated/protocol.ts";
+import type { MeterFrame } from "./meters.ts";
 import type { IpcTransport } from "./transport.ts";
 import { IpcFailure } from "./transport.ts";
 
@@ -29,6 +30,8 @@ export interface MockTransport extends IpcTransport {
   readonly requests: readonly Request[];
   /** Delivers an event to the subscribers of its channel. */
   emit(event: Event): void;
+  /** Delivers a meter frame to the meter subscribers. */
+  emitMeters(frame: MeterFrame): void;
 }
 
 /** Options for {@link createMockTransport}. */
@@ -50,6 +53,7 @@ export function createMockTransport(
 ): MockTransport {
   const requests: Request[] = [];
   const subscribers = new Map<Channel, Set<(event: Event) => void>>();
+  const meterSubscribers = new Set<(frame: MeterFrame) => void>();
   const hostProtocol = options.protocol ?? PROTOCOL_VERSION;
 
   function unhandled(command: Command): IpcFailure {
@@ -101,6 +105,17 @@ export function createMockTransport(
       return buffer === undefined
         ? Promise.reject(unhandled(request.command))
         : Promise.resolve(buffer);
+    },
+    meters(handler) {
+      meterSubscribers.add(handler);
+      return () => {
+        meterSubscribers.delete(handler);
+      };
+    },
+    emitMeters(frame) {
+      for (const handler of meterSubscribers) {
+        handler(frame);
+      }
     },
     emit(event) {
       const channel = EVENT_CHANNELS[event.event];

@@ -12,6 +12,7 @@ import type {
 import { PROTOCOL_VERSION, REPLY_KINDS } from "./generated/protocol.ts";
 import type { IpcTransport } from "./transport.ts";
 import { IpcFailure } from "./transport.ts";
+import type { MeterFrame } from "./meters.ts";
 
 /** The UI and the host were built from different commits (09 §2.2, ADR-0017 §5). */
 export class ProtocolMismatchError extends Error {
@@ -39,6 +40,8 @@ export interface Client {
   subscribe(channel: Channel, handler: (event: Event) => void): () => void;
   /** Sends a command whose reply is a binary view; read it with `readView`. */
   binary(request: RequestFor<BinaryCommand>): Promise<ArrayBuffer>;
+  /** Calls `handler` for every meter frame; returns a function that unsubscribes. */
+  meters(handler: (frame: MeterFrame) => void): () => void;
 }
 
 /**
@@ -83,5 +86,6 @@ export async function connect(transport: IpcTransport): Promise<Client> {
     },
     subscribe: (channel, handler) => transport.subscribe(channel, handler),
     binary: (request) => transport.binary(request),
+    meters: (handler) => transport.meters(handler),
   };
 }

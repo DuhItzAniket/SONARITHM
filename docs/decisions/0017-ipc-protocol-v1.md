@@ -70,7 +70,31 @@ Spec and data problems are results, not errors: `compile` replies with a `Compil
 | `diagnostics` | Diagnostics outside a reply (for example from a background compile) | On change |
 | `announcements` | Text for the announcer (B03) | Rate-limited per 08 §4 |
 | `app` | Rare app-wide notices: device changed or lost, settings recovered | Rare |
-| `meters` | Binary meter frames (B01-T04) | 30 Hz, batched |
+| `meters` | Binary meter frames, never JSON (see Meter frames below) | At most one every 1/30 s while playing, plus one last frame when playback stops |
+
+#### Meter frames
+
+> Amended 2026-10-30, B01-T04, approved by the coordinator under delegation.
+
+A meter frame is not an `Event`. The app core hands it to `EventSink::meters`, and the host sends it on the `meters` channel as 32 raw little-endian bytes, so a frame can never travel as JSON (09 §2).
+
+| Offset | Size | Field |
+|---|---|---|
+| 0 | 4 | Magic `SNRM` |
+| 4 | 2 | Frame version, `1` |
+| 6 | 2 | Flags: bit 0 the master limiter engaged in the window; bit 1 the last frame (the transport stopped, paused or lost its device). The other bits are `0`, and readers ignore them |
+| 8 | 8 | Sequence number (u64) |
+| 16 | 8 | Transport position in seconds (f64) |
+| 24 | 4 | Peak, left (f32, linear; `1.0` is full scale) |
+| 28 | 4 | Peak, right (f32) |
+
+* **Rate.** While playing, at most one frame every 1/30 s. When playback stops, pauses or loses its device, one frame with bit 1 set and zero peaks follows, so a meter falls to silence instead of freezing at its last peak.
+* **Peaks.** Each peak is the maximum over the render graph's last complete 50 ms window (`sonarithm_render::METER_WINDOW`). That window is longer than the gap between two reads, so no peak is missed. The window runs on the audio thread with fixed state and no allocation (checked under `allocation-counter`). It reaches the control thread through the engine state's triple buffer, with no lock.
+* **Versioning.** A change of size, field order or meaning increments the frame version. A new flag bit does not, because readers ignore unknown bits. Adding this frame kind did not change `PROTOCOL_VERSION` (§5).
+* **Readers are strict, as for views (§6).** A buffer of another length, magic or version is refused with `SNR-APP-050` and dropped, never guessed at.
+* **Accessibility.** Meter frames are never announced through live regions: they would bury every other announcement. A meter shows limiter engagement as text or an accessible state, not by colour alone (DL-X08).
+
+Layout: `crates/sonarithm-app/src/ipc/meters.rs`. TypeScript: the generated `METERS` constants and `readMeterFrame` in `@sonarithm/ipc`.
 
 ### 5. Versioning
 

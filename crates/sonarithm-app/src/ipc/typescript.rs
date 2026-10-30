@@ -10,6 +10,7 @@ use std::fmt::Write as _;
 use ts_rs::{Config, TS};
 
 use super::binary::{self, DataType, ViewKind};
+use super::meters;
 use super::{BINARY_COMMANDS, COMMANDS, EVENTS, PROTOCOL_VERSION};
 use crate::ipc::Channel;
 use crate::ipc::{
@@ -94,6 +95,7 @@ pub fn typescript() -> String {
          export type ReplyFor<C extends JsonCommand> = Extract<Reply, { reply: ReplyKinds[C] }>;\n\n",
     );
     binary_constants(&mut out);
+    meter_constants(&mut out);
     declare::<Request>(&mut out, &cfg);
     declare::<Reply>(&mut out, &cfg);
     declare::<IpcError>(&mut out, &cfg);
@@ -182,6 +184,13 @@ pub fn fixtures() -> String {
          // Do not edit.\n\
          \n",
     );
+    let meter = super::meters::MeterFrame::new(7, 1.25, [0.5, 0.125], true);
+    let _ = write!(
+        out,
+        "/** `MeterFrame::new(7, 1.25, [0.5, 0.125], true)` as encoded by Rust (meters.rs), in base64. */\n\
+         export const SAMPLE_METER_FRAME_BASE64 = \"{}\";\n\n",
+        base64(&meter.encode()),
+    );
     let _ = write!(
         out,
         "/** `binary::sample()` as encoded by Rust, in base64. */\n\
@@ -240,6 +249,42 @@ fn base64(bytes: &[u8]) -> String {
         }
     }
     out
+}
+
+/// The meter frame layout (B01-T04) as TypeScript constants.
+fn meter_constants(out: &mut String) {
+    let magic = String::from_utf8_lossy(&meters::METER_MAGIC);
+    let _ = write!(
+        out,
+        "/** The meter frame layout (B01-T04); see crates/sonarithm-app/src/ipc/meters.rs. */\n\
+         export const METERS = {{\n  \
+           magic: \"{magic}\",\n  \
+           version: {},\n  \
+           bytes: {},\n  \
+           flagLimiting: {},\n  \
+           flagLast: {},\n  \
+           offset: {{\n    \
+             magic: {},\n    \
+             version: {},\n    \
+             flags: {},\n    \
+             seq: {},\n    \
+             position: {},\n    \
+             peakLeft: {},\n    \
+             peakRight: {},\n  \
+           }},\n\
+         }} as const;\n\n",
+        meters::METER_VERSION,
+        meters::METER_BYTES,
+        meters::METER_FLAG_LIMITING,
+        meters::METER_FLAG_LAST,
+        meters::offset::MAGIC,
+        meters::offset::VERSION,
+        meters::offset::FLAGS,
+        meters::offset::SEQ,
+        meters::offset::POSITION,
+        meters::offset::PEAK_LEFT,
+        meters::offset::PEAK_RIGHT,
+    );
 }
 
 /// The binary view header (ADR-0017 §6) as TypeScript constants.

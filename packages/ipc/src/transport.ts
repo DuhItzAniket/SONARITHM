@@ -8,6 +8,7 @@ import type {
   Reply,
   Request,
 } from "./generated/protocol.ts";
+import type { MeterFrame } from "./meters.ts";
 
 /**
  * The only seam between the UI and a host (09 §2.3, ADR-0017, OD-15). The Tauri host
@@ -21,6 +22,11 @@ export interface IpcTransport {
   subscribe(channel: Channel, handler: (event: Event) => void): () => void;
   /** Sends a command whose reply is a binary view (ADR-0017 §6). */
   binary(request: Request): Promise<ArrayBuffer>;
+  /**
+   * Calls `handler` for every meter frame (B01-T04). Meters are binary on the `meters`
+   * channel, never JSON events (09 §2); returns a function that unsubscribes.
+   */
+  meters(handler: (frame: MeterFrame) => void): () => void;
 }
 
 /** A command the host could not run, carrying the typed error (12 §1). */

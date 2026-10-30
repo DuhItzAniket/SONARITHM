@@ -11,7 +11,7 @@ use std::sync::{Arc, Mutex, PoisonError};
 
 use sonarithm_app::App;
 use sonarithm_app::codes;
-use sonarithm_app::ipc::{Channel, Event, IpcError, Reply, Request};
+use sonarithm_app::ipc::{Channel, IpcError, Reply, Request};
 use tauri::State;
 use tauri::ipc::Response;
 
@@ -97,7 +97,7 @@ pub(crate) fn ipc_binary(
 pub(crate) fn ipc_subscribe(
     router: State<'_, Arc<Router>>,
     channel: Channel,
-    on_event: tauri::ipc::Channel<Event>,
+    on_event: tauri::ipc::Channel,
 ) -> u64 {
     router.subscribe(channel, Box::new(on_event))
 }

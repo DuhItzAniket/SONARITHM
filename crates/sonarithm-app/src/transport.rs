@@ -35,6 +35,7 @@ use sonarithm_speech::Speaker;
 
 use crate::codes;
 use crate::events::EventSink;
+use crate::ipc::meters::MeterFrame;
 use crate::ipc::{ClockAnchor, Event, IpcError, LoopSpan, PlaybackStatus, TransportState};
 use crate::live::LAG;
 use crate::speech::{Output, Sequencer, SequencerConfig, SpeakerSource, SpeechRoute};
@@ -45,6 +46,32 @@ const TICK: Duration = Duration::from_millis(10);
 
 /// The period of clock anchors while playing (06 §9).
 const ANCHOR_PERIOD: Duration = Duration::from_secs(2);
+
+/// The period of meter frames while playing: 30 Hz (09 §2).
+const METER_PERIOD: Duration = Duration::from_nanos(1_000_000_000 / 30);
+
+/// When a periodic message is due: at once, then a full `period` after the last one. A
+/// message sent early, such as an anchor on a change, restarts the period.
+#[derive(Clone, Copy, Debug)]
+struct Pacer {
+    period: Duration,
+    last: Option<Instant>,
+}
+
+impl Pacer {
+    const fn new(period: Duration) -> Self {
+        Self { period, last: None }
+    }
+
+    fn due(&self, now: Instant) -> bool {
+        self.last
+            .is_none_or(|at| now.saturating_duration_since(at) >= self.period)
+    }
+
+    fn sent(&mut self, now: Instant) {
+        self.last = Some(now);
+    }
+}
 
 /// How long a request waits for the control thread. Opening a device can take a while.
 const REPLY_LIMIT: Duration = Duration::from_secs(10);
@@ -318,7 +345,11 @@ struct Control<B: AudioBackend, F: Fn() -> B> {
     stale_until: u64,
     model: Model,
     seq: u64,
-    last_anchor: Option<Instant>,
+    anchors: Pacer,
+    meters: Pacer,
+    meter_seq: u64,
+    /// Whether meter frames went out since playback last stopped.
+    metering: bool,
     sequencer: Sequencer,
     streams: LiveStreams,
     speaker_source: Option<SpeakerSource>,
@@ -355,7 +386,10 @@ impl<B: AudioBackend, F: Fn() -> B> Control<B, F> {
                 ..Model::default()
             },
             seq: 0,
-            last_anchor: None,
+            anchors: Pacer::new(ANCHOR_PERIOD),
+            meters: Pacer::new(METER_PERIOD),
+            meter_seq: 0,
+            metering: false,
         }
     }
 
@@ -367,6 +401,7 @@ impl<B: AudioBackend, F: Fn() -> B> Control<B, F> {
                 Err(RecvTimeoutError::Timeout) => {}
             }
             self.service();
+            self.meter_tick();
             self.speak();
         }
         // Dropping the player closes the audio stream; live streams stop too.
@@ -785,12 +820,45 @@ impl<B: AudioBackend, F: Fn() -> B> Control<B, F> {
             self.anchor();
             return;
         }
-        if self
-            .last_anchor
-            .is_none_or(|at| at.elapsed() >= ANCHOR_PERIOD)
-        {
+        if self.anchors.due(Instant::now()) {
             self.anchor();
         }
+    }
+
+    /// Meter frames (B01-T04): at most every [`METER_PERIOD`] while playing, then one last
+    /// frame with zero peaks when playback stops, pauses or loses its device, so a meter
+    /// never freezes at the last peak.
+    fn meter_tick(&mut self) {
+        let playing = self.model.status == PlaybackStatus::Playing && self.player.is_some();
+        if playing {
+            let now = Instant::now();
+            if self.meters.due(now) {
+                self.meters.sent(now);
+                self.metering = true;
+                let levels = self
+                    .player
+                    .as_mut()
+                    .map(|player| player.state().graph.meter)
+                    .unwrap_or_default();
+                self.send_meter(MeterFrame::new(
+                    0,
+                    self.model.position_s,
+                    levels.peak,
+                    levels.limiting,
+                ));
+            }
+        } else if self.metering {
+            self.metering = false;
+            // The next play sends its first frame at once.
+            self.meters = Pacer::new(METER_PERIOD);
+            self.send_meter(MeterFrame::last(0, self.model.position_s));
+        }
+    }
+
+    fn send_meter(&mut self, mut frame: MeterFrame) {
+        self.meter_seq += 1;
+        frame.seq = self.meter_seq;
+        self.sink.meters(frame);
     }
 
     /// Closes the player, keeping its underrun count.
@@ -916,7 +984,7 @@ impl<B: AudioBackend, F: Fn() -> B> Control<B, F> {
 
     fn anchor(&mut self) {
         self.seq += 1;
-        self.last_anchor = Some(Instant::now());
+        self.anchors.sent(Instant::now());
         let host_time_s = self
             .player
             .as_mut()
@@ -932,4 +1000,48 @@ impl<B: AudioBackend, F: Fn() -> B> Control<B, F> {
 
 fn position(frames: Frames, rate: SampleRate) -> f64 {
     frames.to_seconds(rate).0
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn b01_t04_anchors_are_due_at_once_then_every_2_s() {
+        let start = Instant::now();
+        let mut anchors = Pacer::new(ANCHOR_PERIOD);
+        assert!(anchors.due(start));
+        anchors.sent(start);
+        assert!(!anchors.due(start + Duration::from_millis(1_999)));
+        assert!(anchors.due(start + Duration::from_secs(2)));
+    }
+
+    #[test]
+    fn b01_t04_an_anchor_on_a_change_restarts_the_2_s_period() {
+        let start = Instant::now();
+        let mut anchors = Pacer::new(ANCHOR_PERIOD);
+        anchors.sent(start);
+        // A seek at 1.5 s sends an anchor; the next periodic one is 2 s after it.
+        anchors.sent(start + Duration::from_millis(1_500));
+        assert!(!anchors.due(start + Duration::from_secs(2)));
+        assert!(!anchors.due(start + Duration::from_millis(3_499)));
+        assert!(anchors.due(start + Duration::from_millis(3_500)));
+    }
+
+    #[test]
+    fn b01_t04_meters_are_paced_at_30_hz() {
+        let start = Instant::now();
+        let mut meters = Pacer::new(METER_PERIOD);
+        let mut sent = 0;
+        // One simulated second of 10 ms control ticks.
+        for tick in 0..100 {
+            let now = start + TICK * tick;
+            if meters.due(now) {
+                meters.sent(now);
+                sent += 1;
+            }
+        }
+        // A tick lands on or after each 33.3 ms boundary: 25 frames at 40 ms spacing.
+        assert!((25..=30).contains(&sent), "{sent}");
+    }
 }

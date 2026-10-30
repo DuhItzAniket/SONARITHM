@@ -7,8 +7,8 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 
-import type { Event } from "@sonarithm/ipc";
-import { IpcFailure } from "@sonarithm/ipc";
+import type { Event, MeterFrame } from "@sonarithm/ipc";
+import { IpcFailure, METERS } from "@sonarithm/ipc";
 
 import type { TauriCore } from "../src/ipc/transport.ts";
 import { createTauriTransport } from "../src/ipc/transport.ts";
@@ -20,10 +20,10 @@ interface Call {
 
 function fakeCore(answer: (call: Call) => unknown): TauriCore & {
   calls: Call[];
-  channels: ((event: Event) => void)[];
+  channels: ((message: unknown) => void)[];
 } {
   const calls: Call[] = [];
-  const channels: ((event: Event) => void)[] = [];
+  const channels: ((message: unknown) => void)[] = [];
   return {
     calls,
     channels,
@@ -124,4 +124,42 @@ test("events reach the handler until unsubscribed, then the host is told", async
   );
   assert.equal(core.calls.at(0)?.args.channel, "app");
   assert.deepEqual(core.calls.at(1)?.args, { id: 7 });
+});
+
+/** A meter frame in the layout of `crates/sonarithm-app/src/ipc/meters.rs`. */
+function meterBytes(
+  seq: number,
+  version: number = METERS.version,
+): ArrayBuffer {
+  const buffer = new ArrayBuffer(METERS.bytes);
+  const data = new DataView(buffer);
+  for (let i = 0; i < METERS.magic.length; i += 1) {
+    data.setUint8(METERS.offset.magic + i, METERS.magic.charCodeAt(i));
+  }
+  data.setUint16(METERS.offset.version, version, true);
+  data.setBigUint64(METERS.offset.seq, BigInt(seq), true);
+  data.setFloat32(METERS.offset.peakLeft, 0.5, true);
+  return buffer;
+}
+
+test("b01_t04 meters arrive as binary frames on the meters channel", () => {
+  const core = fakeCore(() => 1);
+  const transport = createTauriTransport(core);
+  const frames: MeterFrame[] = [];
+  const events: Event[] = [];
+  transport.meters((frame) => frames.push(frame));
+  transport.subscribe("app", (event) => events.push(event));
+  assert.equal(core.calls.at(0)?.args.channel, "meters");
+  const [meters, app] = core.channels;
+  meters?.(meterBytes(1));
+  // A frame of another layout version is dropped; JSON never reaches the meter handler.
+  meters?.(meterBytes(2, 2));
+  meters?.({ event: "playback_finished", durationS: 1 });
+  // A binary frame never reaches a JSON event handler.
+  app?.(meterBytes(3));
+  assert.deepEqual(
+    frames.map((frame) => [frame.seq, frame.peak[0]]),
+    [[1, 0.5]],
+  );
+  assert.equal(events.length, 0);
 });

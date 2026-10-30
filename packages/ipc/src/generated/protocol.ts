@@ -143,6 +143,24 @@ export const PROVENANCE_CLASSES = ["exact", "vector", "cv_estimate", "ml_estimat
 /** The code a strict reader reports for a buffer it cannot read (ADR-0017 §6). */
          export const BINARY_VIEW_ERROR = "SNR-APP-050";
 
+/** The meter frame layout (B01-T04); see crates/sonarithm-app/src/ipc/meters.rs. */
+export const METERS = {
+  magic: "SNRM",
+  version: 1,
+  bytes: 32,
+  flagLimiting: 1,
+  flagLast: 2,
+  offset: {
+    magic: 0,
+    version: 4,
+    flags: 6,
+    seq: 8,
+    position: 16,
+    peakLeft: 24,
+    peakRight: 28,
+  },
+} as const;
+
 /**
  * A command from the UI (09 §2.1).
  */

@@ -80,6 +80,7 @@ No reference-class machine is available yet (risk R-22). Rows on HW-01 apply the
 | A02 spike (WebView2) | 2026-10-19 | [#101](https://github.com/DuhItzAniket/SONARITHM/pull/101), [#102](https://github.com/DuhItzAniket/SONARITHM/pull/102) | HW-01 (Intel UHD and RTX 4050) | WebView2 155.0.4283.62 | — | 60 (panel limit) on both GPUs; full 1M redraw every frame: 37 on Intel UHD | ≤ 0.6 | — | — | PB-09: 1 MB binary p95 11.5–11.8 ms on HW-01, 15.7–20.7 ms on HW-01e, 7.8 ms on CI-WIN (F-040, F-041); PB-08: F-043 |
 | A02 spike (WKWebView) | 2026-10-19 | [#101](https://github.com/DuhItzAniket/SONARITHM/pull/101) | CI-MAC | WKWebView (WebKit 21624.5.1.11.3) | — | pending | pending | — | — | PB-09: 1 MB binary p95 8 ms (F-040). Frame rates need a GPU: owner or volunteer step |
 | A02 spike (WebKitGTK) | 2026-10-19 | [#101](https://github.com/DuhItzAniket/SONARITHM/pull/101) | CI-LNX | WebKitGTK 2.52.6 (Xvfb) | — | pending | pending | — | — | PB-09: 1 MB binary p95 7 ms (F-040). Frame rates on Intel, AMD and NVIDIA GPUs: owner live-USB step |
+| B01 (B01-T04) | pending | — | CI-WIN, CI-MAC, CI-LNX (debug build); HW-01 release run pending (owner) | per CI job | — | — | — | — | — | PB-09: the desktop smoke run reports the p50, p95 and max of 30 `view_get` round trips of a cached 1.2 MB M4 view (`pb09` in `smoke.json`, CI step summary). No number yet: filled in from the first CI run, and on HW-01 by the owner |
 | B01 | | | | | | | | | | |
 | B04 | | | | | | | | | | |
 | Gate B `v0.5.0-beta` | | | | | | | | | | |
