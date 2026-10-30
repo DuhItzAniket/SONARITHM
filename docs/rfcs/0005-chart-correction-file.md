@@ -1,6 +1,6 @@
 # RFC 0005: The chart correction file
 
-> **Status:** **Accepted** on 2026-10-30 by the coordinator session under the owner's delegation, with the 7-day FCP waived (Q8) and two amendments to §11 (see [Unresolved questions](#unresolved-questions)); the owner can reopen it. Outcome recorded in [ADR-0026](../decisions/0026-chart-correction-file.md). **Author(s):** project lead (drafted by an AI coding agent, Claude Code).
+> **Status:** **Accepted** on 2026-10-30 by the coordinator session under the owner's delegation, with the 7-day FCP waived (Q8), two amendments to §11 and a third on which component applies the edits (see [Unresolved questions](#unresolved-questions)); the owner can reopen it. Outcome recorded in [ADR-0026](../decisions/0026-chart-correction-file.md). **Author(s):** project lead (drafted by an AI coding agent, Claude Code).
 > **Related:** [RFC process](README.md) · [RFC-0004 §5, §6 (calibration and inline corrections)](0004-spec-v0.2.md#6-datasourcecorrections-chart-sources) · [RFC-0002 (project format v1)](0002-project-format-v1.md) · [ADR-0018](../decisions/0018-project-format-v1.md) · [ADR-0012](../decisions/0012-privacy-and-telemetry.md) · [ADR-0013](../decisions/0013-determinism-and-provenance.md) · [ADR-0017](../decisions/0017-ipc-protocol-v1.md) · [03 §4](../architecture/03-data-model.md#4-provenance-and-confidence) · [10 §3.1, §5](../architecture/10-ingestion-and-extraction.md#5-accessibility-of-extraction) · [12 §4, §6](../architecture/12-cross-cutting-concerns.md#4-project-file-format)
 
 | Field | Value |
@@ -70,7 +70,7 @@ Without this RFC, C02-T06 (corrections as app commands), C02-T10 (calibration di
 "data": { "source": { "kind": "chart", "path": "rain.png", "corrections": { "path": "rain.png.corrections.json" } } }
 ```
 
-The compiler extracts the chart, checks that the file was made for this chart (same SHA-256), applies the calibration and then the edits in order, and reports each edit it could not apply. Corrected rows are `user_edited`. The extraction report lists every corrected point with its value before and after and its class and confidence before.
+When the spec is compiled, PLOTSONA's chart source extracts the chart, checks that the file was made for this chart (same SHA-256), applies the calibration and then the edits in order, and reports each edit it could not apply. Corrected rows are `user_edited`. The extraction report lists every corrected point with its value before and after and its class and confidence before.
 
 **In the desktop app,** opening a chart creates an empty correction set. Each correction (in the C02-T11 correction view, or by keyboard in the point table) is one undoable step: Ctrl+Z takes it back and the point returns to its extracted value and class. Saving the project stores the set in the bundle; reopening it restores the corrections and each value's history, though the undo stack itself starts empty, as for specs (B05-T01).
 
@@ -108,8 +108,8 @@ Unknown keys in a version the reader knows are `SNR-SPEC-091` (strict reading, a
 | `extractor` | string | Yes | The extractor that produced the points the edits refer to, as in the extraction report (`sonarithm-plotsona/raster`) |
 | `extractorVersion` | string | Yes | Its version; point indices are deterministic per extractor version (RFC-0004 §6) |
 
-- **Applying to another chart.** When the chart's SHA-256 differs from `chart.sha256`, no edit is applied and the compile reports `SNR-COMP-037` (warning: "these corrections were made on a different chart file"). There is no partial or fuzzy match: the `was` guards protect a point, not a whole chart. A host may offer to re-bind the file after the person confirms (Unresolved question Q3).
-- **Another extractor version.** When `extractor` matches but `extractorVersion` differs, edits still apply through their guards (§4), and each edit whose guard fails is reported as RFC-0004 §6 defines (`SNR-COMP-036`). A different `extractor` (say the file was made on an ML extraction, the chart is now read by the raster tier) is `SNR-COMP-037` too.
+- **Applying to another chart.** When the chart's SHA-256 differs from `chart.sha256`, no edit is applied and the compile reports `SNR-ENG-387` (warning: "these corrections were made on a different chart file"). There is no partial or fuzzy match: the `was` guards protect a point, not a whole chart. A host may offer to re-bind the file after the person confirms (Unresolved question Q3).
+- **Another extractor version.** When `extractor` matches but `extractorVersion` differs, edits still apply through their guards (§4), and each edit whose guard fails is reported as RFC-0004 §6 defines (`SNR-ENG-386`). A different `extractor` (say the file was made on an ML extraction, the chart is now read by the raster tier) is `SNR-ENG-387` too.
 
 ### 4. Edits and stable point identity
 
@@ -122,7 +122,7 @@ An edit is RFC-0004 §6's edit (`add`, `move`, `delete`, `retype`, with `series`
 | `note` | string ≤ 1 000 chars | No | The person's own words about the edit. User content: §5 |
 
 - **Stable point ID.** A point the extractor produced is identified by `(series, point)`: its series name as extracted and its 0-based index in that series in the extractor's output order, which is deterministic for an extractor and version (RFC-0004 §6, ADR-0013). Its text form, used in reports and the IPC protocol, is `<series>#<point>` (`Series 2#4`). A point an `add` created is identified by its edit, `+<id>` (`+e7`). Later edits may refer to an added point with `"point": "+e7"`; an integer `point` always means the extractor's index.
-- **Guards.** `was` is required on every edit that refers to an existing point and is checked as in RFC-0004 §6: if the point at that ID no longer has that value (within the extractor's stated tolerance), the edit is not applied and `SNR-COMP-036` names it by `id`. An edit is never applied to a point other than the one the person saw.
+- **Guards.** `was` is required on every edit that refers to an existing point and is checked as in RFC-0004 §6: if the point at that ID no longer has that value (within the extractor's stated tolerance), the edit is not applied and `SNR-ENG-386` names it by `id`. An edit is never applied to a point other than the one the person saw.
 - **Chains are history.** A value moved twice has two `move` edits; the second's `was` is the first's `to`. The file therefore keeps a corrected value's whole history: its extracted value and provenance (`was` and `before` of the first edit), every intermediate value, and the current one. Nothing is overwritten in place.
 - **Order.** Edits apply in array order, after extraction and calibration and before `transform`, exactly as inline edits do. Inline `edits` and `path` are exclusive (RFC-0004 §6: "exactly one of").
 
@@ -178,7 +178,7 @@ A writer never writes, and the format has no field for:
 ### 11. Import and merge (10 §5)
 
 1. Read the file strictly (§8). Refused files change nothing.
-2. Check `chart.sha256` against the open chart; a mismatch is `SNR-COMP-037` and the import stops, unless the person re-binds it (Q3).
+2. Check `chart.sha256` against the open chart; a mismatch is `SNR-ENG-387` and the import stops, unless the person re-binds it (Q3).
 3. **Preview, then confirm.** Compute which imported edits would apply. An imported edit **conflicts** only when its `was` guard fails against the session, that is, when it refers to a point the session's own edits already changed; conflicts are listed, never applied. An imported edit is a **duplicate** of one already present when `op`, the point, `was` and `to` are equal (the `id` is ignored); duplicates are skipped. IDs cannot collide, because step 4 renumbers every imported edit (amendment 2).
 4. The edits that apply are appended after the session's own, renumbered `e<n>` from the next free number in the session, in the file's order (their `note` and `before` kept), as **one** undoable patch. **References are rewritten** with the same mapping: an imported `"point": "+e<k>"` that names an `add` in the imported set becomes `"+e<new k>"`. An imported edit that names an added point the file does not define earlier is `SNR-SPEC-091`, as §8 says, and the whole file is refused before anything applies. An edit that refers to an imported `add` which was itself skipped as a duplicate is rewritten to the session's matching `add`; one whose `add` conflicted is a conflict too (amendment 1).
 5. An imported `calibration` replaces the session's only if the person chooses it in the preview; otherwise it is reported as differing. In an empty session there is nothing to differ from, and it is taken as is.
@@ -191,13 +191,13 @@ Export is the reverse: write the session's set (§1, §5, §6). **Export then im
 - **Import renumbering:** importing into a session that already has edits renumbers the imported ones and rewrites their `+e<k>` references to the new IDs (a chain of `add` then `move` on the added point still applies to that point); a file with a reference to an added point it does not define is refused with `SNR-SPEC-091` and changes nothing; duplicates match on `op`, point, `was` and `to` whatever their IDs; only failed guards are conflicts.
 - **Undo:** property test — any sequence of correction patches, undone in full, returns the canonical document bytes (as B05-T01's spec patches).
 - **Privacy:** no path, time or name is ever written (a test that scans written files for path separators beyond `chart.name`, drive letters, and digits in date shapes); PNG metadata chunks stripped.
-- **Binding:** a correction file applied to a different chart applies nothing and reports `SNR-COMP-037`; a guard that fails reports `SNR-COMP-036` with the edit's `id`.
+- **Binding:** a correction file applied to a different chart applies nothing and reports `SNR-ENG-387`; a guard that fails reports `SNR-ENG-386` with the edit's `id`.
 - **Strict reading:** one test per code (`SNR-SPEC-090` to `094`), unknown keys, newer major and minor versions, limits.
 - **Fuzz target:** `corrections_read` in `sonarithm-spec`'s fuzz crate (nightly matrix): arbitrary bytes through the reader, every error a registered code, with seeds from the tests' files.
 
 ### 13. Codes
 
-New: `SNR-SPEC-090` not a correction file, or a newer major version (error); `091` a shape error (error); `092` over a limit (error); `093` an unsafe `corrections.path` (error); `094` a newer minor version (warning); `SNR-COMP-037` corrections made on a different chart or extractor (warning). Reused: `SNR-SPEC-054`, `055`, `056` (until the spec minor version), `SNR-COMP-036`, `SNR-ENG-306`.
+New: `SNR-SPEC-090` not a correction file, or a newer major version (error); `091` a shape error (error); `092` over a limit (error); `093` an unsafe `corrections.path` (error); `094` a newer minor version (warning); and from PLOTSONA, which applies the edits (amendment 3), `SNR-ENG-386` an edit not applied (warning; RFC-0004's `SNR-COMP-036` is retired) and `SNR-ENG-387` corrections made on a different chart or extractor (warning). Reused: `SNR-SPEC-054`, `055`, `056` (until the spec minor version), `SNR-ENG-306`.
 
 ### 14. Determinism, real-time safety, performance, security
 
@@ -247,10 +247,12 @@ New: `SNR-SPEC-090` not a correction file, or a newer major version (error); `09
 
 Each has a proposal, which C02-T06 follows unless the approver decides otherwise.
 
-**Resolution (2026-10-30):** the coordinator, under the owner's delegation, accepted every proposal (Q1–Q8) as written, with the FCP waived (Q8), and two amendments to §11, both applied in the text above:
+**Resolution (2026-10-30):** the coordinator, under the owner's delegation, accepted every proposal (Q1–Q8) as written, with the FCP waived (Q8), and amendments 1 and 2 to §11; amendment 3 followed during C02-T06. All three are applied in the text above:
 
 1. **Renumbering rewrites references.** Imported edits renumbered from the next free `e<n>` have their `+e<k>` references to added points in the imported set rewritten to the new IDs; a reference to an added point the file does not define is `SNR-SPEC-091` (§8), with a test in §12.
 2. **Conflicts come from guards only.** IDs never collide because every imported edit is renumbered, so a conflict is a failed `was` guard and a duplicate matches on `op`, point, `was` and `to`, ignoring the ID. Export then import into an empty session remains the identity (§11).
+
+3. **PLOTSONA applies the edits (2026-10-30, the owner's decision during C02-T06).** Applying an edit needs the extractor's point order, the chart's bytes for the SHA-256 check and the chart source's safe file reading, all of which PLOTSONA's chart source has and the engine-agnostic compiler does not. Engines cannot emit compiler codes (AGENTS.md rule 4), so the two warnings are PLOTSONA's: `SNR-ENG-386` an edit not applied (it replaces RFC-0004 §6's `SNR-COMP-036`, which is retired, never reused) and `SNR-ENG-387` corrections made on a different chart or extractor. The text above uses the new codes.
 
 The prior-art claim about accessible tools (TODO(verify)) stays open for review; it affects no design decision.
 
@@ -262,7 +264,7 @@ The prior-art claim about accessible tools (TODO(verify)) stays open for review;
 | Q4 | Authorship | Not in v1 (§5); revisit in a minor version only with an explicit opt-in and co-design evidence |
 | Q5 | An image-only file (no chart available) | Shown for viewing only; it applies to nothing until the chart is opened. Extracting from the embedded image would make the file a second chart source and is out of scope |
 | Q6 | Which spec minor version defines `corrections.path` | The next minor after acceptance (`0.3`), with only this change unless other accepted RFCs are ready; the 0.2 → 0.3 migration is the identity. **C02-T06 does the bump** (types, schema, migration, doc 04) |
-| Q7 | Codes area for the reader | `SNR-SPEC-09x`: the reader lives in `sonarithm-spec` beside RFC-0004's `Corrections` types (wasm-safe, no I/O); the compiler reports binding (`SNR-COMP-037`) |
+| Q7 | Codes area for the reader | `SNR-SPEC-09x`: the reader lives in `sonarithm-spec` beside RFC-0004's `Corrections` types (wasm-safe, no I/O); PLOTSONA, which applies the edits, reports binding (`SNR-ENG-387`; amendment 3) |
 | Q8 | FCP | The coordinator accepts under the owner's delegation, with the 7-day FCP waived, as for RFC-0002 and RFC-0004; the owner can reopen it |
 
 Out of scope: an ML or OCR suggestion of corrections (C02-T07, D04), merging two people's conflicting edits automatically, a server or cloud sync (P8), and polar or ternary calibrations (10 §3.1 later).
