@@ -1125,7 +1125,12 @@ speech: SpeechSettings,
 /**
  * The active profile's ID (ADR-0020), if any.
  */
-activeProfile?: string | null, };
+activeProfile?: string | null, 
+/**
+ * Which GPU the webview draws plots with (B04-T02, F-044). Read by the host when it
+ * starts, so a change applies after a restart.
+ */
+gpu: GpuPreference, };
 
 /**
  * Audio output settings.
@@ -1213,6 +1218,14 @@ announcer: AnnouncerRoute, };
  * is the route (08 §4; OD-05, decided provisionally on 2026-10-29).
  */
 export type AnnouncerRoute = "liveRegion" | "native";
+
+/**
+ * Which GPU the webview's plots use (B04-T02, F-044; approved by the coordinator on
+ * 2026-10-30). Only WebView2 (Windows) can be asked: the host passes
+ * `--force_high_performance_gpu` on top of its default browser arguments. Other webviews
+ * ignore it, and the UI says so. There is no detection and no telemetry.
+ */
+export type GpuPreference = "default" | "highPerformance";
 
 /**
  * Where announcements are spoken (A11Y-19).

@@ -98,6 +98,12 @@ ui-output-device = Output device
 ui-system-default-device = System default
 ui-sonification-volume = Sonification volume
 ui-volume-note = Sets the level of SONARITHM's sound only; the system volume does not change.
+ui-display = Display
+ui-gpu-high-performance = Use the high-performance GPU for plots
+ui-gpu-restart-hint = Takes effect after a restart.
+ui-gpu-unavailable = Only Windows lets SONARITHM choose the GPU; this system makes its own choice.
+# Said and shown at start-up when the GPU setting could not be applied (B04-T02).
+ui-gpu-fallback = The high-performance GPU setting will apply after SONARITHM is fully closed and started again.
 
 ## Commands (B02-T07; keyboard-and-navigation §5). Names say what the command does.
 

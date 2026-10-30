@@ -10,7 +10,10 @@ import { startOutsideRegions } from "./keyboard.ts";
 
 interface Mock {
   commands(): string[];
-  settings(): { audio: { device: string | null; volumeDb: number } };
+  settings(): {
+    audio: { device: string | null; volumeDb: number };
+    gpu: string;
+  };
 }
 
 const host = (page: Page) =>
@@ -94,4 +97,49 @@ test("fr_118_preferences_choose_the_device_and_set_the_volume_by_keyboard", asyn
   await page.keyboard.press("Escape");
   await expect(dialog).toBeHidden();
   expect(await focused(page)).toBe(opener);
+});
+
+test("f_044_the_gpu_switch_saves_the_setting_or_says_why_it_cannot", async ({
+  page,
+}) => {
+  await page.keyboard.press(`${await primary(page)}+Comma`);
+  const dialog = page.getByRole("dialog", { name: "Preferences" });
+  const gpu = dialog.getByRole("switch", {
+    name: "Use the high-performance GPU for plots",
+  });
+  await expect(gpu).toBeVisible();
+  const windows = await page.evaluate(() =>
+    navigator.userAgent.includes("Windows"),
+  );
+  if (windows) {
+    await expect(gpu).toHaveAccessibleDescription(
+      "Takes effect after a restart.",
+    );
+    await expect(gpu).toBeEnabled();
+    await gpu.focus();
+    await page.keyboard.press("Space");
+    await expect
+      .poll(async () => (await host(page)).evaluate((m) => m.settings().gpu))
+      .toBe("highPerformance");
+  } else {
+    // Only WebView2 can be asked; the reason is visible text, not a tooltip.
+    await expect(gpu).toBeDisabled();
+    const reason =
+      "Only Windows lets SONARITHM choose the GPU; this system makes its own choice.";
+    await expect(gpu).toHaveAccessibleDescription(reason);
+    await expect(dialog.getByText(reason)).toBeVisible();
+  }
+  expect(await seriousViolations(page)).toEqual([]);
+});
+
+test("f_044_a_gpu_fallback_at_start_up_is_said_in_words", async ({ page }) => {
+  await page.addInitScript(() => {
+    Reflect.set(window, "__SONARITHM_START__", { gpuFallback: true });
+  });
+  await page.goto("/e2e.html");
+  await expect(
+    page
+      .getByRole("contentinfo")
+      .getByText("The high-performance GPU setting will apply after SONARITHM"),
+  ).toBeVisible();
 });

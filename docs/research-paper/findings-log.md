@@ -390,7 +390,7 @@ A05 (render engine, audio backends, export) uses F-050 to F-069.
 - **Statement:** On the development laptop (Intel UHD plus RTX 4050), WebView2's default WebGL renderer was the Intel GPU. Passing `--force_high_performance_gpu` through Tauri's `additional_browser_args` gave "ANGLE (NVIDIA, NVIDIA GeForce RTX 4050 Laptop GPU …)", and `--force_low_power_gpu` kept the Intel GPU. Tauri's default browser arguments must be repeated when replacing them.
 - **Evidence:** [#102](https://github.com/DuhItzAniket/SONARITHM/pull/102) (renderer strings in the results)
 - **Evidence level / confidence:** EV-C / Strong
-- **Affects:** B04 (an optional high-performance setting); 09 §1
+- **Affects:** B04-T02: the `gpu` setting (`highPerformance` adds this switch to wry's default WebView2 arguments; the host retries without it if WebView2 refuses, 09 §7, 12 §3); 09 §1
 - **Papers:** none yet
 
 ### F-045 · In WebView2, React Aria's Tree is a tree grid whose row names repeat the expand button label
