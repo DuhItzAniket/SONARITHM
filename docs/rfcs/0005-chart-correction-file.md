@@ -50,15 +50,15 @@ Without this RFC, C02-T06 (corrections as app commands), C02-T10 (calibration di
   },
   "edits": [
     {
-      "id": "e1",
       "op": "move",
+      "id": "e1",
       "series": "Series 2",
       "point": 4,
       "was": { "x": "May", "y": 61.2 },
       "to": { "y": 64 },
       "before": { "class": "cv_estimate", "confidence": 0.41 }
     },
-    { "id": "e2", "op": "delete", "series": "Series 1", "point": 11, "was": { "x": "Dec", "y": 3.0 },
+    { "op": "delete", "id": "e2", "series": "Series 1", "point": 11, "was": { "x": "Dec", "y": 3.0 },
       "before": { "class": "cv_estimate", "confidence": 0.22 }, "note": "legend swatch, not data" }
   ]
 }
@@ -83,7 +83,7 @@ When the spec is compiled, PLOTSONA's chart source extracts the chart, checks th
 ### 1. File, media type, encoding
 
 - UTF-8 JSON (RFC 8259), no byte-order mark, one top-level object. Conventional name `<chart file name>.corrections.json`; media type `application/vnd.sonarithm.corrections+json` (not registered; used for the desktop file association only).
-- Written canonically (§9): keys in the order of this RFC's tables, two-space indentation, `\n` line ends, a final newline, numbers in Rust's shortest round-trip form.
+- Written canonically: keys in the order of this RFC's tables (in an edit, `op` first, then `id`), two-space indentation, `\n` line ends, a final newline, numbers in Rust's shortest round-trip form.
 
 ### 2. Top-level object
 
