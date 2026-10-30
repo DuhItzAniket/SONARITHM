@@ -3,3 +3,5 @@
 # Tauri's generated schemas and build output.
 src-tauri/
 dist/
+test-results/
+playwright-report/

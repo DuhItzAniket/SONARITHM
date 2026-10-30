@@ -4,7 +4,15 @@
     "allowImportingTsExtensions": true,
     "erasableSyntaxOnly": true,
     "allowJs": true,
-    "types": ["node"]
+    "types": ["node", "vite/client", "@vitest/browser-playwright"]
   },
-  "include": ["src", "test", "tokens", "stylelint"]
+  "include": [
+    "src",
+    "test",
+    "tokens",
+    "stylelint",
+    ".storybook/*.ts",
+    ".storybook/*.tsx",
+    "vitest.config.ts"
+  ]
 }

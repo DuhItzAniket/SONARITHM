@@ -98,6 +98,13 @@ precedence = "closest"
 SPDX-FileCopyrightText = "2026 SONARITHM contributors"
 SPDX-License-Identifier = "MIT OR Apache-2.0"
 
+# Screenshot baselines of the browser tests (B02-T03), taken in CI's pinned Chromium image.
+[[annotations]]
+path = ["packages/ui/test/visual/__screenshots__/**"]
+precedence = "closest"
+SPDX-FileCopyrightText = "2026 SONARITHM contributors"
+SPDX-License-Identifier = "MIT OR Apache-2.0"
+
 # A02 spikes (spikes/, throwaway; roadmap A02). Source files carry SPDX headers. These cover
 # lockfiles and binary assets (code licence) and measurement results (data licence, ADR-0010).
 [[annotations]]
