@@ -1,0 +1,266 @@
+---
+source: crates/engines/sonarithm-plotsona/tests/importers.rs
+expression: "score.review_json(&ReviewOptions::default())"
+---
+{
+  "header": {
+    "data_fingerprint": "53d5c339aa53ab903d1327c69e0f08ae37595efb7d25e8c66a2ada64839e3127",
+    "duration": 5.8,
+    "engines": {
+      "numisona": "*",
+      "platform": "*",
+      "plotsona": "*"
+    },
+    "ir_version": 1,
+    "mode": "analysis",
+    "seed": 0,
+    "shapers": [],
+    "spec_hash": "23f3de544a8939e94394dbe9da844e4d6f215b1c56d7ad32d7ab8beb53effcde",
+    "spec_version": "0.2"
+  },
+  "markers": [],
+  "tracks": [
+    {
+      "engine": "numisona",
+      "events": [
+        {
+          "conf": null,
+          "dur": 0.186957,
+          "gain": -18.0,
+          "pan": 0.0,
+          "pitch": 777.96,
+          "src": {
+            "generation": 0,
+            "row": 0,
+            "table": 0
+          },
+          "t": 0.0,
+          "taps": 1,
+          "timbre": {
+            "brightness": 0.5,
+            "preset": null
+          },
+          "type": "note"
+        },
+        {
+          "conf": null,
+          "dur": 0.213043,
+          "gain": -18.0,
+          "pan": 0.0,
+          "pitch": 1060.85,
+          "src": {
+            "generation": 0,
+            "row": 1,
+            "table": 0
+          },
+          "t": 0.5,
+          "taps": 1,
+          "timbre": {
+            "brightness": 0.5,
+            "preset": null
+          },
+          "type": "note"
+        },
+        {
+          "conf": null,
+          "dur": 0.23913,
+          "gain": -18.0,
+          "pan": 0.0,
+          "pitch": 1343.74,
+          "src": {
+            "generation": 0,
+            "row": 2,
+            "table": 0
+          },
+          "t": 1.0,
+          "taps": 1,
+          "timbre": {
+            "brightness": 0.5,
+            "preset": null
+          },
+          "type": "note"
+        },
+        {
+          "conf": null,
+          "dur": 0.265217,
+          "gain": -18.0,
+          "pan": 0.0,
+          "pitch": 1626.63,
+          "src": {
+            "generation": 0,
+            "row": 3,
+            "table": 0
+          },
+          "t": 1.5,
+          "taps": 1,
+          "timbre": {
+            "brightness": 0.5,
+            "preset": null
+          },
+          "type": "note"
+        },
+        {
+          "conf": null,
+          "dur": 0.204348,
+          "gain": -18.0,
+          "pan": 0.0,
+          "pitch": 966.56,
+          "src": {
+            "generation": 0,
+            "row": 4,
+            "table": 0
+          },
+          "t": 2.0,
+          "taps": 1,
+          "timbre": {
+            "brightness": 0.5,
+            "preset": "square"
+          },
+          "type": "note"
+        },
+        {
+          "conf": null,
+          "dur": 0.23913,
+          "gain": -18.0,
+          "pan": 0.0,
+          "pitch": 1343.74,
+          "src": {
+            "generation": 0,
+            "row": 5,
+            "table": 0
+          },
+          "t": 2.5,
+          "taps": 1,
+          "timbre": {
+            "brightness": 0.5,
+            "preset": "square"
+          },
+          "type": "note"
+        },
+        {
+          "conf": null,
+          "dur": 0.273913,
+          "gain": -18.0,
+          "pan": 0.0,
+          "pitch": 1720.93,
+          "src": {
+            "generation": 0,
+            "row": 6,
+            "table": 0
+          },
+          "t": 3.0,
+          "taps": 1,
+          "timbre": {
+            "brightness": 0.5,
+            "preset": "square"
+          },
+          "type": "note"
+        },
+        {
+          "conf": null,
+          "dur": 0.282609,
+          "gain": -18.0,
+          "pan": 0.0,
+          "pitch": 1815.23,
+          "src": {
+            "generation": 0,
+            "row": 7,
+            "table": 0
+          },
+          "t": 3.5,
+          "taps": 1,
+          "timbre": {
+            "brightness": 0.5,
+            "preset": "square"
+          },
+          "type": "note"
+        },
+        {
+          "conf": null,
+          "dur": 0.221739,
+          "gain": -18.0,
+          "pan": 0.0,
+          "pitch": 1155.15,
+          "src": {
+            "generation": 0,
+            "row": 8,
+            "table": 0
+          },
+          "t": 4.0,
+          "taps": 1,
+          "timbre": {
+            "brightness": 0.5,
+            "preset": "triangle"
+          },
+          "type": "note"
+        },
+        {
+          "conf": null,
+          "dur": 0.265217,
+          "gain": -18.0,
+          "pan": 0.0,
+          "pitch": 1626.63,
+          "src": {
+            "generation": 0,
+            "row": 9,
+            "table": 0
+          },
+          "t": 4.5,
+          "taps": 1,
+          "timbre": {
+            "brightness": 0.5,
+            "preset": "triangle"
+          },
+          "type": "note"
+        },
+        {
+          "conf": null,
+          "dur": 0.282609,
+          "gain": -18.0,
+          "pan": 0.0,
+          "pitch": 1815.23,
+          "src": {
+            "generation": 0,
+            "row": 10,
+            "table": 0
+          },
+          "t": 5.0,
+          "taps": 1,
+          "timbre": {
+            "brightness": 0.5,
+            "preset": "triangle"
+          },
+          "type": "note"
+        },
+        {
+          "conf": null,
+          "dur": 0.3,
+          "gain": -18.0,
+          "pan": 0.0,
+          "pitch": 2003.82,
+          "src": {
+            "generation": 0,
+            "row": 11,
+            "table": 0
+          },
+          "t": 5.5,
+          "taps": 1,
+          "timbre": {
+            "brightness": 0.5,
+            "preset": "triangle"
+          },
+          "type": "note"
+        }
+      ],
+      "gain": 0.0,
+      "id": "bars",
+      "instrument": "mallet",
+      "pan": 0.0,
+      "pitch_range": {
+        "high": 2003.82,
+        "low": -165.0
+      },
+      "role": "data"
+    }
+  ]
+}

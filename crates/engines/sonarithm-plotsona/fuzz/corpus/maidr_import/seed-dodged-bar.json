@@ -1,0 +1,92 @@
+{
+  "id": "chart",
+  "subplots": [
+    [
+      {
+        "id": "plot",
+        "layers": [
+          {
+            "id": "0",
+            "type": "dodged_bar",
+            "axes": {
+              "x": {
+                "label": "Quarter"
+              },
+              "y": {
+                "label": "Sales"
+              }
+            },
+            "data": [
+              [
+                {
+                  "x": "Q1",
+                  "fill": "North",
+                  "y": 10
+                },
+                {
+                  "x": "Q2",
+                  "fill": "North",
+                  "y": 13
+                },
+                {
+                  "x": "Q3",
+                  "fill": "North",
+                  "y": 16
+                },
+                {
+                  "x": "Q4",
+                  "fill": "North",
+                  "y": 19
+                }
+              ],
+              [
+                {
+                  "x": "Q1",
+                  "fill": "South",
+                  "y": 12
+                },
+                {
+                  "x": "Q2",
+                  "fill": "South",
+                  "y": 16
+                },
+                {
+                  "x": "Q3",
+                  "fill": "South",
+                  "y": 20
+                },
+                {
+                  "x": "Q4",
+                  "fill": "South",
+                  "y": 21
+                }
+              ],
+              [
+                {
+                  "x": "Q1",
+                  "fill": "East",
+                  "y": 14
+                },
+                {
+                  "x": "Q2",
+                  "fill": "East",
+                  "y": 19
+                },
+                {
+                  "x": "Q3",
+                  "fill": "East",
+                  "y": 21
+                },
+                {
+                  "x": "Q4",
+                  "fill": "East",
+                  "y": 23
+                }
+              ]
+            ]
+          }
+        ]
+      }
+    ]
+  ]
+}

@@ -1,0 +1,30 @@
+{
+  "$schema": "https://vega.github.io/schema/vega-lite/v5.json",
+  "data": {
+    "values": [
+      {
+        "fruit": "Apples",
+        "units": 30
+      },
+      {
+        "fruit": "Bananas",
+        "units": 50
+      },
+      {
+        "fruit": "Cherries",
+        "units": 20
+      }
+    ]
+  },
+  "mark": "arc",
+  "encoding": {
+    "theta": {
+      "field": "units",
+      "type": "quantitative"
+    },
+    "color": {
+      "field": "fruit",
+      "type": "nominal"
+    }
+  }
+}

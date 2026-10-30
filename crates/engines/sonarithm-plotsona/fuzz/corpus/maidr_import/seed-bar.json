@@ -1,0 +1,43 @@
+{
+  "id": "chart",
+  "subplots": [
+    [
+      {
+        "id": "plot",
+        "layers": [
+          {
+            "id": "0",
+            "type": "bar",
+            "axes": {
+              "x": {
+                "label": "Quarter"
+              },
+              "y": {
+                "label": "Sales"
+              }
+            },
+            "data": [
+              {
+                "x": "Q1",
+                "y": 10
+              },
+              {
+                "x": "Q2",
+                "y": 13
+              },
+              {
+                "x": "Q3",
+                "y": 16
+              },
+              {
+                "x": "Q4",
+                "y": 19
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  ],
+  "title": "Sales by quarter"
+}

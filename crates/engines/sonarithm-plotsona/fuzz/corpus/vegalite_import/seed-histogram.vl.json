@@ -1,0 +1,19 @@
+{
+  "$schema": "https://vega.github.io/schema/vega-lite/v5.json",
+  "data": {
+    "url": "data/waits.csv"
+  },
+  "mark": "bar",
+  "encoding": {
+    "x": {
+      "field": "minutes",
+      "bin": {
+        "maxbins": 8
+      },
+      "title": "Wait"
+    },
+    "y": {
+      "aggregate": "count"
+    }
+  }
+}

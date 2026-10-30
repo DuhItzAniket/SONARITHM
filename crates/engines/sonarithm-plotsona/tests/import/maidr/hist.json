@@ -1,0 +1,66 @@
+{
+  "id": "chart",
+  "subplots": [
+    [
+      {
+        "id": "plot",
+        "layers": [
+          {
+            "id": "0",
+            "type": "hist",
+            "data": [
+              {
+                "x": 1.5,
+                "y": 14,
+                "xMin": 0,
+                "xMax": 3,
+                "yMin": 0,
+                "yMax": 14
+              },
+              {
+                "x": 4.5,
+                "y": 11,
+                "xMin": 3,
+                "xMax": 6,
+                "yMin": 0,
+                "yMax": 11
+              },
+              {
+                "x": 7.5,
+                "y": 8,
+                "xMin": 6,
+                "xMax": 9,
+                "yMin": 0,
+                "yMax": 8
+              },
+              {
+                "x": 10.5,
+                "y": 6,
+                "xMin": 9,
+                "xMax": 12,
+                "yMin": 0,
+                "yMax": 6
+              },
+              {
+                "x": 13.5,
+                "y": 4,
+                "xMin": 12,
+                "xMax": 15,
+                "yMin": 0,
+                "yMax": 4
+              },
+              {
+                "x": 16.5,
+                "y": 2,
+                "xMin": 15,
+                "xMax": 18,
+                "yMin": 0,
+                "yMax": 2
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  ]
+}

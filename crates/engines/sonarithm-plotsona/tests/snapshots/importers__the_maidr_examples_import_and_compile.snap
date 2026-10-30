@@ -1,0 +1,20 @@
+---
+source: crates/engines/sonarithm-plotsona/tests/importers.rs
+expression: "lines.join(\"\\n\")"
+---
+bar.json: "chart-bar" {"category":"x","value":"y"}; 4 notes
+box.json: tracks written out; 10 notes
+  - unmapped upperOutliers at /subplots/0/0/layers/0/data/0/upperOutliers: outliers are not played; the box plays its five numbers
+candlestick.json: "chart-line" {"x":"date","y":"close"}; 10 notes
+  - unmapped data.open at /subplots/0/0/layers/0/data: a candlestick plays its closing price; open, high, low and volume are not played
+dodged-bar.json: "chart-bar" {"category":"x","series":"series","value":"y"}; 12 notes
+heat.json: "heatmap-rowscan" {"column":"column","row":"row","value":"value"}; 12 notes
+hist.json: "chart-bar" {"category":"bin","value":"count"}; 6 notes
+  - approximated data.xMin at /subplots/0/0/layers/0/data: each bin plays at its centre; its edges are not heard
+legacy-bar.json: "chart-bar" {"category":"x","value":"y"}; 4 notes
+line.json: "chart-line" {"series":"series","x":"x","y":"y"}; 24 notes
+pie.json: "chart-pie" {"slice":"x","value":"y"}; 3 notes
+point.json: "scatter-xy" {"x":"x","y":"y"}; 16 notes
+stacked-bar.json: "chart-stacked-bar" {"category":"x","series":"series","value":"y"}; 12 notes
+step.json: "chart-line" {"series":"series","x":"x","y":"y"}; 12 notes
+  - approximated type at /subplots/0/0/layers/0/type: a `step` layer plays its points; the curve between them is not drawn in sound

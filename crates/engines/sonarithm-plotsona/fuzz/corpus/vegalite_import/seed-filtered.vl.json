@@ -1,0 +1,116 @@
+{
+  "$schema": "https://vega.github.io/schema/vega-lite/v5.json",
+  "data": {
+    "values": [
+      {
+        "height": 150.0,
+        "weight": 48.0,
+        "group": "B"
+      },
+      {
+        "height": 152.5,
+        "weight": 51.8,
+        "group": "A"
+      },
+      {
+        "height": 155.0,
+        "weight": 55.6,
+        "group": "B"
+      },
+      {
+        "height": 157.5,
+        "weight": 59.4,
+        "group": "A"
+      },
+      {
+        "height": 160.0,
+        "weight": 54.8,
+        "group": "B"
+      },
+      {
+        "height": 162.5,
+        "weight": 58.6,
+        "group": "A"
+      },
+      {
+        "height": 165.0,
+        "weight": 62.4,
+        "group": "B"
+      },
+      {
+        "height": 167.5,
+        "weight": 66.2,
+        "group": "A"
+      },
+      {
+        "height": 170.0,
+        "weight": 61.6,
+        "group": "B"
+      },
+      {
+        "height": 172.5,
+        "weight": 65.4,
+        "group": "A"
+      },
+      {
+        "height": 175.0,
+        "weight": 69.2,
+        "group": "B"
+      },
+      {
+        "height": 177.5,
+        "weight": 73.0,
+        "group": "A"
+      },
+      {
+        "height": 180.0,
+        "weight": 68.4,
+        "group": "B"
+      },
+      {
+        "height": 182.5,
+        "weight": 72.2,
+        "group": "A"
+      },
+      {
+        "height": 185.0,
+        "weight": 76.0,
+        "group": "B"
+      },
+      {
+        "height": 187.5,
+        "weight": 79.8,
+        "group": "A"
+      }
+    ]
+  },
+  "transform": [
+    {
+      "filter": {
+        "field": "height",
+        "gte": 160
+      }
+    },
+    {
+      "calculate": "datum.weight / 2.2",
+      "as": "pounds"
+    }
+  ],
+  "params": [
+    {
+      "name": "brush",
+      "select": "interval"
+    }
+  ],
+  "mark": "circle",
+  "encoding": {
+    "x": {
+      "field": "height",
+      "type": "quantitative"
+    },
+    "y": {
+      "field": "weight",
+      "type": "quantitative"
+    }
+  }
+}

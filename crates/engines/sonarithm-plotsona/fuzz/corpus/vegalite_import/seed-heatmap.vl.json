@@ -1,0 +1,85 @@
+{
+  "$schema": "https://vega.github.io/schema/vega-lite/v5.json",
+  "data": {
+    "values": [
+      {
+        "quarter": "Q1",
+        "region": "North",
+        "sales": 10
+      },
+      {
+        "quarter": "Q1",
+        "region": "South",
+        "sales": 12
+      },
+      {
+        "quarter": "Q1",
+        "region": "East",
+        "sales": 14
+      },
+      {
+        "quarter": "Q2",
+        "region": "North",
+        "sales": 13
+      },
+      {
+        "quarter": "Q2",
+        "region": "South",
+        "sales": 16
+      },
+      {
+        "quarter": "Q2",
+        "region": "East",
+        "sales": 19
+      },
+      {
+        "quarter": "Q3",
+        "region": "North",
+        "sales": 16
+      },
+      {
+        "quarter": "Q3",
+        "region": "South",
+        "sales": 20
+      },
+      {
+        "quarter": "Q3",
+        "region": "East",
+        "sales": 21
+      },
+      {
+        "quarter": "Q4",
+        "region": "North",
+        "sales": 19
+      },
+      {
+        "quarter": "Q4",
+        "region": "South",
+        "sales": 21
+      },
+      {
+        "quarter": "Q4",
+        "region": "East",
+        "sales": 23
+      }
+    ]
+  },
+  "mark": "rect",
+  "encoding": {
+    "x": {
+      "field": "quarter",
+      "type": "nominal",
+      "title": "Quarter"
+    },
+    "y": {
+      "field": "region",
+      "type": "nominal"
+    },
+    "color": {
+      "field": "sales",
+      "type": "quantitative",
+      "title": "Sales",
+      "aggregate": "sum"
+    }
+  }
+}
