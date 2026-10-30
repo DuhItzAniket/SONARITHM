@@ -32,7 +32,7 @@ use sonarithm_spec::v02::{AnchorValue, AxisKind, Calibration as SpecCalibration,
 
 use crate::budget::{Budget, Budgets, Work, len64, over};
 use crate::calibrate::ticks::parse_date;
-use crate::calibrate::{Anchor, Calibration, ScaleKind};
+use crate::calibrate::{Anchor, Calibration, ScaleKind, check_monotonic};
 use crate::codes;
 
 /// A decoded image, flattened onto white (transparent pixels count as background).
@@ -307,6 +307,13 @@ pub struct RasterCalibration {
     pub y: Calibration,
     /// The x axis's labels in position order, when it is a category axis.
     pub x_labels: Option<Vec<String>>,
+    /// The lowest and highest anchor positions on each axis (x, then y): the span the
+    /// user's ticks cover, beyond which values are extrapolated.
+    pub ticks: [(f64, f64); 2],
+    /// The 10 §3.1 checks the anchors raised: an imprecise fit (`SNR-ENG-325`) or a scale
+    /// that fits far worse than the other one (`SNR-ENG-323`). Warnings, never fixes.
+    #[serde(skip)]
+    pub checks: Vec<Diagnostic>,
 }
 
 /// One axis from the spec's anchors: the anchors' x (or y) pixel coordinates and values,
@@ -315,6 +322,7 @@ fn axis(
     axis: &CalibrationAxis,
     name: &str,
     coordinate: usize,
+    checks: &mut Vec<Diagnostic>,
 ) -> Result<(Calibration, Option<Vec<String>>), Box<Diagnostic>> {
     let bad = |why: String| {
         Box::new(Diagnostic::new(
@@ -355,7 +363,21 @@ fn axis(
         };
         anchors.push(Anchor::new(position, value));
     }
-    Ok((Calibration::fit(kind, &anchors)?, None))
+    // 10 §3.1: tick values must change in one direction along the axis.
+    check_monotonic(&anchors, name)?;
+    let calibration = Calibration::fit(kind, &anchors)?;
+    checks.extend(calibration.check(&anchors, name));
+    Ok((calibration, None))
+}
+
+/// The lowest and highest anchor positions along `coordinate`.
+fn tick_span(axis: &CalibrationAxis, coordinate: usize) -> (f64, f64) {
+    axis.anchors
+        .iter()
+        .filter_map(|a| a.at.get(coordinate).copied())
+        .fold((f64::INFINITY, f64::NEG_INFINITY), |(lo, hi), p| {
+            (lo.min(p), hi.max(p))
+        })
 }
 
 /// A category x axis: every label is an anchor (the user names the categories; no OCR), and
@@ -395,11 +417,22 @@ impl RasterCalibration {
     /// # Errors
     ///
     /// `SNR-ENG-320` for a category y axis, an anchor value of the wrong type or too few
-    /// distinct anchors; `SNR-ENG-321` for a log axis with a value that is not positive.
+    /// distinct anchors; `SNR-ENG-321` for a log axis with a value that is not positive;
+    /// `SNR-ENG-322` when an axis's tick values do not change in one direction.
     pub fn from_spec(calibration: &SpecCalibration) -> Result<Self, Box<Diagnostic>> {
-        let (x, x_labels) = axis(&calibration.axes.x, "x", 0)?;
-        let (y, _) = axis(&calibration.axes.y, "y", 1)?;
-        Ok(Self { x, y, x_labels })
+        let mut checks = Vec::new();
+        let (x, x_labels) = axis(&calibration.axes.x, "x", 0, &mut checks)?;
+        let (y, _) = axis(&calibration.axes.y, "y", 1, &mut checks)?;
+        Ok(Self {
+            x,
+            y,
+            x_labels,
+            ticks: [
+                tick_span(&calibration.axes.x, 0),
+                tick_span(&calibration.axes.y, 1),
+            ],
+            checks,
+        })
     }
 
     /// The category at horizontal position `px`: the label whose index is nearest, when it
