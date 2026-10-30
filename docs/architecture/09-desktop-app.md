@@ -110,6 +110,17 @@ The UI calls an `IpcTransport` interface (`invoke`, `subscribe`, `binary`). The 
 | Application frame | `apps/desktop/src/app/frame` (B02-T06): five landmark regions in the F6 order of design-language §4.1, keyboard splitters (`@sonarithm/ui` `Splitter`, APG window splitter), collapsed regions as an "Expand" control in the F6 cycle, and the Medium and Narrow layouts of §4.3 |
 | Menu bar | **Native menus on every OS** (decided in B02-T06): the system menu bar on macOS, and the window's native menu bar on Windows and Linux, built with Tauri's menu API. React Aria Components has no menubar pattern, and native menus are what NVDA, Narrator, JAWS, VoiceOver and Orca already read. The menu lists commands from the command registry (B02-T07). Menu events reach the UI as commands, so the host keeps no command logic; if this needs a host command or an event channel beyond ADR-0017, B02-T07 proposes it to the coordinator first. Until then the app has no menu bar, and every command stays reachable from the palette (DL-P06) |
 
+**As built (B01-T05): the transport machine.**
+
+- `apps/desktop/src/transport/machine.ts` is the XState v5 `transport` machine, with two parallel regions.
+  - The `status` region has `unknown`, `stopped`, `playing` and `paused`. It moves only when the app core reports a `TransportState`, in a command's reply or in a `clock` anchor, never on an intent.
+  - The `request` region sends intents one at a time. A newer intent replaces one still waiting, and a failure keeps the last reported state.
+- So the Rust state wins over any intent it did not carry out, and the machine never sends a command on its own (A11Y-15).
+- `useTransport` runs one machine per connection: it asks for `transport_state` once, then follows the `clock` channel.
+- The top bar's `TransportBar` has Play/Pause, Stop and Loop: one Tab stop with arrows inside. The buttons are disabled until a Score is loaded. Stop stays enabled while one is loaded, so pressing it never drops the focus.
+- Play/Pause, Stop and Loop are commands (`transport.playPause`, `transport.stop` with Escape in the explorer, and `transport.loop`, unbound), so the palette reaches them.
+- Seek and speed are intents of the machine; their controls come with the explorer (B03-T09) and the rate steps of keyboard §5.3.
+
 ## 4. Security model
 
 | Control | Setting |

@@ -38,6 +38,13 @@
 - **Contract.** The meter frame layout is an ADR-0017 §4 amendment, approved by the coordinator on 2026-10-30 with five conditions, all met in the same PR: the dated amendment with the byte table, rate and versioning; a last frame on stop (flag bit 1, zero peaks; unknown bits ignored); an `allocation-counter` test of the meter window; reader tests with `SNR-APP-050`; and meters never announced, with limiter state never shown by colour alone.
 - **Tooling note.** The shell collapsed backslash escapes passed through it into Rust and TypeScript sources: a string-continuation escape and a Unicode escape were lost. Code with escapes now goes through the editor tool.
 
+## B01-T05: transport machine (2026-10-30)
+
+- XState 5.33.2 added to the catalogue (MIT, no dependencies). It is pinned, because 5.33.3 was 13 days old.
+- `transport` machine with a status region driven only by app-core reports, and a request region with "newest waiting intent wins". The model-based test runs every sequence of three intents (343) against a small Rust-like reducer, and checks that the machine never showed a status the fake host did not report.
+- The toolbar's Stop stays enabled while a Score is loaded: disabling the focused button after a press would drop the keyboard focus.
+- No cargo build (PLOTSONA held the slot). The Playwright spec was not run locally (free RAM 2.9 GB, under the 3 GB floor); CI runs it.
+
 ## Next steps
 
 - [x] Coordinator: ADR-0025 accepted (2026-10-29; numbered 0025, since 0023 and 0024 are reserved).

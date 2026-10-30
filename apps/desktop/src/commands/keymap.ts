@@ -149,6 +149,21 @@ export const DEFAULT_KEYMAP: readonly CommandSpec[] = [
     macKeys: ["Shift+Meta+Space"],
   },
   {
+    // Keyboard §5.3: Escape in the explorer, after closing an overlay; the toolbar's Stop
+    // button and stop-all audio (Ctrl+Period) always work too.
+    id: "transport.stop",
+    name: "command-transport-stop",
+    scope: "explorer",
+    keys: ["Escape"],
+  },
+  {
+    // Keyboard §5.3: unbound by default; reached from the toolbar and the palette.
+    id: "transport.loop",
+    name: "command-transport-loop",
+    scope: "global",
+    keys: [],
+  },
+  {
     id: "transport.stopAll",
     name: "command-transport-stop-all",
     scope: "global",
