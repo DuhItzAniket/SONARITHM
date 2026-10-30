@@ -19,7 +19,7 @@
 //! `--app <exe> [-- <args>]` runs one executable instead of the tests: the nightly workflow
 //! runs the installed desktop app with `--smoke`, so the packaged app is checked too
 //! (B01-T09). On Windows and macOS only the app's own process is checked, not the webview's
-//! processes (WebView2's `msedgewebview2.exe`, WebKit's XPC services); strace on Linux
+//! processes (WebView2's `msedgewebview2.exe`, `WebKit`'s XPC services); strace on Linux
 //! follows every child, WebKitGTK's processes included.
 
 use std::path::{Path, PathBuf};
