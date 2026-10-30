@@ -381,6 +381,12 @@ impl CategoryAxis {
         Self { labels }
     }
 
+    /// The labels and their positions, in position order.
+    #[cfg(test)]
+    pub(crate) fn entries(&self) -> &[(f64, String)] {
+        &self.labels
+    }
+
     /// The labels in position order.
     pub fn labels(&self) -> impl Iterator<Item = &str> {
         self.labels.iter().map(|(_, label)| label.as_str())

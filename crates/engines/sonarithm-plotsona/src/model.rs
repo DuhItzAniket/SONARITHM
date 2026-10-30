@@ -15,7 +15,7 @@ use std::sync::Arc;
 use arrow_array::{ArrayRef, Float64Array, RecordBatch, StringArray, TimestampMillisecondArray};
 use arrow_schema::{DataType, Field, Schema, TimeUnit};
 use serde::Serialize;
-use sonarithm_core::{Provenance, TableId};
+use sonarithm_core::{Confidence, Provenance, TableId};
 use sonarithm_data::provenance::with_provenance;
 use sonarithm_data::{DataError, FieldMeta, FieldType, Role, RowProvenance, Table};
 
@@ -101,6 +101,9 @@ pub struct Series {
     /// For calibrated (`vector`) series, the axis-calibration residual relative to the axis
     /// range (10 §3.1).
     pub residual: Option<f64>,
+    /// Per-point confidences, one per point, when they differ within the series (raster
+    /// estimates, C02-T03); empty when every point has the series' confidence.
+    pub confidences: Vec<Confidence>,
 }
 
 impl Series {
@@ -113,6 +116,7 @@ impl Series {
             points,
             provenance: Provenance::EXACT,
             residual: None,
+            confidences: Vec::new(),
         }
     }
 }
@@ -154,10 +158,14 @@ impl ChartData {
         let mut ys = Vec::with_capacity(rows);
         let mut provenance = Vec::with_capacity(rows);
         for series in &self.series {
-            for point in &series.points {
+            for (index, point) in series.points.iter().enumerate() {
                 series_names.push(series.name.as_str());
                 ys.push(point.y);
-                provenance.push(series.provenance);
+                let mut row = series.provenance;
+                if let Some(confidence) = series.confidences.get(index) {
+                    row.confidence = Some(*confidence);
+                }
+                provenance.push(row);
             }
         }
         let points = || self.series.iter().flat_map(|series| series.points.iter());
@@ -239,7 +247,7 @@ fn x_label(x: &XValue) -> String {
 
 #[cfg(test)]
 mod tests {
-    use sonarithm_core::{Confidence, ProvenanceClass};
+    use sonarithm_core::ProvenanceClass;
 
     use super::*;
 

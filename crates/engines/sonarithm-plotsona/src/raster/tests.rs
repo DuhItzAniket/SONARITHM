@@ -178,10 +178,10 @@ fn every_calibration_can_be_entered_by_hand() {
 }
 
 #[test]
-fn category_axes_and_mistyped_anchors_are_refused() {
+fn category_y_axes_and_mistyped_anchors_are_refused() {
     let category = calibration(json!({ "axes": {
-        "x": { "kind": "category", "anchors": [{ "at": [1, 0], "value": "a" }, { "at": [9, 0], "value": "b" }] },
-        "y": { "kind": "linear", "anchors": [{ "at": [0, 1], "value": 0 }, { "at": [0, 9], "value": 1 }] },
+        "x": { "kind": "linear", "anchors": [{ "at": [1, 0], "value": 0 }, { "at": [9, 0], "value": 1 }] },
+        "y": { "kind": "category", "anchors": [{ "at": [0, 1], "value": "a" }, { "at": [0, 9], "value": "b" }] },
     }}));
     assert_eq!(
         RasterCalibration::from_spec(&category)
@@ -289,8 +289,8 @@ fn bombs_fail_within_budget() {
     );
 }
 
-/// Through `extract`, a raster chart is decoded under the budgets; its marks are read from
-/// C02-T03, so it still reports the tier as not available.
+/// Through `extract`, a raster chart is decoded under the budgets before anything else; it
+/// then needs a calibration (C02-T03).
 #[test]
 fn extract_decodes_rasters_under_budget() {
     let chart = png(&image::RgbaImage::from_pixel(
@@ -299,7 +299,7 @@ fn extract_decodes_rasters_under_budget() {
         image::Rgba([255, 255, 255, 255]),
     ));
     let err = crate::extract(&chart, "chart.png", &crate::ExtractOptions::new()).unwrap_err();
-    assert_eq!(err.code.as_str(), "SNR-ENG-308");
+    assert_eq!(err.code.as_str(), "SNR-ENG-328");
     let bomb = png_header_only(60_000, 60_000);
     let err = crate::extract(&bomb, "bomb.png", &crate::ExtractOptions::new()).unwrap_err();
     assert_eq!(err.code.as_str(), "SNR-ENG-306");

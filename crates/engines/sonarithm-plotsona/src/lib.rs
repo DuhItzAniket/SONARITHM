@@ -61,6 +61,7 @@ use sonarithm_core::{Diagnostic, EngineId, EngineVersion, TableId};
 use sonarithm_data::bundle::SourceKind as DataSourceKind;
 use sonarithm_data::{BundleId, DataBundle, SourceDescriptor};
 use sonarithm_spec::data::Extractor;
+use sonarithm_spec::v02::Calibration as SpecCalibration;
 
 pub use budget::{Budgets, Work};
 pub use detect::{Container, Tier, detect};
@@ -76,7 +77,7 @@ pub const ENGINE: EngineId = EngineId::from_static("plotsona");
 pub const CHART_TABLE: TableId = TableId(0);
 
 /// How to extract a chart.
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, PartialEq)]
 #[non_exhaustive]
 pub struct ExtractOptions {
     /// The input budgets.
@@ -86,6 +87,9 @@ pub struct ExtractOptions {
     /// The bundle and table IDs of the result; a host that keeps several datasets gives
     /// each its own (default `BundleId(0)` and [`CHART_TABLE`]).
     pub ids: (BundleId, TableId),
+    /// The axis calibration the user entered (`data.source.calibration`), which the raster
+    /// tier needs.
+    pub calibration: Option<SpecCalibration>,
 }
 
 impl ExtractOptions {
@@ -96,6 +100,7 @@ impl ExtractOptions {
             budgets: Budgets::DEFAULT,
             extractor: Extractor::Auto,
             ids: (BundleId(0), CHART_TABLE),
+            calibration: None,
         }
     }
 
@@ -117,6 +122,13 @@ impl ExtractOptions {
     #[must_use]
     pub const fn with_extractor(mut self, extractor: Extractor) -> Self {
         self.extractor = extractor;
+        self
+    }
+
+    /// The same options with an axis calibration.
+    #[must_use]
+    pub fn with_calibration(mut self, calibration: SpecCalibration) -> Self {
+        self.calibration = Some(calibration);
         self
     }
 }
@@ -164,11 +176,11 @@ pub fn extract(
             ),
         )));
     }
-    if matches!(options.extractor, Extractor::Raster | Extractor::Ml) {
+    if options.extractor == Extractor::Ml {
         return Err(not_available(container));
     }
     let mut diagnostics = Vec::new();
-    let (chart, extractor) = read_chart(&sniffed, bytes, budgets, &mut work, &mut diagnostics)?;
+    let (chart, extractor) = read_chart(&sniffed, bytes, options, &mut work, &mut diagnostics)?;
     finish(
         locator,
         container,
@@ -187,16 +199,17 @@ pub fn extract(
 fn read_chart(
     sniffed: &detect::Sniffed,
     bytes: &[u8],
-    budgets: &Budgets,
+    options: &ExtractOptions,
     work: &mut Work,
     diagnostics: &mut Vec<Diagnostic>,
 ) -> Result<(ChartData, &'static str), Box<Diagnostic>> {
     let container = sniffed.container;
+    let budgets = &options.budgets;
     match container {
         Container::Xlsx | Container::Pptx | Container::Docx => {
             let is_xlsx = container == Container::Xlsx;
             let chart = office::extract(bytes, is_xlsx, budgets, work, diagnostics)?;
-            return Ok((chart, "sonarithm-plotsona/office"));
+            Ok((chart, "sonarithm-plotsona/office"))
         }
         Container::VegaLite | Container::Vega | Container::Plotly | Container::Highcharts => {
             let json = sniffed
@@ -205,35 +218,44 @@ fn read_chart(
                 .ok_or_else(|| not_available(container))?;
             let mut cx = chartjson::Cx::new(budgets, work, diagnostics);
             let chart = chartjson::extract(container, json, &mut cx)?;
-            return Ok((chart, json_extractor(container)));
+            Ok((chart, json_extractor(container)))
         }
         Container::Html => {
             let mut cx = chartjson::Cx::new(budgets, work, diagnostics);
             let (found, json) = chartjson::html::find_chart(bytes, &mut cx)?;
             let chart = chartjson::extract(found, &json, &mut cx)?;
-            return Ok((chart, json_extractor(found)));
+            Ok((chart, json_extractor(found)))
         }
         Container::Svg => {
             let chart = svg::extract(bytes, budgets, work, diagnostics)?;
-            return Ok((chart, "sonarithm-plotsona/svg"));
+            Ok((chart, "sonarithm-plotsona/svg"))
         }
         Container::Pdf => {
             let chart = pdf::extract(bytes, budgets, work, diagnostics)?;
-            return Ok((chart, "sonarithm-plotsona/pdf-vector"));
+            Ok((chart, "sonarithm-plotsona/pdf-vector"))
         }
         Container::Png | Container::Jpeg => {
-            // The image is decoded and its axes found under the budgets; reading marks
-            // arrives with C02-T03 and C02-T04.
+            // Decoded under the budgets first, so a hostile image fails as one even without
+            // a calibration.
             let format = if container == Container::Png {
                 image::ImageFormat::Png
             } else {
                 image::ImageFormat::Jpeg
             };
             let raster = raster::decode(bytes, format, budgets, work)?;
-            raster::find_axes(&raster, work)?;
+            let Some(calibration) = &options.calibration else {
+                return Err(Box::new(Diagnostic::new(
+                    &codes::RASTER_NEEDS_CALIBRATION,
+                    format!(
+                        "A {} chart is read through an axis calibration: add `data.source.calibration` with two anchors on each axis.",
+                        container.name()
+                    ),
+                )));
+            };
+            let chart = raster::extract::read_lines(&raster, calibration, work)?;
+            Ok((chart, "sonarithm-plotsona/raster"))
         }
     }
-    Err(not_available(container))
 }
 
 /// The extractor name of a chart-JSON library.
@@ -384,7 +406,10 @@ impl Source<DataBundle> for ChartSource {
     ) -> Result<DataBundle, CompileError> {
         let parsed: sonarithm_spec::Source = source.parse()?;
         let sonarithm_spec::Source::Chart {
-            path, extractor, ..
+            path,
+            extractor,
+            calibration,
+            ..
         } = parsed
         else {
             return Err(CompileError::Engine {
@@ -396,9 +421,19 @@ impl Source<DataBundle> for ChartSource {
         let bytes = self
             .read(&path)
             .map_err(|d| CompileError::from(d.at(at.clone())))?;
-        let options = ExtractOptions::new()
+        let mut options = ExtractOptions::new()
             .with_budgets(self.budgets)
             .with_extractor(extractor.unwrap_or(Extractor::Auto));
+        if let Some(calibration) = &calibration {
+            let typed = sonarithm_spec::v02::read(calibration).map_err(|err| {
+                let diagnostic = Diagnostic::new(
+                    &codes::CALIBRATION_ANCHORS,
+                    format!("The calibration cannot be read: {err}."),
+                );
+                CompileError::from(diagnostic.at(source.pointer().key("calibration")))
+            })?;
+            options = options.with_calibration(typed);
+        }
         let extraction =
             extract(&bytes, &path, &options).map_err(|d| CompileError::from(d.at(at.clone())))?;
         for diagnostic in extraction.report.diagnostics {
@@ -473,16 +508,17 @@ pub mod fuzzing {
         chartjson::extract(container, &value, &mut cx)
     }
 
-    /// Decodes `bytes` as a PNG (`png`) or JPEG and finds its axes: the raster core.
+    /// Decodes `bytes` as a PNG (`png`) or JPEG, finds its axes and reads its lines through a
+    /// calibration spanning the image: the raster tier.
     ///
     /// # Errors
     ///
-    /// The raster core's diagnostic.
+    /// The raster tier's diagnostic.
     pub fn raster_image(
         png: bool,
         bytes: &[u8],
         budgets: &Budgets,
-    ) -> Result<crate::raster::Axes, Box<Diagnostic>> {
+    ) -> Result<ChartData, Box<Diagnostic>> {
         let mut work = Work::new(budgets.max_work);
         let format = if png {
             image::ImageFormat::Png
@@ -490,7 +526,19 @@ pub mod fuzzing {
             image::ImageFormat::Jpeg
         };
         let raster = crate::raster::decode(bytes, format, budgets, &mut work)?;
-        crate::raster::find_axes(&raster, &mut work)
+        crate::raster::find_axes(&raster, &mut work)?;
+        let (w, h) = (f64::from(raster.width()), f64::from(raster.height()));
+        let calibration = serde_json::json!({ "axes": {
+            "x": { "kind": "linear", "anchors": [{ "at": [0.0, 0.0], "value": 0.0 }, { "at": [w, 0.0], "value": 1.0 }] },
+            "y": { "kind": "linear", "anchors": [{ "at": [0.0, h], "value": 0.0 }, { "at": [0.0, 0.0], "value": 1.0 }] },
+        }});
+        let calibration = serde_json::from_value(calibration).map_err(|err| {
+            Box::new(Diagnostic::new(
+                &crate::codes::CALIBRATION_ANCHORS,
+                err.to_string(),
+            ))
+        })?;
+        crate::raster::extract::read_lines(&raster, &calibration, &mut work)
     }
 
     /// Reads `bytes` as an SVG chart: scene, axes, calibration and marks.

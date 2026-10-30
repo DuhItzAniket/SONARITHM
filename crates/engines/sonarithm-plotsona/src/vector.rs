@@ -10,6 +10,48 @@ mod marks;
 
 pub(crate) use marks::read;
 
+/// The spec calibration a person would enter for a chart drawn from this scene, with
+/// positions multiplied by `scale` (an image's pixels per drawing unit): the outermost ticks
+/// of a continuous axis, every label of a category axis. `None` without two axes or for a
+/// date axis. For the raster tests (C02-T03).
+#[cfg(test)]
+pub(crate) fn hand_calibration(scene: &Scene, scale: f64) -> Option<serde_json::Value> {
+    use serde_json::json;
+
+    use crate::calibrate::ScaleKind;
+
+    let found = axes::find(scene, &mut Vec::new());
+    let entry = |axis: &axes::Axis, at: &dyn Fn(f64) -> [f64; 2]| -> Option<serde_json::Value> {
+        match axis {
+            axes::Axis::Continuous {
+                calibration, span, ..
+            } => {
+                let kind = match calibration.kind() {
+                    ScaleKind::Linear => "linear",
+                    ScaleKind::Log => "log",
+                    ScaleKind::Date => return None,
+                };
+                let anchors: Vec<_> = [span.0, span.1]
+                    .iter()
+                    .map(|p| json!({ "at": at(*p * scale), "value": calibration.value_at(*p) }))
+                    .collect();
+                Some(json!({ "kind": kind, "anchors": anchors }))
+            }
+            axes::Axis::Category { axis, .. } => {
+                let anchors: Vec<_> = axis
+                    .entries()
+                    .iter()
+                    .map(|(p, label)| json!({ "at": at(*p * scale), "value": label }))
+                    .collect();
+                Some(json!({ "kind": "category", "anchors": anchors }))
+            }
+        }
+    };
+    let x = entry(found.x.as_ref()?, &|p| [p, 0.0])?;
+    let y = entry(found.y.as_ref()?, &|p| [0.0, p])?;
+    Some(json!({ "axes": { "x": x, "y": y } }))
+}
+
 /// An RGB colour.
 pub(crate) type Rgb = (u8, u8, u8);
 

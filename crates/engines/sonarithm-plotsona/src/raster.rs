@@ -17,6 +17,10 @@
 //! A mark drawn into a pixel can lie anywhere in it, so a value read at a pixel centre is
 //! only known to within the values half a pixel either side ([`Estimate`]).
 
+pub mod colour;
+pub(crate) mod extract;
+pub mod lines;
+
 use std::io::Cursor;
 
 use image::{ImageFormat, ImageReader, Limits};
@@ -292,20 +296,24 @@ impl Estimate {
 }
 
 /// An x and a y axis calibrated from anchors in pixels.
-#[derive(Clone, Copy, Debug, PartialEq, Serialize)]
+#[derive(Clone, Debug, PartialEq, Serialize)]
 pub struct RasterCalibration {
-    /// The horizontal axis: anchor x positions to values.
+    /// The horizontal axis: anchor x positions to values. On a category axis the values are
+    /// the labels' indices in position order (0, 1, 2, …), fitted linearly.
     pub x: Calibration,
     /// The vertical axis: anchor y positions to values.
     pub y: Calibration,
+    /// The x axis's labels in position order, when it is a category axis.
+    pub x_labels: Option<Vec<String>>,
 }
 
-/// One axis from the spec's anchors: the anchors' x (or y) pixel coordinates and values.
+/// One axis from the spec's anchors: the anchors' x (or y) pixel coordinates and values,
+/// and for a category axis its labels in position order.
 fn axis(
     axis: &CalibrationAxis,
     name: &str,
     coordinate: usize,
-) -> Result<Calibration, Box<Diagnostic>> {
+) -> Result<(Calibration, Option<Vec<String>>), Box<Diagnostic>> {
     let bad = |why: String| {
         Box::new(Diagnostic::new(
             &codes::CALIBRATION_ANCHORS,
@@ -316,9 +324,10 @@ fn axis(
         AxisKind::Linear => ScaleKind::Linear,
         AxisKind::Log => ScaleKind::Log,
         AxisKind::Date => ScaleKind::Date,
+        AxisKind::Category if coordinate == 0 => return category(axis, &bad),
         _ => {
             return Err(bad(
-                "a category axis has no values between its labels; read categories from the bars or points instead".to_owned(),
+                "only the x axis can be a category axis; the y axis needs values".to_owned(),
             ));
         }
     };
@@ -344,7 +353,36 @@ fn axis(
         };
         anchors.push(Anchor::new(position, value));
     }
-    Calibration::fit(kind, &anchors)
+    Ok((Calibration::fit(kind, &anchors)?, None))
+}
+
+/// A category x axis: every label is an anchor (the user names the categories; no OCR), and
+/// the labels' indices in position order are fitted linearly to their positions, so a
+/// position reads as a fractional index (our design; the documentation calibrates bar
+/// charts on the value axis only).
+fn category(
+    axis: &CalibrationAxis,
+    bad: &dyn Fn(String) -> Box<Diagnostic>,
+) -> Result<(Calibration, Option<Vec<String>>), Box<Diagnostic>> {
+    let mut labels = Vec::with_capacity(axis.anchors.len());
+    for anchor in &axis.anchors {
+        let AnchorValue::Text(label) = &anchor.value else {
+            return Err(bad("a category anchor needs a label".to_owned()));
+        };
+        labels.push((anchor.at[0], label.clone()));
+    }
+    labels.sort_by(|a, b| a.0.total_cmp(&b.0));
+    #[expect(clippy::cast_precision_loss, reason = "label counts are small")]
+    let anchors: Vec<Anchor> = labels
+        .iter()
+        .enumerate()
+        .map(|(i, (position, _))| Anchor::new(*position, i as f64))
+        .collect();
+    let calibration = Calibration::fit(ScaleKind::Linear, &anchors)?;
+    Ok((
+        calibration,
+        Some(labels.into_iter().map(|(_, l)| l).collect()),
+    ))
 }
 
 impl RasterCalibration {
@@ -354,13 +392,41 @@ impl RasterCalibration {
     ///
     /// # Errors
     ///
-    /// `SNR-ENG-320` for a category axis, an anchor value of the wrong type or too few
+    /// `SNR-ENG-320` for a category y axis, an anchor value of the wrong type or too few
     /// distinct anchors; `SNR-ENG-321` for a log axis with a value that is not positive.
     pub fn from_spec(calibration: &SpecCalibration) -> Result<Self, Box<Diagnostic>> {
-        Ok(Self {
-            x: axis(&calibration.axes.x, "x", 0)?,
-            y: axis(&calibration.axes.y, "y", 1)?,
-        })
+        let (x, x_labels) = axis(&calibration.axes.x, "x", 0)?;
+        let (y, _) = axis(&calibration.axes.y, "y", 1)?;
+        Ok(Self { x, y, x_labels })
+    }
+
+    /// The category at horizontal position `px`: the label whose index is nearest, when it
+    /// is within half a step. `None` on a continuous axis.
+    #[must_use]
+    pub fn label_at(&self, px: f64) -> Option<&str> {
+        let labels = self.x_labels.as_ref()?;
+        let index = self.x.value_at(px).round();
+        if index < 0.0 {
+            return None;
+        }
+        #[expect(
+            clippy::cast_possible_truncation,
+            clippy::cast_sign_loss,
+            reason = "not negative; an index past the labels finds none"
+        )]
+        let at = index as usize;
+        labels.get(at).map(String::as_str)
+    }
+
+    /// The labels' positions in pixels, on a category axis.
+    #[must_use]
+    pub fn label_positions(&self) -> Vec<f64> {
+        let count = self.x_labels.as_ref().map_or(0, Vec::len);
+        #[expect(clippy::cast_precision_loss, reason = "label counts are small")]
+        let positions = (0..count)
+            .filter_map(|i| self.x.position_of(i as f64))
+            .collect();
+        positions
     }
 
     /// The values at the pixel position `(px, py)` (for a pixel's centre, `i + 0.5`), each
