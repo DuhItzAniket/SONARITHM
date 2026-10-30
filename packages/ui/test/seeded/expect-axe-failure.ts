@@ -21,7 +21,7 @@ const run = spawnSync(
     vitest,
     "run",
     "--project",
-    "storybook",
+    "storybook-dark",
     "--reporter=json",
     `--outputFile=${out}`,
   ],

@@ -1,0 +1,10 @@
+/* SPDX-FileCopyrightText: 2026 SONARITHM contributors */
+/* SPDX-License-Identifier: MIT OR Apache-2.0 */
+
+/* The app's page background and text colour, so stories render as they do in the app. */
+body {
+  margin: 0;
+  background: var(--surface-0);
+  color: var(--text-1);
+  font-family: var(--font-sans);
+}

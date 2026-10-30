@@ -16,3 +16,33 @@ ui-workspace-empty = No dataset is open.
 ui-starting = Starting SONARITHM…
 # The app core could not be reached; $detail is the app core's message.
 ui-start-failed = SONARITHM could not start. { $detail }
+
+## Commands and controls (B02-T04). Labels name the thing or the action with a verb, in
+## sentence case (design-language §12).
+
+ui-transport = Transport
+ui-play = Play
+ui-pause = Pause
+ui-stop = Stop
+ui-loop = Loop
+# A control's name with its shortcut, for tooltips; $name is the name, $key the binding.
+ui-name-with-shortcut = { $name } ({ $key })
+ui-menu-file = File
+ui-open-file = Open file…
+ui-export-audio = Export audio…
+ui-recent-files = Recent files
+ui-close-window = Close window
+ui-modalities = Modalities
+ui-modality-sonification = Sonification
+ui-modality-speech = Speech
+ui-modality-braille = Braille
+ui-tab-plot = Plot
+ui-tab-table = Table
+ui-tab-spec = Spec
+# Confirmation dialog; buttons are verbs, never Yes and No (design-language §12 rule 5).
+ui-discard-title = Discard unsaved changes?
+ui-discard-body = { $name } has unsaved changes. They are lost if you discard them.
+ui-discard = Discard
+ui-cancel = Cancel
+ui-section-channels = Channels
+ui-section-context = Context cues

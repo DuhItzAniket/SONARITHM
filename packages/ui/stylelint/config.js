@@ -5,6 +5,7 @@
 // uses semantic tokens only; the generated token file is the one place with raw values, so it
 // is ignored. The root stylelint.config.js re-exports this config for the whole workspace.
 
+import hoverFocusVisible from "./hover-focus-visible.js";
 import readoutNumeric from "./readout-numeric.js";
 
 /** Functions that write a colour literal; components use semantic tokens (DL-P07). */
@@ -50,10 +51,12 @@ export default {
     "**/dist/**",
     "**/storybook-static/**",
   ],
-  plugins: [readoutNumeric],
+  plugins: [hoverFocusVisible, readoutNumeric],
   rules: {
     // DL-X10: readouts keep tabular figures.
     "sonarithm/readout-numeric": true,
+    // DL-X11: no hover-only affordance.
+    "sonarithm/hover-focus-visible": true,
     // DL-P07: no colour literals.
     "color-no-hex": true,
     "color-named": "never",

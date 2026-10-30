@@ -24,14 +24,5 @@ export default meta;
 
 type Story = StoryObj<typeof meta>;
 
-/** Every surface and text role in the theme chosen in the toolbar. */
+/** Every surface and text role, in the theme of the toolbar (or of the Vitest project). */
 export const Default: Story = {};
-
-/** The same in each theme, so the axe contrast check covers all four. */
-export const Light: Story = { globals: { theme: "light" } };
-export const HighContrastDark: Story = {
-  globals: { theme: "highContrastDark" },
-};
-export const HighContrastLight: Story = {
-  globals: { theme: "highContrastLight" },
-};

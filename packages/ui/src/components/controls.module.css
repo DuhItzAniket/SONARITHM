@@ -1,0 +1,99 @@
+/* SPDX-FileCopyrightText: 2026 SONARITHM contributors */
+/* SPDX-License-Identifier: MIT OR Apache-2.0 */
+
+/* Shared control geometry (design-language §7): 28 px rows, a 24 px minimum target, 2 px
+   radius, Plex Sans 13 px, and the 2 px focus ring with a 2 px offset (DL-P05). */
+
+.control {
+  box-sizing: border-box;
+  display: inline-flex;
+  gap: var(--space-2);
+  align-items: center;
+  justify-content: center;
+  min-block-size: var(--row-default);
+  min-inline-size: var(--target-min);
+  padding-block: 0;
+  padding-inline: var(--space-3);
+  border: var(--border-width) solid var(--border-strong);
+  border-radius: var(--radius-1);
+  outline: none;
+  background: var(--surface-2);
+  color: var(--text-1);
+  font-family: var(--font-sans);
+  font-size: var(--type-13-size);
+  font-weight: var(--weight-medium);
+  line-height: var(--type-13-line);
+  cursor: default;
+  transition: background-color var(--motion-fast);
+}
+
+.control[data-hovered],
+.control[data-focus-visible] {
+  background: var(--surface-3);
+}
+
+.control[data-pressed] {
+  background: var(--surface-1);
+}
+
+.control[data-focus-visible] {
+  outline: var(--focus-ring-width) solid var(--focus);
+  outline-offset: var(--focus-ring-offset);
+}
+
+.control[data-disabled] {
+  border-color: var(--border);
+  color: var(--text-3);
+}
+
+/* Selected toggles: a fill, an accent border and a thicker bottom edge, so the state is not
+   colour alone (DL-X08). */
+.control[data-selected] {
+  border-color: var(--accent);
+  border-block-end-width: var(--focus-ring-width);
+  background: var(--surface-3);
+}
+
+.quiet {
+  border-color: transparent;
+  background: none;
+}
+
+.icon {
+  display: inline-flex;
+  flex: none;
+  color: var(--text-2);
+}
+
+.control[data-selected] .icon,
+.control[data-hovered] .icon,
+.control[data-focus-visible] .icon {
+  color: var(--text-1);
+}
+
+@media (forced-colors: active) {
+  .control {
+    border-color: ButtonBorder;
+    background: ButtonFace;
+    color: ButtonText;
+  }
+
+  .control[data-selected] {
+    border-color: Highlight;
+    background: Highlight;
+    color: HighlightText;
+  }
+
+  .control[data-disabled] {
+    border-color: GrayText;
+    color: GrayText;
+  }
+
+  .control[data-focus-visible] {
+    outline-color: Highlight;
+  }
+
+  .icon {
+    color: inherit;
+  }
+}

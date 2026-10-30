@@ -19,7 +19,7 @@
     "tokens": "node tokens/generate.ts",
     "storybook": "storybook dev --port 6006 --no-open",
     "build-storybook": "storybook build --quiet",
-    "test:stories": "vitest run --project storybook",
+    "test:stories": "vitest run --project \"storybook-*\"",
     "test:seeded": "node test/seeded/expect-axe-failure.ts",
     "test:visual": "vitest run --project visual"
   },
