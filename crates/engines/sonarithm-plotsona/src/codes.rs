@@ -4,7 +4,7 @@
 //! PLOTSONA's diagnostic codes, in its block of the shared `SNR-ENG` area:
 //! `SNR-ENG-300` to `SNR-ENG-399` (coding-standards §4.2).
 //!
-//! 300–319 detection, budgets and reading; 320–339 axis calibration; 340–359 exact
+//! 300–319 detection, budgets and reading; 320–339 axis calibration and the raster core; 340–359 exact
 //! extractors (Office charts, chart JSON); 360–379 vector extractors (SVG, PDF); 380–399
 //! templates and importers. A released code is never reused.
 
@@ -443,6 +443,17 @@ pub const CHART_EXTRACTED: CodeInfo = CodeInfo {
     status: CodeStatus::Active,
 };
 
+/// A raster image cannot be decoded (C02-T02).
+pub const RASTER_UNREADABLE: CodeInfo = CodeInfo {
+    code: "SNR-ENG-327",
+    severity: Severity::Error,
+    summary: "The image cannot be decoded",
+    help: "The PNG or JPEG file is damaged or uses a feature the decoder does not support. \
+           Export the chart again, or use its source file if you have one.",
+    rules: &[],
+    status: CodeStatus::Active,
+};
+
 /// Every PLOTSONA code, in ascending order.
 pub const CODES: CodeTable = CodeTable {
     area: Area::Eng,
@@ -468,6 +479,7 @@ pub const CODES: CodeTable = CodeTable {
         POINTS_OUTSIDE_PLOT,
         CALIBRATION_RESIDUAL,
         TICK_LABEL_UNREAD,
+        RASTER_UNREADABLE,
         OTHER_CHARTS,
         NO_CACHE,
         EXTERNAL_LINK,

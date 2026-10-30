@@ -43,6 +43,7 @@ pub mod import;
 pub mod model;
 mod office;
 mod pdf;
+pub mod raster;
 pub mod report;
 mod svg;
 pub mod templates;
@@ -220,7 +221,17 @@ fn read_chart(
             let chart = pdf::extract(bytes, budgets, work, diagnostics)?;
             return Ok((chart, "sonarithm-plotsona/pdf-vector"));
         }
-        _ => {}
+        Container::Png | Container::Jpeg => {
+            // The image is decoded and its axes found under the budgets; reading marks
+            // arrives with C02-T03 and C02-T04.
+            let format = if container == Container::Png {
+                image::ImageFormat::Png
+            } else {
+                image::ImageFormat::Jpeg
+            };
+            let raster = raster::decode(bytes, format, budgets, work)?;
+            raster::find_axes(&raster, work)?;
+        }
     }
     Err(not_available(container))
 }
@@ -460,6 +471,26 @@ pub mod fuzzing {
         let mut diagnostics = Vec::new();
         let mut cx = chartjson::Cx::new(budgets, &mut work, &mut diagnostics);
         chartjson::extract(container, &value, &mut cx)
+    }
+
+    /// Decodes `bytes` as a PNG (`png`) or JPEG and finds its axes: the raster core.
+    ///
+    /// # Errors
+    ///
+    /// The raster core's diagnostic.
+    pub fn raster_image(
+        png: bool,
+        bytes: &[u8],
+        budgets: &Budgets,
+    ) -> Result<crate::raster::Axes, Box<Diagnostic>> {
+        let mut work = Work::new(budgets.max_work);
+        let format = if png {
+            image::ImageFormat::Png
+        } else {
+            image::ImageFormat::Jpeg
+        };
+        let raster = crate::raster::decode(bytes, format, budgets, &mut work)?;
+        crate::raster::find_axes(&raster, &mut work)
     }
 
     /// Reads `bytes` as an SVG chart: scene, axes, calibration and marks.
