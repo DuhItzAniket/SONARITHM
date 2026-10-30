@@ -94,6 +94,7 @@ export function App({
   return (
     <>
       <Frame
+        startIn={start.state === "ready" ? "project" : null}
         top={<TransportBar transport={transportView} />}
         project={
           <p className={styles.status}>{t.format("ui-workspace-empty")}</p>

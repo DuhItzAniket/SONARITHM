@@ -69,9 +69,16 @@ export async function tabThrough(page: Page): Promise<FocusStop[]> {
           el.dataset.snrTab = key;
         }
       });
-      if (document.activeElement instanceof HTMLElement) {
-        document.activeElement.blur();
-      }
+      // Start at the top of the page. Blurring is not enough: Firefox keeps the blurred
+      // element as the point Tab moves on from, so a walk would start wherever the app
+      // put the focus (the project region, B01-T07) and run out of presses on the way
+      // round. A focused, untabbable marker before everything else is a start point
+      // every engine agrees on.
+      const start = document.createElement("span");
+      start.tabIndex = -1;
+      start.dataset.snrStart = "";
+      document.body.prepend(start);
+      start.focus();
       return new Set(all.map((el) => el.dataset.snrTab)).size;
     },
     { selector: TABBABLE, composite: COMPOSITE },
@@ -107,6 +114,9 @@ export async function tabThrough(page: Page): Promise<FocusStop[]> {
     }
     stops.push({ label: stop.label });
   }
+  await page.evaluate(() => {
+    document.querySelector("[data-snr-start]")?.remove();
+  });
   if (reached.size < count) {
     const missed = await page.evaluate(
       (seen) =>
@@ -123,4 +133,17 @@ export async function tabThrough(page: Page): Promise<FocusStop[]> {
     );
   }
   return stops;
+}
+
+/**
+ * Moves the focus out of every region, as before start-up placed it (B01-T07), so a test
+ * of the F6 cycle starts from the same point at every breakpoint.
+ */
+export async function startOutsideRegions(page: Page): Promise<void> {
+  await page.evaluate(() => {
+    const active = document.activeElement;
+    if (active instanceof HTMLElement) {
+      active.blur();
+    }
+  });
 }
