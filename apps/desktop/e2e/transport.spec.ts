@@ -7,6 +7,7 @@ import type { Page } from "@playwright/test";
 import { expect, test } from "@playwright/test";
 
 import { seriousViolations } from "./axe.ts";
+import { startOutsideRegions } from "./keyboard.ts";
 
 const toolbar = (page: Page) =>
   page.getByRole("toolbar", { name: "Transport" });
@@ -43,7 +44,9 @@ test("b01_t05_toolbar_arrows_move_inside_and_tab_leaves", async ({ page }) => {
   const play = bar.getByRole("button", { name: "Play" });
   await expect(play).toBeEnabled();
 
-  // F6 reaches the top region; the toolbar is its first Tab stop.
+  // From no focus (start-up puts it in the project region, B01-T07), F6 reaches the top
+  // region, whose first Tab stop is the toolbar.
+  await startOutsideRegions(page);
   await page.keyboard.press("F6");
   await expect(play).toBeFocused();
 

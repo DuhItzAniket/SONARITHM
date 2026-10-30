@@ -87,6 +87,8 @@ changelog_include = [
   "sonarithm-i18n",
   "sonarithm-numisona",
   "sonarithm-audaxis",
+  "sonarithm-sonotrace",
+  "sonarithm-plotsona",
   "sonarithm-echometric",
   "sonarithm-cli",
   "sonarithm-py",
@@ -96,7 +98,9 @@ git_tag_name = "v{{ version }}"
 git_release_enable = true
 git_release_type = "auto"
 
-# Every other published crate shares the facade's version.
+# Every other published crate shares the facade's version: the 16 crates of v0.1.0-alpha, with
+# AUDAXIS, SONOTRACE, PLOTSONA and i18n published as experimental because the facade depends
+# on them. Not published: sonarithm-app, -desktop, -speech, -stream, -py (wheels) and xtask.
 [[package]]
 name = "sonarithm-core"
 version_group = "sonarithm"
@@ -139,6 +143,14 @@ version_group = "sonarithm"
 
 [[package]]
 name = "sonarithm-audaxis"
+version_group = "sonarithm"
+
+[[package]]
+name = "sonarithm-sonotrace"
+version_group = "sonarithm"
+
+[[package]]
+name = "sonarithm-plotsona"
 version_group = "sonarithm"
 
 [[package]]

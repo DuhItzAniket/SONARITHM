@@ -21,9 +21,10 @@ abstract: >-
   Renders carry provenance (engine version, spec hash and data fingerprint) so
   that results can be reproduced.
 authors:
-  # TODO(owner): add given-names, family-names and orcid (https://orcid.org/...) here, and the
-  # same person as "Family, Given" with "orcid" in .zenodo.json creators, before the first tag.
-  - alias: "DuhItzAniket"
+  - given-names: "Aniket"
+    family-names: "Kumar"
+    alias: "DuhItzAniket"
+    orcid: "https://orcid.org/0009-0003-8589-8859"
 url: "https://github.com/DuhItzAniket/SONARITHM"
 repository-code: "https://github.com/DuhItzAniket/SONARITHM"
 keywords:
@@ -43,6 +44,6 @@ keywords:
 license:
   - MIT
   - Apache-2.0
-version: "0.0.0"
-# date-released: set by `cargo xtask citation --release YYYY-MM-DD` in the release PR.
+version: "0.1.0-alpha"
+date-released: "2026-10-30"
 # doi: add the Zenodo concept DOI after the first release is archived (phase A07).

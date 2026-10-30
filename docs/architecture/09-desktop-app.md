@@ -162,3 +162,10 @@ The UI calls an `IpcTransport` interface (`invoke`, `subscribe`, `binary`). The 
 2. The webview loads the bundled UI. The UI requests the session state.
 3. If autosave exists, recovery is offered. Otherwise the app opens the last project or an **empty workspace** with keyboard focus in the data tree. There is no splash screen and no marketing panel ([design-language](../design/design-language.md)).
 4. The first-run experience offers the built-in tutorial (B07) as a single, dismissible, accessible prompt.
+
+**As built (B01-T07).**
+
+- **Start-up never waits for a driver.** The app core loads its settings and answers requests without calling the audio driver; the device opens on the first play. A scenario checks this with a null driver that takes 2 s per call: start-up and the first requests finish sooner, and only the first play waits.
+- **Focus on start.** Once the app core answers, the focus lands in the project region: on its first control, which is the project tree once it holds one, otherwise on the region itself. In Narrow it lands on the workspace, which is shown first (design-language §4.3). It moves only if nothing has the focus yet. There is no splash and no dialog in the way.
+- **PB-07.** The smoke run measures from the host's start to the first focus in a region, and reports it as `pb07` without gating. ci.yml runs a debug build, and desktop-nightly a release build of the installed app. The origin is read before the smoke fixture is written, so the number is an upper bound, and the operating system's process creation before `main` is not counted.
+- **App Nap** (macOS) handling for the control and telemetry threads waits on HP-03, which checks whether F-041's message timing suffers under App Nap.

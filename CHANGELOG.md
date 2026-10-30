@@ -8,9 +8,17 @@ From phase A07, release-plz maintains this file: it generates each release's ent
 
 ## [Unreleased]
 
+## [0.1.0-alpha] - 2026-10-30
+
+The first public alpha. It contains everything merged up to 2026-10-30 and is released as 16 crates on crates.io, the `sonarithm` command line tool (crates.io and release archives) and the `sonarithm` Python package (abi3 wheels on PyPI). The Rust core, the command line tool and the Python package compile specs to Scores, render them to WAV and FLAC with a provenance manifest, and play them.
+
+- **Experimental and unstable:** the Stage B and C library code in `sonarithm-audaxis` (navigation, context cues, announcements, profiles), `sonarithm-sonotrace` (live streams, transport, monitoring), `sonarithm-plotsona` (chart extraction) and `sonarithm-i18n` (message catalogues and locale formatting). These crates are published because the facade depends on them. Their APIs, and the parts of the facade that expose them, can change in any release before 1.0 and are not covered by semantic versioning until then.
+- **Not in this release:** the desktop app (`apps/desktop`, `sonarithm-desktop`, `sonarithm-app`, `@sonarithm/*` packages), `sonarithm-speech` and `sonarithm-stream` are in the repository but not published. Their entries below describe work in progress.
+
 ### Added
 
 - The transport toolbar (B01-T05): Play and Pause, Stop and Loop in the top bar follow what the audio engine reports, and are also in the command palette. Nothing plays until you press Play.
+- Start-up (B01-T07): the app opens with the keyboard focus in the Project region, and never waits for the audio device, which opens on the first play.
 - Nightly desktop builds for testers (B01-T09): unsigned Windows, macOS and Linux installers of the latest `main`, as artifacts of the `desktop-nightly` workflow. They are not releases and have no updater; release-process explains how to install them past the unsigned-app warnings.
 - The command palette (B02-T07): Ctrl+Shift+P (Cmd+Shift+P on macOS) lists every available command with its shortcut; typing filters the list and the number of matches is announced. Shift+F1 lists the shortcuts that work where the focus is.
 - Announcements in the desktop app (B03-T04): what SONARITHM says reaches the screen reader through live regions by default, or through Windows UI Automation notifications with the `speech.announcer` setting set to `native`; every announcement also appears in the Status region's log. Announcing never moves the keyboard focus.
@@ -130,4 +138,9 @@ From phase A07, release-plz maintains this file: it generates each release's ent
 
 - `sonarithm-data`: `ReadOptions::without_inference()` keeps the field semantics declared in `fields` (type, unit, concept, role, label, description) instead of dropping them (#156).
 
-[Unreleased]: https://github.com/DuhItzAniket/SONARITHM/commits/main
+### Security
+
+- Hostile chart and Parquet files fail fast instead of crashing, exhausting memory or running for seconds (#374): a `Date.UTC` call with an enormous argument in an HTML chart page, SVG arcs with huge radii or far end points, and a Parquet page header with a mistyped field. Fuzzing found them before any release, so no published version is affected and no advisory is needed. Each input is a regression seed replayed on every test run.
+
+[Unreleased]: https://github.com/DuhItzAniket/SONARITHM/compare/v0.1.0-alpha...HEAD
+[0.1.0-alpha]: https://github.com/DuhItzAniket/SONARITHM/releases/tag/v0.1.0-alpha

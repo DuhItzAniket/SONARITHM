@@ -10,6 +10,8 @@ export interface SmokeConfig {
   /** The fixture CSV the host wrote. */
   readonly dataset: string;
   readonly rows: number;
+  /** When the host started, in milliseconds since the Unix epoch (PB-07). */
+  readonly startedAtMs: number | null;
 }
 
 /** One check's outcome. */
@@ -25,9 +27,13 @@ export function smokeConfig(scope: object): SmokeConfig | null {
   if (typeof value !== "object" || value === null) {
     return null;
   }
-  const { dataset, rows } = value as Record<string, unknown>;
+  const { dataset, rows, startedAtMs } = value as Record<string, unknown>;
   return typeof dataset === "string" && typeof rows === "number"
-    ? { dataset, rows }
+    ? {
+        dataset,
+        rows,
+        startedAtMs: typeof startedAtMs === "number" ? startedAtMs : null,
+      }
     : null;
 }
 
@@ -73,6 +79,16 @@ export async function runSmoke(
       throw new Error("the workspace region has no accessible name");
     }
     return name;
+  });
+
+  // PB-07 (B01-T07): from the host's start to an interactive workspace, which is the
+  // focus in a region (09 §7). Reported, not enforced here: ci.yml runs a debug build on
+  // shared runners, and desktop-nightly a release build. The benchmarks log records the
+  // HW-01 runs.
+  let pb07: Pb07 | null = null;
+  await check("pb-07-cold-start", async () => {
+    pb07 = await measurePb07(config);
+    return `${pb07.coldStartMs.toFixed(0)} ms to an interactive workspace (budget ${String(PB07_BUDGET_MS)} ms)`;
   });
 
   await check("binary-view", async () => {
@@ -130,8 +146,32 @@ export async function runSmoke(
     return "UI Automation notification raised";
   });
 
-  const results = { ok: checks.every((c) => c.ok), checks, pb09 };
+  const results = { ok: checks.every((c) => c.ok), checks, pb07, pb09 };
   await invoke("smoke_report", { results });
+}
+
+/** PB-07: 2 s from launch to an interactive workspace (12 §8). */
+const PB07_BUDGET_MS = 2000;
+
+/** The PB-07 measurement the smoke report carries. */
+interface Pb07 {
+  readonly coldStartMs: number;
+  readonly budgetMs: number;
+  readonly withinBudget: boolean;
+}
+
+/** Waits until the start-up focus is in a region, then measures from the host's start. */
+async function measurePb07(config: SmokeConfig): Promise<Pb07> {
+  if (config.startedAtMs === null) {
+    throw new Error("the host passed no start time");
+  }
+  await waitFor(() => document.activeElement?.closest("[data-region]"));
+  const coldStartMs = Date.now() - config.startedAtMs;
+  return {
+    coldStartMs,
+    budgetMs: PB07_BUDGET_MS,
+    withinBudget: coldStartMs <= PB07_BUDGET_MS,
+  };
 }
 
 /** PB-09: 30 ms p95 for a 1 MB binary view (12 §8). */

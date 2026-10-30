@@ -81,6 +81,7 @@ No reference-class machine is available yet (risk R-22). Rows on HW-01 apply the
 | A02 spike (WKWebView) | 2026-10-19 | [#101](https://github.com/DuhItzAniket/SONARITHM/pull/101) | CI-MAC | WKWebView (WebKit 21624.5.1.11.3) | — | pending | pending | — | — | PB-09: 1 MB binary p95 8 ms (F-040). Frame rates need a GPU: owner or volunteer step |
 | A02 spike (WebKitGTK) | 2026-10-19 | [#101](https://github.com/DuhItzAniket/SONARITHM/pull/101) | CI-LNX | WebKitGTK 2.52.6 (Xvfb) | — | pending | pending | — | — | PB-09: 1 MB binary p95 7 ms (F-040). Frame rates on Intel, AMD and NVIDIA GPUs: owner live-USB step |
 | B01 (B01-T04) | pending | — | CI-WIN, CI-MAC, CI-LNX (debug build); HW-01 release run pending (owner) | per CI job | — | — | — | — | — | PB-09: the desktop smoke run reports the p50, p95 and max of 30 `view_get` round trips of a cached 1.2 MB M4 view (`pb09` in `smoke.json`, CI step summary). No number yet: filled in from the first CI run, and on HW-01 by the owner |
+| B01 (B01-T07) | pending | — | CI-WIN, CI-MAC, CI-LNX (debug in ci.yml, release in desktop-nightly); HW-01 release run pending (owner) | per CI job | pending: `pb07` in `smoke.json`, from the host's start to the first focus in a region (an upper bound; process creation before `main` not counted) | — | — | — | — | PB-07: no number yet. Filled in from CI's smoke runs and the owner's HW-01 run |
 | B01 | | | | | | | | | | |
 | B04 | | | | | | | | | | |
 | Gate B `v0.5.0-beta` | | | | | | | | | | |

@@ -26,6 +26,22 @@ test("a11y_31_the_workspace_has_no_serious_axe_violation", async ({ page }) => {
   expect(await seriousViolations(page)).toEqual([]);
 });
 
+test("b01_t07_the_empty_workspace_opens_with_focus_in_the_project_region", async ({
+  page,
+}) => {
+  // 09 §7: no splash; the focus is in the project region (its tree once it holds one).
+  await expect
+    .poll(() =>
+      page.evaluate(
+        () =>
+          document.activeElement?.closest<HTMLElement>("[data-region]")?.dataset
+            .region ?? null,
+      ),
+    )
+    .toBe("project");
+  await expect(page.getByRole("dialog")).toHaveCount(0);
+});
+
 test("a11y_05_the_workspace_has_no_focus_trap", async ({ page }) => {
   await tabThrough(page);
 });
