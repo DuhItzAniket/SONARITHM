@@ -1,6 +1,6 @@
 # RFC 0005: The chart correction file
 
-> **Status:** In discussion (proposed for acceptance by the coordinator under the owner's delegation). **Author(s):** project lead (drafted by an AI coding agent, Claude Code).
+> **Status:** **Accepted** on 2026-10-30 by the coordinator session under the owner's delegation, with the 7-day FCP waived (Q8) and two amendments to §11 (see [Unresolved questions](#unresolved-questions)); the owner can reopen it. Outcome recorded in [ADR-0026](../decisions/0026-chart-correction-file.md). **Author(s):** project lead (drafted by an AI coding agent, Claude Code).
 > **Related:** [RFC process](README.md) · [RFC-0004 §5, §6 (calibration and inline corrections)](0004-spec-v0.2.md#6-datasourcecorrections-chart-sources) · [RFC-0002 (project format v1)](0002-project-format-v1.md) · [ADR-0018](../decisions/0018-project-format-v1.md) · [ADR-0012](../decisions/0012-privacy-and-telemetry.md) · [ADR-0013](../decisions/0013-determinism-and-provenance.md) · [ADR-0017](../decisions/0017-ipc-protocol-v1.md) · [03 §4](../architecture/03-data-model.md#4-provenance-and-confidence) · [10 §3.1, §5](../architecture/10-ingestion-and-extraction.md#5-accessibility-of-extraction) · [12 §4, §6](../architecture/12-cross-cutting-concerns.md#4-project-file-format)
 
 | Field | Value |
@@ -10,7 +10,7 @@
 | RFC PR | [#402](https://github.com/DuhItzAniket/SONARITHM/pull/402) |
 | Affects | Persisted formats (a new file, `sonarithm-corrections` v1); spec language (a minor version defines `data.source.corrections.path`, reserved by RFC-0004 §6); IPC protocol (additive commands, ADR-0017 §5); the project bundle only through its reserved `annotations/` folder |
 | Phase | C02 (task C02-T06, issue [#308](https://github.com/DuhItzAniket/SONARITHM/issues/308)) |
-| Related ADR(s) | [ADR-0012](../decisions/0012-privacy-and-telemetry.md), [ADR-0013](../decisions/0013-determinism-and-provenance.md), [ADR-0017](../decisions/0017-ipc-protocol-v1.md), [ADR-0018](../decisions/0018-project-format-v1.md), [ADR-0021](../decisions/0021-spec-v0.2.md); a new ADR records this RFC's outcome |
+| Related ADR(s) | [ADR-0012](../decisions/0012-privacy-and-telemetry.md), [ADR-0013](../decisions/0013-determinism-and-provenance.md), [ADR-0017](../decisions/0017-ipc-protocol-v1.md), [ADR-0018](../decisions/0018-project-format-v1.md), [ADR-0021](../decisions/0021-spec-v0.2.md); [ADR-0026](../decisions/0026-chart-correction-file.md) records this RFC's outcome |
 | Supersedes | none (fills the `corrections.path` slot RFC-0004 §6 reserved) |
 
 ## Summary
@@ -179,15 +179,16 @@ A writer never writes, and the format has no field for:
 
 1. Read the file strictly (§8). Refused files change nothing.
 2. Check `chart.sha256` against the open chart; a mismatch is `SNR-COMP-037` and the import stops, unless the person re-binds it (Q3).
-3. **Preview, then confirm.** Compute which imported edits would apply. An imported edit conflicts when it refers to a point the session's own edits already changed (its `was` no longer matches) or when its `id` already exists with different content; conflicts are listed, never applied. Edits identical to ones already present (same `op`, point, `was`, `to`) are skipped as duplicates.
-4. The edits that apply are appended after the session's own, renumbered `e<n>` from the next free number (their `note` and `before` kept), as **one** undoable patch.
-5. An imported `calibration` replaces the session's only if the person chooses it in the preview; otherwise it is reported as differing.
+3. **Preview, then confirm.** Compute which imported edits would apply. An imported edit **conflicts** only when its `was` guard fails against the session, that is, when it refers to a point the session's own edits already changed; conflicts are listed, never applied. An imported edit is a **duplicate** of one already present when `op`, the point, `was` and `to` are equal (the `id` is ignored); duplicates are skipped. IDs cannot collide, because step 4 renumbers every imported edit (amendment 2).
+4. The edits that apply are appended after the session's own, renumbered `e<n>` from the next free number in the session, in the file's order (their `note` and `before` kept), as **one** undoable patch. **References are rewritten** with the same mapping: an imported `"point": "+e<k>"` that names an `add` in the imported set becomes `"+e<new k>"`. An imported edit that names an added point the file does not define earlier is `SNR-SPEC-091`, as §8 says, and the whole file is refused before anything applies. An edit that refers to an imported `add` which was itself skipped as a duplicate is rewritten to the session's matching `add`; one whose `add` conflicted is a conflict too (amendment 1).
+5. An imported `calibration` replaces the session's only if the person chooses it in the preview; otherwise it is reported as differing. In an empty session there is nothing to differ from, and it is taken as is.
 
-Export is the reverse: write the session's set (§1, §5, §6). Export then import into an empty session is the identity on the file's bytes (§12).
+Export is the reverse: write the session's set (§1, §5, §6). **Export then import into an empty session is the identity on the file's bytes** (§12): in an empty session nothing conflicts and nothing is a duplicate; numbering starts at `e1`, so a file whose IDs run `e1`…`e<n>` in order, as every writer writes them (§4), keeps every ID, and the reference mapping is the identity; the calibration is taken as is.
 
 ### 12. Testing (C02-T06)
 
-- **Round trip:** export then import gives byte-identical files; save and reopen of a project keeps the set and every edit's history (`before`, chains).
+- **Round trip:** export then import into an empty session gives byte-identical files, including files whose edits refer to added points (`+e<k>`); save and reopen of a project keeps the set and every edit's history (`before`, chains).
+- **Import renumbering:** importing into a session that already has edits renumbers the imported ones and rewrites their `+e<k>` references to the new IDs (a chain of `add` then `move` on the added point still applies to that point); a file with a reference to an added point it does not define is refused with `SNR-SPEC-091` and changes nothing; duplicates match on `op`, point, `was` and `to` whatever their IDs; only failed guards are conflicts.
 - **Undo:** property test — any sequence of correction patches, undone in full, returns the canonical document bytes (as B05-T01's spec patches).
 - **Privacy:** no path, time or name is ever written (a test that scans written files for path separators beyond `chart.name`, drive letters, and digits in date shapes); PNG metadata chunks stripped.
 - **Binding:** a correction file applied to a different chart applies nothing and reports `SNR-COMP-037`; a guard that fails reports `SNR-COMP-036` with the edit's `id`.
@@ -246,6 +247,13 @@ New: `SNR-SPEC-090` not a correction file, or a newer major version (error); `09
 
 Each has a proposal, which C02-T06 follows unless the approver decides otherwise.
 
+**Resolution (2026-10-30):** the coordinator, under the owner's delegation, accepted every proposal (Q1–Q8) as written, with the FCP waived (Q8), and two amendments to §11, both applied in the text above:
+
+1. **Renumbering rewrites references.** Imported edits renumbered from the next free `e<n>` have their `+e<k>` references to added points in the imported set rewritten to the new IDs; a reference to an added point the file does not define is `SNR-SPEC-091` (§8), with a test in §12.
+2. **Conflicts come from guards only.** IDs never collide because every imported edit is renumbered, so a conflict is a failed `was` guard and a duplicate matches on `op`, point, `was` and `to`, ignoring the ID. Export then import into an empty session remains the identity (§11).
+
+The prior-art claim about accessible tools (TODO(verify)) stays open for review; it affects no design decision.
+
 | # | Question | Proposal |
 |---|---|---|
 | Q1 | Should calibration live in the correction file? | Yes, optional (§2): edits are only meaningful with the calibration they were made against. When the spec also has `calibration`, the spec's wins, and the extraction report notes that the file's differs (information, not a warning) |
@@ -253,7 +261,7 @@ Each has a proposal, which C02-T06 follows unless the approver decides otherwise
 | Q3 | Re-binding a file to another chart (a re-export, a cropped copy) | Allowed only by an explicit person's action in the app (or `--rebind` on the CLI), which rewrites `chart.sha256` and relies on the guards; never automatic |
 | Q4 | Authorship | Not in v1 (§5); revisit in a minor version only with an explicit opt-in and co-design evidence |
 | Q5 | An image-only file (no chart available) | Shown for viewing only; it applies to nothing until the chart is opened. Extracting from the embedded image would make the file a second chart source and is out of scope |
-| Q6 | Which spec minor version defines `corrections.path` | The next minor after acceptance (`0.3`), with only this change unless other accepted RFCs are ready; the 0.2 → 0.3 migration is the identity |
+| Q6 | Which spec minor version defines `corrections.path` | The next minor after acceptance (`0.3`), with only this change unless other accepted RFCs are ready; the 0.2 → 0.3 migration is the identity. **C02-T06 does the bump** (types, schema, migration, doc 04) |
 | Q7 | Codes area for the reader | `SNR-SPEC-09x`: the reader lives in `sonarithm-spec` beside RFC-0004's `Corrections` types (wasm-safe, no I/O); the compiler reports binding (`SNR-COMP-037`) |
 | Q8 | FCP | The coordinator accepts under the owner's delegation, with the 7-day FCP waived, as for RFC-0002 and RFC-0004; the owner can reopen it |
 
