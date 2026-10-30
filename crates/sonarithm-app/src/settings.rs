@@ -219,6 +219,10 @@ pub struct SpeechSettings {
     pub duck_instead_of_pause: bool,
     /// The speaking rate that sequencing estimates assume, in words per minute.
     pub rate_wpm: f64,
+    /// How the host hands announcements to the screen reader (OD-05, B03-T04). Added after
+    /// settings version 1 was written, so files without it read the default.
+    #[serde(default)]
+    pub announcer: AnnouncerRoute,
 }
 
 impl Default for SpeechSettings {
@@ -227,8 +231,24 @@ impl Default for SpeechSettings {
             route: SpeechRoute::ScreenReader,
             duck_instead_of_pause: false,
             rate_wpm: WordsPerMinute::DEFAULT.0,
+            announcer: AnnouncerRoute::default(),
         }
     }
+}
+
+/// How the host passes announcements to the screen reader when [`SpeechRoute::ScreenReader`]
+/// is the route (08 §4; OD-05, decided provisionally on 2026-10-29).
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Serialize, Deserialize, TS)]
+#[serde(rename_all = "camelCase")]
+#[non_exhaustive]
+pub enum AnnouncerRoute {
+    /// The managed ARIA live-region pair in the webview: the default, spoken by NVDA in the
+    /// A02 walkthrough.
+    #[default]
+    LiveRegion,
+    /// The platform's notification API (UI Automation on Windows). NVDA did not speak it in
+    /// the A02 walkthrough (#382); hosts without one use live regions.
+    Native,
 }
 
 /// Consent to network features (ADR-0012). Each is `None` until the user answers.
@@ -583,6 +603,18 @@ mod tests {
             "theme":"dark","verbosity":"terse","modalities":{"sonification":true,"speech":true,"braille":true,"visual":true},
             "keymap":{},"consent":{"updateCheck":null},"telemetry":true}"#;
         assert!(serde_json::from_str::<Settings>(text).is_err());
+    }
+
+    #[test]
+    fn od_05_speech_settings_without_the_announcer_route_read_live_regions() {
+        // A file written before B03-T04 has no `announcer`.
+        let text = r#"{"route":"screenReader","duckInsteadOfPause":false,"rateWpm":180.0}"#;
+        let speech: SpeechSettings = serde_json::from_str(text).unwrap_or_default();
+        assert_eq!(speech.announcer, AnnouncerRoute::LiveRegion);
+        let native = r#"{"route":"screenReader","duckInsteadOfPause":false,"rateWpm":180.0,
+            "announcer":"native"}"#;
+        let speech: SpeechSettings = serde_json::from_str(native).unwrap_or_default();
+        assert_eq!(speech.announcer, AnnouncerRoute::Native);
     }
 
     #[test]

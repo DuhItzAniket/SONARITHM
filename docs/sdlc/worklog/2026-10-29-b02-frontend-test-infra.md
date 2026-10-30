@@ -52,6 +52,12 @@
 - Decision: native menus on every OS (09 §3); built with the command registry (B02-T07).
 - Locally: 19 Playwright tests in Chromium (landmarks, F6 order, no trap, axe at three widths, splitter keyboard, collapse and expand, Narrow F6) and the Splitter story pass.
 
+## B03-T04: announcer (2026-10-30, after the owner's pause)
+
+- `apps/desktop/src/announcer`: the routed announcer (live regions by default, UIA notifications by setting, fallback), the live-region pair, the feed from the `announcements` channel and the Status log. The host gained `announce_native` in `platform/windows.rs` (ADR-0025 scope). `sonarithm-app` gained the setting `speech.announcer` (additive, `#[serde(default)]`; coordinator OK).
+- #388 decided: React Aria's widget announcements stay; documented in 08 §4 and added to the Narrator walkthrough (WALKTHROUGH.md §2).
+- Built while free RAM stayed near 0.5–1.2 GB (the owner's other work): the TypeScript was written and unit-tested first, and the Rust build and browser tests waited for at least 2 GB free.
+
 ## Next steps
 
 - [ ] Commit the screenshot baselines from the first CI run's `visual-baselines` artifact.

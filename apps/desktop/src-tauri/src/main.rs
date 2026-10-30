@@ -83,6 +83,7 @@ fn main() -> ExitCode {
             commands::ipc_binary,
             commands::ipc_subscribe,
             commands::ipc_unsubscribe,
+            commands::announce_native,
             smoke::smoke_report,
         ])
         .build(tauri::generate_context!());

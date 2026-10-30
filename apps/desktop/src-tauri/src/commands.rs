@@ -102,6 +102,22 @@ pub(crate) fn ipc_subscribe(
     router.subscribe(channel, Box::new(on_event))
 }
 
+/// The native announcer route (B03-T04): the UI's announcer chose it; the host only makes
+/// the platform call. Synchronous, so Tauri runs it on the window's thread, as UI
+/// Automation expects.
+#[tauri::command]
+#[expect(
+    clippy::needless_pass_by_value,
+    reason = "Tauri passes command arguments by value"
+)]
+pub(crate) fn announce_native(
+    window: tauri::WebviewWindow,
+    text: String,
+    assertive: bool,
+) -> Result<(), String> {
+    crate::platform::announce(&window, &text, assertive)
+}
+
 /// Ends a subscription; unknown IDs are ignored.
 #[tauri::command]
 #[expect(

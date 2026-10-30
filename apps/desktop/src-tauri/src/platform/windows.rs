@@ -1,17 +1,57 @@
 // SPDX-FileCopyrightText: 2026 SONARITHM contributors
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
-//! WebView2 COM calls, the only `unsafe` code in this crate (coding-standards §5 register,
-//! ADR-0025). Invariants: every call is made on the window's thread from Tauri's
-//! `with_webview`, on a controller Tauri created and keeps alive for the call; each COM
-//! method returns an `HRESULT` that is checked; interface pointers are reference-counted by
+//! WebView2 and UI Automation calls, the only `unsafe` code in this crate (coding-standards
+//! §5 register, ADR-0025). Invariants: every call is made on the window's thread (from
+//! Tauri's `with_webview`, or a synchronous command, which Tauri runs on that thread), on a
+//! controller or window handle Tauri created and keeps alive for the call; each COM method
+//! returns an `HRESULT` that is checked; interface pointers are reference-counted by
 //! `windows-core` and released when they go out of scope.
 #![expect(unsafe_code, reason = "WebView2 COM methods are unsafe fns (ADR-0025)")]
 
 use webview2_com::Microsoft::Web::WebView2::Win32::{
     ICoreWebView2Controller, ICoreWebView2Settings3,
 };
-use windows::core::{BOOL, Interface as _, Result};
+use windows::Win32::Foundation::HWND;
+use windows::Win32::UI::Accessibility::{
+    NotificationKind_Other, NotificationProcessing_ImportantMostRecent,
+    NotificationProcessing_MostRecent, UiaHostProviderFromHwnd, UiaRaiseNotificationEvent,
+};
+use windows::core::{BOOL, BSTR, Interface as _, Result};
+
+/// The activity ID of every notification, so a screen reader can group them.
+const ACTIVITY: &str = "sonarithm.announce";
+
+/// Raises a UI Automation notification with `text` on the window's host provider: the
+/// native announcer route (B03-T04, OD-05). `assertive` asks the screen reader to speak it
+/// before what is queued (`ImportantMostRecent`); otherwise it replaces the last one
+/// (`MostRecent`).
+pub(super) fn raise_notification(
+    hwnd: *mut core::ffi::c_void,
+    text: &str,
+    assertive: bool,
+) -> Result<()> {
+    // SAFETY: `hwnd` is the live top-level window of this app (module invariants); the
+    // call writes only its out-parameter, and its HRESULT is checked.
+    let provider = unsafe { UiaHostProviderFromHwnd(HWND(hwnd)) }?;
+    let processing = if assertive {
+        NotificationProcessing_ImportantMostRecent
+    } else {
+        NotificationProcessing_MostRecent
+    };
+    let (text, activity) = (BSTR::from(text), BSTR::from(ACTIVITY));
+    // SAFETY: `provider` is the live provider returned above; both BSTRs outlive the call,
+    // and its HRESULT is checked.
+    unsafe {
+        UiaRaiseNotificationEvent(
+            &provider,
+            NotificationKind_Other,
+            processing,
+            &text,
+            &activity,
+        )
+    }
+}
 
 /// Sets `AreBrowserAcceleratorKeysEnabled` to false and reads it back; `Ok(true)` when
 /// the setting is off.

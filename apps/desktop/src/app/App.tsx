@@ -6,6 +6,9 @@ import { connect } from "@sonarithm/ipc";
 import { Button, Tab, TabList, TabPanel, Tabs, Toolbar } from "@sonarithm/ui";
 import { useEffect, useState } from "react";
 
+import type { RoutedAnnouncer } from "../announcer/announcer.ts";
+import { useAnnouncementFeed } from "../announcer/feed.ts";
+import { AnnouncementLog } from "../announcer/AnnouncementLog.tsx";
 import { useLocalizer } from "../i18n.ts";
 import styles from "./App.module.css";
 import { Frame } from "./frame/Frame.tsx";
@@ -18,12 +21,22 @@ type Start =
 /**
  * The app: connects to the app core, which checks the protocol version first (09 §2.2),
  * inside the application frame (B02-T06). The regions hold placeholders until their tasks:
- * transport (B01-T05), project tree (B03), plot and table (B04), inspector (B05), and the
- * announcement log (B03-T04).
+ * transport (B01-T05), project tree (B03), plot and table (B04) and inspector (B05). The
+ * Status region shows the announcement log (B03-T04).
  */
-export function App({ transport }: { readonly transport: IpcTransport }) {
+export function App({
+  transport,
+  announcer,
+}: {
+  readonly transport: IpcTransport;
+  readonly announcer: RoutedAnnouncer;
+}) {
   const t = useLocalizer();
   const [start, setStart] = useState<Start>({ state: "starting" });
+  const log = useAnnouncementFeed(
+    start.state === "ready" ? start.client : null,
+    announcer,
+  );
 
   useEffect(() => {
     let live = true;
@@ -94,9 +107,7 @@ export function App({ transport }: { readonly transport: IpcTransport }) {
             <Tab id="diagnostics">{t.format("ui-tab-diagnostics")}</Tab>
           </TabList>
           <TabPanel id="announcements">
-            <div role="log" aria-label={t.format("ui-tab-announcements")}>
-              <p className={styles.status}>{t.format("ui-no-announcements")}</p>
-            </div>
+            <AnnouncementLog entries={log} />
           </TabPanel>
           <TabPanel id="diagnostics">
             <p className={styles.status}>{t.format("ui-no-diagnostics")}</p>

@@ -29,7 +29,8 @@ tauri.workspace = true
 # crate, in `src/platform/windows.rs` (coding-standards §5, ADR-0025).
 [target.'cfg(windows)'.dependencies]
 webview2-com.workspace = true
-windows.workspace = true
+# UI Automation notifications: the native announcer route (B03-T04, OD-05).
+windows = { workspace = true, features = ["Win32_UI_Accessibility"] }
 
 [lints]
 workspace = true

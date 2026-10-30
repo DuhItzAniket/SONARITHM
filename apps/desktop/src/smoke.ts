@@ -99,6 +99,28 @@ export async function runSmoke(
     return `${String(buffer.byteLength)} bytes, ${String(view.rows)} rows`;
   });
 
+  // B03-T04: the native announcer route raises a UI Automation notification on Windows
+  // (`UiaRaiseNotificationEvent` returns success); other hosts refuse, and the announcer
+  // falls back to live regions.
+  await check("native-announcer", async () => {
+    const windows = navigator.userAgent.includes("Windows");
+    try {
+      await invoke("announce_native", {
+        text: "SONARITHM smoke test",
+        assertive: false,
+      });
+    } catch (error) {
+      if (windows) {
+        throw error;
+      }
+      return "not available on this platform (live regions are used)";
+    }
+    if (!windows) {
+      throw new Error("a native route answered outside Windows");
+    }
+    return "UI Automation notification raised";
+  });
+
   const results = { ok: checks.every((c) => c.ok), checks };
   await invoke("smoke_report", { results });
 }

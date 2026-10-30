@@ -8,6 +8,7 @@
     "allow-ipc-binary",
     "allow-ipc-subscribe",
     "allow-ipc-unsubscribe",
+    "allow-announce-native",
     "allow-smoke-report"
   ]
 }
