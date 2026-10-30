@@ -19,7 +19,7 @@
     "tokens": "node tokens/generate.ts",
     "storybook": "storybook dev --port 6006 --no-open",
     "build-storybook": "storybook build --quiet",
-    "test:stories": "vitest run --project \"storybook-*\"",
+    "test:stories": "node test/run-stories.ts",
     "test:seeded": "node test/seeded/expect-axe-failure.ts",
     "test:visual": "vitest run --project visual"
   },
@@ -47,7 +47,9 @@
   },
   "dependencies": {
     "react": "catalog:",
+    "react-aria": "catalog:",
     "react-aria-components": "catalog:",
-    "react-dom": "catalog:"
+    "react-dom": "catalog:",
+    "react-stately": "catalog:"
   }
 }

@@ -31,9 +31,12 @@ export default defineConfig({
       // One project per theme, so every story passes axe in all four (B02-T04).
       ...THEMES.map((theme) => ({
         extends: true as const,
-        define: { __SNR_THEME__: JSON.stringify(theme) },
-        // Own dependency cache: parallel projects sharing one race on Windows (EPERM).
-        cacheDir: `node_modules/.cache/vitest-storybook-${theme}`,
+        define: {
+          __SNR_THEME__: JSON.stringify(theme),
+          // React Stately's Virtualizer reads this when NODE_ENV is "test"; it keeps real
+          // virtualization on, as in the app.
+          "process.env.VIRT_ON": JSON.stringify("1"),
+        },
         plugins: [
           storybookTest({
             configDir: ".storybook",

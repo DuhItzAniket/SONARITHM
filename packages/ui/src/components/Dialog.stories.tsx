@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
 import type { Meta, StoryObj } from "@storybook/react-vite";
-import { expect, userEvent, within } from "storybook/test";
+import { expect, userEvent, waitFor, within } from "storybook/test";
 
 import { storyLocalizer } from "../../.storybook/localizer.ts";
 import { Button } from "./Button.tsx";
@@ -65,7 +65,8 @@ export const Confirmation: StoryObj<typeof meta> = {
       );
     }
     await userEvent.keyboard("{Escape}");
-    await expect(page.queryByRole("alertdialog")).toBeNull();
-    await expect(trigger).toHaveFocus();
+    // Focus returns once the modal has closed, a frame after Escape.
+    await waitFor(() => expect(page.queryByRole("alertdialog")).toBeNull());
+    await waitFor(() => expect(trigger).toHaveFocus());
   },
 };

@@ -46,3 +46,29 @@ ui-discard = Discard
 ui-cancel = Cancel
 ui-section-channels = Channels
 ui-section-context = Context cues
+
+## Data components (B02-T05).
+
+ui-project = Project
+ui-tree-fields = Fields
+ui-tree-tracks = Tracks
+ui-data-table = Data table
+ui-reference-frequency = Reference frequency
+ui-duration = Duration
+ui-scale = Scale
+ui-scale-linear = Linear
+ui-scale-log = Logarithmic
+ui-concept = Concept
+ui-concept-temperature = Temperature
+ui-concept-price = Price
+ui-concept-count = Count
+ui-announcement-parts = Announcement parts
+ui-part-value = Value
+ui-part-position = Position
+ui-part-series = Series
+# Reordering a list item without dragging (design-language §11); $name is the item.
+ui-move-up = Move { $name } up
+ui-move-down = Move { $name } down
+ui-reorder = Reorder { $name }
+# A number outside its field's range; $low and $high are the limits with their unit.
+ui-error-out-of-range = Enter a value from { $low } to { $high }.

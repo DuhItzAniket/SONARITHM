@@ -331,9 +331,9 @@ React Aria Components (RAC) is the single primitive layer; mixing Radix, Base UI
 | Toolbar **B02** | `Toolbar` | Toolbar | Transport toolbar; arrows move within, Tab leaves. |
 | Menu, menu bar fallback **B02** | `Menu`, `MenuTrigger`, `SubmenuTrigger` | Menu, Menubar | In-window menu bar only where no native menu is used ([09](../architecture/09-desktop-app.md)). |
 | Tabs **B02** | `Tabs`, `TabList`, `TabPanel` | Tabs | Plot · Table · Spec; Announcements · Diagnostics; region switcher in Narrow. |
-| Tree **B02** | `Tree` | Tree view | Project tree. |
+| Tree **B02** | `Tree` | Tree grid (RAC has no `tree` role) | Project tree. The pointer-only expand button is hidden from AT so each row is named once (#383, F-172). |
 | Table **B02** | `Table`, `ResizableTableContainer`, `Virtualizer` | Grid | Data table (A11Y-03), keymap editor, diagnostics. Row and column headers exposed. |
-| Slider **B02** | `Slider` | Slider | Announces value, unit and range; PageUp/PageDown large step; Home/End min/max. |
+| Slider **B02** | `useSlider`, `useSliderThumb` (React Aria hooks) | Slider | Announces value, unit and range; PageUp/PageDown large step; Home/End min/max. Built from hooks because RAC formats only through `Intl`, which has no hertz or decibels (F-171); no `SliderOutput` live region (F-045). |
 | NumberField | `NumberField` | Spinbutton | Accepts units in input ("1.2 kHz"); formats with the shared formatter. |
 | TextField, SearchField | `TextField`, `SearchField` | — | — |
 | Select, ComboBox **B02** | `Select`, `ComboBox` | Listbox, Combobox | Concept selector, scale selector. |
