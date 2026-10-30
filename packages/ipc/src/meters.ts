@@ -11,8 +11,16 @@ export interface MeterFrame {
   readonly positionS: number;
   /** Peak absolute sample, left and right, over the last meter window (linear; 1 is full scale). */
   readonly peak: readonly [number, number];
-  /** Whether the master limiter engaged in that window. */
+  /**
+   * Whether the master limiter engaged in that window. A meter shows it as text or an
+   * accessible state, never by colour alone (DL-X08).
+   */
   readonly limiting: boolean;
+  /**
+   * The last frame before playback stopped, paused or lost its device: its peaks are
+   * zero, so the meter falls to silence instead of freezing.
+   */
+  readonly last: boolean;
 }
 
 /** The buffer is not a meter frame this version reads. */
@@ -41,6 +49,8 @@ export function readMeterFrame(buffer: ArrayBuffer): MeterFrame {
   if (data.getUint16(METERS.offset.version, true) !== METERS.version) {
     throw new MeterFrameError("unknown version");
   }
+  // Unknown flag bits are ignored: a new flag does not change the layout version.
+  const flags = data.getUint16(METERS.offset.flags, true);
   return {
     seq: Number(data.getBigUint64(METERS.offset.seq, true)),
     positionS: data.getFloat64(METERS.offset.position, true),
@@ -48,7 +58,7 @@ export function readMeterFrame(buffer: ArrayBuffer): MeterFrame {
       data.getFloat32(METERS.offset.peakLeft, true),
       data.getFloat32(METERS.offset.peakRight, true),
     ],
-    limiting:
-      (data.getUint16(METERS.offset.flags, true) & METERS.flagLimiting) !== 0,
+    limiting: (flags & METERS.flagLimiting) !== 0,
+    last: (flags & METERS.flagLast) !== 0,
   };
 }

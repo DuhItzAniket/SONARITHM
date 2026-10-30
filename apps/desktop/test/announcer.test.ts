@@ -3,6 +3,7 @@
 
 // The announcer and its two routes (B03-T04; 08 §4, OD-05).
 import assert from "node:assert/strict";
+import { readdirSync, readFileSync } from "node:fs";
 import { test } from "node:test";
 
 import type {
@@ -135,4 +136,25 @@ test("od_05_the_native_route_falls_back_to_live_regions", async () => {
   const none = createRoutedAnnouncer({ live, native: null, route: "native" });
   none.announce({ text: "two", assertive: false });
   assert.deepEqual(said, ["one", "two"]);
+});
+
+test("b01_t04 meters are never announced", () => {
+  // Meter frames arrive up to 30 times a second (09 §2). Speaking them would bury every
+  // other announcement, so no code that reads meters may reach the announcer, and the
+  // announcement feed listens to the `announcements` channel only.
+  const src = new URL("../src/", import.meta.url);
+  const files = readdirSync(src, { recursive: true, encoding: "utf8" }).filter(
+    (file) => /\.tsx?$/.test(file),
+  );
+  const readsMeters = /\.meters\(|"meters"/;
+  const offenders = files.filter((file) => {
+    const source = readFileSync(new URL(file, src), "utf8");
+    return readsMeters.test(source) && /announce/i.test(source);
+  });
+  assert.deepEqual(offenders, []);
+  const feed = readFileSync(new URL("announcer/feed.ts", src), "utf8");
+  assert.deepEqual(
+    [...feed.matchAll(/subscribe\("([a-z]+)"/g)].map((m) => m[1]),
+    ["announcements"],
+  );
 });

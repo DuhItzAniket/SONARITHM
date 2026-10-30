@@ -616,6 +616,7 @@ fn b01_t04_anchors_come_on_changes_not_on_every_tick() {
 
 #[test]
 fn b01_t04_meters_are_binary_frames_at_most_30_a_second_while_playing() {
+    use sonarithm_app::ipc::meters::MeterFrame;
     let mut h = Harness::new("meters");
     h.open_and_compile();
     h.ok(&json!({ "command": "transport_set_loop", "args": { "range": { "startS": 0.0, "endS": 1.0 } } }));
@@ -624,25 +625,30 @@ fn b01_t04_meters_are_binary_frames_at_most_30_a_second_while_playing() {
     std::thread::sleep(Duration::from_millis(700));
     h.ok(&json!({ "command": "transport_pause" }));
     let elapsed = start.elapsed().as_secs_f64();
+    // Let the control thread send the last frame after the pause, then nothing more.
+    std::thread::sleep(Duration::from_millis(200));
     let frames = h.sink.meter_frames();
+    let Some((last, playing)) = frames.split_last() else {
+        panic!("no meter frames");
+    };
     #[expect(clippy::cast_precision_loss, reason = "a handful of frames")]
-    let count = frames.len() as f64;
+    let count = playing.len() as f64;
     assert!(
         count <= elapsed * 30.0 + 1.0,
         "{count} frames in {elapsed} s"
     );
-    assert!(frames.len() >= 5, "{} frames", frames.len());
+    assert!(playing.len() >= 5, "{} frames", playing.len());
     assert!(frames.windows(2).all(|w| w[0].seq < w[1].seq));
     assert!(
-        frames.iter().any(|frame| frame.peak[0] > 0.0),
+        playing.iter().any(|frame| frame.peak[0] > 0.0),
         "the tones are metered"
     );
+    assert!(playing.iter().all(|frame| !frame.last));
+    // The pause sent one last frame with zero peaks, so the meters fall to silence.
+    assert!(last.last && last.peak == [0.0, 0.0], "{last:?}");
     // Every frame survives its binary encoding; none travels as a JSON event (09 §2).
     for frame in &frames {
-        assert_eq!(
-            sonarithm_app::ipc::meters::MeterFrame::decode(&frame.encode()),
-            Some(*frame)
-        );
+        assert_eq!(MeterFrame::decode(&frame.encode()).ok(), Some(*frame));
     }
     assert!(
         h.sink
@@ -650,7 +656,10 @@ fn b01_t04_meters_are_binary_frames_at_most_30_a_second_while_playing() {
             .iter()
             .all(|event| event.channel() != sonarithm_app::ipc::Channel::Meters)
     );
-    // Paused: no more frames.
     std::thread::sleep(Duration::from_millis(200));
-    assert_eq!(h.sink.meter_frames().len(), frames.len());
+    assert_eq!(
+        h.sink.meter_frames().len(),
+        frames.len(),
+        "paused: no more frames"
+    );
 }

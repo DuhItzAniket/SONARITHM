@@ -41,7 +41,7 @@ flowchart LR
 | Control | Yes | Owns the transport state machine (authoritative), translates UI intents to `Command`s, feeds live events (cues, lens, streams) |
 | Plan builder | Yes | Score → RenderPlan ([05 §5](05-compiler-and-score-ir.md#5-from-score-to-renderplan)) |
 | Collector | Yes | Frees retired plans and buffers off the RT thread (basedrop) |
-| Telemetry pump | Yes | Reads the triple buffer, sends clock anchors **only on change**, batches meter frames into binary Channel messages |
+| Telemetry pump | Yes | Reads the triple buffer, sends clock anchors **only on change** and every 2 s, and sends binary meter frames at most every 1/30 s while playing, plus one last frame on stop (B01-T04: the peak of the graph's last complete 50 ms window, `GraphStats::meter`; ADR-0017 §4) |
 
 ## 3. Render graph
 

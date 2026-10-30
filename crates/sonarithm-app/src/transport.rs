@@ -348,6 +348,8 @@ struct Control<B: AudioBackend, F: Fn() -> B> {
     anchors: Pacer,
     meters: Pacer,
     meter_seq: u64,
+    /// Whether meter frames went out since playback last stopped.
+    metering: bool,
     sequencer: Sequencer,
     streams: LiveStreams,
     speaker_source: Option<SpeakerSource>,
@@ -387,6 +389,7 @@ impl<B: AudioBackend, F: Fn() -> B> Control<B, F> {
             anchors: Pacer::new(ANCHOR_PERIOD),
             meters: Pacer::new(METER_PERIOD),
             meter_seq: 0,
+            metering: false,
         }
     }
 
@@ -398,6 +401,7 @@ impl<B: AudioBackend, F: Fn() -> B> Control<B, F> {
                 Err(RecvTimeoutError::Timeout) => {}
             }
             self.service();
+            self.meter_tick();
             self.speak();
         }
         // Dropping the player closes the audio stream; live streams stop too.
@@ -816,29 +820,45 @@ impl<B: AudioBackend, F: Fn() -> B> Control<B, F> {
             self.anchor();
             return;
         }
-        let now = Instant::now();
-        if self.anchors.due(now) {
+        if self.anchors.due(Instant::now()) {
             self.anchor();
-        }
-        if self.meters.due(now) {
-            self.meters.sent(now);
-            self.meter();
         }
     }
 
-    /// Sends the master's level over the last meter window (B01-T04).
-    fn meter(&mut self) {
-        let Some(player) = &mut self.player else {
-            return;
-        };
-        let levels = player.state().graph.meter;
+    /// Meter frames (B01-T04): at most every [`METER_PERIOD`] while playing, then one last
+    /// frame with zero peaks when playback stops, pauses or loses its device, so a meter
+    /// never freezes at the last peak.
+    fn meter_tick(&mut self) {
+        let playing = self.model.status == PlaybackStatus::Playing && self.player.is_some();
+        if playing {
+            let now = Instant::now();
+            if self.meters.due(now) {
+                self.meters.sent(now);
+                self.metering = true;
+                let levels = self
+                    .player
+                    .as_mut()
+                    .map(|player| player.state().graph.meter)
+                    .unwrap_or_default();
+                self.send_meter(MeterFrame::new(
+                    0,
+                    self.model.position_s,
+                    levels.peak,
+                    levels.limiting,
+                ));
+            }
+        } else if self.metering {
+            self.metering = false;
+            // The next play sends its first frame at once.
+            self.meters = Pacer::new(METER_PERIOD);
+            self.send_meter(MeterFrame::last(0, self.model.position_s));
+        }
+    }
+
+    fn send_meter(&mut self, mut frame: MeterFrame) {
         self.meter_seq += 1;
-        self.sink.meters(MeterFrame::new(
-            self.meter_seq,
-            self.model.position_s,
-            levels.peak,
-            levels.limiting,
-        ));
+        frame.seq = self.meter_seq;
+        self.sink.meters(frame);
     }
 
     /// Closes the player, keeping its underrun count.

@@ -149,6 +149,7 @@ export const METERS = {
   version: 1,
   bytes: 32,
   flagLimiting: 1,
+  flagLast: 2,
   offset: {
     magic: 0,
     version: 4,

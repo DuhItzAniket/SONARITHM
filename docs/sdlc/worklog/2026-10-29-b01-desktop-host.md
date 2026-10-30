@@ -35,7 +35,7 @@
 - **Meters.** `sonarithm-render` has a meter window: the peak of each 50 ms window, published in `GraphStats::meter` with no allocation, so a 30 Hz reader misses nothing. `sonarithm-app` has `MeterFrame` (32 bytes, `SNRM`), `EventSink::meters` and a 30 Hz pacer on the control thread. The host sends the frames raw on `meters`. `@sonarithm/ipc` has `readMeterFrame` and `IpcTransport.meters`.
 - **Anchors.** The existing behaviour (on change and every 2 s) moved into a `Pacer` with unit tests, plus a scenario: no anchor in 500 ms without a change, and exactly one on a seek.
 - **PB-09.** The smoke run times 30 round trips of a cached 1.2 MB M4 view and reports p50, p95 and max. It does not gate, because CI runs a debug build on shared runners. No number was measured locally: no benchmarks run on the shared laptop.
-- **Contract.** The meter frame layout is an ADR-0017 §4 amendment and was sent to the coordinator for approval. Auto-merge stays off until it is approved.
+- **Contract.** The meter frame layout is an ADR-0017 §4 amendment, approved by the coordinator on 2026-10-30 with five conditions, all met in the same PR: the dated amendment with the byte table, rate and versioning; a last frame on stop (flag bit 1, zero peaks; unknown bits ignored); an `allocation-counter` test of the meter window; reader tests with `SNR-APP-050`; and meters never announced, with limiter state never shown by colour alone.
 - **Tooling note.** The shell collapsed backslash escapes passed through it into Rust and TypeScript sources: a string-continuation escape and a Unicode escape were lost. Code with escapes now goes through the editor tool.
 
 ## Next steps

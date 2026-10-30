@@ -262,6 +262,7 @@ fn meter_constants(out: &mut String) {
            version: {},\n  \
            bytes: {},\n  \
            flagLimiting: {},\n  \
+           flagLast: {},\n  \
            offset: {{\n    \
              magic: {},\n    \
              version: {},\n    \
@@ -275,6 +276,7 @@ fn meter_constants(out: &mut String) {
         meters::METER_VERSION,
         meters::METER_BYTES,
         meters::METER_FLAG_LIMITING,
+        meters::METER_FLAG_LAST,
         meters::offset::MAGIC,
         meters::offset::VERSION,
         meters::offset::FLAGS,

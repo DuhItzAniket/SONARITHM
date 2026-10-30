@@ -182,7 +182,7 @@ mod tests {
         router.emit(app_notice());
         let raw = meters.raw.lock().map(|v| v.clone()).unwrap_or_default();
         assert_eq!(raw.len(), 1);
-        assert_eq!(MeterFrame::decode(&raw[0]), Some(frame));
+        assert_eq!(MeterFrame::decode(&raw[0]).ok(), Some(frame));
         assert_eq!(meters.count(), 0, "no JSON event on the meters channel");
         assert_eq!(app.raw.lock().map_or(0, |v| v.len()), 0);
         assert_eq!(app.count(), 1);
