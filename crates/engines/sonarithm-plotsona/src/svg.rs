@@ -433,5 +433,25 @@ fn shape_of(
     }))
 }
 
+/// The calibration a person would enter for the chart this SVG draws, rendered at `scale`
+/// pixels per unit (see [`vector::hand_calibration`]).
+#[cfg(test)]
+pub(crate) fn hand_calibration(bytes: &[u8], scale: f64) -> Option<serde_json::Value> {
+    let budgets = Budgets::DEFAULT;
+    let mut work = Work::new(u64::MAX);
+    let document = xml::parse(bytes, "SVG image", &budgets, &mut work).ok()?;
+    let mut scene = Scene::default();
+    let mut notes = Notes::default();
+    walk(
+        document.root_element(),
+        &Style::default(),
+        &mut scene,
+        &mut notes,
+        &mut work,
+    )
+    .ok()?;
+    vector::hand_calibration(&scene, scale)
+}
+
 #[cfg(test)]
 mod tests;

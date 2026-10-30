@@ -454,6 +454,17 @@ pub const RASTER_UNREADABLE: CodeInfo = CodeInfo {
     status: CodeStatus::Active,
 };
 
+/// A raster chart was given without an axis calibration (C02-T03).
+pub const RASTER_NEEDS_CALIBRATION: CodeInfo = CodeInfo {
+    code: "SNR-ENG-328",
+    severity: Severity::Error,
+    summary: "A raster chart needs an axis calibration",
+    help: "Add `data.source.calibration` with two anchors on each axis: the pixel position of \
+           a tick and its value. SONARITHM does not read tick labels from images yet.",
+    rules: &[],
+    status: CodeStatus::Active,
+};
+
 /// Every PLOTSONA code, in ascending order.
 pub const CODES: CodeTable = CodeTable {
     area: Area::Eng,
@@ -480,6 +491,7 @@ pub const CODES: CodeTable = CodeTable {
         CALIBRATION_RESIDUAL,
         TICK_LABEL_UNREAD,
         RASTER_UNREADABLE,
+        RASTER_NEEDS_CALIBRATION,
         OTHER_CHARTS,
         NO_CACHE,
         EXTERNAL_LINK,

@@ -949,4 +949,21 @@ A05 (render engine, audio backends, export) uses F-050 to F-069.
 - **Evidence:** `packages/ui/tokens/cvd.ts`; `packages/ui/test/cvd.test.ts` (`a11y_25 indicators keep 3 to 1 under every cvd type`, `dl_x08 some signal pairs collapse under cvd so signals need text`); [B02 design review](../sdlc/reviews/B02-design-review.md) (the per-theme table)
 - **Evidence level / confidence:** EV-C / Moderate. A simulation, not a test with CVD viewers; the severity-1.0 matrices model full dichromacy, so anomalous trichromats see more difference than shown. Matrix values TODO(verify) against the paper's published table
 - **Affects:** B02-T09, DL-X08, A11Y-25, design-language §5.3; B04 series colours (§6)
+
+### F-180 · Raster line charts read through hand-entered anchors within 0.15 % median error at 1x and 2x
+
+- **Date:** 2026-10-30 · **Phase:** C02 · **Type:** benchmark · **Status:** new
+- **Statement:** The raster line extractor (C02-T03) reads the line charts of DS-007's raster part: Vega-Lite, Plotly and D3 renders at 1x and 2x (vl-convert 1.9.0, resvg, anti-aliased), three series each, 18 series in all. The calibration is entered the way a person would click it: the outermost value ticks and every category label, taken from the SVG's axes and scaled to the image. The median error per series is 0.05 % to 0.15 % of the chart's largest value, and 2x is no worse than 1x. The C02 bar is 2 % (notes/06 §8). Of the 216 values, one category point was not found (plotly-line at 2x). The error is close to F-163's vector error, so on clean renders the anchors' half-pixel placement, not the line search, sets the limit.
+- **Evidence:** `crates/engines/sonarithm-plotsona/src/raster/extract/tests.rs` (`raster_line_charts_read_within_two_percent`, which prints each series' median); the C02-T03 PR (#395)
+- **Evidence level / confidence:** EV-C / Moderate. These are clean, anti-aliased renders of synthetic data with exact anchors; JPEG artefacts, scans, thick or dashed lines, crossing series of one colour and anchors clicked by people are not measured. C02-T08 adds those and the CI job
+- **Affects:** C02 exit, FR-007, FR-008, DS-007, F-163, 10 §3
+- **Papers:** none yet
+
+### F-181 · A palette colour can sit inside the default colour distance of a chart's grey axis line
+
+- **Date:** 2026-10-30 · **Phase:** C02 · **Type:** engineering · **Status:** new
+- **Statement:** Vega's first category colour, `#4c78a8` (76, 120, 168), lies 69.9 from its axis-domain grey `#888` (136, 136, 136) in Euclidean 8-bit RGB. With a fixed foreground threshold of 70, the axis line counted as the blue series, and X step followed the axis (median error 45 %). The other series were unaffected. SONARITHM now lowers each automatically found series colour's threshold to half its distance to the nearest grey and to the nearest other series colour (32.5 for that blue); the series then reads at 0.13 %. A fixed colour-distance threshold is not safe when colours are picked automatically. A threshold the user sets for a colour they picked is unchanged.
+- **Evidence:** `raster::colour::separating_threshold`; the failing run before the change (vl-line@1x, series 3); Vega's default palette and axis colours (TODO(verify): cite the Vega config defaults page)
+- **Evidence level / confidence:** EV-C / Strong for this case
+- **Affects:** C02-T03, C02-T04 (bars use the same colours), 10 §3
 - **Papers:** none yet

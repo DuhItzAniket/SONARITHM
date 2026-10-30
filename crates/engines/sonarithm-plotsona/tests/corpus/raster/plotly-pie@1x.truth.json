@@ -1,0 +1,25 @@
+{
+ "chart_type": "pie",
+ "title": "Fruit sold",
+ "provenance": "cv_estimate",
+ "x_kind": "category",
+ "series": [
+  {
+   "name": "Share (%)",
+   "x": [
+    "apple",
+    "banana",
+    "cherry",
+    "date",
+    "fig"
+   ],
+   "y": [
+    26.41509433962264,
+    35.84905660377358,
+    11.320754716981133,
+    20.754716981132077,
+    5.660377358490567
+   ]
+  }
+ ]
+}
