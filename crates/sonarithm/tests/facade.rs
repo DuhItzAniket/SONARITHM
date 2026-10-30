@@ -158,6 +158,35 @@ fn descriptions_name_estimates() {
     assert_eq!(compiled.summary().tracks[0].estimated, 3);
 }
 
+/// C02-T09: when confidence varies, the description says where it is lowest, relative to
+/// the track (OD-07: no absolute cut-off).
+#[test]
+fn descriptions_name_the_lowest_confidence_stretch() {
+    let values: Vec<serde_json::Value> = (0..20)
+        .map(|x| {
+            let confidence = if (8..11).contains(&x) { 0.3 } else { 0.9 };
+            serde_json::json!({ "x": x, "y": f64::from(x), "__snr_prov": "cv_estimate", "__snr_conf": confidence })
+        })
+        .collect();
+    let spec = serde_json::json!({
+        "specVersion": "0.2",
+        "data": { "source": { "kind": "inline", "values": values } },
+        "substrate": { "time": { "field": "x" } },
+        "tracks": [{ "id": "y", "mark": "tone", "channels": { "pitch": { "field": "y" } } }]
+    });
+    let spec = Spec::from_json_str(spec.to_string()).unwrap();
+    let description = Sonarithm::new().compile(&spec).unwrap().describe();
+    assert!(
+        description
+            .l2
+            .iter()
+            .any(|line| line.contains("Confidence is lowest around")
+                && line.contains("(row 9)")
+                && line.contains("median 0.30")),
+        "{description}"
+    );
+}
+
 #[test]
 fn invalid_json_is_reported_with_its_position() {
     let Err(Error::Spec(diagnostics)) = Spec::from_json_str("{ \"specVersion\": ") else {

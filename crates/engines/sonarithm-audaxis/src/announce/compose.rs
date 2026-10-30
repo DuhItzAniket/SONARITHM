@@ -20,7 +20,7 @@
 use std::collections::BTreeSet;
 
 use sonarithm_core::nav::{
-    AxisName, NavKind, NavNode, NavNodeId, NavTree, Polarity, XType, XValue,
+    AxisName, NavKind, NavNode, NavNodeId, NavTree, PointNode, Polarity, XType, XValue,
 };
 use sonarithm_core::provenance::Provenance;
 use sonarithm_i18n::{
@@ -741,6 +741,7 @@ impl<'l> Composer<'l> {
                     verbose,
                 )?);
                 pieces.position = Some(position_part);
+                pieces.provenance = self.estimates(tree, id, verbose, false)?;
                 pieces.hint = hint("announce-hint-points", &keys.explore)?;
             }
             NavKind::Series(series) => {
@@ -756,6 +757,7 @@ impl<'l> Composer<'l> {
                     verbose,
                 )?);
                 pieces.position = Some(position_part);
+                pieces.provenance = self.estimates(tree, id, verbose, true)?;
                 if self.excluded.contains(&id) {
                     pieces.tags.push(self.inclusion(id)?);
                 }
@@ -923,6 +925,85 @@ impl<'l> Composer<'l> {
                 .map(Some),
             None => Ok(Some(qualifier)),
         }
+    }
+
+    /// The estimates among the points under a series or segment (C02-T09, 03 §4 rule 3),
+    /// so a group of estimates never sounds exact. Terse: "estimated" or "partly
+    /// estimated". Verbose: "36 of 36 points estimated from a chart image, median confidence
+    /// 0.82", and for a series (`stretch`) where it is least certain, relative to the series:
+    /// "lowest confidence around March, median 0.41". `None` when every point is stated
+    /// plainly.
+    fn estimates(
+        &self,
+        tree: &NavTree,
+        id: NavNodeId,
+        verbose: bool,
+        stretch: bool,
+    ) -> Result<Option<String>, I18nError> {
+        let points = points_under(tree, id);
+        let estimated: Vec<&PointNode> = points
+            .iter()
+            .copied()
+            .filter(|p| !p.provenance.class.states_plainly())
+            .collect();
+        if estimated.is_empty() {
+            return Ok(None);
+        }
+        let share = if estimated.len() == points.len() {
+            "all"
+        } else {
+            "some"
+        };
+        if !verbose {
+            return self
+                .message(
+                    "announce-estimated-terse",
+                    &Args::new().text("share", share),
+                )
+                .map(Some);
+        }
+        let first = class_key(estimated[0].provenance);
+        let class = if estimated.iter().all(|p| class_key(p.provenance) == first) {
+            first
+        } else {
+            "other"
+        };
+        let qualifier = self.message("announce-provenance", &Args::new().text("class", class))?;
+        let mut text = self.message(
+            "announce-estimated",
+            &Args::new()
+                .number("estimated", count(len64(estimated.len())))
+                .number("total", count(len64(points.len())))
+                .text("qualifier", qualifier),
+        )?;
+        let rated: Vec<(&PointNode, f32)> = estimated
+            .iter()
+            .filter_map(|p| p.provenance.confidence.map(|c| (*p, c.get())))
+            .collect();
+        let confidences: Vec<f32> = rated.iter().map(|(_, c)| *c).collect();
+        let fixed = |c: f32| Number::with_options(f64::from(c), NumberOptions::fixed(2));
+        if let Some(median) = sonarithm_core::provenance::median(&confidences) {
+            text = self.message(
+                "announce-estimated-confidence",
+                &Args::new()
+                    .text("mix", text)
+                    .number_with("confidence", fixed(median)),
+            )?;
+        }
+        if stretch
+            && let Some(low) = sonarithm_core::lowest_confidence_stretch(&confidences)
+            && let Some((point, _)) = rated.get(low.middle())
+            && let Some(x) = self.x_label(tree, point.x.as_ref(), verbose)?
+        {
+            let lowest = self.message(
+                "announce-lowest-confidence",
+                &Args::new()
+                    .text("x", x)
+                    .number_with("confidence", fixed(low.median)),
+            )?;
+            text = self.join(&[text, lowest])?;
+        }
+        Ok(Some(text))
     }
 
     /// A point's value with its series unit, or "no value".
@@ -1167,6 +1248,24 @@ fn names_level(kind: &NavKind, verbose: bool) -> bool {
 }
 
 /// The series containing `node`.
+/// The points under `node`, in tree order (a series' segments' points in turn).
+fn points_under(tree: &NavTree, node: NavNodeId) -> Vec<&PointNode> {
+    let mut out = Vec::new();
+    let mut stack = vec![node];
+    while let Some(id) = stack.pop() {
+        match tree.node(id).map(|n| &n.kind) {
+            Some(NavKind::Point(point)) => out.push(point),
+            Some(_) => stack.extend(tree.children(id).iter().rev().copied()),
+            None => {}
+        }
+    }
+    out
+}
+
+fn len64(n: usize) -> u64 {
+    u64::try_from(n).unwrap_or(u64::MAX)
+}
+
 fn series_of(tree: &NavTree, node: NavNodeId) -> Option<NavNodeId> {
     let mut current = Some(node);
     while let Some(id) = current {

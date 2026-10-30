@@ -1,0 +1,20 @@
+---
+source: crates/engines/sonarithm-audaxis/tests/announce.rs
+expression: text
+---
+## all estimated, Terse
+series: Temperature. 20 points. 10 degrees C to 20 degrees C. 0 to 19. estimated
+segment: 10 points. 10 degrees C to 20 degrees C. 0 to 9. estimated
+point 9: 15 degrees C. 9. estimated
+## all estimated, Verbose
+series: Temperature. 0 to 19. 20 points. Range 10 degrees Celsius to 20 degrees Celsius. Series 1 of 2. 20 of 20 points estimated from a chart image, median confidence 0.90. lowest confidence around 9, median 0.30. Press Down to explore
+segment: Temperature. 0 to 9. 10 points. Range 10 degrees Celsius to 20 degrees Celsius. Segment 1 of 2. 10 of 10 points estimated from a chart image, median confidence 0.90. Press Down to explore points
+point 9: Temperature. 9. 15 degrees Celsius. Point 10 of 20. estimated from a chart image, confidence 0.30
+## first 10 estimated, Terse
+series: Temperature. 20 points. 10 degrees C to 20 degrees C. 0 to 19. partly estimated
+segment: 10 points. 10 degrees C to 20 degrees C. 0 to 9. estimated
+point 9: 15 degrees C. 9. estimated
+## first 10 estimated, Verbose
+series: Temperature. 0 to 19. 20 points. Range 10 degrees Celsius to 20 degrees Celsius. Series 1 of 2. 10 of 20 points estimated from a chart image, median confidence 0.90. lowest confidence around 8, median 0.30. Press Down to explore
+segment: Temperature. 0 to 9. 10 points. Range 10 degrees Celsius to 20 degrees Celsius. Segment 1 of 2. 10 of 10 points estimated from a chart image, median confidence 0.90. Press Down to explore points
+point 9: Temperature. 9. 15 degrees Celsius. Point 10 of 20. estimated from a chart image, confidence 0.30

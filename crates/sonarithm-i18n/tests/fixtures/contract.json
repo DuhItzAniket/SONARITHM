@@ -27,6 +27,7 @@
     { "locale": "en-XA", "id": "common-point-count", "args": { "count": { "number": 3 } }, "expected": "⟦3 ƥöîñţš~~~~⟧" },
     { "locale": "en-US", "id": "announce-position-verbose", "args": { "kind": "point", "index": { "number": 195 }, "total": { "number": 365 } }, "expected": "Point 195 of 365" },
     { "locale": "en-US", "id": "announce-provenance-confidence", "args": { "qualifier": "estimated from a chart image", "confidence": { "number": 0.82, "minimumFractionDigits": 2, "maximumFractionDigits": 2 } }, "expected": "estimated from a chart image, confidence 0.82" },
+    { "locale": "en-US", "id": "announce-lowest-confidence", "args": { "x": "March", "confidence": { "number": 0.41, "minimumFractionDigits": 2, "maximumFractionDigits": 2 } }, "expected": "lowest confidence around March, median 0.41" },
     { "locale": "en-US", "id": "announce-time", "args": { "hours": { "number": 9, "minimumIntegerDigits": 2 }, "minutes": { "number": 2, "minimumIntegerDigits": 2 }, "seconds": { "number": 11, "minimumIntegerDigits": 2 } }, "expected": "09:02:11" },
     { "locale": "en-XA", "id": "announce-join", "args": { "first": "1", "rest": "2" }, "expected": "⟦1. 2~~⟧" }
   ]

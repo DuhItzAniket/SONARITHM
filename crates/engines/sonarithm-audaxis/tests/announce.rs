@@ -418,3 +418,111 @@ fn a11y_24_history_entries_link_to_their_node() {
         }
     }
 }
+
+/// The first series of the weather tree with its points estimated from a chart image:
+/// `estimated` points from the start, confidence 0.9 except a dip to 0.3 at points 8
+/// to 10.
+fn estimated_series(estimated: usize) -> (NavTree, NavNodeId) {
+    let base = weather();
+    let series = base.series().next().unwrap();
+    let mut tree = base.clone();
+    for (i, point) in base.points(series).iter().enumerate().take(estimated) {
+        let confidence = if (8..11).contains(&i) { 0.3 } else { 0.9 };
+        tree = with_provenance(
+            &tree,
+            *point,
+            Provenance {
+                class: ProvenanceClass::CvEstimate,
+                confidence: Confidence::new(confidence),
+            },
+        );
+    }
+    (tree, series)
+}
+
+fn speak(tree: &NavTree, node: NavNodeId, verbosity: Verbosity) -> String {
+    let localizer = english();
+    let settings = Settings {
+        verbosity,
+        ..Settings::default()
+    };
+    Composer::new(&localizer, settings)
+        .node(tree, node)
+        .unwrap()
+        .speech
+}
+
+/// C02-T09, 03 §4 rule 3: a series or segment of estimates says so at both verbosities,
+/// and the verbose series names where it is least certain, relative to the series (OD-07).
+#[test]
+fn a11y_02_series_and_segments_of_estimates_say_so() {
+    let (tree, series) = estimated_series(usize::MAX);
+    let total = tree.points(series).len();
+    let terse = speak(&tree, series, Verbosity::Terse);
+    assert!(
+        terse.contains("estimated") && !terse.contains("partly"),
+        "{terse}"
+    );
+    let verbose = speak(&tree, series, Verbosity::Verbose);
+    assert!(
+        verbose.contains(&format!(
+            "{total} of {total} points estimated from a chart image, median confidence 0.90"
+        )),
+        "{verbose}"
+    );
+    assert!(
+        verbose.contains("lowest confidence around") && verbose.contains("median 0.30"),
+        "{verbose}"
+    );
+    // Some points estimated: "partly"; the series' other points are stated plainly.
+    let (partly, series) = estimated_series(10);
+    assert!(speak(&partly, series, Verbosity::Terse).contains("partly estimated"));
+    let verbose = speak(&partly, series, Verbosity::Verbose);
+    assert!(
+        verbose.contains(&format!("10 of {total} points estimated")),
+        "{verbose}"
+    );
+    // Segments carry the mix but not the stretch.
+    if let Some(segment) = tree
+        .children(series)
+        .iter()
+        .copied()
+        .find(|id| matches!(tree.node(*id).map(|n| &n.kind), Some(NavKind::Segment(_))))
+    {
+        let verbose = speak(&tree, segment, Verbosity::Verbose);
+        assert!(
+            verbose.contains("points estimated from a chart image"),
+            "{verbose}"
+        );
+        assert!(!verbose.contains("lowest confidence"), "{verbose}");
+    }
+    // A series with no estimates says nothing of the kind.
+    let plain = weather();
+    let first = plain.series().next().unwrap();
+    assert!(!speak(&plain, first, Verbosity::Verbose).contains("estimated"));
+}
+
+/// C02-T09: the estimated series, a segment of it and one estimated point, at terse and
+/// verbose, all estimated and partly estimated, as the listener hears them.
+#[test]
+fn estimates_at_terse_and_verbose() {
+    let mut text = String::new();
+    for (label, estimated) in [("all estimated", usize::MAX), ("first 10 estimated", 10)] {
+        let (tree, series) = estimated_series(estimated);
+        let segment = tree
+            .children(series)
+            .iter()
+            .copied()
+            .find(|id| matches!(tree.node(*id).map(|n| &n.kind), Some(NavKind::Segment(_))));
+        let point = tree.points(series)[9];
+        for verbosity in [Verbosity::Terse, Verbosity::Verbose] {
+            let _ = writeln!(text, "## {label}, {verbosity:?}");
+            let _ = writeln!(text, "series: {}", speak(&tree, series, verbosity));
+            if let Some(segment) = segment {
+                let _ = writeln!(text, "segment: {}", speak(&tree, segment, verbosity));
+            }
+            let _ = writeln!(text, "point 9: {}", speak(&tree, point, verbosity));
+        }
+    }
+    insta::assert_snapshot!(text);
+}
