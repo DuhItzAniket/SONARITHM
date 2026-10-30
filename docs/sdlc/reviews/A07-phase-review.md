@@ -1,6 +1,6 @@
 # A07 phase review: CLI, Python package and first release
 
-> **Status:** Final for the code (2026-10-21; release scope updated 2026-10-30); the release itself waits for the owner. **Phase:** A07. **Author:** A07 agent session (Claude Code) for the project lead. **Reviewers:** coordinator session (owner's delegate), @DuhItzAniket.
+> **Status:** Final (2026-10-21; release scope updated 2026-10-30; released 2026-10-31). **Phase:** A07. **Author:** A07 agent session (Claude Code) for the project lead. **Reviewers:** coordinator session (owner's delegate), @DuhItzAniket.
 > **Related:** [reviews README](README.md) · [roadmap A07](../../planning/roadmap.md#a07--cli-python-package-and-first-release) · [worklog: A07](../worklog/2026-10-21-a07-cli-python-release.md) · [11 bindings, CLI](../../architecture/11-bindings-cli-plugins.md) · [release process](../../engineering/release-process.md)
 
 ## Summary
@@ -10,7 +10,7 @@
 | Phase | A07 · CLI, Python package and first release ([roadmap](../../planning/roadmap.md#a07--cli-python-package-and-first-release)) |
 | Planned window | after A05 and A06, about 2 weeks |
 | Actual window | 2026-10-19 – 2026-10-21 (with a pause for the owner's usage limit and a laptop restart) |
-| Outcome | **Code complete; release ready for the owner's go.** Exit criteria 2 and 3 need owner actions |
+| Outcome | **Released** as [v0.1.0-alpha](https://github.com/DuhItzAniket/SONARITHM/releases/tag/v0.1.0-alpha) on 2026-10-31. Exit criteria 1 and 2 met; criterion 3's user test is the owner's |
 
 A07 delivered what people use and cite:
 
@@ -27,15 +27,15 @@ The CLI, Python and the core produce the same Score and the same WAV bytes for t
 
 | # | Criterion (verbatim from the roadmap) | Result | Evidence |
 |---|---|---|---|
-| 1 | `pip install sonarithm` works on all three OSes. | **Met for the built wheels; publishing waits for the owner** | `wheels.yml` builds the abi3 wheel on Linux (manylinux_2_28), Windows and macOS, installs it alone into a clean venv (no required dependencies), then runs the 19–20 pytest tests on Python 3.10 and 3.14: all green (run 39503116734 on #171). `pip install sonarithm` from PyPI needs the first upload (owner) |
-| 2 | A Zenodo DOI is minted. | **Not yet: owner** | `.zenodo.json` and `CITATION.cff` are ready and checked in CI (#172); the DOI is minted when the owner enables the Zenodo–GitHub integration and publishes the tagged release |
+| 1 | `pip install sonarithm` works on all three OSes. | **Met** | `wheels.yml` builds the abi3 wheel on Linux (manylinux_2_28), Windows and macOS, installs it alone into a clean venv (no required dependencies), then runs the 19–20 pytest tests on Python 3.10 and 3.14: all green (run 39503116734 on #171). Released 2026-10-31: the tag's `wheels` run built and tested all three OSes and published to PyPI (TestPyPI rehearsal passed first); `pip install --pre sonarithm` from PyPI installs and imports `0.1.0-alpha` on Windows |
+| 2 | A Zenodo DOI is minted. | **Met** | Minted from the GitHub pre-release on 2026-10-31: [10.5281/zenodo.23816603](https://doi.org/10.5281/zenodo.23816603), metadata from `.zenodo.json` and `CITATION.cff` (#172, #183) |
 | 3 | Quickstart docs take a new user from install to their first FLAC in ≤ 5 minutes (tested with 3 people). | **Docs done; test: owner** | `docs/tutorials/quickstart.md` (every command checked; the CLI path takes 3.6 s of compute on HW-01); the three-person protocol is in the tutorial, and the test is on the owner's checklist (#129) |
 
 Waivers requested: none. Criteria 1 (upload) and 2 depend on the publish, which the owner gates; criterion 3 is a user test the agent cannot run.
 
 ## Definition of Done (phase)
 
-- [x] Issues: #156, #77, #78, #79, #80, #81, #82 and #83 closed by their PRs; #84 (release) closes when the owner publishes.
+- [x] Issues: #156, #77, #78, #79, #80, #81, #82 and #83 closed by their PRs; #84 (release) closed by #183; released 2026-10-31.
 - [x] No open critical bug from the phase.
 - [x] Docs match what was built: 11 §1–§3 "as built", 04 and 05 (`dataset` source), release-process (configuration notes, CLI binaries, first-release owner steps, Zenodo), CI/CD inventory, supply chain (release tools and their licences), testing strategy (release independence), datasets.md (DS-001 to DS-005 available), tutorials.
 - [x] [status.md](../status.md) updated.
