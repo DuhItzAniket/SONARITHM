@@ -94,6 +94,9 @@ pub struct ExtractOptions {
     pub calibration: Option<SpecCalibration>,
     /// Corrections to apply after extraction (C02-T06): inline edits or a correction file.
     pub corrections: Option<CorrectionSet>,
+    /// The series names the chart's legend lists, when the user gives them; the raster tier
+    /// checks its series count against them (10 §3.1). Not yet in the spec.
+    pub legend: Option<Vec<String>>,
 }
 
 impl ExtractOptions {
@@ -106,6 +109,7 @@ impl ExtractOptions {
             ids: (BundleId(0), CHART_TABLE),
             calibration: None,
             corrections: None,
+            legend: None,
         }
     }
 
@@ -134,6 +138,13 @@ impl ExtractOptions {
     #[must_use]
     pub fn with_corrections(mut self, corrections: CorrectionSet) -> Self {
         self.corrections = Some(corrections);
+        self
+    }
+
+    /// The same options with the series names of the chart's legend.
+    #[must_use]
+    pub fn with_legend(mut self, legend: Vec<String>) -> Self {
+        self.legend = Some(legend);
         self
     }
 
@@ -269,7 +280,13 @@ fn read_chart(
                     ),
                 )));
             };
-            let chart = raster::extract::read_raster(&raster, calibration, work)?;
+            let chart = raster::extract::read_raster(
+                &raster,
+                calibration,
+                options.legend.as_deref(),
+                work,
+                diagnostics,
+            )?;
             Ok((chart, "sonarithm-plotsona/raster"))
         }
     }
@@ -601,7 +618,7 @@ pub mod fuzzing {
                 err.to_string(),
             ))
         })?;
-        crate::raster::extract::read_raster(&raster, &calibration, &mut work)
+        crate::raster::extract::read_raster(&raster, &calibration, None, &mut work, &mut Vec::new())
     }
 
     /// Reads `bytes` as an SVG chart: scene, axes, calibration and marks.

@@ -304,3 +304,50 @@ fn extract_decodes_rasters_under_budget() {
     let err = crate::extract(&bomb, "bomb.png", &crate::ExtractOptions::new()).unwrap_err();
     assert_eq!(err.code.as_str(), "SNR-ENG-306");
 }
+
+fn axis_codes(calibration_json: serde_json::Value) -> Result<Vec<String>, String> {
+    RasterCalibration::from_spec(&calibration(calibration_json))
+        .map(|c| {
+            c.checks
+                .iter()
+                .map(|d| d.code.as_str().to_owned())
+                .collect()
+        })
+        .map_err(|d| d.code.as_str().to_owned())
+}
+
+/// C02-T05 (10 §3.1, monotonic ticks): ticks whose values rise and fall along the axis are
+/// refused; ticks in order pass.
+#[test]
+fn ticks_that_rise_and_fall_are_refused() {
+    let y = |values: [f64; 3]| {
+        json!({ "axes": {
+            "x": { "kind": "linear", "anchors": [{ "at": [0, 0], "value": 0 }, { "at": [100, 0], "value": 1 }] },
+            "y": { "kind": "linear", "anchors": [
+                { "at": [0, 90], "value": values[0] }, { "at": [0, 50], "value": values[1] }, { "at": [0, 10], "value": values[2] }
+            ] },
+        }})
+    };
+    assert_eq!(axis_codes(y([0.0, 50.0, 100.0])), Ok(vec![]));
+    assert_eq!(
+        axis_codes(y([0.0, 120.0, 100.0])),
+        Err("SNR-ENG-322".to_owned())
+    );
+}
+
+/// C02-T05 (10 §3.1, log against linear): log-spaced ticks entered as a linear axis are
+/// reported, and the same ticks entered as log pass.
+#[test]
+fn a_log_axis_entered_as_linear_is_reported() {
+    let y = |kind: &str| {
+        json!({ "axes": {
+            "x": { "kind": "linear", "anchors": [{ "at": [0, 0], "value": 0 }, { "at": [100, 0], "value": 1 }] },
+            "y": { "kind": kind, "anchors": [
+                { "at": [0, 90], "value": 1 }, { "at": [0, 60], "value": 10 }, { "at": [0, 30], "value": 100 }, { "at": [0, 0], "value": 1000 }
+            ] },
+        }})
+    };
+    assert_eq!(axis_codes(y("log")), Ok(vec![]));
+    let found = axis_codes(y("linear")).unwrap();
+    assert!(found.contains(&"SNR-ENG-323".to_owned()), "{found:?}");
+}

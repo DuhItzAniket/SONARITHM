@@ -486,6 +486,17 @@ pub const CORRECTIONS_OTHER_CHART: CodeInfo = CodeInfo {
     status: CodeStatus::Active,
 };
 
+/// A raster chart's series count differs from the legend the user gave (C02-T05).
+pub const RASTER_SERIES_COUNT: CodeInfo = CodeInfo {
+    code: "SNR-ENG-329",
+    severity: Severity::Warning,
+    summary: "The series found differ from the legend",
+    help: "Series are told apart by colour. Two series in similar colours may have merged, \
+           or a marked line split; check the extracted series against the chart (10 §3.1).",
+    rules: &[],
+    status: CodeStatus::Active,
+};
+
 /// Every PLOTSONA code, in ascending order.
 pub const CODES: CodeTable = CodeTable {
     area: Area::Eng,
@@ -513,6 +524,7 @@ pub const CODES: CodeTable = CodeTable {
         TICK_LABEL_UNREAD,
         RASTER_UNREADABLE,
         RASTER_NEEDS_CALIBRATION,
+        RASTER_SERIES_COUNT,
         OTHER_CHARTS,
         NO_CACHE,
         EXTERNAL_LINK,

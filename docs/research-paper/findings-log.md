@@ -976,3 +976,12 @@ A05 (render engine, audio backends, export) uses F-050 to F-069.
 - **Evidence level / confidence:** EV-C / Moderate. Clean renders of synthetic data, well-separated markers and five bars; overlapping markers in dense scatters, stacked and grouped bars, horizontal bars, JPEG artefacts and anchors clicked by people are not measured (C02-T08)
 - **Affects:** C02 exit, FR-007, FR-008, DS-007, F-180, 10 §3
 - **Papers:** none yet
+
+### F-175 · The Windows network-deny harness blamed a test binary for the probe's attempts, through a reused process ID
+
+- **Date:** 2026-10-30 · **Phase:** B01 · **Type:** engineering · **Status:** new
+- **Statement:** On #406's CI, `network-deny (windows-latest)` reported that `speech-c7bd1538ecf07f1c.exe` made 2 connection attempts (#409). The harness's own trace shows otherwise. Both events name the application `network_probe-3f7721675b72fccf.exe`, both go to 192.0.2.1:9 (the probe's TEST-NET-1 target), and both carry PID 6916. That is the self-test probe's deliberate pair, made one step earlier as PID 6916. Windows then gave PID 6916 to the `speech` test binary, and the harness matches Security-log events by PID alone, over a window that starts 60 s before the run. The speech path made no connection: its tests use a recording speaker, not the OS voice. The harness now counts an event only when its application file name matches the executable as well.
+- **Evidence:** job 124105949271 of run 41068449405 (the attempt lines with the probe's path); `xtask/src/network_deny.rs` `wfp_events_of_an_earlier_process_with_the_same_pid_do_not_count`
+- **Evidence level / confidence:** EV-C / Strong for this run: the application path and the destination identify the probe. Whether the OS voice (SAPI or OneCore) would connect when self-voicing really speaks is not covered by any test, because no test drives the OS speaker; TODO(verify) with a real voice under the harness
+- **Affects:** NFR-04, ADR-0012, #409; testing-strategy §10; macOS's sandbox log is also read by PID (sandbox_lines), with the same reuse risk
+- **Papers:** none yet

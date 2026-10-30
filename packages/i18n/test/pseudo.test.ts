@@ -66,6 +66,8 @@ function sampleArgs(style: string): MessageArgs {
     stream: "13",
     event: "14",
     condition: "15",
+    device: "16",
+    paused: "yes",
   };
 }
 

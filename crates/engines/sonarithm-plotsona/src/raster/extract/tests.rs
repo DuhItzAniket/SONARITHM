@@ -348,6 +348,14 @@ fn read_corpus(name: &str, scale: u32) -> (crate::Extraction, Vec<Value>, f64) {
     let hand = crate::svg::hand_calibration(&drawing, f64::from(scale)).unwrap();
     let options = ExtractOptions::new().with_calibration(serde_json::from_value(hand).unwrap());
     let read = extract(&bytes, &label, &options).unwrap();
+    // The 10 §3.1 checks pass on clean renders with good anchors (C02-T05).
+    let codes: Vec<&str> = read
+        .report
+        .diagnostics
+        .iter()
+        .map(|d| d.code.as_str())
+        .collect();
+    assert!(codes.is_empty(), "{label}: {codes:?}");
     for found in &read.chart.series {
         assert_eq!(
             found.provenance.class,
@@ -458,8 +466,174 @@ fn a_blank_image_with_a_calibration_has_no_chart() {
     let err = super::read_raster(
         &raster,
         &serde_json::from_value(calibration).unwrap(),
+        None,
         &mut Work::new(u64::MAX),
+        &mut Vec::new(),
     )
     .unwrap_err();
     assert_eq!(err.code.as_str(), "SNR-ENG-309");
+}
+
+fn codes(diagnostics: &[sonarithm_core::Diagnostic]) -> Vec<&str> {
+    diagnostics.iter().map(|d| d.code.as_str()).collect()
+}
+
+/// A drawn line read through `calibration` (JSON), with the diagnostics it raised.
+fn read_line(
+    calibration: &Value,
+    legend: Option<&[String]>,
+) -> (crate::model::ChartData, Vec<sonarithm_core::Diagnostic>) {
+    let raster = line_image((200, 120), (20.0, 0.4), (10, 190), 3, RED, &|_, _| [0; 3]);
+    let mut diagnostics = Vec::new();
+    let chart = super::read_raster(
+        &raster,
+        &serde_json::from_value(calibration.clone()).unwrap(),
+        legend,
+        &mut Work::new(u64::MAX),
+        &mut diagnostics,
+    )
+    .unwrap();
+    (chart, diagnostics)
+}
+
+/// Anchors on ticks at x = 10 and 190 and y = 10 and 110, so the line lies within them;
+/// `y_mid` moves the middle y anchor to make the fit imprecise.
+fn ticks(y_mid: f64) -> Value {
+    json!({ "plotArea": { "min": [0, 0], "max": [200, 120] }, "axes": {
+        "x": { "kind": "linear", "anchors": [{ "at": [10, 0], "value": 0 }, { "at": [190, 0], "value": 180 }] },
+        "y": { "kind": "linear", "anchors": [
+            { "at": [0, 110], "value": 0 }, { "at": [0, y_mid], "value": 50 }, { "at": [0, 10], "value": 100 }
+        ] },
+    }})
+}
+
+/// C02-T05 (10 §3.1, points within bounds): values beyond the outermost ticks are reported
+/// as extrapolated and kept as read; within them, nothing is reported.
+#[test]
+fn values_beyond_the_ticks_are_reported_not_dropped() {
+    let (inside, diagnostics) = read_line(&ticks(60.0), None);
+    assert!(codes(&diagnostics).is_empty(), "{:?}", codes(&diagnostics));
+    let narrow = json!({ "plotArea": { "min": [0, 0], "max": [200, 120] }, "axes": {
+        "x": { "kind": "linear", "anchors": [{ "at": [50, 0], "value": 0 }, { "at": [150, 0], "value": 100 }] },
+        "y": { "kind": "linear", "anchors": [{ "at": [0, 110], "value": 0 }, { "at": [0, 10], "value": 100 }] },
+    }});
+    let (outside, diagnostics) = read_line(&narrow, None);
+    assert_eq!(codes(&diagnostics), ["SNR-ENG-324"]);
+    assert!(diagnostics[0].message.contains("x axis"));
+    assert_eq!(outside.points(), inside.points());
+}
+
+/// C02-T05 (10 §3.1, the fit): an imprecise calibration is reported and lowers every
+/// value's confidence; the values themselves are not adjusted.
+#[test]
+fn an_imprecise_calibration_is_reported_and_lowers_confidence() {
+    let (exact, diagnostics) = read_line(&ticks(60.0), None);
+    assert_eq!(codes(&diagnostics), Vec::<&str>::new());
+    let (rough, diagnostics) = read_line(&ticks(66.0), None);
+    assert_eq!(codes(&diagnostics), ["SNR-ENG-325"]);
+    let best = |c: &crate::model::ChartData| {
+        c.series[0]
+            .confidences
+            .iter()
+            .map(|c| c.get())
+            .fold(0.0_f32, f32::max)
+    };
+    assert!(
+        best(&rough) < best(&exact) - 0.1,
+        "{} {}",
+        best(&rough),
+        best(&exact)
+    );
+    assert_eq!(rough.points(), exact.points());
+}
+
+/// C02-T05 (10 §3.1, series count against the legend): a legend with the series count
+/// found passes; another count is reported and the series are left as found.
+#[test]
+fn the_series_count_is_checked_against_a_given_legend() {
+    let one = vec!["rain".to_owned()];
+    let (_, diagnostics) = read_line(&ticks(60.0), Some(&one));
+    assert_eq!(codes(&diagnostics), Vec::<&str>::new());
+    let two = vec!["rain".to_owned(), "snow".to_owned()];
+    let (chart, diagnostics) = read_line(&ticks(60.0), Some(&two));
+    assert_eq!(codes(&diagnostics), ["SNR-ENG-329"]);
+    assert_eq!(chart.series.len(), 1);
+    // Through `extract`, the legend comes from the options: vl-line has three series.
+    let drawing = std::fs::read(folder("svg").join("vl-line.svg")).unwrap();
+    let bytes = std::fs::read(folder("raster").join("vl-line@1x.png")).unwrap();
+    let hand = crate::svg::hand_calibration(&drawing, 1.0).unwrap();
+    let options = ExtractOptions::new()
+        .with_calibration(serde_json::from_value(hand).unwrap())
+        .with_legend(two);
+    let read = extract(&bytes, "vl-line", &options).unwrap();
+    assert_eq!(codes(&read.report.diagnostics), ["SNR-ENG-329"]);
+    assert_eq!(read.chart.series.len(), 3);
+}
+
+/// C02-T05 (03 §4): raster values keep the `cv_estimate` class and each row's confidence
+/// through a filter and a sort, and an aggregate takes the lowest confidence of its rows
+/// with the estimate class (A04's propagation rules, extended to raster tables).
+#[test]
+fn raster_provenance_survives_transforms() {
+    use sonarithm_data::RowProvenance;
+    use sonarithm_data::transform::Transform;
+    use sonarithm_data::transform::apply;
+
+    let step = |v: Value| -> Transform { serde_json::from_value(v).unwrap() };
+
+    let (read, _, _) = read_corpus("vl-line", 1);
+    let table = read.bundle.primary().unwrap();
+    let before = RowProvenance::read(table).unwrap();
+    let expected: Vec<f32> = read
+        .chart
+        .series
+        .iter()
+        .flat_map(|s| s.confidences.iter().map(|c| c.get()))
+        .collect();
+    let stored: Vec<f32> = before
+        .rows()
+        .iter()
+        .map(|p| p.confidence.unwrap().get())
+        .collect();
+    assert_eq!(stored, expected, "__snr_conf holds each value's confidence");
+    let mut notes = sonarithm_core::Diagnostics::default();
+    let filtered = apply(
+        table,
+        &step(json!({ "op": "filter", "expr": "y > 50" })),
+        &mut notes,
+    )
+    .unwrap();
+    let sorted = apply(
+        &filtered,
+        &step(json!({ "op": "sort", "field": "y" })),
+        &mut notes,
+    )
+    .unwrap();
+    let after = RowProvenance::read(&sorted).unwrap();
+    assert!(!after.is_empty() && after.len() < before.len());
+    for p in after.rows() {
+        assert_eq!(p.class, ProvenanceClass::CvEstimate);
+        assert!(stored.contains(&p.confidence.unwrap().get()));
+    }
+    let mean = apply(
+        table,
+        &step(json!({ "op": "aggregate", "groupby": ["series"], "ops": [{ "op": "mean", "field": "y", "as": "mean" }] })),
+        &mut notes,
+    )
+    .unwrap();
+    let grouped = RowProvenance::read(&mean).unwrap();
+    assert_eq!(grouped.len(), 3);
+    let lowest = stored.iter().copied().fold(f32::INFINITY, f32::min);
+    assert!(
+        grouped
+            .rows()
+            .iter()
+            .all(|p| p.class == ProvenanceClass::CvEstimate)
+    );
+    assert!(
+        grouped
+            .rows()
+            .iter()
+            .any(|p| (p.confidence.unwrap().get() - lowest).abs() < 1e-6)
+    );
 }

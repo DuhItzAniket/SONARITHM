@@ -4,13 +4,15 @@
 //! The CI smoke test (B01-T03): `sonarithm-desktop --smoke <report.json>` opens the real
 //! window with a temporary settings folder and the null audio device, and the UI's smoke
 //! module (`src/smoke.ts`) checks the empty workspace, the protocol handshake and that a
-//! 1 MB view arrives as binary under the CSP (F-042). The UI hands its results to
+//! 1 MB view arrives as binary under the CSP (F-042), and measures the cold start (PB-07,
+//! B01-T07) from the host's start to an interactive workspace. The UI hands its results to
 //! [`smoke_report`], which adds what only the host can see, writes the report and exits
 //! with a failing status if any check failed.
 
 use std::fmt::Write as _;
 use std::path::{Path, PathBuf};
 use std::sync::{Arc, Mutex, PoisonError};
+use std::time::{SystemTime, UNIX_EPOCH};
 
 use tauri::{AppHandle, State};
 
@@ -24,6 +26,10 @@ pub(crate) struct Smoke {
     report: PathBuf,
     dir: PathBuf,
     accelerators: Arc<AcceleratorState>,
+    /// When the host started, in milliseconds since the Unix epoch: the cold start's origin
+    /// (PB-07). It is read before the fixture is written, so the measurement includes that
+    /// smoke-only work and is an upper bound.
+    started_at_ms: u64,
 }
 
 /// The accelerator setting's outcome, recorded on the window's thread.
@@ -43,6 +49,11 @@ impl AcceleratorState {
 impl Smoke {
     /// `Some` when the command line asks for a smoke run; writes the fixture.
     pub(crate) fn from_args(args: impl Iterator<Item = String>) -> std::io::Result<Option<Self>> {
+        let started_at_ms = SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .map_or(0, |since| {
+                u64::try_from(since.as_millis()).unwrap_or(u64::MAX)
+            });
         let args: Vec<String> = args.collect();
         let Some(report) = args
             .iter()
@@ -58,6 +69,7 @@ impl Smoke {
             report: PathBuf::from(report),
             dir,
             accelerators: Arc::default(),
+            started_at_ms,
         }))
     }
 
@@ -76,6 +88,7 @@ impl Smoke {
         let config = serde_json::json!({
             "dataset": self.dir.join("smoke.csv"),
             "rows": ROWS,
+            "startedAtMs": self.started_at_ms,
         });
         format!("window.__SONARITHM_SMOKE__ = {config};")
     }

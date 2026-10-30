@@ -185,9 +185,13 @@ fn marks_of(
         .collect()
 }
 
-/// A series from the marks found for one colour: values through the calibration, the
-/// `cv_estimate` class, and per value its colour closeness times how much of the plot's
-/// value span (`y_span`) half a pixel leaves certain. `None` when nothing was found.
+/// A series from the marks found for one colour: values through the calibration and the
+/// `cv_estimate` class. Each value's confidence is its colour closeness, times how much of
+/// the plot's value span (`y_span`) half a pixel leaves certain, times the calibration's
+/// own confidence (C01-T04: 1 − 10 × residual, the lower of the two axes; a category axis
+/// counts as certain). **Uncalibrated:** a ranking of how sure the reading is, not a
+/// probability of being right; no study has calibrated such scores for chart extraction
+/// (notes/06 §8, Gaps). `None` when nothing was found.
 fn series_of(
     found: Vec<Found>,
     axes: &RasterCalibration,
@@ -199,6 +203,11 @@ fn series_of(
         return None;
     }
     let category = axes.x_labels.is_some();
+    let fit = if category {
+        axes.y.confidence()
+    } else {
+        axes.y.confidence().min(axes.x.confidence())
+    };
     let mut points = Vec::with_capacity(found.len());
     let mut confidences = Vec::with_capacity(found.len());
     for f in found {
@@ -219,7 +228,7 @@ fn series_of(
             0.0
         };
         #[expect(clippy::cast_possible_truncation, reason = "a confidence in [0, 1]")]
-        let c = (f.closeness * quantization).clamp(0.0, 1.0) as f32;
+        let c = (f.closeness * quantization * f64::from(fit.get())).clamp(0.0, 1.0) as f32;
         confidences.extend(Confidence::new(c).or(Confidence::new(0.0)));
     }
     let mut sorted: Vec<f32> = confidences.iter().map(|c| f32::from(*c)).collect();
@@ -240,19 +249,53 @@ fn series_of(
     Some(one)
 }
 
+/// The 10 §3.1 checks on what was read (C02-T05): values more than 2 % of the tick span
+/// beyond the outermost anchors on a value axis are extrapolated (`SNR-ENG-324`), and a
+/// series count that differs from the user's `legend` is reported (`SNR-ENG-329`).
+fn sanity_checks(
+    axes: &RasterCalibration,
+    positions: &[[f64; 2]],
+    series: usize,
+    legend: Option<&[String]>,
+) -> Vec<Diagnostic> {
+    let mut found = Vec::new();
+    let along = |i: usize| positions.iter().map(|p| p[i]).collect::<Vec<f64>>();
+    if axes.x_labels.is_none() {
+        found.extend(axes.x.check_bounds(&along(0), axes.ticks[0], 0.02, "x"));
+    }
+    found.extend(axes.y.check_bounds(&along(1), axes.ticks[1], 0.02, "y"));
+    if let Some(legend) = legend
+        && legend.len() != series
+    {
+        found.push(Diagnostic::new(
+            &codes::RASTER_SERIES_COUNT,
+            format!(
+                "{series} series were found by colour, but the legend lists {}; a series may be missing, split or merged.",
+                legend.len()
+            ),
+        ));
+    }
+    found
+}
+
 /// Reads a raster chart with `calibration`: each series colour as a line, bars or points
-/// (C02-T03, C02-T04).
+/// (C02-T03, C02-T04), then the sanity checks of 10 §3.1 (C02-T05) as warnings in
+/// `diagnostics`: the calibration's own checks, values beyond the outermost ticks, and the
+/// series count against a `legend` the user gave. No check changes the data.
 ///
 /// # Errors
 ///
-/// The calibration's error (`SNR-ENG-320`, `321`), `SNR-ENG-309` when no series colour is
-/// found, `SNR-ENG-305` over the work budget.
+/// The calibration's error (`SNR-ENG-320`, `321`, `322`), `SNR-ENG-309` when no series
+/// colour is found, `SNR-ENG-305` over the work budget.
 pub(crate) fn read_raster(
     raster: &Raster,
     calibration: &SpecCalibration,
+    legend: Option<&[String]>,
     work: &mut Work,
+    diagnostics: &mut Vec<Diagnostic>,
 ) -> Result<ChartData, Box<Diagnostic>> {
     let axes = RasterCalibration::from_spec(calibration)?;
+    diagnostics.extend(axes.checks.iter().cloned());
     let area = plot_area(raster, calibration, &axes, work)?;
     work.spend(u64::from(raster.width()) * u64::from(raster.height()))?;
     let colours = series_colours(raster, &area, MAX_SERIES);
@@ -280,6 +323,7 @@ pub(crate) fn read_raster(
         .map_or(area.max[1], |p| p.clamp(area.min[1], area.max[1]));
     let y_span = (axes.y.value_at(area.min[1]) - axes.y.value_at(area.max[1])).abs();
     let mut series = Vec::new();
+    let mut positions: Vec<[f64; 2]> = Vec::new();
     for (index, &colour) in colours.iter().enumerate() {
         // Each series scans the plot area once more.
         work.spend(u64::from(raster.width()) * u64::from(raster.height()))?;
@@ -299,10 +343,12 @@ pub(crate) fn read_raster(
         let found = marks_of(
             kind, found_bars, &labels, &search, &axes, thickness, max_marker,
         );
+        positions.extend(found.iter().map(|f| f.at));
         if let Some(one) = series_of(found, &axes, y_span, kind, index) {
             series.push(one);
         }
     }
+    diagnostics.extend(sanity_checks(&axes, &positions, series.len(), legend));
     // One chart type when every series agrees; otherwise each series keeps its own.
     let first = series.first().and_then(|s| s.chart_type);
     let chart_type = if series.iter().all(|s| s.chart_type == first) {

@@ -38,6 +38,10 @@ pub struct NullConfig {
     pub paced: bool,
     /// Interleaved samples to keep for inspection, at most.
     pub capture: usize,
+    /// How long every call into the "driver" takes (listing devices, reading the rate,
+    /// opening a stream): a slow driver, for the test that start-up never waits for one
+    /// (B01-T07). Zero by default.
+    pub driver_delay: Duration,
 }
 
 impl NullConfig {
@@ -50,6 +54,14 @@ impl NullConfig {
             channels: 2,
             paced: true,
             capture: 0,
+            driver_delay: Duration::ZERO,
+        }
+    }
+
+    /// Waits for the simulated driver.
+    fn driver(&self) {
+        if !self.driver_delay.is_zero() {
+            std::thread::sleep(self.driver_delay);
         }
     }
 }
@@ -127,6 +139,7 @@ impl AudioBackend for NullBackend {
     }
 
     fn devices(&self) -> Result<Vec<DeviceInfo>, AudioError> {
+        self.config.driver();
         Ok(vec![DeviceInfo {
             id: NULL_DEVICE.to_owned(),
             name: NULL_DEVICE.to_owned(),
@@ -137,10 +150,12 @@ impl AudioBackend for NullBackend {
     }
 
     fn sample_rate(&self, _device: Option<&str>) -> Result<u32, AudioError> {
+        self.config.driver();
         Ok(self.config.sample_rate)
     }
 
     fn open(&mut self, config: &StreamConfig, processor: Processor) -> Result<Stream, AudioError> {
+        self.config.driver();
         if config.device.as_deref().is_some_and(|id| id != NULL_DEVICE) {
             return Err(AudioError::DeviceNotFound);
         }

@@ -44,6 +44,28 @@
 - `transport` machine with a status region driven only by app-core reports, and a request region with "newest waiting intent wins". The model-based test runs every sequence of three intents (343) against a small Rust-like reducer, and checks that the machine never showed a status the fake host did not report.
 - The toolbar's Stop stays enabled while a Score is loaded: disabling the focused button after a press would drop the keyboard focus.
 - No cargo build (PLOTSONA held the slot). The Playwright spec was not run locally (free RAM 2.9 GB, under the 3 GB floor); CI runs it.
+## B01-T07: start-up path (2026-10-30)
+
+- `NullConfig::driver_delay` makes every null-driver call slow. The scenario `b01_t07_start_up_never_waits_for_an_audio_driver` passes with 2 s per call, and the first play takes at least that long.
+- `Frame`'s `startIn` puts the start-up focus in the project region. The F6 E2E tests now start from no focus (`startOutsideRegions`). #398's new `transport.spec.ts` makes the same assumption, so whichever PR merges second needs that one-line fix.
+- The smoke run reports `pb07`. No benchmark was run locally on the shared machine.
+- Locally: 27 Playwright tests in Chromium (frame, workspace, palette, announcer, gates), 28 unit tests, typecheck and lint; Rust clippy and tests for `sonarithm-audio`, `sonarithm-app` and `sonarithm-desktop` (`CARGO_BUILD_JOBS=4`, 2 test threads).
+
+## #409: network-deny on Windows (2026-10-30)
+
+- The `speech` binary's two "attempts" were the self-test probe's: same PID (6916, reused), the probe's application path, and the probe's 192.0.2.1:9 destination. The speech path is not changed.
+- `wfp_lines` now requires the application file name too, with a regression test using the run's own lines. F-175. Not compiled locally (the Rust slot was PLOTSONA's); CI verifies.
+- Open: no test drives the real OS voice under the harness (F-175's TODO).
+
+## B01-T08: devices, volume, stop all audio (2026-10-30)
+
+- **App core.** Device change and loss announcements in words (Fluent, assertive, through the sequencer). The pseudo-locale sample arguments gained `device` and `paused` in TypeScript and Rust.
+- **Render tests.** Stop all is silent once the 20 ms fade and the limiter's look-ahead pass, and the volume is graph gain. The benchmark fixture engages the limiter at 0 dB, so the volume test compares −12 against −32 dB.
+- **UI.**
+  - `transport.stopAll` now calls `stop_all`.
+  - The Preferences dialog: an output-device Select and a volume Slider. React Aria 1.22 deprecates `selectedKey`, so the Select uses `value` and `onChange`.
+  - Mock-host handlers for settings, devices and stop_all, and an E2E spec.
+- **Gap.** The plan's T-13 wording ("within one audio block") is stricter than the conformance plan's interaction budget and sound-design §5's 20 ms fade. The fade stays: changing it needs evidence (AGENTS.md rule 5).
 
 ## Next steps
 
