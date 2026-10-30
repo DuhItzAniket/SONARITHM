@@ -1183,7 +1183,18 @@ duckInsteadOfPause: boolean,
 /**
  * The speaking rate that sequencing estimates assume, in words per minute.
  */
-rateWpm: number, };
+rateWpm: number, 
+/**
+ * How the host hands announcements to the screen reader (OD-05, B03-T04). Added after
+ * settings version 1 was written, so files without it read the default.
+ */
+announcer: AnnouncerRoute, };
+
+/**
+ * How the host passes announcements to the screen reader when [`SpeechRoute::ScreenReader`]
+ * is the route (08 §4; OD-05, decided provisionally on 2026-10-29).
+ */
+export type AnnouncerRoute = "liveRegion" | "native";
 
 /**
  * Where announcements are spoken (A11Y-19).

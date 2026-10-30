@@ -32,6 +32,26 @@ pub(crate) enum Accelerators {
 #[cfg(windows)]
 mod windows;
 
+/// Speaks `text` through the platform's notification API: the native announcer route
+/// (B03-T04, OD-05). Only Windows has one so far (UI Automation); elsewhere it fails, and the
+/// UI's announcer falls back to live regions.
+pub(crate) fn announce(
+    window: &tauri::WebviewWindow,
+    text: &str,
+    assertive: bool,
+) -> Result<(), String> {
+    #[cfg(windows)]
+    {
+        let hwnd = window.hwnd().map_err(|err| err.to_string())?;
+        windows::raise_notification(hwnd.0, text, assertive).map_err(|err| err.to_string())
+    }
+    #[cfg(not(windows))]
+    {
+        let _ = (window, text, assertive);
+        Err("This platform has no native announcer; live regions are used.".to_owned())
+    }
+}
+
 /// Turns off the webview's browser accelerator keys.
 pub(crate) fn disable_browser_accelerators(
     webview: &tauri::webview::PlatformWebview,

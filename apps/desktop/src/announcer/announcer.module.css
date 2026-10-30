@@ -1,0 +1,33 @@
+/* SPDX-FileCopyrightText: 2026 SONARITHM contributors */
+/* SPDX-License-Identifier: MIT OR Apache-2.0 */
+
+/* The live regions are read, not seen (the announcement log shows the same text). */
+.hidden {
+  position: absolute;
+  overflow: hidden;
+  inline-size: 1px;
+  block-size: 1px;
+  padding: 0;
+  border: 0;
+  white-space: nowrap;
+  clip-path: inset(50%);
+}
+
+.log {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.entry {
+  color: var(--text-1);
+  font-size: var(--type-12-size);
+  line-height: var(--type-12-line);
+}
+
+.empty {
+  margin: 0;
+  color: var(--text-2);
+  font-size: var(--type-13-size);
+  line-height: var(--type-13-line);
+}
