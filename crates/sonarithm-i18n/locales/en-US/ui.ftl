@@ -90,6 +90,15 @@ ui-no-announcements = No announcements yet.
 ui-no-diagnostics = No diagnostics.
 ui-inspector-empty = Nothing is selected.
 
+## Preferences (B01-T08). The volume note says in words what the slider does not do.
+
+ui-preferences = Preferences
+ui-audio = Audio
+ui-output-device = Output device
+ui-system-default-device = System default
+ui-sonification-volume = Sonification volume
+ui-volume-note = Sets the level of SONARITHM's sound only; the system volume does not change.
+
 ## Commands (B02-T07; keyboard-and-navigation §5). Names say what the command does.
 
 command-app-palette = Show the command palette

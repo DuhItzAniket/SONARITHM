@@ -17,6 +17,7 @@ The first public alpha. It contains everything merged up to 2026-10-30 and is re
 
 ### Added
 
+- Audio preferences and stop all audio (B01-T08): Ctrl+Comma (Cmd+Comma) opens Preferences, where you pick the output device and set SONARITHM's own volume in decibels, which never changes the system volume. Ctrl+Period (Cmd+Period) stops all sound and speech from anywhere, even inside a dialog. When the audio device changes or fails, SONARITHM says so in words.
 - The transport toolbar (B01-T05): Play and Pause, Stop and Loop in the top bar follow what the audio engine reports, and are also in the command palette. Nothing plays until you press Play.
 - Start-up (B01-T07): the app opens with the keyboard focus in the Project region, and never waits for the audio device, which opens on the first play.
 - Nightly desktop builds for testers (B01-T09): unsigned Windows, macOS and Linux installers of the latest `main`, as artifacts of the `desktop-nightly` workflow. They are not releases and have no updater; release-process explains how to install them past the unsigned-app warnings.

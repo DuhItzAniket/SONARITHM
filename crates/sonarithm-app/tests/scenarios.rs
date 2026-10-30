@@ -236,6 +236,31 @@ fn device_loss_pauses_at_the_same_position() {
             .iter()
             .any(|event| matches!(event, Event::DeviceChanged { .. }))
     );
+    // HS-05, B01-T08: the change is said in words, assertively, for the log and the screen
+    // reader. The sequencer delivers it on its next tick.
+    let start = Instant::now();
+    let said = loop {
+        let found = h.sink.events().into_iter().find_map(|event| match event {
+            Event::Announcement(info) if info.speech.starts_with("Audio device changed to") => {
+                Some(info)
+            }
+            _ => None,
+        });
+        if let Some(info) = found {
+            break info;
+        }
+        assert!(
+            start.elapsed() < Duration::from_secs(5),
+            "no device announcement"
+        );
+        std::thread::sleep(Duration::from_millis(10));
+    };
+    assert!(said.assertive, "{said:?}");
+    assert!(
+        said.speech.ends_with("Playback is paused."),
+        "{}",
+        said.speech
+    );
 }
 
 #[test]

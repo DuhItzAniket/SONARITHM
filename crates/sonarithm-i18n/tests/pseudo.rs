@@ -68,6 +68,8 @@ fn sample_args(style: UnitStyle) -> Args {
         .text("stream", "13")
         .text("event", "14")
         .text("condition", "15")
+        .text("device", "16")
+        .text("paused", "yes")
 }
 
 #[test]
