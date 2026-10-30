@@ -51,6 +51,9 @@ impl SpecVersion {
     /// `specVersion: "0.2"`: `template`, `instruments`, `lint`, chart calibration and
     /// corrections, and the quantize vocabularies (RFC-0004).
     pub const V0_2: Self = Self { major: 0, minor: 2 };
+    /// `specVersion: "0.3"`: `data.source.corrections.path`, a chart correction file
+    /// (RFC-0005, ADR-0026).
+    pub const V0_3: Self = Self { major: 0, minor: 3 };
 }
 
 impl fmt::Display for SpecVersion {

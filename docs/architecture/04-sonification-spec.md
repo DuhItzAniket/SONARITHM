@@ -1,4 +1,4 @@
-# 04 · Sonification Spec Language (v0.2)
+# 04 · Sonification Spec Language (v0.3)
 
 > **Status:** **Frozen as v0.1** by [RFC-0001](../rfcs/0001-spec-v0.1.md), accepted 2026-10-19 ([ADR-0015](../decisions/0015-spec-v0.1-frozen.md)). The RFC is normative: it holds the exact key set, defaults, validation codes and the 21 resolutions, and it wins wherever this overview is less precise. Changes follow the versioning rules in §7. **Spec v0.2** ([RFC-0004](../rfcs/0004-spec-v0.2.md), [ADR-0021](../decisions/0021-spec-v0.2.md), accepted 2026-10-26) adds `template`, `instruments`, `lint`, a typed chart calibration, chart corrections and AXONOTE's scale and tuning names. It is implemented (C01-T01), and this document describes v0.2; RFC-0004 is normative for what it adds.
 > **Decision:** [ADR-0005 Declarative spec and Score IR](../decisions/0005-declarative-spec-and-score-ir.md). **Owner:** Spec lead.
@@ -16,7 +16,7 @@
 | **Evidence-backed defaults; everything overridable** | Defaults from the design rules; user ownership | P7 |
 | **Human-writable JSON**, with a schema for editors | Authoring in the CodeMirror editor, CLI, notebooks | — |
 
-The canonical serialization is **JSON**. Builders exist in Rust and Python and produce the same JSON. The JSON Schema is generated from the Rust types (schemars) into `schemas/sonarithm-spec-0.2.schema.json`, and CI fails if it is stale. The v0.1 schema stays in `schemas/` for editors of older files.
+The canonical serialization is **JSON**. Builders exist in Rust and Python and produce the same JSON. The JSON Schema is generated from the Rust types (schemars) into `schemas/sonarithm-spec-0.3.schema.json`, and CI fails if it is stale. The v0.1 and v0.2 schemas stay in `schemas/` for editors of older files.
 
 ## 2. Top-level structure
 
@@ -61,7 +61,7 @@ Unknown top-level keys are an **error**. The exception is the `x-` vendor prefix
 |---|---|---|
 | `file` | platform | `path`, `format` (csv, tsv, json, ndjson, parquet, arrow, xlsx, ods), `sheet`, `options` |
 | `inline` | platform | `values` (array of records). For examples and tests |
-| `chart` | PLOTSONA | `path`, `extractor` (`auto`, `office`, `svg`, `vega`, `plotly`, `pdf-vector`, `raster`, `ml`), `calibration` (§3.1), `corrections` (§3.1, v0.2) |
+| `chart` | PLOTSONA | `path`, `extractor` (`auto`, `office`, `svg`, `vega`, `plotly`, `pdf-vector`, `raster`, `ml`), `calibration` (§3.1), `corrections` (§3.1, v0.2; a file in v0.3) |
 | `function` | CURVASONA | `expr`, `domain`, `samples` or `step`, `variables` |
 | `stream` | SONOTRACE | `transport` (`websocket`, `mqtt`, `serial`, `osc`, `tail`), `url`/`port`/`topic`, `schema`, `window` |
 | `dataset` | platform | A reference to a dataset the host already holds: a dataset loaded in a project (desktop/app core), or data handed to the facade or the Python package (A07) |
@@ -93,7 +93,8 @@ A chart source can carry the axis calibration a person confirmed and the correct
 
 - An axis `kind` is `linear`, `log` (values above 0), `date` (ISO 8601 strings) or `category` (labels), with at least two anchors at distinct points and values; more than two are fitted by least squares and the residual is reported. `page` (PDF, default 1) and `plotArea` (`{ "min": [x, y], "max": [x, y] }`) are optional. An invalid calibration is `SNR-SPEC-054`.
 - Without `calibration`, the extractor calibrates on its own and reports the calibration it used in this shape.
-- Edits are `add`, `move`, `delete` and `retype`, applied in order after extraction and before `transform`; edited rows become `user_edited` (03 §4). An edit whose `was` no longer matches is not applied and is reported (`SNR-ENG-386`). Shape errors are `SNR-SPEC-055`; `corrections.path`, a correction file, is reserved for RFC-0005 (`SNR-SPEC-056`).
+- Edits are `add`, `move`, `delete` and `retype`, applied in order after extraction and before `transform`; edited rows become `user_edited` (03 §4). An edit whose `was` no longer matches is not applied and is reported (`SNR-ENG-386`). Shape errors are `SNR-SPEC-055`.
+- **v0.3:** `corrections` may instead be `{ "path": "<relative path>" }`, a correction file ([RFC-0005](../rfcs/0005-chart-correction-file.md)) resolved like the source's own `path`. A path that is absolute, uses `..`, a drive letter or a URL is `SNR-SPEC-093`; in a document that declares `"0.2"` or older, `path` is `SNR-SPEC-056`. A file made on another chart applies nothing (`SNR-ENG-387`).
 
 ## 4. `transform`
 
@@ -334,6 +335,7 @@ The compiler fills in the substrate from `role=x` (or row order), pace 3 points/
 | RFC scope | An RFC is required for a major bump, a new top-level section, a new substrate, mark or channel kind, or any reinterpretation of existing fields. Adding an optional field or enum value inside an existing construct needs only a normal PR with schema regeneration |
 | Migrations | `sonarithm spec migrate` rewrites documents explicitly. The compiler may read old versions through in-memory migration, with a `Warning` diagnostic. It never silently rewrites files |
 | v0.1 and v0.2 | The 0.1 → 0.2 migration changes `specVersion` only, so a v0.2 reader reads `"0.1"` documents **as they are**: no migration, no warning, and their canonical form and spec hash do not change ([RFC-0004 §9](../rfcs/0004-spec-v0.2.md)). A v0.2 key in a `"0.1"` document is unknown (`SNR-SPEC-004`). v0.2 defaults (instrument bank and program, lint settings, the `12-TET` tuning, the calibration's `system` and `page`) fill only v0.2 documents |
+| v0.3 | Adds only `corrections.path` ([RFC-0005](../rfcs/0005-chart-correction-file.md), [ADR-0026](../decisions/0026-chart-correction-file.md)). The 0.2 → 0.3 migration changes `specVersion` only, so `"0.1"` and `"0.2"` documents are read as they are; `sonarithm spec migrate` writes `"0.3"` |
 | Pre-1.0 | Until SONARITHM 1.0, `0.x` minor versions may break, with a migration provided |
 | Canonical form | For hashing, specs are canonicalized per RFC 8785 (JSON Canonicalization Scheme) after the data-independent defaults are applied. The **spec hash** in manifests is SHA-256 of that form ([ADR-0013](../decisions/0013-determinism-and-provenance.md)). Implemented by `sonarithm_spec::prepare` (A03-T08); every applied default is reported as `SNR-SPEC-080` (Info) with its rule ID |
 

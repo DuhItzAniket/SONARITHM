@@ -293,7 +293,7 @@ Owner: `sonarithm-spec`.
 | `SNR-SPEC-053` | error | Invalid transform parameters | Fix the transform parameters the message names (RFC-0001 §4). | — |
 | `SNR-SPEC-054` | error | Invalid chart calibration | Give `axes.x` and `axes.y`, each with a kind (linear, log, date, category) and at least two anchors {"at": [x, y], "value": …} at distinct points with distinct values; log values above zero, dates in ISO 8601. | SDR-01 |
 | `SNR-SPEC-055` | error | Invalid chart correction | Write `corrections` as {"edits": [...]}; each edit has an `op` (add, move, delete, retype), the `series`, and for move, delete and retype the `point` index and the extracted value in `was`. | SDR-01 |
-| `SNR-SPEC-056` | error | Correction files are not available yet | `corrections.path` is reserved for the correction file of RFC-0005; write the edits inline in `corrections.edits`. | — |
+| `SNR-SPEC-056` | error | Correction files need spec 0.3 | `corrections.path` names a correction file (RFC-0005), which spec 0.3 defines; set `"specVersion": "0.3"` or write the edits inline in `corrections.edits`. | — |
 | `SNR-SPEC-060` | error | Invalid output parameters | Use a sample rate from 8000 to 384000 Hz, 1 to 64 channels, and a power-of-two block size from 16 to 8192. | — |
 | `SNR-SPEC-061` | error | Invalid playback parameters | Use a positive, finite playback speed. | — |
 | `SNR-SPEC-070` | error | Unknown field | Name a field of the data, or declare it in `data.fields`. | — |

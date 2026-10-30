@@ -325,8 +325,8 @@ code!(
 code!(
     /// `corrections.path` is reserved for RFC-0005 (RFC-0004 §6).
     CORRECTION_FILE_RESERVED, "SNR-SPEC-056", Error,
-    "Correction files are not available yet",
-    "`corrections.path` is reserved for the correction file of RFC-0005; write the edits inline in `corrections.edits`.",
+    "Correction files need spec 0.3",
+    "`corrections.path` names a correction file (RFC-0005), which spec 0.3 defines; set `\"specVersion\": \"0.3\"` or write the edits inline in `corrections.edits`.",
     []
 );
 

@@ -16,11 +16,13 @@ use crate::track::TrackSpec;
 use crate::v02::{Instrument, Lint, TemplateRef};
 
 /// The spec version this crate writes, and the newest it reads.
-pub const SPEC_VERSION: SpecVersion = SpecVersion::V0_2;
+pub const SPEC_VERSION: SpecVersion = SpecVersion::V0_3;
 
-/// The versions this crate reads as they are, without migrating them: 0.1 reads directly
-/// because the 0.1 → 0.2 migration is the identity (RFC-0004 §9).
-pub const READABLE_VERSIONS: &[SpecVersion] = &[SpecVersion::V0_1, SpecVersion::V0_2];
+/// The versions this crate reads as they are, without migrating them: 0.1 and 0.2 read
+/// directly because the 0.1 → 0.2 and 0.2 → 0.3 migrations are the identity (RFC-0004 §9,
+/// RFC-0005 Q6).
+pub const READABLE_VERSIONS: &[SpecVersion] =
+    &[SpecVersion::V0_1, SpecVersion::V0_2, SpecVersion::V0_3];
 
 /// A SONARITHM sonification spec: data plus how it becomes sound (RFC-0001, RFC-0004).
 ///
@@ -32,7 +34,7 @@ pub const READABLE_VERSIONS: &[SpecVersion] = &[SpecVersion::V0_1, SpecVersion::
 #[schemars(title = "SONARITHM spec", transform = top_level_keys)]
 #[non_exhaustive]
 pub struct Spec {
-    /// The spec language version, `"0.2"` (or `"0.1"`, read as it is).
+    /// The spec language version, `"0.3"` (or `"0.1"` or `"0.2"`, read as they are).
     #[schemars(with = "String", extend("pattern" = "^(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)$"))]
     pub spec_version: SpecVersion,
     /// A title, spoken by the legend.

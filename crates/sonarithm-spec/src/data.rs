@@ -63,7 +63,7 @@ pub enum Source {
         calibration: Option<JsonValue>,
         /// Corrections a person made to the extracted chart (v0.2, RFC-0004 §6).
         #[serde(default, skip_serializing_if = "Option::is_none")]
-        #[schemars(with = "Option<crate::v02::Corrections>")]
+        #[schemars(with = "Option<crate::v02::CorrectionsSource>")]
         corrections: Option<JsonValue>,
     },
     /// A sampled function (CURVASONA). Produces fields `x`, `y` and `dy`.
