@@ -51,6 +51,12 @@
 - The smoke run reports `pb07`. No benchmark was run locally on the shared machine.
 - Locally: 27 Playwright tests in Chromium (frame, workspace, palette, announcer, gates), 28 unit tests, typecheck and lint; Rust clippy and tests for `sonarithm-audio`, `sonarithm-app` and `sonarithm-desktop` (`CARGO_BUILD_JOBS=4`, 2 test threads).
 
+## #409: network-deny on Windows (2026-10-30)
+
+- The `speech` binary's two "attempts" were the self-test probe's: same PID (6916, reused), the probe's application path, and the probe's 192.0.2.1:9 destination. The speech path is not changed.
+- `wfp_lines` now requires the application file name too, with a regression test using the run's own lines. F-175. Not compiled locally (the Rust slot was PLOTSONA's); CI verifies.
+- Open: no test drives the real OS voice under the harness (F-175's TODO).
+
 ## Next steps
 
 - [x] Coordinator: ADR-0025 accepted (2026-10-29; numbered 0025, since 0023 and 0024 are reserved).

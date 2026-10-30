@@ -235,7 +235,7 @@ The headless app core (`sonarithm-app`, B01) holds all non-UI desktop behaviour,
   |---|---|---|
   | Linux | `strace -f -e trace=connect,sendto,sendmsg,sendmmsg` | A traced call with an `AF_INET` or `AF_INET6` address (Unix sockets do not count) |
   | macOS | `sandbox-exec` with `(deny network-outbound (remote ip "*:*"))`, so attempts also fail | A kernel `deny(1) network-outbound` line for the process in `log show` |
-  | Windows | Windows Filtering Platform connection auditing (`auditpol`, needs an elevated shell, as CI runners have) | An outbound 5156 or 5157 event for the process in the Security log |
+  | Windows | Windows Filtering Platform connection auditing (`auditpol`, needs an elevated shell, as CI runners have) | An outbound 5156 or 5157 event in the Security log whose process ID and application file name are both the executable's: Windows reuses process IDs, and an ID alone once blamed a test binary for the probe's attempts (F-175, #409) |
 
   `--self-test` is the negative test: an ignored probe (`network_probe_connects`) connects to 192.0.2.1 (TEST-NET-1) over TCP and UDP, and the harness fails unless it sees those attempts, so a mechanism that stops working cannot pass silently. The self-test reads the OS log for up to about a minute, because the unified log and the Security log persist entries late on busy runners. On macOS, if the log still has no entry, the probe's own report that the sandbox refused its connections (EPERM) counts, since that shows the sandbox is enforcing. B01-T09 runs the same mechanisms against the packaged app.
 - **Project round trip (B05)**: a saved project reopens bit-identically; every inspector edit round-trips through the spec without loss.
