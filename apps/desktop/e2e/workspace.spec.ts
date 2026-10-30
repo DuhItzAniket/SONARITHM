@@ -10,7 +10,9 @@ import { tabThrough } from "./keyboard.ts";
 
 test.beforeEach(async ({ page }) => {
   await page.goto("/e2e.html");
-  await expect(page.getByText("No dataset is open.")).toBeVisible();
+  await expect(
+    page.getByRole("main").getByText("No dataset is open."),
+  ).toBeVisible();
 });
 
 test("the workspace is a named main region", async ({ page }) => {

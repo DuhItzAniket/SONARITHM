@@ -3,10 +3,12 @@
 
 import type { Client, IpcTransport } from "@sonarithm/ipc";
 import { connect } from "@sonarithm/ipc";
-import { useEffect, useId, useState } from "react";
+import { Button, Tab, TabList, TabPanel, Tabs, Toolbar } from "@sonarithm/ui";
+import { useEffect, useState } from "react";
 
 import { useLocalizer } from "../i18n.ts";
 import styles from "./App.module.css";
+import { Frame } from "./frame/Frame.tsx";
 
 type Start =
   | { readonly state: "starting" }
@@ -14,13 +16,13 @@ type Start =
   | { readonly state: "failed"; readonly detail: string };
 
 /**
- * The empty workspace (B01-T03): connects to the app core, which checks the protocol
- * version first (09 §2.2), and shows the workspace region. The application frame with its
- * regions, splitters and F6 order comes with B02-T06.
+ * The app: connects to the app core, which checks the protocol version first (09 §2.2),
+ * inside the application frame (B02-T06). The regions hold placeholders until their tasks:
+ * transport (B01-T05), project tree (B03), plot and table (B04), inspector (B05), and the
+ * announcement log (B03-T04).
  */
 export function App({ transport }: { readonly transport: IpcTransport }) {
   const t = useLocalizer();
-  const titleId = useId();
   const [start, setStart] = useState<Start>({ state: "starting" });
 
   useEffect(() => {
@@ -41,22 +43,66 @@ export function App({ transport }: { readonly transport: IpcTransport }) {
     };
   }, [transport]);
 
+  const startText =
+    start.state === "failed" ? (
+      <p role="alert" className={styles.error}>
+        {t.format("ui-start-failed", { detail: start.detail })}
+      </p>
+    ) : (
+      <p className={styles.status} data-state={start.state}>
+        {start.state === "ready"
+          ? t.format("ui-workspace-empty")
+          : t.format("ui-starting")}
+      </p>
+    );
+
   return (
-    <main className={styles.workspace} aria-labelledby={titleId}>
-      <h1 id={titleId} className={styles.title}>
-        {t.format("ui-region-workspace")}
-      </h1>
-      {start.state === "failed" ? (
-        <p role="alert" className={styles.error}>
-          {t.format("ui-start-failed", { detail: start.detail })}
-        </p>
-      ) : (
-        <p className={styles.status} data-state={start.state}>
-          {start.state === "ready"
-            ? t.format("ui-workspace-empty")
-            : t.format("ui-starting")}
-        </p>
-      )}
-    </main>
+    <Frame
+      top={
+        // The transport commands are wired with the transport machine (B01-T05).
+        <Toolbar label={t.format("ui-transport")}>
+          <Button variant="quiet" isDisabled>
+            {t.format("ui-play")}
+          </Button>
+          <Button variant="quiet" isDisabled>
+            {t.format("ui-stop")}
+          </Button>
+        </Toolbar>
+      }
+      project={
+        <p className={styles.status}>{t.format("ui-workspace-empty")}</p>
+      }
+      workspace={
+        <Tabs>
+          <TabList label={t.format("ui-region-workspace")}>
+            <Tab id="plot">{t.format("ui-tab-plot")}</Tab>
+            <Tab id="table">{t.format("ui-tab-table")}</Tab>
+            <Tab id="spec">{t.format("ui-tab-spec")}</Tab>
+          </TabList>
+          <TabPanel id="plot">{startText}</TabPanel>
+          <TabPanel id="table">{startText}</TabPanel>
+          <TabPanel id="spec">{startText}</TabPanel>
+        </Tabs>
+      }
+      inspector={
+        <p className={styles.status}>{t.format("ui-inspector-empty")}</p>
+      }
+      status={
+        <Tabs>
+          <TabList label={t.format("ui-region-status")}>
+            <Tab id="announcements">{t.format("ui-tab-announcements")}</Tab>
+            <Tab id="diagnostics">{t.format("ui-tab-diagnostics")}</Tab>
+          </TabList>
+          <TabPanel id="announcements">
+            <div role="log" aria-label={t.format("ui-tab-announcements")}>
+              <p className={styles.status}>{t.format("ui-no-announcements")}</p>
+            </div>
+          </TabPanel>
+          <TabPanel id="diagnostics">
+            <p className={styles.status}>{t.format("ui-no-diagnostics")}</p>
+          </TabPanel>
+        </Tabs>
+      }
+    />
   );
 }

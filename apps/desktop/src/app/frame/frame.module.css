@@ -1,0 +1,133 @@
+/* SPDX-FileCopyrightText: 2026 SONARITHM contributors */
+/* SPDX-License-Identifier: MIT OR Apache-2.0 */
+
+/* Fixed regions separated by hairlines (design-language §4, §8). Only Medium's expanded
+   side rails overlay the workspace, as anchored sheets with the overlay shadow. */
+
+.frame {
+  display: flex;
+  flex-direction: column;
+  block-size: 100vh;
+  background: var(--surface-0);
+  color: var(--text-1);
+  font-family: var(--font-sans);
+  font-size: var(--type-13-size);
+  line-height: var(--type-13-line);
+}
+
+.top {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  align-items: center;
+  min-block-size: var(--bar-toolbar);
+  padding-inline: var(--space-3);
+  border-block-end: var(--border-width) solid var(--border);
+  background: var(--surface-1);
+}
+
+.body {
+  position: relative;
+  display: flex;
+  flex: 1;
+  min-block-size: 0;
+}
+
+.side {
+  position: relative;
+  display: flex;
+  flex: none;
+  box-sizing: border-box;
+  background: var(--surface-1);
+}
+
+.side[data-side="project"] {
+  border-inline-end: var(--border-width) solid var(--border);
+}
+
+.side[data-side="inspector"] {
+  border-inline-start: var(--border-width) solid var(--border);
+}
+
+.side[data-collapsed] {
+  align-items: flex-start;
+  padding: var(--space-1);
+}
+
+.sideContent {
+  flex: 1;
+  min-inline-size: 0;
+  padding: var(--space-3);
+  overflow: auto;
+}
+
+.heading {
+  margin: 0 0 var(--space-2);
+  color: var(--text-2);
+  font-size: var(--type-12-size);
+  font-weight: var(--weight-medium);
+  line-height: var(--type-12-line);
+}
+
+.workspace {
+  flex: 1;
+  min-inline-size: 0;
+  padding: var(--space-3);
+  overflow: auto;
+}
+
+.status {
+  min-block-size: 9rem;
+  padding: var(--space-2) var(--space-3);
+  border-block-start: var(--border-width) solid var(--border);
+  background: var(--surface-1);
+}
+
+/* Regions take focus when F6 lands on them with nothing to focus inside. */
+.top:focus-visible,
+.side:focus-visible,
+.workspace:focus-visible,
+.status:focus-visible {
+  outline: var(--focus-ring-width) solid var(--focus);
+  outline-offset: calc(-1 * var(--focus-ring-width));
+}
+
+/* Medium: an expanded side opens over the workspace edge, anchored to its own side. */
+.frame[data-layout="medium"] .side:not([data-collapsed]) {
+  position: absolute;
+  inset-block: 0;
+  z-index: 1;
+  box-shadow: var(--shadow-overlay);
+}
+
+.frame[data-layout="medium"] .side[data-side="project"]:not([data-collapsed]) {
+  inset-inline-start: 0;
+}
+
+.frame[data-layout="medium"]
+  .side[data-side="inspector"]:not([data-collapsed]) {
+  inset-inline-end: 0;
+}
+
+/* Narrow: the shown region fills the body; the others are `hidden`, which must win over
+   the regions' own display. */
+.side[hidden],
+.workspace[hidden] {
+  display: none;
+}
+
+.frame[data-layout="narrow"] .side {
+  flex: 1;
+  border: none;
+}
+
+.visuallyHidden {
+  position: absolute;
+  overflow: hidden;
+  inline-size: 1px;
+  block-size: 1px;
+  padding: 0;
+  border: 0;
+  white-space: nowrap;
+  clip-path: inset(50%);
+}
