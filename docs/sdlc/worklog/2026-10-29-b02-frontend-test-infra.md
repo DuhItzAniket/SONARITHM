@@ -65,6 +65,13 @@
 - axe's `label-content-name-mismatch` flagged menu items whose visible shortcut was not in their name, because React Aria labels the item from its label slot. Items are now named from their content, with the shortcut hidden from the name and kept as the description. This also applies to `@sonarithm/ui`'s `MenuItem`.
 - Stacked on #393 (the announcer), whose announcer the palette uses for the result count.
 
+## B02-T09: design review (2026-10-30)
+
+- [Review record](../reviews/B02-design-review.md): every component and the frame against design-language §3 and §13. Zero DL-X violations; four open items, each with an owner task (the empty state's missing command, the CSS warning mark to become a Lucide icon, 400 % zoom, forced colours per webview).
+- New lints: Stylelint rejects `@keyframes` and `animation` (DL-X09) and `--engine-*` outside chip and tile files (DL-X13, plugin `sonarithm/engine-colours`); node tests for emoji in the catalogues (DL-X05) and for Tailwind, shadcn, Radix or Material packages in any manifest or the lockfile (DL-X06).
+- `packages/ui/tokens/cvd.ts`: CVD simulation (Machado 2009, severity 1.0; achromatopsia as luminance). Indicators keep 3:1 for every deficiency; signal pairs collapse (F-173), so the DL-X08 rule of text or an icon with every signal colour stands.
+- No cargo build: PLOTSONA held the Rust build slot. Locally: the `@sonarithm/ui` and `@sonarithm/i18n` node tests, lint and typecheck. The writing tools turned Unicode escapes in a test file into literal invisible characters; the file now spells them as escapes.
+
 ## Next steps
 
 - [ ] Commit the screenshot baselines from the first CI run's `visual-baselines` artifact.
