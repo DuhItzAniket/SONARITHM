@@ -941,3 +941,12 @@ A05 (render engine, audio backends, export) uses F-050 to F-069.
 - **Evidence level / confidence:** EV-C / Strong for the DOM; whether NVDA and Narrator accept the tree grid as a tree is for the B02-T10 walkthrough
 - **Affects:** B02-T05, #383, ADR-0003, A11Y-18
 - **Papers:** none yet
+
+### F-173 · Under colour-vision deficiency the signal colours collapse, but the indicators keep 3:1
+
+- **Date:** 2026-10-30 · **Phase:** B02 · **Type:** accessibility · **Status:** new
+- **Statement:** The B02 design review simulated protanopia, deuteranopia and tritanopia (Machado, Oliveira and Fernandes 2009, severity 1.0, on linear sRGB) and achromatopsia (relative luminance) on the rendered tokens of all four themes. `focus`, `accent` and `border-strong` keep at least 3:1 against `surface-0..3` for every deficiency; the lowest is 3.03:1, dark `border-strong` on `surface-3`, the same as without simulation. The signal colours do not stay apart: the closest pair falls to an OKLab distance of 0.006 (dark, achromatopsia, warning and success), 0.018 (high contrast light, achromatopsia, error and success) and 0.039 (light, deuteranopia, error and success), against about 0.02 for a just-noticeable difference. No token change can fix this for three saturated hues of similar lightness, so the existing rule holds: a signal colour never carries meaning without text or an icon (DL-X08, §5.3). Every status view in later phases must pass that check in the review record.
+- **Evidence:** `packages/ui/tokens/cvd.ts`; `packages/ui/test/cvd.test.ts` (`a11y_25 indicators keep 3 to 1 under every cvd type`, `dl_x08 some signal pairs collapse under cvd so signals need text`); [B02 design review](../sdlc/reviews/B02-design-review.md) (the per-theme table)
+- **Evidence level / confidence:** EV-C / Moderate. A simulation, not a test with CVD viewers; the severity-1.0 matrices model full dichromacy, so anomalous trichromats see more difference than shown. Matrix values TODO(verify) against the paper's published table
+- **Affects:** B02-T09, DL-X08, A11Y-25, design-language §5.3; B04 series colours (§6)
+- **Papers:** none yet

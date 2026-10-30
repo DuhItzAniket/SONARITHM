@@ -5,6 +5,7 @@
 // uses semantic tokens only; the generated token file is the one place with raw values, so it
 // is ignored. The root stylelint.config.js re-exports this config for the whole workspace.
 
+import engineColours from "./engine-colours.js";
 import hoverFocusVisible from "./hover-focus-visible.js";
 import readoutNumeric from "./readout-numeric.js";
 
@@ -51,12 +52,17 @@ export default {
     "**/dist/**",
     "**/storybook-static/**",
   ],
-  plugins: [hoverFocusVisible, readoutNumeric],
+  plugins: [engineColours, hoverFocusVisible, readoutNumeric],
   rules: {
     // DL-X10: readouts keep tabular figures.
     "sonarithm/readout-numeric": true,
     // DL-X11: no hover-only affordance.
     "sonarithm/hover-focus-visible": true,
+    // DL-X13: engine identity colours only in chips and tiles.
+    "sonarithm/engine-colours": true,
+    // DL-X09: no decorative motion. Nothing animates on its own; state changes use short
+    // transitions with the motion tokens, and the playhead moves from requestAnimationFrame.
+    "at-rule-disallowed-list": ["keyframes"],
     // DL-P07: no colour literals.
     "color-no-hex": true,
     "color-named": "never",
@@ -66,6 +72,9 @@ export default {
       "backdrop-filter",
       "-webkit-backdrop-filter",
       "text-shadow",
+      // DL-X09: keyframe animation (shimmer, pulse, floating blobs).
+      "animation",
+      "animation-name",
     ],
     // DL-X01 gradient text.
     "declaration-property-value-disallowed-list": {

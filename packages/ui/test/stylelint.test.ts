@@ -232,3 +232,35 @@ test("dl_x11 a hover style needs a focus-visible style for the same element", as
     [],
   );
 });
+
+test("dl_x09 keyframe animation is rejected", async () => {
+  assert.deepEqual(
+    await broken("@keyframes shimmer { to { opacity: 0.5; } }"),
+    ["at-rule-disallowed-list"],
+  );
+  assert.deepEqual(
+    await broken(".a { animation: shimmer var(--motion-base); }"),
+    ["property-disallowed-list"],
+  );
+  assert.deepEqual(
+    await broken(".a { transition: opacity var(--motion-fast); }"),
+    [],
+  );
+});
+
+test("dl_x13 engine colours only in chips and tiles", async () => {
+  assert.deepEqual(await broken(".a { background: var(--engine-numisona); }"), [
+    "sonarithm/engine-colours",
+  ]);
+  const chip = await stylelint.lint({
+    code: ".chip { border-color: var(--engine-numisona); }",
+    codeFilename: fileURLToPath(
+      new URL("../src/components/EngineChip.module.css", import.meta.url),
+    ),
+    config,
+  });
+  assert.deepEqual(
+    (chip.results[0]?.warnings ?? []).map((w) => w.rule),
+    [],
+  );
+});
