@@ -366,5 +366,5 @@ Maturity scale: `Designed` → `Prototype` → `Alpha` → `Beta` → `Stable` �
 | 2026-10-29 | A02 NVDA walkthrough (steps 1–19, agent-driven through desktop control): 16 pass, 2 partial, 1 fail, 1 skipped. Live regions behave as designed. NVDA speaks nothing from the native UIA route (F-046). OD-05 decided provisionally by the coordinator: live regions by default, native route off by default, final after Narrator. Failures filed as #382 and #383 (R-33) |
 | 2026-10-29 | C01-T10: Vega-Lite and MAIDR importers write v0.2 specs with chart-type templates and report what they cannot map |
 | 2026-10-30 | C01-T11: all 67 corpus charts meet the C01 exit bar (0.5 %, right class); CI job `chart-accuracy` |
-| 2026-10-31 | C01-T12: charts open in the CLI (`inspect`), Python (`read_chart`) and the app core, with the summary sentence of 10 §5 |
-| 2026-10-31 | C02 started: C02-T02, the raster core (decoding under a pixel budget, axis lines, hand-entered calibration with half-pixel uncertainty) |
+| 2026-10-30 | C01-T12: charts open in the CLI (`inspect`), Python (`read_chart`) and the app core, with the summary sentence of 10 §5 |
+| 2026-10-30 | C02 started: C02-T02, the raster core (decoding under a pixel budget, axis lines, hand-entered calibration with half-pixel uncertainty) |

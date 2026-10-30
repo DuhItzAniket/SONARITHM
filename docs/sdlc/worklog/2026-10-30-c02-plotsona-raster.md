@@ -1,7 +1,7 @@
-# 2026-10-31: C02 PLOTSONA raster digitizer
+# 2026-10-30: C02 PLOTSONA raster digitizer
 
-> **Date(s):** 2026-10-31. **Phase:** C02. **Author:** coding agent (Claude Code), written by an AI agent, reviewed by the coordinator session.
-> **Related:** [worklog conventions](README.md) · [C02 tasks](../status.md#c02-tasks) · [implementation plan §4](../../planning/implementation-plan.md#c02--plotsona-raster-digitizer) · [clean-room register](../../research/clean-room/raster-digitizer-sources.md)
+> **Date(s):** 2026-10-30. **Phase:** C02. **Author:** coding agent (Claude Code), written by an AI agent, reviewed by the coordinator session.
+> **Related:** [worklog conventions](README.md) · [C02 tasks](../status.md#c02-tasks) · [implementation plan §4](../../planning/implementation-plan.md#c02--plotsona-raster-digitizer-with-human-correction) · [clean-room register](../../research/clean-room/raster-digitizer-sources.md)
 
 ## Context and phase
 
