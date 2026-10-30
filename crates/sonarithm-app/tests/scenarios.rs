@@ -637,6 +637,18 @@ fn b01_t04_anchors_come_on_changes_not_on_every_tick() {
     // A seek is a change: exactly one anchor.
     h.ok(&json!({ "command": "transport_seek", "args": { "seconds": 0.25 } }));
     assert_eq!(anchors(&h), after_play + 1);
+    // B04-T04: the null device reports no output latency, so the anchors say so (null),
+    // and the playhead shows the position uncorrected.
+    let json = serde_json::to_value(h.sink.events().iter().find_map(|event| match event {
+        Event::Clock(anchor) => Some(anchor.clone()),
+        _ => None,
+    }))
+    .unwrap();
+    assert_eq!(json["outputLatencyS"], Value::Null, "{json}");
+    assert!(
+        json.as_object()
+            .is_some_and(|o| o.contains_key("outputLatencyS"))
+    );
 }
 
 #[test]

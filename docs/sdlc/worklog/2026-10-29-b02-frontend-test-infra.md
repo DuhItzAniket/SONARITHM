@@ -91,7 +91,7 @@
 
 - `PlayheadClock` and `Playhead` in `@sonarithm/viz`. The anchor's `hostTimeS` is on the device clock (cpal), which the page cannot map onto `performance.now()`, so the clock works on receive times with a minimum-delay filter.
 - The jump threshold is 50 ms of position: a 250 ms draft would have ignored a short backward seek while playing.
-- The latency field on the anchor waits on the coordinator's approval; the B04-T04 PR carries both halves.
+- `ClockAnchor.outputLatencyS` was approved as an additive field. The Rust type, codegen and the ADR-0017 "Clock anchors" record with a change-history line are done, and the null device's anchors carry `null`. `@sonarithm/viz/playhead` is a subpath export, so Node tests can import the clock without TSX or CSS. Stored offsets (approved as option b) get their own PR after this one.
 
 ## Next steps
 

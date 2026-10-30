@@ -88,6 +88,7 @@ void test("events reach the subscribers of their channel only", async () => {
     event: "clock",
     transport: stopped,
     hostTimeS: null,
+    outputLatencyS: null,
     seq: 1,
   });
   transport.emit({ event: "job_progress", id: 1, progress: 0.5 });
@@ -96,6 +97,7 @@ void test("events reach the subscribers of their channel only", async () => {
     event: "clock",
     transport: stopped,
     hostTimeS: null,
+    outputLatencyS: null,
     seq: 2,
   });
   assert.equal(clock.length, 1);

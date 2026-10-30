@@ -1176,6 +1176,14 @@ pub struct ClockAnchor {
     /// The device's playback time of the anchor's block in seconds, when the backend
     /// reports one.
     pub host_time_s: Option<f64>,
+    /// How far the heard sound lags the engine's position, in seconds (B04-T04, 06 §9): the
+    /// UI's playhead shows `positionS − outputLatencyS × speed`. In order of precedence:
+    /// the device's calibrated latency where one is stored (ADR-0016, per-device latency
+    /// calibration; the stored offsets are a follow-up), then the backend's reported
+    /// latency, then `None`, which the UI takes as "no correction", never as a guess. It is
+    /// computed on the control thread when the anchor is built, never in the audio
+    /// callback. Added in protocol 1 (additive, approved by the coordinator on 2026-10-30).
+    pub output_latency_s: Option<f64>,
     /// Counts up with every anchor.
     pub seq: u64,
 }
@@ -1418,6 +1426,7 @@ mod tests {
             Event::Clock(ClockAnchor {
                 transport,
                 host_time_s: None,
+                output_latency_s: None,
                 seq: 1,
             }),
             Event::JobProgress {
