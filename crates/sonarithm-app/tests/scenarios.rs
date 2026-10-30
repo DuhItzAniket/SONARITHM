@@ -663,3 +663,30 @@ fn b01_t04_meters_are_binary_frames_at_most_30_a_second_while_playing() {
         "paused: no more frames"
     );
 }
+
+#[test]
+fn b01_t07_start_up_never_waits_for_an_audio_driver() {
+    // A driver that takes 2 s for every call (09 §7): the app core starts, loads its
+    // settings and answers without touching it, and only the first play opens the device.
+    let delay = Duration::from_secs(2);
+    let mut slow = NullConfig::new(48_000, 256);
+    slow.driver_delay = delay;
+    let started = Instant::now();
+    let mut h = Harness::with_audio("slowdriver", AudioOutput::Null(slow));
+    h.ok(&json!({ "command": "hello", "args": { "protocol": 1 } }));
+    h.ok(&json!({ "command": "settings_get" }));
+    let state = h.state();
+    let start_up = started.elapsed();
+    assert!(start_up < delay, "start-up took {start_up:?}");
+    assert_eq!(
+        state["device"],
+        Value::Null,
+        "no device is open before a play"
+    );
+
+    h.open_and_compile();
+    let play = Instant::now();
+    let state = h.ok(&json!({ "command": "transport_play" }));
+    assert_eq!(status(&state), "playing");
+    assert!(play.elapsed() >= delay, "the first play opens the device");
+}

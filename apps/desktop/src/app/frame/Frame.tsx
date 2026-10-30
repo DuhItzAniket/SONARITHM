@@ -8,7 +8,7 @@ import {
   ToggleButtonGroup,
 } from "@sonarithm/ui";
 import type { FocusEvent, ReactNode } from "react";
-import { useEffect, useId, useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 
 import { useCommand } from "../../commands/context.tsx";
 import { useLocalizer } from "../../i18n.ts";
@@ -30,6 +30,12 @@ export interface FrameProps {
   readonly workspace: ReactNode;
   readonly inspector: ReactNode;
   readonly status: ReactNode;
+  /**
+   * Where the keyboard focus goes once the app is ready (09 §7): the project region, whose
+   * first control is the project tree once it holds one. `null` while starting. It moves
+   * only if nothing has the focus yet.
+   */
+  readonly startIn?: RegionId | null;
 }
 
 type Side = "project" | "inspector";
@@ -37,6 +43,29 @@ type Side = "project" | "inspector";
 /** Elements that take focus with Tab, for landing in a region the first time. */
 const TABBABLE =
   'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
+
+/**
+ * Focuses `remembered` if it is still inside `element` and shown, otherwise the region's
+ * first shown Tab stop, otherwise the region itself.
+ */
+function focusIn(
+  element: HTMLElement | undefined,
+  remembered: HTMLElement | undefined,
+): void {
+  if (element === undefined) {
+    return;
+  }
+  const first = [...element.querySelectorAll<HTMLElement>(TABBABLE)].find(
+    (el) => el.getClientRects().length > 0,
+  );
+  const target =
+    remembered?.isConnected === true &&
+    element.contains(remembered) &&
+    remembered.getClientRects().length > 0
+      ? remembered
+      : (first ?? element);
+  target.focus();
+}
 
 /** The current layout, from the window width (design-language §4.3). */
 function useLayout(): Layout {
@@ -129,25 +158,32 @@ export function Frame(props: FrameProps) {
 
   // Focus moves after the render that shows the target region.
   useEffect(() => {
-    if (focusRequest === null) {
-      return;
+    if (focusRequest !== null) {
+      focusIn(
+        regions.get(focusRequest.region),
+        lastFocused.get(focusRequest.region),
+      );
     }
-    const element = regions.get(focusRequest.region);
-    if (element === undefined) {
-      return;
-    }
-    const remembered = lastFocused.get(focusRequest.region);
-    const first = [...element.querySelectorAll<HTMLElement>(TABBABLE)].find(
-      (el) => el.getClientRects().length > 0,
-    );
-    const target =
-      remembered?.isConnected === true &&
-      element.contains(remembered) &&
-      remembered.getClientRects().length > 0
-        ? remembered
-        : (first ?? element);
-    target.focus();
   }, [focusRequest, regions, lastFocused]);
+
+  // Start-up (09 §7, B01-T07): once ready, the focus lands in the project region, without
+  // a splash or a dialog in the way. In Narrow, where the workspace is shown first
+  // (design-language §4.3), it lands there instead. A focus the user already moved stays.
+  const started = useRef(false);
+  const startIn = props.startIn ?? null;
+  useEffect(() => {
+    if (startIn === null || started.current) {
+      return;
+    }
+    started.current = true;
+    const active = document.activeElement;
+    if (active !== null && active !== document.body) {
+      return;
+    }
+    const region =
+      layout === "narrow" && isSwitchable(startIn) ? shown : startIn;
+    focusIn(regions.get(region), undefined);
+  }, [startIn, layout, shown, regions]);
 
   const region = (id: RegionId) => ({
     ref: (element: HTMLElement | null) => {

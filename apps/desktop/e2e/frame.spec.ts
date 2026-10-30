@@ -7,7 +7,7 @@ import type { Page } from "@playwright/test";
 import { expect, test } from "@playwright/test";
 
 import { seriousViolations } from "./axe.ts";
-import { tabThrough } from "./keyboard.ts";
+import { startOutsideRegions, tabThrough } from "./keyboard.ts";
 
 const ORDER = ["top", "project", "workspace", "inspector", "status"];
 
@@ -44,6 +44,8 @@ for (const size of SIZES) {
       await expect(
         page.getByRole("main").getByText("No dataset is open."),
       ).toBeVisible();
+      await expect.poll(() => focusedRegion(page)).not.toBeNull();
+      await startOutsideRegions(page);
     });
 
     test("a11y_07_the_regions_are_landmarks", async ({ page }) => {
@@ -89,6 +91,8 @@ test("narrow: F6 into a hidden region shows it", async ({ page }) => {
   await page.goto("/e2e.html");
   const inspector = page.getByRole("complementary", { name: "Inspector" });
   await expect(inspector).toBeHidden();
+  await expect.poll(() => focusedRegion(page)).toBe("workspace");
+  await startOutsideRegions(page);
   for (let i = 0; i < 4; i++) {
     await page.keyboard.press("F6");
   }
@@ -103,6 +107,8 @@ test("wide: splitters resize by keyboard and Enter collapses into Expand", async
   await page.goto("/e2e.html");
   const project = page.getByRole("navigation", { name: "Project" });
   const splitter = page.getByRole("separator", { name: "Resize Project" });
+  await expect.poll(() => focusedRegion(page)).toBe("project");
+  await startOutsideRegions(page);
   await page.keyboard.press("F6");
   await page.keyboard.press("F6");
   // Tab from the project region's first stop reaches its splitter.

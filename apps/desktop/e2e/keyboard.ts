@@ -124,3 +124,16 @@ export async function tabThrough(page: Page): Promise<FocusStop[]> {
   }
   return stops;
 }
+
+/**
+ * Moves the focus out of every region, as before start-up placed it (B01-T07), so a test
+ * of the F6 cycle starts from the same point at every breakpoint.
+ */
+export async function startOutsideRegions(page: Page): Promise<void> {
+  await page.evaluate(() => {
+    const active = document.activeElement;
+    if (active instanceof HTMLElement) {
+      active.blur();
+    }
+  });
+}
