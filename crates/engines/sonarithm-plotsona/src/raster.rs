@@ -18,8 +18,10 @@
 //! only known to within the values half a pixel either side ([`Estimate`]).
 
 pub mod colour;
+pub mod components;
 pub(crate) mod extract;
 pub mod lines;
+pub mod marks;
 
 use std::io::Cursor;
 
