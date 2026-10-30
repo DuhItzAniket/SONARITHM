@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
 import type { Meta, StoryObj } from "@storybook/react-vite";
-import { expect, fn, userEvent, within } from "storybook/test";
+import { expect, fn, userEvent, waitFor, within } from "storybook/test";
 
 import { PlayGlyph } from "../../.storybook/icons.tsx";
 import { storyLocalizer } from "../../.storybook/localizer.ts";
@@ -69,6 +69,9 @@ export const IconOnly: StoryObj<typeof IconButton> = {
     const tooltip = await within(document.body).findByRole("tooltip");
     await expect(tooltip).toHaveTextContent("Play (Space)");
     await userEvent.keyboard("{Escape}");
-    await expect(within(document.body).queryByRole("tooltip")).toBeNull();
+    // The tooltip leaves after its close transition, a frame or two after Escape.
+    await waitFor(() =>
+      expect(within(document.body).queryByRole("tooltip")).toBeNull(),
+    );
   },
 };

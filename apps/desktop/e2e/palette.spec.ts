@@ -10,8 +10,18 @@ import { seriousViolations } from "./axe.ts";
 const palette = (page: Page) =>
   page.getByRole("dialog", { name: "Command palette" });
 
+/**
+ * The platform's Primary modifier as the app sees it (KB-07): the app picks its bindings
+ * from the user agent, and Playwright's WebKit project reports a Mac one, so Primary is
+ * Cmd (Meta) there and Ctrl elsewhere, whatever OS runs the test.
+ */
+async function primary(page: Page): Promise<"Meta" | "Control"> {
+  const mac = await page.evaluate(() => navigator.userAgent.includes("Mac"));
+  return mac ? "Meta" : "Control";
+}
+
 async function openPalette(page: Page): Promise<void> {
-  await page.keyboard.press("Control+Shift+P");
+  await page.keyboard.press(`${await primary(page)}+Shift+P`);
   await expect(palette(page)).toBeVisible();
 }
 
@@ -60,6 +70,10 @@ test("kb_01_every_registered_command_runs_from_the_palette", async ({
         page.evaluate(() => document.documentElement.dataset.lastCommand),
       )
       .toBe(id);
+    // These two open a dialog of their own, just after the palette closes.
+    if (id === "app.palette" || id === "help.keyboard") {
+      await expect(page.getByRole("dialog")).toHaveCount(1);
+    }
     await closeDialogs(page);
     await page.evaluate(() => {
       delete document.documentElement.dataset.lastCommand;
