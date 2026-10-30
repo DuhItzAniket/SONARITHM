@@ -31,6 +31,14 @@
 
 Precedence, highest first: overlay → text input or editor → focused widget scope → region → global. An overlay or text field always keeps standard editing keys; for example Primary+Z in a text field undoes typing, not the project.
 
+**As built (B02-T07).** `apps/desktop/src/commands` holds:
+- the command registry, with the v0 keymap of §5.1–§5.2 as data;
+- one keyboard dispatcher for the window;
+- the command palette (React Aria Autocomplete; the result count is announced);
+- the Shift+F1 reference.
+
+While a dialog or menu is open, only overlay commands and `transport.stopAll` run, so no command moves focus out from under a modal. A text field keeps every key without Ctrl, Alt or Meta, except function keys. A lint test (`apps/desktop/test/commands.test.ts`) checks every default binding against KB-02, KB-03, KB-04 and the reserved keys of §13 rule 6, on Windows, Linux and macOS. The palette lists a command once its feature registers a handler (KB-01).
+
 **The chart explorer** is a single Tab stop inside the Plot tab. Tab and Shift+Tab leave it. Its keys only work when the screen reader passes keys through (NVDA and JAWS focus or forms mode, Narrator scan mode off, VoiceOver Quick Nav off, Orca focus mode). The explorer therefore exposes a role that makes NVDA and JAWS switch automatically; which role, and how Narrator and Orca behave with it, is decided in [08](../architecture/08-interaction-and-accessibility.md) and verified in the A02 spike and B07 [CHECK]. Help and the tutorial explain how to switch modes manually.
 
 ## 3. Regions and F6

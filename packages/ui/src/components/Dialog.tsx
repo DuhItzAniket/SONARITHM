@@ -25,21 +25,31 @@ export interface ModalDialogProps {
   readonly role?: "dialog" | "alertdialog";
   /** Whether Escape and a click outside close it; on by default. */
   readonly isDismissable?: boolean;
+  /** Open state when a command, not a trigger, opens it (the command palette). */
+  readonly isOpen?: boolean;
+  readonly onOpenChange?: (isOpen: boolean) => void;
 }
 
 /**
  * A modal dialog (APG Dialog): focus moves inside and stays there, Escape closes it, and
  * focus returns to the control that opened it. Put it in a {@link DialogTrigger} after that
- * control.
+ * control, or control it with `isOpen` when a command opens it.
  */
 export function ModalDialog({
   title,
   children,
   role = "dialog",
   isDismissable = true,
+  isOpen,
+  onOpenChange,
 }: ModalDialogProps) {
   return (
-    <ModalOverlay className={cx(overlays.scrim)} isDismissable={isDismissable}>
+    <ModalOverlay
+      className={cx(overlays.scrim)}
+      isDismissable={isDismissable}
+      {...(isOpen === undefined ? {} : { isOpen })}
+      {...(onOpenChange === undefined ? {} : { onOpenChange })}
+    >
       <Modal>
         <AriaDialog role={role} className={cx(overlays.dialog)}>
           {({ close }) => (

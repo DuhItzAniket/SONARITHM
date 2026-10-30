@@ -10,6 +10,7 @@ import {
 import type { FocusEvent, ReactNode } from "react";
 import { useEffect, useId, useState } from "react";
 
+import { useCommand } from "../../commands/context.tsx";
 import { useLocalizer } from "../../i18n.ts";
 import styles from "./frame.module.css";
 import type { Layout, RegionId, SwitchableRegion } from "./regions.ts";
@@ -56,6 +57,7 @@ function useLayout(): Layout {
  * The application frame (B02-T06; design-language §4, keyboard-and-navigation §3): five
  * fixed regions, each a landmark, in a constant F6 order. F6 and Shift+F6 move between them,
  * landing on the region's last focused element, or its first control the first time.
+ * The region commands are registered with the command registry (B02-T07).
  * Splitters resize the side regions by keyboard or pointer, and Enter collapses one into a
  * single "Expand" control that stays in the F6 cycle. Medium windows collapse both sides
  * to rails that open over the workspace edge; Narrow windows show one of Project, Workspace
@@ -104,31 +106,25 @@ export function Frame(props: FrameProps) {
     }));
   };
 
-  // F6 and Shift+F6 from anywhere (KB-05). The command registry takes this over in B02-T07.
-  useEffect(() => {
-    const onKeyDown = (event: KeyboardEvent) => {
-      if (
-        event.key !== "F6" ||
-        event.ctrlKey ||
-        event.altKey ||
-        event.metaKey
-      ) {
-        return;
-      }
-      event.preventDefault();
-      const target = event.target instanceof Element ? event.target : null;
-      const current = target?.closest<HTMLElement>("[data-region]");
-      goTo(
-        nextRegion(
-          (current?.dataset.region as RegionId | undefined) ?? null,
-          event.shiftKey,
-        ),
-      );
-    };
-    window.addEventListener("keydown", onKeyDown);
-    return () => {
-      window.removeEventListener("keydown", onKeyDown);
-    };
+  // The region commands (KB-05, keyboard §5.2), dispatched by the command registry.
+  const focusedRegion = (): RegionId | null =>
+    (document.activeElement?.closest<HTMLElement>("[data-region]")?.dataset
+      .region as RegionId | undefined) ?? null;
+  useCommand("view.nextRegion", () => {
+    goTo(nextRegion(focusedRegion(), false));
+  });
+  useCommand("view.prevRegion", () => {
+    goTo(nextRegion(focusedRegion(), true));
+  });
+  useCommand("view.announcements", () => {
+    goTo("status");
+  });
+  useCommand("view.toggleRegion", () => {
+    const region = focusedRegion();
+    if (region === "project" || region === "inspector") {
+      setCollapsed(region, !collapsed[region]);
+      goTo(region);
+    }
   });
 
   // Focus moves after the render that shows the target region.
