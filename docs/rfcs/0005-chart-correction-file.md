@@ -7,7 +7,7 @@
 |---|---|
 | RFC | 0005 |
 | Start date | 2026-10-30 |
-| RFC PR | (this PR) |
+| RFC PR | [#402](https://github.com/DuhItzAniket/SONARITHM/pull/402) |
 | Affects | Persisted formats (a new file, `sonarithm-corrections` v1); spec language (a minor version defines `data.source.corrections.path`, reserved by RFC-0004 §6); IPC protocol (additive commands, ADR-0017 §5); the project bundle only through its reserved `annotations/` folder |
 | Phase | C02 (task C02-T06, issue [#308](https://github.com/DuhItzAniket/SONARITHM/issues/308)) |
 | Related ADR(s) | [ADR-0012](../decisions/0012-privacy-and-telemetry.md), [ADR-0013](../decisions/0013-determinism-and-provenance.md), [ADR-0017](../decisions/0017-ipc-protocol-v1.md), [ADR-0018](../decisions/0018-project-format-v1.md), [ADR-0021](../decisions/0021-spec-v0.2.md); a new ADR records this RFC's outcome |
