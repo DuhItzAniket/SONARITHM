@@ -69,9 +69,16 @@ export async function tabThrough(page: Page): Promise<FocusStop[]> {
           el.dataset.snrTab = key;
         }
       });
-      if (document.activeElement instanceof HTMLElement) {
-        document.activeElement.blur();
-      }
+      // Start at the top of the page. Blurring is not enough: Firefox keeps the blurred
+      // element as the point Tab moves on from, so a walk would start wherever the app
+      // put the focus (the project region, B01-T07) and run out of presses on the way
+      // round. A focused, untabbable marker before everything else is a start point
+      // every engine agrees on.
+      const start = document.createElement("span");
+      start.tabIndex = -1;
+      start.dataset.snrStart = "";
+      document.body.prepend(start);
+      start.focus();
       return new Set(all.map((el) => el.dataset.snrTab)).size;
     },
     { selector: TABBABLE, composite: COMPOSITE },
@@ -107,6 +114,9 @@ export async function tabThrough(page: Page): Promise<FocusStop[]> {
     }
     stops.push({ label: stop.label });
   }
+  await page.evaluate(() => {
+    document.querySelector("[data-snr-start]")?.remove();
+  });
   if (reached.size < count) {
     const missed = await page.evaluate(
       (seen) =>
