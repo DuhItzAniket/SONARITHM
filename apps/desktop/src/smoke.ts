@@ -151,9 +151,11 @@ interface Pb09 {
 }
 
 /**
- * Times `view_get` round trips of an M4 view of every fixture row (4 rows per pixel), about
- * 1.2 MB. M4 tiles are cached in the app core after the warm-up call, so the timed calls
- * measure encoding, the IPC transfer and the arrival as an `ArrayBuffer`.
+ * Times `view_get` round trips of an M4 view of every fixture row (one row per pixel), about
+ * 1.2 MB. With more rows per pixel, M4 keeps only the rows that are a pixel's first, last,
+ * minimum or maximum, which on the fixture's smooth sine is about two of every four, so the
+ * view would fall under 1 MB. M4 tiles are cached in the app core after the warm-up call,
+ * so the timed calls measure encoding, the IPC transfer and the arrival as an `ArrayBuffer`.
  */
 async function measurePb09(
   transport: IpcTransport,
@@ -171,7 +173,7 @@ async function measurePb09(
       x: "x",
       y: "y",
       range: null,
-      pxWidth: Math.ceil(config.rows / 4),
+      pxWidth: config.rows,
       method: "m4",
     },
   } as const;
