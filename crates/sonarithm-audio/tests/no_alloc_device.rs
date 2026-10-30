@@ -20,6 +20,11 @@ use sonarithm_render::fixtures::{BENCHMARK_SEED, benchmark_score};
 use sonarithm_render::graph::{Command, Cue, GainTarget, LoopRange};
 use sonarithm_render::{Instrument, PlanConfig};
 
+/// Debug builds render the benchmark Score at about half real time: hundreds of callbacks in
+/// 3 s on a developer machine, but a busy CI runner can fall short (175 and 189 seen on
+/// `windows-latest`), so the test runs until it has seen more than this many.
+const MIN_CALLBACKS: u64 = 200;
+
 #[test]
 fn the_device_callback_never_allocates() {
     let mut config = NullConfig::new(48_000, 128);
@@ -37,9 +42,13 @@ fn the_device_callback_never_allocates() {
         end: Frames(8 * 48_000),
     })));
     player.send(Command::Play);
+    // Run for at least 3 s and until enough callbacks ran, within a limit (MIN_CALLBACKS).
     let start = Instant::now();
     let mut step = 0_u64;
-    while start.elapsed() < Duration::from_secs(3) {
+    while start.elapsed() < Duration::from_secs(3)
+        || (player.stream().unwrap().status().callbacks() <= MIN_CALLBACKS
+            && start.elapsed() < Duration::from_secs(30))
+    {
         step += 1;
         let command = match step % 4 {
             0 => Command::Seek(Frames((step * 9_973) % 300_000)),
@@ -59,8 +68,11 @@ fn the_device_callback_never_allocates() {
     }
     let stream = player.stream().unwrap();
     let callbacks = stream.status().callbacks();
-    // Debug builds render the benchmark Score at about half real time: hundreds of callbacks.
-    assert!(callbacks > 200, "only {callbacks} callbacks");
+    assert!(
+        callbacks > MIN_CALLBACKS,
+        "only {callbacks} callbacks in {:?}",
+        start.elapsed()
+    );
     assert_eq!(stream.status().allocations(), 0, "callbacks that allocated");
     assert!(!stream.status().fault());
 }
