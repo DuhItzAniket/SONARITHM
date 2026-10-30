@@ -502,7 +502,9 @@ jobs:
         if: always()
         with:
           name: chart-accuracy
-          path: target/chart-accuracy.md
+          path: |
+            target/chart-accuracy.md
+            target/chart-accuracy-raster.md
           retention-days: 30
           if-no-files-found: error
 
