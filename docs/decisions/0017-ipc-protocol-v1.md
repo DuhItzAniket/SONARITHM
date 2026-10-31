@@ -91,6 +91,7 @@ The app core computes it on the control thread when it builds the anchor, never 
 |---|---|
 | 2026-10-30 | `outputLatencyS` added (B04-T04), citing ADR-0016 §"Per-device latency calibration"; approved by the coordinator, additive |
 | 2026-10-31 | `cursor_set`, `cursor_get` and the `cursor` event and channel added (B04-T06): Rust's one cursor, with an origin that decides what is spoken (INFER, OD-30); approved by the coordinator, additive |
+| 2026-11-01 | `function_check`, `function_open` and `audify_calculate` added (C03-T08): a function opens as a dataset the cursor and the cues work on, and the SDR-31 calculator; approved by the coordinator, additive |
 
 #### Cursor
 
@@ -117,6 +118,20 @@ The app core computes it on the control thread when it builds the anchor, never 
 * a compile that makes its row a point adds `node`, `x` and the path.
 
 Each change sends a `cursor` event with `origin: null`. A `cursor` event never moves the keyboard focus (B04-T06).
+
+#### Functions
+
+> Amended 2026-11-01, C03-T08: `function_check`, `function_open` and `audify_calculate` added, approved by the coordinator, additive (as `cursor_set`). `PROTOCOL_VERSION` stays 1 (§5).
+
+**Why a function opens as a dataset.** `spec_set` with a `function` source compiles headless (C03-T07), but the cursor, `table_page`, `view_get` and the readout are keyed on an open dataset. A function without one could not be shown in the table or the plot, and the one cursor (A11Y-10) would have nothing to point at. So `function_open` samples the function into a dataset, and specs read it as `{ "kind": "dataset", "id": "dN" }`. The `critical-points` analyzer and the function cues read the function from the table's own metadata (07 CURVASONA), so they work on a dataset source unchanged.
+
+* `function_check { expr, variables? }` reads an expression without sampling it and replies `function_check { ok, canonical, diagnostics, span }`. A bad expression is a result, not an error: `ok` is `false`, `diagnostics` holds its one diagnostic (`SNR-ENG-400` to `403`), and `span` is `[at, len]` in characters as the message counts them, when the error has a place. It opens nothing, so an expression field can call it while the user types.
+* `function_open { expr, domain, samples?, step?, variables?, name? }` samples the function (CURVASONA's limits) and opens it as the next dataset. It replies `function { dataset, function }`. `dataset` is the `DatasetSummary` `dataset_open` gives (fields `x`, `y`, `dy`, all `synthetic`; the name defaults to `f(x) = ` and the canonical expression). `function` is `FunctionInfo { canonical, summary, criticalPoints }`. Each `CriticalPointInfo { kind, x, end?, y?, row?, text }` gives CURVASONA's stable label, its place, and `row`, the first dataset row its insight covers, where its cue sounds and where `cursor_set` goes to reach it. Sampling errors are `IpcError`s with CURVASONA's code (`SNR-ENG-400` to `404`). `dataset_close` closes it.
+* `audify_calculate { dataset, time?, k?, topHz? }` replies `audify_readout { k, fsHz, samples, series, durationS, bandHz, audibleHz, codes }`: the SDR-31 calculator for the series an `audify` track would play, on the encoder's own grid and with its rule for k (`k`, else `topHz`, else SDR-44's 4 kHz top), so the calculator and a compile agree. `codes` lists `SNR-ENG-461` or `462` when they would apply; k out of bounds, too many samples or no series are `IpcError`s with `SNR-ENG-463`, `464` or `465`.
+* **Limits.** Before anything is read, an expression over 4096 bytes or more than 64 variables is refused with `SNR-APP-088`; the expression language's own limits (1024 characters, 16 variables, ADR-0028) then apply.
+* **Projects.** The project format has no place for a function's definition yet (a project-format amendment will add one). Until then, saving a project with an open function dataset fails with `SNR-APP-089`, naming the dataset, and writes nothing; it never drops the function or saves its samples in its place. Autosave, which is best effort, skips while a function dataset is open.
+
+No event is added. A `cursor` event follows only under the rules above (Cursor).
 
 #### Meter frames
 

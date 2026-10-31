@@ -33,6 +33,7 @@ use crate::transport::{Action, AudioOutput, OutputConfig, Transport};
 
 mod corrections;
 mod cursor;
+mod functions;
 mod profiles;
 mod projects;
 
@@ -92,6 +93,9 @@ struct Open {
     origin: Option<PathBuf>,
     /// For a dataset read from a chart: its corrections (C02-T06).
     chart: Option<corrections::ChartState>,
+    /// For a dataset sampled from a function: its definition (C03-T08). Projects cannot
+    /// save it yet (`SNR-APP-089`).
+    function: Option<sonarithm::FunctionSpec>,
 }
 
 /// What an undoable edit changed: the spec, or one chart dataset's corrections (C02-T06).
@@ -326,6 +330,30 @@ impl App {
                 origin,
             } => self.cursor_set(&dataset, row, origin),
             Request::CursorGet => Ok(self.cursor_get()),
+            Request::FunctionCheck { expr, variables } => Self::function_check(&expr, &variables),
+            Request::FunctionOpen {
+                expr,
+                domain,
+                samples,
+                step,
+                variables,
+                name,
+            } => self.edit(|app| {
+                app.function_open(functions::FunctionRequest {
+                    expr,
+                    domain,
+                    samples,
+                    step,
+                    variables,
+                    name,
+                })
+            }),
+            Request::AudifyCalculate {
+                dataset,
+                time,
+                k,
+                top_hz,
+            } => self.audify_calculate(&dataset, time.as_deref(), k, top_hz),
             Request::ViewGet { .. } | Request::TablePage { .. } => Err(IpcError::new(
                 &codes::BAD_REQUEST,
                 "This command returns a binary view; send it with dispatch_binary.",
@@ -572,6 +600,7 @@ impl App {
                 bundle,
                 origin: Some(path.clone()),
                 chart: chart_state,
+                function: None,
             },
         );
         Ok(Reply::Dataset(summary))

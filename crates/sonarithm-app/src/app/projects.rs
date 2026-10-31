@@ -130,6 +130,17 @@ impl App {
         specs.extend(self.project.other_specs.iter().cloned());
         let mut datasets = Vec::new();
         for open in self.datasets.values() {
+            // The project format has no place for a function's definition yet, and saving
+            // its samples would lose the function: refuse, never drop it (C03-T08).
+            if open.function.is_some() {
+                return Err(IpcError::new(
+                    &codes::FUNCTION_NOT_SAVED,
+                    format!(
+                        "`{}` ({}) is a function, and projects cannot save functions yet.",
+                        open.summary.name, open.summary.id
+                    ),
+                ));
+            }
             let Some(table) = open.bundle.primary() else {
                 continue;
             };
@@ -204,6 +215,7 @@ impl App {
                     bundle,
                     origin: dataset.origin,
                     chart,
+                    function: None,
                 },
             );
         }

@@ -121,6 +121,9 @@ fn requests(dir: &TempDir) -> Vec<Value> {
             "op": "move", "id": "e1", "series": "north", "point": 0, "was": { "y": 99.2 }, "to": { "y": 100 }, "before": { "class": "exact" } } }] } }),
         json!({ "command": "corrections_export", "args": { "dataset": "d2", "path": corrections } }),
         json!({ "command": "corrections_import", "args": { "dataset": "d2", "path": corrections } }),
+        json!({ "command": "function_check", "args": { "expr": "x^2 - 1" } }),
+        json!({ "command": "function_open", "args": { "expr": "sin(x)", "domain": [0, 10] } }),
+        json!({ "command": "audify_calculate", "args": { "dataset": "d3", "k": 1000 } }),
         json!({ "command": "dataset_close", "args": { "id": "d1" } }),
         json!({ "command": "project_new" }),
     ]

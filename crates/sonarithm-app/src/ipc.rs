@@ -100,6 +100,9 @@ pub const COMMANDS: &[(&str, &str)] = &[
     ("corrections_import", "corrections_import"),
     ("cursor_set", "cursor"),
     ("cursor_get", "cursor"),
+    ("function_check", "function_check"),
+    ("function_open", "function"),
+    ("audify_calculate", "audify_readout"),
 ];
 
 /// The commands whose reply is a binary view (ADR-0017 §6), sent with
@@ -439,6 +442,52 @@ pub enum Request {
     },
     /// Where the cursor is. Replies [`Reply::Cursor`].
     CursorGet,
+    /// Reads a function's expression without sampling it, for live diagnostics (C03-T08,
+    /// ADR-0017 "Functions"). Replies [`Reply::FunctionCheck`]; a bad expression is a
+    /// result, not an error.
+    FunctionCheck {
+        /// The expression in `x` (ADR-0028), at most 4096 bytes (`SNR-APP-088`).
+        expr: String,
+        /// Named constants, at most 64.
+        #[serde(default)]
+        variables: BTreeMap<String, f64>,
+    },
+    /// Samples a function and opens it as a dataset, like `dataset_open` (C03-T08).
+    /// Replies [`Reply::Function`]. Sampling errors are `SNR-ENG-400` to `404`.
+    FunctionOpen {
+        /// The expression in `x` (ADR-0028), at most 4096 bytes.
+        expr: String,
+        /// `[min, max]` of `x`.
+        domain: [f64; 2],
+        /// The number of samples; default 1000. Exclusive with `step`.
+        #[serde(default)]
+        samples: Option<u32>,
+        /// The sampling step, instead of `samples`.
+        #[serde(default)]
+        step: Option<f64>,
+        /// Named constants, at most 64.
+        #[serde(default)]
+        variables: BTreeMap<String, f64>,
+        /// A name for the dataset; by default `f(x) = ` and the canonical expression.
+        #[serde(default)]
+        name: Option<String>,
+    },
+    /// The audification calculator (SDR-31) for the series a track with the `audify` mark
+    /// would play from a dataset, on the encoder's own grid (C03-T08). Replies
+    /// [`Reply::AudifyReadout`].
+    AudifyCalculate {
+        /// The dataset's ID.
+        dataset: String,
+        /// The time field; by default the field with the x role.
+        #[serde(default)]
+        time: Option<String>,
+        /// The speed-up k; by default from `topHz`, else SDR-44's 4 kHz top.
+        #[serde(default)]
+        k: Option<f64>,
+        /// Where the top of the band should land, in Hz.
+        #[serde(default)]
+        top_hz: Option<f64>,
+    },
     /// A downsampled view of two fields of a dataset for drawing (03 §7). Binary: a view of
     /// kind `m4Tile` or `lttbTile` with the columns `row`, `x` and `y` (ADR-0017 §6).
     ViewGet {
@@ -566,6 +615,9 @@ impl Request {
             Self::CorrectionsImport { .. } => "corrections_import",
             Self::CursorSet { .. } => "cursor_set",
             Self::CursorGet => "cursor_get",
+            Self::FunctionCheck { .. } => "function_check",
+            Self::FunctionOpen { .. } => "function_open",
+            Self::AudifyCalculate { .. } => "audify_calculate",
             Self::ViewGet { .. } => "view_get",
             Self::TablePage { .. } => "table_page",
         }
@@ -612,6 +664,44 @@ pub enum Reply {
     Transport(TransportState),
     /// The one cursor (B04-T06).
     Cursor(CursorState),
+    /// An expression read without sampling it (C03-T08).
+    FunctionCheck {
+        /// Whether it reads.
+        ok: bool,
+        /// Its canonical form, when it reads.
+        canonical: Option<String>,
+        /// Why it does not: one diagnostic, `SNR-ENG-400` to `403`.
+        diagnostics: Vec<DiagnosticInfo>,
+        /// Where reading stopped, `[at, len]` in characters as the message counts them,
+        /// when the error has a place.
+        span: Option<[u32; 2]>,
+    },
+    /// A function opened as a dataset (C03-T08).
+    Function {
+        /// The dataset, as `dataset_open` gives it.
+        dataset: DatasetSummary,
+        /// The function and its critical points.
+        function: FunctionInfo,
+    },
+    /// The audification calculator (SDR-31, C03-T08).
+    AudifyReadout {
+        /// The speed-up.
+        k: f64,
+        /// The series' own rate: samples per second, per unit of the time field, or per row.
+        fs_hz: f64,
+        /// The samples on the uniform grid.
+        samples: u64,
+        /// The field it plays.
+        series: String,
+        /// How long it plays, T/k, in seconds.
+        duration_s: f64,
+        /// The band it sounds in, `[k/T, k·fs/2]`, in Hz.
+        band_hz: [f64; 2],
+        /// The part of the band inside 20 Hz to 20 kHz, if any.
+        audible_hz: Option<[f64; 2]>,
+        /// `SNR-ENG-461` when part of the band is inaudible, `462` when all of it is.
+        codes: Vec<String>,
+    },
     /// One job.
     Job(JobInfo),
     /// Every job.
@@ -1058,6 +1148,39 @@ pub struct DatasetSummary {
     pub fields: Vec<FieldSummary>,
     /// What the reader inferred or changed, as diagnostics.
     pub diagnostics: Vec<DiagnosticInfo>,
+}
+
+/// A function opened as a dataset (C03-T08).
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize, TS)]
+#[serde(rename_all = "camelCase")]
+#[non_exhaustive]
+pub struct FunctionInfo {
+    /// The expression in its canonical form.
+    pub canonical: String,
+    /// One sentence: the expression, the domain and how many of each feature.
+    pub summary: String,
+    /// Its critical points and spans in increasing `x`: the text equivalent of its cues
+    /// (A11Y-24, A11Y-28).
+    pub critical_points: Vec<CriticalPointInfo>,
+}
+
+/// One critical point or span of a function (C03-T08).
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize, TS)]
+#[serde(rename_all = "camelCase")]
+#[non_exhaustive]
+pub struct CriticalPointInfo {
+    /// CURVASONA's stable label: `zero`, `local maximum`, `vertical asymptote`, …
+    pub kind: String,
+    /// Where it is, or where its span starts.
+    pub x: f64,
+    /// Where its span ends, for spans.
+    pub end: Option<f64>,
+    /// Its value, where it has one.
+    pub y: Option<f64>,
+    /// The dataset row its insight covers first: `cursor_set` goes there.
+    pub row: Option<u64>,
+    /// The entry as text, such as `local maximum at x = 1.5708, y = 1`.
+    pub text: String,
 }
 
 /// One field of a dataset, with its inferred semantics (03 §3).

@@ -76,7 +76,10 @@ pub use chart::read_chart;
 pub use chart::{Chart, read_chart_bytes, summary_diagnostic, summary_sentence};
 pub use compiled::{Compiled, Description, DiagnosticCounts, Summary, TrackSummary};
 pub use error::Error;
-pub use function::{CriticalPoint, FUNCTION_DURATION_S, Function, function_spec, read_function};
+pub use function::{
+    CriticalPoint, ExpressionCheck, FUNCTION_DURATION_S, Function, check_expression, function_spec,
+    read_function, read_function_with_ids,
+};
 pub use quick::{QUICK_DATASET, Quick};
 pub use render::{
     AudioFormat, Normalization, RenderManifest, RenderOptions, Rendered, WavEncoding,
@@ -84,7 +87,10 @@ pub use render::{
 pub use sonarithm_curvasona::FunctionSpec;
 /// The audification speed-up calculator (SDR-31): k, the duration T/k and the audible band
 /// of a series, and the seismic preset.
-pub use sonarithm_curvasona::audify::{SEISMIC_K, Speedup, calculate as audify_speedup};
+pub use sonarithm_curvasona::audify::{
+    Readout as AudifyReadout, SEISMIC_K, Speedup, calculate as audify_speedup,
+    readout as audify_readout,
+};
 pub use sonarithm_plotsona::{
     ChartData, ChartType, ClassCounts, CorrectionRecord, CorrectionSet, ExtractOptions,
     ExtractionReport, SeriesReport,

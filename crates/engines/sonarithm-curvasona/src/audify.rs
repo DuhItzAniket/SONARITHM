@@ -209,14 +209,7 @@ impl Encoder<DataBundle> for AudifyEncoder {
             )
             .at_spec(at.clone())
         })?;
-        let raw = numbers(table, &series).unwrap_or_default();
-        // On a uniform grid over the time field, whose rate is the series' own; one sample
-        // per row without a time field.
-        let (values, fs) = time
-            .as_deref()
-            .and_then(|name| times(table, name))
-            .and_then(|t| uniform(&raw, &t))
-            .unwrap_or((raw, 1.0));
+        let (values, fs) = series_grid(table, time.as_deref(), &series);
         let count = values.len();
         if count > Audify::MAX_SAMPLES {
             return Err(refuse(
@@ -293,16 +286,13 @@ fn speedup_of(
     cx: &mut CompileContext,
 ) -> Result<f64, CompileError> {
     let audify = spec.get("audify");
-    let k = match (
+    let k = choose_k(
         audify.and_then(|a| a.get("k")).and_then(Value::as_f64),
         audify
             .and_then(|a| a.pointer("/band/hz/1"))
             .and_then(Value::as_f64),
-    ) {
-        (Some(k), _) => k,
-        (None, Some(hi)) => k_for_band(fs, hi),
-        (None, None) => k_for_band(fs, DEFAULT_TOP_HZ),
-    };
+        fs,
+    );
     if !(k.is_finite() && (K_MIN..=K_MAX).contains(&k)) {
         return Err(refuse(
             &codes::AUDIFY_K_OUT_OF_RANGE,
@@ -345,6 +335,98 @@ fn speedup_of(
         );
     }
     Ok(k)
+}
+
+/// The series on a uniform grid over the time field, whose rate `fs` is the series' own;
+/// one sample per row (`fs` = 1) without a usable time field. The encoder and
+/// [`readout`] share it, so the calculator and a compile always agree.
+fn series_grid(table: &Table, time: Option<&str>, series: &str) -> (Vec<Option<f64>>, f64) {
+    let raw = numbers(table, series).unwrap_or_default();
+    time.and_then(|name| times(table, name))
+        .and_then(|t| uniform(&raw, &t))
+        .unwrap_or((raw, 1.0))
+}
+
+/// k from `audify.k`, else from the top of `audify.band` (`k = 2·hi/fs`), else the SDR-44
+/// default top of 4 kHz (`INFER`).
+fn choose_k(k: Option<f64>, top_hz: Option<f64>, fs: f64) -> f64 {
+    match (k, top_hz) {
+        (Some(k), _) => k,
+        (None, Some(hi)) => k_for_band(fs, hi),
+        (None, None) => k_for_band(fs, DEFAULT_TOP_HZ),
+    }
+}
+
+/// What the audification calculator shows for one series before it compiles (SDR-31,
+/// C03-T08): the speed-up with its duration and bands, the series it plays, and the codes
+/// a compile would report.
+#[derive(Clone, Debug, PartialEq)]
+#[non_exhaustive]
+pub struct Readout {
+    /// k, the series' rate, the duration T/k, the band and its audible part.
+    pub speedup: Speedup,
+    /// The samples on the uniform grid.
+    pub samples: usize,
+    /// The field it plays.
+    pub series: String,
+    /// `SNR-ENG-461` when part of the band is inaudible, `462` when all of it is.
+    pub codes: Vec<&'static str>,
+}
+
+/// The calculator for the series a track with the `audify` mark would play from `table`,
+/// with the time field `time` (else the field with the x role), and `k` or the band's top
+/// `top_hz` (else the SDR-44 default). The same grid and the same rule for k as the
+/// encoder, so it gives the compile's numbers.
+///
+/// # Errors
+///
+/// The diagnostic a compile would refuse with: no numeric series (`SNR-ENG-465`), too many
+/// samples (`464`) or k out of bounds (`463`).
+pub fn readout(
+    table: &Table,
+    time: Option<&str>,
+    k: Option<f64>,
+    top_hz: Option<f64>,
+) -> Result<Readout, Box<Diagnostic>> {
+    let substrate = time.map(|t| serde_json::json!({ "time": { "field": t } }));
+    let (time, series) = fields(table, substrate.as_ref()).ok_or_else(|| {
+        Box::new(Diagnostic::new(
+            &codes::AUDIFY_NO_SERIES,
+            "The data has no numeric field to audify.",
+        ))
+    })?;
+    let (values, fs) = series_grid(table, time.as_deref(), &series);
+    let count = values.len();
+    if count > Audify::MAX_SAMPLES {
+        return Err(Box::new(Diagnostic::new(
+            &codes::AUDIFY_TOO_MANY_SAMPLES,
+            format!(
+                "The series has {count} samples, more than the {} an audification can hold.",
+                Audify::MAX_SAMPLES
+            ),
+        )));
+    }
+    let k = choose_k(k, top_hz, fs);
+    if !(k.is_finite() && (K_MIN..=K_MAX).contains(&k)) {
+        return Err(Box::new(Diagnostic::new(
+            &codes::AUDIFY_K_OUT_OF_RANGE,
+            format!("The speed-up k = {k} is outside {K_MIN} to {K_MAX}."),
+        )));
+    }
+    let speedup = calculate(fs, count.max(1), k);
+    let codes = match speedup.audible {
+        None => vec![codes::AUDIFY_INAUDIBLE.code],
+        Some(_) if speedup.band[0] < AUDIBLE[0] || speedup.band[1] > AUDIBLE[1] => {
+            vec![codes::AUDIFY_PART_INAUDIBLE.code]
+        }
+        Some(_) => Vec::new(),
+    };
+    Ok(Readout {
+        speedup,
+        samples: count,
+        series,
+        codes,
+    })
 }
 
 /// The `loudness` channel's constant value in dB, or SDR-23's default.
