@@ -42,6 +42,14 @@ pub enum EarconId {
     Level,
     /// `E-GAP`: the cursor is on a missing value.
     Gap,
+    /// `E-ZERO`: a function crosses or touches zero (CURVASONA, RFC-0007).
+    Zero,
+    /// `E-ASYMPTOTE`: a vertical asymptote of a function.
+    Asymptote,
+    /// `E-UNDEFINED`: an undefined span of a function starts.
+    Undefined,
+    /// `E-OFFSCREEN`: a function leaves the y-window.
+    Offscreen,
 }
 
 impl EarconId {
@@ -87,8 +95,9 @@ pub struct EarconInfo {
     pub compiled: Option<EarconKind>,
 }
 
-/// The catalogue, in keyboard §11 order, with `E-GAP` last.
-pub const CATALOGUE: [EarconInfo; 9] = [
+/// The catalogue, in keyboard §11 order: the B03 set, `E-GAP`, then CURVASONA's
+/// function cues (RFC-0007, played by its `curvasona.cues` track).
+pub const CATALOGUE: [EarconInfo; 13] = [
     EarconInfo {
         id: EarconId::Boundary,
         code: "E-BOUNDARY",
@@ -169,6 +178,42 @@ pub const CATALOGUE: [EarconInfo; 9] = [
         args: &[],
         default_on: true,
         compiled: None,
+    },
+    EarconInfo {
+        id: EarconId::Zero,
+        code: "E-ZERO",
+        meaning: "A function crosses or touches zero",
+        text: "earcon-zero",
+        args: &[],
+        default_on: true,
+        compiled: Some(EarconKind::Zero),
+    },
+    EarconInfo {
+        id: EarconId::Asymptote,
+        code: "E-ASYMPTOTE",
+        meaning: "A vertical asymptote of a function",
+        text: "earcon-asymptote",
+        args: &[],
+        default_on: true,
+        compiled: Some(EarconKind::Asymptote),
+    },
+    EarconInfo {
+        id: EarconId::Undefined,
+        code: "E-UNDEFINED",
+        meaning: "An undefined span of a function starts",
+        text: "earcon-undefined",
+        args: &[],
+        default_on: true,
+        compiled: Some(EarconKind::Undefined),
+    },
+    EarconInfo {
+        id: EarconId::Offscreen,
+        code: "E-OFFSCREEN",
+        meaning: "A function leaves the y-window",
+        text: "earcon-offscreen",
+        args: &["side"],
+        default_on: true,
+        compiled: Some(EarconKind::Offscreen),
     },
 ];
 

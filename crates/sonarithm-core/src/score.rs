@@ -8,7 +8,9 @@
 //! Every collection is a sorted `Vec` or a `BTreeMap`, so serialization order is stable.
 //!
 //! Event kinds for audification, grains and model excitation are added when their engines
-//! land (C03, D01, D02); new kinds and fields are additive and bump [`IR_VERSION`].
+//! land (C03, D01, D02); new kinds and fields are additive and raise [`IR_VERSION`]. A Score
+//! records the lowest version that can read it ([`Score::required_ir_version`], RFC-0007
+//! §4), so a Score that uses none of the additions keeps version 1 and its hash.
 //! [`Score::check`] verifies the invariants of 05 §4.2, and the [`canonical`] and
 //! [`review`] modules write its two serialized forms (05 §4.3).
 
@@ -31,10 +33,18 @@ use crate::units::{Cents, Db, Pan, Seconds};
 
 pub use invariants::InvariantViolation;
 
-/// The Score IR version. Bump it on any change to the serialized form (02 §6), in a PR
+/// The newest Score IR version this crate reads and writes. A change to the serialized
+/// form (02 §6) raises it. Since RFC-0007 a Score's header records the lowest version that
+/// can read it ([`Score::required_ir_version`]), so additive changes leave existing Scores,
+/// snapshots and golden hashes as they were; a change to existing fields still needs a PR
 /// that regenerates every snapshot and golden hash and contains nothing else
 /// (testing-strategy §4).
-pub const IR_VERSION: u32 = 1;
+///
+/// Version 2 (RFC-0007): the earcon kinds `zero`, `asymptote`, `undefined` and `offscreen`.
+pub const IR_VERSION: u32 = 2;
+
+/// The first Score IR version (A03), which every Score without later additions records.
+pub const IR_VERSION_BASE: u32 = 1;
 
 /// A spec language version, `MAJOR.MINOR` (04 §7), serialized as a string such as `"0.1"`.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
@@ -150,6 +160,22 @@ pub struct Score {
 }
 
 impl Score {
+    /// The lowest Score IR version that can read this Score (RFC-0007 §4): the highest
+    /// version any of its events needs, at least [`IR_VERSION_BASE`]. The compiler writes
+    /// it into the header.
+    #[must_use]
+    pub fn required_ir_version(&self) -> u32 {
+        self.tracks
+            .iter()
+            .flat_map(|track| &track.events)
+            .map(|event| match event {
+                ScoreEvent::Earcon(earcon) => earcon.kind.ir_version(),
+                _ => IR_VERSION_BASE,
+            })
+            .max()
+            .unwrap_or(IR_VERSION_BASE)
+    }
+
     /// An empty Score with `header`.
     #[must_use]
     pub fn new(header: ScoreHeader) -> Self {
@@ -197,7 +223,7 @@ impl Score {
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 #[non_exhaustive]
 pub struct ScoreHeader {
-    /// The [`IR_VERSION`] the Score was written with.
+    /// The lowest Score IR version that can read the Score (RFC-0007 §4).
     pub ir_version: u32,
     /// The spec language version.
     pub spec_version: SpecVersion,
@@ -218,12 +244,13 @@ pub struct ScoreHeader {
 }
 
 impl ScoreHeader {
-    /// A header for the current [`IR_VERSION`], with zero hashes, zero duration and no
-    /// engines or shapers yet.
+    /// A header at [`IR_VERSION_BASE`] (the compiler raises it to
+    /// [`Score::required_ir_version`]), with zero hashes, zero duration and no engines or
+    /// shapers yet.
     #[must_use]
     pub fn new(spec_version: SpecVersion, mode: Mode, seed: u64) -> Self {
         Self {
-            ir_version: IR_VERSION,
+            ir_version: IR_VERSION_BASE,
             spec_version,
             spec_hash: Sha256Digest::ZERO,
             data_fingerprint: Sha256Digest::ZERO,
@@ -484,6 +511,25 @@ pub enum EarconKind {
     Stream,
     /// `E-ALARM`: a user-configured alarm (SDR-35).
     Alarm,
+    /// `E-ZERO`: a function crosses or touches zero (CURVASONA, A11Y-28; IR version 2).
+    Zero,
+    /// `E-ASYMPTOTE`: a vertical asymptote, where the glide breaks (IR version 2).
+    Asymptote,
+    /// `E-UNDEFINED`: an undefined span of a function starts (IR version 2).
+    Undefined,
+    /// `E-OFFSCREEN`: a function leaves the y-window (IR version 2).
+    Offscreen,
+}
+
+impl EarconKind {
+    /// The lowest Score IR version that has this kind.
+    #[must_use]
+    pub const fn ir_version(self) -> u32 {
+        match self {
+            Self::Zero | Self::Asymptote | Self::Undefined | Self::Offscreen => 2,
+            _ => IR_VERSION_BASE,
+        }
+    }
 }
 
 /// An earcon.

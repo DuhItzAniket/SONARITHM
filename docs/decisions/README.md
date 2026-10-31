@@ -42,6 +42,7 @@ Write an ADR when a decision is hard to reverse, affects several crates or engin
 | [0026](0026-chart-correction-file.md) | The chart correction file per RFC-0005 | accepted (2026-10-30, coordinator under owner delegation) | C02-T06: the reader and writer, spec 0.3 (`corrections.path`), app commands with undo, export and import, fuzz target `corrections_read` |
 | [0027](0027-spec-experimental-block.md) | The spec `experimental` block per RFC-0006 | accepted (2026-10-31, coordinator under owner delegation) | C02-T09b: spec 0.4 (`experimental.lowConfidenceTimbre`), SDR-43 in NUMISONA, `SNR-COMP-037`, render manifest version 2 |
 | [0028](0028-function-expression-language.md) | The expression language of a `function` source | accepted (2026-10-31, coordinator under owner delegation) | C03-T01: CURVASONA's `expr` parser, its tests and fuzz target `expr_parse`; the spec schema and 04 §3 cite it |
+| [0029](0029-function-cues-and-audification.md) | Function cues and audification in the Score IR per RFC-0007 | accepted (2026-10-31, coordinator under owner delegation) | C03-T04 (earcon kinds, cue track; golden case `function-cues` to follow), C03-T05 (the `Audify` event) |
 
 ## Process
 
