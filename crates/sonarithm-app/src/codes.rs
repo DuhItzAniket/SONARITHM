@@ -364,6 +364,37 @@ pub const UNKNOWN_PROFILE: CodeInfo = CodeInfo {
     status: CodeStatus::Active,
 };
 
+/// A chart correction set that is not valid (C02-T06, RFC-0005): a patch that breaks it,
+/// or a correction file that does not read.
+pub const CORRECTIONS_INVALID: CodeInfo = CodeInfo {
+    code: "SNR-APP-084",
+    severity: Severity::Error,
+    summary: "The corrections are not valid",
+    help: "A correction set follows RFC-0005: edits with IDs e1, e2, …, `before` on every edit            of an existing point, and `+e<n>` only for an earlier `add`. Nothing was changed.",
+    rules: &[],
+    status: CodeStatus::Active,
+};
+
+/// Corrections that cannot change: the chart's file is not open (C02-T06).
+pub const CORRECTIONS_READ_ONLY: CodeInfo = CodeInfo {
+    code: "SNR-APP-085",
+    severity: Severity::Error,
+    summary: "These corrections cannot change now",
+    help: "A project keeps a chart's corrections and their history, but not the chart file.            Open the chart file again to correct it; export works as it is.",
+    rules: &[],
+    status: CodeStatus::Active,
+};
+
+/// Corrections for a dataset that is not a chart, or a file made on another chart (C02-T06).
+pub const CORRECTIONS_NOT_HERE: CodeInfo = CodeInfo {
+    code: "SNR-APP-086",
+    severity: Severity::Error,
+    summary: "These corrections do not belong to this dataset",
+    help: "Corrections apply to a dataset opened from a chart, and a correction file only to            the chart it was made on (same SHA-256 and extractor, RFC-0005 §3).",
+    rules: &[],
+    status: CodeStatus::Active,
+};
+
 /// Every `SNR-APP` code, in ascending order.
 pub const CODES: CodeTable = CodeTable {
     area: Area::App,
@@ -403,6 +434,9 @@ pub const CODES: CodeTable = CodeTable {
         PROFILE_MAJOR,
         PROFILE_NEWER,
         UNKNOWN_PROFILE,
+        CORRECTIONS_INVALID,
+        CORRECTIONS_READ_ONLY,
+        CORRECTIONS_NOT_HERE,
     ],
 };
 

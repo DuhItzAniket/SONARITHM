@@ -64,6 +64,10 @@ export const REPLY_KINDS = {
   profile_flip_polarity: "compile",
   settings_effective: "effective",
   spec_quick: "spec",
+  corrections_get: "corrections",
+  corrections_apply: "corrections",
+  corrections_export: "corrections",
+  corrections_import: "corrections_import",
 } as const;
 
 /** The channel that carries each event. */
@@ -332,7 +336,51 @@ x: string | null,
 /**
  * The y field.
  */
-y: string, } } | { "command": "view_get", "args": { 
+y: string, } } | { "command": "corrections_get", "args": { 
+/**
+ * The dataset's ID.
+ */
+dataset: string, } } | { "command": "corrections_apply", "args": { 
+/**
+ * The dataset's ID.
+ */
+dataset: string, 
+/**
+ * The operations on the correction document (RFC-0005 §2), in order.
+ */
+patch: Array<PatchOp>, 
+/**
+ * A name for the edit in the history, such as `Move Series 2#4 to 64`.
+ */
+label: string | null, } } | { "command": "corrections_export", "args": { 
+/**
+ * The dataset's ID.
+ */
+dataset: string, 
+/**
+ * The file, ending in `.json`, in an existing folder.
+ */
+path: string, 
+/**
+ * Whether the person's notes go with the edits.
+ */
+notes: boolean, 
+/**
+ * Whether the chart's pixels go too (PNG charts only; off unless asked).
+ */
+includeImage: boolean, } } | { "command": "corrections_import", "args": { 
+/**
+ * The dataset's ID.
+ */
+dataset: string, 
+/**
+ * The correction file (`.json`).
+ */
+path: string, 
+/**
+ * Apply it, rather than only preview it.
+ */
+confirm: boolean, } } | { "command": "view_get", "args": { 
 /**
  * The dataset's ID.
  */
@@ -441,7 +489,7 @@ profile: Profile, } | { "reply": "effective",
 /**
  * Each setting with its value and layer.
  */
-settings: Array<EffectiveSetting>, };
+settings: Array<EffectiveSetting>, } | { "reply": "corrections" } & CorrectionsState | { "reply": "corrections_import" } & ImportPreview;
 
 /**
  * A command that could not run (ADR-0017 §3, 12 §1). Spec and data problems are not
@@ -951,7 +999,78 @@ canRedo: boolean,
 /**
  * The spec after the step.
  */
-spec: SpecState, };
+spec: SpecState, 
+/**
+ * The corrections after the step, when it undid or redid a correction (C02-T06).
+ */
+corrections: CorrectionsState | null, };
+
+/**
+ * A chart dataset's corrections (C02-T06, RFC-0005).
+ */
+export type CorrectionsState = { 
+/**
+ * The dataset's ID.
+ */
+dataset: string, 
+/**
+ * The correction document, as a correction file holds it (RFC-0005 §2).
+ */
+text: string, 
+/**
+ * The number of edits.
+ */
+edits: number, 
+/**
+ * The IDs of edits that did not apply to the current extraction (`SNR-ENG-386`).
+ */
+notApplied: Array<string>, 
+/**
+ * Whether corrections can change: the chart's file is open. A reopened project keeps
+ * them read-only until the chart is opened again.
+ */
+editable: boolean, 
+/**
+ * The undo token of the edit just made, if any.
+ */
+undoToken: number | null, 
+/**
+ * The dataset after the corrections.
+ */
+summary: DatasetSummary, };
+
+/**
+ * What importing a correction file does (RFC-0005 §11).
+ */
+export type ImportPreview = { 
+/**
+ * The dataset's ID.
+ */
+dataset: string, 
+/**
+ * The file's edits that apply, by their IDs in the file.
+ */
+applies: Array<string>, 
+/**
+ * The file's edits whose points the session already changed: listed, never applied.
+ */
+conflicts: Array<string>, 
+/**
+ * The file's edits the session already has: skipped.
+ */
+duplicates: Array<string>, 
+/**
+ * Whether the file's calibration differs from the session's (it is not taken).
+ */
+calibrationDiffers: boolean, 
+/**
+ * Whether the edits were applied (`confirm`).
+ */
+applied: boolean, 
+/**
+ * The corrections after the import, when applied.
+ */
+state: CorrectionsState | null, };
 
 /**
  * An output device.
