@@ -20,6 +20,7 @@
 - C02-T04: `raster::components` (8-connected labelling) and `raster::marks` (bars and histogram bins profiled by column, a blob detector with diameter limits, touching markers separated by k-means, fragments of hollow markers joined); each series colour classified as line, bars or points. The 6 bar renders read within 0.11 % median error; the 6 scatter renders count all 60 markers each. CR-08 added to the register.
 - C02-T05: the 10 §3.1 checks on raster readings, as diagnostics only (monotonic ticks refused, imprecise fit and log-against-linear warnings from C01-T04, values beyond the outermost ticks, the series count against a caller-given legend, `SNR-ENG-329`); the calibration's confidence folded into each value's, documented as uncalibrated; a raster table taken through filter, sort and aggregate keeps its class and confidences.
 - C02-T09: series and segments of estimates are announced as such (they were not: F-184); the lowest-confidence stretch of a series is named relative to the series in speech and in the text description, with no absolute cut-off (OD-07 note); the keyboard guide's terse point example drops "About" (A11Y-12). The timbre flag is split off to C02-T09b, an RFC for a spec `experimental` block after RFC-0005.
+- C02-T08: the raster corpus at 1.5x and 1x crisp for line and bar charts, and the C02 accuracy harness (`accuracy::raster`): every clean render (24) within 0.14 % median error and an RMS-F1 of at least 0.994; JPEG renders at quality 90 and 60, made in memory, reported (F-183). The benchmarks log gains a chart extraction accuracy section.
 
 ## Decisions
 
@@ -33,6 +34,7 @@
 | Bars are recognised by standing on the baseline, not by filling their box | Touching histogram bins of different heights fill only part of their joint box, and a flat line fills its box too; a bar's base on the value-0 row (clamped into the plot) separates bars from lines and markers | `raster::extract::classify` |
 | Pieces of one hollow marker are joined | Anti-aliasing broke one of Vega-Lite's hollow circles into three arcs, which counted as three markers (62 for 60); pieces under half the median marker area within a marker's diameter are one marker | `raster::marks::markers` |
 | The legend for the series-count check is an `ExtractOptions` field, not a spec field | Spec v0.2 has no legend; adding one is a contract change (AGENTS rule 11) that the correction UI (C02-T10, T11) is better placed to propose | 10 §3.1 "As built (C02-T05)" |
+| JPEG variants are made in memory by the harness, not by Pillow | Pillow's MIT-CMU licence is outside the deny.toml allowlist, and licence decisions are the owner's; the `image` crate is already a dependency, and committing JPEGs would only add bytes | datasets.md DS-007 |
 | Every value carries the range half a pixel either side | A mark drawn into a pixel can lie anywhere in it; the range is the uncertainty a raster cannot remove, and the confidence model (C02-T05) builds on it | `raster::Estimate` |
 
 ## Clean room
@@ -44,6 +46,7 @@
 - F-180: raster line charts within 0.15 % median error at 1x and 2x (18 series).
 - F-181: a palette colour (Vega's blue) sat inside the default colour distance of the grey axis line; series thresholds now separate them.
 - F-182: raster bars within 0.11 % median error, every scatter marker counted, positions within 0.11 %.
+- F-183: clean raster line and bar renders within 0.14 % at every resolution; JPEG artefacts break automatic series colours on line charts.
 
 ## Next steps
 
