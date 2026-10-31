@@ -39,6 +39,8 @@ storybook-static/
 playwright-report/
 test-results/
 .vitest-attachments/
+# PB-08 traces from `pnpm -C packages/ui test:perf` (B04-T02); CI uploads them.
+.perf/
 blob-report/
 npm-debug.log*
 pnpm-debug.log*
