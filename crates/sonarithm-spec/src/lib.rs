@@ -13,6 +13,7 @@
 
 pub mod canonical;
 pub mod codes;
+pub mod correction_file;
 pub mod data;
 pub mod defaults;
 pub mod json;

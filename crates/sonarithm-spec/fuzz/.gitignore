@@ -4,3 +4,4 @@ corpus/*/*
 !corpus/*/every-section*.json
 artifacts/
 coverage/
+!corpus/corrections_read/seed-*.json

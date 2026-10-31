@@ -194,7 +194,7 @@ fn migration_changes_only_the_version_and_a_current_spec_not_at_all() {
     assert_eq!(migration.from, sonarithm::SpecVersion::V0_1);
     let migrated: serde_json::Value = serde_json::from_str(&migration.text).unwrap();
     let mut expected: serde_json::Value = serde_json::from_str(TEMPS).unwrap();
-    expected["specVersion"] = serde_json::json!("0.2");
+    expected["specVersion"] = serde_json::json!("0.3");
     assert_eq!(migrated, expected);
     let again = Spec::from_json_str(&migration.text)
         .unwrap()
@@ -362,7 +362,7 @@ fn quick_explains_what_it_cannot_map() {
 fn the_schema_is_the_published_one() {
     let published = std::fs::read_to_string(
         PathBuf::from(env!("CARGO_MANIFEST_DIR"))
-            .join("../../schemas/sonarithm-spec-0.2.schema.json"),
+            .join("../../schemas/sonarithm-spec-0.3.schema.json"),
     )
     .unwrap();
     assert_eq!(

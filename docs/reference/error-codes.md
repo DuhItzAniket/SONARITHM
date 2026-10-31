@@ -71,7 +71,7 @@ Owner: `sonarithm-compiler`.
 | `SNR-COMP-032` | error | Template slot has no field | Name a field for the slot in `template.bind`, or use data with a compatible field. | — |
 | `SNR-COMP-033` | info | Template binding used | Name slots in `template.bind` to choose other fields. | — |
 | `SNR-COMP-034` | info | Sections taken from a template | A section written in the spec replaces the template's section of the same name; the spec's `transform` runs before the template's. | — |
-| `SNR-COMP-036` | warning | A chart correction was not applied | An edit applies only to the point it was made on, checked by its `was` value; re-make the edit on the current extraction. | — |
+| `SNR-COMP-036` | warning | RETIRED: A chart correction was not applied | An edit applies only to the point it was made on, checked by its `was` value; re-make the edit on the current extraction. | — |
 
 ## SNR-DATA
 
@@ -229,6 +229,8 @@ Owner: `sonarithm-plotsona`. Numbers SNR-ENG-300 to SNR-ENG-399.
 | `SNR-ENG-383` | error | The document cannot be imported | Check that it is a Vega-Lite or MAIDR document of a supported chart type, or            write the spec's tracks by hand. | — |
 | `SNR-ENG-384` | error | The imported chart has no readable data | Give the chart inline values or a local data file; SONARITHM never fetches data            from the network (ADR-0012). | — |
 | `SNR-ENG-385` | info | Chart extracted | The message counts the points by how they were obtained: exact, calibrated from            the drawing, or estimated. Estimated values are announced as estimates. | — |
+| `SNR-ENG-386` | warning | A chart correction was not applied | An edit applies only to the point it was made on, checked by its `was` value; the            point is gone or now has another value. Re-make the edit on the current extraction. | — |
+| `SNR-ENG-387` | warning | The corrections were made on another chart | A correction file is bound to its chart by the chart's SHA-256 and the extractor;            this chart differs, so no edit was applied. Open the chart the file was made for. | — |
 
 Owner: `sonarithm-echometric`. Numbers SNR-ENG-600 to SNR-ENG-699.
 
@@ -292,9 +294,14 @@ Owner: `sonarithm-spec`.
 | `SNR-SPEC-053` | error | Invalid transform parameters | Fix the transform parameters the message names (RFC-0001 §4). | — |
 | `SNR-SPEC-054` | error | Invalid chart calibration | Give `axes.x` and `axes.y`, each with a kind (linear, log, date, category) and at least two anchors {"at": [x, y], "value": …} at distinct points with distinct values; log values above zero, dates in ISO 8601. | SDR-01 |
 | `SNR-SPEC-055` | error | Invalid chart correction | Write `corrections` as {"edits": [...]}; each edit has an `op` (add, move, delete, retype), the `series`, and for move, delete and retype the `point` index and the extracted value in `was`. | SDR-01 |
-| `SNR-SPEC-056` | error | Correction files are not available yet | `corrections.path` is reserved for the correction file of RFC-0005; write the edits inline in `corrections.edits`. | — |
+| `SNR-SPEC-056` | error | Correction files need spec 0.3 | `corrections.path` names a correction file (RFC-0005), which spec 0.3 defines; set `"specVersion": "0.3"` or write the edits inline in `corrections.edits`. | — |
 | `SNR-SPEC-060` | error | Invalid output parameters | Use a sample rate from 8000 to 384000 Hz, 1 to 64 channels, and a power-of-two block size from 16 to 8192. | — |
 | `SNR-SPEC-061` | error | Invalid playback parameters | Use a positive, finite playback speed. | — |
 | `SNR-SPEC-070` | error | Unknown field | Name a field of the data, or declare it in `data.fields`. | — |
 | `SNR-SPEC-071` | error | Field type not compatible with the channel | Map nominal fields to timbre and quantitative fields to pitch, duration or rate. | SDR-25 |
 | `SNR-SPEC-080` | info | Default applied | The compiler filled in a default; write the key to choose another value. | — |
+| `SNR-SPEC-090` | error | Not a correction file this version reads | A correction file has `"format": "sonarithm-corrections"` and a version this SONARITHM reads (1.x). A file from a newer major version needs a newer SONARITHM. | — |
+| `SNR-SPEC-091` | error | The correction file is malformed | Fix the key at the reported pointer. Every edit has an `id` (e1, e2, …, unique), an `op`, a `series`, and `point` and `was` for move, delete and retype; `+e<n>` refers to an `add` earlier in the file. | — |
+| `SNR-SPEC-092` | error | The correction file is too large | A correction file holds at most 16 MiB, 100 000 edits, 1 000-character notes and a 4 MiB image; split the corrections or leave the image out. | — |
+| `SNR-SPEC-093` | error | The correction file path is not allowed | Name the correction file by a path relative to the spec, without `..` past the spec's folder, a drive letter or a URL, so the spec carries no user paths. | — |
+| `SNR-SPEC-094` | warning | The correction file is from a newer version | Keys this version does not know were ignored; saving writes this version and drops them. | — |

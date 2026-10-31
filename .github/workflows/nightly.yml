@@ -47,6 +47,7 @@ jobs:
         include:
           - { crate: sonarithm-spec, target: spec_parse }
           - { crate: sonarithm-spec, target: spec_migrate }
+          - { crate: sonarithm-spec, target: corrections_read }
           - { crate: sonarithm-data, target: csv_read }
           - { crate: sonarithm-data, target: json_read }
           - { crate: sonarithm-data, target: xlsx_read }

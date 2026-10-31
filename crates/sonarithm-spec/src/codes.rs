@@ -6,7 +6,7 @@
 //! Codes are grouped by tens: 001–009 syntax, shape and version; 010–019 tracks; 020–029
 //! channels; 030–039 scales and ranges; 040–049 mode and research rules; 050–059 data, pace
 //! and transforms; 060–069 output and playback; 070–079 data-aware checks; 080–089 applied
-//! defaults. A released code
+//! defaults; 090–099 the chart correction file (RFC-0005). A released code
 //! is never reused (coding-standards §4.2).
 
 use sonarithm_core::codes::{Area, CodeInfo, CodeStatus, CodeTable, validate};
@@ -325,8 +325,48 @@ code!(
 code!(
     /// `corrections.path` is reserved for RFC-0005 (RFC-0004 §6).
     CORRECTION_FILE_RESERVED, "SNR-SPEC-056", Error,
-    "Correction files are not available yet",
-    "`corrections.path` is reserved for the correction file of RFC-0005; write the edits inline in `corrections.edits`.",
+    "Correction files need spec 0.3",
+    "`corrections.path` names a correction file (RFC-0005), which spec 0.3 defines; set `\"specVersion\": \"0.3\"` or write the edits inline in `corrections.edits`.",
+    []
+);
+
+code!(
+    /// Not a correction file, or one made by a newer major version (RFC-0005 §8).
+    CORRECTION_FILE_UNREADABLE, "SNR-SPEC-090", Error,
+    "Not a correction file this version reads",
+    "A correction file has `\"format\": \"sonarithm-corrections\"` and a version this SONARITHM reads (1.x). A file from a newer major version needs a newer SONARITHM.",
+    []
+);
+
+code!(
+    /// A correction file with a shape error (RFC-0005 §8).
+    CORRECTION_FILE_SHAPE, "SNR-SPEC-091", Error,
+    "The correction file is malformed",
+    "Fix the key at the reported pointer. Every edit has an `id` (e1, e2, …, unique), an `op`, a `series`, and `point` and `was` for move, delete and retype; `+e<n>` refers to an `add` earlier in the file.",
+    []
+);
+
+code!(
+    /// A correction file over a limit (RFC-0005 §8).
+    CORRECTION_FILE_LIMIT, "SNR-SPEC-092", Error,
+    "The correction file is too large",
+    "A correction file holds at most 16 MiB, 100 000 edits, 1 000-character notes and a 4 MiB image; split the corrections or leave the image out.",
+    []
+);
+
+code!(
+    /// An unsafe `corrections.path` (RFC-0005 §7).
+    CORRECTION_PATH_UNSAFE, "SNR-SPEC-093", Error,
+    "The correction file path is not allowed",
+    "Name the correction file by a path relative to the spec, without `..` past the spec's folder, a drive letter or a URL, so the spec carries no user paths.",
+    []
+);
+
+code!(
+    /// A correction file from a newer minor version (RFC-0005 §8).
+    CORRECTION_FILE_NEWER, "SNR-SPEC-094", Warning,
+    "The correction file is from a newer version",
+    "Keys this version does not know were ignored; saving writes this version and drops them.",
     []
 );
 
@@ -382,6 +422,11 @@ pub const CODES: CodeTable = CodeTable {
         UNKNOWN_FIELD,
         INCOMPATIBLE_FIELD,
         DEFAULT_APPLIED,
+        CORRECTION_FILE_UNREADABLE,
+        CORRECTION_FILE_SHAPE,
+        CORRECTION_FILE_LIMIT,
+        CORRECTION_PATH_UNSAFE,
+        CORRECTION_FILE_NEWER,
     ],
 };
 
