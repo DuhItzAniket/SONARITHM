@@ -121,6 +121,15 @@ The UI calls an `IpcTransport` interface (`invoke`, `subscribe`, `binary`). The 
 - Play/Pause, Stop and Loop are commands (`transport.playPause`, `transport.stop` with Escape in the explorer, and `transport.loop`, unbound), so the palette reaches them.
 - Seek and speed are intents of the machine; their controls come with the explorer (B03-T09) and the rate steps of keyboard §5.3.
 
+**As built (B04-T02): the dense layer.**
+
+- `@sonarithm/viz`'s `DenseLayer` draws three kinds of scene: waveforms (one min/max span per pixel column, from the app core's M4 tiles), spectrograms (dB bytes through a colormap texture) and lines of a million points or more.
+- **WebGL2 first, Canvas2D otherwise.** WebGL2 is probed once on a throwaway canvas: a context opens and the shaders compile. A canvas that took a WebGL2 context cannot give a 2D one, so the real canvas asks for the context that works. The Canvas2D fallback reduces dense lines to M4 per pixel column, and `forceCanvas` takes it anyway.
+- **Drawn once.** Positions are normalized to [0, 1] on upload, so 32-bit floats keep full precision. The data is drawn when the scene, size or theme changes, never per frame. What moves, such as the playhead (B04-T04), goes in the layer's overlay.
+- **Accessible as one image.** Like `Plot`, the layer is named by the summary's L1, described by its L2, and not focusable.
+- **PB-08.** The `perf` Vitest project records the script time of 60 zoom redraws of a million-point line. CI's frontend-browser job reports it without gating (SwiftShader on a shared runner). HW-01 and the three webviews are B04-T08's.
+- **Discrete GPU (F-044).** The `gpu` setting (12 §3) chooses the high-performance GPU on Windows; see the start-up arguments in §7.
+
 ## 4. Security model
 
 | Control | Setting |
@@ -162,6 +171,12 @@ The UI calls an `IpcTransport` interface (`invoke`, `subscribe`, `binary`). The 
 2. The webview loads the bundled UI. The UI requests the session state.
 3. If autosave exists, recovery is offered. Otherwise the app opens the last project or an **empty workspace** with keyboard focus in the data tree. There is no splash screen and no marketing panel ([design-language](../design/design-language.md)).
 4. The first-run experience offers the built-in tutorial (B07) as a single, dismissible, accessible prompt.
+
+**Start-up arguments (B04-T02).**
+
+- With `gpu` set to `highPerformance`, the host builds the window with WebView2 browser arguments: wry's defaults (`--disable-features=msWebOOUI,msPdfOOUI,msSmartScreenProtection`) plus `--force_high_performance_gpu`, because passing arguments replaces the defaults.
+- **Fallback.** WebView2 refuses arguments that differ from a running instance's on the same user-data folder: a second window, or the last run still closing. If creating the window fails with the switch, the host builds it once more without it. The UI then says, and shows in the Status region, that the setting applies after a full restart. The setting never stops the app from starting.
+- The start-up facts reach the UI through the window's initialization script (`window.__SONARITHM_START__`), as the smoke configuration does.
 
 **As built (B01-T08): devices, volume and stop all audio.**
 

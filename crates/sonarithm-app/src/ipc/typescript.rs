@@ -140,6 +140,7 @@ pub fn typescript() -> String {
     declare::<Consent>(&mut out, &cfg);
     declare::<crate::settings::SpeechSettings>(&mut out, &cfg);
     declare::<crate::settings::AnnouncerRoute>(&mut out, &cfg);
+    declare::<crate::settings::GpuPreference>(&mut out, &cfg);
     declare::<crate::speech::SpeechRoute>(&mut out, &cfg);
     declare::<crate::ipc::AnnouncementInfo>(&mut out, &cfg);
     declare::<crate::ipc::AnnouncementClass>(&mut out, &cfg);

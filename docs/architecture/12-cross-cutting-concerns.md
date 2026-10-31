@@ -39,6 +39,16 @@ Every effective value is inspectable through `sonarithm inspect --settings` and 
 
 **As built (B03-T08, [ADR-0020](../decisions/0020-profile-format-v1.md)).** The app core's `settings_effective` gives every setting with its layer. Profiles live in `profiles/` in the app-config folder and `settings.json` names the active one; the project layer is the bundle's `profiles/project-profile.json`. The CLI's `inspect --settings` follows when the CLI uses the app core (A07).
 
+**Settings fields added in Stage B.**
+
+- `speech.announcer` (B03-T04): `liveRegion` (default) or `native`, the OD-05 announcer route ([08 §4](08-interaction-and-accessibility.md#4-announcement-pipeline)).
+- `gpu` (B04-T02, F-044; approved by the coordinator on 2026-10-30): `default` (the default) or `highPerformance`.
+  - Only WebView2 (Windows) can be asked. The host reads the setting at start-up and adds `--force_high_performance_gpu` to wry's default browser arguments ([09 §7](09-desktop-app.md#7-startup-sequence-target--2-s-cold)), so a change applies after a restart.
+  - Elsewhere the Preferences switch is disabled, with the reason in visible text.
+  - There is no GPU detection and no telemetry.
+
+Both are additive, with serde defaults, so `PROTOCOL_VERSION` and the settings version are unchanged.
+
 ## 4. Project file format
 
 `.sonarithm` is a **ZIP container** (stored, not compressed, for large Parquet members; deflate for JSON):

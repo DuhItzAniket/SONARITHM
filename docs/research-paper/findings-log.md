@@ -390,7 +390,7 @@ A05 (render engine, audio backends, export) uses F-050 to F-069.
 - **Statement:** On the development laptop (Intel UHD plus RTX 4050), WebView2's default WebGL renderer was the Intel GPU. Passing `--force_high_performance_gpu` through Tauri's `additional_browser_args` gave "ANGLE (NVIDIA, NVIDIA GeForce RTX 4050 Laptop GPU …)", and `--force_low_power_gpu` kept the Intel GPU. Tauri's default browser arguments must be repeated when replacing them.
 - **Evidence:** [#102](https://github.com/DuhItzAniket/SONARITHM/pull/102) (renderer strings in the results)
 - **Evidence level / confidence:** EV-C / Strong
-- **Affects:** B04 (an optional high-performance setting); 09 §1
+- **Affects:** B04-T02: the `gpu` setting (`highPerformance` adds this switch to wry's default WebView2 arguments; the host retries without it if WebView2 refuses, 09 §7, 12 §3); 09 §1
 - **Papers:** none yet
 
 ### F-045 · In WebView2, React Aria's Tree is a tree grid whose row names repeat the expand button label
@@ -1005,4 +1005,13 @@ A05 (render engine, audio backends, export) uses F-050 to F-069.
 - **Evidence:** `crates/engines/sonarithm-audaxis/tests/announce.rs` (`a11y_02_series_and_segments_of_estimates_say_so`); `sonarithm_core::lowest_confidence_stretch` and its tests; keyboard-and-navigation §8.2; the C02-T09 PR
 - **Evidence level / confidence:** EV-C / Strong for the gap; the stretch rule is a design choice awaiting P08
 - **Affects:** C02-T09, A11Y-02, A11Y-12, A11Y-24, FR-008, OD-07, H-06
+- **Papers:** none yet
+
+### F-176 · Two CI-only test flakes came from React Aria acting a frame or an event later than the tests assumed
+
+- **Date:** 2026-10-31 · **Phase:** B01, B02 · **Type:** engineering (testing) · **Status:** new
+- **Statement:** (1) React Aria's `FocusScope` returns the focus to the opener in the animation frame after a dialog unmounts, so an E2E test that read the focused element right after the dialog was hidden failed on WebKit in CI (run 41158576905), though it passed locally. (2) After Escape closes a tooltip through React Aria's document listener, the trigger still counts as focused, because that listener stops the event before the trigger sees it. Any pointer entering the trigger then opens a new tooltip at once. A local experiment confirmed that one `pointerenter` after Escape reopens it. The `Icon Only` story checked for "no tooltip" and failed in every theme across five CI runs on 2026-10-30 and 2026-10-31, though Escape had worked. Where the stray pointer event comes from on the runner is not known.
+- **Evidence:** `apps/desktop/e2e/audio.spec.ts` (`fr_118_preferences_choose_the_device_and_set_the_volume_by_keyboard`, which now polls); `packages/ui/src/components/Button.stories.tsx` (`IconOnly`, which now waits for the tooltip's removal); React Aria 3.53.1 `FocusScope` and `useTooltipTrigger`
+- **Evidence level / confidence:** EV-C / Strong for the mechanisms (source and the local experiment); Weak for the pointer event's origin in CI, TODO(verify) if the story fails again
+- **Affects:** testing-strategy §12 (browser tests): read focus and overlay state with polling or observers, not one read after an overlay closes
 - **Papers:** none yet

@@ -70,6 +70,10 @@ pub struct Settings {
     /// The active profile's ID (ADR-0020), if any.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub active_profile: Option<String>,
+    /// Which GPU the webview draws plots with (B04-T02, F-044). Read by the host when it
+    /// starts, so a change applies after a restart.
+    #[serde(default)]
+    pub gpu: GpuPreference,
 }
 
 impl Default for Settings {
@@ -84,6 +88,7 @@ impl Default for Settings {
             consent: Consent::default(),
             speech: SpeechSettings::default(),
             active_profile: None,
+            gpu: GpuPreference::default(),
         }
     }
 }
@@ -249,6 +254,21 @@ pub enum AnnouncerRoute {
     /// The platform's notification API (UI Automation on Windows). NVDA did not speak it in
     /// the A02 walkthrough (#382); hosts without one use live regions.
     Native,
+}
+
+/// Which GPU the webview's plots use (B04-T02, F-044; approved by the coordinator on
+/// 2026-10-30). Only WebView2 (Windows) can be asked: the host passes
+/// `--force_high_performance_gpu` on top of its default browser arguments. Other webviews
+/// ignore it, and the UI says so. There is no detection and no telemetry.
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Serialize, Deserialize, TS)]
+#[serde(rename_all = "camelCase")]
+#[non_exhaustive]
+pub enum GpuPreference {
+    /// The webview's own choice: on a hybrid laptop, usually the integrated GPU.
+    #[default]
+    Default,
+    /// The discrete, high-performance GPU of a hybrid laptop, for dense plots (F-044).
+    HighPerformance,
 }
 
 /// Consent to network features (ADR-0012). Each is `None` until the user answers.
