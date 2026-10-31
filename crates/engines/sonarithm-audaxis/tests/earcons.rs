@@ -28,6 +28,7 @@ fn sample(arg: &str) -> &'static str {
         "reason" => "one-series",
         "kind" => "segment",
         "state" => "on",
+        "side" => "above",
         _ => "7",
     }
 }
@@ -54,7 +55,11 @@ fn a11y_08_every_earcon_has_a_text_equivalent() {
         let marked = pseudo.format(info.text, &args).unwrap();
         check_pseudo(&marked).unwrap_or_else(|e| panic!("{}: {e}", info.code));
     }
-    assert_eq!(codes.len(), 9, "keyboard §11's eight earcons and E-GAP");
+    assert_eq!(
+        codes.len(),
+        13,
+        "keyboard §11's eight earcons, E-GAP and the four function cues (RFC-0007)"
+    );
 }
 
 /// Keyboard §11: E-ALARM and E-LEVEL are off by default, every other earcon on.
@@ -75,6 +80,10 @@ fn every_score_earcon_kind_is_in_the_catalogue() {
         EarconKind::Threshold,
         EarconKind::Stream,
         EarconKind::Alarm,
+        EarconKind::Zero,
+        EarconKind::Asymptote,
+        EarconKind::Undefined,
+        EarconKind::Offscreen,
     ] {
         assert!(
             CATALOGUE.iter().any(|info| info.compiled == Some(kind)),

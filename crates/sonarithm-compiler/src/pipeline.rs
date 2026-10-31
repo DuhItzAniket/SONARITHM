@@ -258,6 +258,8 @@ impl<D: CompilerData> Run<'_, D> {
             .map_err(stop)?;
         self.shape(spec, &mut score)?;
         score.header.engines.clone_from(&self.used);
+        // The lowest IR version that can read the Score (RFC-0007 §4).
+        score.header.ir_version = score.required_ir_version();
         // 05 §4.2: invariants are checked after every compile. A violation is an engine bug.
         if let Err(violation) = score.check() {
             debug_assert!(false, "compiled Score breaks an invariant: {violation}");

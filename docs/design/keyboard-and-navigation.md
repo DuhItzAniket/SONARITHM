@@ -393,7 +393,18 @@ Earcons mark structure and events; they are designed to be distinct from data to
 
 B03 (B03-T06) builds this set in the render engine (`EarconSound`; live with `Command::Earcon`) and lists it in AUDAXIS (`earcons::CATALOGUE`) with each text equivalent from the message catalogue. The frequencies and lengths are proposals until the listening check (HP-11).
 
-Reserved for Stage C (CURVASONA, A11Y-28): `E-ZERO` (zero crossing), `E-ASYMPTOTE`, `E-UNDEFINED`, `E-OFFSCREEN`. Reserved for the C02 experiment: `E-ESTIMATE` (low-confidence region).
+**Function cues (C03-T04, [RFC-0007](../rfcs/0007-function-cues-and-audification.md), [ADR-0029](../decisions/0029-function-cues-and-audification.md); A11Y-28).** CURVASONA's `curvasona.cues` track plays these during playback of a function with `analysis.detect: ["critical-points"]`. Extrema, inflections, holes and jumps play `E-LANDMARK`. Cues closer than 150 ms merge into the highest-priority kind (asymptote, undefined, off-screen, zero, landmark), and the cue log names every feature. Sounds and timings are proposals (INFER) until the listening check (HP-21).
+
+| ID | Meaning | Acoustic description (proposal) | Text equivalent | Default |
+|---|---|---|---|---|
+| `E-ZERO` | A function crosses or touches zero | Dry inharmonic tick, about 40 ms: partials at 700, 1932 and 3780 Hz (a struck bar), fast decay; every partial below 4 kHz | "Zero" | On with `critical-points` |
+| `E-ASYMPTOTE` | A vertical asymptote: the glide breaks here | Band-passed noise near 1 kHz swelling in over 60 ms, about 120 ms in all ("whoosh") | "Vertical asymptote" | On with `critical-points` |
+| `E-UNDEFINED` | An undefined span starts | Low-passed noise near 200 Hz with a soft 20 ms attack, about 100 ms: a dull hush | "Undefined" | On with `critical-points` |
+| `E-OFFSCREEN` | The function leaves the y-window (an explicit pitch `scale.domain`) | Two taps of band-passed noise near 2 kHz, 30 ms apart, about 80 ms in all | "Off screen above" / "below" | On with `critical-points` and a window |
+
+As built, the RFC's upward noise sweep for `E-ASYMPTOTE` is a swell of band-passed noise, because the render engine's noise filter is fixed per earcon; the listening check decides whether a swept filter is worth adding. `E-OFFSCREEN`'s taps are band-passed near 2 kHz rather than high-passed above 1.5 kHz: high-passed white noise put 88 % of its energy above 4 kHz, against ED-06 (test `ed_06_function_cue_earcons_keep_their_energy_below_4_khz`).
+
+Reserved for the C02 experiment: `E-ESTIMATE` (low-confidence region).
 
 ## 12. Conflict analysis
 

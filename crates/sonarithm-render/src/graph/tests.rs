@@ -488,6 +488,64 @@ fn every_earcon_plays_live_on_the_earcon_bus() {
     }
 }
 
+/// RFC-0007's function-cue earcons (C03-T04, proposals until HP-21).
+const FUNCTION_CUES: [crate::EarconSound; 4] = [
+    crate::EarconSound::Zero,
+    crate::EarconSound::Asymptote,
+    crate::EarconSound::Undefined,
+    crate::EarconSound::Offscreen,
+];
+
+/// SDR-22: the function-cue earcons fade in and out (no step at either end): the first and
+/// last 2 ms are far quieter than the loudest 2 ms.
+#[test]
+fn sdr_22_function_cue_earcons_have_ramps() {
+    let rms = |part: &[f32]| {
+        let sum: f64 = part.iter().map(|&s| f64::from(s) * f64::from(s)).sum();
+        (sum / part.len().max(1) as f64).sqrt()
+    };
+    for sound in FUNCTION_CUES {
+        let samples = live_earcon(sound);
+        let first = samples.iter().position(|s| s.abs() > 1e-6).unwrap();
+        let last = samples.iter().rposition(|s| s.abs() > 1e-6).unwrap();
+        let body = &samples[first..=last];
+        let edge = 96; // 2 ms at 48 kHz
+        let loudest = body.windows(edge).map(rms).fold(0.0, f64::max);
+        let start = rms(&body[..edge]);
+        let end = rms(&body[body.len() - edge..]);
+        assert!(start < 0.5 * loudest, "{sound:?} starts at {start} of {loudest}");
+        assert!(end < 0.5 * loudest, "{sound:?} ends at {end} of {loudest}");
+    }
+}
+
+/// ED-06 (RFC-0007 amendment 2): the function-cue earcons keep most of their energy below
+/// 4 kHz, so they survive high-frequency hearing loss.
+#[test]
+fn ed_06_function_cue_earcons_keep_their_energy_below_4_khz() {
+    for sound in FUNCTION_CUES {
+        let samples = live_earcon(sound);
+        let n = samples.len().min(4096);
+        let window = &samples[..n];
+        let (mut low, mut high) = (0.0_f64, 0.0_f64);
+        for k in 1..n / 2 {
+            let (mut re, mut im) = (0.0, 0.0);
+            for (i, &x) in window.iter().enumerate() {
+                let angle = core::f64::consts::TAU * k as f64 * i as f64 / n as f64;
+                re += f64::from(x) * sonarithm_core::math::cos(angle);
+                im -= f64::from(x) * sonarithm_core::math::sin(angle);
+            }
+            let hz = k as f64 * 48_000.0 / n as f64;
+            if hz < 4_000.0 {
+                low += re * re + im * im;
+            } else {
+                high += re * re + im * im;
+            }
+        }
+        let share = high / (low + high).max(1e-30);
+        assert!(share < 0.2, "{sound:?}: {share:.3} of its energy above 4 kHz");
+    }
+}
+
 /// B03-T06 acceptance: E-BOUNDARY is noise-based and distinct from data tones; its
 /// spectrum is far flatter than a mallet note's (ED-01, A11Y-08).
 #[test]

@@ -44,6 +44,15 @@ pub enum EarconSound {
     LevelDown,
     /// `E-GAP`: two soft noise taps, the missing value at the cursor (03 §5).
     Gap,
+    /// `E-ZERO`: a dry inharmonic tick, about 40 ms, every partial below 4 kHz (RFC-0007).
+    Zero,
+    /// `E-ASYMPTOTE`: a swelling "whoosh" of band-passed noise, about 120 ms (RFC-0007).
+    Asymptote,
+    /// `E-UNDEFINED`: a dull hush of low-passed noise, about 100 ms (RFC-0007).
+    Undefined,
+    /// `E-OFFSCREEN`: two quick taps of band-passed noise near 2 kHz, about 80 ms (RFC-0007;
+    /// band-passed, not high-passed, so most energy stays below 4 kHz, ED-06).
+    Offscreen,
 }
 
 impl From<EarconKind> for EarconSound {
@@ -53,6 +62,10 @@ impl From<EarconKind> for EarconSound {
             EarconKind::Landmark => Self::Landmark,
             EarconKind::Threshold => Self::Threshold,
             EarconKind::Alarm => Self::Alarm,
+            EarconKind::Zero => Self::Zero,
+            EarconKind::Asymptote => Self::Asymptote,
+            EarconKind::Undefined => Self::Undefined,
+            EarconKind::Offscreen => Self::Offscreen,
             _ => Self::Stream,
         }
     }
@@ -60,7 +73,7 @@ impl From<EarconKind> for EarconSound {
 
 impl EarconSound {
     /// Every earcon sound, in catalogue order.
-    pub const ALL: [Self; 11] = [
+    pub const ALL: [Self; 15] = [
         Self::Boundary,
         Self::Invalid,
         Self::Landmark,
@@ -72,6 +85,10 @@ impl EarconSound {
         Self::LevelUp,
         Self::LevelDown,
         Self::Gap,
+        Self::Zero,
+        Self::Asymptote,
+        Self::Undefined,
+        Self::Offscreen,
     ];
 
     /// How long the earcon sounds, ramps included.
@@ -86,6 +103,10 @@ impl EarconSound {
             Self::Alarm => 600.0,
             Self::LevelUp | Self::LevelDown => 50.0,
             Self::Gap => 70.0,
+            Self::Zero => 40.0,
+            Self::Asymptote => 120.0,
+            Self::Undefined => 100.0,
+            Self::Offscreen => 80.0,
         })
     }
 }
@@ -117,6 +138,9 @@ const THRESHOLD: Partials = [(1_000.0, 0.8), (2_500.0, 0.2), (0.0, 0.0)];
 const STREAM: Partials = [(1_320.0, 0.7), (2_640.0, 0.2), (0.0, 0.0)];
 /// E-ALARM: a pulsed tone.
 const ALARM: Partials = [(1_000.0, 0.7), (1_500.0, 0.2), (0.0, 0.0)];
+/// E-ZERO: a struck-bar tick (ratios 1 : 2.76 : 5.4 from 700 Hz), every partial below
+/// 4 kHz (ED-06, RFC-0007 amendment 2). A proposal until the listening check (HP-21).
+const ZERO: Partials = [(700.0, 0.6), (1_932.0, 0.3), (3_780.0, 0.1)];
 /// E-ALARM pulses: 100 ms on, 100 ms off.
 const ALARM_PULSE: Seconds = Seconds(0.100);
 
@@ -209,6 +233,21 @@ fn recipe(sound: EarconSound) -> ([Option<Part>; 2], Option<NoiseSpec>) {
             [noise(0.0, 0.010), noise(0.060, 0.010)],
             Some((BiquadKind::LowPass, 3_000.0, 0.707, 1.0)),
         ),
+        // The RFC-0007 set (C03-T04), proposals until HP-21: noise-based or inharmonic
+        // (ED-01), short (ED-02), main energy below 4 kHz (ED-06).
+        EarconSound::Zero => ([tone(0.0, 0.040, ZERO), None], None),
+        EarconSound::Asymptote => (
+            [noise(0.0, 0.120), None],
+            Some((BiquadKind::BandPass, 1_000.0, 0.8, 5.0)),
+        ),
+        EarconSound::Undefined => (
+            [noise(0.0, 0.100), None],
+            Some((BiquadKind::LowPass, 200.0, 0.707, 3.0)),
+        ),
+        EarconSound::Offscreen => (
+            [noise(0.0, 0.025), noise(0.055, 0.025)],
+            Some((BiquadKind::BandPass, 2_000.0, 1.2, 4.0)),
+        ),
     }
 }
 
@@ -221,13 +260,25 @@ pub(crate) fn envelope(sound: EarconSound) -> AdsrParams {
         EarconSound::Landmark => (0.100, 0.0),
         EarconSound::Threshold => (0.025, 0.0),
         EarconSound::Stream => (0.060, 0.0),
+        EarconSound::Zero => (0.035, 0.0),
         _ => (MIN_RAMP.0, 1.0),
     };
+    // E-ASYMPTOTE swells into its whoosh; E-UNDEFINED fades in softly.
+    let attack = match sound {
+        EarconSound::Asymptote => Seconds(0.060),
+        EarconSound::Undefined => Seconds(0.020),
+        _ => MIN_RAMP,
+    };
+    let release = match sound {
+        EarconSound::Asymptote => Seconds(0.050),
+        EarconSound::Undefined => Seconds(0.030),
+        _ => MIN_RAMP,
+    };
     AdsrParams {
-        attack: MIN_RAMP,
+        attack,
         decay: Seconds(decay),
         sustain,
-        release: MIN_RAMP,
+        release,
     }
 }
 

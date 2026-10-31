@@ -160,7 +160,7 @@ B03 builds it from the navigation tree: the title, the x range, each series' val
 
 ## 8. Earcon design rules
 
-The catalogue (IDs, meanings, acoustic descriptions, text equivalents) is in [keyboard and navigation §11](keyboard-and-navigation.md). Every earcon, current or proposed, must satisfy these rules. The B03 set (B03-T06) replaces A05's provisional sounds: E-BOUNDARY is band-passed noise near 250 Hz (a test checks that its spectrum is far flatter than a data tone's), E-INVALID two blips falling a minor third, E-MODE a rising or falling major-third dyad, E-LEVEL a short glide by a fifth, E-GAP two soft noise taps. All are proposals until the listening check (HP-11).
+The catalogue (IDs, meanings, acoustic descriptions, text equivalents) is in [keyboard and navigation §11](keyboard-and-navigation.md). Every earcon, current or proposed, must satisfy these rules. The B03 set (B03-T06) replaces A05's provisional sounds: E-BOUNDARY is band-passed noise near 250 Hz (a test checks that its spectrum is far flatter than a data tone's), E-INVALID two blips falling a minor third, E-MODE a rising or falling major-third dyad, E-LEVEL a short glide by a fifth, E-GAP two soft noise taps. All are proposals until the listening check (HP-11). C03-T04 adds the function cues of RFC-0007: E-ZERO an inharmonic tick with every partial below 4 kHz, E-ASYMPTOTE a swell of band-passed noise near 1 kHz, E-UNDEFINED a dull hush of low-passed noise near 200 Hz, E-OFFSCREEN two taps of band-passed noise near 2 kHz (high-passed noise broke ED-06); proposals until HP-21. Tests check SDR-22 ramps and ED-06 (less than a fifth of the energy above 4 kHz) for each.
 
 | ID | Rule | Basis |
 |---|---|---|
