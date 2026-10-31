@@ -1015,4 +1015,3 @@ A05 (render engine, audio backends, export) uses F-050 to F-069.
 - **Evidence level / confidence:** EV-C / Strong (code and test)
 - **Affects:** ADR-0013, RFC-0006, ADR-0027, 06 §7; RFC template ("Affects" should name reader strictness)
 - **Papers:** none yet
-
