@@ -24,6 +24,8 @@ catalog:
   # UI state machines (09 §3): the transport machine mirrors the Rust transport (B01-T05).
   # Pinned: 5.33.3 was under two weeks old when this was added.
   xstate: 5.33.2
+  # Line and time-series plots (09 §3, B04-T01; notes/05 §6): Canvas2D, MIT, no dependencies.
+  uplot: 1.6.32
   vite: 8.3.4
   # Frontend test infrastructure (B02-T03; testing-strategy §12, §13.1). Storybook 10 with
   # its accessibility (axe-core) and Vitest addons; Vitest 4 browser mode on Playwright's
