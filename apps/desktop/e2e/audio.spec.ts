@@ -93,10 +93,11 @@ test("fr_118_preferences_choose_the_device_and_set_the_volume_by_keyboard", asyn
 
   expect(await seriousViolations(page)).toEqual([]);
 
-  // Escape closes it and the focus goes back where it was.
+  // Escape closes it and the focus goes back where it was. React Aria restores the focus in
+  // the animation frame after the dialog unmounts, so wait for it (WebKit in CI read too early).
   await page.keyboard.press("Escape");
   await expect(dialog).toBeHidden();
-  expect(await focused(page)).toBe(opener);
+  await expect.poll(() => focused(page)).toBe(opener);
 });
 
 test("f_044_the_gpu_switch_saves_the_setting_or_says_why_it_cannot", async ({

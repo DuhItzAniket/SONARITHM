@@ -1006,3 +1006,12 @@ A05 (render engine, audio backends, export) uses F-050 to F-069.
 - **Evidence level / confidence:** EV-C / Strong for the gap; the stretch rule is a design choice awaiting P08
 - **Affects:** C02-T09, A11Y-02, A11Y-12, A11Y-24, FR-008, OD-07, H-06
 - **Papers:** none yet
+
+### F-176 · Two CI-only test flakes came from React Aria acting a frame or an event later than the tests assumed
+
+- **Date:** 2026-10-31 · **Phase:** B01, B02 · **Type:** engineering (testing) · **Status:** new
+- **Statement:** (1) React Aria's `FocusScope` returns the focus to the opener in the animation frame after a dialog unmounts, so an E2E test that read the focused element right after the dialog was hidden failed on WebKit in CI (run 41158576905), though it passed locally. (2) After Escape closes a tooltip through React Aria's document listener, the trigger still counts as focused, because that listener stops the event before the trigger sees it. Any pointer entering the trigger then opens a new tooltip at once. A local experiment confirmed that one `pointerenter` after Escape reopens it. The `Icon Only` story checked for "no tooltip" and failed in every theme across five CI runs on 2026-10-30 and 2026-10-31, though Escape had worked. Where the stray pointer event comes from on the runner is not known.
+- **Evidence:** `apps/desktop/e2e/audio.spec.ts` (`fr_118_preferences_choose_the_device_and_set_the_volume_by_keyboard`, which now polls); `packages/ui/src/components/Button.stories.tsx` (`IconOnly`, which now waits for the tooltip's removal); React Aria 3.53.1 `FocusScope` and `useTooltipTrigger`
+- **Evidence level / confidence:** EV-C / Strong for the mechanisms (source and the local experiment); Weak for the pointer event's origin in CI, TODO(verify) if the story fails again
+- **Affects:** testing-strategy §12 (browser tests): read focus and overlay state with polling or observers, not one read after an overlay closes
+- **Papers:** none yet
