@@ -153,6 +153,66 @@ impl Provenance {
     }
 }
 
+/// A run of consecutive values: `start..end`, and the median confidence over it.
+#[derive(Clone, Copy, Debug, PartialEq)]
+pub struct Stretch {
+    /// The first value's index.
+    pub start: usize,
+    /// One past the last value's index.
+    pub end: usize,
+    /// The median confidence of the run.
+    pub median: f32,
+}
+
+impl Stretch {
+    /// The index of the run's middle value.
+    #[must_use]
+    pub const fn middle(&self) -> usize {
+        self.start + (self.end - self.start - 1) / 2
+    }
+}
+
+/// The median of `values`, `None` when there are none (the lower middle for an even count).
+#[must_use]
+pub fn median(values: &[f32]) -> Option<f32> {
+    let mut sorted = values.to_vec();
+    sorted.sort_by(f32::total_cmp);
+    sorted.get(sorted.len().saturating_sub(1) / 2).copied()
+}
+
+/// Where a reading is least certain (C02-T09): among windows of `max(3, n / 10)`
+/// consecutive confidences (all of them when there are fewer), the one with the lowest
+/// median; on ties the one with the lowest sum, then the first. `None` when there are no values, or when that median is not
+/// below the median of all of them, so a reading of even confidence names no stretch.
+///
+/// A relative rule on purpose: confidence is uncalibrated (03 §4, notes/06 §8), so no
+/// absolute cut-off such as 0.5 is justified until P08 / H-06 (OD-07).
+#[must_use]
+pub fn lowest_confidence_stretch(confidences: &[f32]) -> Option<Stretch> {
+    let n = confidences.len();
+    let overall = median(confidences)?;
+    let width = (n / 10).max(3).min(n);
+    let lowest = (0..=n - width)
+        .filter_map(|start| {
+            let median = median(confidences.get(start..start + width)?)?;
+            Some(Stretch {
+                start,
+                end: start + width,
+                median,
+            })
+        })
+        .min_by(|a, b| {
+            // Among equal medians, the window whose values sum lowest: the one centred on
+            // the dip rather than straddling its edge.
+            let sum = |s: &Stretch| -> f32 { confidences[s.start..s.end].iter().sum() };
+            a.median
+                .total_cmp(&b.median)
+                .then(sum(a).total_cmp(&sum(b)))
+                .then(a.start.cmp(&b.start))
+        })?;
+    (lowest.median < overall).then_some(lowest)
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -206,5 +266,33 @@ mod tests {
             serde_json::to_string(&ProvenanceClass::CvEstimate).unwrap(),
             r#""cv_estimate""#
         );
+    }
+}
+
+#[cfg(test)]
+mod stretch_tests {
+    use super::{Stretch, lowest_confidence_stretch, median};
+
+    #[test]
+    fn the_lowest_stretch_is_found_relative_to_the_series() {
+        let mut c = vec![0.9_f32; 20];
+        for v in &mut c[8..11] {
+            *v = 0.3;
+        }
+        assert_eq!(
+            lowest_confidence_stretch(&c),
+            Some(Stretch {
+                start: 8,
+                end: 11,
+                median: 0.3
+            })
+        );
+        assert_eq!(lowest_confidence_stretch(&c).unwrap().middle(), 9);
+        // Even confidence names no stretch, and nothing names nothing.
+        assert_eq!(lowest_confidence_stretch(&[0.8; 12]), None);
+        assert_eq!(lowest_confidence_stretch(&[]), None);
+        // A short series is one window.
+        assert_eq!(lowest_confidence_stretch(&[0.9, 0.2]), None);
+        assert_eq!(median(&[0.4, 0.1, 0.9]), Some(0.4));
     }
 }

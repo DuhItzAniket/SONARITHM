@@ -20,7 +20,8 @@ exit code: 0
         "name": "Sold",
         "points": 5,
         "missing": 0,
-        "class": "exact"
+        "class": "exact",
+        "edited": 0
       }
     ],
     "points": 5,
@@ -36,7 +37,8 @@ exit code: 0
         "location": null,
         "data": null
       }
-    ]
+    ],
+    "corrections": []
   },
   "score": {
     "spec": "xlsx-pie.xlsx.spec.json",

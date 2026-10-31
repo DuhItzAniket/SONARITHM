@@ -218,6 +218,27 @@ pub struct Corrections {
     pub edits: Vec<Edit>,
 }
 
+/// `data.source.corrections` as written: inline edits, or (spec 0.3) a correction file
+/// relative to the spec (RFC-0005 §7). For the schema; the compiler reads the JSON.
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize, JsonSchema)]
+#[serde(untagged)]
+#[non_exhaustive]
+pub enum CorrectionsSource {
+    /// `{ "edits": [...] }`.
+    Inline(Corrections),
+    /// `{ "path": "<relative path>" }` (spec 0.3).
+    File(CorrectionFilePath),
+}
+
+/// `{ "path": "<relative path>" }`: a correction file (RFC-0005, spec 0.3).
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+#[non_exhaustive]
+pub struct CorrectionFilePath {
+    /// The correction file, relative to the spec.
+    pub path: String,
+}
+
 /// One correction, tagged by `op`.
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize, JsonSchema)]
 #[serde(tag = "op", rename_all = "kebab-case", deny_unknown_fields)]

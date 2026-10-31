@@ -113,7 +113,7 @@ pub const VERSION: &str = env!("CARGO_PKG_VERSION");
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 #[non_exhaustive]
 pub enum SchemaKind {
-    /// The spec schema of the current version (`schemas/sonarithm-spec-0.2.schema.json`).
+    /// The spec schema of the current version (`schemas/sonarithm-spec-0.3.schema.json`).
     Spec,
 }
 

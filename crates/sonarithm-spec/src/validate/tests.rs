@@ -677,6 +677,44 @@ fn snr_spec_055_and_056_corrections_are_checked() {
     );
 }
 
+/// RFC-0005 §7, Q6: spec 0.3 allows `corrections.path`, a relative path only
+/// (`SNR-SPEC-093`); a 0.2 document still gets `SNR-SPEC-056`; a path and edits together
+/// are a shape error.
+#[test]
+fn snr_spec_093_correction_file_paths_are_relative() {
+    let v03 = |extra: &str| chart(extra).replacen("\"0.2\"", "\"0.3\"", 1);
+    let passing = v03(r#", "corrections": { "path": "charts/fig.png.corrections.json" }"#);
+    assert_eq!(
+        diagnose(&passing)
+            .iter()
+            .filter(|d| d.code.as_str().starts_with("SNR-SPEC-05")
+                || d.code.as_str().starts_with("SNR-SPEC-09"))
+            .count(),
+        0
+    );
+    for bad in [
+        "/home/me/fig.json",
+        "C:/fig.json",
+        "../fig.json",
+        "a/../../fig.json",
+        "https://example.org/f.json",
+        "",
+    ] {
+        check(
+            "SNR-SPEC-093",
+            "/data/source/corrections/path",
+            &v03(&format!(r#", "corrections": {{ "path": "{bad}" }}"#)),
+            &passing,
+        );
+    }
+    check(
+        "SNR-SPEC-055",
+        "/data/source/corrections",
+        &v03(r#", "corrections": { "path": "fig.json", "edits": [] }"#),
+        &passing,
+    );
+}
+
 #[test]
 fn snr_spec_043_and_044_quantize_vocabularies() {
     check(

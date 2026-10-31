@@ -35,3 +35,10 @@ path = "fuzz_targets/spec_migrate.rs"
 test = false
 doc = false
 bench = false
+
+[[bin]]
+name = "corrections_read"
+path = "fuzz_targets/corrections_read.rs"
+test = false
+doc = false
+bench = false

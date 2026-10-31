@@ -6,7 +6,7 @@
 //!
 //! 300–319 detection, budgets and reading; 320–339 axis calibration and the raster core; 340–359 exact
 //! extractors (Office charts, chart JSON); 360–379 vector extractors (SVG, PDF); 380–399
-//! templates and importers. A released code is never reused.
+//! templates, importers and corrections. A released code is never reused.
 
 use sonarithm_core::codes::{Area, CodeInfo, CodeStatus, CodeTable, validate};
 use sonarithm_core::diagnostic::Severity;
@@ -465,6 +465,27 @@ pub const RASTER_NEEDS_CALIBRATION: CodeInfo = CodeInfo {
     status: CodeStatus::Active,
 };
 
+/// A chart correction was not applied (C02-T06; RFC-0005 amendment 3, in place of
+/// RFC-0004's `SNR-COMP-036`).
+pub const CORRECTION_NOT_APPLIED: CodeInfo = CodeInfo {
+    code: "SNR-ENG-386",
+    severity: Severity::Warning,
+    summary: "A chart correction was not applied",
+    help: "An edit applies only to the point it was made on, checked by its `was` value; the            point is gone or now has another value. Re-make the edit on the current extraction.",
+    rules: &[],
+    status: CodeStatus::Active,
+};
+
+/// A correction file made on another chart or by another extractor (C02-T06; RFC-0005 §3).
+pub const CORRECTIONS_OTHER_CHART: CodeInfo = CodeInfo {
+    code: "SNR-ENG-387",
+    severity: Severity::Warning,
+    summary: "The corrections were made on another chart",
+    help: "A correction file is bound to its chart by the chart's SHA-256 and the extractor;            this chart differs, so no edit was applied. Open the chart the file was made for.",
+    rules: &[],
+    status: CodeStatus::Active,
+};
+
 /// A raster chart's series count differs from the legend the user gave (C02-T05).
 pub const RASTER_SERIES_COUNT: CodeInfo = CodeInfo {
     code: "SNR-ENG-329",
@@ -525,6 +546,8 @@ pub const CODES: CodeTable = CodeTable {
         IMPORT_UNREADABLE,
         IMPORT_NO_DATA,
         CHART_EXTRACTED,
+        CORRECTION_NOT_APPLIED,
+        CORRECTIONS_OTHER_CHART,
     ],
 };
 

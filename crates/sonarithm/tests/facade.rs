@@ -158,6 +158,35 @@ fn descriptions_name_estimates() {
     assert_eq!(compiled.summary().tracks[0].estimated, 3);
 }
 
+/// C02-T09: when confidence varies, the description says where it is lowest, relative to
+/// the track (OD-07: no absolute cut-off).
+#[test]
+fn descriptions_name_the_lowest_confidence_stretch() {
+    let values: Vec<serde_json::Value> = (0..20)
+        .map(|x| {
+            let confidence = if (8..11).contains(&x) { 0.3 } else { 0.9 };
+            serde_json::json!({ "x": x, "y": f64::from(x), "__snr_prov": "cv_estimate", "__snr_conf": confidence })
+        })
+        .collect();
+    let spec = serde_json::json!({
+        "specVersion": "0.2",
+        "data": { "source": { "kind": "inline", "values": values } },
+        "substrate": { "time": { "field": "x" } },
+        "tracks": [{ "id": "y", "mark": "tone", "channels": { "pitch": { "field": "y" } } }]
+    });
+    let spec = Spec::from_json_str(spec.to_string()).unwrap();
+    let description = Sonarithm::new().compile(&spec).unwrap().describe();
+    assert!(
+        description
+            .l2
+            .iter()
+            .any(|line| line.contains("Confidence is lowest around")
+                && line.contains("(row 9)")
+                && line.contains("median 0.30")),
+        "{description}"
+    );
+}
+
 #[test]
 fn invalid_json_is_reported_with_its_position() {
     let Err(Error::Spec(diagnostics)) = Spec::from_json_str("{ \"specVersion\": ") else {
@@ -194,7 +223,7 @@ fn migration_changes_only_the_version_and_a_current_spec_not_at_all() {
     assert_eq!(migration.from, sonarithm::SpecVersion::V0_1);
     let migrated: serde_json::Value = serde_json::from_str(&migration.text).unwrap();
     let mut expected: serde_json::Value = serde_json::from_str(TEMPS).unwrap();
-    expected["specVersion"] = serde_json::json!("0.2");
+    expected["specVersion"] = serde_json::json!("0.3");
     assert_eq!(migrated, expected);
     let again = Spec::from_json_str(&migration.text)
         .unwrap()
@@ -362,7 +391,7 @@ fn quick_explains_what_it_cannot_map() {
 fn the_schema_is_the_published_one() {
     let published = std::fs::read_to_string(
         PathBuf::from(env!("CARGO_MANIFEST_DIR"))
-            .join("../../schemas/sonarithm-spec-0.2.schema.json"),
+            .join("../../schemas/sonarithm-spec-0.3.schema.json"),
     )
     .unwrap();
     assert_eq!(
