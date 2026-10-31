@@ -30,9 +30,9 @@ pub use digest::Sha256Digest;
 pub use ids::{AnalyzerId, EngineId, Generation, RowRange, RowRef, RuleId, TableId, TrackId};
 pub use provenance::{Confidence, Provenance, ProvenanceClass, Stretch, lowest_confidence_stretch};
 pub use score::{
-    Breakpoint, Earcon, EarconKind, EngineVersion, Glide, InstrumentRef, Marker, MarkerKind, Mode,
-    Note, PitchRange, Priority, Score, ScoreEvent, ScoreHeader, ScoreTrack, ShaperStage,
-    SpecVersion, Speech, Timbre, TrackRole,
+    Audify, Breakpoint, Earcon, EarconKind, EngineVersion, Glide, InstrumentRef, Marker,
+    MarkerKind, Mode, Note, PitchRange, Priority, Score, ScoreEvent, ScoreHeader, ScoreTrack,
+    ShaperStage, SpecVersion, Speech, Timbre, TrackRole,
 };
 pub use speech::{WordsPerMinute, spoken_duration};
 pub use units::{Cents, Db, Frames, Hz, Midi, Pan, SampleRate, Seconds};

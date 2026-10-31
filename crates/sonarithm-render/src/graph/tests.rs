@@ -488,6 +488,152 @@ fn every_earcon_plays_live_on_the_earcon_bus() {
     }
 }
 
+/// An audified sine: `cycles_per_sample` cycles per sample, played at `rate` samples per
+/// second, for `count` samples.
+fn audified(cycles_per_sample: f64, rate: f64, count: usize) -> Score {
+    let samples: Vec<f32> = (0..count)
+        .map(|i| {
+            let s = 0.8
+                * sonarithm_core::math::sin(core::f64::consts::TAU * cycles_per_sample * i as f64);
+            s as f32
+        })
+        .collect();
+    let event = sonarithm_core::Audify::new(Seconds(0.1), rate, samples);
+    let duration = 0.1 + event.duration().0 + 0.1;
+    score(
+        duration,
+        vec![track(
+            "sine",
+            TrackRole::Data,
+            vec![ScoreEvent::Audify(event)],
+        )],
+    )
+}
+
+/// Rising zero crossings per second over the middle of a signal.
+fn tone_frequency(samples: &[f32]) -> f64 {
+    let start = samples.iter().position(|s| s.abs() > 1e-3).unwrap_or(0) + 4_800;
+    let end = samples
+        .iter()
+        .rposition(|s| s.abs() > 1e-3)
+        .unwrap_or(0)
+        .saturating_sub(4_800);
+    let middle = &samples[start..end.max(start + 1)];
+    let rising = middle
+        .windows(2)
+        .filter(|w| w[0] < 0.0 && w[1] >= 0.0)
+        .count();
+    rising as f64 / (middle.len() as f64 / 48_000.0)
+}
+
+/// SDR-31, C03-T05: a sine in gives the expected tone out. A series with 1/100 cycle per
+/// sample, played at 44 000 samples per second (k = 2200 on a 20 Hz series), sounds at
+/// 440 Hz, whatever the output rate (resampling, not pitch shifting).
+#[test]
+fn sdr_31_an_audified_sine_plays_the_expected_tone() {
+    let score = audified(0.01, 44_000.0, 44_000);
+    let out = left(&render(&score, 256));
+    let f = tone_frequency(&out);
+    assert!((f - 440.0).abs() < 3.0, "{f} Hz");
+    let plan = RenderPlan::build(&score, &PlanConfig::new(RATE))
+        .unwrap()
+        .plan;
+    let track = &plan.tracks[0];
+    assert_eq!(track.buffers.len(), 1);
+    // One second of samples at 44 kHz is one second at 48 kHz.
+    assert!(track.buffers[0].len().abs_diff(48_000) <= 1);
+}
+
+/// SDR-22: audified output fades in and out over the minimum ramp, with no step.
+#[test]
+fn sdr_22_audification_has_ramps() {
+    let out = left(&render(&audified(0.01, 44_000.0, 44_000), 256));
+    let first = out.iter().position(|s| s.abs() > 1e-6).unwrap();
+    assert!(out[first].abs() < 0.05, "starts at {}", out[first]);
+    let last = out.iter().rposition(|s| s.abs() > 1e-6).unwrap();
+    assert!(out[last].abs() < 0.05, "ends at {}", out[last]);
+    assert!(worst_step(&out) < 0.1, "{}", worst_step(&out));
+}
+
+/// A seek into an audification resumes the series where the seek lands.
+#[test]
+fn audification_resumes_after_a_seek() {
+    let score = audified(0.01, 44_000.0, 44_000);
+    let mut graph = graph(&score, 256);
+    graph.apply(Command::Seek(Frames(24_000)));
+    graph.apply(Command::Play);
+    let mut out = vec![0.0; 2 * 24_000];
+    for chunk in out.chunks_mut(512) {
+        graph.process(chunk);
+    }
+    let f = tone_frequency(&left(&out));
+    assert!((f - 440.0).abs() < 5.0, "{f} Hz after a seek");
+}
+
+/// RFC-0007's function-cue earcons (C03-T04, proposals until HP-21).
+const FUNCTION_CUES: [crate::EarconSound; 4] = [
+    crate::EarconSound::Zero,
+    crate::EarconSound::Asymptote,
+    crate::EarconSound::Undefined,
+    crate::EarconSound::Offscreen,
+];
+
+/// SDR-22: the function-cue earcons fade in and out (no step at either end): the first and
+/// last 2 ms are far quieter than the loudest 2 ms.
+#[test]
+fn sdr_22_function_cue_earcons_have_ramps() {
+    let rms = |part: &[f32]| {
+        let sum: f64 = part.iter().map(|&s| f64::from(s) * f64::from(s)).sum();
+        (sum / part.len().max(1) as f64).sqrt()
+    };
+    for sound in FUNCTION_CUES {
+        let samples = live_earcon(sound);
+        let first = samples.iter().position(|s| s.abs() > 1e-6).unwrap();
+        let last = samples.iter().rposition(|s| s.abs() > 1e-6).unwrap();
+        let body = &samples[first..=last];
+        let edge = 96; // 2 ms at 48 kHz
+        let loudest = body.windows(edge).map(rms).fold(0.0, f64::max);
+        let start = rms(&body[..edge]);
+        let end = rms(&body[body.len() - edge..]);
+        assert!(
+            start < 0.5 * loudest,
+            "{sound:?} starts at {start} of {loudest}"
+        );
+        assert!(end < 0.5 * loudest, "{sound:?} ends at {end} of {loudest}");
+    }
+}
+
+/// ED-06 (RFC-0007 amendment 2): the function-cue earcons keep most of their energy below
+/// 4 kHz, so they survive high-frequency hearing loss.
+#[test]
+fn ed_06_function_cue_earcons_keep_their_energy_below_4_khz() {
+    for sound in FUNCTION_CUES {
+        let samples = live_earcon(sound);
+        let n = samples.len().min(4096);
+        let window = &samples[..n];
+        let (mut low, mut high) = (0.0_f64, 0.0_f64);
+        for k in 1..n / 2 {
+            let (mut re, mut im) = (0.0, 0.0);
+            for (i, &x) in window.iter().enumerate() {
+                let angle = core::f64::consts::TAU * k as f64 * i as f64 / n as f64;
+                re += f64::from(x) * sonarithm_core::math::cos(angle);
+                im -= f64::from(x) * sonarithm_core::math::sin(angle);
+            }
+            let hz = k as f64 * 48_000.0 / n as f64;
+            if hz < 4_000.0 {
+                low += re * re + im * im;
+            } else {
+                high += re * re + im * im;
+            }
+        }
+        let share = high / (low + high).max(1e-30);
+        assert!(
+            share < 0.2,
+            "{sound:?}: {share:.3} of its energy above 4 kHz"
+        );
+    }
+}
+
 /// B03-T06 acceptance: E-BOUNDARY is noise-based and distinct from data tones; its
 /// spectrum is far flatter than a mallet note's (ED-01, A11Y-08).
 #[test]

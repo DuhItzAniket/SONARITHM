@@ -103,6 +103,21 @@ ui-go-to-row = Go to row
 ui-go-to-row-number = Row number
 ui-go-to-row-action = Go
 
+## The cursor (B04-T06; 08 §1). Level words name the breadcrumb's levels; $name is a data
+## name, shown as it is.
+
+ui-cursor-trail = Cursor position
+ui-cursor-step =
+    { $kind ->
+        [dataset] Dataset { $name }
+        [series] Series { $name }
+        [segment] Segment { $name }
+       *[point] Point { $name }
+    }
+# The cursor's row in the dataset's own order, from 1; $index is a number.
+ui-cursor-row = Data row { $index }
+ui-cursor-none = No row is selected.
+
 ## Application frame (B02-T06; design-language §4, keyboard-and-navigation §3).
 
 ui-region-inspector = Inspector

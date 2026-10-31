@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: 2026 SONARITHM contributors
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
-import type { Client, DatasetSummary } from "@sonarithm/ipc";
+import type { Client, CursorState, DatasetSummary } from "@sonarithm/ipc";
 import { readView } from "@sonarithm/ipc";
 import type { DataSort } from "@sonarithm/ui";
 import { DataTable } from "@sonarithm/ui";
@@ -78,15 +78,24 @@ function frame(): Promise<void> {
  * The row header is the true row number, so a screen reader names each cell's position in
  * the whole table; a visible line, also announced politely when the window changes, says
  * which rows are loaded. Nothing here moves the focus unasked.
+ *
+ * The focused row is the shared cursor (B04-T06, A11Y-11): focusing a row sends
+ * `cursor_set` with origin `table`, which Rust does not announce, since the screen reader
+ * reads the row. The cursor's row is shown selected. A cursor moved elsewhere (the plot)
+ * brings its window in only while the focus is outside the table, so a `cursor` event never
+ * moves the focus.
  */
 export function DatasetTable({
   client,
   dataset,
   announcer,
+  cursor,
 }: {
   readonly client: Client;
   readonly dataset: DatasetSummary;
   readonly announcer: RoutedAnnouncer;
+  /** The one cursor, as Rust last reported it. */
+  readonly cursor: CursorState | null;
 }) {
   const t = useLocalizer();
   const platform = useCommands().platform;
@@ -98,6 +107,10 @@ export function DatasetTable({
   const lastColumn = useRef(1);
   // Each load has a number, so a slow reply never replaces a newer one.
   const loadId = useRef(0);
+  // The dataset row last sent as the cursor, so focus inside one row sends it once.
+  const sentRow = useRef<number | null>(null);
+  // Whether the keyboard focus is in the grid: the cursor's window waits until it leaves.
+  const [focusInside, setFocusInside] = useState(false);
 
   const load = useCallback(
     async (start: number, order: DataSort | null): Promise<TableWindow> => {
@@ -233,6 +246,85 @@ export function DatasetTable({
     }
   };
 
+  // The cursor's row on this dataset, and where it sits in the loaded window.
+  const cursorRow =
+    cursor?.dataset === dataset.id && cursor.row !== null ? cursor.row : null;
+  const selectedPosition =
+    cursorRow === null || window === null
+      ? -1
+      : window.datasetRows.indexOf(cursorRow);
+  const selectedKey =
+    window === null || selectedPosition < 0
+      ? null
+      : window.start + selectedPosition;
+
+  // A cursor moved from elsewhere brings its window in, unsorted, while the focus is not in
+  // the table: swapping the window under a focused cell would drop the focus.
+  useEffect(() => {
+    const element = container.current;
+    if (
+      cursorRow === null ||
+      cursor?.origin === "table" ||
+      window === null ||
+      sort !== null ||
+      selectedPosition >= 0 ||
+      focusInside ||
+      element?.contains(document.activeElement) === true
+    ) {
+      return;
+    }
+    void load(windowStart(cursorRow), null).catch(() => undefined);
+  }, [
+    cursorRow,
+    cursor?.origin,
+    window,
+    sort,
+    selectedPosition,
+    focusInside,
+    load,
+  ]);
+
+  // Sends the focused row as the cursor (origin `table`) whenever the focus lands on
+  // another row: the focus moves, the cursor follows (keyboard §5.6).
+  useEffect(() => {
+    const element = container.current;
+    if (element === null || window === null) {
+      return;
+    }
+    const onFocusIn = () => {
+      const cell = focusedCell(element);
+      const row = cell === null ? undefined : window.datasetRows[cell.row];
+      if (row === undefined || row === sentRow.current) {
+        return;
+      }
+      sentRow.current = row;
+      void client
+        .call({
+          command: "cursor_set",
+          args: { dataset: dataset.id, row, origin: "table" },
+        })
+        .catch(() => undefined);
+    };
+    const onFocusOut = (event: FocusEvent) => {
+      if (
+        !(event.relatedTarget instanceof Node) ||
+        !element.contains(event.relatedTarget)
+      ) {
+        setFocusInside(false);
+      }
+    };
+    const onFocusEnter = () => {
+      setFocusInside(true);
+      onFocusIn();
+    };
+    element.addEventListener("focusin", onFocusEnter);
+    element.addEventListener("focusout", onFocusOut);
+    return () => {
+      element.removeEventListener("focusin", onFocusEnter);
+      element.removeEventListener("focusout", onFocusOut);
+    };
+  }, [client, dataset.id, window]);
+
   useCommand("table.goToRow", () => {
     setGoToOpen(true);
   });
@@ -277,6 +369,7 @@ export function DatasetTable({
           onSortChange={onSortChange}
           onKeyDownCapture={onKeyDownCapture}
           containerRef={container}
+          selectedKey={selectedKey}
         />
       )}
       <GoToRow

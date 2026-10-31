@@ -163,6 +163,8 @@ impl App {
     /// Replaces the session with `opened`'s project, unsaved or saved at `path`.
     fn load_project(&mut self, opened: project::Opened, path: Option<PathBuf>, numbers: &[u64]) {
         self.datasets.clear();
+        // A row of the old data means nothing in the new (B04-T06).
+        self.clear_cursor();
         self.tiles = sonarithm_data::TileCache::new(crate::views::TILE_CACHE);
         self.compiled = None;
         self.transport.load(None);

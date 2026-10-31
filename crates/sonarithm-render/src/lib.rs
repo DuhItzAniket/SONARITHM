@@ -26,6 +26,7 @@ pub mod graph;
 mod meter;
 pub mod offline;
 pub mod plan;
+pub mod resample;
 pub mod rt;
 mod voice;
 

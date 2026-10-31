@@ -129,6 +129,11 @@ export interface TableWindow {
   readonly start: number;
   readonly columns: readonly DataColumn[];
   readonly rows: readonly DataRow[];
+  /**
+   * Each row's index in the dataset's own order (`__snr_row`), what the cursor names
+   * (B04-T06); the same as its position while the table is not sorted.
+   */
+  readonly datasetRows: readonly number[];
 }
 
 /**
@@ -171,7 +176,14 @@ export function windowOf(
       : [{ id: PROVENANCE_ID, name: t.format("ui-table-provenance") }]),
   ];
   const rows: DataRow[] = [];
+  const indices = view.columns.find((c) => c.name === BINARY.rowColumn);
+  const datasetRows: number[] = [];
   for (let row = 0; row < view.rows; row += 1) {
+    datasetRows.push(
+      indices?.dataType === "i64"
+        ? Number(indices.values[row] ?? BigInt(start + row))
+        : start + row,
+    );
     const cells: Record<string, string> = {
       [ROW_NUMBER_COLUMN]: numbers.format(start + row + 1),
     };
@@ -191,5 +203,5 @@ export function windowOf(
     }
     rows.push({ id: start + row, cells });
   }
-  return { start, columns, rows };
+  return { start, columns, rows, datasetRows };
 }
