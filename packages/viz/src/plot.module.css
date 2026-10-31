@@ -1,0 +1,37 @@
+/* SPDX-FileCopyrightText: 2026 SONARITHM contributors */
+/* SPDX-License-Identifier: MIT OR Apache-2.0 */
+
+/* The plot (B04-T01): the uPlot area on the workspace surface and a legend of lines. */
+.plot {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  color: var(--text-1);
+  font-family: var(--font-sans);
+}
+
+.area {
+  inline-size: 100%;
+  background: var(--surface-0);
+}
+
+.legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2) var(--space-4);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: var(--type-12-size);
+  line-height: var(--type-12-line);
+}
+
+.entry {
+  display: flex;
+  gap: var(--space-2);
+  align-items: center;
+}
+
+.swatch {
+  flex: none;
+}

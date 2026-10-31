@@ -72,6 +72,13 @@
 - `packages/ui/tokens/cvd.ts`: CVD simulation (Machado 2009, severity 1.0; achromatopsia as luminance). Indicators keep 3:1 for every deficiency; signal pairs collapse (F-173), so the DL-X08 rule of text or an icon with every signal colour stands.
 - No cargo build: PLOTSONA held the Rust build slot. Locally: the `@sonarithm/ui` and `@sonarithm/i18n` node tests, lint and typecheck. The writing tools turned Unicode escapes in a test file into literal invisible characters; the file now spells them as escapes.
 
+## B04-T01: plots and palettes (2026-10-30)
+
+- `series-1..8` tokens derived from Okabe–Ito by a reproducible loop (`tokens/series.ts`, printed by `tokens/series-print.ts`). A test checks that the recipe matches the derivation. Two fixes came from the token tests: black became `text-2` everywhere (DL-X07), and high-contrast series take their standard counterpart's ratio as a floor.
+- The light theme's warm hues turn brown to stay apart under deuteranopia (F-174).
+- `@sonarithm/viz`: `Plot` on uPlot 1.6.32 (MIT), the dash patterns, and viridis and magma lookup tables from BIDS/colormap (CC0). cividis is OD-29. The Plot stories live in `@sonarithm/ui`'s Storybook (`src/viz`), so they run in all four themes with axe.
+- No cargo build. Locally: `@sonarithm/ui` (48) and `@sonarithm/viz` (3) node tests, lint and typecheck, and the Plot story tests in four themes. The shell kept collapsing backslashes, so regex work moved to `sed` and to the editor tool.
+
 ## Next steps
 
 - [ ] Commit the screenshot baselines from the first CI run's `visual-baselines` artifact.
