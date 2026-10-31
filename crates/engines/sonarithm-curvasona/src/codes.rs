@@ -15,9 +15,9 @@ pub const EXPR_SYNTAX: CodeInfo = CodeInfo {
     code: "SNR-ENG-400",
     severity: Severity::Error,
     summary: "The expression cannot be read",
-    help: "Write the function in `x` with numbers, + - * / ^, parentheses and functions such \
-           as sin(x). Write every product with `*` (2*x, not 2x); the message names the \
-           character where reading stopped.",
+    help: "Write the function in `x` with numbers, `+ - * / ^`, parentheses and functions \
+           such as `sin(x)`. Write every product with `*` (`2*x`, not `2x`); the message \
+           names the characters where reading stopped.",
     rules: &[],
     status: CodeStatus::Active,
 };

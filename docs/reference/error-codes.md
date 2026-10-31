@@ -239,7 +239,7 @@ Owner: `sonarithm-curvasona`. Numbers SNR-ENG-400 to SNR-ENG-499.
 
 | Code | Severity | Meaning | How to fix | Rules |
 |---|---|---|---|---|
-| `SNR-ENG-400` | error | The expression cannot be read | Write the function in `x` with numbers, + - * / ^, parentheses and functions such as sin(x). Write every product with `*` (2*x, not 2x); the message names the character where reading stopped. | — |
+| `SNR-ENG-400` | error | The expression cannot be read | Write the function in `x` with numbers, `+ - * / ^`, parentheses and functions such as `sin(x)`. Write every product with `*` (`2*x`, not `2x`); the message names the characters where reading stopped. | — |
 | `SNR-ENG-401` | error | The expression uses an unknown name | An expression may use `x`, the constants pi, e and tau, the source's `variables` and the functions listed in 07 CURVASONA. Declare other names in `variables`. `log` is refused because it means ln in some books and log10 in others: write ln(x) or log10(x). | — |
 | `SNR-ENG-402` | error | The expression exceeds a size limit | Expressions are untrusted input with budgets for length, nesting depth and size (12 §6). Simplify the expression, or split it with `variables`. | — |
 | `SNR-ENG-403` | error | A variable cannot be used | Variable names start with a letter, use letters, digits and `_`, are at most 32 characters long and are not `x`, a constant or a function name. A source declares at most 16 variables. | — |
