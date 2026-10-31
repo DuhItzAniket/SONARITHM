@@ -1016,6 +1016,15 @@ A05 (render engine, audio backends, export) uses F-050 to F-069.
 - **Affects:** C02-T09, A11Y-02, A11Y-12, A11Y-24, FR-008, OD-07, H-06
 - **Papers:** none yet
 
+### F-199 · CURVASONA's canonical form put a negative divisor in parentheses, which made it deeper than its source
+
+- **Date:** 2026-11-01 · **Phase:** C03 · **Type:** engineering (robustness) · **Status:** new
+- **Statement:** The fuzz target `expr_parse` (CI job 124637048464, on #429) found an expression that parses but whose canonical form does not: `4-x/` followed by 32 unary minuses and `4-1`. The parser counts one level of nesting per unary minus, so the input sits exactly at the depth limit of 32. The printer wrapped any negative divisor in parentheses (`x/(-4)`), although ADR-0028's grammar reads a divisor as a unary expression, so `x/-4` already means `x/(-4)`; the added parentheses were a 33rd level, and the canonical form failed with `SNR-ENG-402`. A divisor now prints with the multiplier's rule, so `x/-4` stays `x/-4` and the printer adds parentheses only where the grammar needs them, which the source text must then also have had. ADR-0028's grammar is unchanged; only the canonical spelling of a negative divisor changes.
+- **Evidence:** `crates/engines/sonarithm-curvasona/src/expr.rs` (`Node::print`); the test `f_199_a_divisor_at_the_depth_limit_reads_back`; the corpus seed `seed-regression-divisor-depth.txt`, replayed by `tests/fuzz_regressions.rs` on every run
+- **Evidence level / confidence:** EV-D / Strong (a reproduced fuzz failure, with a regression test)
+- **Affects:** C03-T01 (the expression facade), ADR-0028's canonical form
+- **Papers:** none yet
+
 ### F-194 · A zero of a guard exactly on a grid point hid a second zero in the next grid step
 
 - **Date:** 2026-10-31 · **Phase:** C03 · **Type:** engineering (correctness) · **Status:** new
