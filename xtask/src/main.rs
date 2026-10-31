@@ -49,6 +49,8 @@ Tasks:
   network-deny       Run the app-core tests under an OS mechanism that records network
                      connection attempts, and fail on any (NFR-04; testing-strategy §10)
                      Options: --self-test  check that a deliberate connection is seen
+                              --app <exe> [-- <args>]  run one executable instead (the
+                                                       packaged desktop app, B01-T09)
   replication        Render the replication gallery (replication/) and check it against the
                      committed files
                      Options: --update   rewrite the generated files and manifests
