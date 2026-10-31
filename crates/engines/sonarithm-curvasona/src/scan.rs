@@ -503,10 +503,11 @@ fn undefined_spans(
         let (Some(&first), Some(&last)) = (dense.get(i), dense.get(j)) else {
             break;
         };
-        let at_singularity = i == j
-            && singularities
-                .iter()
-                .any(|s| (s.x - first).abs() <= tolerance);
+        // A run that is only the point of a pole or hole (perhaps several samples within a
+        // float step of it) is that point, not a span.
+        let at_singularity = singularities
+            .iter()
+            .any(|s| (s.x - first).abs() <= tolerance && (s.x - last).abs() <= tolerance);
         if !at_singularity {
             let start = match i.checked_sub(1).and_then(|k| dense.get(k)) {
                 Some(&before) => edge(f, before, first, counter),
