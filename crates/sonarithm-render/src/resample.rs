@@ -155,7 +155,10 @@ mod tests {
             let expected = (input.len() as f64 * to / from).floor();
             #[expect(clippy::cast_precision_loss, reason = "test sizes")]
             let got = output.len() as f64;
-            assert!((got - expected).abs() < 1.0, "{from} -> {to}: {got} vs {expected}");
+            assert!(
+                (got - expected).abs() < 1.0,
+                "{from} -> {to}: {got} vs {expected}"
+            );
             let f = frequency(&output, to);
             assert!((f - 440.0).abs() < 5.0, "{from} -> {to}: {f} Hz");
         }

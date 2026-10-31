@@ -493,7 +493,8 @@ fn every_earcon_plays_live_on_the_earcon_bus() {
 fn audified(cycles_per_sample: f64, rate: f64, count: usize) -> Score {
     let samples: Vec<f32> = (0..count)
         .map(|i| {
-            let s = 0.8 * sonarithm_core::math::sin(core::f64::consts::TAU * cycles_per_sample * i as f64);
+            let s = 0.8
+                * sonarithm_core::math::sin(core::f64::consts::TAU * cycles_per_sample * i as f64);
             s as f32
         })
         .collect();
@@ -501,16 +502,27 @@ fn audified(cycles_per_sample: f64, rate: f64, count: usize) -> Score {
     let duration = 0.1 + event.duration().0 + 0.1;
     score(
         duration,
-        vec![track("sine", TrackRole::Data, vec![ScoreEvent::Audify(event)])],
+        vec![track(
+            "sine",
+            TrackRole::Data,
+            vec![ScoreEvent::Audify(event)],
+        )],
     )
 }
 
 /// Rising zero crossings per second over the middle of a signal.
 fn tone_frequency(samples: &[f32]) -> f64 {
     let start = samples.iter().position(|s| s.abs() > 1e-3).unwrap_or(0) + 4_800;
-    let end = samples.iter().rposition(|s| s.abs() > 1e-3).unwrap_or(0).saturating_sub(4_800);
+    let end = samples
+        .iter()
+        .rposition(|s| s.abs() > 1e-3)
+        .unwrap_or(0)
+        .saturating_sub(4_800);
     let middle = &samples[start..end.max(start + 1)];
-    let rising = middle.windows(2).filter(|w| w[0] < 0.0 && w[1] >= 0.0).count();
+    let rising = middle
+        .windows(2)
+        .filter(|w| w[0] < 0.0 && w[1] >= 0.0)
+        .count();
     rising as f64 / (middle.len() as f64 / 48_000.0)
 }
 
@@ -523,7 +535,9 @@ fn sdr_31_an_audified_sine_plays_the_expected_tone() {
     let out = left(&render(&score, 256));
     let f = tone_frequency(&out);
     assert!((f - 440.0).abs() < 3.0, "{f} Hz");
-    let plan = RenderPlan::build(&score, &PlanConfig::new(RATE)).unwrap().plan;
+    let plan = RenderPlan::build(&score, &PlanConfig::new(RATE))
+        .unwrap()
+        .plan;
     let track = &plan.tracks[0];
     assert_eq!(track.buffers.len(), 1);
     // One second of samples at 44 kHz is one second at 48 kHz.

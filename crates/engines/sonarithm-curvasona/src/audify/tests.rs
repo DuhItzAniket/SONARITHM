@@ -60,7 +60,11 @@ fn frequency(audify: &Audify) -> f64 {
 }
 
 fn codes_of(compiled: &Compiled) -> Vec<&str> {
-    compiled.diagnostics.iter().map(|d| d.code.as_str()).collect()
+    compiled
+        .diagnostics
+        .iter()
+        .map(|d| d.code.as_str())
+        .collect()
 }
 
 /// SDR-31: the seismic preset is k = 2200 (Dombois 2001).
@@ -98,7 +102,11 @@ fn sdr_31_a_sine_in_gives_the_expected_tone_out() {
     assert!((f - 440.0).abs() < 2.0, "{f} Hz");
     assert!((audify.duration().0 - 10.0 / 440.0).abs() < 1e-3);
     assert!(audify.samples.iter().all(|s| s.abs() <= 1.0));
-    assert!(codes_of(&compiled).contains(&"SNR-ENG-460"), "{:?}", codes_of(&compiled));
+    assert!(
+        codes_of(&compiled).contains(&"SNR-ENG-460"),
+        "{:?}",
+        codes_of(&compiled)
+    );
     assert_eq!(compiled.score.header.ir_version, 2);
 }
 
@@ -130,7 +138,11 @@ fn sdr_31_k_bounds_and_inaudible_bands() {
     refused(&json!({ "k": 0.01 }), "SNR-ENG-462");
     // k = 5 sounds from 0.5 Hz to 250 Hz: partly below hearing.
     let partly = compile(&sine_spec(&json!({ "k": 5 }))).unwrap();
-    assert!(codes_of(&partly).contains(&"SNR-ENG-461"), "{:?}", codes_of(&partly));
+    assert!(
+        codes_of(&partly).contains(&"SNR-ENG-461"),
+        "{:?}",
+        codes_of(&partly)
+    );
 }
 
 /// INFER (no study): without `k` or `band`, k puts the top of the band at 4 kHz.
@@ -143,7 +155,11 @@ fn sdr_31_infer_the_default_k_puts_the_top_of_the_band_at_4_khz() {
     });
     let compiled = compile(&spec).unwrap();
     let audify = event(&compiled.score);
-    assert!((audify.rate - 2.0 * DEFAULT_TOP_HZ).abs() < 1e-6, "{}", audify.rate);
+    assert!(
+        (audify.rate - 2.0 * DEFAULT_TOP_HZ).abs() < 1e-6,
+        "{}",
+        audify.rate
+    );
 }
 
 /// SDR-23: the level is the `loudness` value, or −18 dB.

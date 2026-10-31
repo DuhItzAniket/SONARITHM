@@ -438,10 +438,7 @@ impl Voice {
         self.source.set_frequency(Hz(frequency), rate);
         // A buffer starts part-way through after a seek, and follows the transport speed.
         if let Source::Buffer { pos, step, .. } = &mut self.source {
-            #[expect(
-                clippy::cast_precision_loss,
-                reason = "frame offsets below 2^53"
-            )]
+            #[expect(clippy::cast_precision_loss, reason = "frame offsets below 2^53")]
             let offset = at.offset as f64;
             *pos = offset * at.speed;
             *step = at.speed;

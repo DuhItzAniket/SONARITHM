@@ -116,7 +116,10 @@ fn numbers(table: &Table, name: &str) -> Option<Vec<Option<f64>>> {
 fn times(table: &Table, name: &str) -> Option<Vec<Option<f64>>> {
     let column = table.column(name).ok()?;
     if let Some(a) = column.as_any().downcast_ref::<TimestampMillisecondArray>() {
-        #[expect(clippy::cast_precision_loss, reason = "millisecond times, rounding accepted")]
+        #[expect(
+            clippy::cast_precision_loss,
+            reason = "millisecond times, rounding accepted"
+        )]
         return Some(a.iter().map(|v| v.map(|ms| ms as f64 / 1000.0)).collect());
     }
     numbers(table, name)
@@ -154,7 +157,9 @@ fn uniform(values: &[Option<f64>], times: &[Option<f64>]) -> Option<(Vec<Option<
             continue;
         };
         out.push(match (v0, v1) {
-            (Some(a), Some(b)) if t1 > t0 => Some(a + (b - a) * ((t - t0) / (t1 - t0)).clamp(0.0, 1.0)),
+            (Some(a), Some(b)) if t1 > t0 => {
+                Some(a + (b - a) * ((t - t0) / (t1 - t0)).clamp(0.0, 1.0))
+            }
             (Some(a), _) if (t - t0).abs() <= f64::EPSILON * t0.abs().max(1.0) => Some(a),
             _ => None,
         });
@@ -185,9 +190,16 @@ impl Encoder<DataBundle> for AudifyEncoder {
     ) -> Result<ScoreTrack, CompileError> {
         let at = track.spec.pointer().clone();
         let spec: Value = track.spec.parse()?;
-        let substrate: Option<Value> = track.substrate.as_ref().map(SpecFragment::parse).transpose()?;
+        let substrate: Option<Value> = track
+            .substrate
+            .as_ref()
+            .map(SpecFragment::parse)
+            .transpose()?;
         let table = data.primary().ok_or_else(|| {
-            refuse(&codes::AUDIFY_NO_SERIES, "There is no data to audify.".to_owned())
+            refuse(
+                &codes::AUDIFY_NO_SERIES,
+                "There is no data to audify.".to_owned(),
+            )
         })?;
         let time = substrate
             .as_ref()
@@ -238,7 +250,9 @@ impl Encoder<DataBundle> for AudifyEncoder {
         let audify = spec.get("audify");
         let k = match (
             audify.and_then(|a| a.get("k")).and_then(Value::as_f64),
-            audify.and_then(|a| a.pointer("/band/hz/1")).and_then(Value::as_f64),
+            audify
+                .and_then(|a| a.pointer("/band/hz/1"))
+                .and_then(Value::as_f64),
         ) {
             (Some(k), _) => k,
             (None, Some(hi)) => k_for_band(fs, hi),
@@ -285,10 +299,7 @@ impl Encoder<DataBundle> for AudifyEncoder {
                 .at(at.key("audify")),
             );
         }
-        let peak = values
-            .iter()
-            .flatten()
-            .fold(0.0_f64, |m, v| m.max(v.abs()));
+        let peak = values.iter().flatten().fold(0.0_f64, |m, v| m.max(v.abs()));
         let scale = if peak > 0.0 { 1.0 / peak } else { 0.0 };
         #[expect(clippy::cast_possible_truncation, reason = "samples are f32")]
         let samples: Vec<f32> = values

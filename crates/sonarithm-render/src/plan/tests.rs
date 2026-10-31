@@ -140,7 +140,9 @@ fn review(plan: &RenderPlan) -> String {
                     )
                 }
                 EventKind::Earcon { kind, gain } => format!("earcon {kind:?} gain {gain:.4}"),
-                EventKind::Audify { buffer, gain } => format!("audify buffer {buffer} gain {gain:.4}"),
+                EventKind::Audify { buffer, gain } => {
+                    format!("audify buffer {buffer} gain {gain:.4}")
+                }
             };
             let _ = writeln!(
                 out,
