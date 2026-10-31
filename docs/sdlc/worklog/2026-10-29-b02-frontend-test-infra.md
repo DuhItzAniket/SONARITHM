@@ -104,6 +104,12 @@
 
 - #419's frontend-browser job failed in `dense.perf.ts`: the test ran past Vitest's 15 s browser timeout, because 60 software-rendered redraws of a million points were too slow on that runner, and no trace was written. No budget check failed; the test only records. Measuring now stops after 8 s (`cutShort` in the report), the test timeout is 120 s, and it still fails if nothing draws. Not run locally (the builder and browser slots were others'); CI runs it.
 
+## B04-T08: PB-08 in the three webviews, CI side (2026-11-01)
+
+- The Vitest perf project runs in Playwright's Chromium, not in a webview. The desktop smoke run already starts the real app on all three CI hosts, so the PB-08 trace now runs there (`pb-08-dense-layer`). That covers WebView2, WKWebView and WebKitGTK in debug (ci.yml) and release (desktop-nightly) builds.
+- It is reported, not gated, and it fails only when no renderer works. The `backend` field shows a software fallback. Each phase is capped at 8 s, as the perf test is (#428).
+- No number was taken locally on the shared machine. The benchmarks-log row gets CI's values once they exist. The HW-01 WebView2 run (both GPUs) is an owner step, posted as a comment on #129.
+
 ## Next steps
 
 - [ ] Commit the screenshot baselines from the first CI run's `visual-baselines` artifact.
