@@ -1016,6 +1016,15 @@ A05 (render engine, audio backends, export) uses F-050 to F-069.
 - **Affects:** C02-T09, A11Y-02, A11Y-12, A11Y-24, FR-008, OD-07, H-06
 - **Papers:** none yet
 
+### F-193 · NUMISONA's glide `src` ranges include their last row, against `RowRange`'s one-past-the-end contract
+
+- **Date:** 2026-10-31 · **Phase:** C03 · **Type:** engineering (correctness) · **Status:** new
+- **Statement:** C03-T04's cue track found no cue times at all: it expected one glide breakpoint per row of the glide's `src` range, but a glide over rows 0 to 120 has 121 breakpoints with `src` 0..120. `sonarithm_core::RowRange` documents `end` as "one past the last row", so NUMISONA's glide ranges stop one row short (the next glide, after an empty row at a pole, starts at 121). CURVASONA's cue track now accepts both forms. Other readers of glide `src` (AUDAXIS's point placement, linked selection in the app, the scrub preview) may assume the documented contract and miss the last row of each glide. Fixing NUMISONA changes every Score snapshot with glides, so it needs its own PR with the snapshot updates; it is outside C03.
+- **Evidence:** `crates/engines/sonarithm-curvasona/src/cues.rs` (`row_times`); a compile of `1/(x^2 - 4)` with 401 samples gives glides with `src` 0..120, 121..280, 281..401 and 121, 160, 121 breakpoints; `crates/sonarithm-core/src/ids.rs` (`RowRange::end`)
+- **Evidence level / confidence:** EV-C / Strong (reproduced)
+- **Affects:** NUMISONA's glide encoder (A06), every reader of `Glide::src`, C03-T04
+- **Papers:** none yet
+
 ### F-192 · exmex's symbolic derivatives overflow the stack on allowed input, so CURVASONA differentiates on its own tree
 
 - **Date:** 2026-10-31 · **Phase:** C03 · **Type:** engineering (security, correctness) · **Status:** new
