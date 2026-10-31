@@ -629,6 +629,9 @@ fn duration(score: &Score) -> Seconds {
         .map(|event| match event {
             sonarithm_core::score::ScoreEvent::Note(note) => note.t.0 + note.dur.0,
             sonarithm_core::score::ScoreEvent::Glide(glide) => glide.t1.0,
+            sonarithm_core::score::ScoreEvent::Audify(audify) => {
+                audify.t.0 + audify.duration().0
+            }
             other => other.start().0,
         })
         .fold(0.0, f64::max);

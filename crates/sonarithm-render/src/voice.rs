@@ -107,6 +107,9 @@ enum Source {
     Earcon(Earcon),
     /// Seeded white noise through a low-pass (the click).
     Noise { state: u64, filter: Biquad },
+    /// An audified series: a buffer of the track plan, read from `pos` in steps of `step`
+    /// (the transport speed), linearly interpolated (RFC-0007 §3).
+    Buffer { index: u32, pos: f64, step: f64 },
 }
 
 impl Source {
@@ -157,7 +160,7 @@ impl Source {
                 };
                 *weights = mallet_weights(*increment, *brightness);
             }
-            Self::Earcon(_) | Self::Noise { .. } => {}
+            Self::Earcon(_) | Self::Noise { .. } | Self::Buffer { .. } => {}
         }
     }
 
@@ -225,6 +228,8 @@ impl Source {
                 to_f32(sum)
             }
             Self::Earcon(earcon) => earcon.next_sample(),
+            // Buffers are read in `Voice::render`, which has the track plan.
+            Self::Buffer { .. } => 0.0,
             Self::Noise { state, filter } => {
                 *state ^= *state << 13;
                 *state ^= *state >> 7;
@@ -431,6 +436,16 @@ impl Voice {
         };
         self.source.set_brightness(brightness);
         self.source.set_frequency(Hz(frequency), rate);
+        // A buffer starts part-way through after a seek, and follows the transport speed.
+        if let Source::Buffer { pos, step, .. } = &mut self.source {
+            #[expect(
+                clippy::cast_precision_loss,
+                reason = "frame offsets below 2^53"
+            )]
+            let offset = at.offset as f64;
+            *pos = offset * at.speed;
+            *step = at.speed;
+        }
         // The sine is pure, the mallet tilts its partials, earcons are fixed: the other
         // waveforms get a brightness low-pass.
         if matches!(self.source, Source::Wave(_)) && instrument != Instrument::Sine {
@@ -510,6 +525,16 @@ impl Voice {
             match (&mut self.source, &mut self.filter) {
                 // One pass, so the oscillator's arithmetic overlaps the filter's (PB-03).
                 (Source::Wave(osc), Some(filter)) => osc.fill_through(buffer, filter),
+                (Source::Buffer { index, pos, step }, _) => {
+                    let samples = track
+                        .buffers
+                        .get(*index as usize)
+                        .map_or(&[][..], |b| &b[..]);
+                    for sample in buffer.iter_mut() {
+                        *sample = read_buffer(samples, *pos);
+                        *pos += *step;
+                    }
+                }
                 (source, filter) => {
                     source.fill(buffer);
                     if let Some(filter) = filter {
@@ -661,6 +686,20 @@ impl Sound {
                 brightness: 1.0,
                 source: Source::Earcon(Earcon::new(kind, rate, seed)),
             },
+            // SDR-22's minimum ramps at both ends; centred, so nothing is in pan (A11Y-14).
+            EventKind::Audify { buffer, gain } => Self {
+                instrument: Instrument::Sine,
+                ramp: ramp_frames(MIN_RAMP, rate),
+                gain,
+                pan: PanGains::constant_power(Pan::CENTRE),
+                frequency: 0.0,
+                brightness: 1.0,
+                source: Source::Buffer {
+                    index: buffer,
+                    pos: 0.0,
+                    step: 1.0,
+                },
+            },
         }
     }
 }
@@ -701,6 +740,26 @@ fn ramped(ramp: u32, rate: SampleRate) -> AdsrParams {
         sustain: 1.0,
         release: ramp,
     }
+}
+
+/// The buffer at a fractional position, linearly interpolated; 0 outside it.
+fn read_buffer(samples: &[f32], pos: f64) -> f32 {
+    if pos.is_nan() || pos < 0.0 {
+        return 0.0;
+    }
+    #[expect(
+        clippy::cast_possible_truncation,
+        clippy::cast_sign_loss,
+        reason = "checked non-negative; positions below 2^53"
+    )]
+    let index = pos.floor() as usize;
+    let Some(&a) = samples.get(index) else {
+        return 0.0;
+    };
+    let b = samples.get(index + 1).copied().unwrap_or(0.0);
+    #[expect(clippy::cast_precision_loss, reason = "positions below 2^53")]
+    let frac = to_f32(pos - index as f64);
+    a + (b - a) * frac
 }
 
 fn silent_point(frame: u64) -> PlannedBreakpoint {
@@ -790,6 +849,7 @@ mod tests {
             noise_seed: 0,
             events: vec![event],
             breakpoints: Vec::new(),
+            buffers: Vec::new(),
         };
         (track, event)
     }

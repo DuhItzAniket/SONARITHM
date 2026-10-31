@@ -1016,6 +1016,15 @@ A05 (render engine, audio backends, export) uses F-050 to F-069.
 - **Affects:** C02-T09, A11Y-02, A11Y-12, A11Y-24, FR-008, OD-07, H-06
 - **Papers:** none yet
 
+### F-195 · Audification resamples with a deterministic windowed-sinc, because rubato's FFT path is not bit-identical across CPUs
+
+- **Date:** 2026-11-01 · **Phase:** C03 · **Type:** engineering (determinism) · **Status:** new
+- **Statement:** RFC-0007 §3 planned to resample audified series with rubato at plan time. Golden audio relies on renders being bit-identical on Windows, Linux and macOS (F-039, ADR-0013), and rubato's fixed-ratio resamplers use FFTs through realfft and rustfft, which choose AVX, SSE or NEON code at run time, so their rounding can differ between x86 and ARM machines (TODO(verify) by rendering the same plan on both). `sonarithm_render::resample` is a windowed-sinc interpolator (Blackman window, 16 taps a side at unity, widened to low-pass at the output's Nyquist when downsampling, at most 4096 a side), computed with `libm` and IEEE arithmetic only, normalized per output sample and clamped to [−1, 1]. It is slower than an FFT resampler (about 2·16/min(1, ratio) multiply-adds per output sample), acceptable for at most 2^22 samples on a worker thread. rubato stays licence-checked (C03-T01) should a deterministic mode be needed later. The audifier voice then reads the buffer with linear interpolation at the transport speed, so speed changes and seeks need no new resampling on the audio thread.
+- **Evidence:** `crates/sonarithm-render/src/resample.rs` and its tests (`sdr_31_resampling_keeps_the_tone`, `downsampling_removes_what_the_output_cannot_hold`); `crates/sonarithm-render/src/graph/tests.rs` (`sdr_31_an_audified_sine_plays_the_expected_tone`); the C03-T05 PR
+- **Evidence level / confidence:** EV-D / Moderate (the SIMD rounding difference is inferred from rustfft's design, not measured)
+- **Affects:** RFC-0007 §3, 06 (audifier row), C03-T05, C03-T06
+- **Papers:** none yet
+
 ### F-193 · NUMISONA's glide `src` ranges include their last row, against `RowRange`'s one-past-the-end contract
 
 - **Date:** 2026-10-31 · **Phase:** C03 · **Type:** engineering (correctness) · **Status:** new
