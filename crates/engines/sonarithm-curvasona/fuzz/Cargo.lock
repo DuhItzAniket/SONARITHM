@@ -1136,6 +1136,7 @@ dependencies = [
  "arrow-array",
  "arrow-schema",
  "exmex",
+ "serde_json",
  "sonarithm-core",
  "sonarithm-data",
  "sonarithm-spec",

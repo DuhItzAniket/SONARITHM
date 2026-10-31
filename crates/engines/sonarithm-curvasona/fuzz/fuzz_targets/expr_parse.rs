@@ -1,8 +1,8 @@
 // SPDX-FileCopyrightText: 2026 SONARITHM contributors
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
-//! Fuzzes the `expr` facade (C03-T01): parsing under the limits, the exmex lowering,
-//! evaluation and the symbolic derivative. Every error must be a CURVASONA expression code,
+//! Fuzzes the `expr` facade (C03-T01, C03-T03): parsing under the limits, the exmex
+//! lowering, evaluation and the first and second symbolic derivatives. Every error must be a CURVASONA expression code,
 //! the canonical form must parse back to itself, and nothing may panic.
 
 #![no_main]
@@ -25,8 +25,13 @@ fuzz_target!(|data: &[u8]| {
                 let _ = expr.eval(x);
                 let _ = numeric_derivative(&expr, x);
             }
+            // Derivatives are CURVASONA's own (F-192): the first and second must never
+            // overflow the stack or exceed their limits silently.
             if let Ok(dy) = expr.derivative() {
                 let _ = dy.eval(0.5);
+                if let Ok(d2) = dy.derivative() {
+                    let _ = d2.eval(0.5);
+                }
             }
         }
         Err(error) => {

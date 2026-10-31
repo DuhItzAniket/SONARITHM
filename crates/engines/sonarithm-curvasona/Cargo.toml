@@ -13,17 +13,20 @@ publish = false
 [dependencies]
 arrow-array.workspace = true
 arrow-schema.workspace = true
-# Expression evaluation and symbolic derivatives, behind the `expr` facade (07 CURVASONA,
-# C03-T01). Never evalexpr (AGPL since 12.0, banned in deny.toml).
+# Expression evaluation behind the `expr` facade (07 CURVASONA, C03-T01). Never evalexpr
+# (AGPL since 12.0, banned in deny.toml).
 exmex.workspace = true
 sonarithm-core.workspace = true
 sonarithm-data.workspace = true
+serde_json.workspace = true
 sonarithm-spec.workspace = true
 
 [dev-dependencies]
 insta = { workspace = true, features = ["json"] }
 proptest.workspace = true
-serde_json.workspace = true
+# Tests check that critical points reach the navigation tree (C03-T03). A dev-dependency
+# only, like NUMISONA below.
+sonarithm-audaxis.workspace = true
 sonarithm-compiler.workspace = true
 # Tests compile function specs through NUMISONA's marks. A dev-dependency only: engines
 # never depend on each other in shipped code (02 §3 rule 2), and check-deps skips

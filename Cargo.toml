@@ -205,10 +205,11 @@ roxmltree = "0.21.2"
 # Raster chart images (C02-T02): PNG and JPEG decoding only, no encoders or rayon (the C02
 # licence check in supply-chain-and-licensing.md).
 image = { version = "0.25.10", default-features = false, features = ["png", "jpeg"] }
-# Expressions for CURVASONA's `function` source, behind its `expr` facade (C03-T01): parsing,
-# evaluation and symbolic derivatives (`partial`). MIT OR Apache-2.0; its dependencies
-# (regex, smallvec) are already in the tree. evalexpr is banned (AGPL since 12.0).
-exmex = { version = "0.21.0", default-features = false, features = ["partial"] }
+# Expressions for CURVASONA's `function` source, behind its `expr` facade (C03-T01): evaluation
+# of the lowered form only; `partial` is off because it overflows the stack (F-192).
+# MIT OR Apache-2.0; its dependencies (regex, smallvec) are already in the tree. evalexpr is
+# banned (AGPL since 12.0).
+exmex = { version = "0.21.0", default-features = false }
 # SVG path data, transforms, lengths and colours (PLOTSONA's SVG tier, C01-T02, C01-T07).
 svgtypes = "0.16.1"
 # TOML for engine data tables (NUMISONA's concepts.toml, 03 §3.3); parsing only, no writer.

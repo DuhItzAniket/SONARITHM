@@ -1,8 +1,8 @@
 // SPDX-FileCopyrightText: 2026 SONARITHM contributors
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
-//! The `expr` facade (07 CURVASONA): CURVASONA's expression language, parsed here and
-//! evaluated and differentiated by exmex.
+//! The `expr` facade (07 CURVASONA): CURVASONA's expression language, parsed and
+//! differentiated here and evaluated by exmex.
 //!
 //! An expression is untrusted input (12 §6). This module reads it with its own small
 //! parser under [`Limits`] (length, nesting depth, node count), with ordinary maths
@@ -32,7 +32,7 @@
 use std::collections::BTreeMap;
 use std::fmt;
 
-use exmex::{Differentiate, Express, FlatEx};
+use exmex::{Express, FlatEx};
 use sonarithm_core::Diagnostic;
 
 use crate::codes;
@@ -1158,43 +1158,235 @@ impl Expr {
         self.compiled.x.is_some()
     }
 
-    /// The symbolic derivative with respect to `x`, through exmex. Its canonical form is
-    /// exmex's (fully written out), not this module's.
+    /// The symbolic derivative with respect to `x`, computed on this module's tree and
+    /// simplified (`0*u`, `1*u`, `u+0`, constant folding), then compiled like any
+    /// expression. exmex's own `partial` is not used: it overflows a 2 MB stack on inputs
+    /// within the limits, such as `x*(x*(…))` nested eight deep, or the second derivative
+    /// of `exp(-x^2)*cos(3*x)` (F-192).
     ///
     /// # Errors
     ///
-    /// [`NoDerivative`] when exmex has no derivative for a function the expression uses, or
-    /// the derivative is too large.
+    /// [`NoDerivative::Unsupported`] for `min` and `max`; [`NoDerivative::TooLarge`] when the
+    /// tree is deeper than [`MAX_DERIVATIVE_DEPTH`] or the derivative would have more than
+    /// [`MAX_DERIVATIVE_NODES`] nodes or [`Limits::max_derivative_chars`] characters.
     pub fn derivative(&self) -> Result<Self, NoDerivative> {
-        let Some(index) = self.compiled.x else {
-            return Ok(Self {
-                canonical: "0".to_owned(),
-                slots: Slots::default(),
-                compiled: Compiled {
-                    flat: exmex::parse::<f64>("0").map_err(|_| NoDerivative::Unsupported)?,
-                    values: Vec::new(),
-                    x: None,
-                },
-                max_derivative_chars: self.max_derivative_chars,
-                tree: None,
-            });
+        let Some((node, names)) = &self.tree else {
+            return Err(NoDerivative::Unsupported);
         };
-        let flat = self
-            .compiled
-            .flat
-            .clone()
-            .partial(index)
-            .map_err(|_| NoDerivative::Unsupported)?;
-        let text = flat.unparse().to_owned();
-        if text.len() > self.max_derivative_chars {
+        if node.depth() > MAX_DERIVATIVE_DEPTH {
             return Err(NoDerivative::TooLarge);
         }
-        Ok(Self {
-            canonical: text,
-            compiled: Compiled::bind(flat, &self.slots),
-            slots: self.slots.clone(),
-            max_derivative_chars: self.max_derivative_chars,
-            tree: None,
+        let mut budget = MAX_DERIVATIVE_NODES;
+        let derivative = node.derivative(&mut budget)?;
+        if derivative.depth() > 2 * MAX_DERIVATIVE_DEPTH
+            || derivative.count() > MAX_DERIVATIVE_NODES
+        {
+            return Err(NoDerivative::TooLarge);
+        }
+        let expr = Self::from_node(
+            derivative,
+            names.clone(),
+            &self.slots.variables,
+            self.max_derivative_chars,
+        )
+        .map_err(|_| NoDerivative::TooLarge)?;
+        if expr.canonical.len() > self.max_derivative_chars {
+            return Err(NoDerivative::TooLarge);
+        }
+        Ok(expr)
+    }
+}
+
+/// The deepest tree a derivative is taken of; a derivative may be twice as deep. Its
+/// lowered form then nests under 800 parentheses, which exmex parses and evaluates on a
+/// 1 MB stack (tested), and the recursion here stays small.
+pub const MAX_DERIVATIVE_DEPTH: usize = 128;
+
+/// The most nodes a derivative may have.
+pub const MAX_DERIVATIVE_NODES: usize = 8192;
+
+fn num(v: f64) -> Node {
+    Node::Num(v)
+}
+
+fn is_num(node: &Node, v: f64) -> bool {
+    matches!(node, Node::Num(n) if n.total_cmp(&v).is_eq())
+}
+
+fn neg(a: Node) -> Node {
+    match a {
+        Node::Num(v) => num(-v),
+        Node::Neg(inner) => *inner,
+        other => Node::Neg(Box::new(other)),
+    }
+}
+
+fn bin(op: Op, a: Node, b: Node) -> Node {
+    if let (Node::Num(x), Node::Num(y)) = (&a, &b) {
+        let folded = match op {
+            Op::Add => x + y,
+            Op::Sub => x - y,
+            Op::Mul => x * y,
+            Op::Div => x / y,
+            Op::Pow => x.powf(*y),
+        };
+        if folded.is_finite() {
+            return num(folded);
+        }
+    }
+    match op {
+        Op::Add if is_num(&a, 0.0) => b,
+        Op::Add | Op::Sub if is_num(&b, 0.0) => a,
+        Op::Sub if is_num(&a, 0.0) => neg(b),
+        Op::Mul if is_num(&a, 0.0) || is_num(&b, 0.0) => num(0.0),
+        Op::Mul if is_num(&a, 1.0) => b,
+        Op::Mul | Op::Div | Op::Pow if is_num(&b, 1.0) => a,
+        Op::Div if is_num(&a, 0.0) => num(0.0),
+        Op::Pow if is_num(&b, 0.0) => num(1.0),
+        _ => Node::Bin(op, Box::new(a), Box::new(b)),
+    }
+}
+
+fn add(a: Node, b: Node) -> Node {
+    bin(Op::Add, a, b)
+}
+
+fn sub(a: Node, b: Node) -> Node {
+    bin(Op::Sub, a, b)
+}
+
+fn mul(a: Node, b: Node) -> Node {
+    bin(Op::Mul, a, b)
+}
+
+fn div(a: Node, b: Node) -> Node {
+    bin(Op::Div, a, b)
+}
+
+fn pow(a: Node, b: Node) -> Node {
+    bin(Op::Pow, a, b)
+}
+
+fn call(f: Func1, a: Node) -> Node {
+    Node::Call1(f, Box::new(a))
+}
+
+impl Node {
+    /// Whether the tree reads `x`.
+    fn reads_x(&self) -> bool {
+        match self {
+            Self::X => true,
+            Self::Num(_) | Self::Var(_) => false,
+            Self::Neg(a) | Self::Call1(_, a) => a.reads_x(),
+            Self::Bin(_, a, b) | Self::Call2(_, a, b) => a.reads_x() || b.reads_x(),
+        }
+    }
+
+    /// The depth of the tree.
+    fn depth(&self) -> usize {
+        match self {
+            Self::Num(_) | Self::X | Self::Var(_) => 1,
+            Self::Neg(a) | Self::Call1(_, a) => 1 + a.depth(),
+            Self::Bin(_, a, b) | Self::Call2(_, a, b) => 1 + a.depth().max(b.depth()),
+        }
+    }
+
+    /// The number of nodes.
+    fn count(&self) -> usize {
+        match self {
+            Self::Num(_) | Self::X | Self::Var(_) => 1,
+            Self::Neg(a) | Self::Call1(_, a) => 1 + a.count(),
+            Self::Bin(_, a, b) | Self::Call2(_, a, b) => 1 + a.count() + b.count(),
+        }
+    }
+
+    /// d/dx of the tree, simplified as it is built. Every node built is charged to
+    /// `budget`, so a derivative that would grow too large stops early.
+    fn derivative(&self, budget: &mut usize) -> Result<Self, NoDerivative> {
+        // Each rule below builds a handful of nodes plus copies of its operands.
+        let cost = 8 + match self {
+            Self::Bin(_, a, b) | Self::Call2(_, a, b) => a.count() + b.count(),
+            Self::Neg(a) | Self::Call1(_, a) => a.count(),
+            _ => 0,
+        };
+        *budget = budget.checked_sub(cost).ok_or(NoDerivative::TooLarge)?;
+        Ok(match self {
+            Self::Num(_) | Self::Var(_) => num(0.0),
+            Self::X => num(1.0),
+            Self::Neg(a) => neg(a.derivative(budget)?),
+            Self::Bin(op, a, b) => {
+                let (u, v) = ((**a).clone(), (**b).clone());
+                match op {
+                    Op::Add => add(a.derivative(budget)?, b.derivative(budget)?),
+                    Op::Sub => sub(a.derivative(budget)?, b.derivative(budget)?),
+                    Op::Mul => add(mul(a.derivative(budget)?, v), mul(u, b.derivative(budget)?)),
+                    Op::Div => div(
+                        sub(
+                            mul(a.derivative(budget)?, v.clone()),
+                            mul(u, b.derivative(budget)?),
+                        ),
+                        pow(v, num(2.0)),
+                    ),
+                    Op::Pow if !b.reads_x() => mul(
+                        mul(v.clone(), pow(u, sub(v, num(1.0)))),
+                        a.derivative(budget)?,
+                    ),
+                    Op::Pow if !a.reads_x() => {
+                        mul(mul(self.clone(), call(Func1::Ln, u)), b.derivative(budget)?)
+                    }
+                    Op::Pow => mul(
+                        self.clone(),
+                        add(
+                            mul(b.derivative(budget)?, call(Func1::Ln, u.clone())),
+                            div(mul(v, a.derivative(budget)?), u),
+                        ),
+                    ),
+                }
+            }
+            Self::Call1(f, a) => {
+                let u = (**a).clone();
+                let du = a.derivative(budget)?;
+                let square = |n: Self| pow(n, num(2.0));
+                let outer = match f {
+                    Func1::Sin => call(Func1::Cos, u),
+                    Func1::Cos => neg(call(Func1::Sin, u)),
+                    Func1::Tan => div(num(1.0), square(call(Func1::Cos, u))),
+                    Func1::Sec => mul(call(Func1::Sec, u.clone()), call(Func1::Tan, u)),
+                    Func1::Csc => neg(mul(call(Func1::Csc, u.clone()), call(Func1::Cot, u))),
+                    Func1::Cot => neg(div(num(1.0), square(call(Func1::Sin, u)))),
+                    Func1::Asin => div(num(1.0), call(Func1::Sqrt, sub(num(1.0), square(u)))),
+                    Func1::Acos => neg(div(num(1.0), call(Func1::Sqrt, sub(num(1.0), square(u))))),
+                    Func1::Atan => div(num(1.0), add(num(1.0), square(u))),
+                    Func1::Sinh => call(Func1::Cosh, u),
+                    Func1::Cosh => call(Func1::Sinh, u),
+                    Func1::Tanh => div(num(1.0), square(call(Func1::Cosh, u))),
+                    Func1::Asinh => div(num(1.0), call(Func1::Sqrt, add(square(u), num(1.0)))),
+                    Func1::Acosh => div(num(1.0), call(Func1::Sqrt, sub(square(u), num(1.0)))),
+                    Func1::Atanh => div(num(1.0), sub(num(1.0), square(u))),
+                    Func1::Exp => self.clone(),
+                    Func1::Ln => div(num(1.0), u),
+                    Func1::Log2 => div(num(1.0), mul(u, num(std::f64::consts::LN_2))),
+                    Func1::Log10 => div(num(1.0), mul(u, num(std::f64::consts::LN_10))),
+                    Func1::Sqrt => div(num(1.0), mul(num(2.0), self.clone())),
+                    Func1::Cbrt => div(num(1.0), mul(num(3.0), square(self.clone()))),
+                    // Undefined where u = 0, the kink.
+                    Func1::Abs => div(u, self.clone()),
+                    // Zero wherever it is defined; the jumps are the scan's.
+                    Func1::Floor | Func1::Ceil | Func1::Round | Func1::Trunc => num(0.0),
+                };
+                mul(outer, du)
+            }
+            Self::Call2(Func2::Atan2, a, b) => {
+                let (y, x) = ((**a).clone(), (**b).clone());
+                div(
+                    sub(
+                        mul(x.clone(), a.derivative(budget)?),
+                        mul(y.clone(), b.derivative(budget)?),
+                    ),
+                    add(pow(x, num(2.0)), pow(y, num(2.0))),
+                )
+            }
+            Self::Call2(Func2::Min | Func2::Max, ..) => return Err(NoDerivative::Unsupported),
         })
     }
 }

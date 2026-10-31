@@ -1016,6 +1016,29 @@ A05 (render engine, audio backends, export) uses F-050 to F-069.
 - **Affects:** C02-T09, A11Y-02, A11Y-12, A11Y-24, FR-008, OD-07, H-06
 - **Papers:** none yet
 
+### F-192 · exmex's symbolic derivatives overflow the stack on allowed input, so CURVASONA differentiates on its own tree
+
+- **Date:** 2026-10-31 · **Phase:** C03 · **Type:** engineering (security, correctness) · **Status:** new
+- **Statement:** C03-T03's tests aborted with a stack overflow (Windows, debug build, 2 MB test threads). On a 2 MB thread, exmex 0.21.0's `partial` overflowed on the first derivative of `x*(x*(…(x)…))` nested eight deep, well inside CURVASONA's limits (depth 32, 512 nodes), and on the second derivative of `exp(-x^2) * cos(3*x)`, whose first derivative is only 89 characters long. A stack overflow aborts the process and cannot be caught, so an expression in a spec or a project could crash the app or the CLI. C03-T01's code had this path on `main`, but nothing shipped reached it (the crate is unpublished and not in the facade yet). exmex's parsing and evaluation of the lowered form stayed safe up to 1600 nested parentheses on a 1 MB thread. CURVASONA now computes derivatives itself on its parse tree, with simplification and a node budget charged while the derivative is built (8192 nodes; input depth 128, result depth 256), and keeps exmex for evaluation only. A bonus: `abs`, `floor`, `ceil`, `round`, `trunc`, `cbrt` and `atan2` now have symbolic derivatives, so only `min` and `max` fall back to numerical ones. The first version of CURVASONA's own derivative also overflowed a 1 MB thread on a 256-factor product (quadratic growth before the size check), which the budget charged during construction fixed.
+- **Evidence:** `crates/engines/sonarithm-curvasona/src/expr/tests.rs` (`deep_derivatives_run_on_a_small_stack`, on a 1 MB thread); the fuzz target `expr_parse` now takes second derivatives; the C03-T03 PR
+- **Evidence level / confidence:** EV-C / Strong (reproduced on a fixed stack size)
+- **Affects:** C03-T01 (fixed in C03-T03), 07 CURVASONA, supply-chain-and-licensing (exmex row), 12 §6
+- **Papers:** none yet
+- **Draft upstream issue (for the owner to file; not posted):**
+
+  > **Title:** `partial` overflows the stack on shallow expressions
+  >
+  > With exmex 0.21.0 (`partial` feature), `FlatEx::<f64>::parse("x*(x*(x*(x*(x*(x*(x*(x*(x))))))))")?.partial(0)` overflows a 2 MB thread stack (Windows, debug build), as does taking `partial(0)` twice of `exp(-x^2)*cos(3*x)`, whose first derivative unparses to 89 characters. Parsing and evaluating the same expressions work on a 1 MB stack, even with 1600 nested parentheses. A stack overflow aborts the process, so an application that differentiates user input cannot recover. A depth limit, or an iterative `to_deepex`/`partial`, would avoid it. A reproduction runs `partial` inside `std::thread::Builder::new().stack_size(2 << 20)`.
+
+### F-191 · Insight labels are read as data names, so CURVASONA's critical-point labels are English
+
+- **Date:** 2026-10-31 · **Phase:** C03 · **Type:** engineering (accessibility, localization) · **Status:** new
+- **Statement:** AUDAXIS announces an insight as the catalogue word "Insight" followed by the annotation's label, which the composer treats like a series name: data, read as written (announce.ftl header). That fits labels that come from the data, but CURVASONA's labels name kinds of point ("local maximum", "vertical asymptote", "hole"), so in another locale a listener would hear the word "Insight" translated and the kind of point in English. C03-T03 keeps the labels as short, stable English phrases and adds no catalogue messages, because the core `Annotation` has no field for a message ID and adding one changes a core type every engine shares. Mapping analyzer labels to catalogue messages (for CURVASONA's and ECHOMETRIC's insights alike) belongs with the B07 locale work or an RFC for annotation kinds.
+- **Evidence:** `crates/engines/sonarithm-audaxis/src/announce/compose.rs` (the `NavKind::Insight` arm); `crates/sonarithm-i18n/locales/en-US/announce.ftl` (header); `sonarithm_curvasona::critical::FeatureKind::label`
+- **Evidence level / confidence:** EV-C / Strong (source)
+- **Affects:** C03-T03, C05 (ECHOMETRIC insights), B07 (locales), A11Y-24
+- **Papers:** none yet
+
 ### F-190 · exmex alone reads -2^2 as 4, so CURVASONA parses expressions itself
 
 - **Date:** 2026-10-31 · **Phase:** C03 · **Type:** engineering (correctness, security) · **Status:** new

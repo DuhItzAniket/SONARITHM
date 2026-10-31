@@ -295,7 +295,7 @@ fn constants_have_a_zero_derivative() {
 
 #[test]
 fn functions_without_a_symbolic_derivative_fall_back() {
-    for text in ["abs(x)", "floor(x)", "min(x, 1)", "cbrt(x)", "atan2(x, 1)"] {
+    for text in ["min(x, 1)", "max(x^2, 1)"] {
         assert_eq!(
             parse(text).unwrap().derivative().unwrap_err(),
             NoDerivative::Unsupported,
@@ -312,6 +312,51 @@ fn functions_without_a_symbolic_derivative_fall_back() {
         "one-sided at the domain edge: {edge}"
     );
     assert!(numeric_derivative(&parse("ln(x)").unwrap(), -1.0).is_nan());
+}
+
+#[test]
+fn kinks_steps_roots_and_atan2_have_symbolic_derivatives() {
+    let d = |text: &str, x: f64| parse(text).unwrap().derivative().unwrap().eval(x);
+    assert!(close(d("abs(x)", 2.0), 1.0));
+    assert!(close(d("abs(x)", -2.0), -1.0));
+    assert!(d("abs(x)", 0.0).is_nan(), "undefined at the kink");
+    assert!(close(d("floor(3*x)", 0.4), 0.0));
+    assert!(close(d("cbrt(x)", 8.0), 1.0 / 12.0));
+    assert!(close(d("atan2(x, 1)", 1.0), 0.5));
+    assert!(close(d("x^x", 1.0), 1.0));
+    assert!(close(d("2^x", 1.0), 2.0 * std::f64::consts::LN_2));
+    assert!(close(d("log10(x)", 1.0), 1.0 / std::f64::consts::LN_10));
+}
+
+/// F-192: derivatives never recurse through exmex, so deep but allowed inputs and second
+/// derivatives run on a small stack (the size of a wasm32 or worker-thread stack).
+#[test]
+fn deep_derivatives_run_on_a_small_stack() {
+    let worker = std::thread::Builder::new()
+        .stack_size(1 << 20)
+        .spawn(|| {
+            let deep = format!("{}x{}", "(x*".repeat(31), ")".repeat(31));
+            let nested = format!("{}x{}", "sin(".repeat(31), ")".repeat(31));
+            let long = "x*".repeat(255) + "x";
+            let sum = "x^2+".repeat(120) + "x";
+            for text in [
+                deep.as_str(),
+                nested.as_str(),
+                long.as_str(),
+                sum.as_str(),
+                "exp(-x^2) * cos(3*x)",
+            ] {
+                let f = parse(text).unwrap();
+                if let Ok(d1) = f.derivative() {
+                    let _ = d1.eval(0.5);
+                    if let Ok(d2) = d1.derivative() {
+                        let _ = d2.eval(0.5);
+                    }
+                }
+            }
+        })
+        .unwrap();
+    assert!(worker.join().is_ok());
 }
 
 #[test]
