@@ -19,7 +19,7 @@
 
 use std::collections::BTreeMap;
 
-use arrow_array::Float64Array;
+use arrow_array::{Array, Float64Array};
 use serde_json::Value;
 use sonarithm_core::engine::{
     Annotation, CompileContext, CompileError, ContextProvider, SpecFragment,
@@ -27,11 +27,11 @@ use sonarithm_core::engine::{
 use sonarithm_core::score::{
     Earcon, EarconKind, InstrumentRef, Score, ScoreEvent, ScoreTrack, Speech, TrackRole,
 };
-use sonarithm_core::{RowRef, Seconds, TrackId};
+use sonarithm_core::{RowRange, RowRef, Seconds, TrackId};
 use sonarithm_data::DataBundle;
 
 use crate::critical::FeatureKind;
-use crate::{CRITICAL_POINTS, ENGINE};
+use crate::{Budgets, CRITICAL_POINTS, ENGINE, FunctionTable};
 
 /// The cue track's ID.
 pub const CUE_TRACK: &str = "curvasona.cues";
@@ -128,6 +128,50 @@ fn delivery(spec: &Value) -> Option<Delivery> {
         Some("speech") => Some(Delivery::Speech),
         _ => None,
     }
+}
+
+/// The y-window of off-screen cues (RFC-0007 Q5): the explicit `scale.domain` of the first
+/// track's pitch channel, if the spec writes one.
+fn window(spec: &Value) -> Option<[f64; 2]> {
+    let domain = spec
+        .get("tracks")?
+        .get(0)?
+        .get("channels")?
+        .get("pitch")?
+        .get("scale")?
+        .get("domain")?
+        .as_array()?;
+    match domain.as_slice() {
+        [low, high] => {
+            let (low, high) = (low.as_f64()?, high.as_f64()?);
+            (low < high).then_some([low, high])
+        }
+        _ => None,
+    }
+}
+
+/// Off-screen spans as annotations of the `critical-points` analyzer, so they cue like the
+/// others.
+fn offscreen(data: &DataBundle, window: [f64; 2]) -> Vec<Annotation> {
+    let Ok(function) = FunctionTable::read(data, &Budgets::DEFAULT) else {
+        return Vec::new();
+    };
+    function
+        .offscreen(window, &Budgets::DEFAULT)
+        .into_iter()
+        .map(|(_, above, row)| {
+            Annotation::new(
+                CRITICAL_POINTS,
+                FeatureKind::Offscreen { above }.label(),
+                RowRange {
+                    table: function.table.id(),
+                    generation: function.table.generation(),
+                    start: row,
+                    end: row + 1,
+                },
+            )
+        })
+        .collect()
 }
 
 /// Row → time, from the first data track's events that name their rows: a glide has one
@@ -272,7 +316,11 @@ impl ContextProvider<DataBundle> for FunctionCues {
         let Some(delivery) = delivery(&spec) else {
             return Ok(Vec::new());
         };
-        let found = cues(score, data, annotations);
+        let mut all = annotations.to_vec();
+        if let Some(window) = window(&spec) {
+            all.extend(offscreen(data, window));
+        }
+        let found = cues(score, data, &all);
         if found.is_empty() {
             return Ok(Vec::new());
         }

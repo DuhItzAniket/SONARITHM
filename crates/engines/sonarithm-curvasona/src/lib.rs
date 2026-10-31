@@ -16,6 +16,7 @@
 //! | [`sample`] | The sample grid of a domain (`samples` or `step`) under the sample budget |
 //! | [`scan`] | Poles, holes, jumps, undefined spans and off-screen spans, found from the expression's guards |
 //! | [`critical`] | Zeros, extrema, inflections and horizontal asymptotes; the `critical-points` analyzer's annotations |
+//! | [`cues`] | The `curvasona.cues` context track: critical points as earcons or speech (RFC-0007) |
 //! | [`suite`] | The 40-curve suite with analytically known features |
 //! | [`codes`] | Diagnostic codes `SNR-ENG-400` to `499` |
 //! | engine | The `function` source |
@@ -28,6 +29,7 @@
 
 pub mod codes;
 pub mod critical;
+pub mod cues;
 pub mod expr;
 pub mod sample;
 pub mod scan;
@@ -482,7 +484,9 @@ impl Engine<DataBundle> for Curvasona {
             Arc::new(CriticalPoints {
                 budgets: self.budgets,
             }),
-        )
+        )?;
+        registrar.context(Arc::new(cues::FunctionCues));
+        Ok(())
     }
 }
 
@@ -555,6 +559,85 @@ impl Analyzer<DataBundle> for CriticalPoints {
     }
 }
 
+/// A function table read back: its expression (from the metadata) and its rows by `x`.
+pub(crate) struct FunctionTable<'a> {
+    pub(crate) table: &'a Table,
+    pub(crate) expr: Expr,
+    /// `(x, row)`, sorted by `x`.
+    pub(crate) rows: Vec<(f64, u64)>,
+    /// The distinct `x` values, increasing.
+    pub(crate) xs: Vec<f64>,
+}
+
+impl<'a> FunctionTable<'a> {
+    /// Reads the function table of `data`.
+    ///
+    /// # Errors
+    ///
+    /// Why it is not one, as a clause.
+    pub(crate) fn read(data: &'a DataBundle, budgets: &Budgets) -> Result<Self, String> {
+        let table = data
+            .primary()
+            .ok_or_else(|| "the data has no table".to_owned())?;
+        let metadata = table.schema().metadata();
+        let text = metadata
+            .get(META_EXPR)
+            .ok_or_else(|| "the data does not come from a function source".to_owned())?;
+        let variables: BTreeMap<String, f64> = metadata
+            .get(META_VARIABLES)
+            .map(|json| serde_json::from_str(json))
+            .transpose()
+            .map_err(|err| format!("the function's variables cannot be read ({err})"))?
+            .unwrap_or_default();
+        let expr = Expr::parse(text, &variables, &budgets.expr)
+            .map_err(|err| format!("the function's expression cannot be read ({err})"))?;
+        if table.num_rows() > u64::try_from(budgets.max_samples * 2).unwrap_or(u64::MAX) {
+            return Err("the table has more rows than the sample limit".to_owned());
+        }
+        let column = table.column("x").map_err(|err| err.to_string())?;
+        let column = column
+            .as_any()
+            .downcast_ref::<Float64Array>()
+            .ok_or_else(|| "the `x` column is not numeric".to_owned())?;
+        let mut rows: Vec<(f64, u64)> = column
+            .iter()
+            .zip(0_u64..)
+            .filter_map(|(x, row)| x.filter(|x| x.is_finite()).map(|x| (x, row)))
+            .collect();
+        rows.sort_by(|a, b| a.0.total_cmp(&b.0));
+        let mut xs: Vec<f64> = rows.iter().map(|(x, _)| *x).collect();
+        xs.dedup();
+        Ok(Self {
+            table,
+            expr,
+            rows,
+            xs,
+        })
+    }
+
+    /// The spans where the function leaves `window`, as `(start x, above, first row)`
+    /// (RFC-0007 Q5).
+    pub(crate) fn offscreen(&self, window: [f64; 2], budgets: &Budgets) -> Vec<(f64, bool, u64)> {
+        let budget = ScanBudget {
+            max_evaluations: budgets.max_evaluations,
+            max_features: ScanBudget::DEFAULT.max_features,
+        };
+        let found = scan::scan(&self.expr, &self.xs, Some(window), &budget);
+        found
+            .offscreen
+            .iter()
+            .filter_map(|span| {
+                let row = self
+                    .rows
+                    .iter()
+                    .find(|(x, _)| *x >= span.span.start)
+                    .map(|&(_, row)| row)?;
+                Some((span.span.start, span.above, row))
+            })
+            .collect()
+    }
+}
+
 /// The annotations of the function table in `data`, recomputed from the expression its
 /// metadata records, at the table's own `x` values.
 ///
@@ -563,37 +646,8 @@ impl Analyzer<DataBundle> for CriticalPoints {
 /// Why there are none, as a clause: the data is not a function table, or its expression
 /// cannot be read.
 pub fn function_features(data: &DataBundle, budgets: &Budgets) -> Result<Vec<Annotation>, String> {
-    let table = data
-        .primary()
-        .ok_or_else(|| "the data has no table".to_owned())?;
-    let metadata = table.schema().metadata();
-    let text = metadata
-        .get(META_EXPR)
-        .ok_or_else(|| "the data does not come from a function source".to_owned())?;
-    let variables: BTreeMap<String, f64> = metadata
-        .get(META_VARIABLES)
-        .map(|json| serde_json::from_str(json))
-        .transpose()
-        .map_err(|err| format!("the function's variables cannot be read ({err})"))?
-        .unwrap_or_default();
-    let expr = Expr::parse(text, &variables, &budgets.expr)
-        .map_err(|err| format!("the function's expression cannot be read ({err})"))?;
-    if table.num_rows() > u64::try_from(budgets.max_samples * 2).unwrap_or(u64::MAX) {
-        return Err("the table has more rows than the sample limit".to_owned());
-    }
-    let column = table.column("x").map_err(|err| err.to_string())?;
-    let column = column
-        .as_any()
-        .downcast_ref::<Float64Array>()
-        .ok_or_else(|| "the `x` column is not numeric".to_owned())?;
-    let mut rows: Vec<(f64, u64)> = column
-        .iter()
-        .zip(0_u64..)
-        .filter_map(|(x, row)| x.filter(|x| x.is_finite()).map(|x| (x, row)))
-        .collect();
-    rows.sort_by(|a, b| a.0.total_cmp(&b.0));
-    let mut xs: Vec<f64> = rows.iter().map(|(x, _)| *x).collect();
-    xs.dedup();
+    let function = FunctionTable::read(data, budgets)?;
+    let (table, expr, rows, xs) = (function.table, function.expr, function.rows, function.xs);
     let scan_budget = ScanBudget {
         max_evaluations: budgets.max_evaluations,
         max_features: ScanBudget::DEFAULT.max_features,
