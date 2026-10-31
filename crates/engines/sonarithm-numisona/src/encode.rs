@@ -47,10 +47,11 @@ use sonarithm_core::score::{EngineVersion, InstrumentRef, PitchRange, ScoreTrack
 use sonarithm_core::units::Cents;
 use sonarithm_data::{DataBundle, RowProvenance, Table};
 use sonarithm_spec::data::{FieldSpec, Missing, Role};
+use sonarithm_spec::experimental::LOW_CONFIDENCE_TIMBRE;
 use sonarithm_spec::sections::{Pace, Substrate};
 use sonarithm_spec::track::{
-    Channel, ChannelName, Domain as SpecDomain, DomainKeyword, Mark, PitchSpace as SpecSpace,
-    Polarity as SpecPolarity, ScaleType, TrackSpec,
+    Channel, ChannelName, Channels, Domain as SpecDomain, DomainKeyword, Mark,
+    PitchSpace as SpecSpace, Polarity as SpecPolarity, ScaleType, TrackSpec,
 };
 use sonarithm_spec::values::{ChannelRange, ChannelValue, UnitRange, UnitValue};
 
@@ -83,6 +84,28 @@ pub const DEFAULT_LOUDNESS_DB: f64 = -18.0;
 
 /// RFC-0001 §6: the default brightness, 0.5.
 pub const DEFAULT_BRIGHTNESS: f64 = 0.5;
+
+/// SDR-43 (`INFER`, experimental; RFC-0006 §3, H-06): with `experimental.lowConfidenceTimbre`
+/// on, an estimated value plays this much darker even at full confidence: 0.25 of the
+/// brightness scale, one octave of low-pass cutoff in A05's mapping (2 to 32 times the
+/// fundamental over brightness 0 to 1). This fixed step for the estimate class is a
+/// deliberate departure from RFC-0006's candidate (a step proportional to 1 − confidence
+/// alone, which would leave estimates near confidence 1 sounding like exact data): H-06
+/// asks whether estimates can be told apart. Its size is `INFER`.
+pub const ESTIMATE_DARKENING: f64 = 0.25;
+
+/// SDR-43 (`INFER`, experimental): the further darkening as confidence falls from 1 to 0,
+/// in proportion to 1 − confidence: up to one more octave of cutoff. An estimate without
+/// a confidence counts as confidence 0.
+pub const UNCERTAINTY_DARKENING: f64 = 0.25;
+
+/// SDR-43: the brightness of an estimated value with `confidence`, from the brightness it
+/// would have had, kept within [0, 1]. Pitch, timing and loudness do not change.
+#[must_use]
+pub fn low_confidence_brightness(brightness: f64, confidence: Option<f64>) -> f64 {
+    let confidence = confidence.unwrap_or(0.0).clamp(0.0, 1.0);
+    (brightness - ESTIMATE_DARKENING - UNCERTAINTY_DARKENING * (1.0 - confidence)).clamp(0.0, 1.0)
+}
 
 /// Proposal (F-082, not evidence-backed): the duration range of a duration encoding with no
 /// `range`, including the redundant one (A11Y-13). The low end is the ~100 ms event floor
@@ -304,6 +327,42 @@ struct PitchChannel {
 }
 
 impl Run<'_> {
+    /// The rows' provenance, read when notes need it, and whether low-confidence timbre is
+    /// on (RFC-0006 §3). With it on and brightness following a field, warns that the two
+    /// mix (`SNR-ENG-057`, SDR-43).
+    fn provenance(&mut self, channels: &Channels) -> (Option<RowProvenance>, bool) {
+        // Notes carry the confidence column (03 §4); without it every value is exact.
+        let schema = self.table.schema();
+        let has_confidence = schema
+            .index_of(sonarithm_data::provenance::CONF_COLUMN)
+            .is_ok();
+        let has_class = schema
+            .index_of(sonarithm_data::provenance::PROV_COLUMN)
+            .is_ok();
+        let darken = self.request.experiment(LOW_CONFIDENCE_TIMBRE);
+        if darken
+            && channels
+                .brightness
+                .as_ref()
+                .is_some_and(|c| c.field.is_some())
+        {
+            self.diagnostics.push(
+                Diagnostic::new(
+                    &codes::TIMBRE_EXPERIMENT_CONFOUNDED,
+                    format!(
+                        "NUMISONA: track `{}`: low-confidence timbre is on and brightness follows a field, so estimated notes are darkened on top of the data's brightness (SDR-43, experimental).",
+                        self.request.id
+                    ),
+                )
+                .at(self.channel_at(ChannelName::Brightness)),
+            );
+        }
+        let provenance = (has_confidence || (darken && has_class))
+            .then(|| RowProvenance::read(self.table).ok())
+            .flatten();
+        (provenance, darken)
+    }
+
     fn channel_at(&self, name: ChannelName) -> SpecPointer {
         self.at.key("channels").key(name.key())
     }
@@ -365,18 +424,11 @@ impl Run<'_> {
                 .at(self.channel_at(ChannelName::Rate)),
             );
         }
-        // Notes carry the confidence column (03 §4); without it every value is exact.
-        let has_confidence = self
-            .table
-            .schema()
-            .index_of(sonarithm_data::provenance::CONF_COLUMN)
-            .is_ok();
-        let provenance = has_confidence
-            .then(|| RowProvenance::read(self.table).ok())
-            .flatten();
+        let (provenance, darken) = self.provenance(&channels);
         let source = Sources {
             table: self.table,
             provenance: provenance.as_ref(),
+            darken,
         };
         if glide {
             self.ignore_tone_only(&channels);
@@ -1124,11 +1176,27 @@ fn pitch_map(channel: &Channel) -> Result<PitchMap, crate::pitch::PitchError> {
 struct Sources<'a> {
     table: &'a Table,
     provenance: Option<&'a RowProvenance>,
+    /// Whether `experimental.lowConfidenceTimbre` is on (RFC-0006 §3).
+    darken: bool,
 }
 
 impl Sources<'_> {
     fn confidence(&self, row: usize) -> Option<Confidence> {
         self.provenance.and_then(|p| p.get(row).confidence)
+    }
+
+    /// The brightness `row` plays at: darker for an estimate when low-confidence timbre is
+    /// on (SDR-43), else `brightness` itself.
+    fn brightness(&self, row: usize, brightness: f64) -> f64 {
+        match self.provenance.map(|p| p.get(row)) {
+            Some(provenance) if self.darken && provenance.class.is_estimate() => {
+                low_confidence_brightness(
+                    brightness,
+                    provenance.confidence.map(|c| f64::from(f32::from(c))),
+                )
+            }
+            _ => brightness,
+        }
     }
 }
 

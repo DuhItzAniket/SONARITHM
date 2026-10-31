@@ -18,7 +18,7 @@ pub mod registry;
 #[cfg(test)]
 mod tests;
 
-use std::collections::BTreeMap;
+use std::collections::{BTreeMap, BTreeSet};
 use std::fmt;
 
 use serde::de::DeserializeOwned;
@@ -210,11 +210,14 @@ pub struct TrackRequest {
     pub missing: Option<SpecFragment>,
     /// The spec's mode (SDR-36).
     pub mode: Mode,
+    /// The experimental switches the spec turns on (`experimental`, RFC-0006), known to
+    /// this SONARITHM, by key. Each engine acts only on the switches it owns.
+    pub experiments: BTreeSet<String>,
 }
 
 impl TrackRequest {
     /// A request for track `id` with `mark`, in Analysis mode, without substrate, field
-    /// semantics or missing-value treatment.
+    /// semantics, missing-value treatment or experiments.
     #[must_use]
     pub fn new(id: TrackId, mark: MarkKind, spec: SpecFragment) -> Self {
         Self {
@@ -225,6 +228,7 @@ impl TrackRequest {
             fields: None,
             missing: None,
             mode: Mode::Analysis,
+            experiments: BTreeSet::new(),
         }
     }
 
@@ -254,6 +258,19 @@ impl TrackRequest {
     pub fn with_mode(mut self, mode: Mode) -> Self {
         self.mode = mode;
         self
+    }
+
+    /// The same request with the experimental switches that are on (RFC-0006).
+    #[must_use]
+    pub fn with_experiments(mut self, experiments: BTreeSet<String>) -> Self {
+        self.experiments = experiments;
+        self
+    }
+
+    /// Whether the spec turns on experimental switch `key` (RFC-0006).
+    #[must_use]
+    pub fn experiment(&self, key: &str) -> bool {
+        self.experiments.contains(key)
     }
 }
 

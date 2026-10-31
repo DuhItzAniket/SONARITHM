@@ -94,6 +94,8 @@ pub struct ManifestInputs {
     pub data_source: Option<DataSource>,
     /// The share of values in each provenance class (03 §4).
     pub provenance: BTreeMap<String, f64>,
+    /// The experimental switches that were on (RFC-0006), sorted.
+    pub experimental: Vec<String>,
 }
 
 /// Why an export failed.
@@ -257,6 +259,7 @@ fn manifest(
             version: header.spec_version.to_string(),
             hash: sha256_text(&header.spec_hash),
             embedded: inputs.spec.clone(),
+            experimental: inputs.experimental.clone(),
         },
         data: DataInfo {
             fingerprint: sha256_text(&header.data_fingerprint),

@@ -23,7 +23,7 @@ use sonarithm_spec::{FieldCatalog, parse::parse_value, validate};
 
 const DOC: &str = include_str!("../../../docs/architecture/04-sonification-spec.md");
 
-/// Top-level keys of RFC-0001 §2 and RFC-0004 §1.
+/// Top-level keys of RFC-0001 §2, RFC-0004 §1 and RFC-0006 §1.
 const TOP_LEVEL: &[&str] = &[
     "specVersion",
     "name",
@@ -42,6 +42,7 @@ const TOP_LEVEL: &[&str] = &[
     "template",
     "instruments",
     "lint",
+    "experimental",
 ];
 
 /// Fenced blocks as (info string, body, first line number).
@@ -100,10 +101,10 @@ fn strip_comments(text: &str) -> String {
     out
 }
 
-/// A small valid spec that fragments are placed into.
+/// A small valid spec that fragments are placed into, at the current version.
 fn base() -> Map<String, Value> {
     let value = json!({
-        "specVersion": "0.2",
+        "specVersion": "0.4",
         "data": { "source": { "kind": "file", "path": "data/gistemp.csv" } },
         "tracks": [{ "id": "anomaly", "mark": "tone", "channels": { "pitch": { "field": "anomaly" } } }]
     });
@@ -168,7 +169,7 @@ fn every_json_example_in_04_validates() {
         }
     }
     assert!(problems.is_empty(), "{}", problems.join("\n"));
-    // 04 has five complete examples (§6), thirteen section fragments (§3–§5) and one
+    // 04 has five complete examples (§6), fourteen section fragments (§3–§5) and one
     // skeleton.
-    assert_eq!((complete, fragments, skeletons), (5, 13, 1));
+    assert_eq!((complete, fragments, skeletons), (5, 14, 1));
 }

@@ -184,7 +184,7 @@ mod tests {
         fn migration_changes_only_the_version_and_is_idempotent(value in valid_spec_json()) {
             let migrated = migrate(value.clone()).unwrap();
             let mut expected = value;
-            expected["specVersion"] = json!("0.3");
+            expected["specVersion"] = json!("0.4");
             prop_assert_eq!(&migrated.value, &expected);
             prop_assert_eq!(migrate(migrated.value.clone()).unwrap().value, migrated.value);
         }

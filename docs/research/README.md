@@ -10,7 +10,7 @@ This folder holds the evidence base for SONARITHM: the kickoff research, the des
 | Path | What it is |
 |---|---|
 | [research-report.md](research-report.md) | The kickoff synthesis (2026-10-18): landscape, perception science, accessibility, architecture, stack, governance and publishable gaps. Read it first. |
-| [design-rules.md](design-rules.md) | Stable, citable rules `SDR-01`..`SDR-42` and `A11Y-01`..`A11Y-34`, with strength, confidence and owner. Rules marked `INFER` are hypotheses that SONARITHM must test. |
+| [design-rules.md](design-rules.md) | Stable, citable rules `SDR-01`..`SDR-43` and `A11Y-01`..`A11Y-34`, with strength, confidence and owner. Rules marked `INFER` are hypotheses that SONARITHM must test. |
 | [references.bib](references.bib) | Shared BibTeX for all documents and papers. Section 1 is copied verbatim from notes/02 §8; later sections add sources from notes/03, 06 and 07. |
 | [notes/01-tools-landscape.md](notes/01-tools-landscape.md) | Prior art and competitive analysis: every relevant tool, its licence, platform and maintenance status, and the gaps across the landscape. |
 | [notes/02-theory-perception.md](notes/02-theory-perception.md) | Theory, taxonomy, psychoacoustics, mapping design, evaluation methodology and open problems; the numbered design rules (§7) and the verified BibTeX list (§8). |

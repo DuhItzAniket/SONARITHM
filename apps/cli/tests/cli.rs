@@ -346,7 +346,7 @@ fn schema_prints_the_published_spec_schema() {
     assert_eq!(schema.code, 0);
     let published = std::fs::read_to_string(
         PathBuf::from(env!("CARGO_MANIFEST_DIR"))
-            .join("../../schemas/sonarithm-spec-0.3.schema.json"),
+            .join("../../schemas/sonarithm-spec-0.4.schema.json"),
     )
     .unwrap();
     assert_eq!(schema.stdout.trim_end(), published.trim_end());
@@ -390,7 +390,7 @@ fn spec_migrate_reports_what_it_did() {
     let mut expected: serde_json::Value =
         serde_json::from_str(&std::fs::read_to_string(fixtures().join("temps.spec.json")).unwrap())
             .unwrap();
-    expected["specVersion"] = serde_json::json!("0.3");
+    expected["specVersion"] = serde_json::json!("0.4");
     assert_eq!(
         serde_json::from_str::<serde_json::Value>(&migrated.stdout).unwrap(),
         expected

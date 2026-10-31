@@ -6,8 +6,8 @@
 //! | Output | Generator |
 //! |---|---|
 //! | `docs/reference/error-codes.md` | [`crate::codes`] (A03-T02) |
-//! | `schemas/sonarithm-spec-0.3.schema.json` | `sonarithm_spec::json_schema` (A03-T06, RFC-0004, RFC-0005); the 0.1 and 0.2 files stay as written for older editors |
-//! | `schemas/sonarithm-render-manifest-1.schema.json` | `sonarithm_export::manifest::json_schema` (A05-T08) |
+//! | `schemas/sonarithm-spec-0.4.schema.json` | `sonarithm_spec::json_schema` (A03-T06, RFC-0004, RFC-0005, RFC-0006); the 0.1 to 0.3 files stay as written for older editors |
+//! | `schemas/sonarithm-render-manifest-2.schema.json` | `sonarithm_export::manifest::json_schema` (A05-T08, RFC-0006); the version 1 file stays as written |
 //! | `schemas/sonarithm-profile-1.schema.json` | `sonarithm_app::profile::json_schema` (B03-T08, ADR-0020) |
 //! | `packages/ipc/src/generated/protocol.ts` | `sonarithm_app::ipc::typescript` with ts-rs (B01-T02, ADR-0011, ADR-0017) |
 //! | `packages/ipc/src/generated/fixtures.ts` | `sonarithm_app::ipc::typescript::fixtures` (a Rust-encoded binary view for the TypeScript reader's test) |

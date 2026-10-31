@@ -1065,3 +1065,12 @@ A05 (render engine, audio backends, export) uses F-050 to F-069.
 - **Evidence level / confidence:** EV-C / Strong for the constraint. How NVDA, JAWS, VoiceOver and Orca read a window's row count next to the row-number header is TODO(verify) in the owner's walkthroughs (HP-07, HP-08)
 - **Affects:** B04-T05, A11Y-03, A11Y-24, FR-046, keyboard-and-navigation §5.6, 09 §3; B04-T06 (the focused row as the shared cursor)
 - **Papers:** none yet
+
+### F-185 · The render manifest refuses unknown fields, so even an optional field needs a new manifest version
+
+- **Date:** 2026-10-31 · **Phase:** C02 · **Type:** engineering · **Status:** new
+- **Statement:** RFC-0006's first draft added `experimental` to the render manifest as an "additive" field and kept manifest version 1, on the assumption that readers ignore fields they do not know. Checking the code before acceptance showed otherwise. Every manifest type is `deny_unknown_fields`, and `MANIFEST_VERSION` is documented to change with any change to the serialized form. So a reader built before the change would refuse a manifest carrying the field. The manifest became version 2 (RFC-0006 Q6). The field is left out when no experiment is on, so such a manifest still matches the version 1 schema once its version number is set to 1, and the version 2 reader still reads version 1 manifests. The same strictness applies to every other strict format (spec, project, correction file): an RFC that calls a field "additive" should name the reader behaviour it relies on.
+- **Evidence:** `crates/sonarithm-export/src/manifest.rs` (`deny_unknown_fields`, `MANIFEST_VERSION`); `crates/sonarithm-export/tests/manifest.rs` (`manifest_version_2_records_experiments_and_version_1_still_reads`); RFC-0006 §4 and Q6
+- **Evidence level / confidence:** EV-C / Strong (code and test)
+- **Affects:** ADR-0013, RFC-0006, ADR-0027, 06 §7; RFC template ("Affects" should name reader strictness)
+- **Papers:** none yet

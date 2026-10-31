@@ -141,4 +141,30 @@ mod tests {
                 .all(|d| d.code.as_str() == "SNR-SPEC-080")
         );
     }
+
+    /// RFC-0006 §2: `{}`, all-`false` and no `experimental` block share one spec hash; a
+    /// switch that is on changes it.
+    #[test]
+    fn switches_that_are_off_leave_the_spec_hash_alone() {
+        let v04 = MINIMAL.replacen("\"0.1\"", "\"0.4\"", 1);
+        let with = |block: &str| {
+            v04.replacen(
+                "\"data\"",
+                &format!("\"experimental\": {block}, \"data\""),
+                1,
+            )
+        };
+        let none = prepare(&v04, None).unwrap();
+        for off in ["{}", r#"{ "lowConfidenceTimbre": false }"#] {
+            let prepared = prepare(&with(off), None).unwrap();
+            assert_eq!(prepared.hash, none.hash, "{off}");
+            assert!(!prepared.canonical.contains("experimental"));
+        }
+        let on = prepare(&with(r#"{ "lowConfidenceTimbre": true }"#), None).unwrap();
+        assert_ne!(on.hash, none.hash);
+        assert!(
+            on.canonical
+                .contains(r#""experimental":{"lowConfidenceTimbre":true}"#)
+        );
+    }
 }

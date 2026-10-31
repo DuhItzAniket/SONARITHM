@@ -31,17 +31,21 @@ pub fn mode_name(mode: Mode) -> &'static str {
 }
 
 /// The manifest format version. Bump it on any change to the serialized form.
-pub const MANIFEST_VERSION: u32 = 1;
+///
+/// Version 2 adds `spec.experimental` (RFC-0006 §4). Version 1 manifests still read: the
+/// field is optional and left out when no experiment is on.
+pub const MANIFEST_VERSION: u32 = 2;
 
-/// Where the generated schema is committed, relative to the workspace root.
-pub const MANIFEST_SCHEMA_PATH: &str = "schemas/sonarithm-render-manifest-1.schema.json";
+/// Where the generated schema is committed, relative to the workspace root. The version 1
+/// schema stays as written.
+pub const MANIFEST_SCHEMA_PATH: &str = "schemas/sonarithm-render-manifest-2.schema.json";
 
 /// A render manifest.
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize, JsonSchema)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 #[non_exhaustive]
 pub struct RenderManifest {
-    /// The manifest format version (`MANIFEST_VERSION`, currently 1).
+    /// The manifest format version (`MANIFEST_VERSION`, currently 2; 1 still reads).
     pub manifest_version: u32,
     /// The software that rendered.
     pub sonarithm: Software,
@@ -98,6 +102,10 @@ pub struct SpecInfo {
     pub hash: String,
     /// The canonical spec itself, when embedded.
     pub embedded: Option<serde_json::Value>,
+    /// The experimental switches that were on (RFC-0006), sorted; left out when none was
+    /// (manifest version 2).
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub experimental: Vec<String>,
 }
 
 /// The input data.

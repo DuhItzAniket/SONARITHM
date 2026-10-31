@@ -102,7 +102,7 @@ fn every_committed_v0_1_spec_migrates_by_its_version_alone_and_keeps_its_hash() 
         v0_1 += 1;
         let migrated = sonarithm_spec::migrate::migrate(value.clone()).unwrap();
         let mut expected = value.clone();
-        expected["specVersion"] = Value::from("0.3");
+        expected["specVersion"] = Value::from("0.4");
         assert_eq!(migrated.value, expected, "{}", path.display());
         // Reading the file does not migrate it: same version, same canonical form.
         let read = sonarithm_spec::migrate::migrate_for_reading(value.clone()).unwrap();

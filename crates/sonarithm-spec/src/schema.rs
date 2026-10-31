@@ -2,9 +2,9 @@
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
 //! The generated JSON Schema of the spec (04 §1). `cargo xtask codegen` writes it to
-//! `schemas/sonarithm-spec-0.3.schema.json`, and CI fails when the committed file is stale.
-//! The v0.1 schema stays committed beside it, unchanged, for editors of older files
-//! (RFC-0004 §9).
+//! `schemas/sonarithm-spec-0.4.schema.json`, and CI fails when the committed file is stale.
+//! The 0.1 to 0.3 schemas stay committed beside it, unchanged, for editors of older files
+//! (RFC-0004 §9, RFC-0006 §7).
 
 use schemars::Schema;
 use schemars::generate::SchemaSettings;
@@ -14,7 +14,7 @@ use serde_json::Value;
 use crate::spec::Spec;
 
 /// Where the schema is committed, relative to the workspace root.
-pub const SCHEMA_PATH: &str = "schemas/sonarithm-spec-0.3.schema.json";
+pub const SCHEMA_PATH: &str = "schemas/sonarithm-spec-0.4.schema.json";
 
 /// The JSON Schema (draft 2020-12) of [`Spec`], pretty-printed with a trailing newline.
 #[must_use]
