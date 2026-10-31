@@ -14,6 +14,8 @@
 //! |---|---|
 //! | [`expr`] | The expression language: parsing, limits, the sandboxed variable set; exmex evaluation and symbolic derivatives |
 //! | [`sample`] | The sample grid of a domain (`samples` or `step`) under the sample budget |
+//! | [`scan`] | Poles, holes, jumps, undefined spans and off-screen spans, found from the expression's guards |
+//! | [`suite`] | The 40-curve suite with analytically known features |
 //! | [`codes`] | Diagnostic codes `SNR-ENG-400` to `499` |
 //! | engine | The `function` source |
 //!
@@ -26,6 +28,8 @@
 pub mod codes;
 pub mod expr;
 pub mod sample;
+pub mod scan;
+pub mod suite;
 #[cfg(test)]
 mod tests;
 
@@ -48,6 +52,7 @@ use sonarithm_data::{
 
 pub use expr::{Expr, ExprError, Limits, NoDerivative};
 pub use sample::Grid;
+pub use scan::{Approach, Scan, ScanBudget, Singularity, SingularityKind, Span};
 
 /// The engine ID.
 pub const ENGINE: EngineId = EngineId::from_static("curvasona");
@@ -104,8 +109,10 @@ pub struct Sampled {
     pub expr: Expr,
     /// How `dy` was computed.
     pub derivative: Derivative,
-    /// The number of samples whose `y` is undefined.
+    /// The number of rows whose `y` is undefined.
     pub undefined: usize,
+    /// The poles, holes, jumps and undefined spans (C03-T02).
+    pub scan: Scan,
     /// Non-error diagnostics, such as a numerical derivative or undefined samples.
     pub diagnostics: Vec<Diagnostic>,
 }
@@ -219,9 +226,30 @@ pub fn sample_function(
             },
         });
     }
-    let xs: Vec<f64> = grid.points().collect();
+    let grid_points: Vec<f64> = grid.points().collect();
+    let scan_budget = ScanBudget {
+        max_evaluations: budgets.max_evaluations.saturating_sub(evaluations),
+        max_features: ScanBudget::DEFAULT.max_features,
+    };
+    let scan = scan::scan(&expr, &grid_points, None, &scan_budget);
+    let xs = with_singular_rows(&grid_points, &scan);
     let finite = |v: f64| v.is_finite().then_some(v);
-    let ys: Vec<Option<f64>> = xs.iter().map(|&x| finite(expr.eval(x))).collect();
+    let singular = |x: f64| {
+        scan.singularities.iter().any(|s| {
+            s.x.total_cmp(&x).is_eq()
+                && matches!(s.kind, SingularityKind::Pole | SingularityKind::Hole)
+        })
+    };
+    let ys: Vec<Option<f64>> = xs
+        .iter()
+        .map(|&x| {
+            if singular(x) {
+                None
+            } else {
+                finite(expr.eval(x))
+            }
+        })
+        .collect();
     let dys: Vec<Option<f64>> = xs
         .iter()
         .zip(&ys)
@@ -235,26 +263,9 @@ pub fn sample_function(
         })
         .collect();
     let undefined = ys.iter().filter(|y| y.is_none()).count();
-    let mut diagnostics = Vec::new();
-    if let Derivative::Numeric(reason) = derivative {
-        let why = match reason {
-            NoDerivative::TooLarge => "its symbolic derivative is larger than the size limit",
-            _ => "it uses a function without a symbolic derivative",
-        };
-        diagnostics.push(Diagnostic::new(
-            &codes::NUMERIC_DERIVATIVE,
-            format!("`dy` is computed numerically, because {why}."),
-        ));
-    }
-    if undefined > 0 {
-        diagnostics.push(Diagnostic::new(
-            &codes::UNDEFINED_SAMPLES,
-            format!(
-                "The function is undefined at {undefined} of {} samples; those rows have no `y`.",
-                xs.len()
-            ),
-        ));
-    }
+    // The rows added at poles and holes are empty by design; only the grid's count.
+    let undefined_samples = undefined - (xs.len() - grid_points.len());
+    let diagnostics = report(derivative, undefined_samples, grid_points.len(), &scan);
     let table = function_table(ids.1, xs, ys, dys).map_err(|diagnostic| SampleError {
         diagnostic,
         key: "expr",
@@ -267,8 +278,66 @@ pub fn sample_function(
         expr,
         derivative,
         undefined,
+        scan,
         diagnostics,
     })
+}
+
+/// The non-error diagnostics of a sampled function.
+fn report(
+    derivative: Derivative,
+    undefined_samples: usize,
+    samples: usize,
+    scan: &Scan,
+) -> Vec<Diagnostic> {
+    let mut diagnostics = Vec::new();
+    if let Derivative::Numeric(reason) = derivative {
+        let why = match reason {
+            NoDerivative::TooLarge => "its symbolic derivative is larger than the size limit",
+            _ => "it uses a function without a symbolic derivative",
+        };
+        diagnostics.push(Diagnostic::new(
+            &codes::NUMERIC_DERIVATIVE,
+            format!("`dy` is computed numerically, because {why}."),
+        ));
+    }
+    if undefined_samples > 0 {
+        diagnostics.push(Diagnostic::new(
+            &codes::UNDEFINED_SAMPLES,
+            format!(
+                "The function is undefined at {undefined_samples} of {samples} samples; those \
+                 rows have no `y`."
+            ),
+        ));
+    }
+    if scan.truncated {
+        diagnostics.push(Diagnostic::new(
+            &codes::SCAN_TRUNCATED,
+            format!(
+                "The search for poles, holes, jumps and undefined spans stopped at its limit \
+                 after {} evaluations; some may be missing.",
+                scan.evaluations
+            ),
+        ));
+    }
+    diagnostics
+}
+
+/// The grid plus one row at each pole or hole between grid points, in order, so a glide
+/// breaks there instead of sweeping across an asymptote (C03-T02).
+fn with_singular_rows(grid: &[f64], scan: &Scan) -> Vec<f64> {
+    let mut xs = grid.to_vec();
+    for singularity in &scan.singularities {
+        if matches!(
+            singularity.kind,
+            SingularityKind::Pole | SingularityKind::Hole
+        ) {
+            xs.push(singularity.x);
+        }
+    }
+    xs.sort_by(f64::total_cmp);
+    xs.dedup();
+    xs
 }
 
 /// The table `x`, `y`, `dy` with every row `synthetic`.

@@ -299,6 +299,7 @@ Lane R, one PR per task in plan order. C03-T08 waits for Gate U; C03-T09 (teache
 | Task | Status | Notes |
 |---|---|---|
 | C03-T01 `sonarithm-curvasona` and the `function` source | **In review** | The engine crate; the `expr` facade (own parser with ordinary precedence, a closed set of names and limits; exmex 0.21 for evaluation and symbolic derivatives, numerical `dy` where exmex has none); the `function` source gives `x`, `y`, `dy`, all `synthetic`; `SNR-ENG-400` to `406`; fuzz target `expr_parse`; the language is [ADR-0028](../decisions/0028-function-expression-language.md) (accepted by the coordinator); licence check of exmex and rubato; evalexpr stays banned. The 04 §6.3 example compiles except its `analysis` block (C03-T03) |
+| C03-T02 Adaptive sampling and undefined regions | **In review** | `scan`: poles, holes, jumps, undefined spans and off-screen spans found from the expression's guards (the zeros of denominators, of the arguments of `ln`, `sqrt`, `tan`, `floor`, …), bisected and golden-section refined, classified by one-sided limits; budget and `SNR-ENG-407`. The 40-curve suite (`suite`) finds every known singularity and span at 1000, 101 and 37 samples; property tests with random poles, holes and narrow spans. An empty row at each pole or hole between samples. Not denser sampling near curvature: the grid is the spec's (see 07) |
 
 ## 3. Current iteration
 
