@@ -91,6 +91,7 @@ fn sample_args(style: UnitStyle) -> Args {
         .text("reference", "yes")
         .text("name", "11")
         .text("state", "on")
+        .text("side", "above")
         .text("stream", "13")
         .text("event", "14")
         .text("condition", "15")
