@@ -1024,6 +1024,11 @@ A05 (render engine, audio backends, export) uses F-050 to F-069.
 - **Evidence level / confidence:** EV-C / Strong (reproduced on a fixed stack size)
 - **Affects:** C03-T01 (fixed in C03-T03), 07 CURVASONA, supply-chain-and-licensing (exmex row), 12 §6
 - **Papers:** none yet
+- **Draft upstream issue (for the owner to file; not posted):**
+
+  > **Title:** `partial` overflows the stack on shallow expressions
+  >
+  > With exmex 0.21.0 (`partial` feature), `FlatEx::<f64>::parse("x*(x*(x*(x*(x*(x*(x*(x*(x))))))))")?.partial(0)` overflows a 2 MB thread stack (Windows, debug build), as does taking `partial(0)` twice of `exp(-x^2)*cos(3*x)`, whose first derivative unparses to 89 characters. Parsing and evaluating the same expressions work on a 1 MB stack, even with 1600 nested parentheses. A stack overflow aborts the process, so an application that differentiates user input cannot recover. A depth limit, or an iterative `to_deepex`/`partial`, would avoid it. A reproduction runs `partial` inside `std::thread::Builder::new().stack_size(2 << 20)`.
 
 ### F-191 · Insight labels are read as data names, so CURVASONA's critical-point labels are English
 
