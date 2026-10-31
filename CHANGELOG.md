@@ -10,6 +10,7 @@ From phase A07, release-plz maintains this file: it generates each release's ent
 
 ### Added
 
+- Measured output latency (B04-T04): Preferences takes the latency you measured for the selected output device, in milliseconds, and the playhead uses it instead of the system's estimate. It is kept only in your local settings.
 - The playhead (B04-T04): it moves smoothly over plots, extrapolated from the audio engine's clock anchors, with no redraw of the data and no per-frame message from the engine.
 - The data table (B04-T05): the Table tab lists a dataset's rows with each row's number in the whole table, a provenance column that names estimates, and sorting by Enter on a column header. It loads rows in windows of 1,000, says which rows are loaded, and moves between windows with the arrow and page keys, Ctrl+Home and Ctrl+End (Cmd on macOS), and "Go to row…" in the command palette.
 - Nightly desktop builds for testers (B01-T09): unsigned Windows, macOS and Linux installers of the latest `main`, as artifacts of the `desktop-nightly` workflow. They are not releases and have no updater; release-process explains how to install them past the unsigned-app warnings.

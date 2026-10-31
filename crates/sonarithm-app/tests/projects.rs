@@ -73,6 +73,35 @@ fn session(dir: &Path) -> App {
     app
 }
 
+/// B04-T04, AGENTS rule 9: stored latencies are keyed by device IDs, which can hold a
+/// person's name, so they stay in the local settings file and never reach a project.
+#[test]
+fn b04_t04_a_saved_project_carries_no_latency_or_device_name() {
+    let dir = TempDir::new("no-latency");
+    let mut app = session(dir.path());
+    let mut settings = ok(&mut app, &json!({ "command": "settings_get" }));
+    settings.as_object_mut().unwrap().remove("reply");
+    settings["audio"]["device"] = json!("Ada's AirPods");
+    settings["audio"]["calibratedLatencyS"] = json!({ "Ada's AirPods": 0.142_857 });
+    ok(&mut app, &json!({ "command": "settings_set", "args": { "settings": settings } }));
+    let bundle = dir.path().join("p.sonarithm");
+    ok(
+        &mut app,
+        &json!({ "command": "project_save_as", "args": { "path": bundle, "embedData": true } }),
+    );
+    let mut archive = zip::ZipArchive::new(std::fs::File::open(&bundle).unwrap()).unwrap();
+    for index in 0..archive.len() {
+        let mut member = archive.by_index(index).unwrap();
+        let name = member.name().to_owned();
+        let mut bytes = Vec::new();
+        std::io::Read::read_to_end(&mut member, &mut bytes).unwrap();
+        let text = String::from_utf8_lossy(&bytes);
+        for leak in ["Ada", "AirPods", "calibratedLatency", "0.142857"] {
+            assert!(!text.contains(leak), "{name} contains {leak}");
+        }
+    }
+}
+
 #[test]
 fn a_saved_project_reopens_and_saves_to_the_same_bytes() {
     let dir = TempDir::new("roundtrip");

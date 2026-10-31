@@ -197,7 +197,7 @@ The **Score IR is the strict artifact** (byte-identical). Audio is compared with
 - The heard position is the engine's position minus the output latency times the speed.
 - `Playhead` moves a 2 px line with a CSS transform every animation frame, through refs: no React render and no redraw of the data.
 - **Tests:** a drift test with seeded 0–8 ms delays (within one frame over a minute, at speeds 1 and 2), the latency correction, and a story whose React Profiler counts no commit while the playhead moves for 30 frames.
-- **Latency source.** Each anchor carries `outputLatencyS` (ADR-0017 "Clock anchors", approved 2026-10-30). In order of precedence it is the device's calibrated latency (ADR-0016; the stored offsets are a follow-up PR), then the backend's reported latency, then `null`, which means no correction. The desktop app's `usePlayheadClock` feeds the clock from the `clock` channel.
+- **Latency source.** Each anchor carries `outputLatencyS` (ADR-0017 "Clock anchors", approved 2026-10-30). In order of precedence it is the device's calibrated latency (ADR-0016; `audio.calibratedLatencyS` in the settings, by device ID, set in Preferences), then the backend's reported latency, then `null`, which means no correction. The desktop app's `usePlayheadClock` feeds the clock from the `clock` channel.
 
 ## 10. Hearing safety and levels
 

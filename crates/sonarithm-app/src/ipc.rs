@@ -1179,7 +1179,7 @@ pub struct ClockAnchor {
     /// How far the heard sound lags the engine's position, in seconds (B04-T04, 06 §9): the
     /// UI's playhead shows `positionS − outputLatencyS × speed`. In order of precedence:
     /// the device's calibrated latency where one is stored (ADR-0016, per-device latency
-    /// calibration; the stored offsets are a follow-up), then the backend's reported
+    /// calibration: `audio.calibratedLatencyS` in the settings), then the backend's reported
     /// latency, then `None`, which the UI takes as "no correction", never as a guess. It is
     /// computed on the control thread when the anchor is built, never in the audio
     /// callback. Added in protocol 1 (additive, approved by the coordinator on 2026-10-30).

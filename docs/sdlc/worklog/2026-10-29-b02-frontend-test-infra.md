@@ -104,6 +104,14 @@
 
 - #419's frontend-browser job failed in `dense.perf.ts`: the test ran past Vitest's 15 s browser timeout, because 60 software-rendered redraws of a million points were too slow on that runner, and no trace was written. No budget check failed; the test only records. Measuring now stops after 8 s (`cutShort` in the report), the test timeout is 120 s, and it still fails if nothing draws. Not run locally (the builder and browser slots were others'); CI runs it.
 
+## B04-T04 (b): stored latencies (2026-10-31)
+
+- `audio.calibratedLatencyS`: a map from device ID to seconds, `#[serde(default)]` so older files load. A range error does not name the device.
+- The stream knows the device's name, not its ID, so the control thread records the opened ID when it opens the device (the chosen ID, or the default's from the device list, read only when a latency is stored) and drops it on close. A settings change recomputes it and sends an anchor at once.
+- **Model.** The stored value replaces the backend's estimate (ADR-0016: "instead of trusting the backend's reported latency"). The unused `LatencyCalibration` in `sonarithm-audio` describes an offset added to the prediction instead. F-178 records the difference; that type is unchanged.
+- Privacy test: a project saved after storing a latency for "Ada's AirPods" has neither the name nor the value in any member.
+- The code was written while the builder slot was CURVASONA's. The Rust build, codegen and tests ran once the slot was handed over.
+
 ## Next steps
 
 - [ ] Commit the screenshot baselines from the first CI run's `visual-baselines` artifact.

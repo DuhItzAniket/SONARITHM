@@ -46,7 +46,12 @@ function reply(next: TransportState) {
 /** The mock settings (B01-T08): the app core's defaults. */
 let settings: Settings = {
   settingsVersion: 1,
-  audio: { device: null, bufferFrames: null, volumeDb: 0 },
+  audio: {
+    device: null,
+    bufferFrames: null,
+    volumeDb: 0,
+    calibratedLatencyS: {},
+  },
   theme: "system",
   verbosity: "terse",
   modalities: {

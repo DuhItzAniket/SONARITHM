@@ -80,7 +80,7 @@ A `ClockAnchor` carries the transport, `hostTimeS` (the device's playback time o
 
 The order of precedence is:
 
-1. the device's calibrated latency where one is stored (ADR-0016, "Per-device latency calibration": "a loopback self-test where the platform offers one, otherwise a stored offset"; the stored offsets are a follow-up);
+1. the device's calibrated latency where one is stored (ADR-0016, "Per-device latency calibration": "a loopback self-test where the platform offers one, otherwise a stored offset"; stored as `audio.calibratedLatencyS` in the settings, B04-T04);
 2. then the backend's reported latency;
 3. then `null`, which the UI takes as "no correction", never as a guessed value.
 
