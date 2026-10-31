@@ -118,6 +118,19 @@ Each engine is one crate under `crates/engines/` and implements `Engine`. This p
 
 **Tests:** a 40-curve suite with analytically known critical points; audification round-trip (sine in → expected tone out); expression fuzzing.
 
+**As built (C03-T01).** `Curvasona` registers the `function` source. `expr` reads the expression with its own recursive-descent parser under budgets (1024 characters, nesting depth 32, 512 nodes, 16 variables; `SNR-ENG-402`), then hands exmex a form with every operation in parentheses, so exmex's own precedence never decides the meaning and exmex sees no name the parser did not admit. The language is [ADR-0028](../decisions/0028-function-expression-language.md)'s; in short:
+
+| Part | Rule |
+|---|---|
+| Precedence | `^` (right-associative) above unary `-` and `+`, above `*` and `/`, above `+` and `-`; so `-x^2` is `-(x^2)`, `2^3^2` is `2^9` and `2^-1` is `0.5` |
+| Products | Always written with `*`: `2x`, `(x)(x+1)` and `sin x` are errors that say what to write (`SNR-ENG-400`); `**` asks for `^` |
+| Numbers | Decimals with an optional exponent (`1.5`, `.5`, `2e-3`) |
+| Names | `x`; the constants `pi` (`π`), `e` and `tau` (`τ`); the source's `variables` (a letter, then letters, digits and `_`, at most 32 characters, not a reserved name; `SNR-ENG-403`) |
+| Functions | `sin cos tan sec csc cot asin acos atan` (also `arcsin arccos arctan`) `sinh cosh tanh asinh acosh atanh exp ln log2 log10 sqrt cbrt abs floor ceil round trunc`, and `min max atan2` of two arguments. Others are `SNR-ENG-401`. `log` is refused as ambiguous (natural or base 10); there is no `sign`, because exmex's would give sign(0) = 1 |
+| Pasted symbols | `−` (U+2212), `×`, `·` and `÷` read as `-`, `*`, `*` and `/` |
+
+Every error names the character where reading stopped. The canonical form (ordinary precedence, fewest parentheses) parses back to the same expression (property test and fuzz target `expr_parse`). `dy` is exmex's symbolic derivative; where exmex has none (`abs`, `floor`, `min`, `cbrt`, `atan2`, …) or it is longer than 32 768 characters, `dy` comes from central differences, one-sided at a domain edge (`SNR-ENG-405`, Info). The grid is `samples` points from `min` to `max` inclusive (default 1000) or points `step` apart, at most 100 000 samples and 1 000 000 evaluations (`SNR-ENG-404`). Non-finite values (division by zero, `ln` of a negative number, overflow) leave `y` and `dy` empty, reported by `SNR-ENG-406`; C03-T02 turns them into undefined regions. The table is `x` (role x), `y` (role y) and `dy`, every row `synthetic`, from the extractor `sonarithm-curvasona/function`.
+
 ## AXONOTE (`sonarithm-axonote`), C04
 
 **Registers:** Shaper `Quantize` (presentation only); VoiceProvider for the instrument library; Sinks for MIDI file, live MIDI and OSC. The engine crate stays pure and builds for `wasm32`; live MIDI ports and OSC sockets live in the leaf crate `sonarithm-axonote-live` ([02 §2](02-repository-and-crate-layout.md#2-crate-catalogue), placement decided in C04-T01).

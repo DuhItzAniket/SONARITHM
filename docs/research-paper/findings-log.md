@@ -1007,6 +1007,15 @@ A05 (render engine, audio backends, export) uses F-050 to F-069.
 - **Affects:** C02-T09, A11Y-02, A11Y-12, A11Y-24, FR-008, OD-07, H-06
 - **Papers:** none yet
 
+### F-190 · exmex alone reads -2^2 as 4, so CURVASONA parses expressions itself
+
+- **Date:** 2026-10-31 · **Phase:** C03 · **Type:** engineering (correctness, security) · **Status:** new
+- **Statement:** Reading exmex 0.21.0 for C03-T01 showed three differences from school maths that a blind maths teacher would hear as wrong answers: unary operators bind tighter than every binary one, so `-2^2` evaluates to 4 and `-x^2` is a parabola opening upwards; `signum(0)` is 1 (Rust's `f64::signum`); and `log` is the natural logarithm, where many school books mean base 10. exmex also has no symbolic derivative for `abs`, `floor`, `min`, `max`, `cbrt` or `atan2`, and its number syntax has no exponents. CURVASONA therefore reads the expression with its own parser (ordinary precedence, `^` right-associative, a closed set of names, length, depth and node limits) and hands exmex only a form with every operation in parentheses and numbers it can read, so exmex evaluates and differentiates but never decides what the text means. `log` is refused with a hint, `sign` is left out, and `dy` falls back to central differences where exmex has no derivative (`SNR-ENG-405`). The facade also keeps exmex, a single-maintainer crate (tech-stack: Trial), replaceable without changing the language.
+- **Evidence:** `crates/engines/sonarithm-curvasona/src/expr/tests.rs` (`exmex_alone_reads_minus_two_squared_as_four`, `precedence_follows_ordinary_maths`, `canonical_form_round_trips_and_lowering_keeps_meaning`); exmex 0.21.0 `src/lib.rs` ("unary operators always have higher priority") and `src/operators.rs`
+- **Evidence level / confidence:** EV-C / Strong (source and tests)
+- **Affects:** C03-T01, 07 CURVASONA, A11Y-28, FR-009, the teacher pilot's tasks (C03-T09)
+- **Papers:** none yet
+
 ### F-176 · Two CI-only test flakes came from React Aria acting a frame or an event later than the tests assumed
 
 - **Date:** 2026-10-31 · **Phase:** B01, B02 · **Type:** engineering (testing) · **Status:** new

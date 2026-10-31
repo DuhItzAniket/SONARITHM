@@ -1,0 +1,34 @@
+[package]
+name = "sonarithm-curvasona"
+description = "CURVASONA: SONARITHM's function engine (sampled expressions, derivatives, critical-point cues and audification)."
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+repository.workspace = true
+license.workspace = true
+# Not published until the facade depends on it (C03-T07); a new crate's first publish is the
+# owner's (release-process.md).
+publish = false
+
+[dependencies]
+arrow-array.workspace = true
+arrow-schema.workspace = true
+# Expression evaluation and symbolic derivatives, behind the `expr` facade (07 CURVASONA,
+# C03-T01). Never evalexpr (AGPL since 12.0, banned in deny.toml).
+exmex.workspace = true
+sonarithm-core.workspace = true
+sonarithm-data.workspace = true
+sonarithm-spec.workspace = true
+
+[dev-dependencies]
+insta = { workspace = true, features = ["json"] }
+proptest.workspace = true
+serde_json.workspace = true
+sonarithm-compiler.workspace = true
+# Tests compile function specs through NUMISONA's marks. A dev-dependency only: engines
+# never depend on each other in shipped code (02 §3 rule 2), and check-deps skips
+# dev-dependencies.
+sonarithm-numisona.workspace = true
+
+[lints]
+workspace = true
