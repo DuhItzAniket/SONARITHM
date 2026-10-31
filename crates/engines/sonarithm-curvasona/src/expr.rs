@@ -1034,7 +1034,10 @@ pub enum NoDerivative {
 pub struct Expr {
     canonical: String,
     slots: Slots,
-    compiled: Compiled,
+    /// Boxed: exmex's flat form keeps its buffers inline (about 19 KB), and a debug build
+    /// copies an unboxed `Expr` through so many frames that sampling overflowed a 1 MB
+    /// stack (F-198).
+    compiled: Box<Compiled>,
     max_derivative_chars: usize,
     /// The parsed tree, with the sorted variable names it indexes; `None` for a derivative,
     /// which exists only in exmex's form.
@@ -1105,7 +1108,7 @@ impl Expr {
         })?;
         Ok(Self {
             canonical,
-            compiled: Compiled::bind(flat, &slots),
+            compiled: Box::new(Compiled::bind(flat, &slots)),
             slots,
             max_derivative_chars,
             tree: Some((node, names)),

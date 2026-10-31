@@ -342,7 +342,10 @@ fn quick_plays_a_function_with_its_critical_points_as_text() {
         .collect();
     kinds.sort_unstable();
     assert_eq!(kinds, ["local maximum", "zero"], "{value}");
-    assert!(value["summary"]["engines"]["curvasona"].is_string(), "{value}");
+    assert!(
+        value["summary"]["engines"]["curvasona"].is_string(),
+        "{value}"
+    );
     assert_eq!(value["played"]["finished"], true);
     let bad = run(&["--plain", "quick", "--function", "2x", "--domain", "0,1"]);
     assert_eq!(bad.code, 1, "{}", bad.transcript());
@@ -379,7 +382,11 @@ fn inspect_lists_a_function_s_critical_points_and_the_audification_readout() {
         "{}",
         audify.stdout
     );
-    assert!(audify.stdout.contains("1 audified series"), "{}", audify.stdout);
+    assert!(
+        audify.stdout.contains("1 audified series"),
+        "{}",
+        audify.stdout
+    );
 }
 
 #[test]

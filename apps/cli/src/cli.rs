@@ -346,7 +346,9 @@ fn parse_domain(text: &str) -> Result<(f64, f64), String> {
     };
     let (low, high) = (number(low)?, number(high)?);
     if low >= high {
-        return Err(format!("the minimum ({low}) must be below the maximum ({high})"));
+        return Err(format!(
+            "the minimum ({low}) must be below the maximum ({high})"
+        ));
     }
     Ok((low, high))
 }

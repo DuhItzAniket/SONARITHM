@@ -38,7 +38,7 @@ pub const FUNCTION_DURATION_S: f64 = 8.0;
 /// A sampled function: its table, its critical points and how to play it.
 #[derive(Clone, Debug)]
 pub struct Function {
-    function: FunctionSpec,
+    source: FunctionSpec,
     sampled: Sampled,
     window: Option<[f64; 2]>,
 }
@@ -79,7 +79,7 @@ pub fn read_function(function: &FunctionSpec) -> Result<Function, Error> {
             Error::Spec(one)
         })?;
     Ok(Function {
-        function: function.clone(),
+        source: function.clone(),
         sampled,
         window: None,
     })
@@ -135,7 +135,7 @@ impl Function {
     /// The function source as given.
     #[must_use]
     pub fn source(&self) -> &FunctionSpec {
-        &self.function
+        &self.source
     }
 
     /// The table `x`, `y`, `dy` (provenance `synthetic`) in a bundle.
@@ -153,7 +153,7 @@ impl Function {
     /// The bundle with other IDs, for hosts that hold several datasets.
     #[must_use]
     pub fn bundle_with_ids(&self, bundle: BundleId, table: TableId) -> Option<DataBundle> {
-        sample_function(&self.function, &Budgets::DEFAULT, (bundle, table))
+        sample_function(&self.source, &Budgets::DEFAULT, (bundle, table))
             .ok()
             .map(|sampled| sampled.bundle)
     }
@@ -191,8 +191,8 @@ impl Function {
     /// "f(x) = x^2 - 1 from x = -2 to 2, 1000 samples: 2 zeros, 1 local minimum".
     #[must_use]
     pub fn summary(&self) -> String {
-        let [low, high] = self.function.domain;
-        let grid = match (self.function.step, self.function.samples) {
+        let [low, high] = self.source.domain;
+        let grid = match (self.source.step, self.source.samples) {
             (Some(step), _) => format!("a step of {}", number(step)),
             (None, Some(samples)) => format!("{samples} samples"),
             (None, None) => "1000 samples".to_owned(),
@@ -235,7 +235,7 @@ impl Function {
     /// [`Function::spec`] lasting `seconds`.
     #[must_use]
     pub fn spec_lasting(&self, seconds: f64) -> Spec {
-        function_spec(&self.function, seconds)
+        function_spec(&self.source, seconds)
     }
 }
 
@@ -301,7 +301,11 @@ fn critical_point(feature: &Feature) -> CriticalPoint {
 /// A label's plural, for counts.
 fn plural(kind: &str, count: usize) -> String {
     if count == 1 {
-        return kind.to_owned();
+        return match kind {
+            "undefined" => "undefined span".to_owned(),
+            "above the window" | "below the window" => format!("span {kind}"),
+            other => other.to_owned(),
+        };
     }
     match kind {
         "local maximum" => "local maxima".to_owned(),
@@ -323,7 +327,8 @@ fn number(value: f64) -> String {
     }
     let mut text = format!("{value:.4}");
     if text.contains('.') {
-        text = text.trim_end_matches('0').trim_end_matches('.').to_owned();
+        let kept = text.trim_end_matches('0').trim_end_matches('.').len();
+        text.truncate(kept);
     }
     if text == "-0" { "0".to_owned() } else { text }
 }
@@ -334,7 +339,7 @@ mod tests {
 
     #[test]
     fn numbers_read_without_noise() {
-        assert_eq!(number(1.570_796_326_8), "1.5708");
+        assert_eq!(number(1.234_567_89), "1.2346");
         assert_eq!(number(-0.000_01), "0");
         assert_eq!(number(2.0), "2");
         assert_eq!(number(-1.5), "-1.5");
@@ -345,6 +350,8 @@ mod tests {
         assert_eq!(plural("local maximum", 2), "local maxima");
         assert_eq!(plural("zero", 3), "zeros");
         assert_eq!(plural("inflection point", 1), "inflection point");
+        assert_eq!(plural("below the window", 1), "span below the window");
+        assert_eq!(plural("undefined", 1), "undefined span");
         assert_eq!(
             plural("horizontal asymptote to the left", 2),
             "horizontal asymptotes to the left"

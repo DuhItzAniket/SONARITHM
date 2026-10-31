@@ -1016,6 +1016,15 @@ A05 (render engine, audio backends, export) uses F-050 to F-069.
 - **Affects:** C02-T09, A11Y-02, A11Y-12, A11Y-24, FR-008, OD-07, H-06
 - **Papers:** none yet
 
+### F-198 · An unboxed `Expr` was 19 KB, and sampling a function overflowed the CLI's 1 MB main-thread stack in debug builds
+
+- **Date:** 2026-11-01 · **Phase:** C03 · **Type:** engineering (robustness) · **Status:** new
+- **Statement:** exmex's compiled form (`FlatEx<f64>`) keeps its buffers inline, so CURVASONA's `Expr` was 19,296 bytes and `Calculus` (f, f′, f″) 57,888 bytes. A debug build copies these values through many frames. Sampling `x^3 - 3*x` needed between 768 KB and 1 MB of stack, and the facade's `read_function` between 1 and 1.5 MB, with no recursion involved. That overflowed the 1 MB main thread on Windows, where the CLI runs: both new CLI tests crashed with `STATUS_STACK_OVERFLOW`. Python calls run on the caller's thread, so they were exposed the same way. Boxing the compiled form makes `Expr` 136 bytes, and `read_function` then runs in 512 KB but not in 256 KB. Measured on HW-01 (Windows 11, debug build); release builds use less stack and were not measured.
+- **Evidence:** `crates/engines/sonarithm-curvasona/src/expr.rs` (`compiled: Box<Compiled>`); the test `a_function_reads_and_compiles_on_a_1_mb_stack`; stack probes at 256 KB to 4 MB during C03-T07
+- **Evidence level / confidence:** EV-D / Strong (measured, one machine)
+- **Affects:** C03-T07, every host that runs CURVASONA on a main thread (CLI, Python, the app's command thread)
+- **Papers:** none yet
+
 ### F-197 · A registered context provider is recorded in every Score, so the facade adds CURVASONA only where a spec uses it
 
 - **Date:** 2026-11-01 · **Phase:** C03 · **Type:** engineering (determinism, diagnostics) · **Status:** new

@@ -1137,7 +1137,8 @@ impl FunctionJson {
 /// critical points, one per line, then the audification calculator's readout (SDR-31).
 fn print_function(function: Option<&sonarithm::Function>, compiled: &Compiled) {
     if let Some(function) = function {
-        line(format!("{}.", sentence(&function.summary())));
+        // Not capitalized: the summary starts with `f(x)`.
+        line(format!("Function: {}.", function.summary()));
         let points = function.critical_points();
         if !points.is_empty() {
             line("Critical points:");

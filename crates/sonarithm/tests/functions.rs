@@ -4,6 +4,12 @@
 //! Functions through the facade (C03-T07): `read_function`, its critical-point list and the
 //! spec that plays it with CURVASONA's cues.
 
+#![allow(
+    clippy::unwrap_used,
+    clippy::panic,
+    reason = "integration test; clippy treats its helpers as non-test code"
+)]
+
 use arrow_array::Float64Array;
 use sonarithm::score::{ScoreEvent, ScoreTrack};
 use sonarithm::{FunctionSpec, Sonarithm, Spec, read_function};
@@ -64,7 +70,11 @@ fn spans_and_asymptotes_read_as_text() {
         undefined,
         ["undefined from x = -2 to -1", "undefined from x = 1 to 2"]
     );
-    assert!(points.iter().all(|p| p.kind != "undefined" || p.end.is_some()));
+    assert!(
+        points
+            .iter()
+            .all(|p| p.kind != "undefined" || p.end.is_some())
+    );
 }
 
 #[test]
@@ -80,8 +90,8 @@ fn an_expression_that_cannot_be_read_is_a_coded_error_at_its_key() {
 }
 
 /// A11Y-24, A11Y-28: the critical-point list is a text equivalent of the cues. On every
-/// curve of the 40-curve suite, each earcon of `curvasona.cues` comes from a row at an
-/// entry of the list (inside it, for a span), and the list has at least as many entries
+/// curve of the 40-curve suite, each earcon of `curvasona.cues` comes from a row within one
+/// grid step of an entry of the list (inside it, for a span), and the list has at least as many entries
 /// with cues as there are earcons (cues closer than 150 ms merge).
 #[test]
 fn a11y_28_the_critical_point_list_is_a_text_equivalent_of_the_cues() {
@@ -96,6 +106,8 @@ fn a11y_28_the_critical_point_list_is_a_text_equivalent_of_the_cues() {
         let column = table.column("x").unwrap();
         let xs = column.as_any().downcast_ref::<Float64Array>().unwrap();
         let points = function.critical_points();
+        // The grid step of the default 1000 samples.
+        let step = (curve.domain[1] - curve.domain[0]) / 999.0;
         let earcons: Vec<_> = cue_track(compiled.score())
             .map(|track| {
                 track
@@ -121,10 +133,13 @@ fn a11y_28_the_critical_point_list_is_a_text_equivalent_of_the_cues() {
         for earcon in earcons {
             let row = earcon.src.unwrap_or_else(|| panic!("{}", curve.name)).row;
             let x = xs.value(usize::try_from(row).unwrap());
-            // A point's cue is at its row; a span's at its first row inside it.
+            // A point's cue is at its nearest row (its own row, for the points the source
+            // adds a row at); a span's at its first row inside it.
             assert!(
-                points.iter().any(|p| (p.x - x).abs() <= 1e-9 * (1.0 + x.abs())
-                    || p.end.is_some_and(|end| p.x <= x && x <= end)),
+                points
+                    .iter()
+                    .any(|p| (p.x - x).abs() <= step
+                        || p.end.is_some_and(|end| p.x <= x && x <= end)),
                 "{}: a cue at x = {x} has no entry in {points:?}",
                 curve.name
             );
@@ -200,8 +215,29 @@ fn sdr_31_an_audify_track_on_inline_data_reports_the_speedup() {
         .iter()
         .find(|d| d.code.as_str() == "SNR-ENG-460")
         .unwrap();
-    assert!(readout.message.starts_with("Audification: k = 100,"), "{readout}");
+    assert!(
+        readout.message.starts_with("Audification: k = 100,"),
+        "{readout}"
+    );
     let speedup = sonarithm::audify_speedup(1.0, 200, 100.0);
     assert!((speedup.duration.0 - 2.0).abs() < 1e-12);
     assert!((sonarithm::SEISMIC_K - 2200.0).abs() < f64::EPSILON);
+}
+
+/// F-198: reading and compiling a function fits the 1 MB stack of a Windows main thread,
+/// where the CLI and Python run it, even in a debug build. Before the compiled form was
+/// boxed, an `Expr` was about 19 KB and sampling alone needed more than 1 MB.
+#[test]
+fn a_function_reads_and_compiles_on_a_1_mb_stack() {
+    assert!(std::mem::size_of::<sonarithm_curvasona::Expr>() < 1024);
+    std::thread::Builder::new()
+        .stack_size(1024 * 1024)
+        .spawn(|| {
+            let function = read_function(&FunctionSpec::new("x^3 - 3*x", [-3.0, 3.0])).unwrap();
+            let compiled = Sonarithm::new().compile(&function.spec()).unwrap();
+            assert_eq!(compiled.score().tracks.len(), 2, "the glide and the cues");
+        })
+        .unwrap()
+        .join()
+        .unwrap();
 }
