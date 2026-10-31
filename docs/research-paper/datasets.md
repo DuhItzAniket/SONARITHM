@@ -69,7 +69,7 @@ None of these is registered for use yet. Before use, record the licence, the ver
 | WB-ChartExtract, EpiCurveBench *(preprints)* | Realistic 2026 chart-to-table benchmarks | D04 extraction evaluation | To verify |
 | TESS data-validation time series | Used in ICAD sonification work (`riber2022tess`) | Astronomy examples; transit tasks with real data | To verify |
 | NASA Chandra data used in "A Universe of Sound" (`arcand2024universe`) | Outreach sonification at scale | Presentation-mode examples | To verify |
-| A public seismic waveform archive (to be identified) | Audification as in Dombois 2001 | Real-data audification example | To verify |
+| A public seismic waveform archive: candidates in [OD-30](../planning/open-decisions.md) (GEOFON GE, GSN IU through EarthScope, STEAD) | Audification as in Dombois 2001 | Real-data audification example (C03-T06) | Owner decision pending (OD-30); nothing downloaded |
 | Erie gallery examples (`kim2024erie`) | Replication gallery items (Erie code is MIT-licensed) | Gallery and importer tests | Data licence to verify |
 | Data Sonification Archive (`lindborg2025trends`) | Corpus of 470 projects | Design-pattern reference, not a task benchmark | Not applicable (no data reuse) |
 
