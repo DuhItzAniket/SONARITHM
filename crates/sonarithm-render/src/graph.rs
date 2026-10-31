@@ -299,7 +299,7 @@ impl Graph {
                 noise_seed: 0,
                 events: Vec::new(),
                 breakpoints: Vec::new(),
-            buffers: Vec::new(),
+                buffers: Vec::new(),
             },
             cues: VoicePool::new(CUE_VOICES),
             earcon_track: TrackPlan {
@@ -313,7 +313,7 @@ impl Graph {
                 noise_seed: 0,
                 events: Vec::new(),
                 breakpoints: Vec::new(),
-            buffers: Vec::new(),
+                buffers: Vec::new(),
             },
             earcons: VoicePool::new(EARCON_VOICES),
             buses: [stereo(), stereo(), stereo(), stereo()],
