@@ -58,7 +58,8 @@ fn the_function_source_gives_x_y_and_dy_with_synthetic_provenance() {
     let bundle = bundle.unwrap();
     assert!(cx.diagnostics().is_empty(), "{:?}", cx.diagnostics());
     let table = bundle.primary().unwrap();
-    assert_eq!(table.num_rows(), 2000_u64);
+    // The 2000 samples plus one empty row at the hole at 0 (C03-T02).
+    assert_eq!(table.num_rows(), 2001_u64);
     let names: Vec<&str> = table
         .schema()
         .fields()
@@ -78,8 +79,19 @@ fn the_function_source_gives_x_y_and_dy_with_synthetic_provenance() {
     let xs = column(&bundle, "x");
     let ys = column(&bundle, "y");
     let dys = column(&bundle, "dy");
+    assert_eq!(ys.iter().filter(|y| y.is_none()).count(), 1);
+    let hole = xs
+        .iter()
+        .zip(&ys)
+        .find(|(_, y)| y.is_none())
+        .unwrap()
+        .0
+        .unwrap();
+    assert!(hole.abs() < 1e-12, "{hole}");
     for ((x, y), dy) in xs.iter().zip(&ys).zip(&dys) {
-        let (x, y, dy) = (x.unwrap(), y.unwrap(), dy.unwrap());
+        let (Some(x), Some(y), Some(dy)) = (*x, *y, *dy) else {
+            continue;
+        };
         assert!((y - x.sin() / x).abs() < 1e-12);
         let exact = (x * x.cos() - x.sin()) / (x * x);
         assert!((dy - exact).abs() < 1e-9, "dy at {x}: {dy} vs {exact}");
@@ -273,6 +285,52 @@ fn the_manifest_owns_the_function_source() {
     let manifest = Curvasona::manifest();
     assert_eq!(manifest.id, ENGINE);
     assert_eq!(manifest.spec_keys, ["data.source.kind=function"]);
+}
+
+/// A glide breaks at each pole: the table has an empty row there (C03-T02).
+#[test]
+fn poles_between_samples_get_an_empty_row() {
+    let sampled = sample_function(
+        &FunctionSpec::new("tan(x)", [-2.0, 2.0]).with_samples(10),
+        &Budgets::DEFAULT,
+        (BundleId(0), FUNCTION_TABLE),
+    )
+    .unwrap();
+    let xs = column(&sampled.bundle, "x");
+    let ys = column(&sampled.bundle, "y");
+    assert_eq!(xs.len(), 12);
+    let empty: Vec<f64> = xs
+        .iter()
+        .zip(&ys)
+        .filter(|(_, y)| y.is_none())
+        .map(|(x, _)| x.unwrap())
+        .collect();
+    let half_pi = std::f64::consts::FRAC_PI_2;
+    assert_eq!(empty.len(), 2);
+    assert!((empty[0] + half_pi).abs() < 1e-12 && (empty[1] - half_pi).abs() < 1e-12);
+    assert!(sampled.diagnostics.is_empty(), "{:?}", sampled.diagnostics);
+    assert_eq!(sampled.scan.singularities.len(), 2);
+}
+
+#[test]
+fn snr_eng_407_a_scan_that_runs_out_says_so() {
+    let budgets = Budgets {
+        max_evaluations: 4100,
+        ..Budgets::DEFAULT
+    };
+    let sampled = sample_function(
+        &FunctionSpec::new("tan(x) + 1/(x - 0.3) + floor(3*x)", [-5.0, 5.0]).with_samples(1000),
+        &budgets,
+        (BundleId(0), FUNCTION_TABLE),
+    )
+    .unwrap();
+    assert!(sampled.scan.truncated);
+    let codes: Vec<&str> = sampled
+        .diagnostics
+        .iter()
+        .map(|d| d.code.as_str())
+        .collect();
+    assert!(codes.contains(&"SNR-ENG-407"), "{codes:?}");
 }
 
 #[test]

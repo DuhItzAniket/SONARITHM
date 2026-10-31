@@ -1036,6 +1036,9 @@ pub struct Expr {
     slots: Slots,
     compiled: Compiled,
     max_derivative_chars: usize,
+    /// The parsed tree, with the sorted variable names it indexes; `None` for a derivative,
+    /// which exists only in exmex's form.
+    tree: Option<(Node, Vec<String>)>,
 }
 
 impl Expr {
@@ -1074,11 +1077,24 @@ impl Expr {
             Tok::Comma => return Err(syntax(rest.at, "a `,` belongs inside min, max or atan2")),
             _ => return Err(syntax(rest.at, "expected an operator here")),
         }
+        let names: Vec<String> = names.into_iter().map(str::to_owned).collect();
+        let values: Vec<f64> = variables.values().copied().collect();
+        Self::from_node(node, names, &values, limits.max_derivative_chars)
+    }
+
+    /// Prints, lowers and compiles a tree whose `Var` indices point into `names`.
+    fn from_node(
+        node: Node,
+        names: Vec<String>,
+        values: &[f64],
+        max_derivative_chars: usize,
+    ) -> Result<Self, ExprError> {
+        let borrowed: Vec<&str> = names.iter().map(String::as_str).collect();
         let mut canonical = String::new();
-        node.print(&names, &mut canonical);
+        node.print(&borrowed, &mut canonical);
         let mut slots = Slots {
             values: BTreeMap::new(),
-            variables: variables.values().copied().collect(),
+            variables: values.to_vec(),
         };
         let mut lowered = String::new();
         node.lower(&mut slots, &mut lowered);
@@ -1091,8 +1107,36 @@ impl Expr {
             canonical,
             compiled: Compiled::bind(flat, &slots),
             slots,
-            max_derivative_chars: limits.max_derivative_chars,
+            max_derivative_chars,
+            tree: Some((node, names)),
         })
+    }
+
+    /// The guards of the expression (C03-T02): the sub-expressions whose zeros are the only
+    /// places where it can have a pole, a hole, a jump or the edge of a region where it is
+    /// undefined. Every discontinuity of a function in the language sits at a zero of one
+    /// of them, because the language is closed (ADR-0028). Guards that do not read `x` are
+    /// left out, and each appears once.
+    #[must_use]
+    pub fn guards(&self) -> Vec<Guard> {
+        let Some((node, names)) = &self.tree else {
+            return Vec::new();
+        };
+        let mut found: Vec<(GuardKind, Node)> = Vec::new();
+        node.guards(&mut found);
+        let mut seen = std::collections::BTreeSet::new();
+        let values = &self.slots.variables;
+        let mut guards = Vec::new();
+        for (kind, guard) in found {
+            let Ok(expr) = Self::from_node(guard, names.clone(), values, self.max_derivative_chars)
+            else {
+                continue;
+            };
+            if expr.reads_x() && seen.insert((kind, expr.canonical.clone())) {
+                guards.push(Guard { kind, expr });
+            }
+        }
+        guards
     }
 
     /// The canonical form: ordinary precedence, the fewest parentheses. Parsing it again
@@ -1132,6 +1176,7 @@ impl Expr {
                     x: None,
                 },
                 max_derivative_chars: self.max_derivative_chars,
+                tree: None,
             });
         };
         let flat = self
@@ -1149,7 +1194,118 @@ impl Expr {
             compiled: Compiled::bind(flat, &self.slots),
             slots: self.slots.clone(),
             max_derivative_chars: self.max_derivative_chars,
+            tree: None,
         })
+    }
+}
+
+/// What a zero of a [`Guard`] can be.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord)]
+#[non_exhaustive]
+pub enum GuardKind {
+    /// A denominator: where it is zero the expression is undefined, so a finite limit there
+    /// is a hole and an infinite one a pole.
+    Denominator,
+    /// A pole where the limit is infinite, otherwise nothing (`ln`, `tan`, negative
+    /// powers, `atanh`).
+    Pole,
+    /// A jump (`floor`, `ceil`, `round`, `trunc`, `atan2`).
+    Step,
+    /// The edge of a region where the expression is undefined (`sqrt`, `asin`, `acos`,
+    /// `acosh`, fractional powers).
+    Domain,
+}
+
+/// A sub-expression whose zeros may be singular points (see [`Expr::guards`]).
+#[derive(Clone, Debug)]
+pub struct Guard {
+    /// What its zeros can be.
+    pub kind: GuardKind,
+    /// The sub-expression.
+    pub expr: Expr,
+}
+
+impl Node {
+    /// Collects the guard trees of this tree and its children.
+    fn guards(&self, out: &mut Vec<(GuardKind, Self)>) {
+        let num = |v: f64| Box::new(Self::Num(v));
+        let call = |f: Func1, a: &Self| Self::Call1(f, Box::new(a.clone()));
+        // 1 - a^2, zero at a = 1 and a = -1.
+        let unit = |a: &Self| {
+            Self::Bin(
+                Op::Sub,
+                num(1.0),
+                Box::new(Self::Bin(Op::Pow, Box::new(a.clone()), num(2.0))),
+            )
+        };
+        // sin(pi*a) or cos(pi*a): zero where a is a whole number or a half.
+        let periodic = |f: Func1, a: &Self| {
+            call(
+                f,
+                &Self::Bin(Op::Mul, num(std::f64::consts::PI), Box::new(a.clone())),
+            )
+        };
+        match self {
+            Self::Num(_) | Self::X | Self::Var(_) => {}
+            Self::Neg(a) => a.guards(out),
+            Self::Bin(op, a, b) => {
+                match op {
+                    Op::Div => out.push((GuardKind::Denominator, (**b).clone())),
+                    Op::Pow => match **b {
+                        Self::Num(e) if e.fract() == 0.0 && e >= 0.0 => {}
+                        Self::Num(e) if e.fract() == 0.0 => {
+                            out.push((GuardKind::Pole, (**a).clone()));
+                        }
+                        Self::Num(e) => {
+                            out.push((GuardKind::Domain, (**a).clone()));
+                            if e < 0.0 {
+                                out.push((GuardKind::Pole, (**a).clone()));
+                            }
+                        }
+                        _ => {
+                            out.push((GuardKind::Pole, (**a).clone()));
+                            out.push((GuardKind::Domain, (**a).clone()));
+                        }
+                    },
+                    Op::Add | Op::Sub | Op::Mul => {}
+                }
+                a.guards(out);
+                b.guards(out);
+            }
+            Self::Call1(f, a) => {
+                match f {
+                    Func1::Tan | Func1::Sec => {
+                        out.push((GuardKind::Pole, call(Func1::Cos, a)));
+                    }
+                    Func1::Csc | Func1::Cot => {
+                        out.push((GuardKind::Pole, call(Func1::Sin, a)));
+                    }
+                    Func1::Ln | Func1::Log2 | Func1::Log10 => {
+                        out.push((GuardKind::Pole, (**a).clone()));
+                    }
+                    Func1::Sqrt => out.push((GuardKind::Domain, (**a).clone())),
+                    Func1::Asin | Func1::Acos => out.push((GuardKind::Domain, unit(a))),
+                    Func1::Acosh => out.push((
+                        GuardKind::Domain,
+                        Self::Bin(Op::Sub, Box::new((**a).clone()), num(1.0)),
+                    )),
+                    Func1::Atanh => out.push((GuardKind::Pole, unit(a))),
+                    Func1::Floor | Func1::Ceil | Func1::Trunc => {
+                        out.push((GuardKind::Step, periodic(Func1::Sin, a)));
+                    }
+                    Func1::Round => out.push((GuardKind::Step, periodic(Func1::Cos, a))),
+                    _ => {}
+                }
+                a.guards(out);
+            }
+            Self::Call2(f, a, b) => {
+                if *f == Func2::Atan2 {
+                    out.push((GuardKind::Step, (**a).clone()));
+                }
+                a.guards(out);
+                b.guards(out);
+            }
+        }
     }
 }
 

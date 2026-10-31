@@ -94,6 +94,18 @@ pub const UNDEFINED_SAMPLES: CodeInfo = CodeInfo {
     status: CodeStatus::Active,
 };
 
+/// The scan for singular points stopped at its budget.
+pub const SCAN_TRUNCATED: CodeInfo = CodeInfo {
+    code: "SNR-ENG-407",
+    severity: Severity::Warning,
+    summary: "The search for poles and undefined spans stopped early",
+    help: "The function has more poles, holes, jumps or undefined spans than the limits \
+           allow, or needs too many evaluations to find them, so some may be missing from \
+           the cues and the list. Narrow the domain or lower `samples`.",
+    rules: &["A11Y-28"],
+    status: CodeStatus::Active,
+};
+
 /// Every code CURVASONA emits.
 pub const CODES: CodeTable = CodeTable {
     area: Area::Eng,
@@ -106,6 +118,7 @@ pub const CODES: CodeTable = CodeTable {
         TOO_MANY_SAMPLES,
         NUMERIC_DERIVATIVE,
         UNDEFINED_SAMPLES,
+        SCAN_TRUNCATED,
     ],
 };
 
