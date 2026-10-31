@@ -998,6 +998,15 @@ A05 (render engine, audio backends, export) uses F-050 to F-069.
 - **Affects:** NFR-04, ADR-0012, #409; testing-strategy §10; macOS's sandbox log is also read by PID (sandbox_lines), with the same reuse risk
 - **Papers:** none yet
 
+### F-183 · Clean raster line and bar charts read within 0.14 % median error at every resolution, but JPEG artefacts break automatic series colours
+
+- **Date:** 2026-10-30 · **Phase:** C02 · **Type:** benchmark · **Status:** new
+- **Statement:** The C02-T08 harness scores the raster line and bar charts of DS-007 (Vega-Lite, Plotly and D3; three line charts of 36 values and three bar charts of 5) rendered by vl-convert 1.9.0 at 1x, 1.5x and 2x, and at 1x without anti-aliasing, 24 clean PNG renders in all, read through anchors placed on the SVG's ticks. Every clean render reads as `cv_estimate` with a confidence; the worst median error is 0.14 % of the chart's largest value (crisp D3 line) and the lowest RMS-F1 0.994, well inside the C02 bar of 2 %. The same renders re-encoded as JPEG fare differently: the bar charts keep their accuracy at quality 90 and 60 except D3's (whose thin bars lose most categories), but line charts often fail at quality 90 and mostly fail at 60 (no series, or one or two of three). Chroma subsampling and ringing spread each line colour over many nearby shades, so automatic series-colour detection (C02-T03) splits or drops series. Plotly's line charts have one point per series near 8.6 % off at every clean resolution, where the line meets a marker of the same colour; the median is unaffected.
+- **Evidence:** `crates/engines/sonarithm-plotsona/src/accuracy/raster.rs` (`the_raster_corpus_meets_the_c02_accuracy_bar`, which writes the per-render table); the CI artefact `chart-accuracy` (`chart-accuracy-raster.md`); the C02-T08 PR
+- **Evidence level / confidence:** EV-C / Strong for clean renders of this corpus; Moderate for JPEG (two qualities from one encoder, the `image` crate's). Scans, photographs, thick or dashed lines, overlapping series of one colour and anchors clicked by people are not measured
+- **Affects:** C02 exit (FR-007, SDR-42), DS-007, F-180, F-182, F-181 (colour thresholds), 10 §3; a follow-up for JPEG robustness (colour clustering before series detection, or a user-picked colour per series as WebPlotDigitizer's documentation describes)
+- **Papers:** none yet
+
 ### F-184 · Series of estimates were announced like exact data, and the lowest confidence is named relative to each series
 
 - **Date:** 2026-10-30 · **Phase:** C02 · **Type:** engineering (accessibility) · **Status:** new
@@ -1014,13 +1023,4 @@ A05 (render engine, audio backends, export) uses F-050 to F-069.
 - **Evidence:** `apps/desktop/e2e/audio.spec.ts` (`fr_118_preferences_choose_the_device_and_set_the_volume_by_keyboard`, which now polls); `packages/ui/src/components/Button.stories.tsx` (`IconOnly`, which now waits for the tooltip's removal); React Aria 3.53.1 `FocusScope` and `useTooltipTrigger`
 - **Evidence level / confidence:** EV-C / Strong for the mechanisms (source and the local experiment); Weak for the pointer event's origin in CI, TODO(verify) if the story fails again
 - **Affects:** testing-strategy §12 (browser tests): read focus and overlay state with polling or observers, not one read after an overlay closes
-- **Papers:** none yet
-
-### F-183 · Clean raster line and bar charts read within 0.14 % median error at every resolution, but JPEG artefacts break automatic series colours
-
-- **Date:** 2026-10-30 · **Phase:** C02 · **Type:** benchmark · **Status:** new
-- **Statement:** The C02-T08 harness scores the raster line and bar charts of DS-007 (Vega-Lite, Plotly and D3; three line charts of 36 values and three bar charts of 5) rendered by vl-convert 1.9.0 at 1x, 1.5x and 2x, and at 1x without anti-aliasing, 24 clean PNG renders in all, read through anchors placed on the SVG's ticks. Every clean render reads as `cv_estimate` with a confidence; the worst median error is 0.14 % of the chart's largest value (crisp D3 line) and the lowest RMS-F1 0.994, well inside the C02 bar of 2 %. The same renders re-encoded as JPEG fare differently: the bar charts keep their accuracy at quality 90 and 60 except D3's (whose thin bars lose most categories), but line charts often fail at quality 90 and mostly fail at 60 (no series, or one or two of three). Chroma subsampling and ringing spread each line colour over many nearby shades, so automatic series-colour detection (C02-T03) splits or drops series. Plotly's line charts have one point per series near 8.6 % off at every clean resolution, where the line meets a marker of the same colour; the median is unaffected.
-- **Evidence:** `crates/engines/sonarithm-plotsona/src/accuracy/raster.rs` (`the_raster_corpus_meets_the_c02_accuracy_bar`, which writes the per-render table); the CI artefact `chart-accuracy` (`chart-accuracy-raster.md`); the C02-T08 PR
-- **Evidence level / confidence:** EV-C / Strong for clean renders of this corpus; Moderate for JPEG (two qualities from one encoder, the `image` crate's). Scans, photographs, thick or dashed lines, overlapping series of one colour and anchors clicked by people are not measured
-- **Affects:** C02 exit (FR-007, SDR-42), DS-007, F-180, F-182, F-181 (colour thresholds), 10 §3; a follow-up for JPEG robustness (colour clustering before series detection, or a user-picked colour per series as WebPlotDigitizer's documentation describes)
 - **Papers:** none yet
