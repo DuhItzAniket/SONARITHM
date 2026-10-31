@@ -1,0 +1,138 @@
+{
+  "kermadec-2021": {
+    "attribution": {
+      "channel": "GE.MORC..BHZ (STS-2/N, 20 samples per second), Moravsky Beroun, Czech Republic",
+      "doi": "10.14470/TR560404",
+      "licence": "CC-BY-4.0",
+      "modified": "Clip of one channel; the window's mean removed as an integer offset; converted from miniSEED to Parquet by convert.py",
+      "request": "https://geofon.gfz.de/fdsnws/dataselect/1/query?network=GE&station=MORC&location=--&channel=BHZ, 2021-03-04T19:43:35 to 2021-03-04T20:43:35 UTC",
+      "source": "GEOFON Data Centre (1993): GEOFON Seismic Network. Deutsches GeoForschungsZentrum GFZ. doi:10.14470/TR560404"
+    },
+    "cues": null,
+    "data": {
+      "fingerprint": "sha256:58ae63abee18863d6a60df7bef8261ae35613c968a461298447bc1798a2a7396",
+      "provenance": {},
+      "source": {
+        "kind": "file",
+        "name": "kermadec-2021-morc-bhz.parquet"
+      }
+    },
+    "manifestVersion": 2,
+    "output": {
+      "bitsPerSample": 24,
+      "channels": 2,
+      "file": "kermadec-2021.wav",
+      "format": "wav",
+      "frames": 78545,
+      "gainDb": 0.0,
+      "integratedLufs": -38.45,
+      "limitedFrames": 0,
+      "sha256": "sha256:d6ea787de6778e10b91b497f7a67037dfc5ce626d6e487874434013fb71b6326",
+      "truePeakDbtp": -22.35
+    },
+    "render": {
+      "blockSize": 256,
+      "durationS": 1.6363541666666668,
+      "loudnessCompensationPhon": 60.0,
+      "mode": "analysis",
+      "sampleRate": 48000,
+      "seed": 0
+    },
+    "score": {
+      "irVersion": 2,
+      "releaseIndependentHash": "sha256:d59c7189bc74e1acea4d2e81390d6c89752d98b0f73dc998c969744e25237335"
+    },
+    "spec": {
+      "embedded": null,
+      "hash": "sha256:593038b1f913bcabbe6d570dce722201e0f27b8d71cee26836d254ea3e920c15",
+      "version": "0.4"
+    },
+    "tracks": [
+      {
+        "audified": [
+          {
+            "durationS": 1.636364,
+            "rateHz": 43999.999999417196,
+            "samples": 72000
+          }
+        ],
+        "events": 1,
+        "firstOnsetS": null,
+        "id": "z",
+        "instrument": "sine",
+        "lastOnsetS": null,
+        "noteDurationsS": [],
+        "notes": 0,
+        "pitchHz": null
+      }
+    ]
+  },
+  "petrinja-2020": {
+    "attribution": {
+      "channel": "GE.MORC..BHZ (STS-2/N, 20 samples per second), Moravsky Beroun, Czech Republic",
+      "doi": "10.14470/TR560404",
+      "licence": "CC-BY-4.0",
+      "modified": "Clip of one channel; the window's mean removed as an integer offset; converted from miniSEED to Parquet by convert.py",
+      "request": "https://geofon.gfz.de/fdsnws/dataselect/1/query?network=GE&station=MORC&location=--&channel=BHZ, 2020-12-29T11:19:25 to 2020-12-29T11:29:25 UTC",
+      "source": "GEOFON Data Centre (1993): GEOFON Seismic Network. Deutsches GeoForschungsZentrum GFZ. doi:10.14470/TR560404"
+    },
+    "cues": null,
+    "data": {
+      "fingerprint": "sha256:e4dbb8fba146da19f42e54a21fd0f140967e5c83696cdaa5a316a9ae0c73b2b2",
+      "provenance": {},
+      "source": {
+        "kind": "file",
+        "name": "petrinja-2020-morc-bhz.parquet"
+      }
+    },
+    "manifestVersion": 2,
+    "output": {
+      "bitsPerSample": 24,
+      "channels": 2,
+      "file": "petrinja-2020.wav",
+      "format": "wav",
+      "frames": 13091,
+      "gainDb": 0.0,
+      "integratedLufs": null,
+      "limitedFrames": 0,
+      "sha256": "sha256:c84d7fcdb93494d17d9677d11daca73506542815ef95186d4fec8eb1c64e018b",
+      "truePeakDbtp": -21.0
+    },
+    "render": {
+      "blockSize": 256,
+      "durationS": 0.2727291666666667,
+      "loudnessCompensationPhon": 60.0,
+      "mode": "analysis",
+      "sampleRate": 48000,
+      "seed": 0
+    },
+    "score": {
+      "irVersion": 2,
+      "releaseIndependentHash": "sha256:32709ada8abb12f4d25e2dfd0d523e4554fc9781bf35f918c9d402b5520eff9c"
+    },
+    "spec": {
+      "embedded": null,
+      "hash": "sha256:536f11e198a5ea4d3fcf7f07272e750467b892d4fee0d702ef405ce7709474e2",
+      "version": "0.4"
+    },
+    "tracks": [
+      {
+        "audified": [
+          {
+            "durationS": 0.272727,
+            "rateHz": 43999.9999965029,
+            "samples": 12000
+          }
+        ],
+        "events": 1,
+        "firstOnsetS": null,
+        "id": "z",
+        "instrument": "sine",
+        "lastOnsetS": null,
+        "noteDurationsS": [],
+        "notes": 0,
+        "pitchHz": null
+      }
+    ]
+  }
+}
