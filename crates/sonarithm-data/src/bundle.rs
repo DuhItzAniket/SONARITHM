@@ -96,6 +96,8 @@ pub enum SourceKind {
     /// Data extracted from a chart file by PLOTSONA; the descriptor's extractor names the
     /// tier, such as `sonarithm-plotsona/office` (10 §3).
     Chart,
+    /// Samples of a function computed by CURVASONA (`data.source.kind = "function"`).
+    Function,
 }
 
 /// Unix time in milliseconds.

@@ -63,7 +63,7 @@ Unknown top-level keys are an **error**. The exception is the `x-` vendor prefix
 | `file` | platform | `path`, `format` (csv, tsv, json, ndjson, parquet, arrow, xlsx, ods), `sheet`, `options` |
 | `inline` | platform | `values` (array of records). For examples and tests |
 | `chart` | PLOTSONA | `path`, `extractor` (`auto`, `office`, `svg`, `vega`, `plotly`, `pdf-vector`, `raster`, `ml`), `calibration` (§3.1), `corrections` (§3.1, v0.2; a file in v0.3) |
-| `function` | CURVASONA | `expr`, `domain`, `samples` or `step`, `variables` |
+| `function` | CURVASONA | `expr` (the language of [ADR-0028](../decisions/0028-function-expression-language.md)), `domain`, `samples` or `step`, `variables` |
 | `stream` | SONOTRACE | `transport` (`websocket`, `mqtt`, `serial`, `osc`, `tail`), `url`/`port`/`topic`, `schema`, `window` |
 | `dataset` | platform | A reference to a dataset the host already holds: a dataset loaded in a project (desktop/app core), or data handed to the facade or the Python package (A07) |
 

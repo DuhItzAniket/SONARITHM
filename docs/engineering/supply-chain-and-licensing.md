@@ -232,6 +232,18 @@ Notes for C02-T02, which adds them:
 - imageproc functions that draw random numbers are not used, or are seeded from the spec seed (AGENTS.md rule 3).
 - Decoding limits (decompression bombs) are set through image's own limits API, checked in C02-T02's tests (`raster::tests::bombs_fail_within_budget`), after PLOTSONA checks the header's size against its pixel budget.
 
+### C03: CURVASONA crates (C03-T01, checked 2026-10-31)
+
+Checked with `cargo info` against crates.io on 2026-10-31. `sonarithm-curvasona` is an engine crate: it builds for `wasm32-unknown-unknown` and fits the core MSRV (1.88), and a function source's expression is untrusted input ([12 §6](../architecture/12-cross-cutting-concerns.md#6-security-and-threat-model)).
+
+| Crate | Version | Licence | MSRV | For | Decision |
+|---|---|---|---|---|---|
+| exmex | 0.21.0 | MIT OR Apache-2.0 | 1.80.1 | Expression evaluation and symbolic derivatives behind CURVASONA's `expr` facade (C03-T01) | **Use** with default features off and `partial` on. Its dependencies, regex and smallvec, are already in the lockfile, so it adds no other crate. Single maintainer (tech-stack: Trial), hence the facade: CURVASONA parses the expression itself and hands exmex only a fully parenthesized form |
+| rubato | 5.0.1 | MIT OR Apache-2.0 | 1.87 | Resampling in the audifier voice (C03-T05) | Allowed; added by C03-T05, not T01. New transitive crates: audioadapter 5.0.0 and audioadapter-buffers 5.2.0 (MIT OR Apache-2.0), visibility 0.1.1 (Zlib OR MIT OR Apache-2.0), windowfunctions 0.1.1 (MIT); through the default `fft_resampler` feature also realfft 3.5.1 (MIT), rustfft 6.4.1, primal-check 0.3.4, strength_reduce 0.2.4 and transpose 0.2.3 (all MIT OR Apache-2.0). num-traits, num-integer and num-complex are already in the lockfile |
+| evalexpr | ≥ 12.0.0 | AGPL-3.0-only | — | — | **Banned** in `deny.toml` (see [Known traps](#known-traps)). A branch that adds it fails `cargo deny check bans` (checked in C03-T01) |
+
+No candidate needs a licence outside the allowlist, so C03 files no open decision.
+
 ### C04: AXONOTE crates
 
 Checked on crates.io on 2026-10-26 (C04-T01). Where the crates go is in [02 §2](../architecture/02-repository-and-crate-layout.md#2-crate-catalogue): the engine crate `sonarithm-axonote` stays pure and builds for `wasm32`; live MIDI and the OSC socket live in the leaf crate `sonarithm-axonote-live`.

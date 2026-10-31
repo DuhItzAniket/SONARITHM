@@ -87,6 +87,16 @@ No reference-class machine is available yet (risk R-22). Rows on HW-01 apply the
 | Gate B `v0.5.0-beta` | | | | | | | | | | |
 | Gate C `v1.0.0` | | | | | | | | | | |
 
+## Chart extraction accuracy
+
+PLOTSONA's accuracy on the DS-007 corpus, scored by the harness in `crates/engines/sonarithm-plotsona/src/accuracy.rs` (the CI job `chart-accuracy` uploads the reports). Errors are relative to the chart's largest value for calibrated and estimated tiers, and to each value for exact tiers.
+
+| Phase | Date | Commit | Corpus | Charts | Worst error | Lowest RMS-F1 | Bar | Evidence |
+|---|---|---|---|---|---|---|---|---|
+| C01 (exact and vector tiers) | 2026-10-26 | [#385](https://github.com/DuhItzAniket/SONARITHM/pull/385) | DS-007 Office, chart JSON, SVG, vector PDF | 67 | 0.147 % (largest error, vector) | 0.9986 | 0.5 % per value | [F-167](findings-log.md#f-167--all-67-corpus-charts-extract-with-the-right-class-within-015--and-an-rms-f1-of-at-least-0998) |
+| C02 (raster tier, clean renders) | 2026-10-30 | C02-T08 PR | DS-007 raster: line and bar charts at 1x, 1.5x, 2x and 1x crisp | 24 renders | 0.14 % (median per render) | 0.994 | 2 % median | [F-183](findings-log.md#f-183--clean-raster-line-and-bar-charts-read-within-014--median-error-at-every-resolution-but-jpeg-artefacts-break-automatic-series-colours) |
+| C02 (raster tier, JPEG q90 and q60) | 2026-10-30 | C02-T08 PR | The same renders re-encoded in memory | 36 renders | bars mostly within 0.12 %; most line renders lose series | down to 0 | reported only | F-183 |
+
 ## Continuous integration
 
 The A01 research hook records CI times as a baseline.
@@ -108,6 +118,7 @@ The A01 research hook records CI times as a baseline.
 - **UI.** Measure playhead frame rate and scripting time per frame with a 1M-point series, downsampled in Rust, in each webview (WebView2, WKWebView, WebKitGTK).
 - **Startup.** Cold start to interactive after a reboot or with caches cleared; state which.
 - **Installer.** Size of each platform installer without ML models.
+- **Chart extraction accuracy.** `cargo test -p sonarithm-plotsona --lib accuracy -- --nocapture`; set `SONARITHM_ACCURACY_REPORT` to write the tables. Raster renders are read through anchors taken from the SVG's axes and scaled to the image; raster series are paired with truth series by least error, because the raster tier names them `Series 1`, `Series 2`…
 - **Evidence column.** Link the CI run, the committed benchmark spec and the manifest. A row without evidence is not valid.
 
 ## Change log
@@ -119,3 +130,4 @@ The A01 research hook records CI times as a baseline.
 | 2026-10-21 | A08 row: end-to-end export of the replication gallery; method note; [A08 report](benchmark-report-a08.md). | A08 session (AI agent), for review |
 | 2026-10-25 | PB-03 rerun after the voice-loop work (#185): met on HW-01e. | AI agent (Claude Code), for review |
 | 2026-10-25 | B06 row: the 1-hour stream soak on the null device (PB-11 memory and throughput; F-144). | Lane R session (AI agent), for review |
+| 2026-10-30 | Chart extraction accuracy section: the C01 row (F-167) and the C02 raster rows (F-183). | PLOTSONA session (AI agent), for review |

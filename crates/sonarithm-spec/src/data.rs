@@ -68,7 +68,12 @@ pub enum Source {
     },
     /// A sampled function (CURVASONA). Produces fields `x`, `y` and `dy`.
     Function {
-        /// The expression in `x`.
+        /// The expression in `x`, in the language of ADR-0028: ordinary precedence (`^` binds
+        /// tightest and is right-associative, so `-x^2` is `-(x^2)`), every product written
+        /// with `*`, the constants `pi`, `e` and `tau`, the names in `variables`, and the
+        /// functions sin, cos, tan, sec, csc, cot, asin, acos, atan, sinh, cosh, tanh, asinh,
+        /// acosh, atanh, exp, ln, log2, log10, sqrt, cbrt, abs, floor, ceil, round, trunc,
+        /// min, max and atan2. At most 1024 characters.
         expr: String,
         /// `[min, max]` of `x`.
         domain: [f64; 2],

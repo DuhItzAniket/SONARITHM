@@ -1,0 +1,25 @@
+{
+ "chart_type": "bar",
+ "title": "Fruit sold",
+ "provenance": "cv_estimate",
+ "x_kind": "category",
+ "series": [
+  {
+   "name": "Sold",
+   "x": [
+    "apple",
+    "banana",
+    "cherry",
+    "date",
+    "fig"
+   ],
+   "y": [
+    42.0,
+    57.0,
+    18.0,
+    33.0,
+    9.0
+   ]
+  }
+ ]
+}

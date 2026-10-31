@@ -14,7 +14,13 @@
 //! `--self-test` runs a probe that connects on purpose (TCP and UDP to 192.0.2.1, a
 //! documentation address that routes nowhere) and fails unless the mechanism sees it, so
 //! a mechanism that stopped working cannot pass silently. testing-strategy §10 documents
-//! the mechanisms; B01-T09 runs the same checks against the packaged app.
+//! the mechanisms.
+//!
+//! `--app <exe> [-- <args>]` runs one executable instead of the tests: the nightly workflow
+//! runs the installed desktop app with `--smoke`, so the packaged app is checked too
+//! (B01-T09). On Windows and macOS only the app's own process is checked, not the webview's
+//! processes (WebView2's `msedgewebview2.exe`, `WebKit`'s XPC services); strace on Linux
+//! follows every child, WebKitGTK's processes included.
 
 use std::path::{Path, PathBuf};
 use std::process::{Command, Stdio};
@@ -48,31 +54,74 @@ const SELF_TEST_WAITS: [u64; 7] = [2, 3, 5, 8, 12, 15, 15];
 /// a late entry.
 const SETTLE: u64 = 10;
 
+/// What the harness runs.
+#[derive(Debug, PartialEq, Eq)]
+enum Mode {
+    /// The app-core test executables, or with `self_test` only the probe.
+    Tests { self_test: bool },
+    /// One executable with its arguments: the packaged desktop app (B01-T09), run with
+    /// `--smoke` so it exits by itself.
+    App { exe: PathBuf, args: Vec<String> },
+}
+
+impl Mode {
+    fn parse(rest: &[String]) -> Result<Self> {
+        match rest {
+            [] => Ok(Self::Tests { self_test: false }),
+            [flag] if flag == "--self-test" => Ok(Self::Tests { self_test: true }),
+            [flag, exe, tail @ ..] if flag == "--app" => {
+                let args = match tail {
+                    [] => Vec::new(),
+                    [separator, args @ ..] if separator == "--" => args.to_vec(),
+                    [other, ..] => bail!(
+                        "unexpected `{other}` after `--app <exe>`; put the app's arguments after `--`"
+                    ),
+                };
+                Ok(Self::App {
+                    exe: PathBuf::from(exe),
+                    args,
+                })
+            }
+            [other, ..] => bail!(
+                "unexpected option `{other}`; expected `--self-test`, `--app <exe> [-- <args>]` or nothing"
+            ),
+        }
+    }
+}
+
 pub(crate) fn run(root: &Path, rest: &[String]) -> Result<()> {
-    let self_test = match rest {
-        [] => false,
-        [flag] if flag == "--self-test" => true,
-        [other, ..] => bail!("unexpected option `{other}`; expected `--self-test` or nothing"),
-    };
+    let mode = Mode::parse(rest)?;
+    let self_test = mode == Mode::Tests { self_test: true };
     let mechanism = Mechanism::detect()?;
     mechanism.prepare(root)?;
-    let executables = build(root)?;
+    let targets: Vec<(PathBuf, Vec<String>)> = match mode {
+        Mode::App { exe, args } => vec![(exe, args)],
+        Mode::Tests { self_test } => build(root)?
+            .into_iter()
+            .filter(|exe| {
+                let is_probe = exe
+                    .file_name()
+                    .is_some_and(|n| n.to_string_lossy().starts_with("network_probe"));
+                is_probe == self_test
+            })
+            .map(|exe| {
+                let args = if self_test {
+                    Vec::from(["--ignored", "--exact", PROBE, "--nocapture"].map(str::to_owned))
+                } else {
+                    Vec::new()
+                };
+                (exe, args)
+            })
+            .collect(),
+    };
     let mut runs = Vec::new();
     let started = Instant::now();
-    for exe in &executables {
+    for (exe, args) in &targets {
         let name = exe
             .file_name()
             .map(|n| n.to_string_lossy().into_owned())
             .unwrap_or_default();
-        let is_probe = name.starts_with("network_probe");
-        if self_test != is_probe {
-            continue;
-        }
-        let args: Vec<&str> = if self_test {
-            vec!["--ignored", "--exact", PROBE, "--nocapture"]
-        } else {
-            vec![]
-        };
+        let args: Vec<&str> = args.iter().map(String::as_str).collect();
         println!("network-deny: running {name} under {}", mechanism.name());
         let (pid, attempts, output) = mechanism.run(root, exe, &args)?;
         runs.push(Run {
@@ -381,7 +430,7 @@ fn check(exe: &Path, ok: bool) -> Result<()> {
     if ok {
         Ok(())
     } else {
-        bail!("the tests in {} failed under the harness", exe.display())
+        bail!("{} failed under the harness", exe.display())
     }
 }
 
@@ -439,6 +488,45 @@ fn wfp_lines(log: &str, pid: u32, exe: &str) -> Vec<String> {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    fn args(list: &[&str]) -> Vec<String> {
+        list.iter().map(|s| (*s).to_owned()).collect()
+    }
+
+    #[test]
+    fn b01_t09_the_app_mode_takes_an_executable_and_its_arguments() {
+        assert_eq!(
+            Mode::parse(&args(&[
+                "--app",
+                "SONARITHM.exe",
+                "--",
+                "--smoke",
+                "s.json"
+            ]))
+            .ok(),
+            Some(Mode::App {
+                exe: PathBuf::from("SONARITHM.exe"),
+                args: args(&["--smoke", "s.json"]),
+            })
+        );
+        assert_eq!(
+            Mode::parse(&args(&["--app", "app"])).ok(),
+            Some(Mode::App {
+                exe: PathBuf::from("app"),
+                args: Vec::new(),
+            })
+        );
+        assert!(Mode::parse(&args(&["--app", "app", "--smoke"])).is_err());
+        assert!(Mode::parse(&args(&["--app"])).is_err());
+        assert_eq!(
+            Mode::parse(&[]).ok(),
+            Some(Mode::Tests { self_test: false })
+        );
+        assert_eq!(
+            Mode::parse(&args(&["--self-test"])).ok(),
+            Some(Mode::Tests { self_test: true })
+        );
+    }
 
     #[test]
     fn strace_lines_with_inet_addresses_are_attempts() {
