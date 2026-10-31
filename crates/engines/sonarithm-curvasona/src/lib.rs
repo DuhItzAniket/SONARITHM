@@ -696,8 +696,14 @@ fn covered_rows(rows: &[(f64, u64)], feature: &Feature) -> Option<(u64, u64)> {
 /// sounds and where the cursor goes to reach it (C03-T08). `None` for a feature with no
 /// row, or when `data` is not a function table.
 #[must_use]
-pub fn feature_rows(data: &DataBundle, features: &[Feature], budgets: &Budgets) -> Vec<Option<u64>> {
-    let rows = FunctionTable::read(data, budgets).map(|f| f.rows).unwrap_or_default();
+pub fn feature_rows(
+    data: &DataBundle,
+    features: &[Feature],
+    budgets: &Budgets,
+) -> Vec<Option<u64>> {
+    let rows = FunctionTable::read(data, budgets)
+        .map(|f| f.rows)
+        .unwrap_or_default();
     features
         .iter()
         .map(|feature| covered_rows(&rows, feature).map(|(start, _)| start))

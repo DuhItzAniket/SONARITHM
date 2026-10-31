@@ -70,6 +70,9 @@ export const REPLY_KINDS = {
   corrections_import: "corrections_import",
   cursor_set: "cursor",
   cursor_get: "cursor",
+  function_check: "function_check",
+  function_open: "function",
+  audify_calculate: "audify_readout",
 } as const;
 
 /** The channel that carries each event. */
@@ -395,7 +398,55 @@ row: number,
 /**
  * Where the move came from; it decides what is spoken.
  */
-origin: CursorOrigin, } } | { "command": "cursor_get" } | { "command": "view_get", "args": { 
+origin: CursorOrigin, } } | { "command": "cursor_get" } | { "command": "function_check", "args": { 
+/**
+ * The expression in `x` (ADR-0028), at most 4096 bytes (`SNR-APP-088`).
+ */
+expr: string, 
+/**
+ * Named constants, at most 64.
+ */
+variables: { [key in string]: number }, } } | { "command": "function_open", "args": { 
+/**
+ * The expression in `x` (ADR-0028), at most 4096 bytes.
+ */
+expr: string, 
+/**
+ * `[min, max]` of `x`.
+ */
+domain: [number, number], 
+/**
+ * The number of samples; default 1000. Exclusive with `step`.
+ */
+samples: number | null, 
+/**
+ * The sampling step, instead of `samples`.
+ */
+step: number | null, 
+/**
+ * Named constants, at most 64.
+ */
+variables: { [key in string]: number }, 
+/**
+ * A name for the dataset; by default `f(x) = ` and the canonical expression.
+ */
+name: string | null, } } | { "command": "audify_calculate", "args": { 
+/**
+ * The dataset's ID.
+ */
+dataset: string, 
+/**
+ * The time field; by default the field with the x role.
+ */
+time: string | null, 
+/**
+ * The speed-up k; by default from `topHz`, else SDR-44's 4 kHz top.
+ */
+k: number | null, 
+/**
+ * Where the top of the band should land, in Hz.
+ */
+topHz: number | null, } } | { "command": "view_get", "args": { 
 /**
  * The dataset's ID.
  */
@@ -460,7 +511,64 @@ diagnostics: Array<DiagnosticInfo>,
 /**
  * Errors, warnings and infos.
  */
-counts: Counts, } | { "reply": "compile" } & CompileReport | { "reply": "transport" } & TransportState | { "reply": "cursor" } & CursorState | { "reply": "job" } & JobInfo | { "reply": "jobs", 
+counts: Counts, } | { "reply": "compile" } & CompileReport | { "reply": "transport" } & TransportState | { "reply": "cursor" } & CursorState | { "reply": "function_check", 
+/**
+ * Whether it reads.
+ */
+ok: boolean, 
+/**
+ * Its canonical form, when it reads.
+ */
+canonical: string | null, 
+/**
+ * Why it does not: one diagnostic, `SNR-ENG-400` to `403`.
+ */
+diagnostics: Array<DiagnosticInfo>, 
+/**
+ * Where reading stopped, `[at, len]` in characters as the message counts them,
+ * when the error has a place.
+ */
+span: [number, number] | null, } | { "reply": "function", 
+/**
+ * The dataset, as `dataset_open` gives it.
+ */
+dataset: DatasetSummary, 
+/**
+ * The function and its critical points.
+ */
+function: FunctionInfo, } | { "reply": "audify_readout", 
+/**
+ * The speed-up.
+ */
+k: number, 
+/**
+ * The series' own rate: samples per second, per unit of the time field, or per row.
+ */
+fsHz: number, 
+/**
+ * The samples on the uniform grid.
+ */
+samples: number, 
+/**
+ * The field it plays.
+ */
+series: string, 
+/**
+ * How long it plays, T/k, in seconds.
+ */
+durationS: number, 
+/**
+ * The band it sounds in, `[k/T, k·fs/2]`, in Hz.
+ */
+bandHz: [number, number], 
+/**
+ * The part of the band inside 20 Hz to 20 kHz, if any.
+ */
+audibleHz: [number, number] | null, 
+/**
+ * `SNR-ENG-461` when part of the band is inaudible, `462` when all of it is.
+ */
+codes: Array<string>, } | { "reply": "job" } & JobInfo | { "reply": "jobs", 
 /**
  * The jobs, oldest first.
  */
@@ -968,6 +1076,53 @@ label: string, };
  * A level of the cursor's path, which the UI names through its own catalogue.
  */
 export type PathLevel = "dataset" | "series" | "segment" | "point";
+
+/**
+ * A function opened as a dataset (C03-T08).
+ */
+export type FunctionInfo = { 
+/**
+ * The expression in its canonical form.
+ */
+canonical: string, 
+/**
+ * One sentence: the expression, the domain and how many of each feature.
+ */
+summary: string, 
+/**
+ * Its critical points and spans in increasing `x`: the text equivalent of its cues
+ * (A11Y-24, A11Y-28).
+ */
+criticalPoints: Array<CriticalPointInfo>, };
+
+/**
+ * One critical point or span of a function (C03-T08).
+ */
+export type CriticalPointInfo = { 
+/**
+ * CURVASONA's stable label: `zero`, `local maximum`, `vertical asymptote`, …
+ */
+kind: string, 
+/**
+ * Where it is, or where its span starts.
+ */
+x: number, 
+/**
+ * Where its span ends, for spans.
+ */
+end: number | null, 
+/**
+ * Its value, where it has one.
+ */
+y: number | null, 
+/**
+ * The dataset row its insight covers first: `cursor_set` goes there.
+ */
+row: number | null, 
+/**
+ * The entry as text, such as `local maximum at x = 1.5708, y = 1`.
+ */
+text: string, };
 
 /**
  * What to export.

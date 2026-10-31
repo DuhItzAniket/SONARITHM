@@ -90,13 +90,12 @@ pub fn read_function_with_ids(
     bundle: BundleId,
     table: TableId,
 ) -> Result<Function, Error> {
-    let sampled = sample_function(function, &Budgets::DEFAULT, (bundle, table))
-        .map_err(|err| {
-            let at = SpecPointer::root().key("data").key("source").key(err.key);
-            let mut one = Diagnostics::new();
-            one.push(err.diagnostic.at(at));
-            Error::Spec(one)
-        })?;
+    let sampled = sample_function(function, &Budgets::DEFAULT, (bundle, table)).map_err(|err| {
+        let at = SpecPointer::root().key("data").key("source").key(err.key);
+        let mut one = Diagnostics::new();
+        one.push(err.diagnostic.at(at));
+        Error::Spec(one)
+    })?;
     Ok(Function {
         source: function.clone(),
         sampled,
@@ -195,7 +194,8 @@ impl Function {
             ));
         }
         features.sort_by(|a, b| a.x.total_cmp(&b.x).then(a.kind.cmp(&b.kind)));
-        let rows = sonarithm_curvasona::feature_rows(&self.sampled.bundle, &features, &Budgets::DEFAULT);
+        let rows =
+            sonarithm_curvasona::feature_rows(&self.sampled.bundle, &features, &Budgets::DEFAULT);
         features
             .iter()
             .zip(rows)

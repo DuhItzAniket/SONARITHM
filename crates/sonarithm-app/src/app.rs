@@ -330,30 +330,9 @@ impl App {
                 origin,
             } => self.cursor_set(&dataset, row, origin),
             Request::CursorGet => Ok(self.cursor_get()),
-            Request::FunctionCheck { expr, variables } => Self::function_check(&expr, &variables),
-            Request::FunctionOpen {
-                expr,
-                domain,
-                samples,
-                step,
-                variables,
-                name,
-            } => self.edit(|app| {
-                app.function_open(functions::FunctionRequest {
-                    expr,
-                    domain,
-                    samples,
-                    step,
-                    variables,
-                    name,
-                })
-            }),
-            Request::AudifyCalculate {
-                dataset,
-                time,
-                k,
-                top_hz,
-            } => self.audify_calculate(&dataset, time.as_deref(), k, top_hz),
+            request @ (Request::FunctionCheck { .. }
+            | Request::FunctionOpen { .. }
+            | Request::AudifyCalculate { .. }) => self.functions(request),
             Request::ViewGet { .. } | Request::TablePage { .. } => Err(IpcError::new(
                 &codes::BAD_REQUEST,
                 "This command returns a binary view; send it with dispatch_binary.",

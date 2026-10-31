@@ -103,8 +103,14 @@ fn a_function_opens_as_a_dataset_the_cursor_and_the_cues_use() {
     assert_eq!(function["canonical"], "x^3 - 3*x");
     let points = function["criticalPoints"].as_array().unwrap();
     let kinds: Vec<&str> = points.iter().filter_map(|p| p["kind"].as_str()).collect();
-    assert!(kinds.contains(&"local maximum") && kinds.contains(&"zero"), "{function}");
-    let maximum = points.iter().find(|p| p["kind"] == "local maximum").unwrap();
+    assert!(
+        kinds.contains(&"local maximum") && kinds.contains(&"zero"),
+        "{function}"
+    );
+    let maximum = points
+        .iter()
+        .find(|p| p["kind"] == "local maximum")
+        .unwrap();
     assert_eq!(maximum["text"], "local maximum at x = -1, y = 2");
     let row = maximum["row"].as_u64().unwrap();
     let cursor = h.ok(&json!({ "command": "cursor_set",
@@ -126,7 +132,10 @@ fn a_function_opens_as_a_dataset_the_cursor_and_the_cues_use() {
         .iter()
         .find(|t| t["id"] == "curvasona.cues")
         .unwrap_or_else(|| panic!("{report}"));
-    assert_eq!(cues["events"], 5, "three zeros, two extrema; the inflection merges");
+    assert_eq!(
+        cues["events"], 5,
+        "three zeros, two extrema; the inflection merges"
+    );
 }
 
 #[test]
@@ -177,7 +186,10 @@ fn sdr_31_the_calculator_agrees_with_the_compile() {
     );
     let default = h.ok(&json!({ "command": "audify_calculate", "args": { "dataset": "d1" } }));
     let top = default["bandHz"][1].as_f64().unwrap();
-    assert!((top - 4000.0).abs() < 1e-6, "SDR-44's default top: {default}");
+    assert!(
+        (top - 4000.0).abs() < 1e-6,
+        "SDR-44's default top: {default}"
+    );
     let err = h
         .send(&json!({ "command": "audify_calculate", "args": { "dataset": "d1", "k": 0 } }))
         .unwrap_err();

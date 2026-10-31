@@ -18,7 +18,7 @@ use sonarithm_data::BundleId;
 
 use super::{App, Open, summarize, unknown_dataset};
 use crate::codes;
-use crate::ipc::{CriticalPointInfo, DiagnosticInfo, FunctionInfo, IpcError, Reply};
+use crate::ipc::{CriticalPointInfo, DiagnosticInfo, FunctionInfo, IpcError, Reply, Request};
 
 /// The longest expression the protocol accepts, in bytes: four times the parser's 1024
 /// characters, so any expression the parser would read fits, and a pasted megabyte is
@@ -53,21 +53,52 @@ fn check_size(expr: &str, variables: &BTreeMap<String, f64>) -> Result<(), IpcEr
 }
 
 /// The arguments of `function_open`.
-pub(crate) struct FunctionRequest {
-    pub(crate) expr: String,
-    pub(crate) domain: [f64; 2],
-    pub(crate) samples: Option<u32>,
-    pub(crate) step: Option<f64>,
-    pub(crate) variables: BTreeMap<String, f64>,
-    pub(crate) name: Option<String>,
+struct FunctionRequest {
+    expr: String,
+    domain: [f64; 2],
+    samples: Option<u32>,
+    step: Option<f64>,
+    variables: BTreeMap<String, f64>,
+    name: Option<String>,
 }
 
 impl App {
+    /// The function commands (ADR-0017 "Functions").
+    pub(super) fn functions(&mut self, request: Request) -> Result<Reply, IpcError> {
+        match request {
+            Request::FunctionCheck { expr, variables } => Self::function_check(&expr, &variables),
+            Request::FunctionOpen {
+                expr,
+                domain,
+                samples,
+                step,
+                variables,
+                name,
+            } => self.edit(|app| {
+                app.function_open(FunctionRequest {
+                    expr,
+                    domain,
+                    samples,
+                    step,
+                    variables,
+                    name,
+                })
+            }),
+            Request::AudifyCalculate {
+                dataset,
+                time,
+                k,
+                top_hz,
+            } => self.audify_calculate(&dataset, time.as_deref(), k, top_hz),
+            other => Err(IpcError::new(
+                &codes::BAD_REQUEST,
+                format!("{} is not a function command.", other.name()),
+            )),
+        }
+    }
+
     /// `function_check`: the canonical form, or the diagnostic and where reading stopped.
-    pub(super) fn function_check(
-        expr: &str,
-        variables: &BTreeMap<String, f64>,
-    ) -> Result<Reply, IpcError> {
+    fn function_check(expr: &str, variables: &BTreeMap<String, f64>) -> Result<Reply, IpcError> {
         check_size(expr, variables)?;
         let check = sonarithm::check_expression(expr, variables);
         let diagnostics: Vec<DiagnosticInfo> =
@@ -86,7 +117,7 @@ impl App {
     }
 
     /// `function_open`: samples the function and opens it as the next dataset.
-    pub(super) fn function_open(&mut self, request: FunctionRequest) -> Result<Reply, IpcError> {
+    fn function_open(&mut self, request: FunctionRequest) -> Result<Reply, IpcError> {
         check_size(&request.expr, &request.variables)?;
         let mut source = FunctionSpec::new(request.expr, request.domain);
         source.samples = request.samples;
@@ -96,14 +127,16 @@ impl App {
         let ids = u32::try_from(number).unwrap_or(u32::MAX);
         let function = sonarithm::read_function_with_ids(&source, BundleId(number), TableId(ids))
             .map_err(|err| {
-                err.diagnostics().iter().next().map_or_else(
-                    || IpcError::new(&codes::BAD_REQUEST, err.to_string()),
-                    IpcError::from_diagnostic,
-                )
-            })?;
+            err.diagnostics().iter().next().map_or_else(
+                || IpcError::new(&codes::BAD_REQUEST, err.to_string()),
+                IpcError::from_diagnostic,
+            )
+        })?;
         self.next_dataset += 1;
         let id = format!("d{number}");
-        let name = request.name.unwrap_or_else(|| format!("f(x) = {}", function.expr()));
+        let name = request
+            .name
+            .unwrap_or_else(|| format!("f(x) = {}", function.expr()));
         let summary = summarize(&id, &name, function.bundle(), &function.diagnostics());
         let info = FunctionInfo {
             canonical: function.expr().to_owned(),
@@ -138,7 +171,7 @@ impl App {
     }
 
     /// `audify_calculate`: the SDR-31 calculator over an open dataset.
-    pub(super) fn audify_calculate(
+    fn audify_calculate(
         &self,
         dataset: &str,
         time: Option<&str>,
@@ -150,7 +183,10 @@ impl App {
             .values()
             .find(|open| open.summary.id == dataset)
             .ok_or_else(|| unknown_dataset(dataset))?;
-        let table = open.bundle.primary().ok_or_else(|| unknown_dataset(dataset))?;
+        let table = open
+            .bundle
+            .primary()
+            .ok_or_else(|| unknown_dataset(dataset))?;
         let readout = sonarithm::audify_readout(table, time, k, top_hz)
             .map_err(|diagnostic| IpcError::from_diagnostic(&diagnostic))?;
         let speedup = readout.speedup;
@@ -162,7 +198,11 @@ impl App {
             duration_s: speedup.duration.0,
             band_hz: speedup.band,
             audible_hz: speedup.audible,
-            codes: readout.codes.iter().map(|code| (*code).to_owned()).collect(),
+            codes: readout
+                .codes
+                .iter()
+                .map(|code| (*code).to_owned())
+                .collect(),
         })
     }
 }
