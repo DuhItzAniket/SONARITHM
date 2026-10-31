@@ -4,8 +4,9 @@
 //! Inputs that once crashed the expression facade stay plain results: the committed
 //! `seed-regression-*` files of the `expr_parse` corpus, replayed as the fuzz target does
 //! (parse, re-parse the canonical form, evaluate, first and second derivatives), on a 1 MB
-//! thread, the size of a wasm32 or worker stack. Both seeds overflowed exmex's `partial`
-//! on a 2 MB stack (F-192).
+//! thread, the size of a wasm32 or worker stack. Two seeds overflowed exmex's `partial`
+//! on a 2 MB stack (F-192); `seed-regression-divisor-depth` had a canonical form deeper than
+//! its source, which did not read back (F-199).
 
 #![allow(
     clippy::unwrap_used,
