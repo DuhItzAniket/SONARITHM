@@ -275,7 +275,13 @@ const SUITE_SECONDS: f64 = 8.0;
 fn suite_name(index: usize, name: &str) -> String {
     let slug: String = name
         .chars()
-        .map(|c| if c.is_ascii_alphanumeric() { c.to_ascii_lowercase() } else { '-' })
+        .map(|c| {
+            if c.is_ascii_alphanumeric() {
+                c.to_ascii_lowercase()
+            } else {
+                '-'
+            }
+        })
         .collect();
     format!("{:02}-{slug}", index + 1)
 }
@@ -326,7 +332,10 @@ fn suite_readme() -> Result<String> {
         let sampled = sonarithm_curvasona::sample_function(
             &source,
             &sonarithm_curvasona::Budgets::DEFAULT,
-            (sonarithm_data::BundleId(0), sonarithm_curvasona::FUNCTION_TABLE),
+            (
+                sonarithm_data::BundleId(0),
+                sonarithm_curvasona::FUNCTION_TABLE,
+            ),
         )
         .map_err(|err| anyhow::anyhow!("{}: {}", curve.name, err.diagnostic.message))?;
         let points: Vec<String> = sampled
@@ -341,16 +350,21 @@ fn suite_readme() -> Result<String> {
                         suite_number(feature.end)
                     )
                 } else if label.starts_with("horizontal asymptote") {
-                    feature
-                        .y
-                        .map_or_else(|| label.to_owned(), |y| format!("{label}, y = {}", suite_number(y)))
+                    feature.y.map_or_else(
+                        || label.to_owned(),
+                        |y| format!("{label}, y = {}", suite_number(y)),
+                    )
                 } else {
                     format!("{label} at {}", suite_number(feature.x))
                 }
             })
             .collect();
         let name = suite_name(index, curve.name);
-        let listed = if points.is_empty() { "none".to_owned() } else { points.join("; ") };
+        let listed = if points.is_empty() {
+            "none".to_owned()
+        } else {
+            points.join("; ")
+        };
         let _ = writeln!(
             text,
             "| [{name}]({name}.json) | `{}` | [{}, {}] | {listed} |",
@@ -599,8 +613,7 @@ fn render_timed(
         } else {
             vec![&platform, &numisona]
         };
-    let pipeline =
-        Compiler::new(&engines).map_err(|err| anyhow::anyhow!("{}", err.message))?;
+    let pipeline = Compiler::new(&engines).map_err(|err| anyhow::anyhow!("{}", err.message))?;
     let started = std::time::Instant::now();
     let compiled = pipeline
         .compile(&spec_text, &CancelToken::new())
