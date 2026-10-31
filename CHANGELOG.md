@@ -10,6 +10,7 @@ From phase A07, release-plz maintains this file: it generates each release's ent
 
 ### Added
 
+- The data table (B04-T05): the Table tab lists a dataset's rows with each row's number in the whole table, a provenance column that names estimates, and sorting by Enter on a column header. It loads rows in windows of 1,000, says which rows are loaded, and moves between windows with the arrow and page keys, Ctrl+Home and Ctrl+End (Cmd on macOS), and "Go to row…" in the command palette.
 - Nightly desktop builds for testers (B01-T09): unsigned Windows, macOS and Linux installers of the latest `main`, as artifacts of the `desktop-nightly` workflow. They are not releases and have no updater; release-process explains how to install them past the unsigned-app warnings.
 - Dense views (B04-T02): waveforms, spectrograms and lines of a million points draw with WebGL2, or with Canvas2D where WebGL2 is unavailable, and are drawn once, so a moving playhead never redraws the data.
 - Audio preferences and stop all audio (B01-T08): Ctrl+Comma (Cmd+Comma) opens Preferences, where you pick the output device and set SONARITHM's own volume in decibels, which never changes the system volume. Ctrl+Period (Cmd+Period) stops all sound and speech from anywhere, even inside a dialog. When the audio device changes or fails, SONARITHM says so in words.

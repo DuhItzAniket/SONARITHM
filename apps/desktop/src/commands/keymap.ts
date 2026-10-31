@@ -202,6 +202,13 @@ export const DEFAULT_KEYMAP: readonly CommandSpec[] = [
     keys: ["Ctrl+Shift+Backslash"],
     macKeys: ["Shift+Meta+Backslash"],
   },
+  {
+    // Keyboard §5.6 (B04-T05): from the palette while a data table is open.
+    id: "table.goToRow",
+    name: "command-table-go-to-row",
+    scope: "table",
+    keys: [],
+  },
 ];
 
 /** A command's default bindings on `platform`. */

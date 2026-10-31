@@ -25,6 +25,7 @@ export {
 export {
   type DataColumn,
   type DataRow,
+  type DataSort,
   DataTable,
   type DataTableProps,
 } from "./components/DataTable.tsx";

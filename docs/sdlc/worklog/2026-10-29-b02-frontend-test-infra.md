@@ -87,6 +87,13 @@
 - **perf project.** The test was run once locally to check the plumbing, and its numbers are not recorded. CI reports them; the trace is written to `packages/ui/.perf/`, which git ignores.
 - **F-044 GPU setting.** Asked the coordinator to approve a `gpu` settings field; this PR holds that part.
 
+## B04-T05: data table (2026-10-31)
+
+- **Design.** React Aria's Table cannot hold a million rows or take an overridden `aria-rowcount`, so the table holds windows of 1,000 rows. The coordinator chose this over patching ARIA (rule 6) and added conditions: the true row number as the row header, whole-table jumps, "Go to row…", the focus kept in its column, and the range announced only when the window changes. F-177.
+- **`encodeView`** in `@sonarithm/ipc` writes binary views for mocks and tests, byte for byte as Rust does (checked against the shared fixture). Mock binary replies can now depend on the request.
+- **`GoToRow`.** NumberField commits a typed number during the Enter keydown that also submits the form, so the submit reads the latest value from a ref.
+- Locally: desktop 37 unit tests and all 37 E2E tests in Chromium, plus `table.spec.ts` (4) in WebKit; ipc 16, i18n 9 and ui 48 node tests; the DataTable stories in two themes. No cargo: the new Fluent messages reuse sample arguments the Rust catalogue tests already have, and CI runs those tests.
+
 ## Next steps
 
 - [ ] Commit the screenshot baselines from the first CI run's `visual-baselines` artifact.

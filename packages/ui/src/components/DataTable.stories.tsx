@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
 import type { Meta, StoryObj } from "@storybook/react-vite";
-import { expect, userEvent, within } from "storybook/test";
+import { expect, fn, userEvent, within } from "storybook/test";
 
 import { storyLocalizer } from "../../.storybook/localizer.ts";
 import type { DataColumn, DataRow } from "./DataTable.tsx";
@@ -55,5 +55,39 @@ export const Thousand: StoryObj<typeof meta> = {
     await expect(first).toHaveFocus();
     await userEvent.keyboard("{ArrowDown}");
     await expect(canvas.getAllByRole("row")[2]).toHaveFocus();
+  },
+};
+
+/**
+ * A sortable column (B04-T05): Enter on its header asks the owner to sort, and the header's
+ * `aria-sort` follows the order the owner reports; the arrow beside it is not the only cue.
+ */
+export const Sortable: StoryObj<typeof meta> = {
+  args: {
+    columns: [
+      COLUMNS[0] ?? { id: "time", name: "time (s)" },
+      {
+        id: "temperature",
+        name: "temperature (°C)",
+        numeric: true,
+        allowsSorting: true,
+      },
+    ],
+    sort: { column: "temperature", direction: "ascending" },
+    onSortChange: fn(),
+  },
+  play: async ({ args, canvasElement }) => {
+    const header = within(canvasElement).getByRole("columnheader", {
+      name: /temperature/,
+    });
+    await expect(header).toHaveAttribute("aria-sort", "ascending");
+    await userEvent.tab();
+    await userEvent.keyboard("{ArrowUp}{ArrowRight}");
+    await expect(header).toHaveFocus();
+    await userEvent.keyboard("{Enter}");
+    await expect(args.onSortChange).toHaveBeenCalledWith({
+      column: "temperature",
+      direction: "descending",
+    });
   },
 };

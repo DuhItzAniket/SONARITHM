@@ -214,13 +214,14 @@ The Table tab is a React Aria `Table` following the APG grid pattern (A11Y-03).
 |---|---|
 | Arrows | Move between cells; row and column headers are announced |
 | Home / End | First / last cell in the row |
-| Primary+Home / Primary+End | First / last cell in the table |
-| PageUp / PageDown | Previous / next page of rows |
+| Primary+Home / Primary+End | First / last cell of the whole table, loading that window |
+| PageUp / PageDown | Previous / next page of rows; on the first or last loaded row, the previous or next window of rows (B04-T05) |
 | Space | Play or pause from the focused row |
 | Enter (on a column header) | Sort |
 | Primary+F | Search the table |
+| Go to row… (command palette) | Load the window that holds a row number and focus that row, in the same column |
 
-The focused row is the shared cursor (A11Y-11): moving it moves the plot highlight and the explorer cursor, and plays the point cue if sonification is on.
+The table holds a window of rows. Its first column, a row header, is each row's number in the whole table, and a line above the grid gives the loaded range ("Rows 1 to 1,000 of 1,000,000"), announced politely when the window changes (09 §3, B04-T05). The focused row is the shared cursor (A11Y-11): moving it moves the plot highlight and the explorer cursor, and plays the point cue if sonification is on.
 
 ### 5.7 Project tree
 

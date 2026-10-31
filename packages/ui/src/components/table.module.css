@@ -41,6 +41,10 @@
   font-weight: var(--weight-medium);
 }
 
+.sort {
+  margin-inline-start: var(--space-1);
+}
+
 .numeric {
   font-family: var(--font-mono);
   font-variant-numeric: var(--numeric);

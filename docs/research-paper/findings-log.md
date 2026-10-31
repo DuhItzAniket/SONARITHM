@@ -1033,3 +1033,12 @@ A05 (render engine, audio backends, export) uses F-050 to F-069.
 - **Evidence level / confidence:** EV-C / Strong for the mechanisms (source and the local experiment); Weak for the pointer event's origin in CI, TODO(verify) if the story fails again
 - **Affects:** testing-strategy §12 (browser tests): read focus and overlay state with polling or observers, not one read after an overlay closes
 - **Papers:** none yet
+
+### F-177 · React Aria's Table cannot say a row's place in a million, so the row number is content
+
+- **Date:** 2026-10-31 · **Phase:** B04 · **Type:** engineering (accessibility) · **Status:** new
+- **Statement:** React Aria Components' Table builds a collection node for every row and sets `aria-rowcount` and `aria-rowindex` from that collection (react-aria 3.53.1, `useTable` and `useTableRow`), with no override. A million-row table cannot be one collection, and patching the attributes would be hand-rolled ARIA that React Aria rewrites. The data table holds windows of 1,000 rows from `table_page` and puts each row's number in the whole table in a row-header column, so screen readers announce the true position as content while `aria-rowcount` counts the window. A visible and politely announced range ("Rows 1,001 to 2,000 of 1,000,000") and whole-table moves (window edges, Primary+Home/End, "Go to row…") keep the user's place.
+- **Evidence:** `apps/desktop/e2e/table.spec.ts` (Chromium and WebKit); `apps/desktop/test/table-paging.test.ts`; the coordinator's decision of 2026-10-31
+- **Evidence level / confidence:** EV-C / Strong for the constraint. How NVDA, JAWS, VoiceOver and Orca read a window's row count next to the row-number header is TODO(verify) in the owner's walkthroughs (HP-07, HP-08)
+- **Affects:** B04-T05, A11Y-03, A11Y-24, FR-046, keyboard-and-navigation §5.6, 09 §3; B04-T06 (the focused row as the shared cursor)
+- **Papers:** none yet

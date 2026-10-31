@@ -130,6 +130,15 @@ The UI calls an `IpcTransport` interface (`invoke`, `subscribe`, `binary`). The 
 - **PB-08.** The `perf` Vitest project records the script time of 60 zoom redraws of a million-point line. CI's frontend-browser job reports it without gating (SwiftShader on a shared runner). HW-01 and the three webviews are B04-T08's.
 - **Discrete GPU (F-044).** The `gpu` setting (12 §3) chooses the high-performance GPU on Windows; see the start-up arguments in §7.
 
+**As built (B04-T05): the data table.**
+
+- **Windows, not one collection.** React Aria's Table builds a node for every row and takes `aria-rowcount` and `aria-rowindex` from that collection, with no way to override them. A million rows cannot be one collection, and patching those attributes by hand would be hand-rolled ARIA (AGENTS rule 6). The Table tab therefore holds one window of 1,000 rows from `table_page` (`WINDOW_ROWS`, under the command's 10,000 limit), virtualized inside the window (approved by the coordinator, 2026-10-31; F-177).
+- **The true position is content.** The first column is a row header holding the row's number in the whole table, in the table's current order ("500,001"), formatted for the locale. A screen reader names every cell by it. `aria-rowcount` describes the window. A visible line above the grid says which rows are loaded: "Rows 10,001 to 11,000 of 1,000,000".
+- **Moving between windows.** ArrowDown or PageDown on a window's last row loads the next window and focuses its first row. ArrowUp or PageUp on the first row loads the previous window and focuses its last row. Primary+Home and Primary+End go to the first and last cell of the whole table. "Go to row…" (command palette, `table.goToRow`) loads the window that holds a row and focuses it. Every move keeps the focus in the same column, and the range is announced politely only when the window changes. A slower reply never replaces a newer window.
+- **Sorting.** Enter on a field's header sorts through `table_page`'s `sort` and starts again at row 1. React Aria sets `aria-sort`, and "Sorted by temperature (°C), ascending" is announced.
+- **Provenance (AGENTS rule 7).** A page with `__snr_prov` and `__snr_conf` gets a Provenance column. Estimates use speech's own messages (`announce-provenance`, `announce-provenance-confidence`, two decimals), so the table and speech say the same thing. Values stated plainly read "exact", "calibrated" or "edited". A missing value reads "no value", never a blank cell.
+- **Not yet.** The Table tab shows the first open dataset until the project tree chooses one (B03). Space to play from the focused row, and the focused row as the shared cursor, are B04-T06. Primary+F search needs a search command.
+
 ## 4. Security model
 
 | Control | Setting |
