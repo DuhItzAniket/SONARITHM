@@ -670,12 +670,17 @@ fn b04_t04_a_stored_latency_replaces_the_backends_on_the_anchors() {
         })
     };
     assert_eq!(latest(&h), Some(Some(0.071)));
-    // Removing it while playing sends a new anchor at once, back to no correction.
+    // Removing it while playing sends a new anchor at once, back to the backend's report:
+    // none at first, then the null device's one buffer (256 frames at 48 kHz) once it runs.
     settings["audio"]["calibratedLatencyS"] = json!({});
     let before = anchors(&h);
     h.ok(&json!({ "command": "settings_set", "args": { "settings": settings } }));
     assert!(anchors(&h) > before);
-    assert_eq!(latest(&h), Some(None));
+    let fallback = latest(&h).flatten();
+    assert!(
+        fallback.is_none_or(|latency| (latency - 256.0 / 48_000.0).abs() < 1e-6),
+        "{fallback:?}"
+    );
 }
 
 #[test]

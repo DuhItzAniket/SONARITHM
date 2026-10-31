@@ -169,9 +169,9 @@ pub struct AudioSettings {
     /// carry this instead of the backend's reported latency (ADR-0017 "Clock anchors").
     ///
     /// Privacy (ADR-0012, AGENTS rule 9): a device ID or name can contain a person's name
-    /// ("Ada's AirPods"), so this map lives only in the local settings file. It is never
-    /// written to logs, manifests, projects or exported diagnostics, and no error message
-    /// names a device from it.
+    /// (a headset named after its owner), so this map lives only in the local settings
+    /// file. It is never written to logs, manifests, projects or exported diagnostics, and
+    /// no error message names a device from it.
     #[serde(default)]
     pub calibrated_latency_s: BTreeMap<String, f64>,
 }

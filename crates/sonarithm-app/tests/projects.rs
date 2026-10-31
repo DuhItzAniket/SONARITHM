@@ -95,7 +95,10 @@ fn b04_t04_a_saved_project_carries_no_latency_or_device_name() {
     let mut archive = zip::ZipArchive::new(std::fs::File::open(&bundle).unwrap()).unwrap();
     for index in 0..archive.len() {
         let mut member = archive.by_index(index).unwrap();
-        let name = member.name().to_owned();
+        let name = member
+            .name()
+            .map(std::borrow::Cow::into_owned)
+            .unwrap_or_default();
         let mut bytes = Vec::new();
         std::io::Read::read_to_end(&mut member, &mut bytes).unwrap();
         let text = String::from_utf8_lossy(&bytes);
