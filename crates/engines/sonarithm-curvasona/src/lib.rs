@@ -12,9 +12,10 @@
 //!
 //! | Module | Responsibility |
 //! |---|---|
-//! | [`expr`] | The expression language: parsing, limits, the sandboxed variable set; exmex evaluation and symbolic derivatives |
+//! | [`expr`] | The expression language: parsing, limits, the sandboxed variable set, symbolic derivatives; exmex evaluation |
 //! | [`sample`] | The sample grid of a domain (`samples` or `step`) under the sample budget |
 //! | [`scan`] | Poles, holes, jumps, undefined spans and off-screen spans, found from the expression's guards |
+//! | [`critical`] | Zeros, extrema, inflections and horizontal asymptotes; the `critical-points` analyzer's annotations |
 //! | [`suite`] | The 40-curve suite with analytically known features |
 //! | [`codes`] | Diagnostic codes `SNR-ENG-400` to `499` |
 //! | engine | The `function` source |
@@ -26,6 +27,7 @@
 #![deny(missing_docs)]
 
 pub mod codes;
+pub mod critical;
 pub mod expr;
 pub mod sample;
 pub mod scan;
@@ -39,10 +41,13 @@ use std::sync::Arc;
 use arrow_array::{ArrayRef, Float64Array, RecordBatch};
 use arrow_schema::{DataType, Field, Schema};
 use sonarithm_core::engine::{
-    CompileContext, CompileError, Engine, EngineManifest, Registrar, RegistryError, Source,
-    SourceKind, SpecFragment,
+    Analyzer, Annotation, CompileContext, CompileError, Engine, EngineManifest, Registrar,
+    RegistryError, Source, SourceKind, SpecFragment,
 };
-use sonarithm_core::{Diagnostic, EngineId, EngineVersion, Provenance, ProvenanceClass, TableId};
+use sonarithm_core::{
+    AnalyzerId, Diagnostic, EngineId, EngineVersion, Provenance, ProvenanceClass, RowRange, RuleId,
+    TableId,
+};
 use sonarithm_data::bundle::SourceKind as DataSourceKind;
 use sonarithm_data::provenance::with_provenance;
 use sonarithm_data::{
@@ -50,6 +55,7 @@ use sonarithm_data::{
     Table,
 };
 
+pub use critical::{Calculus, Feature, FeatureKind};
 pub use expr::{Expr, ExprError, Limits, NoDerivative};
 pub use sample::Grid;
 pub use scan::{Approach, Scan, ScanBudget, Singularity, SingularityKind, Span};
@@ -62,6 +68,16 @@ pub const FUNCTION_TABLE: TableId = TableId(0);
 
 /// The extractor name recorded in the bundle's source descriptor.
 pub const EXTRACTOR: &str = "sonarithm-curvasona/function";
+
+/// The `critical-points` analyzer (A11Y-28).
+pub const CRITICAL_POINTS: AnalyzerId = AnalyzerId::from_static("critical-points");
+
+/// Table metadata: the function's expression in canonical form, so the analyzer can
+/// recompute its features from the table (C03-T03).
+pub const META_EXPR: &str = "snr.function.expr";
+
+/// Table metadata: the function's `variables`, as a JSON object.
+pub const META_VARIABLES: &str = "snr.function.variables";
 
 /// Limits for one function source. Engineering safety limits, not research defaults.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -93,7 +109,7 @@ impl Default for Budgets {
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 #[non_exhaustive]
 pub enum Derivative {
-    /// From exmex's symbolic derivative.
+    /// From the symbolic derivative.
     Symbolic,
     /// From central differences, and why.
     Numeric(NoDerivative),
@@ -113,6 +129,8 @@ pub struct Sampled {
     pub undefined: usize,
     /// The poles, holes, jumps and undefined spans (C03-T02).
     pub scan: Scan,
+    /// Every feature, critical points included (C03-T03).
+    pub features: Vec<Feature>,
     /// Non-error diagnostics, such as a numerical derivative or undefined samples.
     pub diagnostics: Vec<Diagnostic>,
 }
@@ -232,44 +250,25 @@ pub fn sample_function(
         max_features: ScanBudget::DEFAULT.max_features,
     };
     let scan = scan::scan(&expr, &grid_points, None, &scan_budget);
-    let xs = with_singular_rows(&grid_points, &scan);
-    let finite = |v: f64| v.is_finite().then_some(v);
-    let singular = |x: f64| {
-        scan.singularities.iter().any(|s| {
-            s.x.total_cmp(&x).is_eq()
-                && matches!(s.kind, SingularityKind::Pole | SingularityKind::Hole)
-        })
-    };
-    let ys: Vec<Option<f64>> = xs
-        .iter()
-        .map(|&x| {
-            if singular(x) {
-                None
-            } else {
-                finite(expr.eval(x))
-            }
-        })
-        .collect();
-    let dys: Vec<Option<f64>> = xs
-        .iter()
-        .zip(&ys)
-        .map(|(&x, y)| {
-            y.and_then(|_| {
-                finite(match &dy_expr {
-                    Some(dy) => dy.eval(x),
-                    None => crate::expr::numeric_derivative(&expr, x),
-                })
-            })
-        })
-        .collect();
+    let calculus = Calculus::new(expr.clone());
+    let features = critical::features(&calculus, &grid_points, &scan, scan_budget.max_features);
+    let xs = with_feature_rows(&grid_points, &scan, &features);
+    let (ys, dys) = evaluate(&calculus, &xs, &scan);
+    let singular = |x: f64| is_singular(&scan, x);
     let undefined = ys.iter().filter(|y| y.is_none()).count();
     // The rows added at poles and holes are empty by design; only the grid's count.
-    let undefined_samples = undefined - (xs.len() - grid_points.len());
+    let undefined_samples = grid_points
+        .iter()
+        .filter(|&&x| !singular(x) && !expr.eval(x).is_finite())
+        .count();
     let diagnostics = report(derivative, undefined_samples, grid_points.len(), &scan);
-    let table = function_table(ids.1, xs, ys, dys).map_err(|diagnostic| SampleError {
-        diagnostic,
-        key: "expr",
-    })?;
+    let table =
+        function_table(ids.1, &expr, &function.variables, xs, ys, dys).map_err(|diagnostic| {
+            SampleError {
+                diagnostic,
+                key: "expr",
+            }
+        })?;
     let mut source = SourceDescriptor::new(DataSourceKind::Function, "function", "function");
     EXTRACTOR.clone_into(&mut source.extractor);
     env!("CARGO_PKG_VERSION").clone_into(&mut source.extractor_version);
@@ -279,8 +278,38 @@ pub fn sample_function(
         derivative,
         undefined,
         scan,
+        features,
         diagnostics,
     })
+}
+
+/// Whether `x` is a pole or a hole of the scan, whose row stays empty.
+fn is_singular(scan: &Scan, x: f64) -> bool {
+    scan.singularities.iter().any(|s| {
+        s.x.total_cmp(&x).is_eq() && matches!(s.kind, SingularityKind::Pole | SingularityKind::Hole)
+    })
+}
+
+/// The `y` and `dy` columns at `xs`: empty where the function is undefined, or at a pole or
+/// a hole.
+fn evaluate(calculus: &Calculus, xs: &[f64], scan: &Scan) -> (Vec<Option<f64>>, Vec<Option<f64>>) {
+    let finite = |v: f64| v.is_finite().then_some(v);
+    let ys: Vec<Option<f64>> = xs
+        .iter()
+        .map(|&x| {
+            if is_singular(scan, x) {
+                None
+            } else {
+                finite(calculus.f().eval(x))
+            }
+        })
+        .collect();
+    let dys = xs
+        .iter()
+        .zip(&ys)
+        .map(|(&x, y)| y.and_then(|_| finite(calculus.d1(x))))
+        .collect();
+    (ys, dys)
 }
 
 /// The non-error diagnostics of a sampled function.
@@ -323,9 +352,10 @@ fn report(
     diagnostics
 }
 
-/// The grid plus one row at each pole or hole between grid points, in order, so a glide
-/// breaks there instead of sweeping across an asymptote (C03-T02).
-fn with_singular_rows(grid: &[f64], scan: &Scan) -> Vec<f64> {
+/// The grid plus one row at each pole or hole between grid points, so a glide breaks there
+/// instead of sweeping across an asymptote (C03-T02), and one at each zero, extremum and
+/// inflection, so the glide passes through it and its insight lands on it (C03-T03).
+fn with_feature_rows(grid: &[f64], scan: &Scan, features: &[Feature]) -> Vec<f64> {
     let mut xs = grid.to_vec();
     for singularity in &scan.singularities {
         if matches!(
@@ -335,29 +365,51 @@ fn with_singular_rows(grid: &[f64], scan: &Scan) -> Vec<f64> {
             xs.push(singularity.x);
         }
     }
+    for feature in features {
+        if matches!(
+            feature.kind,
+            FeatureKind::Zero
+                | FeatureKind::Maximum
+                | FeatureKind::Minimum
+                | FeatureKind::Inflection
+        ) {
+            xs.push(feature.x);
+        }
+    }
     xs.sort_by(f64::total_cmp);
     xs.dedup();
     xs
 }
 
-/// The table `x`, `y`, `dy` with every row `synthetic`.
+/// The table `x`, `y`, `dy` with every row `synthetic`, and the expression in its metadata.
 fn function_table(
     id: TableId,
+    expr: &Expr,
+    variables: &BTreeMap<String, f64>,
     xs: Vec<f64>,
     ys: Vec<Option<f64>>,
     dys: Vec<Option<f64>>,
 ) -> Result<Table, Box<Diagnostic>> {
     let rows = xs.len();
     let quantitative = || FieldMeta::new().with_type(FieldType::Quantitative);
-    let schema = Arc::new(Schema::new(vec![
-        quantitative()
-            .with_role(Role::X)
-            .apply(Field::new("x", DataType::Float64, false)),
-        quantitative()
-            .with_role(Role::Y)
-            .apply(Field::new("y", DataType::Float64, true)),
-        quantitative().apply(Field::new("dy", DataType::Float64, true)),
-    ]));
+    let schema = Arc::new(
+        Schema::new(vec![
+            quantitative()
+                .with_role(Role::X)
+                .apply(Field::new("x", DataType::Float64, false)),
+            quantitative()
+                .with_role(Role::Y)
+                .apply(Field::new("y", DataType::Float64, true)),
+            quantitative().apply(Field::new("dy", DataType::Float64, true)),
+        ])
+        .with_metadata(std::collections::HashMap::from([
+            (META_EXPR.to_owned(), expr.canonical().to_owned()),
+            (
+                META_VARIABLES.to_owned(),
+                serde_json::to_string(variables).unwrap_or_else(|_| "{}".to_owned()),
+            ),
+        ])),
+    );
     let columns: Vec<ArrayRef> = vec![
         Arc::new(Float64Array::from(xs)),
         Arc::new(Float64Array::from(ys)),
@@ -424,6 +476,12 @@ impl Engine<DataBundle> for Curvasona {
             Arc::new(FunctionSource {
                 budgets: self.budgets,
             }),
+        )?;
+        registrar.analyzer(
+            CRITICAL_POINTS,
+            Arc::new(CriticalPoints {
+                budgets: self.budgets,
+            }),
         )
     }
 }
@@ -469,4 +527,110 @@ impl Source<DataBundle> for FunctionSource {
         }
         Ok(sampled.bundle)
     }
+}
+
+/// The `critical-points` analyzer: the features of a function table as annotations, which
+/// AUDAXIS turns into the navigation tree's insight nodes (08 §2, A11Y-23, A11Y-28).
+struct CriticalPoints {
+    budgets: Budgets,
+}
+
+impl Analyzer<DataBundle> for CriticalPoints {
+    fn analyze(
+        &self,
+        data: &DataBundle,
+        _params: &SpecFragment,
+        cx: &mut CompileContext,
+    ) -> Result<Vec<Annotation>, CompileError> {
+        match function_features(data, &self.budgets) {
+            Ok(annotations) => Ok(annotations),
+            Err(reason) => {
+                cx.report(Diagnostic::new(
+                    &codes::NOT_A_FUNCTION,
+                    format!("No critical points were looked for: {reason}."),
+                ));
+                Ok(Vec::new())
+            }
+        }
+    }
+}
+
+/// The annotations of the function table in `data`, recomputed from the expression its
+/// metadata records, at the table's own `x` values.
+///
+/// # Errors
+///
+/// Why there are none, as a clause: the data is not a function table, or its expression
+/// cannot be read.
+pub fn function_features(data: &DataBundle, budgets: &Budgets) -> Result<Vec<Annotation>, String> {
+    let table = data
+        .primary()
+        .ok_or_else(|| "the data has no table".to_owned())?;
+    let metadata = table.schema().metadata();
+    let text = metadata
+        .get(META_EXPR)
+        .ok_or_else(|| "the data does not come from a function source".to_owned())?;
+    let variables: BTreeMap<String, f64> = metadata
+        .get(META_VARIABLES)
+        .map(|json| serde_json::from_str(json))
+        .transpose()
+        .map_err(|err| format!("the function's variables cannot be read ({err})"))?
+        .unwrap_or_default();
+    let expr = Expr::parse(text, &variables, &budgets.expr)
+        .map_err(|err| format!("the function's expression cannot be read ({err})"))?;
+    if table.num_rows() > u64::try_from(budgets.max_samples * 2).unwrap_or(u64::MAX) {
+        return Err("the table has more rows than the sample limit".to_owned());
+    }
+    let column = table.column("x").map_err(|err| err.to_string())?;
+    let column = column
+        .as_any()
+        .downcast_ref::<Float64Array>()
+        .ok_or_else(|| "the `x` column is not numeric".to_owned())?;
+    let mut rows: Vec<(f64, u64)> = column
+        .iter()
+        .zip(0_u64..)
+        .filter_map(|(x, row)| x.filter(|x| x.is_finite()).map(|x| (x, row)))
+        .collect();
+    rows.sort_by(|a, b| a.0.total_cmp(&b.0));
+    let mut xs: Vec<f64> = rows.iter().map(|(x, _)| *x).collect();
+    xs.dedup();
+    let scan_budget = ScanBudget {
+        max_evaluations: budgets.max_evaluations,
+        max_features: ScanBudget::DEFAULT.max_features,
+    };
+    let scan = scan::scan(&expr, &xs, None, &scan_budget);
+    let features = critical::features(&Calculus::new(expr), &xs, &scan, scan_budget.max_features);
+    let range = |start: u64, end: u64| RowRange {
+        table: table.id(),
+        generation: table.generation(),
+        start,
+        end,
+    };
+    let nearest = |x: f64| {
+        rows.iter()
+            .min_by(|a, b| (a.0 - x).abs().total_cmp(&(b.0 - x).abs()))
+            .map(|&(_, row)| row)
+    };
+    let mut annotations = Vec::with_capacity(features.len());
+    for feature in &features {
+        let covered = if feature.is_point() {
+            nearest(feature.x).map(|row| range(row, row + 1))
+        } else {
+            let inside: Vec<u64> = rows
+                .iter()
+                .filter(|(x, _)| *x >= feature.x && *x <= feature.end)
+                .map(|&(_, row)| row)
+                .collect();
+            match (inside.iter().min(), inside.iter().max()) {
+                (Some(&first), Some(&last)) => Some(range(first, last + 1)),
+                _ => nearest(feature.x).map(|row| range(row, row + 1)),
+            }
+        };
+        let Some(covered) = covered else { continue };
+        let mut annotation = Annotation::new(CRITICAL_POINTS, feature.kind.label(), covered);
+        annotation.value = feature.y;
+        annotation.rules = vec![RuleId::from_static("A11Y-28")];
+        annotations.push(annotation);
+    }
+    Ok(annotations)
 }

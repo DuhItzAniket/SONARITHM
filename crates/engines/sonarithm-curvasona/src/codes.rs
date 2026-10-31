@@ -75,9 +75,9 @@ pub const NUMERIC_DERIVATIVE: CodeInfo = CodeInfo {
     code: "SNR-ENG-405",
     severity: Severity::Info,
     summary: "The derivative is computed numerically",
-    help: "The expression uses a function without a symbolic derivative (such as abs, floor \
-           or min), or its derivative is larger than the size limit, so `dy` comes from \
-           central differences. It is accurate where the function is smooth.",
+    help: "The expression uses `min` or `max`, which have no symbolic derivative, or its \
+           derivative is larger than the size limit, so `dy` comes from central \
+           differences. It is accurate where the function is smooth.",
     rules: &["A11Y-28"],
     status: CodeStatus::Active,
 };
@@ -106,6 +106,18 @@ pub const SCAN_TRUNCATED: CodeInfo = CodeInfo {
     status: CodeStatus::Active,
 };
 
+/// The `critical-points` detector was asked for on data that is not a function.
+pub const NOT_A_FUNCTION: CodeInfo = CodeInfo {
+    code: "SNR-ENG-420",
+    severity: Severity::Warning,
+    summary: "Critical points need a function source",
+    help: "The `critical-points` detector works on the table of a `function` source, whose \
+           expression it differentiates. For a data file, use the `extrema` detector \
+           instead.",
+    rules: &["A11Y-28"],
+    status: CodeStatus::Active,
+};
+
 /// Every code CURVASONA emits.
 pub const CODES: CodeTable = CodeTable {
     area: Area::Eng,
@@ -119,6 +131,7 @@ pub const CODES: CodeTable = CodeTable {
         NUMERIC_DERIVATIVE,
         UNDEFINED_SAMPLES,
         SCAN_TRUNCATED,
+        NOT_A_FUNCTION,
     ],
 };
 
