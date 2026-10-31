@@ -96,17 +96,15 @@ impl EarconSound {
     pub fn duration(self) -> Seconds {
         Seconds::from_millis(match self {
             Self::Boundary => 60.0,
-            Self::Invalid => 80.0,
-            Self::Landmark | Self::ModeOn | Self::ModeOff => 120.0,
+            Self::Invalid | Self::Offscreen => 80.0,
+            Self::Landmark | Self::ModeOn | Self::ModeOff | Self::Asymptote => 120.0,
             Self::Threshold => 30.0,
             Self::Stream => 150.0,
             Self::Alarm => 600.0,
             Self::LevelUp | Self::LevelDown => 50.0,
             Self::Gap => 70.0,
             Self::Zero => 40.0,
-            Self::Asymptote => 120.0,
             Self::Undefined => 100.0,
-            Self::Offscreen => 80.0,
         })
     }
 }
