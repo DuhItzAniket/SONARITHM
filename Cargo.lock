@@ -1719,6 +1719,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "exmex"
+version = "0.21.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "e9a53dccfc387af263e69c1eb53d13a4e9b26a7134ffdd38398a208374cbf851"
+dependencies = [
+ "regex",
+ "smallvec",
+]
+
+[[package]]
 name = "fast-float2"
 version = "0.2.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -5266,6 +5276,23 @@ dependencies = [
 ]
 
 [[package]]
+name = "sonarithm-curvasona"
+version = "0.1.0-alpha"
+dependencies = [
+ "arrow-array",
+ "arrow-schema",
+ "exmex",
+ "insta",
+ "proptest",
+ "serde_json",
+ "sonarithm-compiler",
+ "sonarithm-core",
+ "sonarithm-data",
+ "sonarithm-numisona",
+ "sonarithm-spec",
+]
+
+[[package]]
 name = "sonarithm-data"
 version = "0.1.0-alpha"
 dependencies = [
@@ -7376,6 +7403,7 @@ dependencies = [
  "sonarithm-audaxis",
  "sonarithm-compiler",
  "sonarithm-core",
+ "sonarithm-curvasona",
  "sonarithm-data",
  "sonarithm-dsp",
  "sonarithm-echometric",

@@ -1,0 +1,120 @@
+---
+source: crates/engines/sonarithm-curvasona/src/tests.rs
+expression: "score.review_json(&ReviewOptions::default())"
+---
+{
+  "header": {
+    "data_fingerprint": "c693025a3b27d67262e65434c12536f3a049a7afd7a5bf6aded7a27873be59a4",
+    "duration": 4.0,
+    "engines": {
+      "curvasona": "*",
+      "numisona": "*"
+    },
+    "ir_version": 1,
+    "mode": "analysis",
+    "seed": 3,
+    "shapers": [],
+    "spec_hash": "7bbf41ad0ccd014bbcd17773eb3fcad0ab3f2c8dcde4ff0e39f62e43df34431c",
+    "spec_version": "0.1"
+  },
+  "markers": [],
+  "tracks": [
+    {
+      "engine": "numisona",
+      "events": [
+        {
+          "curve": [
+            {
+              "brightness": 0.5,
+              "gain": -18.0,
+              "pan": 0.0,
+              "pitch": 2003.82,
+              "t": 0.0
+            },
+            {
+              "brightness": 0.5,
+              "gain": -18.0,
+              "pan": 0.0,
+              "pitch": 1054.96,
+              "t": 0.444444
+            },
+            {
+              "brightness": 0.5,
+              "gain": -18.0,
+              "pan": 0.0,
+              "pitch": 377.2,
+              "t": 0.888889
+            },
+            {
+              "brightness": 0.5,
+              "gain": -18.0,
+              "pan": 0.0,
+              "pitch": -29.45,
+              "t": 1.333333
+            },
+            {
+              "brightness": 0.5,
+              "gain": -18.0,
+              "pan": 0.0,
+              "pitch": -165.0,
+              "t": 1.777778
+            },
+            {
+              "brightness": 0.5,
+              "gain": -18.0,
+              "pan": 0.0,
+              "pitch": -29.45,
+              "t": 2.222222
+            },
+            {
+              "brightness": 0.5,
+              "gain": -18.0,
+              "pan": 0.0,
+              "pitch": 377.2,
+              "t": 2.666667
+            },
+            {
+              "brightness": 0.5,
+              "gain": -18.0,
+              "pan": 0.0,
+              "pitch": 1054.96,
+              "t": 3.111111
+            },
+            {
+              "brightness": 0.5,
+              "gain": -18.0,
+              "pan": 0.0,
+              "pitch": 2003.82,
+              "t": 3.555556
+            },
+            {
+              "brightness": 0.5,
+              "gain": -18.0,
+              "pan": 0.0,
+              "pitch": 2003.82,
+              "t": 4.0
+            }
+          ],
+          "src": {
+            "end": 9,
+            "generation": 0,
+            "start": 0,
+            "table": 0
+          },
+          "t0": 0.0,
+          "t1": 4.0,
+          "type": "glide"
+        }
+      ],
+      "gain": 0.0,
+      "id": "f",
+      "instrument": "mallet",
+      "pan": 0.0,
+      "pitch_range": {
+        "high": 2003.82,
+        "low": -165.0
+      },
+      "role": "data"
+    }
+  ]
+}

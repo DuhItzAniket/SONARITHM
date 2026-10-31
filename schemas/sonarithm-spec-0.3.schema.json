@@ -1911,7 +1911,7 @@
               "minItems": 2
             },
             "expr": {
-              "description": "The expression in `x`.",
+              "description": "The expression in `x`, in the language of ADR-0028: ordinary precedence (`^` binds\ntightest and is right-associative, so `-x^2` is `-(x^2)`), every product written\nwith `*`, the constants `pi`, `e` and `tau`, the names in `variables`, and the\nfunctions sin, cos, tan, sec, csc, cot, asin, acos, atan, sinh, cosh, tanh, asinh,\nacosh, atanh, exp, ln, log2, log10, sqrt, cbrt, abs, floor, ceil, round, trunc,\nmin, max and atan2. At most 1024 characters.",
               "type": "string"
             },
             "kind": {

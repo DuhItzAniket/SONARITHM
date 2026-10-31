@@ -1,0 +1,30 @@
+# cargo-fuzz harness for sonarithm-curvasona (testing-strategy §7): a function source's
+# expression is untrusted input (12 §6). Not part of the main workspace: it needs the
+# nightly toolchain. Run from the parent crate with
+#   cargo +nightly fuzz run expr_parse -- -max_total_time=3600
+# CI runs every target in .github/workflows/nightly.yml.
+
+[package]
+name = "sonarithm-curvasona-fuzz"
+version = "0.0.0"
+edition = "2024"
+license = "MIT OR Apache-2.0"
+publish = false
+
+[package.metadata]
+cargo-fuzz = true
+
+[dependencies]
+libfuzzer-sys = "0.4.13"
+sonarithm-curvasona = { path = ".." }
+
+# A workspace of its own, so the main workspace (stable toolchain) never builds it.
+[workspace]
+members = ["."]
+
+[[bin]]
+name = "expr_parse"
+path = "fuzz_targets/expr_parse.rs"
+test = false
+doc = false
+bench = false
