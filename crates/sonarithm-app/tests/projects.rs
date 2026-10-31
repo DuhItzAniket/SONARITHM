@@ -83,7 +83,10 @@ fn b04_t04_a_saved_project_carries_no_latency_or_device_name() {
     settings.as_object_mut().unwrap().remove("reply");
     settings["audio"]["device"] = json!("Ada's AirPods");
     settings["audio"]["calibratedLatencyS"] = json!({ "Ada's AirPods": 0.142_857 });
-    ok(&mut app, &json!({ "command": "settings_set", "args": { "settings": settings } }));
+    ok(
+        &mut app,
+        &json!({ "command": "settings_set", "args": { "settings": settings } }),
+    );
     let bundle = dir.path().join("p.sonarithm");
     ok(
         &mut app,
