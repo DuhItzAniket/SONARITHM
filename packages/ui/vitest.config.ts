@@ -54,6 +54,15 @@ export default defineConfig({
           browser: { ...browser(), viewport: { width: 1024, height: 768 } },
         },
       },
+      // PB-08 traces of the dense layer (B04-T02): reported, not gated (`test:perf`).
+      {
+        extends: true,
+        test: {
+          name: "perf",
+          include: ["test/perf/**/*.perf.ts"],
+          browser: browser(),
+        },
+      },
     ],
   },
 });

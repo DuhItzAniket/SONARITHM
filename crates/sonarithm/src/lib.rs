@@ -80,7 +80,8 @@ pub use render::{
     AudioFormat, Normalization, RenderManifest, RenderOptions, Rendered, WavEncoding,
 };
 pub use sonarithm_plotsona::{
-    ChartData, ChartType, ClassCounts, ExtractOptions, ExtractionReport, SeriesReport,
+    ChartData, ChartType, ClassCounts, CorrectionRecord, CorrectionSet, ExtractOptions,
+    ExtractionReport, SeriesReport,
 };
 pub use spec::{Migration, Spec};
 

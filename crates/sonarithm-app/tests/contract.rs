@@ -44,6 +44,15 @@ fn requests(dir: &TempDir) -> Vec<Value> {
     let wav = dir.path().join("t.wav");
     let project = dir.path().join("t.sonarithm");
     let exported = dir.path().join("contract.json");
+    // A chart for the correction commands (C02-T06).
+    let chart = dir.path().join("rain.json");
+    std::fs::copy(
+        std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
+            .join("../engines/sonarithm-plotsona/tests/corpus/chartjson/vl-line.json"),
+        &chart,
+    )
+    .unwrap();
+    let corrections = dir.path().join("rain.corrections.json");
     vec![
         json!({ "command": "hello", "args": { "protocol": 1 } }),
         json!({ "command": "dataset_open", "args": { "path": csv } }),
@@ -104,6 +113,12 @@ fn requests(dir: &TempDir) -> Vec<Value> {
         json!({ "command": "profile_flip_polarity", "args": { "field": "temp" } }),
         json!({ "command": "settings_effective" }),
         json!({ "command": "spec_quick", "args": { "dataset": "d1", "x": "day", "y": "temp" } }),
+        json!({ "command": "dataset_open", "args": { "path": chart } }),
+        json!({ "command": "corrections_get", "args": { "dataset": "d2" } }),
+        json!({ "command": "corrections_apply", "args": { "dataset": "d2", "patch": [{ "op": "add", "path": "/edits/-", "value": {
+            "op": "move", "id": "e1", "series": "north", "point": 0, "was": { "y": 99.2 }, "to": { "y": 100 }, "before": { "class": "exact" } } }] } }),
+        json!({ "command": "corrections_export", "args": { "dataset": "d2", "path": corrections } }),
+        json!({ "command": "corrections_import", "args": { "dataset": "d2", "path": corrections } }),
         json!({ "command": "dataset_close", "args": { "id": "d1" } }),
         json!({ "command": "project_new" }),
     ]

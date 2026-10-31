@@ -21,6 +21,19 @@ import { useTransport } from "../transport/useTransport.ts";
 import styles from "./App.module.css";
 import { Frame } from "./frame/Frame.tsx";
 
+/**
+ * Start-up facts the host passes before the page loads (`src-tauri/src/gpu.rs`): whether
+ * the GPU setting could not be applied this time (B04-T02, F-044).
+ */
+function startFacts(): { readonly gpuFallback: boolean } {
+  const value: unknown = Reflect.get(window, "__SONARITHM_START__");
+  const gpuFallback =
+    typeof value === "object" &&
+    value !== null &&
+    Reflect.get(value, "gpuFallback") === true;
+  return { gpuFallback };
+}
+
 type Start =
   | { readonly state: "starting" }
   | { readonly state: "ready"; readonly client: Client }
@@ -43,6 +56,17 @@ export function App({
   const [start, setStart] = useState<Start>({ state: "starting" });
   const client = start.state === "ready" ? start.client : null;
   const log = useAnnouncementFeed(client, announcer);
+  const [gpuFallback] = useState(() => startFacts().gpuFallback);
+  // Said once the app is ready, and shown in the Status region: the GPU setting applies
+  // after a full restart (B04-T02).
+  useEffect(() => {
+    if (client !== null && gpuFallback) {
+      announcer.announce({
+        text: t.format("ui-gpu-fallback"),
+        assertive: false,
+      });
+    }
+  }, [client, gpuFallback, announcer, t]);
   const transportView = useTransport(client);
   const registry = useCommands();
   useKeymap(registry);
@@ -121,18 +145,23 @@ export function App({
           <p className={styles.status}>{t.format("ui-inspector-empty")}</p>
         }
         status={
-          <Tabs>
-            <TabList label={t.format("ui-region-status")}>
-              <Tab id="announcements">{t.format("ui-tab-announcements")}</Tab>
-              <Tab id="diagnostics">{t.format("ui-tab-diagnostics")}</Tab>
-            </TabList>
-            <TabPanel id="announcements">
-              <AnnouncementLog entries={log} />
-            </TabPanel>
-            <TabPanel id="diagnostics">
-              <p className={styles.status}>{t.format("ui-no-diagnostics")}</p>
-            </TabPanel>
-          </Tabs>
+          <>
+            {gpuFallback && (
+              <p className={styles.status}>{t.format("ui-gpu-fallback")}</p>
+            )}
+            <Tabs>
+              <TabList label={t.format("ui-region-status")}>
+                <Tab id="announcements">{t.format("ui-tab-announcements")}</Tab>
+                <Tab id="diagnostics">{t.format("ui-tab-diagnostics")}</Tab>
+              </TabList>
+              <TabPanel id="announcements">
+                <AnnouncementLog entries={log} />
+              </TabPanel>
+              <TabPanel id="diagnostics">
+                <p className={styles.status}>{t.format("ui-no-diagnostics")}</p>
+              </TabPanel>
+            </Tabs>
+          </>
         }
       />
       <Preferences

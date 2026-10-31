@@ -9,6 +9,7 @@ import {
   Option,
   Select,
   Slider,
+  Switch,
 } from "@sonarithm/ui";
 import { useEffect, useState } from "react";
 
@@ -20,6 +21,12 @@ const SYSTEM_DEFAULT = "system-default";
 
 /** The sonification volume range in dB (settings.rs: −60 to 0 dB, A11Y-15). */
 const VOLUME = { min: -60, max: 0 } as const;
+
+/**
+ * Only WebView2 (Windows) can be asked for the discrete GPU (F-044); the host passes the
+ * switch at start-up. WebView2's user agent names Windows.
+ */
+const GPU_CHOOSABLE = navigator.userAgent.includes("Windows");
 
 /** Settings as the app core takes them back: the reply's own `reply` tag removed. */
 function settingsOf(reply: Settings & { readonly reply?: string }): Settings {
@@ -101,6 +108,22 @@ export function Preferences({
     );
   };
 
+  const saveGpu = (highPerformance: boolean) => {
+    if (client === null || settings === null) {
+      return;
+    }
+    const next: Settings = {
+      ...settings,
+      gpu: highPerformance ? "highPerformance" : "default",
+    };
+    client.call({ command: "settings_set", args: { settings: next } }).then(
+      (saved) => {
+        setSettings(settingsOf(saved));
+      },
+      () => undefined,
+    );
+  };
+
   return (
     <ModalDialog
       title={t.format("ui-preferences")}
@@ -150,6 +173,24 @@ export function Preferences({
               onChangeEnd={saveVolume}
             />
             <p className={styles.note}>{t.format("ui-volume-note")}</p>
+          </section>
+          <section
+            aria-labelledby="preferences-display"
+            className={styles.section}
+          >
+            <h3 id="preferences-display" className={styles.heading}>
+              {t.format("ui-display")}
+            </h3>
+            <Switch
+              isSelected={settings?.gpu === "highPerformance"}
+              isDisabled={!GPU_CHOOSABLE || settings === null}
+              description={t.format(
+                GPU_CHOOSABLE ? "ui-gpu-restart-hint" : "ui-gpu-unavailable",
+              )}
+              onChange={saveGpu}
+            >
+              {t.format("ui-gpu-high-performance")}
+            </Switch>
           </section>
           <DialogActions>
             <Button onPress={close}>{t.format("ui-close-window")}</Button>

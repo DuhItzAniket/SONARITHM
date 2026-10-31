@@ -5,3 +5,5 @@ src/generated/
 font-test/
 storybook-static/
 .vitest-attachments/
+# PB-08 traces from `pnpm test:perf`.
+.perf/

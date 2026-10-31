@@ -79,6 +79,14 @@
 - `@sonarithm/viz`: `Plot` on uPlot 1.6.32 (MIT), the dash patterns, and viridis and magma lookup tables from BIDS/colormap (CC0). cividis is OD-29. The Plot stories live in `@sonarithm/ui`'s Storybook (`src/viz`), so they run in all four themes with axe.
 - No cargo build. Locally: `@sonarithm/ui` (48) and `@sonarithm/viz` (3) node tests, lint and typecheck, and the Plot story tests in four themes. The shell kept collapsing backslashes, so regex work moved to `sed` and to the editor tool.
 
+## B04-T02: dense layer (2026-10-30)
+
+- `DenseLayer`, `createRenderer` (WebGL2 or Canvas2D), `cssColor`. The shaders are adapted from the A02 spike's `webgl.ts`.
+- A first draft drew twice on mount: the ResizeObserver reported the same size, and a new size object redrew. An unchanged size now keeps its object; the story test catches a regression.
+- **Fallback path.** A draft fell back by swapping the canvas from inside an effect (setState in an effect, which lint rejects). A one-time probe on a throwaway canvas picks the context up front instead.
+- **perf project.** The test was run once locally to check the plumbing, and its numbers are not recorded. CI reports them; the trace is written to `packages/ui/.perf/`, which git ignores.
+- **F-044 GPU setting.** Asked the coordinator to approve a `gpu` settings field; this PR holds that part.
+
 ## Next steps
 
 - [ ] Commit the screenshot baselines from the first CI run's `visual-baselines` artifact.
