@@ -165,3 +165,48 @@ fn sdr_43_glide_points_over_estimates_play_darker() {
         assert!((got - want).abs() < 1e-6, "{points:?}");
     }
 }
+
+/// The `low-confidence-timbre` golden case (`cargo xtask golden`) renders this Score with
+/// the switch on (SDR-43): one second each of exact values, estimates at confidence 1.0,
+/// estimates at 0.3, and exact values again. Every second plays the same three pitches, so
+/// the per-second spectral centroid in `case.json` changes with the timbre alone. Engine
+/// versions are written as `*`. Set `UPDATE_GOLDEN_SCORE=1` to rewrite it, then update the
+/// reference.
+#[test]
+fn sdr_43_golden_score_is_current() {
+    let rows: Vec<serde_json::Value> = (0..12)
+        .map(|x| {
+            let y = [5.0, 7.0, 6.0][x % 3];
+            match x / 3 {
+                1 => serde_json::json!({ "x": x, "y": y, "__snr_prov": "cv_estimate", "__snr_conf": 1.0 }),
+                2 => serde_json::json!({ "x": x, "y": y, "__snr_prov": "cv_estimate", "__snr_conf": 0.3 }),
+                _ => serde_json::json!({ "x": x, "y": y, "__snr_prov": "exact" }),
+            }
+        })
+        .collect();
+    let spec = serde_json::json!({
+        "specVersion": "0.4",
+        "experimental": { "lowConfidenceTimbre": true },
+        "data": { "source": { "kind": "inline", "values": rows } },
+        "substrate": { "time": { "field": "x" } },
+        "tracks": [{ "id": "y", "mark": "tone", "channels": { "pitch": { "field": "y" } } }]
+    });
+    let mut score = compile(&spec.to_string(), None).score;
+    for version in score.header.engines.values_mut() {
+        *version = sonarithm_core::score::EngineVersion("*".to_owned());
+    }
+    let text = serde_json::to_string_pretty(&score).unwrap() + "\n";
+    let dir = std::path::PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+        .join("../../../tests/golden/low-confidence-timbre");
+    let path = dir.join("score.json");
+    if std::env::var_os("UPDATE_GOLDEN_SCORE").is_some() {
+        std::fs::write(&path, &text).unwrap();
+    }
+    let stored = std::fs::read_to_string(&path)
+        .unwrap()
+        .replace("\r\n", "\n");
+    assert_eq!(
+        stored, text,
+        "run with UPDATE_GOLDEN_SCORE=1, then `cargo xtask golden --update`"
+    );
+}

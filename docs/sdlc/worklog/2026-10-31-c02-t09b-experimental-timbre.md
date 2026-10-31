@@ -26,6 +26,7 @@
 - **Compiler:** one `SNR-COMP-037` Info per switch that is on; `Compiled.experiments`.
 - **Render manifest version 2:** `spec.experimental`, left out when empty; the version 1 schema stays as written.
 - **Facade:** an "Experimental: …" line in the text description; `Compiled::experiments`.
+- **Golden-audio case** `low-confidence-timbre`: one second each of exact values, estimates at confidence 1.0 and at 0.3, and exact values, all at the same pitches, with the switch on.
 - **Docs:** SDR-43 in design-rules (`INFER`), H-06 linked to it, doc 04 §5.12 and §7, doc 06's manifest note, ADR-0027.
 
 ## Decisions
@@ -36,6 +37,12 @@
 | Darken by brightness, not by changing the instrument | RFC-0006 §3 names brightness as the candidate. It survives mono output and the NVDA sound split (A11Y-14), and keeps pitch, timing and loudness | RFC-0006 §3 |
 | Engines get the switches that are on as a set of keys in `TrackRequest` | Engines must not read each other's settings; each acts only on the keys it owns, and the compiler passes known switches only | ADR-0027 |
 | Warn, not refuse, when brightness also follows data | The spec is valid; the listener should know the two mix | `SNR-ENG-057` |
+
+## Measurements
+
+| What | Value | Conditions | Logged in |
+|---|---|---|---|
+| Spectral centroid per second, golden case `low-confidence-timbre` | 1517.5 Hz exact; 1263.3 Hz at confidence 1.0 (−17 %); 1144.7 Hz at 0.3 (−25 %); 1482.5 Hz exact again | Mallet, the same three pitches every second, 48 kHz, block 256, Windows x86-64; identical at blocks 64 and 1024 | `tests/golden/low-confidence-timbre/case.json` |
 
 ## Findings to log
 
