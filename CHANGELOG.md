@@ -8,6 +8,12 @@ From phase A07, release-plz maintains this file: it generates each release's ent
 
 ## [Unreleased]
 
+### Added
+
+- Audio preferences and stop all audio (B01-T08): Ctrl+Comma (Cmd+Comma) opens Preferences, where you pick the output device and set SONARITHM's own volume in decibels, which never changes the system volume. Ctrl+Period (Cmd+Period) stops all sound and speech from anywhere, even inside a dialog. When the audio device changes or fails, SONARITHM says so in words.
+- Start-up (B01-T07): the app opens with the keyboard focus in the Project region, and never waits for the audio device, which opens on the first play.
+- Plots (B04-T01): `@sonarithm/viz` draws line charts whose eight series colours are tuned per theme to stay visible and distinguishable for colour-blind viewers, each with its own dash pattern; a plot is one named, described image for screen readers. Spectrogram colormaps viridis and magma are included.
+
 ## [0.1.0-alpha] - 2026-10-30
 
 The first public alpha. It contains everything merged up to 2026-10-30 and is released as 16 crates on crates.io, the `sonarithm` command line tool (crates.io and release archives) and the `sonarithm` Python package (abi3 wheels on PyPI). The Rust core, the command line tool and the Python package compile specs to Scores, render them to WAV and FLAC with a provenance manifest, and play them.
@@ -17,10 +23,7 @@ The first public alpha. It contains everything merged up to 2026-10-30 and is re
 
 ### Added
 
-- Audio preferences and stop all audio (B01-T08): Ctrl+Comma (Cmd+Comma) opens Preferences, where you pick the output device and set SONARITHM's own volume in decibels, which never changes the system volume. Ctrl+Period (Cmd+Period) stops all sound and speech from anywhere, even inside a dialog. When the audio device changes or fails, SONARITHM says so in words.
 - The transport toolbar (B01-T05): Play and Pause, Stop and Loop in the top bar follow what the audio engine reports, and are also in the command palette. Nothing plays until you press Play.
-- Start-up (B01-T07): the app opens with the keyboard focus in the Project region, and never waits for the audio device, which opens on the first play.
-- Plots (B04-T01): `@sonarithm/viz` draws line charts whose eight series colours are tuned per theme to stay visible and distinguishable for colour-blind viewers, each with its own dash pattern; a plot is one named, described image for screen readers. Spectrogram colormaps viridis and magma are included.
 - The command palette (B02-T07): Ctrl+Shift+P (Cmd+Shift+P on macOS) lists every available command with its shortcut; typing filters the list and the number of matches is announced. Shift+F1 lists the shortcuts that work where the focus is.
 - Announcements in the desktop app (B03-T04): what SONARITHM says reaches the screen reader through live regions by default, or through Windows UI Automation notifications with the `speech.announcer` setting set to `native`; every announcement also appears in the Status region's log. Announcing never moves the keyboard focus.
 - Open a chart and hear it (C01-T12): `sonarithm inspect figure.svg` (and XLSX, PPTX, DOCX, chart JSON, HTML pages, vector PDF) prints what was extracted, a summary such as "36 points: 0 exact, 36 calibrated, 0 estimated, median confidence 0.99", and the Score its chart-type template gives; `--json` prints the report. Python has `sonarithm.read_chart(path)`, the Rust facade `read_chart`, and the app opens chart files as datasets. The default engines now include PLOTSONA.
