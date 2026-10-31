@@ -436,6 +436,33 @@ fn function_table(
         .map_err(|err| Box::new(err.to_diagnostic()))
 }
 
+/// Whether `spec` (as JSON) uses CURVASONA: a `function` source, a track with the `audify`
+/// mark, or `critical-points` in `analysis.detect` (the manifest's spec keys). Hosts
+/// register CURVASONA only for such specs, because a registered context provider is
+/// recorded in every Score's header (F-197).
+#[must_use]
+pub fn is_used_by(spec: &serde_json::Value) -> bool {
+    use serde_json::Value;
+    let function = spec.pointer("/data/source/kind").and_then(Value::as_str) == Some("function");
+    let audify = spec
+        .get("tracks")
+        .and_then(Value::as_array)
+        .is_some_and(|tracks| {
+            tracks
+                .iter()
+                .any(|t| t.get("mark").and_then(Value::as_str) == Some("audify"))
+        });
+    let detects = spec
+        .pointer("/analysis/detect")
+        .and_then(Value::as_array)
+        .is_some_and(|detect| {
+            detect
+                .iter()
+                .any(|d| d.as_str() == Some(CRITICAL_POINTS.as_str()))
+        });
+    function || audify || detects
+}
+
 /// The CURVASONA engine. It registers the `function` source.
 #[derive(Clone, Debug, Default)]
 pub struct Curvasona {

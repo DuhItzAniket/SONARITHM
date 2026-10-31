@@ -14,7 +14,8 @@
 //!    Erie gallery subset imported by NUMISONA from its fixtures, with a synthetic
 //!    stand-in for the one external file they name.
 //! 3. **Renders**: every spec under `replication/` compiles with the real compiler and
-//!    NUMISONA and is exported as 24-bit WAV at the rendered level (no normalization, as
+//!    NUMISONA (and CURVASONA where the spec uses it: the Dombois audifications and the
+//!    40-curve suite, C03-T06) and is exported as 24-bit WAV at the rendered level (no normalization, as
 //!    for research exports) into `target/replication/`, with its render manifest. The
 //!    reproducible part of each manifest (everything except the platform and the
 //!    software versions) is committed in the group's `manifests.json`.
@@ -31,6 +32,8 @@ use serde_json::{Value, json};
 use sonarithm_compiler::{Compiler, Platform};
 use sonarithm_core::engine::CancelToken;
 use sonarithm_core::score::{Note, Score, ScoreEvent};
+use sonarithm_curvasona::Curvasona;
+use sonarithm_curvasona::suite::CURVES;
 use sonarithm_echometric::harness::generators::prices::PriceParams;
 use sonarithm_echometric::harness::generators::reversals::{ReversalParams, Start};
 use sonarithm_echometric::harness::generators::transits::{STUDIED_SNR, TransitParams};
@@ -248,7 +251,119 @@ fn generated(root: &Path) -> Result<BTreeMap<String, String>> {
         }
     }
     files.insert("erie/data/penguins.json".to_owned(), pretty(&penguins())?);
+    // CURVASONA's 40-curve suite (C03-T06): one spec per curve and the README listing
+    // each curve's critical points, generated from the suite and the engine.
+    for (index, curve) in CURVES.iter().enumerate() {
+        files.insert(
+            format!("{SUITE}/{}.json", suite_name(index, curve.name)),
+            pretty(&suite_spec(curve))?,
+        );
+    }
+    files.insert(format!("{SUITE}/README.md"), suite_readme()?);
     Ok(files)
+}
+
+/// The folder of the 40-curve suite.
+const SUITE: &str = "curvasona-suite";
+
+/// How long each suite curve plays: the length of 04 §6.3's example, as `quick --function`
+/// (TODO(verify), HP-21).
+const SUITE_SECONDS: f64 = 8.0;
+
+/// `01-parabola` and so on: the position in the suite, then the name in lower case with
+/// hyphens.
+fn suite_name(index: usize, name: &str) -> String {
+    let slug: String = name
+        .chars()
+        .map(|c| if c.is_ascii_alphanumeric() { c.to_ascii_lowercase() } else { '-' })
+        .collect();
+    format!("{:02}-{slug}", index + 1)
+}
+
+/// One suite curve as a spec: a glide over the domain with its critical points as earcons
+/// (the shape of 04 §6.3).
+fn suite_spec(curve: &sonarithm_curvasona::suite::Curve) -> Value {
+    json!({
+        "specVersion": "0.4",
+        "name": format!("CURVASONA suite: {}", curve.name),
+        "description": format!(
+            "f(x) = {} over [{}, {}], one curve of the 40-curve suite with analytically known critical points (C03-T03), as a glide with its critical points as earcons. Curve gallery, C03-T06.",
+            curve.expr, curve.domain[0], curve.domain[1]
+        ),
+        "data": { "source": { "kind": "function", "expr": curve.expr, "domain": curve.domain } },
+        "substrate": { "time": { "pace": { "duration": { "s": SUITE_SECONDS } } } },
+        "tracks": [{ "id": "f", "mark": "glide", "channels": { "pitch": { "field": "y" } } }],
+        "analysis": { "detect": ["critical-points"], "cue": "earcon" }
+    })
+}
+
+/// A number for the README: at most four decimals, no trailing zeros, never `-0`.
+fn suite_number(value: f64) -> String {
+    let mut text = format!("{value:.4}");
+    if text.contains('.') {
+        let kept = text.trim_end_matches('0').trim_end_matches('.').len();
+        text.truncate(kept);
+    }
+    if text == "-0" { "0".to_owned() } else { text }
+}
+
+/// The suite's README: what the group is and, per curve, its critical points as CURVASONA
+/// finds them at 1000 samples (the text equivalent of the earcons, A11Y-24, A11Y-28).
+fn suite_readme() -> Result<String> {
+    use std::fmt::Write as _;
+    let mut text = String::from(
+        "# CURVASONA's 40-curve suite\n\n\
+         > **Generated** by `cargo xtask replication` from `sonarithm_curvasona::suite`; do not edit by hand.\n\n\
+         Not a published design: this group renders the 40 curves whose critical points are known analytically, \
+         the suite CURVASONA is tested against (07 CURVASONA, C03-T02 and C03-T03). Each spec plays its curve as one \
+         8-second glide, y as pitch with the default range, and its critical points as earcons (`analysis.detect: \
+         [\"critical-points\"]`, RFC-0007 §2). The list below is what CURVASONA finds at the default 1000 samples, \
+         the text equivalent of each render's cues. Horizontal asymptotes are listed but have no earcon.\n\n\
+         | Spec | f(x) | Domain | Critical points |\n|---|---|---|---|\n",
+    );
+    for (index, curve) in CURVES.iter().enumerate() {
+        let source = sonarithm_curvasona::FunctionSpec::new(curve.expr, curve.domain);
+        let sampled = sonarithm_curvasona::sample_function(
+            &source,
+            &sonarithm_curvasona::Budgets::DEFAULT,
+            (sonarithm_data::BundleId(0), sonarithm_curvasona::FUNCTION_TABLE),
+        )
+        .map_err(|err| anyhow::anyhow!("{}: {}", curve.name, err.diagnostic.message))?;
+        let points: Vec<String> = sampled
+            .features
+            .iter()
+            .map(|feature| {
+                let label = feature.kind.label();
+                if !feature.is_point() {
+                    format!(
+                        "{label} from {} to {}",
+                        suite_number(feature.x),
+                        suite_number(feature.end)
+                    )
+                } else if label.starts_with("horizontal asymptote") {
+                    feature
+                        .y
+                        .map_or_else(|| label.to_owned(), |y| format!("{label}, y = {}", suite_number(y)))
+                } else {
+                    format!("{label} at {}", suite_number(feature.x))
+                }
+            })
+            .collect();
+        let name = suite_name(index, curve.name);
+        let listed = if points.is_empty() { "none".to_owned() } else { points.join("; ") };
+        let _ = writeln!(
+            text,
+            "| [{name}]({name}.json) | `{}` | [{}, {}] | {listed} |",
+            curve.expr.replace('|', "\\|"),
+            suite_number(curve.domain[0]),
+            suite_number(curve.domain[1]),
+        );
+    }
+    text.push_str(
+        "\nThe reproducible part of each render manifest is in [manifests.json](manifests.json). \
+         Specs and records are CC BY 4.0, like the rest of the gallery.\n",
+    );
+    Ok(text)
 }
 
 /// The spec of one Nees & Walker cell: 125 ms tones, $6–$106 linear on MIDI G2–B6 in
@@ -474,13 +589,22 @@ fn render_timed(
         .join(&group);
     let platform = Platform::with_base_dir(base);
     let numisona = Numisona::new();
+    let curvasona = Curvasona::new();
+    let spec: Value = serde_json::from_str(&spec_text)?;
+    // CURVASONA only where the spec uses it: registered for every spec, it would enter
+    // every Score's header and change every record (F-197).
+    let engines: Vec<&dyn sonarithm_core::engine::Engine<sonarithm_data::DataBundle>> =
+        if sonarithm_curvasona::is_used_by(&spec) {
+            vec![&platform, &numisona, &curvasona]
+        } else {
+            vec![&platform, &numisona]
+        };
     let pipeline =
-        Compiler::new(&[&platform, &numisona]).map_err(|err| anyhow::anyhow!("{}", err.message))?;
+        Compiler::new(&engines).map_err(|err| anyhow::anyhow!("{}", err.message))?;
     let started = std::time::Instant::now();
     let compiled = pipeline
         .compile(&spec_text, &CancelToken::new())
         .map_err(|failure| anyhow::anyhow!("{group}/{name}: compile failed: {failure:?}"))?;
-    let spec: Value = serde_json::from_str(&spec_text)?;
     let source = spec
         .pointer("/data/source/path")
         .and_then(Value::as_str)
@@ -515,6 +639,11 @@ fn render_timed(
             }),
         );
         object.insert("tracks".to_owned(), tracks(&compiled.score));
+        // Third-party data names its source and licence in the spec (CC BY 4.0 asks for
+        // attribution); the record repeats it, so the credit travels with the render.
+        if let Some(attribution) = spec.get("x-attribution") {
+            object.insert("attribution".to_owned(), attribution.clone());
+        }
     }
     Ok(manifest)
 }
@@ -551,7 +680,7 @@ fn tracks(score: &Score) -> Value {
                 .iter()
                 .map(|note| format!("{}", (note.dur.0 * 1000.0).round() / 1000.0))
                 .collect();
-            json!({
+            let mut record = json!({
                 "id": track.id.as_str(),
                 "instrument": track.instrument.0,
                 "events": track.events.len(),
@@ -560,7 +689,25 @@ fn tracks(score: &Score) -> Value {
                 "lastOnsetS": notes.last().map(|note| note.t.0),
                 "noteDurationsS": durations.into_iter().collect::<Vec<_>>(),
                 "pitchHz": if notes.is_empty() { Value::Null } else { json!([round(low), round(high)]) },
-            })
+            });
+            // Audified series (C03-T05): their sample count, playback rate and length.
+            // Only tracks that have one carry the key, so older records are unchanged.
+            let audified: Vec<Value> = track
+                .events
+                .iter()
+                .filter_map(|event| match event {
+                    ScoreEvent::Audify(audify) => Some(json!({
+                        "samples": audify.samples.len(),
+                        "rateHz": audify.rate,
+                        "durationS": (audify.duration().0 * 1e6).round() / 1e6,
+                    })),
+                    _ => None,
+                })
+                .collect();
+            if let (false, Some(object)) = (audified.is_empty(), record.as_object_mut()) {
+                object.insert("audified".to_owned(), Value::Array(audified));
+            }
+            record
         })
         .collect();
     Value::Array(summary)
@@ -578,7 +725,7 @@ fn stage_data(
     std::fs::create_dir_all(&base)?;
     // Committed data first, then generated data over it.
     copy_tree(dir, &base, &|name| {
-        has_extension(name, "csv") || name == "penguins.json"
+        has_extension(name, "csv") || has_extension(name, "parquet") || name == "penguins.json"
     })?;
     for (path, text) in files {
         if let Some(rest) = path.strip_prefix(&format!("{group}/"))
