@@ -145,9 +145,10 @@ fn sdr_31_k_bounds_and_inaudible_bands() {
     );
 }
 
-/// INFER (no study): without `k` or `band`, k puts the top of the band at 4 kHz.
+/// SDR-44 (`INFER`, experimental, no study): without `k` or `band`, k puts the top of the
+/// band at 4 kHz.
 #[test]
-fn sdr_31_infer_the_default_k_puts_the_top_of_the_band_at_4_khz() {
+fn sdr_44_infer_the_default_k_puts_the_top_of_the_band_at_4_khz() {
     let spec = json!({
         "specVersion": "0.1",
         "data": { "source": { "kind": "function", "expr": "sin(2*pi*x)", "domain": [0, 10], "samples": 1001 } },

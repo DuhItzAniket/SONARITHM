@@ -15,9 +15,9 @@
 //! and k maps `fs/2` to `hi` (`k = 2·hi/fs`).
 //!
 //! **Defaults and evidence.** The seismic preset k = 2200 is SDR-31's (Dombois 2001). With
-//! neither `k` nor `band`, k puts the top of the band at 4 kHz: a proposal without study
-//! evidence (INFER), chosen so the energy stays where ageing ears keep it (the ED-06
-//! reasoning), experimental until a listening check. No EEG preset: none has a documented
+//! neither `k` nor `band`, k puts the top of the band at 4 kHz (SDR-44, `INFER`,
+//! experimental, F-196): an extrapolation of ED-06, so the energy stays where ageing ears
+//! keep it, until a listening study. No EEG preset: none has a documented
 //! source yet (TODO(verify), C03-T05).
 
 use arrow_array::{Float64Array, Int32Array, Int64Array, TimestampMillisecondArray};
@@ -43,7 +43,8 @@ pub const K_MAX: f64 = 1e6;
 /// The audible band.
 pub const AUDIBLE: [f64; 2] = [20.0, 20_000.0];
 
-/// Where the top of the band goes when the spec gives neither `k` nor `band` (INFER).
+/// Where the top of the band goes when the spec gives neither `k` nor `band` (SDR-44,
+/// `INFER`, experimental).
 pub const DEFAULT_TOP_HZ: f64 = 4_000.0;
 
 /// The level of an audification without a `loudness` value (SDR-23's default).

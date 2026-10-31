@@ -9,7 +9,8 @@
 //! arithmetic only, so a plan is bit-identical on every platform (ADR-0013, F-039). RFC-0007
 //! named rubato; its FFT path runs through rustfft's per-CPU SIMD code, whose rounding can
 //! differ between x86 and ARM, which golden audio's cross-platform hashes do not allow
-//! (F-195). Downsampling widens the kernel to low-pass at the output's Nyquist frequency.
+//! (F-195, ADR-0030). Downsampling widens the kernel to low-pass at the output's Nyquist
+//! frequency.
 
 use sonarithm_core::math;
 
@@ -139,8 +140,9 @@ mod tests {
         per_second
     }
 
-    /// SDR-31: resampling keeps the waveform; a tone keeps its frequency in seconds of
-    /// output when the rate changes.
+    /// SDR-31, ADR-0030: resampling keeps the waveform; a tone keeps its frequency in
+    /// seconds of output when the rate changes. The 5 Hz tolerance is not yet from a
+    /// measurement: TODO(verify) against the values a CI run prints.
     #[test]
     fn sdr_31_resampling_keeps_the_tone() {
         // One second of input at each rate.
@@ -160,10 +162,14 @@ mod tests {
                 "{from} -> {to}: {got} vs {expected}"
             );
             let f = frequency(&output, to);
+            eprintln!("resample {from} -> {to}: {f:.3} Hz");
             assert!((f - 440.0).abs() < 5.0, "{from} -> {to}: {f} Hz");
         }
     }
 
+    /// ADR-0030: a tone above the output's Nyquist frequency is attenuated. The 0.05 peak
+    /// threshold is not yet from a measurement: TODO(verify) against the value a CI run
+    /// prints.
     #[test]
     fn downsampling_removes_what_the_output_cannot_hold() {
         // 20 kHz at 96 kHz, down to 16 kHz (Nyquist 8 kHz): filtered out.
@@ -171,6 +177,7 @@ mod tests {
         let output = resample(&input, 96_000.0, 16_000.0);
         let middle = &output[200..output.len() - 200];
         let peak = middle.iter().fold(0.0_f32, |m, s| m.max(s.abs()));
+        eprintln!("resample 20 kHz at 96 kHz -> 16 kHz: peak {peak:.5} (input 0.5)");
         assert!(peak < 0.05, "{peak}");
     }
 

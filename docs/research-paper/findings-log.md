@@ -1016,6 +1016,15 @@ A05 (render engine, audio backends, export) uses F-050 to F-069.
 - **Affects:** C02-T09, A11Y-02, A11Y-12, A11Y-24, FR-008, OD-07, H-06
 - **Papers:** none yet
 
+### F-196 · An audification without `k` or `band` needs a target band, and no study gives one
+
+- **Date:** 2026-11-01 · **Phase:** C03 · **Type:** engineering (sound default) · **Status:** new
+- **Statement:** RFC-0001 lets `tracks[].audify` be omitted ("`k` computed from the data band"), and SDR-31 computes k "from the data band to a target audio band", but neither names the target. C03-T05 needs one, so it maps the top of the series' band (fs/2) to 4 kHz. This follows ED-06's reasoning (keep the main energy below about 4 kHz, which survives high-frequency hearing loss and small speakers, A11Y-14); it is not measured. It is recorded as SDR-44 (`INFER`, experimental) until a listening study (HP-21 or a later experiment) tests it against alternatives such as 2 kHz or 8 kHz.
+- **Evidence:** `crates/engines/sonarithm-curvasona/src/audify.rs` (`DEFAULT_TOP_HZ`) and the test `sdr_44_infer_the_default_k_puts_the_top_of_the_band_at_4_khz`; design-rules SDR-44
+- **Evidence level / confidence:** EV-D / Weak (an extrapolation)
+- **Affects:** SDR-31, SDR-44, C03-T05
+- **Papers:** none yet
+
 ### F-195 · Audification resamples with a deterministic windowed-sinc, because rubato's FFT path is not bit-identical across CPUs
 
 - **Date:** 2026-11-01 · **Phase:** C03 · **Type:** engineering (determinism) · **Status:** new
