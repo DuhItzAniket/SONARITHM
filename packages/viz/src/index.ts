@@ -26,6 +26,7 @@ export {
   Plot,
   type PlotCursor,
   type PlotProps,
+  type PlotRange,
   type PlotSeries,
   type PlotSummary,
 } from "./Plot.tsx";

@@ -166,6 +166,7 @@ export function App({
                   client={client}
                   dataset={dataset}
                   cursor={cursor}
+                  announcer={announcer}
                 />
               ) : (
                 startText
