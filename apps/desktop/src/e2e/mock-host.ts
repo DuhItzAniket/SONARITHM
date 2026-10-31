@@ -58,6 +58,7 @@ let settings: Settings = {
     rateWpm: 180,
     announcer: "liveRegion",
   },
+  gpu: "default",
 };
 
 const DEVICES = [

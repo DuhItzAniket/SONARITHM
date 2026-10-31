@@ -31,6 +31,7 @@ use crate::speech::{SequencerConfig, SpeakerSource};
 use crate::streams::{self, StreamAction};
 use crate::transport::{Action, AudioOutput, OutputConfig, Transport};
 
+mod corrections;
 mod profiles;
 mod projects;
 
@@ -88,6 +89,17 @@ struct Open {
     bundle: DataBundle,
     /// The canonical file it was read from, if any: what a saved project links.
     origin: Option<PathBuf>,
+    /// For a dataset read from a chart: its corrections (C02-T06).
+    chart: Option<corrections::ChartState>,
+}
+
+/// What an undoable edit changed: the spec, or one chart dataset's corrections (C02-T06).
+#[derive(Clone, Debug, PartialEq, Eq)]
+enum Snapshot {
+    /// The spec text.
+    Spec(Option<String>),
+    /// A chart dataset's correction document (RFC-0005).
+    Corrections { dataset: u64, text: String },
 }
 
 /// The headless app core: one session (open datasets, the spec, the last compiled Score
@@ -112,7 +124,7 @@ pub struct App {
     next_dataset: u64,
     spec: Option<String>,
     compiled: Option<Compiled>,
-    history: History<Option<String>>,
+    history: History<Snapshot>,
     tiles: TileCache,
     config_dir: PathBuf,
     data_dir: PathBuf,
@@ -282,6 +294,10 @@ impl App {
             Request::ProfileFlipPolarity { field } => self.profile_flip_polarity(&field),
             Request::SettingsEffective => self.settings_effective(),
             Request::SpecQuick { dataset, x, y } => self.spec_quick(&dataset, x, y),
+            request @ (Request::CorrectionsGet { .. }
+            | Request::CorrectionsApply { .. }
+            | Request::CorrectionsExport { .. }
+            | Request::CorrectionsImport { .. }) => self.corrections_request(request),
             Request::ProjectNew => Ok(self.project_new()),
             Request::ProjectOpen { path } => self.project_open(Path::new(&path)),
             Request::ProjectOpenRecent { index } => self.project_open_recent(index),
@@ -517,8 +533,10 @@ impl App {
         let ids = u32::try_from(number).unwrap_or(u32::MAX);
         let name = file_name(&path);
         let chart = open_chart(&path, &name, BundleId(number), TableId(ids))?;
-        let (bundle, diagnostics) = if let Some(chart) = chart {
-            chart
+        let mut chart_state = None;
+        let (bundle, diagnostics) = if let Some((bundle, diagnostics, state)) = chart {
+            chart_state = Some(state);
+            (bundle, diagnostics)
         } else {
             let options = ReadOptions::new().with_ids(BundleId(number), TableId(ids));
             let loaded = read_file(&path, None, &options)
@@ -534,6 +552,7 @@ impl App {
                 summary: summary.clone(),
                 bundle,
                 origin: Some(path.clone()),
+                chart: chart_state,
             },
         );
         Ok(Reply::Dataset(summary))
@@ -571,7 +590,11 @@ impl App {
             return Err(first_error(&err));
         }
         let before = self.spec.replace(text.clone());
-        let token = self.history.record("Set spec", before, Some(text.clone()));
+        let token = self.history.record(
+            "Set spec",
+            Snapshot::Spec(before),
+            Snapshot::Spec(Some(text.clone())),
+        );
         Ok(Reply::Spec(SpecState {
             text: Some(text),
             undo_token: Some(token),
@@ -606,9 +629,11 @@ impl App {
             )
         })?;
         let label = label.unwrap_or_else(|| "Edit spec".to_owned());
-        let token = self
-            .history
-            .record(label, Some(text), Some(new_text.clone()));
+        let token = self.history.record(
+            label,
+            Snapshot::Spec(Some(text)),
+            Snapshot::Spec(Some(new_text.clone())),
+        );
         self.spec = Some(new_text.clone());
         let (diagnostics, counts) = diagnose(&new_text);
         Ok(Reply::SpecPatch(SpecPatchResult {
@@ -722,9 +747,15 @@ impl App {
         } else {
             self.history.redo()
         };
+        let mut corrections = None;
         let (token, label) = match edit {
             Some(edit) => {
-                self.spec = if back { edit.before } else { edit.after };
+                match if back { edit.before } else { edit.after } {
+                    Snapshot::Spec(spec) => self.spec = spec,
+                    Snapshot::Corrections { dataset, text } => {
+                        corrections = self.restore_corrections(dataset, &text);
+                    }
+                }
                 (Some(edit.token), Some(edit.label))
             }
             None => (None, None),
@@ -738,6 +769,7 @@ impl App {
                 text: self.spec.clone(),
                 undo_token: None,
             },
+            corrections,
         })
     }
 
@@ -952,7 +984,14 @@ fn open_chart(
     name: &str,
     bundle: BundleId,
     table: TableId,
-) -> Result<Option<(DataBundle, sonarithm_core::Diagnostics)>, IpcError> {
+) -> Result<
+    Option<(
+        DataBundle,
+        sonarithm_core::Diagnostics,
+        corrections::ChartState,
+    )>,
+    IpcError,
+> {
     let extension = path
         .extension()
         .and_then(|ext| ext.to_str())
@@ -976,7 +1015,10 @@ fn open_chart(
             for diagnostic in &chart.report().diagnostics {
                 diagnostics.push(diagnostic.clone());
             }
-            Ok(Some((chart.into_bundle(), diagnostics)))
+            let extractor = chart.report().extractor.clone();
+            let version = chart.bundle().source().extractor_version.clone();
+            let state = corrections::ChartState::new(bytes, name, &extractor, &version);
+            Ok(Some((chart.into_bundle(), diagnostics, state)))
         }
         Err(err) if chart_only => Err(err.diagnostics().iter().next().map_or_else(
             || IpcError::new(&codes::FILE_REFUSED, format!("`{name}` holds no chart.")),

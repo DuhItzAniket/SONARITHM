@@ -1,0 +1,110 @@
+/* SPDX-FileCopyrightText: 2026 SONARITHM contributors */
+/* SPDX-License-Identifier: MIT OR Apache-2.0 */
+
+/* The switch (B04-T02): a 28 px row with a track and a thumb. On, the thumb moves to the
+   end and the track fills with the accent, so the state is position as well as colour
+   (DL-X08); the focus ring is the shared 2 px ring with an offset (DL-P05). */
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.switch {
+  display: inline-flex;
+  gap: var(--space-2);
+  align-items: center;
+  min-block-size: var(--row-default);
+  outline: none;
+  color: var(--text-1);
+  font-family: var(--font-sans);
+  font-size: var(--type-13-size);
+  line-height: var(--type-13-line);
+  cursor: default;
+}
+
+.track {
+  box-sizing: border-box;
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  inline-size: calc(var(--target-min) * 1.5);
+  block-size: var(--target-min);
+  padding: var(--space-1);
+  border: var(--border-width) solid var(--border-strong);
+  border-radius: var(--radius-2);
+  background: var(--surface-2);
+  transition: background-color var(--motion-fast);
+}
+
+.thumb {
+  box-sizing: border-box;
+  inline-size: calc(var(--target-min) / 2);
+  block-size: calc(var(--target-min) / 2);
+  border-radius: var(--radius-1);
+  background: var(--text-2);
+}
+
+.switch[data-hovered] .track,
+.switch[data-focus-visible] .track {
+  background: var(--surface-3);
+}
+
+.switch[data-focus-visible] .track {
+  outline: var(--focus-ring-width) solid var(--focus);
+  outline-offset: var(--focus-ring-offset);
+}
+
+.switch[data-selected] .track {
+  justify-content: flex-end;
+  border-color: var(--accent);
+  background: var(--accent);
+}
+
+.switch[data-selected] .thumb {
+  background: var(--surface-0);
+}
+
+.switch[data-disabled] {
+  color: var(--text-3);
+}
+
+.switch[data-disabled] .track {
+  border-color: var(--border);
+}
+
+.description {
+  margin: 0;
+  color: var(--text-2);
+  font-size: var(--type-12-size);
+  line-height: var(--type-12-line);
+}
+
+@media (forced-colors: active) {
+  .track {
+    border-color: ButtonBorder;
+    background: ButtonFace;
+  }
+
+  .thumb {
+    background: ButtonText;
+  }
+
+  .switch[data-selected] .track {
+    border-color: Highlight;
+    background: Highlight;
+  }
+
+  .switch[data-selected] .thumb {
+    background: HighlightText;
+  }
+
+  .switch[data-focus-visible] .track {
+    outline-color: Highlight;
+  }
+
+  .switch[data-disabled] .track {
+    border-color: GrayText;
+  }
+}

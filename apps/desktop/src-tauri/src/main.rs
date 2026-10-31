@@ -15,6 +15,7 @@
 
 mod channels;
 mod commands;
+mod gpu;
 mod navigation;
 mod platform;
 mod smoke;
@@ -22,6 +23,8 @@ mod smoke;
 use std::process::ExitCode;
 use std::sync::Arc;
 
+use sonarithm_app::ipc::{Reply, Request};
+use sonarithm_app::settings::GpuPreference;
 use sonarithm_app::{App, AppConfig, AudioOutput};
 use tauri::{Manager, RunEvent, WebviewUrl, WebviewWindowBuilder};
 
@@ -56,19 +59,47 @@ fn main() -> ExitCode {
                 .with_data_dir(data_dir)
                 .with_audio(audio);
             let sink: Arc<dyn sonarithm_app::EventSink> = router.clone();
-            let core = App::new(config, sink)?;
+            let mut core = App::new(config, sink)?;
+            // The GPU setting is read once, at start-up (B04-T02, F-044).
+            let gpu = match core.dispatch(Request::SettingsGet) {
+                Ok(Reply::Settings(settings)) => settings.gpu,
+                _ => GpuPreference::Default,
+            };
             app.manage(Core::new(core));
 
-            let mut window = WebviewWindowBuilder::new(app, MAIN_WINDOW, WebviewUrl::default())
-                .title(PRODUCT_NAME)
-                .inner_size(1280.0, 800.0)
-                .min_inner_size(640.0, 480.0)
-                // No remote content, ever (09 §4).
-                .on_navigation(navigation::allowed);
-            if let Some(script) = smoke.as_ref().map(Smoke::init_script) {
-                window = window.initialization_script(script);
-            }
-            let window = window.build()?;
+            let build = |args: Option<&str>, gpu_fallback: bool| {
+                let mut window = WebviewWindowBuilder::new(app, MAIN_WINDOW, WebviewUrl::default())
+                    .title(PRODUCT_NAME)
+                    .inner_size(1280.0, 800.0)
+                    .min_inner_size(640.0, 480.0)
+                    // No remote content, ever (09 §4).
+                    .on_navigation(navigation::allowed)
+                    .initialization_script(gpu::start_script(gpu_fallback));
+                if let Some(args) = args {
+                    window = window.additional_browser_args(args);
+                }
+                if let Some(script) = smoke.as_ref().map(Smoke::init_script) {
+                    window = window.initialization_script(script);
+                }
+                window.build()
+            };
+            let window = match gpu::browser_args(gpu) {
+                None => build(None, false)?,
+                // WebView2 refuses browser arguments that differ from a running instance's on
+                // the same data folder (a second window, or the last run still closing). The
+                // GPU setting must never stop the app from starting: start without the switch
+                // and tell the user it applies after a full restart (the UI says it).
+                Some(args) => {
+                    if let Ok(window) = build(Some(&args), false) {
+                        window
+                    } else {
+                        if let Some(stale) = app.get_webview_window(MAIN_WINDOW) {
+                            let _ = stale.destroy();
+                        }
+                        build(None, true)?
+                    }
+                }
+            };
             let state = smoke.as_ref().map(Smoke::accelerators);
             window.with_webview(move |webview| {
                 let disabled = platform::disable_browser_accelerators(&webview);

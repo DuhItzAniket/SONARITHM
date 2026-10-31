@@ -1,0 +1,21 @@
+/* SPDX-FileCopyrightText: 2026 SONARITHM contributors */
+/* SPDX-License-Identifier: MIT OR Apache-2.0 */
+
+/* A dense layer (B04-T02): the data canvas, with an overlay above it for what moves. */
+.layer {
+  position: relative;
+  inline-size: 100%;
+  background: var(--surface-0);
+}
+
+.data,
+.overlay {
+  position: absolute;
+  inset: 0;
+  inline-size: 100%;
+  block-size: 100%;
+}
+
+.overlay {
+  pointer-events: none;
+}

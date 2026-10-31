@@ -21,7 +21,8 @@
     "build-storybook": "storybook build --quiet",
     "test:stories": "node test/run-stories.ts",
     "test:seeded": "node test/seeded/expect-axe-failure.ts",
-    "test:visual": "vitest run --project visual"
+    "test:visual": "vitest run --project visual",
+    "test:perf": "vitest run --project perf"
   },
   "devDependencies": {
     "@sonarithm/i18n": "workspace:*",

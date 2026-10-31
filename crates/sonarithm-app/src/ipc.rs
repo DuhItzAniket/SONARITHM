@@ -94,6 +94,10 @@ pub const COMMANDS: &[(&str, &str)] = &[
     ("profile_flip_polarity", "compile"),
     ("settings_effective", "effective"),
     ("spec_quick", "spec"),
+    ("corrections_get", "corrections"),
+    ("corrections_apply", "corrections"),
+    ("corrections_export", "corrections"),
+    ("corrections_import", "corrections_import"),
 ];
 
 /// The commands whose reply is a binary view (ADR-0017 §6), sent with
@@ -377,6 +381,49 @@ pub enum Request {
         /// The y field.
         y: String,
     },
+    /// The corrections of a dataset opened from a chart (C02-T06, RFC-0005). Replies
+    /// [`Reply::Corrections`].
+    CorrectionsGet {
+        /// The dataset's ID.
+        dataset: String,
+    },
+    /// Applies a JSON Patch (RFC 6902) to a chart dataset's correction document, all or
+    /// nothing, as one undoable edit; the dataset is re-extracted with the corrections
+    /// (RFC-0005 §9). Replies [`Reply::Corrections`].
+    CorrectionsApply {
+        /// The dataset's ID.
+        dataset: String,
+        /// The operations on the correction document (RFC-0005 §2), in order.
+        patch: Vec<crate::patch::PatchOp>,
+        /// A name for the edit in the history, such as `Move Series 2#4 to 64`.
+        label: Option<String>,
+    },
+    /// Writes a dataset's corrections to a correction file (RFC-0005 §5, §6, §11). The file
+    /// holds no paths, names or times. Replies [`Reply::Corrections`].
+    CorrectionsExport {
+        /// The dataset's ID.
+        dataset: String,
+        /// The file, ending in `.json`, in an existing folder.
+        path: String,
+        /// Whether the person's notes go with the edits.
+        #[serde(default = "yes")]
+        notes: bool,
+        /// Whether the chart's pixels go too (PNG charts only; off unless asked).
+        #[serde(default)]
+        include_image: bool,
+    },
+    /// Reads a correction file made on this chart and previews what it would do; with
+    /// `confirm`, appends what applies as one undoable edit (RFC-0005 §11). Replies
+    /// [`Reply::CorrectionsImport`].
+    CorrectionsImport {
+        /// The dataset's ID.
+        dataset: String,
+        /// The correction file (`.json`).
+        path: String,
+        /// Apply it, rather than only preview it.
+        #[serde(default)]
+        confirm: bool,
+    },
     /// A downsampled view of two fields of a dataset for drawing (03 §7). Binary: a view of
     /// kind `m4Tile` or `lttbTile` with the columns `row`, `x` and `y` (ADR-0017 §6).
     ViewGet {
@@ -498,6 +545,10 @@ impl Request {
             Self::ProfileFlipPolarity { .. } => "profile_flip_polarity",
             Self::SettingsEffective => "settings_effective",
             Self::SpecQuick { .. } => "spec_quick",
+            Self::CorrectionsGet { .. } => "corrections_get",
+            Self::CorrectionsApply { .. } => "corrections_apply",
+            Self::CorrectionsExport { .. } => "corrections_export",
+            Self::CorrectionsImport { .. } => "corrections_import",
             Self::ViewGet { .. } => "view_get",
             Self::TablePage { .. } => "table_page",
         }
@@ -601,6 +652,53 @@ pub enum Reply {
         /// Each setting with its value and layer.
         settings: Vec<crate::profile::EffectiveSetting>,
     },
+    /// A chart dataset's corrections.
+    Corrections(CorrectionsState),
+    /// What a correction file would do, or did.
+    CorrectionsImport(ImportPreview),
+}
+
+/// A chart dataset's corrections (C02-T06, RFC-0005).
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize, TS)]
+#[serde(rename_all = "camelCase")]
+#[non_exhaustive]
+pub struct CorrectionsState {
+    /// The dataset's ID.
+    pub dataset: String,
+    /// The correction document, as a correction file holds it (RFC-0005 §2).
+    pub text: String,
+    /// The number of edits.
+    pub edits: usize,
+    /// The IDs of edits that did not apply to the current extraction (`SNR-ENG-386`).
+    pub not_applied: Vec<String>,
+    /// Whether corrections can change: the chart's file is open. A reopened project keeps
+    /// them read-only until the chart is opened again.
+    pub editable: bool,
+    /// The undo token of the edit just made, if any.
+    pub undo_token: Option<u64>,
+    /// The dataset after the corrections.
+    pub summary: DatasetSummary,
+}
+
+/// What importing a correction file does (RFC-0005 §11).
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize, TS)]
+#[serde(rename_all = "camelCase")]
+#[non_exhaustive]
+pub struct ImportPreview {
+    /// The dataset's ID.
+    pub dataset: String,
+    /// The file's edits that apply, by their IDs in the file.
+    pub applies: Vec<String>,
+    /// The file's edits whose points the session already changed: listed, never applied.
+    pub conflicts: Vec<String>,
+    /// The file's edits the session already has: skipped.
+    pub duplicates: Vec<String>,
+    /// Whether the file's calibration differs from the session's (it is not taken).
+    pub calibration_differs: bool,
+    /// Whether the edits were applied (`confirm`).
+    pub applied: bool,
+    /// The corrections after the import, when applied.
+    pub state: Option<CorrectionsState>,
 }
 
 /// A command that could not run (ADR-0017 §3, 12 §1). Spec and data problems are not
@@ -1193,7 +1291,7 @@ pub struct JobInfo {
 }
 
 /// The history after an undo or redo.
-#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, TS)]
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize, TS)]
 #[serde(rename_all = "camelCase")]
 #[non_exhaustive]
 pub struct HistoryState {
@@ -1207,6 +1305,9 @@ pub struct HistoryState {
     pub can_redo: bool,
     /// The spec after the step.
     pub spec: SpecState,
+    /// The corrections after the step, when it undid or redid a correction (C02-T06).
+    #[serde(default)]
+    pub corrections: Option<CorrectionsState>,
 }
 
 /// A project (RFC-0002 §9). Files are named alone, never with their folders (ADR-0017 §7).
