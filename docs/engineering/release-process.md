@@ -36,7 +36,7 @@ SONARITHM follows [Semantic Versioning 2.0.0](https://semver.org/).
 
 | Channel | Source | Contents | Where | Signing |
 |---|---|---|---|---|
-| **Nightly** | `main`, daily (`nightly.yml`) | Latest `main`, untested beyond CI | Workflow artifacts only, never GitHub Releases in this repository (immutable releases are all-or-nothing) and never the stable updater feed | Unsigned or ad-hoc signed; provenance attested |
+| **Nightly** | `main`, daily (`nightly.yml`; desktop bundles `desktop-nightly.yml`) | Latest `main`, untested beyond CI | Workflow artifacts only, never GitHub Releases in this repository (immutable releases are all-or-nothing) and never the stable updater feed | Unsigned or ad-hoc signed; provenance attested |
 | **Beta** (pre-release) | Pre-release tags: `-alpha`, `-beta`, `-rc.N` | Release candidates and the alpha and beta releases of Stages A and B | GitHub pre-release, crates.io and PyPI pre-release versions, opt-in beta updater feed (from C06) | Signed once signing is available |
 | **Stable** | Release tags without a pre-release identifier | Supported releases | GitHub Release (immutable), crates.io, PyPI, stable updater feed | Signed and attested |
 
@@ -94,6 +94,14 @@ The first publish of each crate is manual, and trusted publishers can only be ad
 3. The release is created as a **draft**. Installers are smoke-tested on each OS: install, open a dataset, play, export, uninstall.
 4. The [screen-reader matrix](#release-checklist) passes.
 5. The release manager publishes the draft.
+
+**Nightly bundles for testers (B01-T09).** Every night, `desktop-nightly.yml` builds unsigned bundles from `main` and uploads them as workflow artifacts named by commit. Before upload, each runner installs its bundle, runs the smoke test and runs the network-deny harness on the installed app. To install one:
+
+- **Windows.** Download `sonarithm-desktop-nightly-<commit>-Windows` from the latest run and run the NSIS installer. It installs for the current user, without administrator rights. SmartScreen warns about an unknown publisher: choose More info, then Run anyway.
+- **macOS.** Download `…-macOS`, open the DMG, and drag SONARITHM to Applications. The app is ad-hoc signed, not notarized, so the first launch needs Control-click → Open (or System Settings → Privacy & Security → Open Anyway).
+- **Linux.** Download `…-Linux`, `chmod +x` the AppImage and run it. Without FUSE, run it with `--appimage-extract-and-run`.
+
+Nightly bundles have no updater and expire after 30 days. Report problems with the commit in the artifact's name.
 
 **Signing timeline.** The roadmap schedules code signing and the updater in C06. The `0.5.0-beta` desktop build (Gate B) is signed only if certificates are in place by B07. Otherwise it ships unsigned with documented OS warnings, and the gate review records the decision.
 

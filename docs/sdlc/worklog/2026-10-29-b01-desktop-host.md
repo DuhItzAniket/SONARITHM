@@ -51,6 +51,13 @@
 - The smoke run reports `pb07`. No benchmark was run locally on the shared machine.
 - Locally: 27 Playwright tests in Chromium (frame, workspace, palette, announcer, gates), 28 unit tests, typecheck and lint; Rust clippy and tests for `sonarithm-audio`, `sonarithm-app` and `sonarithm-desktop` (`CARGO_BUILD_JOBS=4`, 2 test threads).
 
+## B01-T09: nightly bundles (2026-10-30)
+
+- `desktop-nightly.yml`, a workflow of its own: `nightly.yml` also runs on app-core pull requests, and three release bundles on each would cost about an hour of runner time.
+- `tauri.nightly.conf.json` turns bundling on (`bundle.active` stays off in the main config, so CI and dev builds stay unbundled), with no updater artifacts and ad-hoc macOS signing.
+- `cargo xtask network-deny --app <exe> -- <args>` runs the installed app with `--smoke`. On Windows and macOS it checks only the app's own process; the webview's processes are a known gap, written down in testing-strategy §10.
+- No cargo build locally: PLOTSONA held the Rust slot. `rustfmt` only, and the PR's dry run is the first build of the new code.
+
 ## #409: network-deny on Windows (2026-10-30)
 
 - The `speech` binary's two "attempts" were the self-test probe's: same PID (6916, reused), the probe's application path, and the probe's 192.0.2.1:9 destination. The speech path is not changed.
