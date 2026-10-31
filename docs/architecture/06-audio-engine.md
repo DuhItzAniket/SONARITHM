@@ -191,6 +191,14 @@ The **Score IR is the strict artifact** (byte-identical). Audio is compared with
 3. The UI extrapolates the playhead each animation frame from the anchor. Rendering cost is constant and IPC jitter is irrelevant.
 4. **Interactive cue latency** = input handling + IPC + control enqueue + up to one block + device latency. The budget is ≤ 50 ms p95 at a 256-frame buffer and 48 kHz, measured by the loopback harness in A02 and B03.
 
+**As built (B04-T04, UI side).**
+
+- `@sonarithm/viz`'s `PlayheadClock` extrapolates the heard position from anchors received on the UI's own clock. While the status and speed stay the same, every anchor describes the same line, so it keeps the line that predicts furthest: the least-delayed anchor's (a minimum-delay filter against IPC jitter). An anchor more than 50 ms of position behind the line is a jump (a seek) and starts a new one.
+- The heard position is the engine's position minus the output latency times the speed.
+- `Playhead` moves a 2 px line with a CSS transform every animation frame, through refs: no React render and no redraw of the data.
+- **Tests:** a drift test with seeded 0–8 ms delays (within one frame over a minute, at speeds 1 and 2), the latency correction, and a story whose React Profiler counts no commit while the playhead moves for 30 frames.
+- **Latency source.** Each anchor carries `outputLatencyS` (ADR-0017 "Clock anchors", approved 2026-10-30). In order of precedence it is the device's calibrated latency (ADR-0016; the stored offsets are a follow-up PR), then the backend's reported latency, then `null`, which means no correction. The desktop app's `usePlayheadClock` feeds the clock from the `clock` channel.
+
 ## 10. Hearing safety and levels
 
 - **Start-up.** Master gain starts at −20 dB and ramps over 500 ms. There are no full-scale onsets.

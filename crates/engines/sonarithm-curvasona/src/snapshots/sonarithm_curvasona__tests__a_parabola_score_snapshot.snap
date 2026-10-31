@@ -4,7 +4,7 @@ expression: "score.review_json(&ReviewOptions::default())"
 ---
 {
   "header": {
-    "data_fingerprint": "c693025a3b27d67262e65434c12536f3a049a7afd7a5bf6aded7a27873be59a4",
+    "data_fingerprint": "d02ee99c4d2b07a9f02dd1851b4e0848e52ba8279b1ace75119593b8272240bb",
     "duration": 4.0,
     "engines": {
       "curvasona": "*",

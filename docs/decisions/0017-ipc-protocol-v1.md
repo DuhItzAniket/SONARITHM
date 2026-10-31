@@ -65,12 +65,30 @@ Spec and data problems are results, not errors: `compile` replies with a `Compil
 
 | Channel | Events | Rate |
 |---|---|---|
-| `clock` | Clock anchors: transport status, position, speed and the host time of the block | On change and every 2 s (06 §9) |
+| `clock` | Clock anchors: transport status, position, speed, the host time of the block and the output latency (`outputLatencyS`, see Clock anchors below) | On change and every 2 s (06 §9) |
 | `jobs` | Job progress, finished, failed, cancelled | On change, at most 10 per second per job |
 | `diagnostics` | Diagnostics outside a reply (for example from a background compile) | On change |
 | `announcements` | Text for the announcer (B03) | Rate-limited per 08 §4 |
 | `app` | Rare app-wide notices: device changed or lost, settings recovered | Rare |
 | `meters` | Binary meter frames, never JSON (see Meter frames below) | At most one every 1/30 s while playing, plus one last frame when playback stops |
+
+#### Clock anchors
+
+> Amended 2026-10-30, B04-T04: `outputLatencyS` added, approved by the coordinator, additive.
+
+A `ClockAnchor` carries the transport, `hostTimeS` (the device's playback time of the anchor's block, when the backend reports one), `seq`, and `outputLatencyS: number | null`. That is how far the heard sound lags the engine's position, in seconds; the UI's playhead shows `positionS − outputLatencyS × speed` (06 §9).
+
+The order of precedence is:
+
+1. the device's calibrated latency where one is stored (ADR-0016, "Per-device latency calibration": "a loopback self-test where the platform offers one, otherwise a stored offset"; the stored offsets are a follow-up);
+2. then the backend's reported latency;
+3. then `null`, which the UI takes as "no correction", never as a guessed value.
+
+The app core computes it on the control thread when it builds the anchor, never in the audio callback. Adding the field did not change `PROTOCOL_VERSION` (§5).
+
+| Date | Change |
+|---|---|
+| 2026-10-30 | `outputLatencyS` added (B04-T04), citing ADR-0016 §"Per-device latency calibration"; approved by the coordinator, additive |
 
 #### Meter frames
 

@@ -5285,6 +5285,7 @@ dependencies = [
  "insta",
  "proptest",
  "serde_json",
+ "sonarithm-audaxis",
  "sonarithm-compiler",
  "sonarithm-core",
  "sonarithm-data",

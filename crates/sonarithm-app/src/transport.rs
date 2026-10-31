@@ -1019,9 +1019,18 @@ impl<B: AudioBackend, F: Fn() -> B> Control<B, F> {
             .as_mut()
             .and_then(|player| player.state().host_time)
             .map(|time| time.as_secs_f64());
+        // No stored calibration yet (ADR-0016's stored offsets are a follow-up): the
+        // backend's reported latency, or none.
+        let output_latency_s = self
+            .player
+            .as_ref()
+            .and_then(|player| player.stream())
+            .and_then(|stream| stream.latency().reported)
+            .map(|latency| latency.as_secs_f64());
         self.sink.emit(Event::Clock(ClockAnchor {
             transport: self.state(),
             host_time_s,
+            output_latency_s,
             seq: self.seq,
         }));
     }

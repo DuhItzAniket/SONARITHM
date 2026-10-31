@@ -87,12 +87,22 @@
 - **perf project.** The test was run once locally to check the plumbing, and its numbers are not recorded. CI reports them; the trace is written to `packages/ui/.perf/`, which git ignores.
 - **F-044 GPU setting.** Asked the coordinator to approve a `gpu` settings field; this PR holds that part.
 
+## B04-T04: playhead, UI side (2026-10-30)
+
+- `PlayheadClock` and `Playhead` in `@sonarithm/viz`. The anchor's `hostTimeS` is on the device clock (cpal), which the page cannot map onto `performance.now()`, so the clock works on receive times with a minimum-delay filter.
+- The jump threshold is 50 ms of position: a 250 ms draft would have ignored a short backward seek while playing.
+- `ClockAnchor.outputLatencyS` was approved as an additive field. The Rust type, codegen and the ADR-0017 "Clock anchors" record with a change-history line are done, and the null device's anchors carry `null`. `@sonarithm/viz/playhead` is a subpath export, so Node tests can import the clock without TSX or CSS. Stored offsets (approved as option b) get their own PR after this one.
+
 ## B04-T05: data table (2026-10-31)
 
 - **Design.** React Aria's Table cannot hold a million rows or take an overridden `aria-rowcount`, so the table holds windows of 1,000 rows. The coordinator chose this over patching ARIA (rule 6) and added conditions: the true row number as the row header, whole-table jumps, "Go to row…", the focus kept in its column, and the range announced only when the window changes. F-177.
 - **`encodeView`** in `@sonarithm/ipc` writes binary views for mocks and tests, byte for byte as Rust does (checked against the shared fixture). Mock binary replies can now depend on the request.
 - **`GoToRow`.** NumberField commits a typed number during the Enter keydown that also submits the form, so the submit reads the latest value from a ref.
 - Locally: desktop 37 unit tests and all 37 E2E tests in Chromium, plus `table.spec.ts` (4) in WebKit; ipc 16, i18n 9 and ui 48 node tests; the DataTable stories in two themes. No cargo: the new Fluent messages reuse sample arguments the Rust catalogue tests already have, and CI runs those tests.
+
+## PB-08 perf trace on slow runners (2026-10-31)
+
+- #419's frontend-browser job failed in `dense.perf.ts`: the test ran past Vitest's 15 s browser timeout, because 60 software-rendered redraws of a million points were too slow on that runner, and no trace was written. No budget check failed; the test only records. Measuring now stops after 8 s (`cutShort` in the report), the test timeout is 120 s, and it still fails if nothing draws. Not run locally (the builder and browser slots were others'); CI runs it.
 
 ## Next steps
 

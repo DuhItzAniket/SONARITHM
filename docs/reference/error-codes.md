@@ -246,9 +246,10 @@ Owner: `sonarithm-curvasona`. Numbers SNR-ENG-400 to SNR-ENG-499.
 | `SNR-ENG-402` | error | The expression exceeds a size limit | Expressions are untrusted input with budgets for length, nesting depth and size (12 §6). Simplify the expression, or split it with `variables`. | — |
 | `SNR-ENG-403` | error | A variable cannot be used | Variable names start with a letter, use letters, digits and `_`, are at most 32 characters long and are not `x`, a constant or a function name. A source declares at most 16 variables. | — |
 | `SNR-ENG-404` | error | The function needs more samples than the limit | Lower `samples`, raise `step` or narrow the `domain`. The limit keeps a function source from exhausting memory or time. | — |
-| `SNR-ENG-405` | info | The derivative is computed numerically | The expression uses a function without a symbolic derivative (such as abs, floor or min), or its derivative is larger than the size limit, so `dy` comes from central differences. It is accurate where the function is smooth. | A11Y-28 |
+| `SNR-ENG-405` | info | The derivative is computed numerically | The expression uses `min` or `max`, which have no symbolic derivative, or its derivative is larger than the size limit, so `dy` comes from central differences. It is accurate where the function is smooth. | A11Y-28 |
 | `SNR-ENG-406` | warning | The function is undefined at some samples | Division by zero, roots and logarithms of negative numbers and overflows give no value; those rows have no `y` and follow `data.missing`. Narrow the domain to leave them out. | A11Y-28 |
 | `SNR-ENG-407` | warning | The search for poles and undefined spans stopped early | The function has more poles, holes, jumps or undefined spans than the limits allow, or needs too many evaluations to find them, so some may be missing from the cues and the list. Narrow the domain or lower `samples`. | A11Y-28 |
+| `SNR-ENG-420` | warning | Critical points need a function source | The `critical-points` detector works on the table of a `function` source, whose expression it differentiates. For a data file, use the `extrema` detector instead. | A11Y-28 |
 
 Owner: `sonarithm-echometric`. Numbers SNR-ENG-600 to SNR-ENG-699.
 

@@ -5,9 +5,11 @@ use arrow_array::Array;
 use arrow_array::cast::AsArray;
 use arrow_array::types::Float64Type;
 use serde_json::{Value, json};
+use sonarithm_audaxis::Audaxis;
 use sonarithm_compiler::{Compiled, Compiler, Failure, Platform};
 use sonarithm_core::SpecPointer;
 use sonarithm_core::engine::{Budget, CancelToken, CompileContext, Registry};
+use sonarithm_core::nav::NavKind;
 use sonarithm_core::score::review::ReviewOptions;
 use sonarithm_core::score::{EngineVersion, ScoreEvent};
 use sonarithm_numisona::Numisona;
@@ -58,8 +60,10 @@ fn the_function_source_gives_x_y_and_dy_with_synthetic_provenance() {
     let bundle = bundle.unwrap();
     assert!(cx.diagnostics().is_empty(), "{:?}", cx.diagnostics());
     let table = bundle.primary().unwrap();
-    // The 2000 samples plus one empty row at the hole at 0 (C03-T02).
-    assert_eq!(table.num_rows(), 2001_u64);
+    // The 2000 samples, one empty row at the hole at 0 (C03-T02) and one row at each zero,
+    // extremum and inflection (C03-T03).
+    let rows = table.num_rows();
+    assert!(rows > 2001 && rows < 2100, "{rows}");
     let names: Vec<&str> = table
         .schema()
         .fields()
@@ -123,7 +127,8 @@ fn snr_eng_406_undefined_samples_have_no_y_and_are_reported() {
 
 #[test]
 fn snr_eng_405_functions_without_a_symbolic_derivative_get_a_numerical_one() {
-    let source = json!({"kind": "function", "expr": "abs(x - 1)", "domain": [-2, 4], "samples": 7});
+    let source =
+        json!({"kind": "function", "expr": "max(x - 1, 1 - x)", "domain": [-2, 4], "samples": 7});
     let (bundle, cx) = ingest(&source);
     let dys = column(&bundle.unwrap(), "dy");
     assert!((dys[0].unwrap() + 1.0).abs() < 1e-6);
@@ -217,16 +222,21 @@ fn compile(spec: &Value) -> Result<Compiled, Failure> {
     compiler.compile(&spec.to_string(), &CancelToken::new())
 }
 
-/// 04 §6.3's example compiles: the function is a glide with pitch from `y` and brightness
-/// from `dy`. Its `analysis` block (critical-point cues) arrives with C03-T03.
-#[test]
-fn the_04_6_3_function_example_compiles() {
-    let spec = json!({
+fn example_6_3() -> Value {
+    json!({
         "specVersion": "0.1",
         "data": { "source": { "kind": "function", "expr": "sin(x) / x", "domain": [-20, 20], "samples": 2000 } },
         "substrate": { "time": { "pace": { "duration": { "s": 8 } } } },
-        "tracks": [{ "id": "f", "mark": "glide", "channels": { "pitch": { "field": "y" }, "brightness": { "field": "dy" } } }]
-    });
+        "tracks": [{ "id": "f", "mark": "glide", "channels": { "pitch": { "field": "y" }, "brightness": { "field": "dy" } } }],
+        "analysis": { "detect": ["critical-points"], "cue": "earcon" }
+    })
+}
+
+/// 04 §6.3's example compiles: the function is a glide with pitch from `y` and brightness
+/// from `dy`, and the `critical-points` detector runs (C03-T03).
+#[test]
+fn the_04_6_3_function_example_compiles() {
+    let spec = example_6_3();
     let compiled = compile(&spec).unwrap();
     let track = &compiled.score.tracks[0];
     assert_eq!(track.id.as_str(), "f");
@@ -240,6 +250,107 @@ fn the_04_6_3_function_example_compiles() {
     assert!(compiled.score.header.engines.contains_key(&ENGINE));
     assert!((compiled.score.header.duration.0 - 8.0).abs() < 1e-6);
     assert_eq!(compiled.provenance.get("synthetic"), Some(&1.0));
+}
+
+/// C03-T03: the critical points reach AUDAXIS's navigation tree as insight nodes, through
+/// core annotations only (no engine depends on another, `check-deps`).
+#[test]
+fn a11y_23_critical_points_are_insight_nodes() {
+    let platform = Platform::new();
+    let curvasona = Curvasona::new();
+    let numisona = Numisona::new();
+    let audaxis = Audaxis::new();
+    let compiler: Compiler<DataBundle> =
+        Compiler::new(&[&platform, &curvasona, &numisona, &audaxis]).unwrap();
+    let output = compiler
+        .compile(&example_6_3().to_string(), &CancelToken::new())
+        .unwrap();
+    let tree = output.nav.unwrap();
+    let labels: Vec<&str> = tree
+        .iter()
+        .filter(|(_, node)| matches!(node.kind, NavKind::Insight(_)))
+        .filter_map(|(_, node)| node.label.as_deref())
+        .collect();
+    let count = |label: &str| labels.iter().filter(|&&l| l == label).count();
+    assert_eq!(count("zero"), 12, "{labels:?}");
+    assert_eq!(count("local maximum"), 4);
+    assert_eq!(count("local minimum"), 6);
+    assert_eq!(count("hole"), 1);
+    assert_eq!(count("horizontal asymptote to the left"), 1);
+    assert_eq!(count("horizontal asymptote to the right"), 1);
+    let groups: Vec<String> = tree
+        .iter()
+        .filter_map(|(_, node)| match &node.kind {
+            NavKind::InsightGroup(group) => Some(group.analyzer.to_string()),
+            _ => None,
+        })
+        .collect();
+    assert_eq!(groups, ["critical-points"]);
+    // Every insight lands on a point.
+    for (_, node) in tree.iter() {
+        if let NavKind::Insight(insight) = &node.kind {
+            assert!(insight.target.is_some(), "{:?}", node.label);
+        }
+    }
+}
+
+/// The table has a row at each zero, extremum and inflection, so the glide passes
+/// through it and its insight lands on it (C03-T03).
+#[test]
+fn critical_points_get_their_own_rows() {
+    let sampled = sample_function(
+        &FunctionSpec::new("x^3 - 3*x", [-3.0, 3.0]).with_samples(7),
+        &Budgets::DEFAULT,
+        (BundleId(0), FUNCTION_TABLE),
+    )
+    .unwrap();
+    let xs: Vec<f64> = column(&sampled.bundle, "x").into_iter().flatten().collect();
+    let root3 = 3.0_f64.sqrt();
+    for want in [-root3, -1.0, 0.0, 1.0, root3] {
+        assert!(
+            xs.iter().any(|&x| (x - want).abs() < 1e-12),
+            "{want} in {xs:?}"
+        );
+    }
+    let annotations = function_features(&sampled.bundle, &Budgets::DEFAULT).unwrap();
+    let labels: Vec<&str> = annotations.iter().map(|a| a.label.as_str()).collect();
+    assert_eq!(
+        labels,
+        [
+            "zero",
+            "local maximum",
+            "zero",
+            "inflection point",
+            "local minimum",
+            "zero"
+        ]
+    );
+    assert!(annotations.iter().all(|a| a.range.len() == 1));
+}
+
+/// Critical points on data that is not a function are refused with a warning.
+#[test]
+fn snr_eng_420_critical_points_need_a_function() {
+    let platform = Platform::new();
+    let curvasona = Curvasona::new();
+    let numisona = Numisona::new();
+    let compiler: Compiler<DataBundle> =
+        Compiler::new(&[&platform, &curvasona, &numisona]).unwrap();
+    let spec = json!({
+        "specVersion": "0.1",
+        "data": { "source": { "kind": "inline", "values": [{"x": 1, "y": 2}, {"x": 2, "y": 3}] } },
+        "tracks": [{ "id": "f", "mark": "tone", "channels": { "pitch": { "field": "y" } } }],
+        "analysis": { "detect": ["critical-points"] }
+    });
+    let output = compiler
+        .compile(&spec.to_string(), &CancelToken::new())
+        .unwrap();
+    assert!(
+        output
+            .diagnostics
+            .iter()
+            .any(|d| d.code.as_str() == "SNR-ENG-420")
+    );
 }
 
 /// The Score of a small function, for review (testing-strategy §4).
@@ -298,7 +409,8 @@ fn poles_between_samples_get_an_empty_row() {
     .unwrap();
     let xs = column(&sampled.bundle, "x");
     let ys = column(&sampled.bundle, "y");
-    assert_eq!(xs.len(), 12);
+    // Ten samples, the two poles and the zero (and inflection) at 0.
+    assert_eq!(xs.len(), 13);
     let empty: Vec<f64> = xs
         .iter()
         .zip(&ys)

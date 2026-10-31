@@ -255,7 +255,13 @@ Reflect.set(window, "__SONARITHM_MOCK__", {
   /** Loads a Score of `durationS` seconds and reports it, as a compile would. */
   loadScore(durationS: number) {
     transport = { ...transport, loaded: true, durationS };
-    emit({ event: "clock", transport, hostTimeS: null, seq: 1 });
+    emit({
+      event: "clock",
+      transport,
+      hostTimeS: null,
+      outputLatencyS: null,
+      seq: 1,
+    });
   },
   emit,
   /** The commands the UI sent through `ipc_dispatch`, oldest first. */
