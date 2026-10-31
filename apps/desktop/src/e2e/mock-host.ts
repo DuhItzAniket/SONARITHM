@@ -183,11 +183,21 @@ function moveCursor(row: number, origin: CursorOrigin): CursorState {
  * with the columns `row`, `x` (time) and `y` (temperature), as `view_get` sends them. It
  * thins the rows rather than computing M4, which is enough for the cursor's tests.
  */
-function viewTile(pxWidth: number): ArrayBuffer {
+function viewTile(
+  pxWidth: number,
+  range: { readonly start: number; readonly end: number } | null,
+): ArrayBuffer {
   const total = dataset?.rows ?? 0;
-  const count = Math.min(total, Math.max(1, pxWidth));
+  // x is row / 10, so a range of x is a range of rows (B04-T07).
+  const first = range === null ? 0 : Math.max(0, Math.ceil(range.start * 10));
+  const last =
+    range === null
+      ? total - 1
+      : Math.min(total - 1, Math.floor(range.end * 10));
+  const span = Math.max(0, last - first);
+  const count = Math.min(span + 1, Math.max(1, pxWidth));
   const rows = Array.from({ length: count }, (_, i) =>
-    count === 1 ? 0 : Math.round((i * (total - 1)) / (count - 1)),
+    count === 1 ? first : first + Math.round((i * span) / (count - 1)),
   );
   return encodeView({
     kind: 1,
@@ -257,7 +267,7 @@ const host = createMockTransport(handlers, {
         : new ArrayBuffer(0),
     view_get: (request) =>
       request.command === "view_get"
-        ? viewTile(request.args.pxWidth)
+        ? viewTile(request.args.pxWidth, request.args.range)
         : new ArrayBuffer(0),
   },
 });
@@ -330,6 +340,12 @@ Reflect.set(window, "__SONARITHM_MOCK__", {
   /** The cursor as the mock host holds it. */
   cursor(): CursorState {
     return cursor;
+  },
+  /** The x ranges of the plot's `view_get` requests, oldest first (`null` for all of x). */
+  viewRanges(): ({ start: number; end: number } | null)[] {
+    return host.requests.flatMap((request) =>
+      request.command === "view_get" ? [request.args.range] : [],
+    );
   },
   /** The commands the UI sent through `ipc_dispatch`, oldest first. */
   commands(): string[] {

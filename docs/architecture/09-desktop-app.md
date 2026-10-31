@@ -148,6 +148,13 @@ The UI calls an `IpcTransport` interface (`invoke`, `subscribe`, `binary`). The 
 - **Click to move.** A click on the plot moves the cursor to the nearest drawn point (origin `plot`), which Rust announces. The plot stays one image (A11Y-01): the click is a pointer convenience, and the table and the chart explorer (B03-T09) are the keyboard ways. B04-T07 adds the other non-drag alternatives.
 - **Readout.** The Status region shows "Data row N" and the breadcrumb. It is not a live region.
 
+**As built (B04-T07): zoom and pan without dragging (A11Y-26).**
+
+- **Drag zoom.** A drag across the plot selects an x range, and the plot zooms to it (`view_get` with that range). A press and release in place is a click, which moves the cursor; a drag never also moves it. Pointer events on uPlot's overlay read the overlay's box at each event (F-179).
+- **Alternatives.** Every drag has one that needs neither a drag nor a pointer: a "Plot view" toolbar (React Aria Toolbar) with Zoom in, Zoom out, Reset zoom, Pan left and Pan right. The same commands come from the keyboard (`view.zoomIn` Ctrl+Plus, `view.zoomOut` Ctrl+Minus, `view.zoomReset` Ctrl+0; Cmd on macOS) and from the palette (`view.panLeft`, `view.panRight`, unbound).
+- **Behaviour.** Zooming halves or doubles the view around the cursor when it is in view (it keeps its place), else around the middle. Panning moves a quarter of the view and stops at the data's ends. The shown range is visible text ("Showing time (s) from 0 to 99.9") and is announced politely when it changes.
+- **Targets.** Every toolbar button is at least 24 × 24 CSS pixels (WCAG 2.5.8; the controls' `--row-default` and `--target-min`), checked by an E2E test.
+
 ## 4. Security model
 
 | Control | Setting |

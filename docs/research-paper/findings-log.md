@@ -1074,3 +1074,12 @@ A05 (render engine, audio backends, export) uses F-050 to F-069.
 - **Evidence level / confidence:** EV-C / Strong (code and test)
 - **Affects:** ADR-0013, RFC-0006, ADR-0027, 06 §7; RFC template ("Affects" should name reader strictness)
 - **Papers:** none yet
+
+### F-179 · uPlot's drag selection missed in WebKit because it positions from a cached box
+
+- **Date:** 2026-11-01 · **Phase:** B04 · **Type:** engineering · **Status:** new
+- **Statement:** B04-T07's first drag-to-zoom used uPlot 1.6.32's cursor drag selection. It zoomed in Chromium, but in Playwright's WebKit a drag across the plot selected nothing. uPlot computes the selection from a bounding box it caches and refreshes only on its own resize, scroll and enter events; after a layout shift the cached box no longer matched the plot. The drag is now SONARITHM's own: pointer events on uPlot's overlay, positioned from `getBoundingClientRect()` at each event, with pointer capture. That works in Chromium and WebKit. uPlot's cursor stays off, which also keeps the hover readout out (DL-X11).
+- **Evidence:** `apps/desktop/e2e/plot.spec.ts` (`a11y_26_a_drag_zooms_and_does_not_move_the_cursor`, Chromium and WebKit); `packages/viz/src/Plot.tsx`
+- **Evidence level / confidence:** EV-C / Moderate. The cached-box cause is inferred from uPlot's documented behaviour and the fix; WebKitGTK and WKWebView inside Tauri are untested (TODO(verify), B04-T08)
+- **Affects:** B04-T07, A11Y-26; any later uPlot interaction (B04-T08 traces in three webviews)
+- **Papers:** none yet

@@ -125,6 +125,13 @@
 - **Pseudo-locale.** The test forbids unaccented letters in the output, and the `axis` sample is the letter "x", so the plot's label takes the x header as `text`.
 - Locally: desktop 43 unit tests, all 40 Chromium E2E tests, `cursor.spec.ts` in WebKit (3), the Plot stories, `sonarithm-i18n` 25 and the TypeScript i18n 9.
 
+## B04-T07: zoom and pan without dragging (2026-11-01)
+
+- `zoom` and `pan` in `plot/zoom.ts` (Node tests), the Plot view toolbar, and command handlers for `view.zoomIn`, `view.zoomOut` and `view.zoomReset` (already in the keymap), plus new palette commands `view.panLeft` and `view.panRight`.
+- **Drag zoom.** The first version used uPlot's drag selection, which worked in Chromium. In WebKit no selection happened, because uPlot positions the selection from a bounding box it caches, and the layout had moved since. Pointer events on the overlay, reading its box at each event, work in both (F-179).
+- A local name `view` (the decoded tile) shadowed the range state named `view`, and lint caught the dead condition.
+- Locally: desktop 47 unit tests, all 44 Chromium E2E tests, `plot.spec.ts` and `cursor.spec.ts` in WebKit (14 in both), the Plot stories, i18n 25 and 9, viz 7. No cargo beyond the i18n tests.
+
 ## Next steps
 
 - [ ] Commit the screenshot baselines from the first CI run's `visual-baselines` artifact.

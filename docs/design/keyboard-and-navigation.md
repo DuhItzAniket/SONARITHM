@@ -454,7 +454,7 @@ Navigation is built on discrete commands (`nav.move(verb, direction)`), not on c
 | Switch access | OS switch control (for example macOS Switch Control) issues the same key commands. A proposed in-app "explorer action ring" lets one or two switches cycle through Next, Previous, In, Out, Lateral, Play/Pause and Where am I, and select. | Proposal for B07 co-design |
 | Gamepad | Gamepad API: D-pad Left/Right = spatial step, Up/Down = local out/in; shoulder buttons = lateral; triggers = jump ±10 %; A = play/pause; B = stop; X = where am I; Y = repeat; Start = query menu. DIXTRAL used keyboard and gamepad navigation in a small study. | Proposal; Gamepad API availability per webview [CHECK] |
 | Voice control | OS voice control (Windows Voice Access, macOS Voice Control) can press keys and activate named controls; every command has a visible name in menus and the palette. | Supported by KB-01 |
-| Pointer | Clicking a point moves the cursor there; drag scrubbing and drag zoom have keyboard and single-pointer alternatives (A11Y-26). | B04 |
+| Pointer | Clicking a point moves the cursor there (B04-T06). A drag across the plot zooms to that range; the Plot view toolbar (Zoom in, Zoom out, Reset zoom, Pan left, Pan right) and the commands `view.zoomIn` (Ctrl+Plus), `view.zoomOut` (Ctrl+Minus), `view.zoomReset` (Ctrl+0), `view.panLeft` and `view.panRight` (palette) are its single-pointer and keyboard alternatives. There is no drag scrubbing: a click moves the cursor, and the table and the explorer step it (A11Y-26). | B04-T07 |
 
 ## 15. Validation
 
