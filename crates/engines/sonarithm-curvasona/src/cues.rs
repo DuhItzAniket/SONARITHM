@@ -345,11 +345,7 @@ impl ContextProvider<DataBundle> for FunctionCues {
                 Delivery::Earcon => {
                     let mut earcon = Earcon::new(cue.t, cue.kind);
                     // The highest-priority feature's row; `cue_log` names them all.
-                    earcon.src = cue
-                        .kind
-                        .eq(&EarconKind::Landmark)
-                        .then(|| cue.rows.first().copied())
-                        .unwrap_or_else(|| first_of_kind(&cue));
+                    earcon.src = first_of_kind(&cue);
                     ScoreEvent::Earcon(earcon)
                 }
                 Delivery::Speech => {
