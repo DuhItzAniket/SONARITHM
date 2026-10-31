@@ -307,6 +307,14 @@ code!(
 );
 
 code!(
+    /// An `experimental` switch this version does not know (RFC-0006 §2).
+    UNKNOWN_EXPERIMENT, "SNR-SPEC-047", Warning,
+    "Unknown experimental switch",
+    "This SONARITHM does not know the switch, so it has no effect. Check its spelling, or use the version that introduced it.",
+    []
+);
+
+code!(
     /// An invalid chart calibration (RFC-0004 §5).
     INVALID_CALIBRATION, "SNR-SPEC-054", Error,
     "Invalid chart calibration",
@@ -410,6 +418,7 @@ pub const CODES: CodeTable = CodeTable {
         INVALID_TUNING,
         UNKNOWN_LINT_RULE,
         SUPPRESSION_WITHOUT_REASON,
+        UNKNOWN_EXPERIMENT,
         INVALID_PACE,
         INVALID_SOURCE,
         ABSOLUTE_PATH,

@@ -10,19 +10,24 @@ use serde::{Deserialize, Serialize};
 use sonarithm_core::score::SpecVersion;
 
 use crate::data::{DataSpec, Transform};
+use crate::experimental::Experimental;
 use crate::json::JsonValue;
 use crate::sections::{Analysis, Context, Music, Output, Playback, Substrate};
 use crate::track::TrackSpec;
 use crate::v02::{Instrument, Lint, TemplateRef};
 
 /// The spec version this crate writes, and the newest it reads.
-pub const SPEC_VERSION: SpecVersion = SpecVersion::V0_3;
+pub const SPEC_VERSION: SpecVersion = SpecVersion::V0_4;
 
-/// The versions this crate reads as they are, without migrating them: 0.1 and 0.2 read
-/// directly because the 0.1 → 0.2 and 0.2 → 0.3 migrations are the identity (RFC-0004 §9,
-/// RFC-0005 Q6).
-pub const READABLE_VERSIONS: &[SpecVersion] =
-    &[SpecVersion::V0_1, SpecVersion::V0_2, SpecVersion::V0_3];
+/// The versions this crate reads as they are, without migrating them: 0.1 to 0.3 read
+/// directly because the 0.1 → 0.2, 0.2 → 0.3 and 0.3 → 0.4 migrations are the identity
+/// (RFC-0004 §9, RFC-0005 Q6, RFC-0006 §2).
+pub const READABLE_VERSIONS: &[SpecVersion] = &[
+    SpecVersion::V0_1,
+    SpecVersion::V0_2,
+    SpecVersion::V0_3,
+    SpecVersion::V0_4,
+];
 
 /// A SONARITHM sonification spec: data plus how it becomes sound (RFC-0001, RFC-0004).
 ///
@@ -34,7 +39,7 @@ pub const READABLE_VERSIONS: &[SpecVersion] =
 #[schemars(title = "SONARITHM spec", transform = top_level_keys)]
 #[non_exhaustive]
 pub struct Spec {
-    /// The spec language version, `"0.3"` (or `"0.1"` or `"0.2"`, read as they are).
+    /// The spec language version, `"0.4"` (or `"0.1"` to `"0.3"`, read as they are).
     #[schemars(with = "String", extend("pattern" = "^(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)$"))]
     pub spec_version: SpecVersion,
     /// A title, spoken by the legend.
@@ -85,6 +90,9 @@ pub struct Spec {
     /// Lint rule levels and suppressions (v0.2, RFC-0004 §4).
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub lint: Option<Lint>,
+    /// Opt-in sound experiments, each off unless turned on (v0.4, RFC-0006).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub experimental: Option<Experimental>,
     /// Other top-level keys. Only `x-` vendor keys are valid; they are preserved and
     /// ignored by the compiler.
     #[serde(flatten)]

@@ -1,6 +1,6 @@
 # RFC 0006: An `experimental` block in the spec, first for low-confidence timbre
 
-> **Status:** In discussion (proposed for acceptance by the coordinator under the owner's delegation). **Author(s):** project lead (drafted by an AI coding agent, Claude Code).
+> **Status:** **Accepted** (2026-10-31, coordinator under the owner's delegation; 7-day FCP waived; the owner can reopen it). Q1–Q5 as proposed; Q6: manifest version 2. Conditions: the timbre parameters are a new `INFER` rule (SDR-43) cited in doc comments and test names, and the Prior-art citations are resolved. Recorded in [ADR-0027](../decisions/0027-spec-experimental-block.md); implemented by C02-T09b. **Author(s):** project lead (drafted by an AI coding agent, Claude Code).
 > **Related:** [RFC process](README.md) · [RFC-0004 (spec v0.2)](0004-spec-v0.2.md) · [RFC-0005 (spec v0.3 via the correction file)](0005-chart-correction-file.md) · [ADR-0013](../decisions/0013-determinism-and-provenance.md) · [03 §4](../architecture/03-data-model.md#4-provenance-and-confidence) · [04](../architecture/04-sonification-spec.md) · [open-decisions OD-07](../planning/open-decisions.md) · [hypotheses H-06](../research-paper/hypotheses.md) · [design-rules](../research/design-rules.md)
 
 | Field | Value |
@@ -10,7 +10,7 @@
 | RFC PR | (this PR) |
 | Affects | Spec language (a minor version, `specVersion: "0.4"`, one new top-level key); the compile report (one Info code); the render manifest (format version 2, one optional field) |
 | Phase | C02 (task C02-T09b, split from C02-T09 by the coordinator on 2026-10-30) |
-| Related ADR(s) | [ADR-0013](../decisions/0013-determinism-and-provenance.md), [ADR-0021](../decisions/0021-spec-v0.2.md); a new ADR records this RFC's outcome |
+| Related ADR(s) | [ADR-0013](../decisions/0013-determinism-and-provenance.md), [ADR-0021](../decisions/0021-spec-v0.2.md); [ADR-0027](../decisions/0027-spec-experimental-block.md) records this RFC's outcome |
 | Supersedes | none |
 
 ## Summary
@@ -109,8 +109,8 @@ New: `SNR-SPEC-047` unknown experimental switch (warning); `SNR-COMP-037` an exp
 
 ## Prior art
 
-- Feature flags in declarative grammars (Vega's experimental signals, Rust's `#![feature]` gates): opt-in, named, reported, removable.
-- Uncertainty sonification (H-06's sources; notes/06 §8): proposed treatments, none evaluated with blind listeners. TODO(verify) the specific citations when C02-T09b writes the `INFER` rule.
+- Opt-in feature gates: Rust's `#![feature]` gates and Cargo's `-Z` flags are opt-in, named and removable, and a build that uses one says so. Within SONARITHM, `lint.experimental` (RFC-0004 §4) already gates the `INFER` lint rules the same way.
+- Uncertainty in sound: granular synthesis renders distributions and uncertainty as grain density ([Williamson & Murray-Smith 2005](https://doi.org/10.1109/MMUL.2005.37); SDR-32), a different treatment from a per-note timbre. The project's literature review found no study that measures how blind or low-vision listeners notice, or trust, extraction uncertainty conveyed in audio ([notes/06 §7–§8](../research/notes/06-chart-extraction-ai.md)); the research report lists that as an open study (accessible uncertainty, P08). So SDR-43's values are a starting point to test (H-06, EXP-005), not a result taken from the literature.
 
 ## Accessibility impact
 

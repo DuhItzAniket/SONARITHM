@@ -5,7 +5,7 @@ Checked-in expectations that more than one test suite reads.
 | Directory | What | Checked by | Regenerate |
 |---|---|---|---|
 | `parity/` | A spec, its CSV, the Score the facade compiles for it (engine versions written as `*`, since they change with every release) and the SHA-256 of its default WAV render | `crates/sonarithm/tests/parity.rs` (Rust facade) and `bindings/python/tests/test_parity.py` (Python package): both front ends must produce this Score, value for value | `UPDATE_PARITY=1 cargo test -p sonarithm --test parity`, with the reason in the PR |
-| `benchmark-10s/`, `compensation-sweep/`, `context-cues/`, `earcons/`, `glide-sweeps/`, `limiter-stress/`, `monitoring-soundscape/`, `stereo-placement/`, `taps-and-short-notes/` | Golden-audio cases of the render engine: a `case.json` manifest (hashes and metrics, no audio) and, for handcrafted Scores, a `score.json` | `cargo xtask golden` and the `golden` and `golden-compare` CI jobs (A05-T11, below) | `cargo xtask golden --update --reason "<why>"`, in its own PR |
+| `benchmark-10s/`, `compensation-sweep/`, `context-cues/`, `earcons/`, `glide-sweeps/`, `limiter-stress/`, `low-confidence-timbre/`, `monitoring-soundscape/`, `stereo-placement/`, `taps-and-short-notes/` | Golden-audio cases of the render engine: a `case.json` manifest (hashes and metrics, no audio) and, for handcrafted Scores, a `score.json` | `cargo xtask golden` and the `golden` and `golden-compare` CI jobs (A05-T11, below) | `cargo xtask golden --update --reason "<why>"`, in its own PR |
 
 ## Golden-audio cases (A05-T11)
 
@@ -20,6 +20,7 @@ Each directory is one case: `case.json` (the manifest) and, for handcrafted Scor
 | `earcons` | Every compiled earcon kind, with seeded noise (the B03-T06 set) |
 | `glide-sweeps` | Glides with moving pitch, level, pan and brightness |
 | `limiter-stress` | The master true-peak limiter on a +12 dB chord |
+| `low-confidence-timbre` | The experimental low-confidence timbre (C02-T09b, SDR-43, RFC-0006): exact, then estimated values at confidence 1.0 and 0.3, compiled with `experimental.lowConfidenceTimbre` on. Expected per-second centroids: about 1518 Hz (exact), 1263 Hz (confidence 1.0: SDR-43's fixed step for the estimate class), 1145 Hz (0.3) and 1483 Hz (exact), at the same pitches every second. `crates/engines/sonarithm-numisona/tests/experimental.rs` checks that `score.json` matches a fresh compile; the Score with the switch off is checked to be byte-identical to one without the block |
 | `monitoring-soundscape` | The monitoring soundscape (B06-T04, SDR-35): the bed brightening on three events of rising salience, `E-STREAM` and a configured `E-ALARM`. `crates/engines/sonarithm-sonotrace/src/monitor/tests.rs` checks that `score.json` is the module's output |
 | `context-cues` | Tick clicks (SDR-16) and the dynamic reference tone (SDR-17) over a rising and falling mallet series, compiled with NUMISONA and AUDAXIS (B03-T05). `crates/engines/sonarithm-audaxis/tests/context.rs` checks that `score.json` matches a fresh compile |
 | `stereo-placement` | x on pan from left to right and y on pitch, compiled with NUMISONA and AUDAXIS (B03-T11, SDR-30). `crates/engines/sonarithm-audaxis/tests/spatial.rs` checks that `score.json` matches a fresh compile |

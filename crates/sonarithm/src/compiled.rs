@@ -71,6 +71,13 @@ impl Compiled {
         &self.inner.provenance
     }
 
+    /// The keys of the experimental switches that are on (RFC-0006), sorted, such as
+    /// `["lowConfidenceTimbre"]`.
+    #[must_use]
+    pub fn experiments(&self) -> &[String] {
+        &self.inner.experiments
+    }
+
     /// The spec's name in messages, such as `temps.spec.json`.
     #[must_use]
     pub fn spec_name(&self) -> &str {
@@ -161,6 +168,12 @@ impl Compiled {
         )];
         if let Some(text) = spec.as_ref().and_then(|spec| spec.description.clone()) {
             l1.push(text);
+        }
+        // RFC-0006 §4: no listener hears an experiment without being told.
+        for key in &self.inner.experiments {
+            if let Some(experiment) = sonarithm_spec::experimental::experiment(key) {
+                l1.push(format!("Experimental: {}.", experiment.summary));
+            }
         }
         let time_field = spec
             .as_ref()

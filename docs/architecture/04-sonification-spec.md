@@ -1,6 +1,6 @@
-# 04 · Sonification Spec Language (v0.3)
+# 04 · Sonification Spec Language (v0.4)
 
-> **Status:** **Frozen as v0.1** by [RFC-0001](../rfcs/0001-spec-v0.1.md), accepted 2026-10-19 ([ADR-0015](../decisions/0015-spec-v0.1-frozen.md)). The RFC is normative: it holds the exact key set, defaults, validation codes and the 21 resolutions, and it wins wherever this overview is less precise. Changes follow the versioning rules in §7. **Spec v0.2** ([RFC-0004](../rfcs/0004-spec-v0.2.md), [ADR-0021](../decisions/0021-spec-v0.2.md), accepted 2026-10-26) adds `template`, `instruments`, `lint`, a typed chart calibration, chart corrections and AXONOTE's scale and tuning names. It is implemented (C01-T01), and this document describes v0.2; RFC-0004 is normative for what it adds.
+> **Status:** **Frozen as v0.1** by [RFC-0001](../rfcs/0001-spec-v0.1.md), accepted 2026-10-19 ([ADR-0015](../decisions/0015-spec-v0.1-frozen.md)). The RFC is normative: it holds the exact key set, defaults, validation codes and the 21 resolutions, and it wins wherever this overview is less precise. Changes follow the versioning rules in §7. **Spec v0.2** ([RFC-0004](../rfcs/0004-spec-v0.2.md), [ADR-0021](../decisions/0021-spec-v0.2.md), accepted 2026-10-26) adds `template`, `instruments`, `lint`, a typed chart calibration, chart corrections and AXONOTE's scale and tuning names. It is implemented (C01-T01), and this document describes v0.2; RFC-0004 is normative for what it adds. **Spec v0.3** ([RFC-0005](../rfcs/0005-chart-correction-file.md)) adds `corrections.path`, and **spec v0.4** ([RFC-0006](../rfcs/0006-spec-experimental-block.md), [ADR-0027](../decisions/0027-spec-experimental-block.md)) adds `experimental` (§5.12).
 > **Decision:** [ADR-0005 Declarative spec and Score IR](../decisions/0005-declarative-spec-and-score-ir.md). **Owner:** Spec lead.
 > **Evidence:** [SDR-01..06](../research/design-rules.md#a-specification-and-reproducibility).
 
@@ -16,7 +16,7 @@
 | **Evidence-backed defaults; everything overridable** | Defaults from the design rules; user ownership | P7 |
 | **Human-writable JSON**, with a schema for editors | Authoring in the CodeMirror editor, CLI, notebooks | — |
 
-The canonical serialization is **JSON**. Builders exist in Rust and Python and produce the same JSON. The JSON Schema is generated from the Rust types (schemars) into `schemas/sonarithm-spec-0.3.schema.json`, and CI fails if it is stale. The v0.1 and v0.2 schemas stay in `schemas/` for editors of older files.
+The canonical serialization is **JSON**. Builders exist in Rust and Python and produce the same JSON. The JSON Schema is generated from the Rust types (schemars) into `schemas/sonarithm-spec-0.4.schema.json`, and CI fails if it is stale. The v0.1 to v0.3 schemas stay in `schemas/` for editors of older files.
 
 ## 2. Top-level structure
 
@@ -38,7 +38,8 @@ The canonical serialization is **JSON**. Builders exist in Rust and Python and p
   "output": { },                 // §5.8  sample rate, channels, loudness target, sinks
   "template": { },               // §5.9  v0.2: a reusable design bound to the data
   "instruments": { },            // §5.10 v0.2: named instruments (SoundFonts)
-  "lint": { }                    // §5.11 v0.2: lint rule levels and suppressions
+  "lint": { },                   // §5.11 v0.2: lint rule levels and suppressions
+  "experimental": { }            // §5.12 v0.4: opt-in sound experiments, each off by default
 }
 ```
 
@@ -263,6 +264,18 @@ A section written in the spec replaces the template's section of the same name, 
 
 Rules are named by design-rule ID; one the lint does not implement is a warning (`SNR-SPEC-045`). A suppression needs a reason (`SNR-SPEC-046`) and may name a `track`. Turning a rule off is always reported. Validation errors (such as `music` outside Presentation, SDR-10) and hearing safety are not lint and cannot be turned off.
 
+### 5.12 `experimental` (v0.4)
+
+```jsonc
+"experimental": { "lowConfidenceTimbre": true }   // each switch is false unless written true
+```
+
+Switches for sound designs that evidence does not yet back ([RFC-0006](../rfcs/0006-spec-experimental-block.md), [ADR-0027](../decisions/0027-spec-experimental-block.md)). Only the spec can turn one on: templates, profiles and presets cannot. A switch that is on is reported (`SNR-COMP-037`, Info), named in the text description ("Experimental: …") and listed in the render manifest's `spec.experimental`. A switch this version does not know is a warning (`SNR-SPEC-047`) and has no effect. Switches set to `false`, and an empty block, leave the canonical form, so they do not change the spec hash. This block is separate from `lint.experimental`, which only changes lint advice.
+
+| Switch | Engine | Effect |
+|---|---|---|
+| `lowConfidenceTimbre` | NUMISONA | Estimated values (`cv_estimate`, `ml_estimate`, `cloud_estimate`) play darker: 0.25 of the brightness scale, plus 0.25 × (1 − confidence) (SDR-43, `INFER`, for H-06). Pitch, timing and loudness do not change; speech, text and the table still label every estimate. With brightness mapped from data, NUMISONA warns (`SNR-ENG-057`) |
+
 ## 6. Complete examples
 
 ### 6.1 Minimal (inferred defaults)
@@ -336,6 +349,7 @@ The compiler fills in the substrate from `role=x` (or row order), pace 3 points/
 | Migrations | `sonarithm spec migrate` rewrites documents explicitly. The compiler may read old versions through in-memory migration, with a `Warning` diagnostic. It never silently rewrites files |
 | v0.1 and v0.2 | The 0.1 → 0.2 migration changes `specVersion` only, so a v0.2 reader reads `"0.1"` documents **as they are**: no migration, no warning, and their canonical form and spec hash do not change ([RFC-0004 §9](../rfcs/0004-spec-v0.2.md)). A v0.2 key in a `"0.1"` document is unknown (`SNR-SPEC-004`). v0.2 defaults (instrument bank and program, lint settings, the `12-TET` tuning, the calibration's `system` and `page`) fill only v0.2 documents |
 | v0.3 | Adds only `corrections.path` ([RFC-0005](../rfcs/0005-chart-correction-file.md), [ADR-0026](../decisions/0026-chart-correction-file.md)). The 0.2 → 0.3 migration changes `specVersion` only, so `"0.1"` and `"0.2"` documents are read as they are; `sonarithm spec migrate` writes `"0.3"` |
+| v0.4 | Adds only `experimental` ([RFC-0006](../rfcs/0006-spec-experimental-block.md), [ADR-0027](../decisions/0027-spec-experimental-block.md)). The 0.3 → 0.4 migration changes `specVersion` only, so `"0.1"` to `"0.3"` documents are read as they are; `experimental` in a `"0.3"` or older document is `SNR-SPEC-004` |
 | Pre-1.0 | Until SONARITHM 1.0, `0.x` minor versions may break, with a migration provided |
 | Canonical form | For hashing, specs are canonicalized per RFC 8785 (JSON Canonicalization Scheme) after the data-independent defaults are applied. The **spec hash** in manifests is SHA-256 of that form ([ADR-0013](../decisions/0013-determinism-and-provenance.md)). Implemented by `sonarithm_spec::prepare` (A03-T08); every applied default is reported as `SNR-SPEC-080` (Info) with its rule ID |
 

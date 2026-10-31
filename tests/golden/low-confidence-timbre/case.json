@@ -1,0 +1,29 @@
+{
+  "description": "Low-confidence timbre (C02-T09b, SDR-43, experimental): a mallet series compiled with `experimental.lowConfidenceTimbre` on, one second each of exact values, estimates at confidence 1.0, estimates at 0.3 and exact values again. Every second plays the same three pitches, so the per-second centroid falls with the timbre alone: darker for the estimates, darkest at 0.3.",
+  "source": {
+    "kind": "score"
+  },
+  "sampleRate": 48000,
+  "blockSize": 256,
+  "tolerances": {
+    "nullResidualDbfs": -90.0,
+    "lufsDelta": 0.1,
+    "centroidRelative": 0.01
+  },
+  "reference": {
+    "platform": "windows-x86_64",
+    "sha256": "sha256:0b9d38edaa4618fa5db8432f3f43b29a2b66592adc28f3212ebc34eb9fe3a92c",
+    "frames": 188000,
+    "integratedLufs": -29.941,
+    "truePeakDbtp": -23.038,
+    "peakDbfs": -23.048,
+    "rmsDbfs": -33.366,
+    "centroidHz": [
+      1517.5,
+      1263.3,
+      1144.7,
+      1482.5
+    ]
+  },
+  "reason": "New case for C02-T09b: the experimental low-confidence timbre (SDR-43, RFC-0006) with the switch on"
+}

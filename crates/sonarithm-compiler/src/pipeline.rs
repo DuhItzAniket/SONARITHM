@@ -18,7 +18,7 @@ use sonarithm_core::engine::{
     Annotation, Budget, CancelToken, CompileContext, CompileError, Engine, MarkKind, Registry,
     SourceKind, SpecFragment, TrackRequest,
 };
-use sonarithm_core::ids::{AnalyzerId, EngineId, TrackId};
+use sonarithm_core::ids::{AnalyzerId, EngineId, RuleId, TrackId};
 use sonarithm_core::nav::NavTree;
 use sonarithm_core::score::{EngineVersion, Score, ScoreHeader, ShaperStage};
 use sonarithm_core::units::Seconds;
@@ -76,6 +76,9 @@ pub struct Compiled {
     /// The navigation tree (05 §8), when a registered context provider builds one
     /// (AUDAXIS). It is not part of the Score and never changes its hash.
     pub nav: Option<NavTree>,
+    /// The keys of the experimental switches that are on (RFC-0006), sorted, for the
+    /// render manifest and the description.
+    pub experiments: Vec<String>,
 }
 
 /// Why a compile produced no Score.
@@ -143,11 +146,14 @@ impl<D: CompilerData> Compiler<D> {
     ) -> Result<Compiled, Failure> {
         let written = &prepared.spec;
         let spec = &prepared.resolved;
+        let experiments = experiments_on(spec);
+        let mut diagnostics = prepared.diagnostics.clone();
+        diagnostics.extend(experiment_notes(&experiments));
         let mut run = Run {
             registry: &self.registry,
             cx: CompileContext::new(spec.seed.unwrap_or(0), self.budget, cancel.clone()),
             used: BTreeMap::new(),
-            diagnostics: prepared.diagnostics.clone(),
+            diagnostics,
         };
         match run.stages(written, spec, prepared.hash) {
             Ok(Finished {
@@ -166,6 +172,7 @@ impl<D: CompilerData> Compiler<D> {
                     diagnostics,
                     provenance,
                     nav,
+                    experiments,
                 })
             }
             Err(Stop::Cancelled) => Err(Failure::Cancelled),
@@ -527,8 +534,43 @@ impl<D: CompilerData> Run<'_, D> {
     }
 }
 
+/// The keys of the known experimental switches the spec turns on, sorted (RFC-0006 §1).
+fn experiments_on(spec: &Spec) -> Vec<String> {
+    spec.experimental
+        .as_ref()
+        .map(|block| block.on().into_iter().map(str::to_owned).collect())
+        .unwrap_or_default()
+}
+
+/// One `SNR-COMP-037` Info per switch that is on, naming it and its evidence (RFC-0006 §4).
+fn experiment_notes(experiments: &[String]) -> Vec<Diagnostic> {
+    experiments
+        .iter()
+        .filter_map(|key| sonarithm_spec::experimental::experiment(key))
+        .map(|experiment| {
+            let mut diagnostic = Diagnostic::new(
+                &codes::EXPERIMENT_ON,
+                format!(
+                    "Experimental: {} ({}, not yet backed by evidence).",
+                    experiment.summary,
+                    experiment.evidence.join(", ")
+                ),
+            )
+            .at(SpecPointer::root().key("experimental").key(experiment.key));
+            diagnostic.rules = experiment
+                .evidence
+                .iter()
+                .copied()
+                .filter(|id| id.starts_with("SDR-") || id.starts_with("A11Y-"))
+                .map(RuleId::from_static)
+                .collect();
+            diagnostic
+        })
+        .collect()
+}
+
 /// The request for one track: the track, the substrate, the declared field semantics,
-/// the missing-value treatment and the mode.
+/// the missing-value treatment, the mode and the experiments that are on.
 fn track_request(
     spec: &Spec,
     track: &sonarithm_spec::TrackSpec,
@@ -538,7 +580,8 @@ fn track_request(
     let root = SpecPointer::root();
     let mode = spec.mode.unwrap_or(sonarithm_spec::Mode::Analysis).into();
     let mut request = TrackRequest::new(TrackId::new(track.id.clone()), mark, fragment(at, track)?)
-        .with_mode(mode);
+        .with_mode(mode)
+        .with_experiments(experiments_on(spec).into_iter().collect());
     if let Some(substrate) = &spec.substrate {
         request = request.with_substrate(fragment(root.key("substrate"), substrate)?);
     }

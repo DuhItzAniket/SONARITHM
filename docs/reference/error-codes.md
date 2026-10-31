@@ -75,6 +75,7 @@ Owner: `sonarithm-compiler`.
 | `SNR-COMP-033` | info | Template binding used | Name slots in `template.bind` to choose other fields. | — |
 | `SNR-COMP-034` | info | Sections taken from a template | A section written in the spec replaces the template's section of the same name; the spec's `transform` runs before the template's. | — |
 | `SNR-COMP-036` | warning | RETIRED: A chart correction was not applied | An edit applies only to the point it was made on, checked by its `was` value; re-make the edit on the current extraction. | — |
+| `SNR-COMP-037` | info | An experimental sound design is on | The spec's `experimental` block turns on a sound design that evidence does not yet back. Remove the switch, or set it to false, to hear the default. | — |
 
 ## SNR-DATA
 
@@ -159,6 +160,7 @@ Owner: `sonarithm-numisona`. Numbers SNR-ENG-001 to SNR-ENG-099.
 | `SNR-ENG-054` | warning | Timbres repeat | Split the track by category, or announce the categories. | SDR-25, A11Y-14 |
 | `SNR-ENG-055` | warning | Channel not encoded | Remove the channel, or use a mark that supports it. | — |
 | `SNR-ENG-056` | warning | Redundant encoding not added | Map a field to pitch, or drop the explicit channel the redundant encoding would add. | A11Y-13 |
+| `SNR-ENG-057` | warning | Low-confidence timbre darkens a brightness channel | Estimated notes are darkened on top of the brightness the data sets, so the two mix. Map the field to another channel, or turn the experiment off. | SDR-43 |
 | `SNR-ENG-080` | warning | Erie construct not imported | Spec v0.1 has no equivalent; the note says what the import does instead. Adjust the imported spec by hand if the construct matters. | SDR-05 |
 | `SNR-ENG-081` | info | Erie construct imported approximately | Check the imported spec against the note; the construct maps onto spec v0.1 with the stated difference. | SDR-05 |
 
@@ -305,6 +307,7 @@ Owner: `sonarithm-spec`.
 | `SNR-SPEC-044` | error | Invalid tuning | Use "12-TET" or {"cents": [0, …]} with twelve strictly increasing values below 1200 ("just" waits for a cited ratio table, RFC-0004 Q13). A custom scale carries its own cents, so give it no tuning. | SDR-10 |
 | `SNR-SPEC-045` | warning | Unknown lint rule | Lint rules are named by design-rule ID, such as SDR-17 or A11Y-14. This lint does not implement the rule, so the setting has no effect. | — |
 | `SNR-SPEC-046` | error | A lint suppression has no reason | Say why the rule does not apply in `reason`; the lint reports it whenever it would have warned. | — |
+| `SNR-SPEC-047` | warning | Unknown experimental switch | This SONARITHM does not know the switch, so it has no effect. Check its spelling, or use the version that introduced it. | — |
 | `SNR-SPEC-050` | error | Invalid pace | Use a positive, finite pace with exactly one of `pointsPerSecond`, `duration` or `secondsPerUnit`. | — |
 | `SNR-SPEC-051` | error | Invalid data source parameters | Fix the source parameters the message names (RFC-0001 §4). | — |
 | `SNR-SPEC-052` | warning | Absolute path in the spec | Use a path relative to the spec, so the spec carries no user paths and stays portable. | — |

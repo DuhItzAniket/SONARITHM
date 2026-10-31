@@ -198,3 +198,56 @@ fn names_keep_only_their_last_component() {
         "a drive-relative path"
     );
 }
+
+/// Validates `instance` against the schema text `schema`.
+fn validates(schema: &str, instance: &serde_json::Value) -> Result<(), String> {
+    let schema: serde_json::Value = serde_json::from_str(schema).unwrap();
+    let mut schemas = boon::Schemas::new();
+    let mut compiler = boon::Compiler::new();
+    compiler
+        .add_resource("urn:sonarithm:manifest", schema)
+        .unwrap();
+    let index = compiler
+        .compile("urn:sonarithm:manifest", &mut schemas)
+        .unwrap();
+    schemas
+        .validate(instance, index)
+        .map_err(|error| error.to_string())
+}
+
+/// RFC-0006 §4, Q6: manifest version 2 records the experiments that were on in
+/// `spec.experimental`, and leaves the field out when none was, so a manifest without
+/// experiments still matches the version 1 schema apart from its version number.
+#[test]
+fn manifest_version_2_records_experiments_and_version_1_still_reads() {
+    let dir = scratch("experiments");
+    let options = ExportOptions::new(AudioFormat::Wav(WavEncoding::Pcm24));
+    let mut inputs = provenance();
+    inputs.experimental = vec!["lowConfidenceTimbre".to_owned()];
+    let exported = export(&score(), &options, &inputs, &dir, "on").unwrap();
+    assert_eq!(exported.manifest.manifest_version, 2);
+    assert_eq!(exported.manifest.spec.experimental, ["lowConfidenceTimbre"]);
+    let text = std::fs::read_to_string(dir.join("on.render.json")).unwrap();
+    let on: serde_json::Value = serde_json::from_str(&text).unwrap();
+    assert_eq!(
+        on["spec"]["experimental"],
+        serde_json::json!(["lowConfidenceTimbre"])
+    );
+    validates(&json_schema(), &on).unwrap();
+
+    let off = export(&score(), &options, &provenance(), &dir, "off").unwrap();
+    let text = std::fs::read_to_string(dir.join("off.render.json")).unwrap();
+    let mut old: serde_json::Value = serde_json::from_str(&text).unwrap();
+    assert!(old["spec"].get("experimental").is_none());
+    assert_eq!(off.manifest.spec.experimental, Vec::<String>::new());
+    old["manifestVersion"] = serde_json::json!(1);
+    let v1 = std::fs::read_to_string(
+        std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
+            .join("../../schemas/sonarithm-render-manifest-1.schema.json"),
+    )
+    .unwrap();
+    validates(&v1, &old).unwrap();
+    let read: sonarithm_export::manifest::RenderManifest = serde_json::from_value(old).unwrap();
+    assert_eq!(read.manifest_version, 1);
+    let _ = std::fs::remove_dir_all(dir);
+}
