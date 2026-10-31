@@ -32,6 +32,9 @@ pub struct SeriesReport {
     /// For calibrated series, the axis-calibration residual relative to the axis range.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub residual: Option<f64>,
+    /// How many of the points a person corrected; those are `user_edited`, whatever
+    /// `class` says (C02-T06).
+    pub edited: usize,
 }
 
 /// A report's points by how they were obtained (10 §5).
@@ -73,6 +76,9 @@ pub struct ExtractionReport {
     pub provenance: BTreeMap<String, usize>,
     /// Warnings and notes from extraction (errors stop it instead).
     pub diagnostics: Vec<Diagnostic>,
+    /// Every correction edit, applied or not, with the point's value and provenance before
+    /// it (C02-T06; 03 §4).
+    pub corrections: Vec<crate::corrections::CorrectionRecord>,
 }
 
 impl ExtractionReport {
@@ -90,11 +96,15 @@ impl ExtractionReport {
             .series
             .iter()
             .map(|series| {
+                let edited = series.user_edited.len();
                 *provenance
                     .entry(
                         sonarithm_data::provenance::class_name(series.provenance.class).to_owned(),
                     )
-                    .or_insert(0) += series.points.len();
+                    .or_insert(0) += series.points.len() - edited;
+                if edited > 0 {
+                    *provenance.entry("user_edited".to_owned()).or_insert(0) += edited;
+                }
                 SeriesReport {
                     name: series.name.clone(),
                     points: series.points.len(),
@@ -102,6 +112,7 @@ impl ExtractionReport {
                     class: series.provenance.class,
                     confidence: series.provenance.confidence.map(f32::from),
                     residual: series.residual,
+                    edited,
                 }
             })
             .collect();
@@ -115,6 +126,7 @@ impl ExtractionReport {
             series,
             provenance,
             diagnostics,
+            corrections: Vec::new(),
         }
     }
 
@@ -129,15 +141,17 @@ impl ExtractionReport {
         };
         let mut confidences: Vec<(f32, usize)> = Vec::new();
         for series in &self.series {
+            let rest = series.points - series.edited;
+            counts.exact += series.edited;
             match series.class {
-                ProvenanceClass::Exact | ProvenanceClass::UserEdited => {
-                    counts.exact += series.points;
-                }
-                ProvenanceClass::Vector => counts.calibrated += series.points,
-                _ => counts.estimated += series.points,
+                ProvenanceClass::Exact | ProvenanceClass::UserEdited => counts.exact += rest,
+                ProvenanceClass::Vector => counts.calibrated += rest,
+                _ => counts.estimated += rest,
             }
-            if let Some(confidence) = series.confidence {
-                confidences.push((confidence, series.points));
+            if let Some(confidence) = series.confidence
+                && rest > 0
+            {
+                confidences.push((confidence, rest));
             }
         }
         confidences.sort_by(|a, b| a.0.total_cmp(&b.0));

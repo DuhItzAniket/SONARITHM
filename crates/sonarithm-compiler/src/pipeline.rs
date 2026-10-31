@@ -218,21 +218,8 @@ impl<D: CompilerData> Run<'_, D> {
         spec_hash: Sha256Digest,
     ) -> Result<Finished, Stop> {
         let spec = resolved;
-        // Chart corrections are spec v0.2 (RFC-0004 §6); this compiler does not apply them
-        // yet, and says so rather than compiling something else.
-        if let sonarithm_spec::Source::Chart {
-            corrections: Some(_),
-            ..
-        } = &spec.data.source
-        {
-            self.diagnostics.push(
-                Diagnostic::new(
-                    &codes::CORRECTION_NOT_APPLIED,
-                    "This build does not apply chart corrections yet; the chart is used as extracted.",
-                )
-                .at(SpecPointer::root().key("data").key("source").key("corrections")),
-            );
-        }
+        // Chart corrections (RFC-0004 §6, RFC-0005) are applied by the chart source that
+        // reads the chart (PLOTSONA, RFC-0005 amendment 3), before `transform`.
         let mut data = self.resolve_source(spec)?;
         self.run_transforms(
             &mut data,

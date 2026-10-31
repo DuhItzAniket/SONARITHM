@@ -104,6 +104,9 @@ pub struct Series {
     /// Per-point confidences, one per point, when they differ within the series (raster
     /// estimates, C02-T03); empty when every point has the series' confidence.
     pub confidences: Vec<Confidence>,
+    /// The indices of points a person corrected (C02-T06): `user_edited`, with no
+    /// confidence, whatever the series' class (03 §4). Ascending.
+    pub user_edited: Vec<usize>,
 }
 
 impl Series {
@@ -117,6 +120,7 @@ impl Series {
             provenance: Provenance::EXACT,
             residual: None,
             confidences: Vec::new(),
+            user_edited: Vec::new(),
         }
     }
 }
@@ -164,6 +168,12 @@ impl ChartData {
                 let mut row = series.provenance;
                 if let Some(confidence) = series.confidences.get(index) {
                     row.confidence = Some(*confidence);
+                }
+                if series.user_edited.binary_search(&index).is_ok() {
+                    row = Provenance {
+                        class: sonarithm_core::ProvenanceClass::UserEdited,
+                        confidence: None,
+                    };
                 }
                 provenance.push(row);
             }

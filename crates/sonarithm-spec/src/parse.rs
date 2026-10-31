@@ -206,13 +206,17 @@ mod tests {
 
     #[test]
     fn snr_spec_005_other_versions_are_unsupported() {
-        let diagnostic = error(&VALID.replace("\"0.1\"", "\"0.3\""));
+        let diagnostic = error(&VALID.replace("\"0.1\"", "\"0.4\""));
         assert_eq!(diagnostic.code.as_str(), "SNR-SPEC-005");
         assert_eq!(diagnostic.location.unwrap().as_str(), "/specVersion");
         assert!(parse(VALID).is_ok());
         assert!(
             parse(&VALID.replace("\"0.1\"", "\"0.2\"")).is_ok(),
-            "0.2 is current"
+            "0.2 is read as it is"
+        );
+        assert!(
+            parse(&VALID.replace("\"0.1\"", "\"0.3\"")).is_ok(),
+            "0.3 is current"
         );
     }
 }

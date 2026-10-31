@@ -28,7 +28,7 @@ pub mod units;
 pub use diagnostic::{Code, Diagnostic, Diagnostics, Severity, SpecPointer};
 pub use digest::Sha256Digest;
 pub use ids::{AnalyzerId, EngineId, Generation, RowRange, RowRef, RuleId, TableId, TrackId};
-pub use provenance::{Confidence, Provenance, ProvenanceClass};
+pub use provenance::{Confidence, Provenance, ProvenanceClass, Stretch, lowest_confidence_stretch};
 pub use score::{
     Breakpoint, Earcon, EarconKind, EngineVersion, Glide, InstrumentRef, Marker, MarkerKind, Mode,
     Note, PitchRange, Priority, Score, ScoreEvent, ScoreHeader, ScoreTrack, ShaperStage,

@@ -74,6 +74,18 @@ announce-provenance-terse =
     }
 announce-provenance-confidence = { $qualifier }, confidence { $confidence }
 
+# The estimates in a series or segment (C02-T09, 03 §4 rule 3): terse says whether all or
+# some points are estimates; verbose says how many, from what, and the median confidence.
+announce-estimated-terse =
+    { $share ->
+        [all] estimated
+       *[some] partly estimated
+    }
+announce-estimated = { $estimated } of { $total } points { $qualifier }
+announce-estimated-confidence = { $mix }, median confidence { $confidence }
+# Where a series' reading is least certain, relative to the series (OD-07: no absolute cut-off).
+announce-lowest-confidence = lowest confidence around { $x }, median { $confidence }
+
 # A count of points.
 announce-points =
     { $count ->

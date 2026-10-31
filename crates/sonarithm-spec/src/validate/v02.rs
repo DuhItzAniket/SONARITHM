@@ -27,6 +27,15 @@ fn root() -> SpecPointer {
     SpecPointer::root()
 }
 
+/// Whether `path` is relative and stays under the spec's folder (RFC-0005 §7): not empty,
+/// no drive letter, URL scheme or leading separator, no `..` segment.
+fn safe_relative(path: &str) -> bool {
+    !path.is_empty()
+        && !path.contains(':')
+        && !path.starts_with(['/', '\\'])
+        && !path.split(['/', '\\']).any(|part| part == "..")
+}
+
 /// Every v0.2 check, in document order.
 pub(super) fn check(spec: &Spec, ids: &BTreeSet<String>, out: &mut Diagnostics) {
     version_gate(spec, out);
@@ -44,7 +53,7 @@ pub(super) fn check(spec: &Spec, ids: &BTreeSet<String>, out: &mut Diagnostics) 
             self::calibration(value, &at.key("calibration"), out);
         }
         if let Some(value) = corrections {
-            self::corrections(value, &at.key("corrections"), out);
+            self::corrections(value, &at.key("corrections"), spec.spec_version, out);
         }
     }
     quantize(spec, out);
@@ -390,17 +399,44 @@ fn iso_date(text: &str) -> bool {
     date_ok && clock_ok && offset_ok
 }
 
-fn corrections(value: &JsonValue, at: &SpecPointer, out: &mut Diagnostics) {
+fn corrections(value: &JsonValue, at: &SpecPointer, version: SpecVersion, out: &mut Diagnostics) {
     if let JsonValue::Object(object) = value
-        && object.contains_key("path")
+        && let Some(path) = object.get("path")
     {
-        out.push(
-            Diagnostic::new(
-                &codes::CORRECTION_FILE_RESERVED,
-                "`corrections.path` is reserved for the correction file of RFC-0005; write the edits inline.",
-            )
-            .at(at.key("path")),
-        );
+        if version < SpecVersion::V0_3 {
+            out.push(
+                Diagnostic::new(
+                    &codes::CORRECTION_FILE_RESERVED,
+                    format!(
+                        "`corrections.path`, a correction file (RFC-0005), is spec 0.3; this spec declares \"{version}\". Set \"specVersion\": \"0.3\" or write the edits inline."
+                    ),
+                )
+                .at(at.key("path")),
+            );
+            return;
+        }
+        if object.len() > 1 {
+            out.push(
+                Diagnostic::new(
+                    &codes::INVALID_CORRECTION,
+                    "`corrections` is either {\"path\": …} or {\"edits\": […]}, not both.",
+                )
+                .at(at.clone()),
+            );
+        }
+        let safe = match path {
+            JsonValue::String(path) => safe_relative(path),
+            _ => false,
+        };
+        if !safe {
+            out.push(
+                Diagnostic::new(
+                    &codes::CORRECTION_PATH_UNSAFE,
+                    "Name the correction file by a path relative to the spec, without `..`, a drive letter or a URL.",
+                )
+                .at(at.key("path")),
+            );
+        }
         return;
     }
     let Some(corrections) = typed::<Corrections>(value, at, &codes::INVALID_CORRECTION, out) else {

@@ -997,3 +997,12 @@ A05 (render engine, audio backends, export) uses F-050 to F-069.
 - **Evidence level / confidence:** EV-C / Strong for this run: the application path and the destination identify the probe. Whether the OS voice (SAPI or OneCore) would connect when self-voicing really speaks is not covered by any test, because no test drives the OS speaker; TODO(verify) with a real voice under the harness
 - **Affects:** NFR-04, ADR-0012, #409; testing-strategy §10; macOS's sandbox log is also read by PID (sandbox_lines), with the same reuse risk
 - **Papers:** none yet
+
+### F-184 · Series of estimates were announced like exact data, and the lowest confidence is named relative to each series
+
+- **Date:** 2026-10-30 · **Phase:** C02 · **Type:** engineering (accessibility) · **Status:** new
+- **Statement:** Auditing announcements for C02-T09 found that AUDAXIS labelled each estimated *point* at both verbosities (03 §4 rule 3), but a *series* or *segment* made of estimates was announced with its count and range and no qualifier, so a listener moving by series heard estimated data as if it were exact. Series and segments now carry the estimate mix: terse "estimated" or "partly estimated"; verbose "N of M points estimated from a chart image, median confidence …". Where a series is least certain is named relative to the series, not against a fixed cut-off: the window of max(3, n/10) consecutive estimated points with the lowest median confidence, said only when that median is below the series' median ("lowest confidence around March, median 0.41"). The extraction confidence is uncalibrated (notes/06 §8, C02-T05), so an absolute threshold such as 0.5 would claim more than the number means; OD-07 records that P08/H-06 must decide one. The facade's text description names the same stretch by time. The keyboard guide's terse point example began with "About", which would have put estimate wording into the value part, outside the Provenance part a listener can move (A11Y-12); the example now ends in "Estimated." as the composer says.
+- **Evidence:** `crates/engines/sonarithm-audaxis/tests/announce.rs` (`a11y_02_series_and_segments_of_estimates_say_so`); `sonarithm_core::lowest_confidence_stretch` and its tests; keyboard-and-navigation §8.2; the C02-T09 PR
+- **Evidence level / confidence:** EV-C / Strong for the gap; the stretch rule is a design choice awaiting P08
+- **Affects:** C02-T09, A11Y-02, A11Y-12, A11Y-24, FR-008, OD-07, H-06
+- **Papers:** none yet
