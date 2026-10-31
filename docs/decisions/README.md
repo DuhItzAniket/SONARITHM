@@ -43,6 +43,7 @@ Write an ADR when a decision is hard to reverse, affects several crates or engin
 | [0027](0027-spec-experimental-block.md) | The spec `experimental` block per RFC-0006 | accepted (2026-10-31, coordinator under owner delegation) | C02-T09b: spec 0.4 (`experimental.lowConfidenceTimbre`), SDR-43 in NUMISONA, `SNR-COMP-037`, render manifest version 2 |
 | [0028](0028-function-expression-language.md) | The expression language of a `function` source | accepted (2026-10-31, coordinator under owner delegation) | C03-T01: CURVASONA's `expr` parser, its tests and fuzz target `expr_parse`; the spec schema and 04 §3 cite it |
 | [0029](0029-function-cues-and-audification.md) | Function cues and audification in the Score IR per RFC-0007 | accepted (2026-10-31, coordinator under owner delegation) | C03-T04 (earcon kinds, cue track; golden case `function-cues` to follow), C03-T05 (the `Audify` event) |
+| [0030](0030-deterministic-audification-resampler.md) | A deterministic windowed-sinc resampler for audification, not rubato | accepted (2026-11-01, coordinator under owner delegation) | C03-T05: `sonarithm_render::resample` and its known-signal tests |
 
 ## Process
 

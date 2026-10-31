@@ -251,6 +251,12 @@ Owner: `sonarithm-curvasona`. Numbers SNR-ENG-400 to SNR-ENG-499.
 | `SNR-ENG-406` | warning | The function is undefined at some samples | Division by zero, roots and logarithms of negative numbers and overflows give no value; those rows have no `y` and follow `data.missing`. Narrow the domain to leave them out. | A11Y-28 |
 | `SNR-ENG-407` | warning | The search for poles and undefined spans stopped early | The function has more poles, holes, jumps or undefined spans than the limits allow, or needs too many evaluations to find them, so some may be missing from the cues and the list. Narrow the domain or lower `samples`. | A11Y-28 |
 | `SNR-ENG-420` | warning | Critical points need a function source | The `critical-points` detector works on the table of a `function` source, whose expression it differentiates. For a data file, use the `extrema` detector instead. | A11Y-28 |
+| `SNR-ENG-460` | info | The audification's speed-up, duration and band | Audification plays the series k times faster by resampling it. The message gives k, the output length T/k and the part of the band you can hear. Set `tracks[].audify.k`, or `audify.band` to choose where the band lands. | SDR-31 |
+| `SNR-ENG-461` | warning | Part of the audified band is inaudible | At this k some of the series sounds below 20 Hz or above 20 kHz and cannot be heard. Raise k to lift slow changes into hearing, or lower it to bring fast ones down. | SDR-31 |
+| `SNR-ENG-462` | error | The audified band is wholly inaudible | At this k the whole series sounds below 20 Hz or above 20 kHz, so nothing would be heard. Choose a k that brings the band into 20 Hz to 20 kHz, or give `audify.band`. | SDR-31 |
+| `SNR-ENG-463` | error | The audification speed-up is out of range | k must be a finite number from 0.001 to 1 000 000 (RFC-0007 amendment 3). | SDR-31 |
+| `SNR-ENG-464` | error | The series is too long to audify | An audification holds at most 4 194 304 samples (RFC-0007). Filter or resample the data first, or audify a shorter stretch. | — |
+| `SNR-ENG-465` | error | There is no series to audify | The `audify` mark plays the field with the y role, else the first numeric field that is not the time field. Give the data a numeric field. | — |
 
 Owner: `sonarithm-echometric`. Numbers SNR-ENG-600 to SNR-ENG-699.
 

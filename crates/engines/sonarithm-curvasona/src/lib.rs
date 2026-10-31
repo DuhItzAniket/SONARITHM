@@ -16,6 +16,7 @@
 //! | [`sample`] | The sample grid of a domain (`samples` or `step`) under the sample budget |
 //! | [`scan`] | Poles, holes, jumps, undefined spans and off-screen spans, found from the expression's guards |
 //! | [`critical`] | Zeros, extrema, inflections and horizontal asymptotes; the `critical-points` analyzer's annotations |
+//! | [`audify`] | The `audify` mark: the SDR-31 speed-up calculator and the audification encoder (RFC-0007 §3) |
 //! | [`cues`] | The `curvasona.cues` context track: critical points as earcons or speech (RFC-0007) |
 //! | [`suite`] | The 40-curve suite with analytically known features |
 //! | [`codes`] | Diagnostic codes `SNR-ENG-400` to `499` |
@@ -27,6 +28,7 @@
 #![forbid(unsafe_code)]
 #![deny(missing_docs)]
 
+pub mod audify;
 pub mod codes;
 pub mod critical;
 pub mod cues;
@@ -462,7 +464,10 @@ impl Curvasona {
             "CURVASONA",
             EngineVersion(env!("CARGO_PKG_VERSION").to_owned()),
         );
-        manifest.spec_keys = vec!["data.source.kind=function".to_owned()];
+        manifest.spec_keys = vec![
+            "data.source.kind=function".to_owned(),
+            "tracks[].audify".to_owned(),
+        ];
         manifest
     }
 }
@@ -486,6 +491,9 @@ impl Engine<DataBundle> for Curvasona {
             }),
         )?;
         registrar.context(Arc::new(cues::FunctionCues));
+        let audify: Arc<dyn sonarithm_core::engine::Encoder<DataBundle>> =
+            Arc::new(audify::AudifyEncoder);
+        registrar.encoder(&[sonarithm_core::engine::MarkKind::Audify], &audify)?;
         Ok(())
     }
 }

@@ -1016,6 +1016,25 @@ A05 (render engine, audio backends, export) uses F-050 to F-069.
 - **Affects:** C02-T09, A11Y-02, A11Y-12, A11Y-24, FR-008, OD-07, H-06
 - **Papers:** none yet
 
+### F-196 · An audification without `k` or `band` needs a target band, and no study gives one
+
+- **Date:** 2026-11-01 · **Phase:** C03 · **Type:** engineering (sound default) · **Status:** new
+- **Statement:** RFC-0001 lets `tracks[].audify` be omitted ("`k` computed from the data band"), and SDR-31 computes k "from the data band to a target audio band", but neither names the target. C03-T05 needs one, so it maps the top of the series' band (fs/2) to 4 kHz. This follows ED-06's reasoning (keep the main energy below about 4 kHz, which survives high-frequency hearing loss and small speakers, A11Y-14); it is not measured. It is recorded as SDR-44 (`INFER`, experimental) until a listening study (HP-21 or a later experiment) tests it against alternatives such as 2 kHz or 8 kHz.
+- **Evidence:** `crates/engines/sonarithm-curvasona/src/audify.rs` (`DEFAULT_TOP_HZ`) and the test `sdr_44_infer_the_default_k_puts_the_top_of_the_band_at_4_khz`; design-rules SDR-44
+- **Evidence level / confidence:** EV-D / Weak (an extrapolation)
+- **Affects:** SDR-31, SDR-44, C03-T05
+- **Papers:** none yet
+
+### F-195 · Audification resamples with a deterministic windowed-sinc, because rubato's FFT path is not bit-identical across CPUs
+
+- **Date:** 2026-11-01 · **Phase:** C03 · **Type:** engineering (determinism) · **Status:** new
+- **Statement:** RFC-0007 §3 planned to resample audified series with rubato at plan time. Golden audio relies on renders being bit-identical on Windows, Linux and macOS (F-039, ADR-0013), and rubato's fixed-ratio resamplers use FFTs through realfft and rustfft, which choose AVX, SSE or NEON code at run time, so their rounding can differ between x86 and ARM machines (TODO(verify) by rendering the same plan on both). `sonarithm_render::resample` is a windowed-sinc interpolator (Blackman window, 16 taps a side at unity, widened to low-pass at the output's Nyquist when downsampling, at most 4096 a side), computed with `libm` and IEEE arithmetic only, normalized per output sample and clamped to [−1, 1]. It is slower than an FFT resampler (about 2·16/min(1, ratio) multiply-adds per output sample), acceptable for at most 2^22 samples on a worker thread. rubato stays licence-checked (C03-T01) should a deterministic mode be needed later. The audifier voice then reads the buffer with linear interpolation at the transport speed, so speed changes and seeks need no new resampling on the audio thread.
+- **Measured (2026-11-01, HW-01, Windows 11, debug build, local):** a 440 Hz tone resampled from 8 kHz, 96 kHz and 44.1 kHz to 48 kHz measured 440.000, 439.000 and 439.000 Hz by rising zero crossings over one second (the method resolves 1 Hz); a 20 kHz tone at 96 kHz resampled to 16 kHz kept a peak of 6.0e-7 of 0.5 (about −118 dB). Linux and macOS values: TODO(verify) from CI.
+- **Evidence:** `crates/sonarithm-render/src/resample.rs` and its tests (`sdr_31_resampling_keeps_the_tone`, `downsampling_removes_what_the_output_cannot_hold`); `crates/sonarithm-render/src/graph/tests.rs` (`sdr_31_an_audified_sine_plays_the_expected_tone`); the C03-T05 PR
+- **Evidence level / confidence:** EV-D / Moderate (the SIMD rounding difference is inferred from rustfft's design, not measured)
+- **Affects:** RFC-0007 §3, 06 (audifier row), C03-T05, C03-T06
+- **Papers:** none yet
+
 ### F-193 · NUMISONA's glide `src` ranges include their last row, against `RowRange`'s one-past-the-end contract
 
 - **Date:** 2026-10-31 · **Phase:** C03 · **Type:** engineering (correctness) · **Status:** new
