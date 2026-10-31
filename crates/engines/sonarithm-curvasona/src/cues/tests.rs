@@ -85,7 +85,11 @@ fn a11y_28_poles_and_extrema_are_cued_where_they_play() {
     let kinds: Vec<EarconKind> = found.iter().map(|(_, k)| *k).collect();
     assert_eq!(
         kinds,
-        [EarconKind::Asymptote, EarconKind::Landmark, EarconKind::Asymptote]
+        [
+            EarconKind::Asymptote,
+            EarconKind::Landmark,
+            EarconKind::Asymptote
+        ]
     );
     for ((t, _), want) in found.iter().zip([3.0, 5.0, 7.0]) {
         assert!(near(*t, want), "{t} vs {want}");
@@ -152,7 +156,10 @@ fn a11y_24_merged_cues_keep_every_feature_in_the_log() {
     assert_eq!(cue.labels.len(), cue.rows.len());
     let log = cue_log(&found);
     assert_eq!(log.len(), found.len());
-    assert!(log.iter().any(|line| line.contains("vertical asymptote") && line.contains("zero")));
+    assert!(
+        log.iter()
+            .any(|line| line.contains("vertical asymptote") && line.contains("zero"))
+    );
     let pole_row = cue
         .labels
         .iter()
@@ -218,7 +225,10 @@ fn a11y_28_leaving_the_window_plays_e_offscreen() {
         .map(|(t, _)| t)
         .collect();
     assert_eq!(offscreen.len(), 2, "{:?}", earcons(&compiled));
-    assert!(near(offscreen[0], 0.0) && near(offscreen[1], 25.0 / 3.0), "{offscreen:?}");
+    assert!(
+        near(offscreen[0], 0.0) && near(offscreen[1], 25.0 / 3.0),
+        "{offscreen:?}"
+    );
     let unwindowed = compile(&cued("x^2", [-3.0, 3.0]));
     assert!(
         earcons(&unwindowed)
@@ -249,7 +259,10 @@ fn a11y_08_every_cue_has_a_text_equivalent() {
         }
     }
     let undefined = earcons(&compile(&cued("sqrt(x)", [-4.0, 4.0])));
-    assert_eq!(undefined.first().map(|(_, k)| *k), Some(EarconKind::Undefined));
+    assert_eq!(
+        undefined.first().map(|(_, k)| *k),
+        Some(EarconKind::Undefined)
+    );
 }
 
 /// A11Y-14: with AUDAXIS's spatial shaper on, the cue track carries nothing in pan, and no
@@ -263,8 +276,10 @@ fn a11y_14_cues_carry_nothing_in_pan() {
         compiled
             .diagnostics
             .iter()
-            .all(|d| !(d.code.as_str() == "SNR-ENG-100" || d.code.as_str() == "SNR-ENG-101")
-                || !d.message.contains(CUE_TRACK)),
+            .all(
+                |d| !(d.code.as_str() == "SNR-ENG-100" || d.code.as_str() == "SNR-ENG-101")
+                    || !d.message.contains(CUE_TRACK)
+            ),
         "{:?}",
         compiled.diagnostics
     );
@@ -278,4 +293,3 @@ fn rfc_0007_scores_record_the_lowest_ir_version_that_reads_them() {
     let landmarks_only = compile(&cued("x^2 + 1", [-1.0, 1.0])).score;
     assert_eq!(landmarks_only.header.ir_version, 1);
 }
-

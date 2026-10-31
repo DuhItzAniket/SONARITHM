@@ -222,7 +222,10 @@ const fn has_src(event: &ScoreEvent) -> bool {
 /// The time at `x`, interpolated between the timed rows around it (`(x, t)` sorted by x).
 fn time_at(timed: &[(f64, f64)], x: f64) -> Option<f64> {
     let after = timed.partition_point(|&(px, _)| px < x);
-    match (after.checked_sub(1).and_then(|i| timed.get(i)), timed.get(after)) {
+    match (
+        after.checked_sub(1).and_then(|i| timed.get(i)),
+        timed.get(after),
+    ) {
         (_, Some(&(px, t))) if px.total_cmp(&x).is_eq() => Some(t),
         (Some(&(x0, t0)), Some(&(x1, t1))) if x1 > x0 => {
             Some(t0 + (t1 - t0) * (x - x0) / (x1 - x0))
