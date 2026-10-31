@@ -1,6 +1,6 @@
 # RFC 0007: Function cues and audification in the Score IR
 
-> **Status:** In discussion (proposed for acceptance by the coordinator under the owner's delegation). **Author(s):** project lead (drafted by an AI coding agent, Claude Code).
+> **Status:** Accepted (2026-10-31, by the coordinator under the owner's delegation; 7-day FCP waived; Q1–Q5 as proposed; three amendments, marked below). **Author(s):** project lead (drafted by an AI coding agent, Claude Code). **Decision:** ADR-0029 (with C03-T04).
 > **Related:** [RFC process](README.md) · [05 §4](../architecture/05-compiler-and-score-ir.md#4-score-ir) · [06 §3](../architecture/06-audio-engine.md) · [07 CURVASONA](../architecture/07-engines.md#curvasona-sonarithm-curvasona-c03) · [ADR-0013](../decisions/0013-determinism-and-provenance.md) · [ADR-0028](../decisions/0028-function-expression-language.md) · [sound design §8](../design/sound-design.md#8-earcon-design-rules) · [keyboard and navigation §11](../design/keyboard-and-navigation.md#11-earcon-catalogue) · [design rules](../research/design-rules.md)
 
 | Field | Value |
@@ -53,7 +53,7 @@ The compile reports k, the output duration T/k and the audible band as Info diag
 
 | ID | Meaning | Proposed sound | Text equivalent |
 |---|---|---|---|
-| `E-ZERO` | The function crosses or touches zero | A dry inharmonic tick, about 40 ms: partials at 900, 2484 and 4860 Hz (ratios 1 : 2.76 : 5.4, a struck bar), fast decay | "Zero" |
+| `E-ZERO` | The function crosses or touches zero | A dry inharmonic tick, about 40 ms: partials at 700, 1932 and 3780 Hz (ratios 1 : 2.76 : 5.4, a struck bar), fast decay; every partial below 4 kHz (ED-06, amendment 2) | "Zero" |
 | `E-ASYMPTOTE` | A vertical asymptote: the glide breaks here | Band-passed noise sweeping up from 500 to 2000 Hz over about 120 ms ("whoosh") | "Vertical asymptote" |
 | `E-UNDEFINED` | An undefined span starts | Low-passed noise near 200 Hz, about 100 ms, soft attack: a dull hush, the glide is silent after it | "Undefined" |
 | `E-OFFSCREEN` | The function leaves the y-window | Two quick high-passed noise taps above about 1.5 kHz, 30 ms apart, about 80 ms in all | "Off screen above" / "below" |
@@ -73,7 +73,7 @@ CURVASONA registers a context provider. When the spec's `analysis.detect` contai
 | extremum, inflection, hole, jump | `E-LANDMARK` | its label |
 | horizontal asymptote | none (it is a limit, not a point on the glide) | none |
 
-The time of a cue is the time of the feature's row in the first data track that plays it: CURVASONA adds a row at each feature (C03-T02, C03-T03), and a glide has one breakpoint per row of its `src` range. Each event's `src` is that row. Earcons whose onsets fall within 150 ms of each other (ED-02) are merged into the first, so a dense function does not turn into a buzz. Speech events use the en-US labels, as AUDAXIS's legend does; the app speaks them in the listener's locale. `cue: "none"` adds no track.
+The time of a cue is the time of the feature's row in the first data track that plays it: CURVASONA adds a row at each feature (C03-T02, C03-T03), and a glide has one breakpoint per row of its `src` range. Each event's `src` is that row. Earcons whose onsets fall within 150 ms of each other (ED-02; the window is a proposal, INFER) are merged, so a dense function does not turn into a buzz. **Amendment 1:** the merged earcon plays at the first onset with the highest-priority kind among them, in the order `asymptote`, `undefined`, `offscreen`, `zero`, `landmark`; its `src` spans every merged feature's row, and the text log names every merged feature, so none disappears from the insight list or from speech. Speech cues are not merged; they queue as AUDAXIS's announcements do. Speech events use the en-US labels, as AUDAXIS's legend does; the app speaks them in the listener's locale. `cue: "none"` adds no track.
 
 **The sign cues of A11Y-28.** A glide already carries the sign of `f'` in its pitch direction, and `E-ZERO` marks every change of sign of `f`. The 04 §6.3 example maps `brightness` to `dy`, which adds a derivative cue in timbre on top of pitch. This RFC adds **no automatic timbre change**: a default that changes how data sounds needs evidence, and A11Y-28's sources (SonicFunction, AudioFunctions 2.0) are not specific enough to set one (TODO(verify)). Mapping a channel to `dy` stays the way to ask for it, and the sign is then never carried by timbre alone (A11Y-14).
 
@@ -93,6 +93,8 @@ pub struct Audify {
 - **Duration.** `samples.len() / rate`, which counts for invariant 2 and the header's duration.
 - **Rendering.** The plan builder resamples the samples from `rate` to the output rate with rubato (SDR-31: resampling, not pitch shifting) on a worker thread. The audifier voice plays the result from a preallocated `Arc<[f32]>`, with SDR-22 ramps at both ends, and allocates nothing on the audio thread (AGENTS.md rule 2).
 - **Normalization.** Each series is scaled by its largest absolute value. Undefined samples are 0.
+- **The speed-up and its report (amendment 3, SDR-31).** A series has its own rate `fs`: samples per second of its time field when that field is temporal, otherwise samples per unit of the time field (or per row without one). Its band runs from `1/T` (`T` the series' length in those units) to `fs/2`. `audify.k` gives the speed-up directly; `audify.band` gives a target band `[lo, hi]` in Hz, and k is chosen so that `fs/2` maps to `hi` (`k = 2·hi/fs`). k must be finite and between 10^-3 and 10^6. The compile reports, as Info diagnostics: k, the output duration `T/k`, and the audible band `[k/T, k·fs/2]` clipped to 20 Hz–20 kHz. Part of the band outside 20 Hz–20 kHz is a warning that names the lost part. A k that puts the whole band outside 20 Hz–20 kHz is an error, with its own code, and no event is made.
+- **Hearing safety.** Audified output passes through the same loudness target, limiter and hearing-safety rules as every other track (06, sound design §12); it gets no exemption for being raw data.
 
 ### 4. The IR version
 
@@ -125,13 +127,13 @@ The four earcons are candidates for the earcon identification study (sound desig
 
 ## Unresolved questions
 
-For the coordinator, each with a proposal:
+Resolved on acceptance (2026-10-31): each proposal below stands.
 
 | Q | Question | Proposal |
 |---|---|---|
 | Q1 | IR version per Score (lowest reader) or a global bump? | Per Score (§4) |
 | Q2 | Are cues on whenever `critical-points` is detected, or does a function spec need `cue` written? | On, since `cue` defaults to `earcon` (RFC-0001) |
-| Q3 | Merge window for dense cues | 150 ms, the ED-02 earcon length (proposal, INFER) |
+| Q3 | Merge window for dense cues | 150 ms, the ED-02 earcon length (proposal, INFER); the merged earcon keeps the highest-priority kind (amendment 1) |
 | Q4 | Inline sample cap | 2^22 samples |
 | Q5 | Should the y-window for `E-OFFSCREEN` come from the pitch channel's explicit `scale.domain`? | Yes when one is written; otherwise no off-screen cues. A spec key for a window waits for a later RFC |
 
