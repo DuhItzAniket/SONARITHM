@@ -3,6 +3,8 @@
 
 import type {
   Channel,
+  CursorOrigin,
+  CursorState,
   DatasetSummary,
   Event,
   MockHandlers,
@@ -148,7 +150,40 @@ function tablePage(args: {
   });
 }
 
+/**
+ * The one cursor as Rust would hold it (B04-T06), without a compiled Score: the path is the
+ * dataset alone. Every change goes out as a `cursor` event.
+ */
+let cursor: CursorState = {
+  seq: 0,
+  dataset: null,
+  row: null,
+  x: null,
+  node: null,
+  path: [],
+  origin: null,
+};
+
+function moveCursor(row: number, origin: CursorOrigin): CursorState {
+  cursor = {
+    seq: cursor.seq + 1,
+    dataset: dataset?.id ?? null,
+    row,
+    x: null,
+    node: null,
+    path: dataset === null ? [] : [{ level: "dataset", label: dataset.name }],
+    origin,
+  };
+  emit({ event: "cursor", ...cursor });
+  return cursor;
+}
+
 const handlers: MockHandlers = {
+  cursor_set: (request) => ({
+    reply: "cursor" as const,
+    ...moveCursor(request.args.row, request.args.origin),
+  }),
+  cursor_get: () => ({ reply: "cursor" as const, ...cursor }),
   dataset_list: () => ({
     reply: "datasets" as const,
     datasets: dataset === null ? [] : [dataset],
@@ -264,6 +299,12 @@ Reflect.set(window, "__SONARITHM_MOCK__", {
     });
   },
   emit,
+  /** Moves the cursor as another view would, such as the plot (B04-T06). */
+  moveCursor,
+  /** The cursor as the mock host holds it. */
+  cursor(): CursorState {
+    return cursor;
+  },
   /** The commands the UI sent through `ipc_dispatch`, oldest first. */
   commands(): string[] {
     return host.requests.map((request) => request.command);

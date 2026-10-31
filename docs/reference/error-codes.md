@@ -48,6 +48,7 @@ Owner: `sonarithm-app`.
 | `SNR-APP-084` | error | The corrections are not valid | A correction set follows RFC-0005: edits with IDs e1, e2, …, `before` on every edit            of an existing point, and `+e<n>` only for an earlier `add`. Nothing was changed. | — |
 | `SNR-APP-085` | error | These corrections cannot change now | A project keeps a chart's corrections and their history, but not the chart file.            Open the chart file again to correct it; export works as it is. | — |
 | `SNR-APP-086` | error | These corrections do not belong to this dataset | Corrections apply to a dataset opened from a chart, and a correction file only to            the chart it was made on (same SHA-256 and extractor, RFC-0005 §3). | — |
+| `SNR-APP-087` | error | The row is outside the dataset | A cursor row counts from 0 and is below the dataset's row count (`rows` in its summary). Nothing was changed. | — |
 
 ## SNR-COMP
 

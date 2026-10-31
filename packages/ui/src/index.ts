@@ -23,6 +23,11 @@ export {
   type IconButtonProps,
 } from "./components/Button.tsx";
 export {
+  type BreadcrumbItem,
+  Breadcrumbs,
+  type BreadcrumbsProps,
+} from "./components/Breadcrumbs.tsx";
+export {
   type DataColumn,
   type DataRow,
   type DataSort,
