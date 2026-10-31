@@ -88,9 +88,10 @@ pub const DEFAULT_BRIGHTNESS: f64 = 0.5;
 /// SDR-43 (`INFER`, experimental; RFC-0006 §3, H-06): with `experimental.lowConfidenceTimbre`
 /// on, an estimated value plays this much darker even at full confidence: 0.25 of the
 /// brightness scale, one octave of low-pass cutoff in A05's mapping (2 to 32 times the
-/// fundamental over brightness 0 to 1). A step that depends on confidence alone would leave
-/// estimates near confidence 1 sounding like exact data, and H-06 asks whether estimates
-/// can be told apart.
+/// fundamental over brightness 0 to 1). This fixed step for the estimate class is a
+/// deliberate departure from RFC-0006's candidate (a step proportional to 1 − confidence
+/// alone, which would leave estimates near confidence 1 sounding like exact data): H-06
+/// asks whether estimates can be told apart. Its size is `INFER`.
 pub const ESTIMATE_DARKENING: f64 = 0.25;
 
 /// SDR-43 (`INFER`, experimental): the further darkening as confidence falls from 1 to 0,
