@@ -994,4 +994,3 @@ A05 (render engine, audio backends, export) uses F-050 to F-069.
 - **Evidence level / confidence:** EV-C / Strong for the gap; the stretch rule is a design choice awaiting P08
 - **Affects:** C02-T09, A11Y-02, A11Y-12, A11Y-24, FR-008, OD-07, H-06
 - **Papers:** none yet
-
