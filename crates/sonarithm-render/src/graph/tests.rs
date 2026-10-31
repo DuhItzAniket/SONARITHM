@@ -513,7 +513,10 @@ fn sdr_22_function_cue_earcons_have_ramps() {
         let loudest = body.windows(edge).map(rms).fold(0.0, f64::max);
         let start = rms(&body[..edge]);
         let end = rms(&body[body.len() - edge..]);
-        assert!(start < 0.5 * loudest, "{sound:?} starts at {start} of {loudest}");
+        assert!(
+            start < 0.5 * loudest,
+            "{sound:?} starts at {start} of {loudest}"
+        );
         assert!(end < 0.5 * loudest, "{sound:?} ends at {end} of {loudest}");
     }
 }
@@ -542,7 +545,10 @@ fn ed_06_function_cue_earcons_keep_their_energy_below_4_khz() {
             }
         }
         let share = high / (low + high).max(1e-30);
-        assert!(share < 0.2, "{sound:?}: {share:.3} of its energy above 4 kHz");
+        assert!(
+            share < 0.2,
+            "{sound:?}: {share:.3} of its energy above 4 kHz"
+        );
     }
 }
 
