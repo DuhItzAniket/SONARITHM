@@ -30,6 +30,7 @@ Both are the vertical (BHZ) channel of GEOFON station MORC (Moravsky Beroun, Cze
 ## Deviations
 
 - **Data.** The paper does not name its archive, and its 1995 examples were not available as open data with a stated licence. This group uses two recent earthquakes at one GEOFON station, chosen to span "near" and "far" (TODO(verify): whether Dombois's own records are available under an open licence).
+- **Length.** At k = 2200 the near quake plays for only about 0.27 s, short for careful listening. The k is Dombois's own, written in each spec (`audify.k`, §2: "a factor of 2.200 suited best"), not SDR-44's default. Without `k`, SDR-44 (INFER) would put the top of the band at 4 kHz: k = 2 × 4000 / 20 = 400, so Petrinja would play for 1.5 s and Kermadec for 9 s, at frequencies 5.5 times lower. The gallery keeps the published value; whether a slower default suits listeners better is for the HP-21 listening check, not this item.
 - **Band.** At 20 samples per second and k = 2200 the series sounds from about 3.7 Hz (Petrinja) or 0.6 Hz (Kermadec) up to 22 kHz, so part of each band is outside hearing, which the compile reports (`SNR-ENG-461`). Most of a seismogram's energy, below about 1 Hz, lands below 2.2 kHz.
 - **Timestamps.** Sample times are the first sample's time plus multiples of 50 ms, written to the millisecond, so the Kermadec record's 49.9 ms start offset is rounded to 49 ms.
 - **Listening.** No listening check has been made of these renders; the owner's HP-21 covers the audification presets.
