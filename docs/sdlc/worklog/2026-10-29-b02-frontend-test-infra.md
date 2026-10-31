@@ -117,6 +117,14 @@
 - **UI.** `useCursor` (`cursor_get`, then events, newest `seq` wins). `CursorReadout` with `@sonarithm/ui`'s new `Breadcrumbs`: only the current level is a link, with `aria-current="page"`, and the separators are CSS. The table sends `cursor_set` on `focusin` and shows the cursor row selected. A cursor in another window loads it only when the focus is outside the table. Table rows now carry `__snr_row`, so a sorted table still names the dataset row.
 - Locally, between low-memory pauses: codegen, clippy and all 134 `sonarithm-app` tests, `sonarithm-i18n` 25, the frontend typecheck, lint and unit tests, the Breadcrumbs and DataTable stories, and all 39 Chromium E2E tests. The first cursor test caught an empty `cursor` event on the session's first command; the model now starts as "no cursor, already sent". The E2E caught that a cursor's window never loaded after the focus left the table: whether the focus is inside is now state, so leaving re-runs the load.
 
+## B04-T06 (2): the plot and its crosshair (2026-11-01)
+
+- `Plot` gains `cursor` and `onPick`. The crosshair and the ring live in uPlot's overlay, placed with `valToPos` and moved by transform, so a cursor move redraws nothing. The click is a native listener on the overlay, so the image gets no JSX handler. The design system has no full radius, so the ring is a square with `--radius-1`.
+- `DatasetPlot` with `axesOf` (the first temporal or numeric field, then the next numeric one) and `nearest` (binary search over the tile's x). M4 keeps some rows only, so a cursor row outside the tile reads its values from a one-row `table_page`.
+- **What the E2E caught.** In the virtualized table, the cursor's row could be loaded but scrolled out of the DOM. A cursor moved elsewhere now scrolls its row into view (never the focus) while the focus is outside the table.
+- **Pseudo-locale.** The test forbids unaccented letters in the output, and the `axis` sample is the letter "x", so the plot's label takes the x header as `text`.
+- Locally: desktop 43 unit tests, all 40 Chromium E2E tests, `cursor.spec.ts` in WebKit (3), the Plot stories, `sonarithm-i18n` 25 and the TypeScript i18n 9.
+
 ## Next steps
 
 - [ ] Commit the screenshot baselines from the first CI run's `visual-baselines` artifact.
