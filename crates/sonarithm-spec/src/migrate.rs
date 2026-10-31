@@ -8,10 +8,10 @@
 //! reports a `Warning` (`SNR-SPEC-006`) and never rewrites files. `sonarithm spec migrate`
 //! (A07) writes the result only when asked.
 //!
-//! The 0.1 → 0.2 step is the identity (RFC-0004 §9): only `specVersion` changes. Because
-//! of that, the compiler reads 0.1 documents as they are ([`READABLE_VERSIONS`]), with no
-//! migration, no warning and an unchanged spec hash; the step runs only when a file is
-//! migrated on purpose.
+//! The 0.1 → 0.2 step is the identity (RFC-0004 §9), and so are 0.2 → 0.3 and 0.3 → 0.4:
+//! only `specVersion` changes. Because of that, the compiler reads older documents as they
+//! are ([`READABLE_VERSIONS`]), with no migration, no warning and an unchanged spec hash;
+//! the steps run only when a file is migrated on purpose.
 
 use serde_json::Value;
 use sonarithm_core::diagnostic::{Diagnostic, SpecPointer};
@@ -44,6 +44,11 @@ pub const MIGRATIONS: &[Migration] = &[
         to: SpecVersion::V0_3,
         apply: v0_2_to_v0_3,
     },
+    Migration {
+        from: SpecVersion::V0_3,
+        to: SpecVersion::V0_4,
+        apply: v0_3_to_v0_4,
+    },
 ];
 
 /// 0.1 → 0.2 (RFC-0004 §9): nothing but `specVersion` changes, which the framework sets.
@@ -62,6 +67,16 @@ fn v0_1_to_v0_2(_value: &mut Value) -> Result<(), String> {
     reason = "every migration step has this signature"
 )]
 fn v0_2_to_v0_3(_value: &mut Value) -> Result<(), String> {
+    Ok(())
+}
+
+/// 0.3 → 0.4 (RFC-0006 §2): 0.4 only adds `experimental`, so nothing but `specVersion`
+/// changes.
+#[expect(
+    clippy::unnecessary_wraps,
+    reason = "every migration step has this signature"
+)]
+fn v0_3_to_v0_4(_value: &mut Value) -> Result<(), String> {
     Ok(())
 }
 
@@ -165,22 +180,23 @@ pub fn migrate_with(
 
 #[cfg(test)]
 mod tests {
-    /// RFC-0004 §9, RFC-0005 Q6: the 0.1 → 0.2 → 0.3 steps change `specVersion` and
-    /// nothing else, and reading a 0.1 document does not migrate it.
+    /// RFC-0004 §9, RFC-0005 Q6, RFC-0006 §2: the 0.1 → 0.2 → 0.3 → 0.4 steps change
+    /// `specVersion` and nothing else, and reading a 0.1 document does not migrate it.
     #[test]
     fn migrating_v0_1_changes_only_the_version_and_reading_does_not_migrate() {
         let old =
             serde_json::json!({ "specVersion": "0.1", "tracks": [{ "id": "a" }], "x-note": 1 });
         let migrated = super::migrate(old.clone()).unwrap();
         let mut expected = old.clone();
-        expected["specVersion"] = serde_json::json!("0.3");
+        expected["specVersion"] = serde_json::json!("0.4");
         assert_eq!(migrated.value, expected);
         assert_eq!(
             migrated.path,
             [
                 super::SpecVersion::V0_1,
                 super::SpecVersion::V0_2,
-                super::SpecVersion::V0_3
+                super::SpecVersion::V0_3,
+                super::SpecVersion::V0_4
             ]
         );
         let read = super::migrate_for_reading(old.clone()).unwrap();
@@ -233,11 +249,11 @@ mod tests {
 
     #[test]
     fn versions_without_a_chain_are_unsupported() {
-        let newer = json!({ "specVersion": "0.4" });
+        let newer = json!({ "specVersion": "0.5" });
         let err = migrate(newer).unwrap_err();
         assert_eq!(err.code.as_str(), "SNR-SPEC-005");
-        let current = json!({ "specVersion": "0.3" });
-        assert_eq!(migrate(current).unwrap().path, [SpecVersion::V0_3]);
+        let current = json!({ "specVersion": "0.4" });
+        assert_eq!(migrate(current).unwrap().path, [SpecVersion::V0_4]);
         assert_eq!(
             migrate(json!({})).unwrap_err().code.as_str(),
             "SNR-SPEC-003"

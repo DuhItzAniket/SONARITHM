@@ -9,7 +9,7 @@
         "name": "inline"
       }
     },
-    "manifestVersion": 1,
+    "manifestVersion": 2,
     "output": {
       "bitsPerSample": 24,
       "channels": 2,
@@ -67,7 +67,7 @@
         "name": "penguins.json"
       }
     },
-    "manifestVersion": 1,
+    "manifestVersion": 2,
     "output": {
       "bitsPerSample": 24,
       "channels": 2,
@@ -125,7 +125,7 @@
         "name": "inline"
       }
     },
-    "manifestVersion": 1,
+    "manifestVersion": 2,
     "output": {
       "bitsPerSample": 24,
       "channels": 2,
@@ -183,7 +183,7 @@
         "name": "inline"
       }
     },
-    "manifestVersion": 1,
+    "manifestVersion": 2,
     "output": {
       "bitsPerSample": 24,
       "channels": 2,
@@ -251,7 +251,7 @@
         "name": "inline"
       }
     },
-    "manifestVersion": 1,
+    "manifestVersion": 2,
     "output": {
       "bitsPerSample": 24,
       "channels": 2,
@@ -309,7 +309,7 @@
         "name": "inline"
       }
     },
-    "manifestVersion": 1,
+    "manifestVersion": 2,
     "output": {
       "bitsPerSample": 24,
       "channels": 2,
@@ -367,7 +367,7 @@
         "name": "inline"
       }
     },
-    "manifestVersion": 1,
+    "manifestVersion": 2,
     "output": {
       "bitsPerSample": 24,
       "channels": 2,
@@ -427,7 +427,7 @@
         "name": "inline"
       }
     },
-    "manifestVersion": 1,
+    "manifestVersion": 2,
     "output": {
       "bitsPerSample": 24,
       "channels": 2,
@@ -485,7 +485,7 @@
         "name": "inline"
       }
     },
-    "manifestVersion": 1,
+    "manifestVersion": 2,
     "output": {
       "bitsPerSample": 24,
       "channels": 2,

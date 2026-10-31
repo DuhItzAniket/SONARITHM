@@ -121,7 +121,7 @@ Each hypothesis is a testable claim that SONARITHM's defaults or papers depend o
 
 - **Statement:** Rendering low-confidence (estimated) data points in a distinct timbre improves BLV listeners' detection of estimated regions, without reducing trend-identification accuracy.
 - **Rationale:** ML line-chart extraction is weak (F-006), so PLOTSONA labels every estimate. Rendering low-confidence regions distinctly is "promising but untested with blind users", and no study measures BLV trust or error detection with uncertainty cues. Sources: research report ("PLOTSONA must prefer exact data and label every estimate"); [notes/06 §7–§8](../research/notes/06-chart-extraction-ai.md); `onechart2024`.
-- **Linked rules and findings:** A11Y-14, A11Y-24 (non-audio equivalents must remain) · F-006
+- **Linked rules and findings:** SDR-43 (`INFER`: the timbre condition, behind `experimental.lowConfidenceTimbre`, RFC-0006), A11Y-14, A11Y-24 (non-audio equivalents must remain) · F-006
 - **Operationalization:**
   - *Design:* co-design rounds first, to choose candidate renderings; then a within-subjects task study.
   - *IV:* uncertainty rendering = {none (speech hedging only), timbre change, earcon marker}; proportion of estimated points.

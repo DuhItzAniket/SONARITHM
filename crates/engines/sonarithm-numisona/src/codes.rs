@@ -295,6 +295,14 @@ code!(
 );
 
 code!(
+    /// Low-confidence timbre is on while brightness carries data (RFC-0006 §3, SDR-43).
+    TIMBRE_EXPERIMENT_CONFOUNDED, "SNR-ENG-057", Warning,
+    "Low-confidence timbre darkens a brightness channel",
+    "Estimated notes are darkened on top of the brightness the data sets, so the two mix. Map the field to another channel, or turn the experiment off.",
+    ["SDR-43"]
+);
+
+code!(
     /// An Erie construct with no spec v0.1 equivalent was left out of an import (04 §9).
     ERIE_UNMAPPED, "SNR-ENG-080", Warning,
     "Erie construct not imported",
@@ -348,6 +356,7 @@ pub const CODES: CodeTable = CodeTable {
         TIMBRE_REPEATS,
         CHANNEL_NOT_RENDERED,
         REDUNDANT_IGNORED,
+        TIMBRE_EXPERIMENT_CONFOUNDED,
         ERIE_UNMAPPED,
         ERIE_APPROXIMATED,
     ],

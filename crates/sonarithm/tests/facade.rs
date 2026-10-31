@@ -187,6 +187,38 @@ fn descriptions_name_the_lowest_confidence_stretch() {
     );
 }
 
+/// RFC-0006 §4, SDR-43: an experiment that is on is named in the description and listed
+/// for the manifest; with no block there is no such line.
+#[test]
+fn sdr_43_descriptions_name_an_experiment_that_is_on() {
+    let spec = |block: &str| {
+        format!(
+            r#"{{ "specVersion": "0.4", {block}
+  "data": {{ "source": {{ "kind": "inline", "values": [
+    {{ "x": 1, "y": 3.0, "__snr_prov": "exact" }}, {{ "x": 2, "y": 5.0, "__snr_prov": "cv_estimate", "__snr_conf": 0.8 }} ] }} }},
+  "tracks": [{{ "id": "y", "mark": "tone", "channels": {{ "pitch": {{ "field": "y" }} }} }}] }}"#
+        )
+    };
+    let snr = Sonarithm::new();
+    let on =
+        Spec::from_json_str(spec(r#""experimental": { "lowConfidenceTimbre": true },"#)).unwrap();
+    let compiled = snr.compile(&on).unwrap();
+    assert_eq!(compiled.experiments(), ["lowConfidenceTimbre"]);
+    let description = compiled.describe();
+    assert!(
+        description
+            .l1
+            .iter()
+            .any(|line| line.starts_with("Experimental: low-confidence timbre is on.")),
+        "{description}"
+    );
+    let off = snr
+        .compile(&Spec::from_json_str(spec("")).unwrap())
+        .unwrap();
+    assert_eq!(off.experiments(), &[] as &[String]);
+    assert!(!off.describe().to_string().contains("Experimental"));
+}
+
 #[test]
 fn invalid_json_is_reported_with_its_position() {
     let Err(Error::Spec(diagnostics)) = Spec::from_json_str("{ \"specVersion\": ") else {
@@ -223,7 +255,7 @@ fn migration_changes_only_the_version_and_a_current_spec_not_at_all() {
     assert_eq!(migration.from, sonarithm::SpecVersion::V0_1);
     let migrated: serde_json::Value = serde_json::from_str(&migration.text).unwrap();
     let mut expected: serde_json::Value = serde_json::from_str(TEMPS).unwrap();
-    expected["specVersion"] = serde_json::json!("0.3");
+    expected["specVersion"] = serde_json::json!("0.4");
     assert_eq!(migrated, expected);
     let again = Spec::from_json_str(&migration.text)
         .unwrap()
@@ -391,7 +423,7 @@ fn quick_explains_what_it_cannot_map() {
 fn the_schema_is_the_published_one() {
     let published = std::fs::read_to_string(
         PathBuf::from(env!("CARGO_MANIFEST_DIR"))
-            .join("../../schemas/sonarithm-spec-0.3.schema.json"),
+            .join("../../schemas/sonarithm-spec-0.4.schema.json"),
     )
     .unwrap();
     assert_eq!(

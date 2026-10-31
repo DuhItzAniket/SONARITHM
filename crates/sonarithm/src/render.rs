@@ -198,6 +198,7 @@ fn manifest_inputs(compiled: &Compiled) -> ManifestInputs {
     inputs.spec = serde_json::from_str(compiled.canonical_spec()).ok();
     inputs.data_source = data_source(compiled);
     inputs.provenance = compiled.provenance().clone();
+    inputs.experimental = compiled.experiments().to_vec();
     inputs
 }
 

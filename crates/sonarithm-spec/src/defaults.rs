@@ -109,6 +109,12 @@ pub fn apply_defaults(spec: &Spec) -> (Spec, Diagnostics) {
     if spec.spec_version >= sonarithm_core::score::SpecVersion::V0_2 {
         v0_2(&mut spec, &mut a);
     }
+    // Not a default: switches that are off leave the canonical form, so `{}`, all-`false`
+    // and no block share one spec hash (RFC-0006 §2).
+    spec.experimental = spec
+        .experimental
+        .as_ref()
+        .and_then(crate::experimental::Experimental::canonical);
     (spec, a.out)
 }
 

@@ -186,6 +186,16 @@ pub const CORRECTION_NOT_APPLIED: CodeInfo = CodeInfo {
     )
 };
 
+/// An experimental switch is on (RFC-0006 §4).
+pub const EXPERIMENT_ON: CodeInfo = CodeInfo {
+    severity: Severity::Info,
+    ..code_info(
+        "SNR-COMP-037",
+        "An experimental sound design is on",
+        "The spec's `experimental` block turns on a sound design that evidence does not yet back. Remove the switch, or set it to false, to hear the default.",
+    )
+};
+
 const fn code_info(code: &'static str, summary: &'static str, help: &'static str) -> CodeInfo {
     CodeInfo {
         code,
@@ -222,6 +232,7 @@ pub const CODES: CodeTable = CodeTable {
         TEMPLATE_BINDING,
         TEMPLATE_SECTIONS,
         CORRECTION_NOT_APPLIED,
+        EXPERIMENT_ON,
     ],
 };
 

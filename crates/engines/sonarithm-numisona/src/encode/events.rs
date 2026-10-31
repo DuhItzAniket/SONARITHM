@@ -61,7 +61,7 @@ impl Run<'_> {
             let mut note = Note::new(Seconds(onset), Seconds(duration), pitch);
             note.gain = Db(gain);
             note.pan = Pan::clamped(pan);
-            note.timbre = timbre(preset, brightness);
+            note.timbre = timbre(preset, sources.brightness(row, brightness));
             #[expect(
                 clippy::cast_possible_truncation,
                 clippy::cast_sign_loss,
@@ -131,9 +131,10 @@ pub(super) fn glides(
             finish(&mut run, &mut events);
             continue;
         };
+        let row = timeline.rows[i];
         run.push((
-            timeline.rows[i],
-            breakpoint(onset, cents, gain, pan, brightness),
+            row,
+            breakpoint(onset, cents, gain, pan, sources.brightness(row, brightness)),
         ));
     }
     finish(&mut run, &mut events);
