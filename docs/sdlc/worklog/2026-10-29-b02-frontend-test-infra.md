@@ -104,6 +104,19 @@
 
 - #419's frontend-browser job failed in `dense.perf.ts`: the test ran past Vitest's 15 s browser timeout, because 60 software-rendered redraws of a million points were too slow on that runner, and no trace was written. No budget check failed; the test only records. Measuring now stops after 8 s (`cutShort` in the report), the test timeout is 120 s, and it still fails if nothing draws. Not run locally (the builder and browser slots were others'); CI runs it.
 
+## B04-T06 (1): the one cursor (2026-11-01)
+
+- **Contract, approved with five conditions.**
+  1. One owner; B03-T09's verbs use this cursor.
+  2. `origin` decides speech (table moves are not announced; INFER, OD-30).
+  3. A structured path with levels.
+  4. The cursor is cleared or clamped when its data changes, with a test for each case.
+  5. A `cursor` event never moves the focus, and the readout is not live.
+- **App core.** `app/cursor.rs`. `App::dispatch` now runs the command, then `sync_cursor`. That one check covers a closed dataset, corrections, undo and a compile, and a project load clears the cursor first. A replaced dataset can keep its ID (projects reuse them), so clearing on load is explicit.
+- **Gap.** The app core has no point-cue builder, so a cursor move plays no cue yet (B03-T09, B03-T12).
+- **UI.** `useCursor` (`cursor_get`, then events, newest `seq` wins). `CursorReadout` with `@sonarithm/ui`'s new `Breadcrumbs`: only the current level is a link, with `aria-current="page"`, and the separators are CSS. The table sends `cursor_set` on `focusin` and shows the cursor row selected. A cursor in another window loads it only when the focus is outside the table. Table rows now carry `__snr_row`, so a sorted table still names the dataset row.
+- Locally, between low-memory pauses: codegen, clippy and all 134 `sonarithm-app` tests, `sonarithm-i18n` 25, the frontend typecheck, lint and unit tests, the Breadcrumbs and DataTable stories, and all 39 Chromium E2E tests. The first cursor test caught an empty `cursor` event on the session's first command; the model now starts as "no cursor, already sent". The E2E caught that a cursor's window never loaded after the focus left the table: whether the focus is inside is now state, so leaving re-runs the load.
+
 ## Next steps
 
 - [ ] Commit the screenshot baselines from the first CI run's `visual-baselines` artifact.

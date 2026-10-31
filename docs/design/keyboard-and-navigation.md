@@ -221,7 +221,7 @@ The Table tab is a React Aria `Table` following the APG grid pattern (A11Y-03).
 | Primary+F | Search the table |
 | Go to row… (command palette) | Load the window that holds a row number and focus that row, in the same column |
 
-The table holds a window of rows. Its first column, a row header, is each row's number in the whole table, and a line above the grid gives the loaded range ("Rows 1 to 1,000 of 1,000,000"), announced politely when the window changes (09 §3, B04-T05). The focused row is the shared cursor (A11Y-11): moving it moves the plot highlight and the explorer cursor, and plays the point cue if sonification is on.
+The table holds a window of rows. Its first column, a row header, is each row's number in the whole table, and a line above the grid gives the loaded range ("Rows 1 to 1,000 of 1,000,000"), announced politely when the window changes (09 §3, B04-T05). The focused row is the shared cursor (A11Y-11): moving it moves the plot highlight and the explorer cursor, and plays the point cue if sonification is on. The move is not announced, because the screen reader reads the focused row (ADR-0017 "Cursor", INFER, OD-30). The cursor's row is shown selected, and the Status region's readout and breadcrumb follow it. A cursor moved elsewhere never moves the focus (B04-T06).
 
 ### 5.7 Project tree
 

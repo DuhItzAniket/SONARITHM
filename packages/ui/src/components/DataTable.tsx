@@ -56,6 +56,11 @@ export interface DataTableProps {
   readonly onKeyDownCapture?: KeyboardEventHandler<HTMLDivElement>;
   /** The element around the grid. */
   readonly containerRef?: Ref<HTMLDivElement>;
+  /**
+   * The row to show as selected (`aria-selected`): the shared cursor (B04-T06). The owner
+   * decides it; pressing a row does not change it here.
+   */
+  readonly selectedKey?: Key | null;
 }
 
 /** Rows and the header are the compact row height (design-language §7.2), in pixels. */
@@ -76,6 +81,7 @@ export function DataTable({
   onSortChange,
   onKeyDownCapture,
   containerRef,
+  selectedKey,
 }: DataTableProps) {
   const descriptor: SortDescriptor | undefined =
     sort === undefined || sort === null
@@ -95,6 +101,15 @@ export function DataTable({
           aria-label={label}
           className={cx(styles.table)}
           {...(descriptor === undefined ? {} : { sortDescriptor: descriptor })}
+          {...(selectedKey === undefined
+            ? {}
+            : {
+                selectionMode: "single" as const,
+                selectedKeys:
+                  selectedKey === null
+                    ? new Set<Key>()
+                    : new Set([selectedKey]),
+              })}
           {...(onSortChange === undefined
             ? {}
             : {

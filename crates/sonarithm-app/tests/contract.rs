@@ -113,6 +113,8 @@ fn requests(dir: &TempDir) -> Vec<Value> {
         json!({ "command": "profile_flip_polarity", "args": { "field": "temp" } }),
         json!({ "command": "settings_effective" }),
         json!({ "command": "spec_quick", "args": { "dataset": "d1", "x": "day", "y": "temp" } }),
+        json!({ "command": "cursor_set", "args": { "dataset": "d1", "row": 0, "origin": "table" } }),
+        json!({ "command": "cursor_get" }),
         json!({ "command": "dataset_open", "args": { "path": chart } }),
         json!({ "command": "corrections_get", "args": { "dataset": "d2" } }),
         json!({ "command": "corrections_apply", "args": { "dataset": "d2", "patch": [{ "op": "add", "path": "/edits/-", "value": {

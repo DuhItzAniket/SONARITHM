@@ -1,0 +1,20 @@
+/* SPDX-FileCopyrightText: 2026 SONARITHM contributors */
+/* SPDX-License-Identifier: MIT OR Apache-2.0 */
+
+/* The cursor readout (B04-T06): the data row, then the breadcrumb, on one line when they fit. */
+.readout {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  align-items: baseline;
+  margin: 0;
+  color: var(--text-2);
+  font-size: var(--type-13-size);
+  line-height: var(--type-13-line);
+  font-variant-numeric: var(--numeric);
+}
+
+.row {
+  margin: 0;
+  color: var(--text-1);
+}
