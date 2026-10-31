@@ -1,7 +1,8 @@
 // SPDX-FileCopyrightText: 2026 SONARITHM contributors
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
-import type { Key } from "react-aria-components";
+import type { KeyboardEventHandler, Ref } from "react";
+import type { Key, SortDescriptor } from "react-aria-components";
 import {
   Cell,
   Column,
@@ -25,6 +26,14 @@ export interface DataColumn {
   readonly isRowHeader?: boolean;
   /** Right-aligned with tabular figures (DL-P03, DL-P04). */
   readonly numeric?: boolean;
+  /** Whether Enter (or a click) on the header sorts by this column. */
+  readonly allowsSorting?: boolean;
+}
+
+/** The table's order: a column and a direction, as React Aria's `SortDescriptor`. */
+export interface DataSort {
+  readonly column: string;
+  readonly direction: "ascending" | "descending";
 }
 
 /** One row: an ID and the text of each column, already formatted with units. */
@@ -39,6 +48,14 @@ export interface DataTableProps {
   readonly label: string;
   readonly columns: readonly DataColumn[];
   readonly rows: readonly DataRow[];
+  /** The current order, shown with `aria-sort` on its header. */
+  readonly sort?: DataSort | null;
+  /** Called when a sortable header is pressed; the owner fetches rows in the new order. */
+  readonly onSortChange?: (sort: DataSort) => void;
+  /** Sees keys before the grid does: paging past the loaded rows (B04-T05). */
+  readonly onKeyDownCapture?: KeyboardEventHandler<HTMLDivElement>;
+  /** The element around the grid. */
+  readonly containerRef?: Ref<HTMLDivElement>;
 }
 
 /** Rows and the header are the compact row height (design-language §7.2), in pixels. */
@@ -51,22 +68,63 @@ const ROW_PX = 24;
  * names each value by its row and column (A11Y-03). Arrows move between cells; PageUp and
  * PageDown move a page.
  */
-export function DataTable({ label, columns, rows }: DataTableProps) {
+export function DataTable({
+  label,
+  columns,
+  rows,
+  sort,
+  onSortChange,
+  onKeyDownCapture,
+  containerRef,
+}: DataTableProps) {
+  const descriptor: SortDescriptor | undefined =
+    sort === undefined || sort === null
+      ? undefined
+      : { column: sort.column, direction: sort.direction };
   return (
-    <div className={cx(styles.scroller)}>
+    <div
+      ref={containerRef}
+      className={cx(styles.scroller)}
+      onKeyDownCapture={onKeyDownCapture}
+    >
       <Virtualizer
         layout={TableLayout}
         layoutOptions={{ rowHeight: ROW_PX, headingHeight: ROW_PX }}
       >
-        <Table aria-label={label} className={cx(styles.table)}>
+        <Table
+          aria-label={label}
+          className={cx(styles.table)}
+          {...(descriptor === undefined ? {} : { sortDescriptor: descriptor })}
+          {...(onSortChange === undefined
+            ? {}
+            : {
+                onSortChange: (next: SortDescriptor) => {
+                  onSortChange({
+                    column: String(next.column),
+                    direction: next.direction,
+                  });
+                },
+              })}
+        >
           <TableHeader columns={columns} className={cx(styles.header)}>
             {(column) => (
               <Column
                 id={column.id}
                 isRowHeader={column.isRowHeader ?? false}
+                allowsSorting={column.allowsSorting ?? false}
                 className={cx(styles.column, column.numeric && styles.numeric)}
               >
-                {column.name}
+                {({ sortDirection }) => (
+                  <>
+                    {column.name}
+                    {sortDirection !== undefined && (
+                      // The direction is in aria-sort too; this arrow is for sighted users.
+                      <span className={cx(styles.sort)} aria-hidden="true">
+                        {sortDirection === "ascending" ? "↑" : "↓"}
+                      </span>
+                    )}
+                  </>
+                )}
               </Column>
             )}
           </TableHeader>

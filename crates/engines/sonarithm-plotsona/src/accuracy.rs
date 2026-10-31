@@ -350,3 +350,5 @@ fn the_metrics_score_known_tables() {
     let curve = curve_error(&truth, &truth, 20.0);
     assert_eq!(curve, Some(0.0));
 }
+
+mod raster;

@@ -73,6 +73,36 @@ ui-reorder = Reorder { $name }
 # A number outside its field's range; $low and $high are the limits with their unit.
 ui-error-out-of-range = Enter a value from { $low } to { $high }.
 
+## Data table (B04-T05; keyboard-and-navigation §5.6). The table holds a window of rows at a
+## time; the range says where those rows sit in the whole table.
+
+# The table's name; $name is the dataset.
+ui-table-label = Rows of { $name }
+# The loaded rows; $from, $to and $total are row numbers.
+ui-table-rows = Rows { $from } to { $to } of { $total }
+ui-table-loading = Loading rows…
+ui-table-no-rows = The dataset has no rows.
+ui-table-row-number = Row
+ui-table-provenance = Provenance
+# A column header with its unit; $name is the field and $unit its symbol.
+ui-table-heading-unit = { $name } ({ $unit })
+# Values stated plainly (03 §4 rule 3); estimates use announce-provenance, as speech does.
+ui-table-provenance-plain =
+    { $class ->
+        [vector] calibrated
+        [user_edited] edited
+       *[other] exact
+    }
+ui-table-no-value = no value
+ui-table-yes = yes
+ui-table-no = no
+# Said after a sort; $field is the column header.
+ui-table-sorted-ascending = Sorted by { $field }, ascending
+ui-table-sorted-descending = Sorted by { $field }, descending
+ui-go-to-row = Go to row
+ui-go-to-row-number = Row number
+ui-go-to-row-action = Go
+
 ## Application frame (B02-T06; design-language §4, keyboard-and-navigation §3).
 
 ui-region-inspector = Inspector
@@ -133,6 +163,7 @@ command-view-prev-region = Previous region
 command-view-menu-bar = Go to the menu bar
 command-view-context-menu = Context menu
 command-view-toggle-region = Collapse or expand this region
+command-table-go-to-row = Go to row…
 # The palette's result count, announced as it filters; $count is a number.
 command-results =
     { $count ->

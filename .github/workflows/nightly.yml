@@ -2,7 +2,7 @@
 # §7), 30 minutes per target each night: the spec parser and migrations (from A03) and the
 # data-layer importers (from A04: CSV/TSV, JSON/NDJSON, XLSX/ODS, Parquet/Arrow IPC), the
 # `.sonarithm` project reader (from B05) and the stream payload decoders (from B06: JSON,
-# OSC, lines) and the chart parsers (from C01).
+# OSC, lines), the chart parsers (from C01) and the function expressions (from C03).
 # Manual dispatch takes the seconds per target; use 3600 for an exit run. Pull requests that
 # touch a fuzzed crate run a two-minute smoke fuzz of every target. From A05: the 10-minute
 # allocation soak on the null device; from B06: the 10-minute stream soak (PB-11)
@@ -26,6 +26,7 @@ on:
       - "crates/sonarithm-stream/**"
       - "crates/sonarithm-app/**"
       - "crates/engines/sonarithm-plotsona/**"
+      - "crates/engines/sonarithm-curvasona/**"
       - ".github/workflows/nightly.yml"
 
 permissions: {}
@@ -65,6 +66,7 @@ jobs:
           - { crate: engines/sonarithm-plotsona, target: vegalite_import }
           - { crate: engines/sonarithm-plotsona, target: maidr_import }
           - { crate: engines/sonarithm-plotsona, target: raster_image }
+          - { crate: engines/sonarithm-curvasona, target: expr_parse }
     env:
       FUZZ_SECONDS: ${{ github.event_name == 'pull_request' && '120' || inputs.seconds || '1800' }}
     steps:

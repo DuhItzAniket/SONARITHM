@@ -998,6 +998,15 @@ A05 (render engine, audio backends, export) uses F-050 to F-069.
 - **Affects:** NFR-04, ADR-0012, #409; testing-strategy §10; macOS's sandbox log is also read by PID (sandbox_lines), with the same reuse risk
 - **Papers:** none yet
 
+### F-183 · Clean raster line and bar charts read within 0.14 % median error at every resolution, but JPEG artefacts break automatic series colours
+
+- **Date:** 2026-10-30 · **Phase:** C02 · **Type:** benchmark · **Status:** new
+- **Statement:** The C02-T08 harness scores the raster line and bar charts of DS-007 (Vega-Lite, Plotly and D3; three line charts of 36 values and three bar charts of 5) rendered by vl-convert 1.9.0 at 1x, 1.5x and 2x, and at 1x without anti-aliasing, 24 clean PNG renders in all, read through anchors placed on the SVG's ticks. Every clean render reads as `cv_estimate` with a confidence; the worst median error is 0.14 % of the chart's largest value (crisp D3 line) and the lowest RMS-F1 0.994, well inside the C02 bar of 2 %. The same renders re-encoded as JPEG fare differently: the bar charts keep their accuracy at quality 90 and 60 except D3's (whose thin bars lose most categories), but line charts often fail at quality 90 and mostly fail at 60 (no series, or one or two of three). Chroma subsampling and ringing spread each line colour over many nearby shades, so automatic series-colour detection (C02-T03) splits or drops series. Plotly's line charts have one point per series near 8.6 % off at every clean resolution, where the line meets a marker of the same colour; the median is unaffected.
+- **Evidence:** `crates/engines/sonarithm-plotsona/src/accuracy/raster.rs` (`the_raster_corpus_meets_the_c02_accuracy_bar`, which writes the per-render table); the CI artefact `chart-accuracy` (`chart-accuracy-raster.md`); the C02-T08 PR
+- **Evidence level / confidence:** EV-C / Strong for clean renders of this corpus; Moderate for JPEG (two qualities from one encoder, the `image` crate's). Scans, photographs, thick or dashed lines, overlapping series of one colour and anchors clicked by people are not measured
+- **Affects:** C02 exit (FR-007, SDR-42), DS-007, F-180, F-182, F-181 (colour thresholds), 10 §3; a follow-up for JPEG robustness (colour clustering before series detection, or a user-picked colour per series as WebPlotDigitizer's documentation describes)
+- **Papers:** none yet
+
 ### F-184 · Series of estimates were announced like exact data, and the lowest confidence is named relative to each series
 
 - **Date:** 2026-10-30 · **Phase:** C02 · **Type:** engineering (accessibility) · **Status:** new
@@ -1007,6 +1016,15 @@ A05 (render engine, audio backends, export) uses F-050 to F-069.
 - **Affects:** C02-T09, A11Y-02, A11Y-12, A11Y-24, FR-008, OD-07, H-06
 - **Papers:** none yet
 
+### F-190 · exmex alone reads -2^2 as 4, so CURVASONA parses expressions itself
+
+- **Date:** 2026-10-31 · **Phase:** C03 · **Type:** engineering (correctness, security) · **Status:** new
+- **Statement:** Reading exmex 0.21.0 for C03-T01 showed three differences from school maths that a blind maths teacher would hear as wrong answers: unary operators bind tighter than every binary one, so `-2^2` evaluates to 4 and `-x^2` is a parabola opening upwards; `signum(0)` is 1 (Rust's `f64::signum`); and `log` is the natural logarithm, where many school books mean base 10. exmex also has no symbolic derivative for `abs`, `floor`, `min`, `max`, `cbrt` or `atan2`, and its number syntax has no exponents. CURVASONA therefore reads the expression with its own parser (ordinary precedence, `^` right-associative, a closed set of names, length, depth and node limits) and hands exmex only a form with every operation in parentheses and numbers it can read, so exmex evaluates and differentiates but never decides what the text means. `log` is refused with a hint, `sign` is left out, and `dy` falls back to central differences where exmex has no derivative (`SNR-ENG-405`). The facade also keeps exmex, a single-maintainer crate (tech-stack: Trial), replaceable without changing the language.
+- **Evidence:** `crates/engines/sonarithm-curvasona/src/expr/tests.rs` (`exmex_alone_reads_minus_two_squared_as_four`, `precedence_follows_ordinary_maths`, `canonical_form_round_trips_and_lowering_keeps_meaning`); exmex 0.21.0 `src/lib.rs` ("unary operators always have higher priority") and `src/operators.rs`
+- **Evidence level / confidence:** EV-C / Strong (source and tests)
+- **Affects:** C03-T01, 07 CURVASONA, A11Y-28, FR-009, the teacher pilot's tasks (C03-T09)
+- **Papers:** none yet
+
 ### F-176 · Two CI-only test flakes came from React Aria acting a frame or an event later than the tests assumed
 
 - **Date:** 2026-10-31 · **Phase:** B01, B02 · **Type:** engineering (testing) · **Status:** new
@@ -1014,4 +1032,13 @@ A05 (render engine, audio backends, export) uses F-050 to F-069.
 - **Evidence:** `apps/desktop/e2e/audio.spec.ts` (`fr_118_preferences_choose_the_device_and_set_the_volume_by_keyboard`, which now polls); `packages/ui/src/components/Button.stories.tsx` (`IconOnly`, which now waits for the tooltip's removal); React Aria 3.53.1 `FocusScope` and `useTooltipTrigger`
 - **Evidence level / confidence:** EV-C / Strong for the mechanisms (source and the local experiment); Weak for the pointer event's origin in CI, TODO(verify) if the story fails again
 - **Affects:** testing-strategy §12 (browser tests): read focus and overlay state with polling or observers, not one read after an overlay closes
+- **Papers:** none yet
+
+### F-177 · React Aria's Table cannot say a row's place in a million, so the row number is content
+
+- **Date:** 2026-10-31 · **Phase:** B04 · **Type:** engineering (accessibility) · **Status:** new
+- **Statement:** React Aria Components' Table builds a collection node for every row and sets `aria-rowcount` and `aria-rowindex` from that collection (react-aria 3.53.1, `useTable` and `useTableRow`), with no override. A million-row table cannot be one collection, and patching the attributes would be hand-rolled ARIA that React Aria rewrites. The data table holds windows of 1,000 rows from `table_page` and puts each row's number in the whole table in a row-header column, so screen readers announce the true position as content while `aria-rowcount` counts the window. A visible and politely announced range ("Rows 1,001 to 2,000 of 1,000,000") and whole-table moves (window edges, Primary+Home/End, "Go to row…") keep the user's place.
+- **Evidence:** `apps/desktop/e2e/table.spec.ts` (Chromium and WebKit); `apps/desktop/test/table-paging.test.ts`; the coordinator's decision of 2026-10-31
+- **Evidence level / confidence:** EV-C / Strong for the constraint. How NVDA, JAWS, VoiceOver and Orca read a window's row count next to the row-number header is TODO(verify) in the owner's walkthroughs (HP-07, HP-08)
+- **Affects:** B04-T05, A11Y-03, A11Y-24, FR-046, keyboard-and-navigation §5.6, 09 §3; B04-T06 (the focused row as the shared cursor)
 - **Papers:** none yet

@@ -93,6 +93,13 @@
 - The jump threshold is 50 ms of position: a 250 ms draft would have ignored a short backward seek while playing.
 - `ClockAnchor.outputLatencyS` was approved as an additive field. The Rust type, codegen and the ADR-0017 "Clock anchors" record with a change-history line are done, and the null device's anchors carry `null`. `@sonarithm/viz/playhead` is a subpath export, so Node tests can import the clock without TSX or CSS. Stored offsets (approved as option b) get their own PR after this one.
 
+## B04-T05: data table (2026-10-31)
+
+- **Design.** React Aria's Table cannot hold a million rows or take an overridden `aria-rowcount`, so the table holds windows of 1,000 rows. The coordinator chose this over patching ARIA (rule 6) and added conditions: the true row number as the row header, whole-table jumps, "Go to row…", the focus kept in its column, and the range announced only when the window changes. F-177.
+- **`encodeView`** in `@sonarithm/ipc` writes binary views for mocks and tests, byte for byte as Rust does (checked against the shared fixture). Mock binary replies can now depend on the request.
+- **`GoToRow`.** NumberField commits a typed number during the Enter keydown that also submits the form, so the submit reads the latest value from a ref.
+- Locally: desktop 37 unit tests and all 37 E2E tests in Chromium, plus `table.spec.ts` (4) in WebKit; ipc 16, i18n 9 and ui 48 node tests; the DataTable stories in two themes. No cargo: the new Fluent messages reuse sample arguments the Rust catalogue tests already have, and CI runs those tests.
+
 ## Next steps
 
 - [ ] Commit the screenshot baselines from the first CI run's `visual-baselines` artifact.

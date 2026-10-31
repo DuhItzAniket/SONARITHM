@@ -38,8 +38,13 @@ export interface MockTransport extends IpcTransport {
 export interface MockOptions {
   /** The protocol version the mock host speaks; by default the UI's. */
   readonly protocol?: number;
-  /** Binary replies by command. */
-  readonly binary?: Partial<Record<BinaryCommand, ArrayBuffer>>;
+  /** Binary replies by command: a buffer, or a function of the request (a table page). */
+  readonly binary?: Partial<
+    Record<
+      BinaryCommand,
+      ArrayBuffer | ((request: RequestFor<BinaryCommand>) => ArrayBuffer)
+    >
+  >;
 }
 
 /**
@@ -101,7 +106,11 @@ export function createMockTransport(
     },
     binary(request) {
       requests.push(request);
-      const buffer = options.binary?.[request.command as BinaryCommand];
+      const reply = options.binary?.[request.command as BinaryCommand];
+      const buffer =
+        typeof reply === "function"
+          ? reply(request as RequestFor<BinaryCommand>)
+          : reply;
       return buffer === undefined
         ? Promise.reject(unhandled(request.command))
         : Promise.resolve(buffer);

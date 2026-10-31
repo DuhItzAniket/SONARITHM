@@ -29,6 +29,7 @@ sonarithm-echometric.workspace = true
 sonarithm-render.workspace = true
 sonarithm-sonotrace.workspace = true
 sonarithm-plotsona.workspace = true
+sonarithm-curvasona.workspace = true
 sonarithm-spec.workspace = true
 
 [lints]

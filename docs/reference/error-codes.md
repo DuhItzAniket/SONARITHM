@@ -235,6 +235,19 @@ Owner: `sonarithm-plotsona`. Numbers SNR-ENG-300 to SNR-ENG-399.
 | `SNR-ENG-386` | warning | A chart correction was not applied | An edit applies only to the point it was made on, checked by its `was` value; the            point is gone or now has another value. Re-make the edit on the current extraction. | — |
 | `SNR-ENG-387` | warning | The corrections were made on another chart | A correction file is bound to its chart by the chart's SHA-256 and the extractor;            this chart differs, so no edit was applied. Open the chart the file was made for. | — |
 
+Owner: `sonarithm-curvasona`. Numbers SNR-ENG-400 to SNR-ENG-499.
+
+| Code | Severity | Meaning | How to fix | Rules |
+|---|---|---|---|---|
+| `SNR-ENG-400` | error | The expression cannot be read | Write the function in `x` with numbers, `+ - * / ^`, parentheses and functions such as `sin(x)`. Write every product with `*` (`2*x`, not `2x`); the message names the characters where reading stopped. | — |
+| `SNR-ENG-401` | error | The expression uses an unknown name | An expression may use `x`, the constants pi, e and tau, the source's `variables` and the functions listed in 07 CURVASONA. Declare other names in `variables`. `log` is refused because it means ln in some books and log10 in others: write ln(x) or log10(x). | — |
+| `SNR-ENG-402` | error | The expression exceeds a size limit | Expressions are untrusted input with budgets for length, nesting depth and size (12 §6). Simplify the expression, or split it with `variables`. | — |
+| `SNR-ENG-403` | error | A variable cannot be used | Variable names start with a letter, use letters, digits and `_`, are at most 32 characters long and are not `x`, a constant or a function name. A source declares at most 16 variables. | — |
+| `SNR-ENG-404` | error | The function needs more samples than the limit | Lower `samples`, raise `step` or narrow the `domain`. The limit keeps a function source from exhausting memory or time. | — |
+| `SNR-ENG-405` | info | The derivative is computed numerically | The expression uses a function without a symbolic derivative (such as abs, floor or min), or its derivative is larger than the size limit, so `dy` comes from central differences. It is accurate where the function is smooth. | A11Y-28 |
+| `SNR-ENG-406` | warning | The function is undefined at some samples | Division by zero, roots and logarithms of negative numbers and overflows give no value; those rows have no `y` and follow `data.missing`. Narrow the domain to leave them out. | A11Y-28 |
+| `SNR-ENG-407` | warning | The search for poles and undefined spans stopped early | The function has more poles, holes, jumps or undefined spans than the limits allow, or needs too many evaluations to find them, so some may be missing from the cues and the list. Narrow the domain or lower `samples`. | A11Y-28 |
+
 Owner: `sonarithm-echometric`. Numbers SNR-ENG-600 to SNR-ENG-699.
 
 | Code | Severity | Meaning | How to fix | Rules |

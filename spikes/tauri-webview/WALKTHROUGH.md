@@ -52,7 +52,7 @@ Every run writes JSON with `--out`. Keep the files: they are the evidence.
 
 Start Narrator with `Win+Ctrl+Enter`; scan mode toggles with `Caps Lock+Space`. Repeat steps 1–19. Narrator is the reference consumer of UI Automation notifications, so steps 14 and 15 matter most here.
 
-**Also with the desktop app (B03-T04, for the OD-05 decision and #388).** In a nightly build of `apps/desktop`:
+**Also with the desktop app (B03-T04, for the OD-05 decision and #388).** In a nightly build of `apps/desktop` (the `sonarithm-desktop-nightly-<commit>-Windows` artifact of the latest `desktop-nightly` run; install steps in [release-process](../../docs/engineering/release-process.md#desktop-release)):
 
 - With `speech.announcer` set to `native` (the settings file), check that Narrator speaks app announcements once. Then set it back to `liveRegion` and repeat.
 - React Aria Components' own widget announcements are kept (#388). Check that each is spoken once, and not on top of an app announcement:
