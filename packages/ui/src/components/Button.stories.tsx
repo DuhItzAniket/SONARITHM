@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
 import type { Meta, StoryObj } from "@storybook/react-vite";
-import { expect, fn, userEvent, waitFor, within } from "storybook/test";
+import { expect, fn, userEvent, within } from "storybook/test";
 
 import { PlayGlyph } from "../../.storybook/icons.tsx";
 import { storyLocalizer } from "../../.storybook/localizer.ts";
@@ -68,10 +68,24 @@ export const IconOnly: StoryObj<typeof IconButton> = {
     await expect(button).toHaveFocus();
     const tooltip = await within(document.body).findByRole("tooltip");
     await expect(tooltip).toHaveTextContent("Play (Space)");
+    // Escape removes this tooltip. Watch for that removal rather than for "no tooltip": after
+    // Escape, React Aria still counts the trigger as focused, so any pointer entering it opens
+    // a new tooltip at once. A stray pointer event in CI made the absence check fail in every
+    // theme, though Escape had worked.
+    const removed = new Promise<boolean>((resolve) => {
+      const observer = new MutationObserver(() => {
+        if (!tooltip.isConnected) {
+          observer.disconnect();
+          resolve(true);
+        }
+      });
+      observer.observe(document.body, { childList: true, subtree: true });
+      setTimeout(() => {
+        observer.disconnect();
+        resolve(!tooltip.isConnected);
+      }, 3000);
+    });
     await userEvent.keyboard("{Escape}");
-    // The tooltip leaves after its close transition, a frame or two after Escape.
-    await waitFor(() =>
-      expect(within(document.body).queryByRole("tooltip")).toBeNull(),
-    );
+    await expect(await removed, "Escape removes the tooltip").toBe(true);
   },
 };
