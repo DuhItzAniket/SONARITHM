@@ -1016,6 +1016,15 @@ A05 (render engine, audio backends, export) uses F-050 to F-069.
 - **Affects:** C02-T09, A11Y-02, A11Y-12, A11Y-24, FR-008, OD-07, H-06
 - **Papers:** none yet
 
+### F-194 · A zero of a guard exactly on a grid point hid a second zero in the next grid step
+
+- **Date:** 2026-10-31 · **Phase:** C03 · **Type:** engineering (correctness) · **Status:** new
+- **Statement:** The property test `poles_and_holes_are_never_missed` failed on an unrelated PR's CI run (41224538690): with a pole at x = 0 and a hole at b in (0, 4), on the coarsest grid -4, 0, 4, the scan found the pole and missed the hole. The guard `x(x - b)` is exactly 0 at the grid point 0 and positive at -4 and 4, so the second zero has no sign change on the grid, and the dip search skipped grid points where the guard is 0. The zero finder of `critical` shared the gap (`x*(x - 1)` on the same grid). Both intervals beside an exact zero are now searched like a dip. Earlier random runs passed because an exact zero on the grid needs a pole at a grid point, which proptest's shrinking towards 0 finds and uniform sampling rarely does.
+- **Evidence:** `crates/engines/sonarithm-curvasona/src/scan/tests.rs` (`a_zero_on_the_grid_does_not_hide_a_second_one_beside_it`), `src/critical/tests.rs` (`a_zero_on_the_grid_does_not_hide_its_neighbour`); `scan::dips`
+- **Evidence level / confidence:** EV-C / Strong (reproduced)
+- **Affects:** C03-T02, C03-T03 (fixed in this PR)
+- **Papers:** none yet
+
 ### F-192 · exmex's symbolic derivatives overflow the stack on allowed input, so CURVASONA differentiates on its own tree
 
 - **Date:** 2026-10-31 · **Phase:** C03 · **Type:** engineering (security, correctness) · **Status:** new

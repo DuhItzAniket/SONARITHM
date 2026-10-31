@@ -253,8 +253,9 @@ fn zeros(g: &Expr, kind: GuardKind, xs: &[f64], counter: &mut Counter, out: &mut
 }
 
 /// The intervals where `|g|` dips without a sign change on the grid, with the sign of `g`
-/// there: around each interior local minimum of `|g|`, and the first or last interval when
-/// `|g|` falls towards that end of the domain, where a dip shows only at the end point.
+/// there: around each interior local minimum of `|g|`, the first or last interval when
+/// `|g|` falls towards that end of the domain, where a dip shows only at the end point, and
+/// both intervals next to a grid point where `g` is exactly 0.
 pub(crate) fn dips(xs: &[f64], values: &[f64]) -> Vec<(f64, f64, bool)> {
     let usable = |v: f64| v.is_finite() && v != 0.0;
     let same = |a: f64, b: f64| (a < 0.0) == (b < 0.0);
@@ -264,6 +265,18 @@ pub(crate) fn dips(xs: &[f64], values: &[f64]) -> Vec<(f64, f64, bool)> {
         let (Some(&x), Some(&v)) = (xs.get(i), values.get(i)) else {
             continue;
         };
+        // g is exactly 0 at a grid point: a second zero may hide in either neighbouring
+        // step without a sign change on the grid (x(x - b) on the grid -4, 0, 4).
+        if v == 0.0 {
+            for j in [i.checked_sub(1), Some(i + 1)].into_iter().flatten() {
+                if let (Some(&xj), Some(&vj)) = (xs.get(j), values.get(j))
+                    && usable(vj)
+                {
+                    out.push((x.min(xj), x.max(xj), vj < 0.0));
+                }
+            }
+            continue;
+        }
         if !usable(v) {
             continue;
         }
