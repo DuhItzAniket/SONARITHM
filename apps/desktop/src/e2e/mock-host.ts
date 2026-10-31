@@ -3,13 +3,18 @@
 
 import type {
   Channel,
+  DatasetSummary,
   Event,
   MockHandlers,
   Request,
   Settings,
   TransportState,
 } from "@sonarithm/ipc";
-import { createMockTransport, EVENT_CHANNELS } from "@sonarithm/ipc";
+import {
+  createMockTransport,
+  encodeView,
+  EVENT_CHANNELS,
+} from "@sonarithm/ipc";
 import { mockIPC } from "@tauri-apps/api/mocks";
 
 /**
@@ -66,7 +71,88 @@ const DEVICES = [
   { id: "headphones", name: "Headphones", isDefault: false },
 ];
 
+/**
+ * A dataset for the data table (B04-T05), when a test sets
+ * `window.__SONARITHM_MOCK_DATASET__ = { rows }` before the page loads. Row `i` has time
+ * `i / 10` s and a temperature; every tenth row is estimated from a chart image, with a
+ * confidence. Sorting by any field reverses the order when descending, which is the order
+ * these values have; the mock does not sort by value.
+ */
+function mockDataset(): DatasetSummary | null {
+  const wanted: unknown = Reflect.get(window, "__SONARITHM_MOCK_DATASET__");
+  const rows =
+    typeof wanted === "object" && wanted !== null
+      ? Number(Reflect.get(wanted, "rows"))
+      : Number.NaN;
+  if (!Number.isInteger(rows) || rows < 0) {
+    return null;
+  }
+  const field = (name: string, unit: string) => ({
+    name,
+    dataType: "f64",
+    fieldType: null,
+    role: null,
+    unit,
+    concept: null,
+  });
+  return {
+    id: "mock-1",
+    name: "Readings",
+    rows,
+    fields: [field("time", "s"), field("temperature", "°C")],
+    diagnostics: [],
+  };
+}
+const dataset = mockDataset();
+
+/** A table page of the mock dataset, encoded as the app core does (ADR-0017 §6). */
+function tablePage(args: {
+  readonly offset: number;
+  readonly limit: number;
+  readonly sort: { readonly descending: boolean } | null;
+}): ArrayBuffer {
+  const total = dataset?.rows ?? 0;
+  const count = Math.max(0, Math.min(args.limit, total - args.offset));
+  const index = Array.from({ length: count }, (_, i) =>
+    args.sort?.descending === true
+      ? total - 1 - (args.offset + i)
+      : args.offset + i,
+  );
+  return encodeView({
+    kind: 3,
+    generation: 1,
+    columns: [
+      {
+        name: "__snr_row",
+        dataType: "i64",
+        values: index.map((i) => BigInt(i)),
+      },
+      { name: "time", dataType: "f64", values: index.map((i) => i / 10) },
+      {
+        name: "temperature",
+        dataType: "f64",
+        values: index.map((i) => 15 + (i % 7)),
+      },
+      {
+        name: "__snr_prov",
+        dataType: "provenance",
+        values: index.map((i) => (i % 10 === 9 ? 2 : 0)),
+      },
+      {
+        name: "__snr_conf",
+        dataType: "confidence",
+        values: index.map(() => 0.82),
+        validity: index.map((i) => i % 10 === 9),
+      },
+    ],
+  });
+}
+
 const handlers: MockHandlers = {
+  dataset_list: () => ({
+    reply: "datasets" as const,
+    datasets: dataset === null ? [] : [dataset],
+  }),
   stop_all: () =>
     reply(
       transport.status === "playing"
@@ -106,7 +192,14 @@ const handlers: MockHandlers = {
   transport_set_loop: (request) =>
     reply({ ...transport, loopRange: request.args.range }),
 };
-const host = createMockTransport(handlers);
+const host = createMockTransport(handlers, {
+  binary: {
+    table_page: (request) =>
+      request.command === "table_page"
+        ? tablePage(request.args)
+        : new ArrayBuffer(0),
+  },
+});
 
 /** A Tauri channel as the mock receives it: its handler is readable. */
 interface MockChannel {
