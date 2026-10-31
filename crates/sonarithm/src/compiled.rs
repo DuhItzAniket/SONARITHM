@@ -314,28 +314,46 @@ fn extremes_line(track: &ScoreTrack) -> Option<String> {
     ))
 }
 
-/// "In temps, 3 of 10 tones are estimates; the lowest confidence is 0.75." (03 §4)
+/// "In temps, 3 of 10 tones are estimates; the lowest confidence is 0.75." (03 §4), and
+/// when confidence varies, where it is lowest relative to the track (C02-T09, OD-07):
+/// "Confidence is lowest around 4.2 seconds (row 17), median 0.41."
 fn estimates_line(track: &ScoreTrack) -> Option<String> {
     let mut notes = 0_usize;
-    let mut estimated = 0_usize;
     let mut lowest = f32::INFINITY;
+    let mut rated: Vec<(f32, f64, Option<u64>)> = Vec::new();
     for event in &track.events {
         if let ScoreEvent::Note(note) = event {
             notes += 1;
             if let Some(conf) = note.conf {
                 let value = f32::from(conf);
                 if value < 1.0 {
-                    estimated += 1;
                     lowest = lowest.min(value);
+                    rated.push((value, note.t.0, note.src.map(|r| r.row)));
                 }
             }
         }
     }
+    let estimated = rated.len();
     (estimated > 0).then(|| {
-        format!(
+        let mut line = format!(
             "In {}, {estimated} of {notes} tones are estimates; the lowest confidence is {lowest:.2}.",
             track.id
-        )
+        );
+        let confidences: Vec<f32> = rated.iter().map(|r| r.0).collect();
+        if let Some(stretch) = sonarithm_core::lowest_confidence_stretch(&confidences)
+            && let Some((_, t, row)) = rated.get(stretch.middle())
+        {
+            let at = row.map_or_else(
+                || format!("{} seconds", seconds(*t)),
+                |row| format!("{} seconds (row {row})", seconds(*t)),
+            );
+            let _ = write!(
+                line,
+                " Confidence is lowest around {at}, median {:.2}.",
+                stretch.median
+            );
+        }
+        line
     })
 }
 

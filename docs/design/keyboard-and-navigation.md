@@ -329,7 +329,9 @@ Example dataset: Weather 2026, series Temperature (°C), Humidity (%), Pressure 
 | Event | Terse | Verbose |
 |---|---|---|
 | Point | "28.7 °C, 14 Jul. Maximum." | "Temperature, 14 July 2026: 28.7 °C. Point 195 of 365. Global maximum." |
-| Point, estimated (Stage C) | "About 21.4 °C, 12 Mar. Estimated." | "Temperature, 12 March: 21.4 °C, estimated from a raster image, confidence 0.82. Point 71 of 365." |
+| Point, estimated (Stage C) | "21.4 °C, 12 Mar. Estimated." | "Temperature, 12 March: 21.4 °C, estimated from a chart image, confidence 0.82. Point 71 of 365." |
+| Segment, estimated (Stage C) | "March, 31 points, 4.1 to 12.6 °C. Estimated." | "Segment 3 of 12: March 2026, 31 points. Range 4.1 to 12.6 °C. 31 of 31 points estimated from a chart image, median confidence 0.82." |
+| Series, estimated (Stage C) | "Temperature, 365 points, 3.1 to 28.7 °C. Estimated." (some points only: "Partly estimated.") | "Series 1 of 3: Temperature, degrees Celsius. 365 points … 365 of 365 points estimated from a chart image, median confidence 0.82. Lowest confidence around 12 March, median 0.41." |
 | Segment | "July, 31 points, 24.9 to 28.7 °C." | "Segment 7 of 12: July 2026, 31 points. Range 24.9 to 28.7 °C, mean 26.8 °C." |
 | Series | "Temperature, 365 points, 3.1 to 28.7 °C." | "Series 1 of 3: Temperature, degrees Celsius. 365 points, 1 January to 31 December 2026. Range 3.1 to 28.7 °C, mean 15.2 °C. Press Down to explore, Space to play." |
 | Lateral move | "Humidity: 61 %, 14 Jul." | "Series 2 of 3, Humidity, 14 July 2026: 61 %." |
@@ -341,6 +343,8 @@ Example dataset: Weather 2026, series Temperature (°C), Humidity (%), Pressure 
 | Invalid action | Earcon, then "No other series." | Earcon, then "Not available: this dataset has one series." |
 | Mode change | "Presentation mode." | "Presentation mode. Pitch is quantized to a scale; values are approximate." (SDR-10) |
 | Query answer | "Mean 15.2 °C." | "Mean of Temperature, 365 points: 15.2 °C." |
+
+The estimate wording is always the Provenance part, never a prefix on the value, so a listener can move it but not lose it (§8.1, A11Y-12); an earlier draft of the point example began with "About". A series or segment of estimates says so too (C02-T09): terse "estimated" or "partly estimated", verbose the count, the source and the median confidence, and for a series the stretch where confidence is lowest relative to the series (no absolute cut-off, OD-07).
 
 ## 9. Announcement queue and sequencing
 
