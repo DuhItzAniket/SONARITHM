@@ -3,8 +3,9 @@
 
 //! Checks of the sections spec v0.2 adds (RFC-0004): the version gate (a v0.2 key in a
 //! document that declares `"0.1"` is unknown, `004`), `template`, `instruments`, `lint`
-//! (`045`, `046`), chart `calibration` (`054`) and `corrections` (`055`, `056`), and the
-//! `music.quantize` vocabularies (`043`, `044`).
+//! (`045`, `046`), chart `calibration` (`054`) and `corrections` (`055`, `056`), the
+//! `music.quantize` vocabularies (`043`, `044`), and the v0.4 `experimental` block (`047`,
+//! RFC-0006).
 
 use std::collections::BTreeSet;
 
@@ -42,6 +43,7 @@ pub(super) fn check(spec: &Spec, ids: &BTreeSet<String>, out: &mut Diagnostics) 
     template(spec, out);
     instruments(spec, out);
     lint(spec, ids, out);
+    experimental(spec, out);
     if let Source::Chart {
         calibration,
         corrections,
@@ -96,6 +98,40 @@ fn version_gate(spec: &Spec, out: &mut Diagnostics) {
                 ),
             )
             .at(at),
+        );
+    }
+}
+
+/// `experimental` (RFC-0006 §2): a spec 0.4 key, so unknown (`004`) in older documents;
+/// a switch this version does not know is a warning (`047`) and has no effect. A known
+/// switch that is not a boolean fails to parse (`002`).
+fn experimental(spec: &Spec, out: &mut Diagnostics) {
+    let Some(block) = &spec.experimental else {
+        return;
+    };
+    let at = root().key("experimental");
+    if spec.spec_version < SpecVersion::V0_4 {
+        out.push(
+            Diagnostic::new(
+                &codes::UNKNOWN_KEY,
+                format!(
+                    "`experimental` is a spec v0.4 key, but this spec declares \"{}\". Set \"specVersion\": \"0.4\" to use it.",
+                    spec.spec_version
+                ),
+            )
+            .at(at),
+        );
+        return;
+    }
+    for key in block.other.keys() {
+        out.push(
+            Diagnostic::new(
+                &codes::UNKNOWN_EXPERIMENT,
+                format!(
+                    "Experimental switch `{key}` is not known to this SONARITHM; it is ignored."
+                ),
+            )
+            .at(at.key(key)),
         );
     }
 }

@@ -54,6 +54,9 @@ impl SpecVersion {
     /// `specVersion: "0.3"`: `data.source.corrections.path`, a chart correction file
     /// (RFC-0005, ADR-0026).
     pub const V0_3: Self = Self { major: 0, minor: 3 };
+    /// `specVersion: "0.4"`: the `experimental` block of opt-in sound experiments
+    /// (RFC-0006, ADR-0027).
+    pub const V0_4: Self = Self { major: 0, minor: 4 };
 }
 
 impl fmt::Display for SpecVersion {

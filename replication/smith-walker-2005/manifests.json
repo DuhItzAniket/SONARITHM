@@ -9,7 +9,7 @@
         "name": "data.csv"
       }
     },
-    "manifestVersion": 1,
+    "manifestVersion": 2,
     "output": {
       "bitsPerSample": 24,
       "channels": 2,
@@ -82,7 +82,7 @@
         "name": "data.csv"
       }
     },
-    "manifestVersion": 1,
+    "manifestVersion": 2,
     "output": {
       "bitsPerSample": 24,
       "channels": 2,
@@ -170,7 +170,7 @@
         "name": "data.csv"
       }
     },
-    "manifestVersion": 1,
+    "manifestVersion": 2,
     "output": {
       "bitsPerSample": 24,
       "channels": 2,
@@ -258,7 +258,7 @@
         "name": "data.csv"
       }
     },
-    "manifestVersion": 1,
+    "manifestVersion": 2,
     "output": {
       "bitsPerSample": 24,
       "channels": 2,
@@ -331,7 +331,7 @@
         "name": "data.csv"
       }
     },
-    "manifestVersion": 1,
+    "manifestVersion": 2,
     "output": {
       "bitsPerSample": 24,
       "channels": 2,
@@ -389,7 +389,7 @@
         "name": "data.csv"
       }
     },
-    "manifestVersion": 1,
+    "manifestVersion": 2,
     "output": {
       "bitsPerSample": 24,
       "channels": 2,

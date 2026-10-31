@@ -779,3 +779,42 @@ fn sdr_03_template_is_data_agnostic() {
     );
     assert!(named_field.is_err(), "a template has no field of its own");
 }
+
+/// A 0.4 spec with the tone track and extra top-level members.
+fn v04(extra: &str) -> String {
+    with_extra(extra).replacen("\"0.1\"", "\"0.4\"", 1)
+}
+
+/// RFC-0006 §2: `experimental` is a spec 0.4 key, so unknown (`SNR-SPEC-004`) in a 0.3
+/// document; a switch this version does not know is a warning (`SNR-SPEC-047`) that
+/// changes nothing.
+#[test]
+fn snr_spec_047_experimental_switches_and_version_gate() {
+    let on = r#", "experimental": { "lowConfidenceTimbre": true }"#;
+    let passing = v04(on);
+    check(
+        "SNR-SPEC-004",
+        "/experimental",
+        &with_extra(on).replacen("\"0.1\"", "\"0.3\"", 1),
+        &passing,
+    );
+    check(
+        "SNR-SPEC-047",
+        "/experimental/glowingEstimates",
+        &v04(r#", "experimental": { "lowConfidenceTimbre": true, "glowingEstimates": true }"#),
+        &passing,
+    );
+    let unknown = diagnose(&v04(r#", "experimental": { "glowingEstimates": true }"#));
+    assert!(unknown.iter().all(|d| d.severity == Severity::Warning));
+}
+
+/// RFC-0006 §2: a known switch that is not a boolean does not parse.
+#[test]
+fn snr_spec_002_experimental_switches_are_booleans() {
+    let wrong = v04(r#", "experimental": { "lowConfidenceTimbre": "yes" }"#);
+    let errors = parse(&wrong).unwrap_err();
+    assert!(
+        errors.iter().any(|d| d.code.as_str() == "SNR-SPEC-002"),
+        "{errors:#?}"
+    );
+}
