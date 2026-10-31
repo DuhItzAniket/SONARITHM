@@ -10,6 +10,7 @@ From phase A07, release-plz maintains this file: it generates each release's ent
 
 ### Added
 
+- Smoke-run diagnostics (#436): a desktop smoke run that hangs or whose page fails to load now ends with a failing report that names the stuck check, instead of waiting until CI's time limit.
 - The Plot tab (B04-T06): it draws the dataset as a line, with the shared cursor as a dashed crosshair. Clicking the plot moves the cursor to the nearest point, which is announced, and the table and the Status region follow.
 - One cursor (B04-T06): the row you focus in the data table is the cursor that every view shows. It is selected in the table, and the Status region shows its data row and its place (dataset, series, segment, point) as a breadcrumb. Moving it from the table does not repeat what your screen reader already reads, and nothing moves your focus when the cursor moves elsewhere.
 - The playhead (B04-T04): it moves smoothly over plots, extrapolated from the audio engine's clock anchors, with no redraw of the data and no per-frame message from the engine.

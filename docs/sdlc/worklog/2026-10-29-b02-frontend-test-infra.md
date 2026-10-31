@@ -125,6 +125,11 @@
 - **Pseudo-locale.** The test forbids unaccented letters in the output, and the `axis` sample is the letter "x", so the plot's label takes the x header as `text`.
 - Locally: desktop 43 unit tests, all 40 Chromium E2E tests, `cursor.spec.ts` in WebKit (3), the Plot stories, `sonarithm-i18n` 25 and the TypeScript i18n 9.
 
+## Smoke run watchdog (2026-11-01)
+
+- #436's Linux smoke step timed out after 5 minutes without a report. The log ends at WebKit's usual libEGL warnings, so nothing showed whether a check hung or the page never loaded.
+- `public/smoke-guard.js` (classic, before the modules) reports a page error before the run starts, or no start within 60 s. `runSmoke` gains a 120 s watchdog that names the check still waiting. The normal path is unchanged; CI exercises it, since a smoke run needs the desktop build.
+
 ## Next steps
 
 - [ ] Commit the screenshot baselines from the first CI run's `visual-baselines` artifact.
