@@ -123,7 +123,7 @@ pub const AUDIFY_SPEEDUP: CodeInfo = CodeInfo {
     code: "SNR-ENG-460",
     severity: Severity::Info,
     summary: "The audification's speed-up, duration and band",
-    help: "Audification plays the series k times faster by resampling it. The message gives            k, the output length T/k and the part of the band you can hear. Set            `tracks[].audify.k`, or `audify.band` to choose where the band lands.",
+    help: "Audification plays the series k times faster by resampling it. The message gives k, the output length T/k and the part of the band you can hear. Set `tracks[].audify.k`, or `audify.band` to choose where the band lands.",
     rules: &["SDR-31"],
     status: CodeStatus::Active,
 };
@@ -133,7 +133,7 @@ pub const AUDIFY_PART_INAUDIBLE: CodeInfo = CodeInfo {
     code: "SNR-ENG-461",
     severity: Severity::Warning,
     summary: "Part of the audified band is inaudible",
-    help: "At this k some of the series sounds below 20 Hz or above 20 kHz and cannot be            heard. Raise k to lift slow changes into hearing, or lower it to bring fast            ones down.",
+    help: "At this k some of the series sounds below 20 Hz or above 20 kHz and cannot be heard. Raise k to lift slow changes into hearing, or lower it to bring fast ones down.",
     rules: &["SDR-31"],
     status: CodeStatus::Active,
 };
@@ -143,7 +143,7 @@ pub const AUDIFY_INAUDIBLE: CodeInfo = CodeInfo {
     code: "SNR-ENG-462",
     severity: Severity::Error,
     summary: "The audified band is wholly inaudible",
-    help: "At this k the whole series sounds below 20 Hz or above 20 kHz, so nothing would            be heard. Choose a k that brings the band into 20 Hz to 20 kHz, or give            `audify.band`.",
+    help: "At this k the whole series sounds below 20 Hz or above 20 kHz, so nothing would be heard. Choose a k that brings the band into 20 Hz to 20 kHz, or give `audify.band`.",
     rules: &["SDR-31"],
     status: CodeStatus::Active,
 };
@@ -163,7 +163,7 @@ pub const AUDIFY_TOO_MANY_SAMPLES: CodeInfo = CodeInfo {
     code: "SNR-ENG-464",
     severity: Severity::Error,
     summary: "The series is too long to audify",
-    help: "An audification holds at most 4 194 304 samples (RFC-0007). Filter or resample            the data first, or audify a shorter stretch.",
+    help: "An audification holds at most 4 194 304 samples (RFC-0007). Filter or resample the data first, or audify a shorter stretch.",
     rules: &[],
     status: CodeStatus::Active,
 };
@@ -173,7 +173,7 @@ pub const AUDIFY_NO_SERIES: CodeInfo = CodeInfo {
     code: "SNR-ENG-465",
     severity: Severity::Error,
     summary: "There is no series to audify",
-    help: "The `audify` mark plays the field with the y role, else the first numeric field            that is not the time field. Give the data a numeric field.",
+    help: "The `audify` mark plays the field with the y role, else the first numeric field that is not the time field. Give the data a numeric field.",
     rules: &[],
     status: CodeStatus::Active,
 };

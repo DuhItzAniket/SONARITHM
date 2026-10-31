@@ -131,18 +131,18 @@ fn times(table: &Table, name: &str) -> Option<Vec<Option<f64>>> {
 /// the grid's rate. Rows need not be evenly spaced: a function table has extra rows at its
 /// critical points (C03-T03). `None` without two distinct times.
 fn uniform(values: &[Option<f64>], times: &[Option<f64>]) -> Option<(Vec<Option<f64>>, f64)> {
-    let mut timed: Vec<(f64, Option<f64>)> = times
+    let mut points: Vec<(f64, Option<f64>)> = times
         .iter()
         .zip(values)
         .filter_map(|(t, v)| t.map(|t| (t, *v)))
         .collect();
-    timed.sort_by(|a, b| a.0.total_cmp(&b.0));
-    let (first, last) = (timed.first()?.0, timed.last()?.0);
+    points.sort_by(|a, b| a.0.total_cmp(&b.0));
+    let (first, last) = (points.first()?.0, points.last()?.0);
     let span = last - first;
-    if !(span > 0.0 && span.is_finite()) || timed.len() < 2 {
+    if !(span > 0.0 && span.is_finite()) || points.len() < 2 {
         return None;
     }
-    let count = timed.len();
+    let count = points.len();
     #[expect(clippy::cast_precision_loss, reason = "at most 2^22 samples")]
     let steps = (count - 1) as f64;
     let mut out = Vec::with_capacity(count);
@@ -150,10 +150,10 @@ fn uniform(values: &[Option<f64>], times: &[Option<f64>]) -> Option<(Vec<Option<
     for i in 0..count {
         #[expect(clippy::cast_precision_loss, reason = "at most 2^22 samples")]
         let t = first + span * (i as f64 / steps);
-        while j + 2 < timed.len() && timed.get(j + 1).is_some_and(|p| p.0 <= t) {
+        while j + 2 < points.len() && points.get(j + 1).is_some_and(|p| p.0 <= t) {
             j += 1;
         }
-        let (Some(&(t0, v0)), Some(&(t1, v1))) = (timed.get(j), timed.get(j + 1)) else {
+        let (Some(&(t0, v0)), Some(&(t1, v1))) = (points.get(j), points.get(j + 1)) else {
             out.push(None);
             continue;
         };
@@ -202,33 +202,13 @@ impl Encoder<DataBundle> for AudifyEncoder {
                 "There is no data to audify.".to_owned(),
             )
         })?;
-        let time = substrate
-            .as_ref()
-            .and_then(|s| s.pointer("/time/field"))
-            .and_then(Value::as_str)
-            .map(str::to_owned)
-            .or_else(|| field_with_role(table, "x"));
-        let series = field_with_role(table, "y")
-            .filter(|name| numbers(table, name).is_some())
-            .or_else(|| {
-                table
-                    .schema()
-                    .fields()
-                    .iter()
-                    .map(|f| f.name().clone())
-                    .find(|name| {
-                        Some(name) != time.as_ref()
-                            && !name.starts_with("__snr_")
-                            && numbers(table, name).is_some()
-                    })
-            })
-            .ok_or_else(|| {
-                refuse(
-                    &codes::AUDIFY_NO_SERIES,
-                    "The data has no numeric field to audify.".to_owned(),
-                )
-                .at_spec(at.clone())
-            })?;
+        let (time, series) = fields(table, substrate.as_ref()).ok_or_else(|| {
+            refuse(
+                &codes::AUDIFY_NO_SERIES,
+                "The data has no numeric field to audify.".to_owned(),
+            )
+            .at_spec(at.clone())
+        })?;
         let raw = numbers(table, &series).unwrap_or_default();
         // On a uniform grid over the time field, whose rate is the series' own; one sample
         // per row without a time field.
@@ -248,58 +228,7 @@ impl Encoder<DataBundle> for AudifyEncoder {
             )
             .at_spec(at.clone()));
         }
-        let audify = spec.get("audify");
-        let k = match (
-            audify.and_then(|a| a.get("k")).and_then(Value::as_f64),
-            audify
-                .and_then(|a| a.pointer("/band/hz/1"))
-                .and_then(Value::as_f64),
-        ) {
-            (Some(k), _) => k,
-            (None, Some(hi)) => k_for_band(fs, hi),
-            (None, None) => k_for_band(fs, DEFAULT_TOP_HZ),
-        };
-        if !(k.is_finite() && (K_MIN..=K_MAX).contains(&k)) {
-            return Err(refuse(
-                &codes::AUDIFY_K_OUT_OF_RANGE,
-                format!("The speed-up k = {k} is outside {K_MIN} to {K_MAX}."),
-            )
-            .at_spec(at.key("audify")));
-        }
-        let speedup = calculate(fs, count.max(1), k);
-        let band = speedup.band;
-        let Some(audible) = speedup.audible else {
-            return Err(refuse(
-                &codes::AUDIFY_INAUDIBLE,
-                format!(
-                    "At k = {k} the series sounds from {:.3} Hz to {:.3} Hz, wholly outside 20 Hz to 20 kHz.",
-                    band[0], band[1]
-                ),
-            )
-            .at_spec(at.key("audify")));
-        };
-        cx.report(
-            Diagnostic::new(
-                &codes::AUDIFY_SPEEDUP,
-                format!(
-                    "Audification: k = {k}, {:.3} s long (T/k), audible from {:.1} Hz to {:.1} Hz.",
-                    speedup.duration.0, audible[0], audible[1]
-                ),
-            )
-            .at(at.clone()),
-        );
-        if band[0] < AUDIBLE[0] || band[1] > AUDIBLE[1] {
-            cx.report(
-                Diagnostic::new(
-                    &codes::AUDIFY_PART_INAUDIBLE,
-                    format!(
-                        "Part of the band is inaudible: the series sounds from {:.3} Hz to {:.1} Hz, and only {:.1} Hz to {:.1} Hz can be heard.",
-                        band[0], band[1], audible[0], audible[1]
-                    ),
-                )
-                .at(at.key("audify")),
-            );
-        }
+        let k = speedup_of(&spec, fs, count, &at, cx)?;
         let peak = values.iter().flatten().fold(0.0_f64, |m, v| m.max(v.abs()));
         let scale = if peak > 0.0 { 1.0 / peak } else { 0.0 };
         #[expect(clippy::cast_possible_truncation, reason = "samples are f32")]
@@ -325,6 +254,97 @@ impl Encoder<DataBundle> for AudifyEncoder {
         out.events.push(ScoreEvent::Audify(event));
         Ok(out)
     }
+}
+
+/// The time field (the substrate's, else the field with the x role) and the series to
+/// play (the field with the y role, else the first numeric field that is not the time
+/// field); `None` without a numeric series.
+fn fields(table: &Table, substrate: Option<&Value>) -> Option<(Option<String>, String)> {
+    let time = substrate
+        .and_then(|s| s.pointer("/time/field"))
+        .and_then(Value::as_str)
+        .map(str::to_owned)
+        .or_else(|| field_with_role(table, "x"));
+    let series = field_with_role(table, "y")
+        .filter(|name| numbers(table, name).is_some())
+        .or_else(|| {
+            table
+                .schema()
+                .fields()
+                .iter()
+                .map(|f| f.name().clone())
+                .find(|name| {
+                    Some(name) != time.as_ref()
+                        && !name.starts_with("__snr_")
+                        && numbers(table, name).is_some()
+                })
+        })?;
+    Some((time, series))
+}
+
+/// The speed-up k of the track `spec` for `count` samples at `fs` (SDR-31): checked against
+/// its bounds and the audible band, and reported as Info (`SNR-ENG-460`) with a warning when
+/// part of the band is inaudible (`461`).
+fn speedup_of(
+    spec: &Value,
+    fs: f64,
+    count: usize,
+    at: &sonarithm_core::SpecPointer,
+    cx: &mut CompileContext,
+) -> Result<f64, CompileError> {
+    let audify = spec.get("audify");
+    let k = match (
+        audify.and_then(|a| a.get("k")).and_then(Value::as_f64),
+        audify
+            .and_then(|a| a.pointer("/band/hz/1"))
+            .and_then(Value::as_f64),
+    ) {
+        (Some(k), _) => k,
+        (None, Some(hi)) => k_for_band(fs, hi),
+        (None, None) => k_for_band(fs, DEFAULT_TOP_HZ),
+    };
+    if !(k.is_finite() && (K_MIN..=K_MAX).contains(&k)) {
+        return Err(refuse(
+            &codes::AUDIFY_K_OUT_OF_RANGE,
+            format!("The speed-up k = {k} is outside {K_MIN} to {K_MAX}."),
+        )
+        .at_spec(at.key("audify")));
+    }
+    let speedup = calculate(fs, count.max(1), k);
+    let band = speedup.band;
+    let Some(audible) = speedup.audible else {
+        return Err(refuse(
+            &codes::AUDIFY_INAUDIBLE,
+            format!(
+                "At k = {k} the series sounds from {:.3} Hz to {:.3} Hz, wholly outside 20 Hz to 20 kHz.",
+                band[0], band[1]
+            ),
+        )
+        .at_spec(at.key("audify")));
+    };
+    cx.report(
+        Diagnostic::new(
+            &codes::AUDIFY_SPEEDUP,
+            format!(
+                "Audification: k = {k}, {:.3} s long (T/k), audible from {:.1} Hz to {:.1} Hz.",
+                speedup.duration.0, audible[0], audible[1]
+            ),
+        )
+        .at(at.clone()),
+    );
+    if band[0] < AUDIBLE[0] || band[1] > AUDIBLE[1] {
+        cx.report(
+            Diagnostic::new(
+                &codes::AUDIFY_PART_INAUDIBLE,
+                format!(
+                    "Part of the band is inaudible: the series sounds from {:.3} Hz to {:.1} Hz, and only {:.1} Hz to {:.1} Hz can be heard.",
+                    band[0], band[1], audible[0], audible[1]
+                ),
+            )
+            .at(at.key("audify")),
+        );
+    }
+    Ok(k)
 }
 
 /// The `loudness` channel's constant value in dB, or SDR-23's default.

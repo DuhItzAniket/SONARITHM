@@ -35,4 +35,4 @@ It runs at plan time on a worker thread. The audifier voice reads the result wit
 
 ### Confirmation
 
-C03-T05 (issue [#318](https://github.com/DuhItzAniket/SONARITHM/issues/318)): the resampler's tests on known signals (a tone keeps its frequency; a tone above the output's Nyquist frequency is attenuated), with thresholds marked TODO(verify) until a CI measurement replaces them, and the render test `sdr_31_an_audified_sine_plays_the_expected_tone`.
+C03-T05 (issue [#318](https://github.com/DuhItzAniket/SONARITHM/issues/318)): the resampler's tests on known signals (a tone keeps its frequency within 1.5 Hz; a tone above the output's Nyquist frequency is attenuated below 1e-5), with thresholds set from local measurements on HW-01 (F-195) and other platforms TODO(verify) from CI, and the render test `sdr_31_an_audified_sine_plays_the_expected_tone`.

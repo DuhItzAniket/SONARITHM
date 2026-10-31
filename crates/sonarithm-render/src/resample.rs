@@ -34,7 +34,7 @@ pub fn resample(input: &[f32], from: f64, to: f64) -> Vec<f32> {
     )]
     let len = input.len() as f64;
     let out_len = (len * ratio).floor();
-    if !(out_len >= 1.0 && out_len < 1e9) {
+    if !(1.0..1e9).contains(&out_len) {
         return Vec::new();
     }
     // Low-pass at the lower of the two Nyquist frequencies, relative to the input's.
@@ -141,8 +141,11 @@ mod tests {
     }
 
     /// SDR-31, ADR-0030: resampling keeps the waveform; a tone keeps its frequency in
-    /// seconds of output when the rate changes. The 5 Hz tolerance is not yet from a
-    /// measurement: TODO(verify) against the values a CI run prints.
+    /// seconds of output when the rate changes. Measured locally on 2026-11-01 (HW-01:
+    /// i7-14650HX, Windows 11, debug build): 440.000, 439.000 and 439.000 Hz for 8 kHz,
+    /// 96 kHz and 44.1 kHz input; one rising crossing per second is this method's
+    /// resolution. The 1.5 Hz tolerance comes from those values; other platforms are
+    /// TODO(verify) from the values CI prints.
     #[test]
     fn sdr_31_resampling_keeps_the_tone() {
         // One second of input at each rate.
@@ -163,13 +166,14 @@ mod tests {
             );
             let f = frequency(&output, to);
             eprintln!("resample {from} -> {to}: {f:.3} Hz");
-            assert!((f - 440.0).abs() < 5.0, "{from} -> {to}: {f} Hz");
+            assert!((f - 440.0).abs() < 1.5, "{from} -> {to}: {f} Hz");
         }
     }
 
-    /// ADR-0030: a tone above the output's Nyquist frequency is attenuated. The 0.05 peak
-    /// threshold is not yet from a measurement: TODO(verify) against the value a CI run
-    /// prints.
+    /// ADR-0030: a tone above the output's Nyquist frequency is attenuated. Measured locally
+    /// on 2026-11-01 (HW-01, debug build): a peak of 6.0e-7 left of an input of 0.5, about
+    /// −118 dB. The 1e-5 threshold keeps a margin of about 17 times; other platforms are
+    /// TODO(verify) from the value CI prints.
     #[test]
     fn downsampling_removes_what_the_output_cannot_hold() {
         // 20 kHz at 96 kHz, down to 16 kHz (Nyquist 8 kHz): filtered out.
@@ -177,16 +181,16 @@ mod tests {
         let output = resample(&input, 96_000.0, 16_000.0);
         let middle = &output[200..output.len() - 200];
         let peak = middle.iter().fold(0.0_f32, |m, s| m.max(s.abs()));
-        eprintln!("resample 20 kHz at 96 kHz -> 16 kHz: peak {peak:.5} (input 0.5)");
-        assert!(peak < 0.05, "{peak}");
+        eprintln!("resample 20 kHz at 96 kHz -> 16 kHz: peak {peak:.3e} (input 0.5)");
+        assert!(peak < 1e-5, "{peak}");
     }
 
     #[test]
     fn unusable_inputs_give_nothing() {
-        assert!(resample(&[], 1.0, 2.0).is_empty());
-        assert!(resample(&[0.5], 0.0, 2.0).is_empty());
-        assert!(resample(&[0.5], f64::NAN, 2.0).is_empty());
-        assert!(resample(&[0.5; 10], 48_000.0, 1.0).is_empty());
+        assert_eq!(resample(&[], 1.0, 2.0).len(), 0);
+        assert_eq!(resample(&[0.5], 0.0, 2.0).len(), 0);
+        assert_eq!(resample(&[0.5], f64::NAN, 2.0).len(), 0);
+        assert_eq!(resample(&[0.5; 10], 48_000.0, 1.0).len(), 0);
     }
 
     #[test]
