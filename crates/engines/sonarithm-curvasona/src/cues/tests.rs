@@ -169,6 +169,48 @@ fn a11y_24_merged_cues_keep_every_feature_in_the_log() {
     assert_eq!(merged.src, pole_row);
 }
 
+/// ADR-0029: a merged earcon's `src` is the row of its highest-priority feature, even when
+/// a landmark comes first, and every feature stays in the cue (and so in `cue_log`).
+#[test]
+fn adr_0029_merged_src_is_the_highest_priority_features_row() {
+    let row = |r: u64| RowRef {
+        table: sonarithm_core::TableId(0),
+        generation: sonarithm_core::Generation(0),
+        row: r,
+    };
+    let landmark_then_asymptote = Cue {
+        t: Seconds(1.0),
+        kind: EarconKind::Asymptote,
+        labels: vec![
+            "local maximum".to_owned(),
+            "zero".to_owned(),
+            "vertical asymptote".to_owned(),
+        ],
+        rows: vec![row(10), row(11), row(12)],
+    };
+    assert_eq!(first_of_kind(&landmark_then_asymptote), Some(row(12)));
+    let landmark_then_zero = Cue {
+        t: Seconds(2.0),
+        kind: EarconKind::Zero,
+        labels: vec!["inflection point".to_owned(), "zero".to_owned()],
+        rows: vec![row(20), row(21)],
+    };
+    assert_eq!(first_of_kind(&landmark_then_zero), Some(row(21)));
+    let landmarks = Cue {
+        t: Seconds(3.0),
+        kind: EarconKind::Landmark,
+        labels: vec!["local minimum".to_owned(), "inflection point".to_owned()],
+        rows: vec![row(30), row(31)],
+    };
+    assert_eq!(first_of_kind(&landmarks), Some(row(30)));
+    let log = cue_log(&[landmark_then_asymptote]);
+    assert_eq!(log, ["1.000 s: local maximum, zero, vertical asymptote"]);
+    assert!(priority(EarconKind::Asymptote) > priority(EarconKind::Undefined));
+    assert!(priority(EarconKind::Undefined) > priority(EarconKind::Offscreen));
+    assert!(priority(EarconKind::Offscreen) > priority(EarconKind::Zero));
+    assert!(priority(EarconKind::Zero) > priority(EarconKind::Landmark));
+}
+
 /// `analysis.cue: "speech"` speaks each feature's text equivalent instead; `"none"` and a
 /// spec without `critical-points` add no cue track.
 #[test]
