@@ -94,6 +94,10 @@
 - **`GoToRow`.** NumberField commits a typed number during the Enter keydown that also submits the form, so the submit reads the latest value from a ref.
 - Locally: desktop 37 unit tests and all 37 E2E tests in Chromium, plus `table.spec.ts` (4) in WebKit; ipc 16, i18n 9 and ui 48 node tests; the DataTable stories in two themes. No cargo: the new Fluent messages reuse sample arguments the Rust catalogue tests already have, and CI runs those tests.
 
+## PB-08 perf trace on slow runners (2026-10-31)
+
+- #419's frontend-browser job failed in `dense.perf.ts`: the test ran past Vitest's 15 s browser timeout, because 60 software-rendered redraws of a million points were too slow on that runner, and no trace was written. No budget check failed; the test only records. Measuring now stops after 8 s (`cutShort` in the report), the test timeout is 120 s, and it still fails if nothing draws. Not run locally (the builder and browser slots were others'); CI runs it.
+
 ## Next steps
 
 - [ ] Commit the screenshot baselines from the first CI run's `visual-baselines` artifact.
