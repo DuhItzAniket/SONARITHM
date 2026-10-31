@@ -216,10 +216,14 @@ pub fn scan(f: &Expr, xs: &[f64], window: Option<[f64; 2]>, budget: &ScanBudget)
 /// refined local minima of its magnitude.
 fn zeros(g: &Expr, kind: GuardKind, xs: &[f64], counter: &mut Counter, out: &mut Vec<Candidate>) {
     let values: Vec<f64> = xs.iter().map(|&x| counter.eval(g, x)).collect();
-    let scale = values
+    // The typical size of g (the median: near a pole of g it is huge).
+    let mut magnitudes: Vec<f64> = values
         .iter()
         .filter(|v| v.is_finite())
-        .fold(0.0_f64, |m, v| m.max(v.abs()));
+        .map(|v| v.abs())
+        .collect();
+    magnitudes.sort_by(f64::total_cmp);
+    let scale = magnitudes.get(magnitudes.len() / 2).copied().unwrap_or(0.0);
     let tiny = 1e-12 * scale.max(f64::MIN_POSITIVE);
     let mut push = |x: f64| out.push(Candidate { x, kind });
     for (i, (&x, &v)) in xs.iter().zip(&values).enumerate() {
@@ -232,25 +236,62 @@ fn zeros(g: &Expr, kind: GuardKind, xs: &[f64], counter: &mut Counter, out: &mut
         if v.is_finite() && v1.is_finite() && v != 0.0 && v1 != 0.0 && (v < 0.0) != (v1 < 0.0) {
             push(bisect(g, x, x1, v < 0.0, counter));
         }
-        // A local minimum of |g| between its neighbours, with no sign change: refine it.
-        let Some(&v0) = i.checked_sub(1).and_then(|j| values.get(j)) else {
-            continue;
-        };
-        let same_sign = v0 != 0.0 && (v0 < 0.0) == (v < 0.0) && (v < 0.0) == (v1 < 0.0);
-        if same_sign && v.is_finite() && v.abs() < v0.abs() && v.abs() <= v1.abs() {
-            let Some(&x0) = xs.get(i - 1) else { continue };
-            // Towards zero: the lowest point of a positive dip, the highest of a negative one.
-            let toward = if v < 0.0 { -1.0 } else { 1.0 };
-            let xm = golden_minimum(g, x0, x1, toward, counter);
-            let vm = counter.eval(g, xm);
-            if vm.is_finite() && vm != 0.0 && (vm < 0.0) != (v < 0.0) {
-                push(bisect(g, x0, xm, v0 < 0.0, counter));
-                push(bisect(g, xm, x1, vm < 0.0, counter));
-            } else if vm.abs() <= tiny {
-                push(xm);
-            }
+    }
+    // Dips of |g| that do not change sign on the grid: refine each and look for zeros.
+    for (lo, hi, negative) in dips(xs, &values) {
+        // Towards zero: the lowest point of a positive dip, the highest of a negative one.
+        let toward = if negative { -1.0 } else { 1.0 };
+        let xm = golden_minimum(g, lo, hi, toward, counter);
+        let vm = counter.eval(g, xm);
+        if vm.is_finite() && vm != 0.0 && (vm < 0.0) != negative {
+            push(bisect(g, lo, xm, negative, counter));
+            push(bisect(g, xm, hi, vm < 0.0, counter));
+        } else if vm.abs() <= tiny {
+            push(xm);
         }
     }
+}
+
+/// The intervals where `|g|` dips without a sign change on the grid, with the sign of `g`
+/// there: around each interior local minimum of `|g|`, and the first or last interval when
+/// `|g|` falls towards that end of the domain, where a dip shows only at the end point.
+pub(crate) fn dips(xs: &[f64], values: &[f64]) -> Vec<(f64, f64, bool)> {
+    let usable = |v: f64| v.is_finite() && v != 0.0;
+    let same = |a: f64, b: f64| (a < 0.0) == (b < 0.0);
+    let mut out = Vec::new();
+    let n = values.len().min(xs.len());
+    for i in 0..n {
+        let (Some(&x), Some(&v)) = (xs.get(i), values.get(i)) else {
+            continue;
+        };
+        if !usable(v) {
+            continue;
+        }
+        let before = i
+            .checked_sub(1)
+            .and_then(|j| Some((*xs.get(j)?, *values.get(j)?)));
+        let after = xs.get(i + 1).copied().zip(values.get(i + 1).copied());
+        match (before, after) {
+            (Some((x0, v0)), Some((x1, v1)))
+                if usable(v0)
+                    && usable(v1)
+                    && same(v0, v)
+                    && same(v, v1)
+                    && v.abs() < v0.abs()
+                    && v.abs() <= v1.abs() =>
+            {
+                out.push((x0, x1, v < 0.0));
+            }
+            (None, Some((x1, v1))) if usable(v1) && same(v, v1) && v.abs() < v1.abs() => {
+                out.push((x, x1, v < 0.0));
+            }
+            (Some((x0, v0)), None) if usable(v0) && same(v0, v) && v.abs() < v0.abs() => {
+                out.push((x0, x, v < 0.0));
+            }
+            _ => {}
+        }
+    }
+    out
 }
 
 /// The point between `a` and `b` where `g` changes sign, to the last representable bit.

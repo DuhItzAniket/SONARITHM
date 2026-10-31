@@ -5,3 +5,4 @@
 # It is recommended to check this file in to source control so that
 # everyone who runs the test benefits from these saved cases.
 cc c17012ec91f63bfefca46b7e5deafbb8f5433c5499ffbf04b670f89454e4b6f9 # shrinks to c = -0.3323248089087128, width = 0.025802029232972652, samples = 22
+cc 2eaa383c4f804fdba809399f2ebb9227af305f72730e6e8b2e5304b07a794f5b # shrinks to a = 3.14127638366876, b = 3.0118498763993142, samples = 2
