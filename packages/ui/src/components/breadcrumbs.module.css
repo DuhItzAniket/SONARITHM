@@ -1,0 +1,37 @@
+/* SPDX-FileCopyrightText: 2026 SONARITHM contributors */
+/* SPDX-License-Identifier: MIT OR Apache-2.0 */
+
+/* The breadcrumb trail (B04-T06): one line of small text; the separator is a CSS glyph, so
+   it is never read aloud. */
+.trail {
+  min-inline-size: 0;
+}
+
+.list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  color: var(--text-2);
+  font-size: var(--type-12-size);
+  line-height: var(--type-12-line);
+}
+
+.item {
+  display: inline-flex;
+  gap: var(--space-1);
+  align-items: center;
+}
+
+.item:not(:last-child)::after {
+  content: "›" / "";
+  color: var(--text-3);
+}
+
+.current {
+  color: var(--text-1);
+  font-weight: var(--weight-medium);
+  text-decoration: none;
+}

@@ -175,6 +175,7 @@ fn plan_track(
     };
     let mut events = Vec::with_capacity(track.events.len());
     let mut breakpoints = Vec::new();
+    let mut buffers: Vec<std::sync::Arc<[f32]>> = Vec::new();
     for (index, event) in track.events.iter().enumerate() {
         let source = u32::try_from(index).map_err(|_| too_many())?;
         match event {
@@ -238,6 +239,12 @@ fn plan_track(
                     },
                 });
             }
+            // Audification (RFC-0007 §3, SDR-31): resampled here, on the worker thread, to the
+            // plan's rate; the voice plays the buffer as it is.
+            ScoreEvent::Audify(audify) => {
+                plan_audify(audify, source, rate, &mut buffers, &mut events)
+                    .map_err(|()| too_many())?;
+            }
             // Speech is routed to the announcer or the sidecar, never rendered (05 §4.1).
             _ => {}
         }
@@ -256,7 +263,38 @@ fn plan_track(
         noise_seed: TrackRng::new(seed, &track.id).next_u64(),
         events,
         breakpoints,
+        buffers,
     })
+}
+
+/// Plans an audification (RFC-0007 §3, SDR-31): its samples are resampled here, on the
+/// worker thread, to the plan's rate, and the voice plays the buffer as it is. `Err` when
+/// the track has more buffers or frames than the plan can index.
+fn plan_audify(
+    audify: &sonarithm_core::Audify,
+    source: u32,
+    rate: SampleRate,
+    buffers: &mut Vec<std::sync::Arc<[f32]>>,
+    events: &mut Vec<PlannedEvent>,
+) -> Result<(), ()> {
+    let resampled = crate::resample::resample(&audify.samples, audify.rate, f64::from(rate.get()));
+    if resampled.is_empty() {
+        return Ok(());
+    }
+    let start = frame(audify.t, rate).map_err(|_| ())?;
+    let length = u64::try_from(resampled.len()).map_err(|_| ())?;
+    let buffer = u32::try_from(buffers.len()).map_err(|_| ())?;
+    buffers.push(std::sync::Arc::from(resampled));
+    events.push(PlannedEvent {
+        start,
+        length,
+        source,
+        kind: EventKind::Audify {
+            buffer,
+            gain: to_f32(audify.gain.to_gain()),
+        },
+    });
+    Ok(())
 }
 
 /// Plans a note as one tone per tap (A11Y-13).

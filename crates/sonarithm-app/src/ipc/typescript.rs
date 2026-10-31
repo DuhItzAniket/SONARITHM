@@ -116,6 +116,10 @@ pub fn typescript() -> String {
     declare::<LoopSpan>(&mut out, &cfg);
     declare::<TransportState>(&mut out, &cfg);
     declare::<ClockAnchor>(&mut out, &cfg);
+    declare::<crate::ipc::CursorState>(&mut out, &cfg);
+    declare::<crate::ipc::CursorOrigin>(&mut out, &cfg);
+    declare::<crate::ipc::CursorPathItem>(&mut out, &cfg);
+    declare::<crate::ipc::PathLevel>(&mut out, &cfg);
     declare::<ExportRequest>(&mut out, &cfg);
     declare::<ExportResult>(&mut out, &cfg);
     declare::<JobKind>(&mut out, &cfg);

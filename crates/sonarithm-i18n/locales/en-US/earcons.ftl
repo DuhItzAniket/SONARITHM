@@ -19,3 +19,15 @@ earcon-mode =
 earcon-stream = { $stream }: { $event }
 # E-ALARM.
 earcon-alarm = Alarm: { $condition }
+# E-ZERO (CURVASONA, RFC-0007): a function crosses or touches zero.
+earcon-zero = Zero
+# E-ASYMPTOTE: a vertical asymptote.
+earcon-asymptote = Vertical asymptote
+# E-UNDEFINED: an undefined span starts.
+earcon-undefined = Undefined
+# E-OFFSCREEN: the function leaves the y-window; $side is above or below.
+earcon-offscreen =
+    { $side ->
+        [above] Off screen above
+       *[below] Off screen below
+    }

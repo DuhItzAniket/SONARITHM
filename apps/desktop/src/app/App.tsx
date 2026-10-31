@@ -17,6 +17,8 @@ import { activeScopes } from "../commands/scopes.ts";
 import { useLocalizer } from "../i18n.ts";
 import { Preferences } from "../preferences/Preferences.tsx";
 import { TransportBar } from "../transport/TransportBar.tsx";
+import { CursorReadout } from "../cursor/CursorReadout.tsx";
+import { useCursor } from "../cursor/useCursor.ts";
 import { DatasetTable } from "../table/DatasetTable.tsx";
 import { useTransport } from "../transport/useTransport.ts";
 import styles from "./App.module.css";
@@ -104,6 +106,8 @@ export function App({
       live = false;
     };
   }, [client]);
+  // The one cursor, Rust's (B04-T06): the table and the readout show it.
+  const cursor = useCursor(client);
   const [preferencesOpen, setPreferencesOpen] = useState(false);
   useCommand("app.preferences", () => {
     setPreferencesOpen(true);
@@ -162,6 +166,7 @@ export function App({
                   client={client}
                   dataset={dataset}
                   announcer={announcer}
+                  cursor={cursor}
                 />
               ) : (
                 startText
@@ -175,6 +180,7 @@ export function App({
         }
         status={
           <>
+            <CursorReadout cursor={cursor} />
             {gpuFallback && (
               <p className={styles.status}>{t.format("ui-gpu-fallback")}</p>
             )}

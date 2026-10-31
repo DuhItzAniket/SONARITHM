@@ -203,6 +203,14 @@ pub enum EventKind {
         /// Linear gain relative to the track.
         gain: f32,
     },
+    /// An audified series (RFC-0007 §3): a buffer of [`TrackPlan::buffers`], already
+    /// resampled to the plan's rate.
+    Audify {
+        /// Index into [`TrackPlan::buffers`].
+        buffer: u32,
+        /// Linear gain relative to the track.
+        gain: f32,
+    },
 }
 
 /// One event in frames. Events of a track are sorted by start frame, ties in Score order.
@@ -269,6 +277,9 @@ pub struct TrackPlan {
     pub events: Vec<PlannedEvent>,
     /// Glide breakpoints, referenced by [`GlideRef`].
     pub breakpoints: Vec<PlannedBreakpoint>,
+    /// Audified series at the plan's rate, referenced by [`EventKind::Audify`]. Shared and
+    /// immutable, so the audio thread only reads them (05 §5).
+    pub buffers: Vec<std::sync::Arc<[f32]>>,
 }
 
 /// A Score prepared for rendering at one sample rate.
