@@ -75,7 +75,7 @@ macro_rules! snapshot {
             filters => vec![
                 // Semver pre-release identifiers are dot-separated, so a sentence's full stop
                 // after `0.1.0-alpha` stays out of the match.
-                (r"(sonarithm|numisona|platform|plotsona)( |\x22: \x22)\d+\.\d+\.\d+(-[0-9A-Za-z-]+(\.[0-9A-Za-z-]+)*)?", "$1$2[version]"),
+                (r"(sonarithm|numisona|platform|plotsona|curvasona)( |\x22: \x22)\d+\.\d+\.\d+(-[0-9A-Za-z-]+(\.[0-9A-Za-z-]+)*)?", "$1$2[version]"),
                 (r"(Score hash: |\x22score_hash\x22: \x22)[0-9a-f]{64}", "$1[score hash]"),
             ],
         }, {
@@ -303,6 +303,83 @@ fn quick_sonifies_a_data_file_with_the_defaults() {
     assert!(bad.stderr.contains("nope"), "{}", bad.stderr);
     let range = run(&["quick", "temps.csv", "--range", "900,300"]);
     assert_eq!(range.code, 2, "{}", range.transcript());
+}
+
+/// C03-T07: `quick --function` plays a function as a glide with its critical-point
+/// earcons, and prints the critical points as text first (A11Y-24, A11Y-28).
+#[test]
+fn quick_plays_a_function_with_its_critical_points_as_text() {
+    let quick = run(&[
+        "--plain",
+        "quick",
+        "--function",
+        "x^3 - 3*x",
+        "--domain=-3,3",
+    ]);
+    assert_eq!(quick.code, 0, "{}", quick.transcript());
+    assert_linear(&quick);
+    snapshot!("quick_function", quick);
+    let json = run(&[
+        "--json",
+        "quick",
+        "--function",
+        "-x^2",
+        "--domain",
+        "-1,1",
+        "--samples",
+        "101",
+        "--duration",
+        "2",
+    ]);
+    assert_eq!(json.code, 0, "{}", json.transcript());
+    let value = json.json();
+    assert_eq!(value["function"]["expr"], "-x^2");
+    let mut kinds: Vec<&str> = value["function"]["critical_points"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .filter_map(|p| p["kind"].as_str())
+        .collect();
+    kinds.sort_unstable();
+    assert_eq!(kinds, ["local maximum", "zero"], "{value}");
+    assert!(value["summary"]["engines"]["curvasona"].is_string(), "{value}");
+    assert_eq!(value["played"]["finished"], true);
+    let bad = run(&["--plain", "quick", "--function", "2x", "--domain", "0,1"]);
+    assert_eq!(bad.code, 1, "{}", bad.transcript());
+    assert!(bad.stderr.contains("SNR-ENG-400"), "{}", bad.stderr);
+    let both = run(&["quick", "temps.csv", "--function", "x", "--domain", "0,1"]);
+    assert_eq!(both.code, 2, "{}", both.transcript());
+    let no_domain = run(&["quick", "--function", "x"]);
+    assert_eq!(no_domain.code, 2, "{}", no_domain.transcript());
+}
+
+/// C03-T07: `inspect` on a function spec lists its critical points, the off-screen spans
+/// of its pitch window included, and on an audification prints the calculator's readout
+/// (SDR-31) as a result line, not only as an Info diagnostic.
+#[test]
+fn inspect_lists_a_function_s_critical_points_and_the_audification_readout() {
+    let inspect = run(&["--plain", "inspect", "function.spec.json"]);
+    assert_eq!(inspect.code, 0, "{}", inspect.transcript());
+    assert_linear(&inspect);
+    snapshot!("inspect_function", inspect);
+    let json = run(&["--json", "inspect", "function.spec.json"]);
+    let value = json.json();
+    let points = value["function"]["critical_points"].as_array().unwrap();
+    assert!(
+        points.iter().any(|p| p["kind"] == "above the window"),
+        "{value}"
+    );
+    let audify = run(&["--plain", "inspect", "audify.spec.json"]);
+    assert_eq!(audify.code, 0, "{}", audify.transcript());
+    assert!(
+        audify
+            .stdout
+            .lines()
+            .any(|l| l.starts_with("Audification: k = 100,")),
+        "{}",
+        audify.stdout
+    );
+    assert!(audify.stdout.contains("1 audified series"), "{}", audify.stdout);
 }
 
 #[test]

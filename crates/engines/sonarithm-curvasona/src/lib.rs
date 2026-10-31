@@ -646,6 +646,31 @@ impl<'a> FunctionTable<'a> {
     }
 }
 
+/// The spans where the function table in `data` leaves the y-`window`, as
+/// [`FeatureKind::Offscreen`] features in increasing `x` (RFC-0007 Q5): the spans the
+/// off-screen cues mark, for a text list of the cues (C03-T07). Empty when `data` is not a
+/// function table.
+#[must_use]
+pub fn offscreen_features(data: &DataBundle, window: [f64; 2], budgets: &Budgets) -> Vec<Feature> {
+    let Ok(function) = FunctionTable::read(data, budgets) else {
+        return Vec::new();
+    };
+    let budget = ScanBudget {
+        max_evaluations: budgets.max_evaluations,
+        max_features: ScanBudget::DEFAULT.max_features,
+    };
+    scan::scan(&function.expr, &function.xs, Some(window), &budget)
+        .offscreen
+        .iter()
+        .map(|span| Feature {
+            kind: FeatureKind::Offscreen { above: span.above },
+            x: span.span.start,
+            end: span.span.end,
+            y: None,
+        })
+        .collect()
+}
+
 /// The annotations of the function table in `data`, recomputed from the expression its
 /// metadata records, at the table's own `x` values.
 ///

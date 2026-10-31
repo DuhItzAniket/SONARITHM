@@ -1016,6 +1016,15 @@ A05 (render engine, audio backends, export) uses F-050 to F-069.
 - **Affects:** C02-T09, A11Y-02, A11Y-12, A11Y-24, FR-008, OD-07, H-06
 - **Papers:** none yet
 
+### F-197 · A registered context provider is recorded in every Score, so the facade adds CURVASONA only where a spec uses it
+
+- **Date:** 2026-11-01 · **Phase:** C03 · **Type:** engineering (determinism, diagnostics) · **Status:** new
+- **Statement:** The compiler's context stage records every registered context provider as a contributing engine, whether or not it adds a track, and it warns that context cues need AUDAXIS (`SNR-COMP-023`) only when no provider is registered. CURVASONA provides the `curvasona.cues` context track, so registering it for every compile in the facade (C03-T07) would have put `curvasona` into every Score header, changing every Score hash and golden snapshot, and would have hidden `SNR-COMP-023` from every CLI and Python compile that has no AUDAXIS. The facade therefore adds CURVASONA only to compiles whose spec uses it: a `function` source, an `audify` track, or `critical-points` in `analysis.detect` (its manifest's spec keys). Found by reading `pipeline.rs`, not measured; a compiler-level fix (record a provider only when it adds a track, and warn when no provider handles `context`) would change the app's Score headers and is left as a follow-up.
+- **Evidence:** `crates/sonarithm-compiler/src/pipeline.rs` (`add_context`); `crates/sonarithm/src/api.rs` (`uses_curvasona`); the test `specs_that_do_not_use_curvasona_compile_without_it`
+- **Evidence level / confidence:** EV-D / Strong (code reading, with a test)
+- **Affects:** C03-T07, the facade's default engines, every later engine with a context provider
+- **Papers:** none yet
+
 ### F-196 · An audification without `k` or `band` needs a target band, and no study gives one
 
 - **Date:** 2026-11-01 · **Phase:** C03 · **Type:** engineering (sound default) · **Status:** new

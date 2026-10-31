@@ -65,6 +65,7 @@ mod api;
 mod chart;
 mod compiled;
 mod error;
+mod function;
 mod quick;
 mod render;
 mod spec;
@@ -75,6 +76,11 @@ pub use chart::read_chart;
 pub use chart::{Chart, read_chart_bytes, summary_diagnostic, summary_sentence};
 pub use compiled::{Compiled, Description, DiagnosticCounts, Summary, TrackSummary};
 pub use error::Error;
+pub use function::{CriticalPoint, FUNCTION_DURATION_S, Function, function_spec, read_function};
+pub use sonarithm_curvasona::FunctionSpec;
+/// The audification speed-up calculator (SDR-31): k, the duration T/k and the audible band
+/// of a series, and the seismic preset.
+pub use sonarithm_curvasona::audify::{SEISMIC_K, Speedup, calculate as audify_speedup};
 pub use quick::{QUICK_DATASET, Quick};
 pub use render::{
     AudioFormat, Normalization, RenderManifest, RenderOptions, Rendered, WavEncoding,

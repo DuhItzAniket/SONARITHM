@@ -175,6 +175,8 @@ struct Inspected<'a> {
     ok: bool,
     summary: Option<sonarithm::Summary>,
     description: Option<sonarithm::Description>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    function: Option<FunctionJson>,
     counts: Counts,
     diagnostics: &'a Diagnostics,
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -200,6 +202,12 @@ fn inspect(args: &Inspect, out: Out) -> Exit {
         Err(diagnostics) => diagnostics.clone(),
     };
     let exit = Exit::of(&diagnostics, checked.deny_warnings);
+    // A function source's critical points, as text (C03-T07).
+    let function = source
+        .spec()
+        .ok()
+        .and_then(|spec| sonarithm::Function::from_spec(&spec))
+        .and_then(Result::ok);
     if out.json() {
         let compiled = compiled.as_ref().ok();
         json_value(&Inspected {
@@ -207,6 +215,7 @@ fn inspect(args: &Inspect, out: Out) -> Exit {
             ok: compiled.is_some(),
             summary: compiled.map(Compiled::summary),
             description: compiled.map(Compiled::describe),
+            function: function.as_ref().map(FunctionJson::of),
             counts: Counts::of(&diagnostics),
             diagnostics: &diagnostics,
             score: compiled.filter(|_| args.tree).map(Compiled::score),
@@ -216,6 +225,7 @@ fn inspect(args: &Inspect, out: Out) -> Exit {
     match &compiled {
         Ok(compiled) => {
             print_summary(compiled);
+            print_function(function.as_ref(), compiled);
             if args.describe {
                 line("Description:");
                 raw(&compiled.describe().to_string());
@@ -395,6 +405,7 @@ fn print_summary(compiled: &Compiled) {
             (track.glides, "glide", "glides"),
             (track.earcons, "earcon", "earcons"),
             (track.speech, "speech event", "speech events"),
+            (track.audifications, "audified series", "audified series"),
         ] {
             if count > 0 {
                 kinds.push(format!("{count} {}", if count == 1 { one } else { many }));
@@ -878,6 +889,8 @@ struct Quicked<'a> {
     #[serde(skip_serializing_if = "Option::is_none")]
     played: Option<crate::play::Played>,
     ok: bool,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    function: Option<FunctionJson>,
     summary: Option<sonarithm::Summary>,
     description: Option<sonarithm::Description>,
     counts: Counts,
@@ -911,33 +924,120 @@ fn configure(mut quick: sonarithm::Quick, args: &Quick) -> sonarithm::Quick {
     quick
 }
 
-fn quick(args: &Quick, out: Out) -> Exit {
-    let data_name = file_name(&args.data);
-    let quick = match Sonarithm::new().quick().data_file(&args.data) {
-        Ok(quick) => configure(quick, args),
-        Err(err) => return unreadable(out, &data_name, &err.to_string()),
-    };
-    let spec = match quick.spec() {
-        Ok(spec) => spec,
-        Err(err) => return unreadable(out, &data_name, &err.to_string()),
-    };
+/// What `quick` compiles: the generated spec and what it came from.
+struct Prepared {
+    /// The data file's name, or `function`, for messages.
+    label: String,
+    spec: Spec,
+    written: Option<String>,
+    compiled: Result<Compiled, Diagnostics>,
+    function: Option<sonarithm::Function>,
+}
+
+/// `quick` on a data file: NUMISONA's `line-overview` template.
+fn quick_data(args: &Quick, data: &Path) -> Result<Prepared, (String, String)> {
+    let label = file_name(data);
+    let failed = |message: String| (label.clone(), message);
+    let quick = Sonarithm::new()
+        .quick()
+        .data_file(data)
+        .map(|quick| configure(quick, args))
+        .map_err(|err| failed(err.to_string()))?;
+    let spec = quick.spec().map_err(|err| failed(err.to_string()))?;
     let written = match &args.spec_out {
-        Some(path) => match write_spec(&spec, &args.data, path) {
-            Ok(()) => Some(file_name(path)),
-            Err(message) => return unreadable(out, &data_name, &message),
-        },
+        Some(path) => {
+            write_spec(&spec, data, path).map_err(failed)?;
+            Some(file_name(path))
+        }
         None => None,
     };
     let compiled = match quick.compile().map_err(Failed::from) {
         Ok(compiled) => Ok(compiled),
         Err(Failed::Diagnostics(diagnostics)) => Err(diagnostics),
-        Err(Failed::Message(message)) => return unreadable(out, &data_name, &message),
+        Err(Failed::Message(message)) => return Err(failed(message)),
     };
-    let diagnostics = match &compiled {
+    Ok(Prepared {
+        label,
+        spec,
+        written,
+        compiled,
+        function: None,
+    })
+}
+
+/// `quick --function`: the function as a glide with its critical points as earcons
+/// (C03-T07, the shape of 04 §6.3).
+fn quick_function(args: &Quick, expr: &str) -> Result<Prepared, (String, String)> {
+    let label = "function".to_owned();
+    let failed = |message: String| (label.clone(), message);
+    let (low, high) = args
+        .domain
+        .ok_or_else(|| failed("--function needs --domain MIN,MAX".to_owned()))?;
+    let mut source = sonarithm::FunctionSpec::new(expr, [low, high]);
+    if let Some(samples) = args.samples {
+        source = source.with_samples(samples);
+    }
+    let seconds = args.duration.unwrap_or(sonarithm::FUNCTION_DURATION_S);
+    let mut value: Value = serde_json::from_str(sonarithm::function_spec(&source, seconds).text())
+        .map_err(|err| failed(err.to_string()))?;
+    if let Some(mark) = args.mark {
+        value["tracks"][0]["mark"] = json!(match mark {
+            MarkArg::Tone => "tone",
+            MarkArg::Glide => "glide",
+            MarkArg::Auto => "auto",
+        });
+    }
+    if let Some((low, high)) = args.range {
+        value["tracks"][0]["channels"]["pitch"]["range"] = json!({ "hz": [low, high] });
+    }
+    let name = args.name.clone().unwrap_or_else(|| "function".to_owned());
+    value["name"] = json!(name);
+    let spec = Spec::from_value(&value).with_name(format!("{name}.spec.json"));
+    let written = match &args.spec_out {
+        Some(path) => {
+            write_json(&value, path).map_err(failed)?;
+            Some(file_name(path))
+        }
+        None => None,
+    };
+    let compiled = match Sonarithm::new().compile(&spec).map_err(Failed::from) {
+        Ok(compiled) => Ok(compiled),
+        Err(Failed::Diagnostics(diagnostics)) => Err(diagnostics),
+        Err(Failed::Message(message)) => return Err(failed(message)),
+    };
+    let function = sonarithm::Function::from_spec(&spec).and_then(Result::ok);
+    Ok(Prepared {
+        label,
+        spec,
+        written,
+        compiled,
+        function,
+    })
+}
+
+fn quick(args: &Quick, out: Out) -> Exit {
+    let prepared = match (&args.function, &args.data) {
+        (Some(expr), _) => quick_function(args, expr),
+        (None, Some(data)) => quick_data(args, data),
+        (None, None) => Err((
+            "quick".to_owned(),
+            "quick needs a data file or --function".to_owned(),
+        )),
+    };
+    let Prepared {
+        label,
+        spec,
+        written,
+        compiled,
+        function,
+    } = match prepared {
+        Ok(prepared) => prepared,
+        Err((label, message)) => return unreadable(out, &label, &message),
+    };
+    let mut diagnostics = match &compiled {
         Ok(compiled) => compiled.diagnostics().clone(),
         Err(diagnostics) => diagnostics.clone(),
     };
-    let mut diagnostics = diagnostics;
     let mut exit = Exit::of(&diagnostics, args.deny_warnings);
     let mut rendered = None;
     if let (Some(path), Ok(compiled), Exit::Success) = (&args.output, &compiled, exit) {
@@ -946,7 +1046,7 @@ fn quick(args: &Quick, out: Out) -> Exit {
                 diagnostics.extend(done.diagnostics.clone());
                 rendered = Some(done);
             }
-            Err(message) => return unreadable(out, &data_name, &message),
+            Err(message) => return unreadable(out, &label, &message),
         }
         exit = Exit::of(&diagnostics, args.deny_warnings);
     }
@@ -966,18 +1066,19 @@ fn quick(args: &Quick, out: Out) -> Exit {
         let played = match playable {
             Some(compiled) => match crate::play::play(compiled, args.backend, &settings) {
                 Ok(played) => Some(played),
-                Err(message) => return unreadable(out, &data_name, &message),
+                Err(message) => return unreadable(out, &label, &message),
             },
             None => None,
         };
         let compiled = compiled.as_ref().ok();
         json_value(&Quicked {
-            data: &data_name,
+            data: &label,
             spec: spec.name(),
             spec_written: written.as_deref(),
             rendered: rendered.as_ref().map(RenderedJson::of),
             played,
             ok: compiled.is_some(),
+            function: function.as_ref().map(FunctionJson::of),
             summary: compiled.map(Compiled::summary),
             description: compiled.map(Compiled::describe),
             counts: Counts::of(&diagnostics),
@@ -991,6 +1092,7 @@ fn quick(args: &Quick, out: Out) -> Exit {
     match &compiled {
         Ok(compiled) => {
             print_summary(compiled);
+            print_function(function.as_ref(), compiled);
             line("Description:");
             raw(&compiled.describe().to_string());
             if let Some(rendered) = &rendered {
@@ -1008,9 +1110,65 @@ fn quick(args: &Quick, out: Out) -> Exit {
     if let Some(compiled) = playable
         && let Err(message) = crate::play::play(compiled, args.backend, &settings)
     {
-        return unreadable(out, &data_name, &message);
+        return unreadable(out, &label, &message);
     }
     exit
+}
+
+/// A function's summary and critical points in `--json` (C03-T07).
+#[derive(Serialize)]
+struct FunctionJson {
+    expr: String,
+    summary: String,
+    critical_points: Vec<sonarithm::CriticalPoint>,
+}
+
+impl FunctionJson {
+    fn of(function: &sonarithm::Function) -> Self {
+        Self {
+            expr: function.expr().to_owned(),
+            summary: function.summary(),
+            critical_points: function.critical_points(),
+        }
+    }
+}
+
+/// The text equivalents of a function's cues (A11Y-24, A11Y-28): its summary and its
+/// critical points, one per line, then the audification calculator's readout (SDR-31).
+fn print_function(function: Option<&sonarithm::Function>, compiled: &Compiled) {
+    if let Some(function) = function {
+        line(format!("{}.", sentence(&function.summary())));
+        let points = function.critical_points();
+        if !points.is_empty() {
+            line("Critical points:");
+            for point in &points {
+                line(format!("{}.", sentence(&point.text)));
+            }
+        }
+    }
+    for diagnostic in compiled
+        .diagnostics()
+        .iter()
+        .filter(|d| d.code.as_str() == "SNR-ENG-460")
+    {
+        line(&diagnostic.message);
+    }
+}
+
+/// `text` with a capital first letter.
+fn sentence(text: &str) -> String {
+    let mut chars = text.chars();
+    chars.next().map_or_else(String::new, |first| {
+        first.to_uppercase().chain(chars).collect()
+    })
+}
+
+/// Writes a generated spec as pretty JSON to `path`.
+fn write_json(value: &Value, path: &Path) -> Result<(), String> {
+    let mut text = serde_json::to_string_pretty(value).map_err(|err| err.to_string())?;
+    text.push('\n');
+    std::fs::write(path, text)
+        .map_err(|err| format!("`{}` cannot be written: {err}", file_name(path)))
 }
 
 /// Writes the quick spec as pretty JSON to `path`, with its data path relative to the

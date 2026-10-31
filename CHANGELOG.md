@@ -10,6 +10,7 @@ From phase A07, release-plz maintains this file: it generates each release's ent
 
 ### Added
 
+- Functions in the command line and Python (C03-T07): `sonarithm quick --function "sin(x)/x" --domain -20,20` plays a function as a glide with earcons at its zeros, extrema and asymptotes, and first prints its critical points as text, such as "Local maximum at x = 1.5708, y = 1.". `sonarithm inspect` lists a function spec's critical points and prints an audification's speed-up, length and audible band. Python gains `read_function`. The `sonarithm-curvasona` crate is published as experimental.
 - One cursor (B04-T06): the row you focus in the data table is the cursor that every view shows. It is selected in the table, and the Status region shows its data row and its place (dataset, series, segment, point) as a breadcrumb. Moving it from the table does not repeat what your screen reader already reads, and nothing moves your focus when the cursor moves elsewhere.
 - The playhead (B04-T04): it moves smoothly over plots, extrapolated from the audio engine's clock anchors, with no redraw of the data and no per-frame message from the engine.
 - The data table (B04-T05): the Table tab lists a dataset's rows with each row's number in the whole table, a provenance column that names estimates, and sorting by Enter on a column header. It loads rows in windows of 1,000, says which rows are loaded, and moves between windows with the arrow and page keys, Ctrl+Home and Ctrl+End (Cmd on macOS), and "Go to row…" in the command palette.

@@ -378,6 +378,7 @@ fn span(track: &ScoreTrack) -> Option<(f64, f64)> {
         let (from, to) = match event {
             ScoreEvent::Note(note) => (note.t.0, note.t.0 + note.dur.0),
             ScoreEvent::Glide(glide) => (glide.t0.0, glide.t1.0),
+            ScoreEvent::Audify(audify) => (audify.t.0, audify.t.0 + audify.duration().0),
             other => (other.start().0, other.start().0),
         };
         start = start.min(from);
@@ -392,6 +393,7 @@ struct EventCounts {
     glides: usize,
     earcons: usize,
     speech: usize,
+    audifications: usize,
     estimated: usize,
 }
 
@@ -409,6 +411,7 @@ impl EventCounts {
                 ScoreEvent::Glide(_) => counts.glides += 1,
                 ScoreEvent::Earcon(_) => counts.earcons += 1,
                 ScoreEvent::Speech(_) => counts.speech += 1,
+                ScoreEvent::Audify(_) => counts.audifications += 1,
                 _ => {}
             }
         }
@@ -470,6 +473,9 @@ pub struct TrackSummary {
     pub earcons: usize,
     /// Speech events.
     pub speech: usize,
+    /// Audified series (C03-T05); left out of `--json` when there are none.
+    #[serde(skip_serializing_if = "is_zero")]
+    pub audifications: usize,
     /// Notes from estimated data (confidence below 1, 03 §4).
     pub estimated: usize,
     /// When the first event starts, in seconds.
@@ -498,6 +504,7 @@ impl TrackSummary {
             glides: counts.glides,
             earcons: counts.earcons,
             speech: counts.speech,
+            audifications: counts.audifications,
             estimated: counts.estimated,
             start_s: span.map(|(start, _)| micro(start)),
             end_s: span.map(|(_, end)| micro(end)),
@@ -508,6 +515,15 @@ impl TrackSummary {
             pan: track.pan.0,
         }
     }
+}
+
+/// For `skip_serializing_if`.
+#[allow(
+    clippy::trivially_copy_pass_by_ref,
+    reason = "serde passes the field by reference; the lint may or may not fire on it"
+)]
+const fn is_zero(count: &usize) -> bool {
+    *count == 0
 }
 
 /// Diagnostic counts by severity.
