@@ -6,7 +6,8 @@
   "license": "MIT OR Apache-2.0",
   "type": "module",
   "exports": {
-    ".": "./src/index.ts"
+    ".": "./src/index.ts",
+    "./playhead": "./src/playhead.ts"
   },
   "scripts": {
     "lint": "eslint --max-warnings 0 . && prettier --check . && stylelint --allow-empty-input \"**/*.css\"",

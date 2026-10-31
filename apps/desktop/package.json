@@ -18,6 +18,7 @@
     "@sonarithm/i18n": "workspace:*",
     "@sonarithm/ipc": "workspace:*",
     "@sonarithm/ui": "workspace:*",
+    "@sonarithm/viz": "workspace:*",
     "@tauri-apps/api": "catalog:",
     "react": "catalog:",
     "react-aria-components": "catalog:",

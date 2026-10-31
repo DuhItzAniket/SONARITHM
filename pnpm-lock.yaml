@@ -307,6 +307,9 @@ importers:
       '@sonarithm/ui':
         specifier: workspace:*
         version: link:../../packages/ui
+      '@sonarithm/viz':
+        specifier: workspace:*
+        version: link:../../packages/viz
       '@tauri-apps/api':
         specifier: 'catalog:'
         version: 2.12.4
