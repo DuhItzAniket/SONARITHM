@@ -11,7 +11,11 @@ import { startOutsideRegions } from "./keyboard.ts";
 interface Mock {
   commands(): string[];
   settings(): {
-    audio: { device: string | null; volumeDb: number };
+    audio: {
+      device: string | null;
+      volumeDb: number;
+      calibratedLatencyS: Record<string, number>;
+    };
     gpu: string;
   };
 }
@@ -143,4 +147,29 @@ test("f_044_a_gpu_fallback_at_start_up_is_said_in_words", async ({ page }) => {
       .getByRole("contentinfo")
       .getByText("The high-performance GPU setting will apply after SONARITHM"),
   ).toBeVisible();
+});
+
+test("b04_t04_preferences_store_the_measured_latency_of_the_selected_device", async ({
+  page,
+}) => {
+  await page.keyboard.press(`${await primary(page)}+Comma`);
+  const dialog = page.getByRole("dialog", { name: "Preferences" });
+  await expect(dialog).toBeVisible();
+  // ADR-0016: for the system default device (Speakers in the mock), in milliseconds.
+  const field = dialog.getByRole("textbox", {
+    name: "Measured output latency",
+  });
+  await expect(field).toBeEnabled();
+  await field.fill("71");
+  await page.keyboard.press("Tab");
+  await expect
+    .poll(async () => (await audio(page)).calibratedLatencyS)
+    .toEqual({ speakers: 0.071 });
+  // Emptying the field removes it, so the playhead uses the system's estimate again.
+  await field.fill("");
+  await page.keyboard.press("Tab");
+  await expect
+    .poll(async () => (await audio(page)).calibratedLatencyS)
+    .toEqual({});
+  expect(await seriousViolations(page)).toEqual([]);
 });

@@ -893,6 +893,7 @@ fn output(settings: &Settings) -> OutputConfig {
         device: settings.audio.device.clone(),
         buffer_frames: settings.audio.buffer_frames,
         volume_db: settings.audio.volume_db,
+        calibrated_latency_s: settings.audio.calibrated_latency_s.clone(),
         speech,
     }
 }

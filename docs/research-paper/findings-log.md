@@ -1112,6 +1112,14 @@ A05 (render engine, audio backends, export) uses F-050 to F-069.
 - **Affects:** B04-T05, A11Y-03, A11Y-24, FR-046, keyboard-and-navigation §5.6, 09 §3; B04-T06 (the focused row as the shared cursor)
 - **Papers:** none yet
 
+### F-178 · Two meanings of "latency calibration" in the code: a replacement and an added offset
+
+- **Date:** 2026-10-31 · **Phase:** B04 · **Type:** engineering · **Status:** new
+- **Statement:** ADR-0016 says the calibration is used for the playhead "instead of trusting the backend's reported latency", and ADR-0017's `outputLatencyS` takes the calibrated latency in place of the backend's. A05's `sonarithm_audio::LatencyCalibration`, which no code uses, instead stores an offset *added* to the engine's predicted time. B04-T04 stores the measured total output latency per device (`audio.calibratedLatencyS`) and uses it as a replacement. A loopback self-test (A05, Windows) must therefore report the total latency, the key-press-to-onset value of ADR-0016's confirmation step 3, not the difference from cpal's estimate.
+- **Evidence:** `crates/sonarithm-audio/src/calibration.rs` (`heard_at` adds the offset); `crates/sonarithm-app/src/transport.rs` (`anchor`); ADR-0016 §Decision
+- **Evidence level / confidence:** EV-C / Strong (source)
+- **Affects:** ADR-0016 confirmation step 3; a future loopback self-test that fills the setting; `LatencyCalibration` (to retire or re-document when the self-test lands)
+
 ### F-185 · The render manifest refuses unknown fields, so even an optional field needs a new manifest version
 
 - **Date:** 2026-10-31 · **Phase:** C02 · **Type:** engineering · **Status:** new
