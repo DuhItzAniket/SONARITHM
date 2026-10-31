@@ -185,9 +185,20 @@ fn scan_budget(text: &str, domain: [f64; 2], budget: &ScanBudget) -> Scan {
 fn a_zero_on_the_grid_does_not_hide_a_second_one_beside_it() {
     for b in [0.5, 1.0, 3.0, -2.5] {
         let text = format!("(x - ({b}))/((x - 0)*(x - ({b})))");
-        let found = scan(&parse(&text), &grid([-4.0, 4.0], 3), None, &ScanBudget::DEFAULT);
-        assert!(matches(&of_kind(&found, SingularityKind::Pole), &[0.0]), "{found:?}");
-        assert!(matches(&of_kind(&found, SingularityKind::Hole), &[b]), "{b}: {found:?}");
+        let found = scan(
+            &parse(&text),
+            &grid([-4.0, 4.0], 3),
+            None,
+            &ScanBudget::DEFAULT,
+        );
+        assert!(
+            matches(&of_kind(&found, SingularityKind::Pole), &[0.0]),
+            "{found:?}"
+        );
+        assert!(
+            matches(&of_kind(&found, SingularityKind::Hole), &[b]),
+            "{b}: {found:?}"
+        );
     }
 }
 
