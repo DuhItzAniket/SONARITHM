@@ -92,6 +92,7 @@ The app core computes it on the control thread when it builds the anchor, never 
 | 2026-10-30 | `outputLatencyS` added (B04-T04), citing ADR-0016 §"Per-device latency calibration"; approved by the coordinator, additive |
 | 2026-10-31 | `cursor_set`, `cursor_get` and the `cursor` event and channel added (B04-T06): Rust's one cursor, with an origin that decides what is spoken (INFER, OD-30); approved by the coordinator, additive |
 | 2026-11-01 | `nav_move`, `nav_where` and the `nav` reply added (B03-T09); `CursorState.node` may be any navigation node, `path` levels gain the axes, insights and filters levels, `CursorState.excluded` lists the filtered series and `TransportState.excludedTracks` the tracks playback leaves out; approved by the coordinator, additive |
+| 2026-11-01 | `braille_route`, `CursorOrigin::braille` and `CursorState.braille` (a `BrailleState`) added, and the settings gain `braille` (`mode`, `cells`) (B03-T10); approved by the coordinator, additive |
 
 #### Cursor
 
@@ -154,6 +155,21 @@ Each change sends a `cursor` event with `origin: null`. A `cursor` event never m
 * Exports render the whole compiled Score: the filter is session state, not part of the spec or the project. While a series is excluded, starting an export announces "Export includes all series; exclusions apply to playback only" (`announce-export-all-series`), until the export dialog (B05-T05) says it. A spec-level filter can follow with `spec_apply` (B05-T01).
 
 **Point cue (A11Y-10, A11Y-20).** A move is to play the point's cue, then speak. The transport has no one-shot cue path yet, so the cue arrives in its own change, with a `cue` field added to `NavResult` then.
+
+#### Braille
+
+> Amended 2026-11-01, B03-T10: `braille_route`, the `braille` origin, `CursorState.braille` and the `braille` settings added, approved by the coordinator, additive.
+
+**The same cursor (A11Y-10).** With braille output on (the effective `modalities.braille`), every `cursor` event carries `braille: BrailleState | null` for the cursor's node:
+
+* `mode`: `"review"` or `"sparkline"`. It says what `text` is: in sparkline mode, a node that is not a point shows its review line, with `mode: "review"`.
+* `text`: the review line (the composer's parts in symbol form, in the listener's terse order with the position added, whole parts only) or the sparkline (one 8-dot cell per point of the cursor's segment, U+2800 to U+28FF; MAIDR's four heights; a blank cell for a missing value) (keyboard §10; A11Y-21).
+* `caret`: the cell of the cursor's point in a sparkline, 0 in review mode.
+* `cells`: the display's cell count from the settings, or `null` when nothing is fitted and the screen reader pans.
+
+The UI shows `text` in a read-only text field, with the caret at `caret` (keyboard §14). A routing-key press sends `braille_route { cell }`, the caret's cell. On a sparkline it moves the one cursor to the point under the cell with origin `"braille"` and replies `cursor`. Elsewhere (review mode, past the last cell, no compiled Score) the cursor stays and the reply is where it is. A `braille` move is not announced, as for the table: the display and the screen reader already show the field (INFER, OD-30).
+
+**Settings.** `settings.braille = { mode: "review" | "sparkline", cells?: number }` holds Shift+B's mode and the display's cell count, which a web page cannot read. They are app settings, not profile fields: they belong to the user's device. `cells: 0` is refused (`SNR-APP-013`). Files without `braille` read the defaults (review, no cell count).
 
 #### Meter frames
 
