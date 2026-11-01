@@ -72,6 +72,13 @@ None.
 - Sonification off sets the master to -120 dB (`TransportState.muted`). Visual off hides the plot's crosshair; the UI reads it from `settings_effective` and the toggles' replies. Braille off is read by the braille line (#453) through the effective modalities.
 - Tests: one Rust test per toggle's effect, the order of "Speech off" and "Speech on", persistence across a restart, the reset, and the lockout; E2E for the keys, the spoken change, the highlight and the refusal; a unit test for muted delivery.
 
+## The point cue (2026-11-01)
+
+- The design was approved before code. The render graph already had `Command::Cue` and preallocated cue voices under `no_alloc`, so the control thread does most of the work: `Transport::cue`, dropped while playing (keyboard §9.2 item 3), the output opened on the first cue, then `Sequencer::cue` so speech waits (A11Y-20).
+- The cue is the point's own note: a binary search of its track's events by the point's time, then the note whose `src` is the row. That avoids a per-row index, which would cost about 80 MB at a million rows.
+- **The steal clicked** (F-211): `Voice::start` replaces a voice at once. Now there are 8 cue slots with at most 4 sounding, and the oldest sounding cue fades over the ramp. Tests: the step at the fade stays within twice a sine's own steepest step; a full pool steals a fading voice and counts it; `no_alloc` sends ten cues in one block.
+- Not measured: the 50 ms key-to-onset budget, which needs the loopback harness on HW-01 (an owner step on #129).
+
 ## Next steps
 
 - PR (2): the Explorer component, keymap v0, the query menu, modality and verbosity toggles, E2E for every verb.

@@ -93,6 +93,12 @@ impl App {
         });
         self.place_nav();
         let state = self.send_cursor(Some(origin), true);
+        // Every origin plays the point's cue (keyboard §5, the table; A11Y-10); only the
+        // speech depends on where the move came from. The cue goes first, so the
+        // announcement waits for it (A11Y-20).
+        if let Some(node) = state.node.map(NavNodeId) {
+            self.play_cue(node);
+        }
         // The table and braille routing keys are not announced: the screen reader already
         // reads the focused row or the braille field (INFER, OD-30).
         if !matches!(origin, CursorOrigin::Table | CursorOrigin::Braille)

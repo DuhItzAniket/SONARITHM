@@ -33,6 +33,7 @@ use crate::transport::{Action, AudioOutput, OutputConfig, Transport};
 
 mod braille;
 mod corrections;
+mod cue;
 mod cursor;
 mod functions;
 mod modalities;
