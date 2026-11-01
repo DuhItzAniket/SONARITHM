@@ -100,6 +100,15 @@ fn a11y_28_the_suite_finds_every_critical_point() {
     assert!(failures.is_empty(), "{}", failures.join("\n"));
 }
 
+/// A zero exactly on a grid point does not hide a second zero in the next grid step.
+#[test]
+fn a_zero_on_the_grid_does_not_hide_its_neighbour() {
+    let found = features_of("x*(x - 1)", [-4.0, 4.0], 3);
+    let zeros = xs_of(&found, FeatureKind::Zero);
+    assert_eq!(zeros.len(), 2, "{zeros:?}");
+    assert!(near(zeros[0], 0.0) && near(zeros[1], 1.0), "{zeros:?}");
+}
+
 #[test]
 fn extrema_and_inflections_carry_their_values() {
     let found = features_of("x^3 - 3*x", [-3.0, 3.0], 1000);

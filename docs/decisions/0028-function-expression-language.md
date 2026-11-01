@@ -57,3 +57,5 @@ number  = digits [ "." digits ] [ ("e" | "E") [ "+" | "-" ] digits ] | "." digit
 ### Confirmation
 
 C03-T01 (issue [#314](https://github.com/DuhItzAniket/SONARITHM/issues/314)): `sonarithm_curvasona::expr` with the tests `precedence_follows_ordinary_maths`, `exmex_alone_reads_minus_two_squared_as_four`, one test per error code, the property test `canonical_form_round_trips_and_lowering_keeps_meaning` and the fuzz target `expr_parse`; the spec schema's `expr` description and 04 §3 cite this ADR.
+
+**Note (2026-11-01, [F-199](../research-paper/findings-log.md)).** A negative divisor now prints without parentheses in the canonical form (`x/-4`, as `x*-4` already did), so the canonical form is never more deeply nested than its source; the grammar is unchanged.
