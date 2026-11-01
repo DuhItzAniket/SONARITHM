@@ -25,8 +25,8 @@ fn point_fields() -> Vec<ReviewField> {
     ]
 }
 
-/// A11Y-21, keyboard §10: the review line at several cell counts. Whole fields only, and
-/// the "more" mark when some are left out.
+/// A11Y-21, keyboard §10: the review line at several cell counts. Whole fields only, the
+/// value and the provenance qualifier always kept, and the "more" mark when some are left out.
 #[test]
 fn a11y_21_review_line_at_several_cell_counts() {
     let fields = point_fields();
@@ -36,15 +36,16 @@ fn a11y_21_review_line_at_several_cell_counts() {
         let label = cells.map_or("unset".to_owned(), |c| c.to_string());
         let _ = writeln!(out, "{label:>5} | {line} | {}", line.chars().count());
         if let Some(cells) = cells {
-            let first = fields[0].text.chars().count();
-            assert!(line.chars().count() <= cells.max(first), "{cells}: {line}");
+            // The value and its qualifier are always kept, even past the display.
+            let must = "28.7 °C est.".chars().count();
+            assert!(line.chars().count() <= cells.max(must), "{cells}: {line}");
         }
     }
     insta::assert_snapshot!(out);
 }
 
-/// A number is never cut: the first field is kept whole even on a display that is too
-/// short, and a later field is either whole or left out.
+/// A number is never cut: every kept field is whole, the kept fields stay in their order,
+/// the value is first, and the provenance qualifier is never left out.
 #[test]
 fn a11y_21_review_line_never_cuts_a_field() {
     let fields = point_fields();
@@ -52,15 +53,55 @@ fn a11y_21_review_line_never_cuts_a_field() {
     for cells in 0..60 {
         let line = review_line(&fields, Some(cells));
         let body = line.trim_end_matches(MORE);
-        let whole = (1..=texts.len()).any(|n| texts[..n].join(" ") == body);
-        assert!(whole, "{cells}: {line} is not a run of whole fields");
+        // The kept fields are some of the fields, whole and in order.
+        let mut rest = body;
+        let mut next = 0;
+        while !rest.is_empty() {
+            let at = texts[next..]
+                .iter()
+                .position(|text| rest.starts_with(text))
+                .unwrap_or_else(|| panic!("{cells}: {line} has a cut field"));
+            rest = rest[texts[next + at].len()..].trim_start();
+            next += at + 1;
+        }
         assert!(line.starts_with("28.7 °C"), "{cells}: {line}");
+        assert!(body.contains("est."), "{cells}: {line} lost the qualifier");
     }
     assert_eq!(
         review_line(&fields, None),
         "28.7 °C Mar 14 73/365 est.",
         "no cell count: every field, the screen reader pans"
     );
+}
+
+/// AGENTS rule 7, A11Y-02: on a small display an estimated point keeps its qualifier right
+/// after the value, never left out with the fields that do not fit.
+#[test]
+fn a11y_02_an_estimate_keeps_its_qualifier_on_a_small_display() {
+    let fields = vec![
+        field(Part::Value, "28.7 °C"),
+        field(Part::X, "14 Jul"),
+        field(Part::Position, "195 of 365"),
+        field(Part::Provenance, "estimated"),
+    ];
+    let line = review_line(&fields, Some(12));
+    assert_eq!(line, "28.7 °C estimated");
+    let line = review_line(&fields, Some(26));
+    assert_eq!(line, "28.7 °C 14 Jul estimated…");
+}
+
+/// When a field is left out, the line ends in the mark even if the kept fields would fill
+/// the display exactly: its cell is kept back.
+#[test]
+fn a11y_21_the_more_mark_has_its_cell() {
+    let fields = vec![
+        field(Part::Value, "AAAAA"),
+        field(Part::X, "BBBBB"),
+        field(Part::Position, "CCCCC"),
+    ];
+    assert_eq!(review_line(&fields, Some(11)), "AAAAA…");
+    assert_eq!(review_line(&fields, Some(12)), "AAAAA BBBBB…");
+    assert_eq!(review_line(&fields, Some(17)), "AAAAA BBBBB CCCCC");
 }
 
 /// MAIDR's four heights (notes 03 §1): dots 7–8, 3–6, 2–5, 1–4, as Unicode 8-dot cells.

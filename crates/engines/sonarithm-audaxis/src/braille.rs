@@ -46,38 +46,74 @@ pub struct ReviewField {
 /// The review line from `fields`, in their order, fitted to `cells`.
 ///
 /// Fields are joined by one space. With no cell count, every field is kept and the screen
-/// reader pans. With one, whole fields are kept from the front while they fit; when some
-/// are left out the line ends in [`MORE`]. A field is never cut, so no number is ever
-/// shortened: the first field is kept whole even when it alone is longer than the display.
+/// reader pans. With one, and when not every field fits:
+///
+/// - the first field (the value) and every provenance qualifier are always kept, so an
+///   estimate is never shown as if it were exact (AGENTS rule 7, A11Y-02);
+/// - the other fields are added in their order while they fit, with one cell kept back
+///   for [`MORE`], which ends the line whenever a field was left out;
+/// - kept fields stay in the listener's order (A11Y-12).
+///
+/// A field is never cut, so no number is ever shortened. When the value and its qualifier
+/// alone are longer than the display, they are shown whole and the screen reader pans.
 #[must_use]
 pub fn review_line(fields: &[ReviewField], cells: Option<usize>) -> String {
-    let texts: Vec<&str> = fields
+    let kept: Vec<(Part, &str)> = fields
         .iter()
-        .map(|field| field.text.trim())
-        .filter(|text| !text.is_empty())
+        .map(|field| (field.part, field.text.trim()))
+        .filter(|(_, text)| !text.is_empty())
         .collect();
-    let Some(cells) = cells else {
-        return texts.join(" ");
+    let all = kept
+        .iter()
+        .map(|(_, text)| text.chars().count())
+        .sum::<usize>()
+        + kept.len().saturating_sub(1);
+    let Some(cells) = cells.filter(|&cells| all > cells) else {
+        return kept
+            .iter()
+            .map(|(_, text)| *text)
+            .collect::<Vec<_>>()
+            .join(" ");
     };
-    let mut line = String::new();
-    let mut width = 0;
-    for (index, text) in texts.iter().enumerate() {
-        let gap = usize::from(index > 0);
-        let len = text.chars().count();
-        let last = index + 1 == texts.len();
-        // Room for the field, and for the "more" mark unless it is the last field.
-        let needed = width + gap + len + usize::from(!last);
-        if index > 0 && needed > cells {
-            if width < cells {
-                line.push(MORE);
-            }
-            return line;
+    // A field will be left out, so one cell is kept back for the mark.
+    let budget = cells.saturating_sub(1);
+    let must = |index: usize, part: Part| index == 0 || part == Part::Provenance;
+    let width_of = |text: &str| text.chars().count();
+    let mut chosen: Vec<bool> = kept
+        .iter()
+        .enumerate()
+        .map(|(i, (p, _))| must(i, *p))
+        .collect();
+    let mut width = kept
+        .iter()
+        .zip(&chosen)
+        .filter(|(_, keep)| **keep)
+        .map(|((_, text), _)| width_of(text))
+        .sum::<usize>()
+        + chosen
+            .iter()
+            .filter(|keep| **keep)
+            .count()
+            .saturating_sub(1);
+    for (index, (_, text)) in kept.iter().enumerate() {
+        if chosen[index] {
+            continue;
         }
-        if index > 0 {
-            line.push(' ');
+        let needed = width + 1 + width_of(text);
+        if needed <= budget {
+            chosen[index] = true;
+            width = needed;
         }
-        line.push_str(text);
-        width += gap + len;
+    }
+    let mut line = kept
+        .iter()
+        .zip(&chosen)
+        .filter(|(_, keep)| **keep)
+        .map(|((_, text), _)| *text)
+        .collect::<Vec<_>>()
+        .join(" ");
+    if chosen.iter().any(|keep| !keep) && width < cells {
+        line.push(MORE);
     }
     line
 }

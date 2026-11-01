@@ -163,7 +163,7 @@ Each change sends a `cursor` event with `origin: null`. A `cursor` event never m
 **The same cursor (A11Y-10).** With braille output on (the effective `modalities.braille`), every `cursor` event carries `braille: BrailleState | null` for the cursor's node:
 
 * `mode`: `"review"` or `"sparkline"`. It says what `text` is: in sparkline mode, a node that is not a point shows its review line, with `mode: "review"`.
-* `text`: the review line (the composer's parts in symbol form, in the listener's terse order with the position added, whole parts only) or the sparkline (one 8-dot cell per point of the cursor's segment, U+2800 to U+28FF; MAIDR's four heights; a blank cell for a missing value) (keyboard §10; A11Y-21).
+* `text`: the review line (the composer's parts in symbol form, in the listener's terse order with the position added; whole parts only, the value and its provenance qualifier always kept, a "…" for parts left out) or the sparkline (one 8-dot cell per point of the cursor's segment, U+2800 to U+28FF; MAIDR's four heights; a blank cell for a missing value) (keyboard §10; A11Y-21).
 * `caret`: the cell of the cursor's point in a sparkline, 0 in review mode.
 * `cells`: the display's cell count from the settings, or `null` when nothing is fitted and the screen reader pans.
 
