@@ -127,7 +127,8 @@ Each change sends a `cursor` event with `origin: null`. A `cursor` event never m
 
 * A table or plot move puts the node on the row's point, keeping the excluded series. A row that is not a point leaves no node.
 * A verb moves the node, and the row follows it: a point's own row; for a series or a segment, the series' point nearest the cursor's x. An axis, an insight group or a filter leaves the row where it was.
-* A compile renumbers the nodes, so the node is found again from the row, and the excluded series by their names.
+* A compile renumbers the nodes, so the node is found again from the row, and the excluded series and the explorer's series by their tracks (labels need not be unique: two tracks can read one field).
+* A table or plot move keeps the explorer's series when the row is a point there; otherwise it takes the first series the filters keep.
 
 **Commands.**
 
@@ -149,7 +150,7 @@ Each change sends a `cursor` event with `origin: null`. A `cursor` event never m
 
 * The transport plays a copy of the compiled Score with the excluded series' tracks removed and nothing else changed: the header, the markers and every other track are the compiled Score's own, bit for bit (tested). It is still the compiler's Score IR (ADR-0005); nothing new synthesizes sound, and nothing changes on the audio thread.
 * Loading it pauses playback, which never continues on its own (A11Y-15).
-* The exclusion is recorded where it applies, so what is playing is never taken for the canonical Score: `CursorState.excluded` in the session, and `TransportState.excludedTracks` (the removed track IDs, empty when the compiled Score plays as it is) in the transport. A live Score plays whole and clears it.
+* The exclusion is recorded where it applies, so what is playing is never taken for the canonical Score: `CursorState.excluded` in the session, and `TransportState.excludedTracks` (the removed track IDs, empty when the compiled Score plays as it is) in the transport. Live windows keep the exclusions made before monitoring started. While a live stream is monitored a filter cannot change, because reloading playback would end monitoring: Enter on a filter is invalid (`reason: "liveMonitoring"`, `E-INVALID`) and announced.
 * Exports render the whole compiled Score: the filter is session state, not part of the spec or the project. While a series is excluded, starting an export announces "Export includes all series; exclusions apply to playback only" (`announce-export-all-series`), until the export dialog (B05-T05) says it. A spec-level filter can follow with `spec_apply` (B05-T01).
 
 **Point cue (A11Y-10, A11Y-20).** A move is to play the point's cue, then speak. The transport has no one-shot cue path yet, so the cue arrives in its own change, with a `cue` field added to `NavResult` then.

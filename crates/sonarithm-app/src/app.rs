@@ -691,9 +691,9 @@ impl App {
                 let report = report(true, compiled.diagnostics().iter(), Some(&compiled));
                 // The filters' excluded series carry over by label (B03-T09), so the
                 // transport plays the new Score without them.
-                let excluded = self.excluded_labels();
+                let (excluded, series) = (self.excluded_tracks(), self.nav_series_track());
                 self.compiled = Some(compiled);
-                self.renumber_nav(&excluded);
+                self.renumber_nav(&excluded, series.as_ref());
                 self.load_playback();
                 Ok(Reply::Compile(report))
             }

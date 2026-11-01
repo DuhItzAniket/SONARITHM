@@ -59,6 +59,16 @@ impl App {
             cursor.set_excluded(self.cursor.excluded.iter().copied());
             cursor
         });
+        // While a live stream is monitored, a filter cannot change: reloading playback
+        // would end monitoring. The cursor stays, and the listener is told why.
+        let on_filter = matches!(
+            tree.node(cursor.node()).map(|node| &node.kind),
+            Some(NavKind::Filter(_))
+        );
+        if self.live.is_some() && on_filter && matches!(verb, Verb::Activate) {
+            self.cursor.nav = Some(cursor);
+            return Ok(self.refuse_filter_while_live());
+        }
         let before: BTreeSet<NavNodeId> = cursor.excluded().collect();
         let outcome = cursor.apply(tree, &verb);
         let excluded: BTreeSet<NavNodeId> = cursor.excluded().collect();
@@ -98,11 +108,45 @@ impl App {
         Ok(self.finish_move(step))
     }
 
+    /// The reply to Enter on a filter while a live stream is monitored: invalid, with the
+    /// reason announced and `E-INVALID`.
+    fn refuse_filter_while_live(&mut self) -> Reply {
+        let text = self.localizer.as_ref().and_then(|localizer| {
+            localizer
+                .format("announce-filter-live", &sonarithm_i18n::Args::new())
+                .ok()
+        });
+        let announced = text.is_some();
+        if let Some(text) = text {
+            let mut announcement =
+                sonarithm_audaxis::announce::Announcement::status(text.clone(), text);
+            announcement.earcon = Some(sonarithm_audaxis::earcons::EarconId::Invalid);
+            self.transport.announce(announcement);
+        }
+        let cursor = self.send_cursor(Some(CursorOrigin::Nav), true);
+        Reply::Nav(NavResult {
+            cursor,
+            outcome: NavOutcome::Invalid,
+            edge: None,
+            reason: Some("liveMonitoring".to_owned()),
+            included: None,
+            earcon: Some(
+                sonarithm_audaxis::earcons::EarconId::Invalid
+                    .id()
+                    .to_owned(),
+            ),
+            highlight: None,
+            announced,
+        })
+    }
+
     /// Stores the row, reloads playback after a toggle, announces and replies.
     fn finish_move(&mut self, step: Step) -> Reply {
         if let Some(at) = step.row {
             self.cursor.at = Some(at);
         }
+        // Loading the filtered Score pauses playback, which never continues on its own
+        // (A11Y-15): the listener resumes it.
         if step.excluded_changed {
             self.load_playback();
         }
@@ -198,7 +242,7 @@ impl App {
     }
 
     /// The compiled Score's tracks of the series the filters took out, in track order.
-    fn excluded_tracks(&self) -> BTreeSet<TrackId> {
+    pub(super) fn excluded_tracks(&self) -> BTreeSet<TrackId> {
         let Some(tree) = self.compiled.as_ref().and_then(sonarithm::Compiled::nav) else {
             return BTreeSet::new();
         };
@@ -225,43 +269,52 @@ impl App {
         Some(Arc::new(score))
     }
 
-    /// The labels of the excluded series, read before a compile replaces the tree.
-    pub(super) fn excluded_labels(&self) -> BTreeSet<String> {
-        let Some(tree) = self.compiled.as_ref().and_then(sonarithm::Compiled::nav) else {
-            return BTreeSet::new();
-        };
-        self.cursor
-            .excluded
-            .iter()
-            .filter_map(|&id| tree.node(id).and_then(|node| node.label.clone()))
-            .collect()
+    /// The track of the explorer's series, read before a compile replaces the tree.
+    pub(super) fn nav_series_track(&self) -> Option<TrackId> {
+        let tree = self.compiled.as_ref().and_then(sonarithm::Compiled::nav)?;
+        let series = self.cursor.nav.as_ref().and_then(Cursor::series)?;
+        match tree.node(series).map(|node| &node.kind) {
+            Some(NavKind::Series(node)) => Some(node.track.clone()),
+            _ => None,
+        }
     }
 
-    /// After a compile: node IDs may have changed, so the explorer's node is found again
-    /// from the row, the excluded series by their labels, and the composer forgets which
-    /// series it named last.
-    pub(super) fn renumber_nav(&mut self, labels: &BTreeSet<String>) {
+    /// After a compile: node IDs may have changed, so the excluded series and the
+    /// explorer's series are found again by their tracks (labels need not be unique: two
+    /// tracks can read one field), the explorer's node from the row, and the composer
+    /// forgets which series it named last.
+    pub(super) fn renumber_nav(&mut self, excluded: &BTreeSet<TrackId>, series: Option<&TrackId>) {
         self.cursor.memory.clear();
         self.cursor.nav = None;
         let Some(tree) = self.compiled.as_ref().and_then(sonarithm::Compiled::nav) else {
             self.cursor.excluded.clear();
             return;
         };
+        let track_of = |id: NavNodeId| match tree.node(id).map(|node| &node.kind) {
+            Some(NavKind::Series(node)) => Some(&node.track),
+            _ => None,
+        };
         self.cursor.excluded = tree
             .series()
-            .filter(|&id| {
-                tree.node(id)
-                    .and_then(|node| node.label.as_ref())
-                    .is_some_and(|label| labels.contains(label))
-            })
+            .filter(|&id| track_of(id).is_some_and(|track| excluded.contains(track)))
             .collect();
-        self.place_nav();
+        let prefer = series.and_then(|wanted| {
+            tree.series()
+                .find(|&id| track_of(id).is_some_and(|track| track == wanted))
+        });
+        self.place_nav_in(prefer);
     }
 
     /// Puts the explorer's node on the cursor row's point, keeping the excluded series;
-    /// no node when the row is not a point.
+    /// no node when the row is not a point. The point is in the explorer's own series when
+    /// the row has one there (keyboard §4.2: the series stays until a lateral move).
     pub(super) fn place_nav(&mut self) {
-        let point = self.row_point();
+        let prefer = self.cursor.nav.as_ref().and_then(Cursor::series);
+        self.place_nav_in(prefer);
+    }
+
+    fn place_nav_in(&mut self, prefer: Option<NavNodeId>) {
+        let point = self.row_point_in(prefer);
         let nav = match (
             self.compiled.as_ref().and_then(sonarithm::Compiled::nav),
             point,
