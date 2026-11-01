@@ -17,7 +17,7 @@ Track line: data track, 36 events (36 notes), 0.000 to 11.917 seconds, pitch 400
 Score hash: [score hash].
 Diagnostics: 0 errors, 1 warning, 40 applied defaults and choices.
 --- stderr
-Context cues (ticks, reference tone, legend, earcons) are not available in this build; AUDAXIS arrives in B03.
+Context cues (ticks, reference tone, legend, earcons) are not available: no engine that provides them (AUDAXIS) is registered in this build.
     Diagnostic severity: warning
 diagnostic code: SNR-COMP-023
 
