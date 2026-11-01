@@ -569,19 +569,30 @@ fn keyboard_7_queries_answer_about_the_cursors_series() {
     let before = cursor.clone();
     let localizer = english();
     let mut composer = Composer::new(&localizer, Settings::default());
-    let ask = |composer: &mut Composer<'_>, query: Query| {
-        composer.query(&tree, &cursor, &query).unwrap()
-    };
+    let ask =
+        |composer: &mut Composer<'_>, query: Query| composer.query(&tree, &cursor, &query).unwrap();
     let max = ask(&mut composer, Query::Maximum);
     assert_eq!(max.class, Class::Response);
-    assert!(max.speech.starts_with("Maximum of Temperature: "), "{}", max.speech);
+    assert!(
+        max.speech.starts_with("Maximum of Temperature: "),
+        "{}",
+        max.speech
+    );
     assert!(max.speech.contains("degrees Celsius"), "{}", max.speech);
     assert!(max.display.contains("°C"), "{}", max.display);
     let min = ask(&mut composer, Query::Minimum);
-    assert!(min.speech.starts_with("Minimum of Temperature: "), "{}", min.speech);
+    assert!(
+        min.speech.starts_with("Minimum of Temperature: "),
+        "{}",
+        min.speech
+    );
     assert_ne!(min.node, max.node);
     let range = ask(&mut composer, Query::Range);
-    assert!(range.speech.starts_with("Range of Temperature: "), "{}", range.speech);
+    assert!(
+        range.speech.starts_with("Range of Temperature: "),
+        "{}",
+        range.speech
+    );
     assert!(range.speech.contains(", span "), "{}", range.speech);
     let at = ask(&mut composer, Query::ValueAt(XTarget::Number(5.0)));
     assert!(at.speech.starts_with("At "), "{}", at.speech);

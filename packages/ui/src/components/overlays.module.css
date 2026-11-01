@@ -86,6 +86,10 @@
 
 .dialog {
   max-inline-size: 32rem;
+  /* A long dialog (Preferences with its keyboard table, B03-T09) scrolls inside the window
+     instead of running off it (WCAG 1.4.10); its controls stay reachable by Tab. */
+  max-block-size: calc(100dvh - 2 * var(--space-5));
+  overflow-y: auto;
   padding: var(--space-5);
   outline: none;
 }

@@ -275,7 +275,11 @@ fn keyboard_7_a_query_is_announced_and_moves_nothing() {
         json!({ "query": "valueAt", "x": { "number": 3.0 } }),
     ] {
         let reply = h.ok(&json!({ "command": "nav_query", "args": { "query": query } }));
-        assert_eq!(reply, json!({ "reply": "announce", "queued": true }), "{query}");
+        assert_eq!(
+            reply,
+            json!({ "reply": "announce", "queued": true }),
+            "{query}"
+        );
     }
     assert_eq!(h.cursors().len(), events);
     assert_eq!(h.ok(&json!({ "command": "cursor_get" })), before);

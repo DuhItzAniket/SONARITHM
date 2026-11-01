@@ -50,6 +50,8 @@ Owner: `sonarithm-app`.
 | `SNR-APP-086` | error | These corrections do not belong to this dataset | Corrections apply to a dataset opened from a chart, and a correction file only to            the chart it was made on (same SHA-256 and extractor, RFC-0005 §3). | — |
 | `SNR-APP-087` | error | The row is outside the dataset | A cursor row counts from 0 and is below the dataset's row count (`rows` in its summary). Nothing was changed. | — |
 | `SNR-APP-090` | error | There is nothing to explore yet | The chart explorer moves through the navigation tree of the compiled Score. Compile the spec, then explore. Nothing was changed. | — |
+| `SNR-APP-091` | error | This key combination is reserved | Tab, Shift+Tab, F6, Shift+F6, Escape, Insert and CapsLock combinations, Win or Super combinations, Ctrl+Option on macOS, Alt+F4, Alt+Space and Cmd+Q belong to the system, the screen reader or moving between regions (keyboard §13 rule 6). Choose another combination in Preferences › Keyboard. | — |
+| `SNR-APP-092` | warning | A project cannot change your keys | Keys are yours: a shared project must not rebind someone's keyboard, so the keys in this project's profile were ignored. Everything else in it applies. Set keys in Preferences › Keyboard. | — |
 
 ## SNR-COMP
 

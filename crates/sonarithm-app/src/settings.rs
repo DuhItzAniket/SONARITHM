@@ -443,8 +443,7 @@ impl SettingsStore {
         let settings = migrated
             .and_then(|value| serde_json::from_value::<Settings>(value).ok())
             .map(|mut settings| {
-                while let Some((command, chord)) = crate::keymap::first_reserved(&settings.keymap)
-                {
+                while let Some((command, chord)) = crate::keymap::first_reserved(&settings.keymap) {
                     notices.push(IpcError::new(
                         &codes::KEYMAP_RESERVED,
                         format!(
@@ -785,7 +784,9 @@ mod tests {
         let dir = TempDir::new("settings-reserved");
         let store = SettingsStore::new(dir.path());
         let mut settings = Settings::default();
-        settings.keymap.insert("nav.next".to_owned(), "Shift+Tab".to_owned());
+        settings
+            .keymap
+            .insert("nav.next".to_owned(), "Shift+Tab".to_owned());
         let error = store.save(&settings).err();
         assert_eq!(error.map(|e| e.code), Some("SNR-APP-091".to_owned()));
         assert!(!store.path().exists());
@@ -798,7 +799,9 @@ mod tests {
         let dir = TempDir::new("settings-keys");
         let mut store = SettingsStore::new(dir.path());
         let mut settings = Settings::default();
-        settings.keymap.insert("nav.next".to_owned(), "L".to_owned());
+        settings
+            .keymap
+            .insert("nav.next".to_owned(), "L".to_owned());
         settings.keyboard.single_key_commands = false;
         settings.verbosity = Verbosity::Verbose;
         assert!(store.save(&settings).is_ok());
@@ -808,10 +811,17 @@ mod tests {
         value["keymap"]["nav.previous"] = serde_json::json!("Tab");
         std::fs::write(store.path(), value.to_string()).unwrap();
         let loaded = store.load();
-        assert_eq!(loaded.settings, settings, "only the reserved binding is gone");
+        assert_eq!(
+            loaded.settings, settings,
+            "only the reserved binding is gone"
+        );
         assert_eq!(loaded.notices.len(), 1);
         assert_eq!(loaded.notices[0].code, "SNR-APP-091");
-        assert_eq!(store.load().notices, Vec::new(), "written back, so said once");
+        assert_eq!(
+            store.load().notices,
+            Vec::new(),
+            "written back, so said once"
+        );
     }
 
     #[test]

@@ -612,27 +612,10 @@ impl<'l> Composer<'l> {
         let mut out = Vec::with_capacity(2);
         for units in [UnitStyle::Verbose, UnitStyle::Symbol] {
             let text = match (query, target) {
-                (Query::Range, _) => {
-                    let range = match tree.node(series).map(|n| &n.kind) {
-                        Some(NavKind::Series(s)) => s.range,
-                        _ => None,
-                    };
-                    let Some(range) = range else {
-                        return self.invalid_query(cursor, Invalid::NoValues);
-                    };
-                    let point = first_point(tree, series).unwrap_or(series);
-                    self.message(
-                        "announce-query-range",
-                        &Args::new()
-                            .text("series", name.as_str())
-                            .text("from", self.point_value(tree, point, Some(range.min), units)?)
-                            .text("to", self.point_value(tree, point, Some(range.max), units)?)
-                            .text(
-                                "span",
-                                self.point_value(tree, point, Some(range.max - range.min), units)?,
-                            ),
-                    )?
-                }
+                (Query::Range, _) => match self.range_answer(tree, series, &name, units)? {
+                    Some(text) => text,
+                    None => return self.invalid_query(cursor, Invalid::NoValues),
+                },
                 (_, Some(point)) => {
                     let Some(NavKind::Point(p)) = tree.node(point).map(|n| &n.kind) else {
                         return self.invalid_query(cursor, Invalid::NotHere);
@@ -676,6 +659,34 @@ impl<'l> Composer<'l> {
             speak: true,
             error: false,
         })
+    }
+
+    /// "Range of Temperature: 3.1 to 28.7 °C, span 25.6 °C", or `None` for a series with no
+    /// values.
+    fn range_answer(
+        &self,
+        tree: &NavTree,
+        series: NavNodeId,
+        name: &str,
+        units: UnitStyle,
+    ) -> Result<Option<String>, I18nError> {
+        let Some(NavKind::Series(node)) = tree.node(series).map(|n| &n.kind) else {
+            return Ok(None);
+        };
+        let Some(range) = node.range else {
+            return Ok(None);
+        };
+        let point = first_point(tree, series).unwrap_or(series);
+        let value = |v: f64| self.point_value(tree, point, Some(v), units);
+        self.message(
+            "announce-query-range",
+            &Args::new()
+                .text("series", name)
+                .text("from", value(range.min)?)
+                .text("to", value(range.max)?)
+                .text("span", value(range.max - range.min)?),
+        )
+        .map(Some)
     }
 
     fn invalid_query(&self, cursor: &Cursor, reason: Invalid) -> Result<Announcement, I18nError> {

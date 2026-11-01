@@ -202,9 +202,8 @@ test("keyboard_7_q_asks_about_the_series_and_moves_nothing", async ({
   const menu = page.getByRole("menu", { name: "Ask" });
   await expect(menu).toBeVisible();
   await expect(menu.getByRole("menuitem", { name: "Summary" })).toBeFocused();
-  // Type-ahead: M goes to Minimum, then Maximum.
-  await page.keyboard.press("m");
-  await page.keyboard.press("m");
+  // Type-ahead: "ma" goes to Maximum (React Aria matches the typed prefix).
+  await page.keyboard.type("ma");
   await page.keyboard.press("Enter");
   await expect(menu).toBeHidden();
   await expect.poll(queries).toEqual([JSON.stringify({ query: "maximum" })]);

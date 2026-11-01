@@ -44,12 +44,12 @@ export function KeyboardPreferences({
   };
   const setKeys = (id: string, keys: string | null) => {
     save((current) => {
-      const next = { ...current.keymap };
-      if (keys === null) {
-        delete next[id];
-      } else {
-        next[id] = keys;
-      }
+      const others = Object.entries(current.keymap).filter(
+        ([command]) => command !== id,
+      );
+      const next = Object.fromEntries(
+        keys === null ? others : [...others, [id, keys]],
+      );
       return { ...current, keymap: next };
     });
   };
@@ -245,7 +245,7 @@ function KeyRecorder({
           <DialogActions>
             <Button onPress={close}>{t.format("ui-cancel")}</Button>
             <Button
-              isDisabled={recorded === null || !recorded.ok}
+              isDisabled={!recorded?.ok}
               onPress={() => {
                 if (spec !== null && recorded?.ok === true) {
                   onSave(spec, recorded.chord);

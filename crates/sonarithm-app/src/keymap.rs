@@ -9,7 +9,7 @@
 //! `settings_set` (`SNR-APP-091`), so a hand-edited settings file cannot bind Tab either.
 //! It mirrors the desktop's keymap lint (`apps/desktop/src/commands/lint.ts`), §13 rule 6:
 //! Tab and Shift+Tab, F6 and Shift+F6 (except for the region commands), Escape alone
-//! (except as Stop), Insert and CapsLock combinations, Ctrl+Option on macOS, Win and Super
+//! (except as Stop), Insert and `CapsLock` combinations, Ctrl+Option on macOS, Win and Super
 //! combinations, Alt+F4, Alt+Space and Cmd+Q.
 
 use std::collections::BTreeMap;
@@ -17,7 +17,8 @@ use std::collections::BTreeMap;
 /// The region commands, which may use F6 and Shift+F6 (§13 rule 6).
 const REGION_COMMANDS: [&str; 2] = ["view.nextRegion", "view.prevRegion"];
 
-/// Whether this build runs on macOS, where Meta is Cmd and Ctrl+Option are VoiceOver's keys.
+/// Whether this build runs on macOS, where Meta is Cmd and Ctrl+Option are the screen
+/// reader keys of `VoiceOver`.
 const MAC: bool = cfg!(target_os = "macos");
 
 /// The first chord of `keys` that `command` may not use, if any.
@@ -65,7 +66,14 @@ mod tests {
     /// only the region commands may take F6.
     #[test]
     fn keyboard_13_rule_6_reserved_combinations_are_refused() {
-        for chord in ["Tab", "Shift+Tab", "F6", "Shift+F6", "Ctrl+Insert", "CapsLock"] {
+        for chord in [
+            "Tab",
+            "Shift+Tab",
+            "F6",
+            "Shift+F6",
+            "Ctrl+Insert",
+            "CapsLock",
+        ] {
             assert_eq!(reserved_chord("nav.next", chord), Some(chord), "{chord}");
         }
         assert_eq!(reserved_chord("nav.next", "Alt+F4"), Some("Alt+F4"));
@@ -74,7 +82,11 @@ mod tests {
         assert_eq!(reserved_chord("view.nextRegion", "F6"), None);
         assert_eq!(reserved_chord("transport.stop", "Escape"), None);
         assert_eq!(reserved_chord("nav.next", "ArrowRight L"), None);
-        assert_eq!(reserved_chord("nav.next", ""), None, "an empty value unbinds");
+        assert_eq!(
+            reserved_chord("nav.next", ""),
+            None,
+            "an empty value unbinds"
+        );
         assert_eq!(
             reserved_chord("nav.next", "ArrowRight Shift+Tab"),
             Some("Shift+Tab"),

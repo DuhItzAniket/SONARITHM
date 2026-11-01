@@ -208,6 +208,9 @@ export function Explorer({
           setQueryOpen(open);
           if (!open) requestAnimationFrame(() => surface.current?.focus());
         }}
+        // APG menu button: an opened menu puts the focus on its first item, also when Q
+        // opens it.
+        // eslint-disable-next-line jsx-a11y/no-autofocus -- see above
         autoFocus="first"
         onAction={(key) => {
           if (key === "valueAt") {

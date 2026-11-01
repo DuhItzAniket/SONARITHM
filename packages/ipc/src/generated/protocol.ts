@@ -72,6 +72,7 @@ export const REPLY_KINDS = {
   cursor_get: "cursor",
   nav_move: "nav",
   nav_where: "announce",
+  nav_query: "announce",
 } as const;
 
 /** The channel that carries each event. */
@@ -401,7 +402,11 @@ origin: CursorOrigin, } } | { "command": "cursor_get" } | { "command": "nav_move
 /**
  * The verb.
  */
-verb: NavVerb, } } | { "command": "nav_where" } | { "command": "view_get", "args": { 
+verb: NavVerb, } } | { "command": "nav_where" } | { "command": "nav_query", "args": { 
+/**
+ * The question.
+ */
+query: NavQuery, } } | { "command": "view_get", "args": { 
 /**
  * The dataset's ID.
  */
@@ -1024,6 +1029,15 @@ value: number, };
 export type NavLandmark = "xAxis" | "yAxis" | "insights" | "filters" | "dataset";
 
 /**
+ * A question of the query menu (keyboard-and-navigation §7; the B03 subset).
+ */
+export type NavQuery = { "query": "summary" } | { "query": "minimum" } | { "query": "maximum" } | { "query": "range" } | { "query": "valueAt", 
+/**
+ * The x value.
+ */
+x: NavX, };
+
+/**
  * Where [`NavVerb::GoTo`] goes.
  */
 export type NavX = { "number": number } | { "category": string };
@@ -1430,9 +1444,15 @@ verbosity: Verbosity,
  */
 modalities: Modalities, 
 /**
- * Keymap overrides: command ID → key combination (keyboard-and-navigation §13).
+ * Keymap overrides: command ID → keys (keyboard-and-navigation §13): chords separated
+ * by spaces, or the empty string to unbind the command. Reserved chords are refused
+ * (`SNR-APP-091`, §13 rule 6).
  */
 keymap: { [key in string]: string }, 
+/**
+ * Keyboard choices beyond single bindings (B03-T09).
+ */
+keyboard: KeyboardSettings, 
 /**
  * Consent for features that use the network (ADR-0012). `None` means not asked yet.
  */
@@ -1509,6 +1529,18 @@ braille: boolean,
  * The visual plot.
  */
 visual: boolean, };
+
+/**
+ * Keyboard choices beyond single bindings (keyboard-and-navigation §13).
+ */
+export type KeyboardSettings = { 
+/**
+ * The group switch of KB-02 and §13 rule 3: "Single-key commands in the chart
+ * explorer". Off unbinds every single-character binding there (letters, Shift+letters,
+ * punctuation); arrows, Home, End, Page Up, Page Down, Space and Escape stay. On by
+ * default: focus scoping already satisfies WCAG 2.1.4.
+ */
+singleKeyCommands: boolean, };
 
 /**
  * Consent to network features (ADR-0012). Each is `None` until the user answers.

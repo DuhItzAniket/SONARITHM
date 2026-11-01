@@ -27,13 +27,24 @@ const settings = async (page: Page) =>
 const explorer = (page: Page) =>
   page.getByRole("application", { name: "Chart explorer, Readings" });
 
+async function backInExplorer(page: Page) {
+  await expect
+    .poll(() => explorer(page).evaluate((e) => e === document.activeElement))
+    .toBe(true);
+}
+
 /** Primary as the app sees it: Cmd where the user agent is a Mac (WebKit), else Ctrl. */
 async function primary(page: Page): Promise<"Meta" | "Control"> {
   const mac = await page.evaluate(() => navigator.userAgent.includes("Mac"));
   return mac ? "Meta" : "Control";
 }
 
+/**
+ * Opens Preferences from the explorer, so closing it returns the focus there. React Aria
+ * returns it in an animation frame (F-176), so callers wait for it with {@link backInExplorer}.
+ */
 async function openKeyboard(page: Page) {
+  await explorer(page).focus();
   await page.keyboard.press(`${await primary(page)}+Comma`);
   const dialog = page.getByRole("dialog", { name: "Preferences" });
   await expect(dialog).toBeVisible();
@@ -53,15 +64,17 @@ test("kb_02_the_group_switch_turns_the_explorers_single_keys_off", async ({
   page,
 }) => {
   const dialog = await openKeyboard(page);
+  // By keyboard, as a screen-reader user would: focus the switch, then Space.
   await dialog
     .getByRole("switch", { name: "Single-key commands in the chart explorer" })
-    .click();
+    .focus();
+  await page.keyboard.press("Space");
   await expect
     .poll(async () => (await settings(page)).keyboard.singleKeyCommands)
     .toBe(false);
   expect(await seriousViolations(page)).toEqual([]);
   await page.keyboard.press("Escape");
-  await explorer(page).focus();
+  await backInExplorer(page);
   await page.keyboard.press("n");
   await page.keyboard.press("w");
   await page.keyboard.press("ArrowRight");
@@ -96,7 +109,7 @@ test("keyboard_13_the_recorder_refuses_reserved_keys_and_saves_a_free_one", asyn
     .toBe("Shift+W");
   await page.keyboard.press("Escape");
   await expect(dialog).toBeHidden();
-  await explorer(page).focus();
+  await backInExplorer(page);
   await page.keyboard.press("w");
   await page.keyboard.press("Shift+W");
   await expect
