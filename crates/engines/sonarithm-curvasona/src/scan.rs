@@ -371,13 +371,18 @@ fn golden_minimum(g: &Expr, mut a: f64, mut b: f64, sign: f64, counter: &mut Cou
     if fc < fd { c } else { d }
 }
 
-/// The function's behaviour on one side of `x`, from samples at `x ± step·10^-k`.
-fn approach(f: &Expr, x: f64, step: f64, sign: f64, counter: &mut Counter) -> Approach {
+/// `f` at `x + sign·h` for `h` = 10^-2 to 10^-8 grid steps: the probes of one side.
+fn probe(f: &Expr, x: f64, step: f64, sign: f64, counter: &mut Counter) -> [f64; 7] {
     let mut values = [0.0; 7];
     for (k, value) in values.iter_mut().enumerate() {
         let h = step * 10_f64.powi(-2 - i32::try_from(k).unwrap_or(0));
         *value = counter.eval(f, x + sign * h);
     }
+    values
+}
+
+/// The one-sided limit the probes of [`probe`] show.
+fn approach_of(values: &[f64; 7]) -> Approach {
     let Some(&last) = values.last() else {
         return Approach::Undefined;
     };
@@ -429,12 +434,14 @@ fn classify(
     counter: &mut Counter,
 ) -> Option<Singularity> {
     let x = candidate.x;
-    let left = approach(f, x, step, -1.0, counter);
-    let right = approach(f, x, step, 1.0, counter);
+    let below = probe(f, x, step, -1.0, counter);
+    let above = probe(f, x, step, 1.0, counter);
+    let (left, right) = (approach_of(&below), approach_of(&above));
     let kind = match (left, right) {
         _ if left.is_infinite() || right.is_infinite() => SingularityKind::Pole,
         (Approach::Value(l), Approach::Value(r)) => {
-            let same = (l - r).abs() <= 1e-6 * (1.0 + l.abs().max(r.abs()));
+            let same = (l - r).abs() <= 1e-6 * (1.0 + l.abs().max(r.abs()))
+                || closing(&below, &above);
             if !same {
                 SingularityKind::Jump
             } else if candidate.kind == GuardKind::Denominator || !counter.eval(f, x).is_finite() {
@@ -451,6 +458,24 @@ fn classify(
         left,
         right,
     })
+}
+
+/// Whether the gap between the two sides closes as the probes come closer: at a hole on a
+/// steep slope (beside a pole, F-201) the sides differ by about the slope times the probe
+/// distance, so the gap shrinks tenfold per decade, while at a jump it stays the jump's
+/// size. Judged on the three closest probes, which lie nearest the point and so on its own
+/// slope: over two decades the gap must fall at least fivefold, or reach rounding.
+fn closing(below: &[f64; 7], above: &[f64; 7]) -> bool {
+    let gap = |k: usize| match (below.get(k), above.get(k)) {
+        (Some(l), Some(r)) => (l - r).abs(),
+        _ => f64::NAN,
+    };
+    let (far, near) = (gap(4), gap(6));
+    if !(far.is_finite() && near.is_finite()) {
+        return false;
+    }
+    let scale = below.get(6).map_or(0.0, |v| v.abs()).max(above.get(6).map_or(0.0, |v| v.abs()));
+    near <= 0.2 * far || near <= 1e-12 * (1.0 + scale)
 }
 
 /// The last point between `defined` and `undefined` where `f` is not `NaN`.

@@ -1016,6 +1016,15 @@ A05 (render engine, audio backends, export) uses F-050 to F-069.
 - **Affects:** C02-T09, A11Y-02, A11Y-12, A11Y-24, FR-008, OD-07, H-06
 - **Papers:** none yet
 
+### F-201 · A hole on a pole's steep slope was taken for a jump, because the sides were compared with a fixed tolerance
+
+- **Date:** 2026-11-01 · **Phase:** C03 · **Type:** engineering (robustness) · **Status:** new
+- **Statement:** The property test `poles_and_holes_are_never_missed` (CI on #438, Windows job 124726369301) found a hole at b = 2.0748585424618367 only 0.0042 from a pole at a = 2.0790137126487966, on a 3-sample grid. The scan reported it as a jump, with left −240.66171264649452 and right −240.66634618052169. The scan classifies a candidate by its one-sided limits, read at 10^-2 to 10^-8 grid steps, and called the sides different when they disagreed by more than a relative 1e-6. Beside a pole the slope is about 1/0.004² ≈ 60 000, so the two sides of a smooth point differ by about the slope times the probe distance, 2e-5 relative here, and the fixed tolerance failed. Now the sides also count as equal when their gap closes as the probes come closer: over the three closest probes (two decades of distance) it must fall at least fivefold, or reach rounding. At a jump the gap stays the jump's size. ADR-0028 is unchanged.
+- **Evidence:** `crates/engines/sonarithm-curvasona/src/scan.rs` (`closing`, `classify`); the tests `f_201_a_hole_beside_a_pole_is_not_a_jump` (the counterexample, pinned) and `f_201_a_jump_beside_a_pole_is_still_a_jump`
+- **Evidence level / confidence:** EV-D / Strong (a reproduced property-test failure, with regression tests)
+- **Affects:** C03-T02 (the scan), the function cues and the critical-point list
+- **Papers:** none yet
+
 ### F-199 · CURVASONA's canonical form put a negative divisor in parentheses, which made it deeper than its source
 
 - **Date:** 2026-11-01 · **Phase:** C03 · **Type:** engineering (robustness) · **Status:** new
