@@ -69,17 +69,17 @@ pub(super) fn cue_of(score: &Score, tree: &NavTree, node: NavNodeId) -> Option<C
     let first = track
         .events
         .partition_point(|event| event.start().0 < t - ONSET_TOLERANCE_S);
-    let note = track.events[first..]
+    let played = track.events[first..]
         .iter()
         .take_while(|event| event.start().0 <= t + ONSET_TOLERANCE_S)
         .find_map(|event| match event {
-            ScoreEvent::Note(note) if note.src == Some(point.row) => Some(note),
+            ScoreEvent::Note(candidate) if candidate.src == Some(point.row) => Some(candidate),
             _ => None,
         })?;
     Some(Cue {
-        frequency: note.pitch.to_hz(),
-        gain: Db(track.gain.0 + note.gain.0),
-        pan: Pan::clamped(track.pan.0 + note.pan.0),
+        frequency: played.pitch.to_hz(),
+        gain: Db(track.gain.0 + played.gain.0),
+        pan: Pan::clamped(track.pan.0 + played.pan.0),
         instrument: Instrument::from_name(&track.instrument.0).unwrap_or_default(),
         duration: POINT_CUE,
     })

@@ -161,7 +161,9 @@ fn a11y_10_explorer_verbs_move_the_one_cursor_and_its_row() {
         h.ok(&json!({ "command": "cursor_get" }))["node"],
         next["cursor"]["node"]
     );
-    h.wait_for_announcements(4);
+    // Speech waits for each point cue, and only the newest navigation announcement
+    // survives the wait (A11Y-17, A11Y-20): four quick moves are heard as fewer.
+    h.wait_for_announcements(1);
 }
 
 /// A11Y-10: a table move puts the explorer on that row's point, so the next verb starts
@@ -316,7 +318,10 @@ fn a11y_10_every_cursor_origin_plays_the_point_cue() {
         } else {
             h.ok(&json!({ "command": "cursor_set", "args": { "dataset": "d1", "row": 1, "origin": origin } }));
         }
-        assert!(device(&mut h).is_string(), "{origin}: the cue opened the output");
+        assert!(
+            device(&mut h).is_string(),
+            "{origin}: the cue opened the output"
+        );
     }
 }
 

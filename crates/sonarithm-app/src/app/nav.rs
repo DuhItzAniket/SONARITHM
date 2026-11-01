@@ -108,7 +108,11 @@ impl App {
         }
         // A move onto a point plays its cue before the announcement (A11Y-10, A11Y-20).
         let cue = matches!(step.outcome, Outcome::Moved(_))
-            && self.cursor.nav.as_ref().is_some_and(|cursor| self.play_cue(cursor.node()));
+            && self
+                .cursor
+                .nav
+                .as_ref()
+                .is_some_and(|cursor| self.play_cue(cursor.node()));
         let announced = step.announcement.is_some();
         if let Some(announcement) = step.announcement {
             self.transport.announce(announcement);
