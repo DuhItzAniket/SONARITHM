@@ -56,23 +56,22 @@ test("kb_01_every_registered_command_runs_from_the_palette", async ({
     (Reflect.get(window, "__SONARITHM_COMMANDS__") as () => string[])(),
   );
   expect(ids.length).toBeGreaterThan(0);
-  for (const id of ids) {
+  // The results list the registered commands in this order; the explorer's commands are
+  // the app's (B03-T09), so there are dozens, and the walk is checked once per command.
+  test.setTimeout(120_000);
+  for (const [index, id] of ids.entries()) {
     await openPalette(page);
     const input = palette(page).getByRole("searchbox");
-    // Keyboard only: arrows move the active result until it is this command.
-    let previous: string | null = null;
-    for (let i = 0; i <= ids.length; i++) {
+    // Keyboard only: the arrows move the active result down to this command.
+    for (let i = 0; i <= index; i++) {
       await page.keyboard.press("ArrowDown");
-      // The active result updates after the key press; wait for it to move.
-      await expect
-        .poll(() => input.getAttribute("aria-activedescendant"))
-        .not.toBe(previous);
-      previous = await input.getAttribute("aria-activedescendant");
-      const key = await page
-        .locator(`[id="${previous ?? ""}"]`)
-        .getAttribute("data-key");
-      if (key === id) break;
     }
+    await expect
+      .poll(async () => {
+        const active = await input.getAttribute("aria-activedescendant");
+        return page.locator(`[id="${active ?? ""}"]`).getAttribute("data-key");
+      })
+      .toBe(id);
     await page.keyboard.press("Enter");
     await expect
       .poll(() =>
@@ -80,13 +79,16 @@ test("kb_01_every_registered_command_runs_from_the_palette", async ({
       )
       .toBe(id);
     // These open a dialog of their own, just after the palette closes: the palette again,
-    // the key references (help.explorer is the explorer's, B03-T09) and Preferences.
+    // the key references (help.explorer is the explorer's, B03-T09), Preferences, and
+    // the explorer's value dialogs (G, Primary+F).
     if (
       [
         "app.palette",
         "help.keyboard",
         "help.explorer",
         "app.preferences",
+        "nav.goTo",
+        "nav.findValue",
       ].includes(id)
     ) {
       await expect(page.getByRole("dialog")).toHaveCount(1);

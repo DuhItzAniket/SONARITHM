@@ -4,7 +4,9 @@
 import type { Client, DatasetSummary, IpcTransport } from "@sonarithm/ipc";
 import { connect } from "@sonarithm/ipc";
 import { Tab, TabList, TabPanel, Tabs } from "@sonarithm/ui";
-import { useEffect, useState } from "react";
+import type { Key } from "react-aria-components";
+import { useEffect, useRef, useState } from "react";
+import { flushSync } from "react-dom";
 
 import type { RoutedAnnouncer } from "../announcer/announcer.ts";
 import { useAnnouncementFeed } from "../announcer/feed.ts";
@@ -18,6 +20,8 @@ import { useLocalizer } from "../i18n.ts";
 import { Preferences } from "../preferences/Preferences.tsx";
 import { TransportBar } from "../transport/TransportBar.tsx";
 import { CursorReadout } from "../cursor/CursorReadout.tsx";
+import { Explorer } from "../explorer/Explorer.tsx";
+import { ExplorerCommands } from "../explorer/ExplorerCommands.tsx";
 import { DatasetPlot } from "../plot/DatasetPlot.tsx";
 import { useCursor } from "../cursor/useCursor.ts";
 import { DatasetTable } from "../table/DatasetTable.tsx";
@@ -84,6 +88,10 @@ export function App({
   useCommand("help.keyboard", () => {
     setReferenceScopes(activeScopes(document.activeElement).scopes);
   });
+  // H in the chart explorer: its own keys first (keyboard §5.4).
+  useCommand("help.explorer", () => {
+    setReferenceScopes(["explorer", "global"]);
+  });
   // Stop all audio from any scope, even in a dialog (A11Y-15, T-13): sonification,
   // earcons and self-voicing, through the app core's `stop_all` (B01-T08).
   useCommand("transport.stopAll", () => {
@@ -109,6 +117,17 @@ export function App({
   }, [client]);
   // The one cursor, Rust's (B04-T06): the table and the readout show it.
   const cursor = useCursor(client);
+  // The chart explorer (B03-T09): its commands are the app's, so the palette reaches them
+  // from any tab; "Go to the chart explorer" selects the Plot tab, then focuses it.
+  const explorer = useRef<HTMLDivElement>(null);
+  const [workspaceTab, setWorkspaceTab] = useState<Key>("plot");
+  useCommand("view.focusExplorer", () => {
+    // Render the Plot tab now, so its explorer exists to take the focus.
+    flushSync(() => {
+      setWorkspaceTab("plot");
+    });
+    explorer.current?.focus();
+  });
   const [preferencesOpen, setPreferencesOpen] = useState(false);
   useCommand("app.preferences", () => {
     setPreferencesOpen(true);
@@ -154,7 +173,7 @@ export function App({
           <p className={styles.status}>{t.format("ui-workspace-empty")}</p>
         }
         workspace={
-          <Tabs>
+          <Tabs selectedKey={workspaceTab} onSelectionChange={setWorkspaceTab}>
             <TabList label={t.format("ui-region-workspace")}>
               <Tab id="plot">{t.format("ui-tab-plot")}</Tab>
               <Tab id="table">{t.format("ui-tab-table")}</Tab>
@@ -162,12 +181,19 @@ export function App({
             </TabList>
             <TabPanel id="plot">
               {client !== null && dataset !== null ? (
-                <DatasetPlot
-                  client={client}
-                  dataset={dataset}
-                  cursor={cursor}
-                  announcer={announcer}
-                />
+                <>
+                  <Explorer
+                    dataset={dataset}
+                    cursor={cursor}
+                    surface={explorer}
+                  />
+                  <DatasetPlot
+                    client={client}
+                    dataset={dataset}
+                    cursor={cursor}
+                    announcer={announcer}
+                  />
+                </>
               ) : (
                 startText
               )}
@@ -211,6 +237,7 @@ export function App({
           </>
         }
       />
+      <ExplorerCommands client={client} />
       <Preferences
         client={client}
         isOpen={preferencesOpen}

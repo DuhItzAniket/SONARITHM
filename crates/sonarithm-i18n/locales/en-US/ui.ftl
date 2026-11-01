@@ -126,6 +126,19 @@ ui-cursor-step =
 # A series the explorer's filters took out (B03-T09; keyboard-and-navigation §3); $name is
 # its data name.
 ui-cursor-excluded = { $name } excluded from playback and view
+
+## The chart explorer (B03-T09; 08 §5, keyboard-and-navigation §4, §5.5). $name is the
+## dataset's name, shown as it is.
+
+ui-explorer-label = Chart explorer, { $name }
+ui-explorer-hint = Arrow keys move through the chart. Press H for its keys.
+ui-explorer-start = At the dataset
+ui-explorer-go-to = Go to an x value
+ui-explorer-go-to-value = X value
+ui-explorer-go-to-action = Go
+ui-explorer-find = Find a value
+ui-explorer-find-value = Value
+ui-explorer-find-action = Find
 # The cursor's row in the dataset's own order, from 1; $index is a number.
 ui-cursor-row = Data row { $index }
 ui-cursor-none = No row is selected.
@@ -205,6 +218,32 @@ command-view-menu-bar = Go to the menu bar
 command-view-context-menu = Context menu
 command-view-toggle-region = Collapse or expand this region
 command-table-go-to-row = Go to row…
+# The chart explorer (B03-T09; keyboard-and-navigation §4.2, §5.4, §5.5).
+command-nav-next = Next at this level
+command-nav-previous = Previous at this level
+command-nav-jump-forward = Jump forward 10 percent
+command-nav-jump-back = Jump back 10 percent
+command-nav-first = First at this level
+command-nav-last = Last at this level
+command-nav-into = Into the next level
+command-nav-activate = Describe, toggle or go into
+command-nav-out = Out to the level above
+command-nav-next-series = Next series
+command-nav-previous-series = Previous series
+command-nav-maximum = Go to the maximum
+command-nav-minimum = Go to the minimum
+command-nav-next-insight = Next insight
+command-nav-previous-insight = Previous insight
+command-nav-x-axis = Go to the x axis
+command-nav-y-axis = Go to the y axis
+command-nav-insights = Go to the insights
+command-nav-filters = Go to the filters
+command-nav-dataset = Go to the dataset
+command-nav-go-to = Go to an x value…
+command-nav-find-value = Find a value…
+command-nav-where-am-i = Where am I
+command-nav-repeat = Repeat the last announcement
+command-help-explorer = Explorer keys
 # The palette's result count, announced as it filters; $count is a number.
 command-results =
     { $count ->

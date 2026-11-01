@@ -49,6 +49,22 @@ None.
 
 - F-211 (logged).
 
+## PR (2): the explorer and keymap v0 (2026-11-01)
+
+- `Explorer` (`apps/desktop/src/explorer/`): one Tab stop in the Plot tab. Only the chart surface has `role="application"`; it is named "Chart explorer, <dataset>", described by a visible hint, and has no `aria-activedescendant`, so a move is spoken once, by the app core (OD-30). It holds no position: Rust's cursor does.
+- Keymap v0: 25 commands in the `explorer` scope (keyboard §4.2, §5.4), registered for the whole app by `ExplorerCommands` through a new `useCommandTable`, so the palette runs them from any tab (KB-01) while their keys work only in the explorer (KB-02). G and Primary+F open a value dialog that returns the focus to its opener; W, R, and H or F1 (`help.explorer`).
+- **KB-04 against KB-07.** The lint refused Alt+arrows on every platform as webview history, but KB-07 makes Jump Option+arrows on macOS. History is Alt+arrows in WebView2 and WebKitGTK only (WKWebView uses Cmd), so the lint and KB-04's text now limit that rule to Windows and Linux.
+- Not yet: the query menu with `nav_query`, remapping and the group switch (PR 3), compare, selection and polarity (their features).
+- The E2E checks which verb each key sends against the mock host; the app core's tests cover what each verb does.
+
+## PLOTSONA's review of #451 (2026-11-01)
+
+- **The toggles announced changes nothing made.** T, S, B, V and Shift+T wrote `settings.modalities` and `verbosity` and said "Speech off", but nothing reads those values, and the effective value comes from the profile layers (`profile::effective`), not the base settings. They are out of this PR. They come back in their own change, where the app core gates speech, cues, highlight and braille on the effective modalities, writes the session layer, and announces with the mode earcon.
+- **The commands vanished with the Plot tab.** React Aria unmounts an inactive tab panel, so `view.focusExplorer` and the explorer's palette entries disappeared on the Table tab. The commands are now registered by `ExplorerCommands` in App. "Go to the chart explorer" selects the Plot tab with `flushSync`, then focuses the surface.
+- The value dialog no longer forces the focus onto the explorer; React Aria returns it to the opener.
+- F1 in the explorer runs `help.explorer` (§5.4). The deferral note names L (legend) and Z and Shift+Z (zoom to node).
+- The palette test walked the list from the top for each command, with a check per key, which grew quadratically. It now presses straight to each command's position and checks once.
+
 ## Next steps
 
 - PR (2): the Explorer component, keymap v0, the query menu, modality and verbosity toggles, E2E for every verb.

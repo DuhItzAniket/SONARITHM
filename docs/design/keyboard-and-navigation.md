@@ -12,7 +12,7 @@
 | KB-01 | Every action is a named command reachable from a menu and the command palette. Shortcuts are accelerators, never the only path. | A11Y-05; WCAG 2.1.1 |
 | KB-02 | Single-character shortcuts (letters, including Shift+letter, and punctuation) exist only inside the chart explorer, and can be disabled as a group or remapped one by one. | A11Y-06; WCAG 2.1.4 |
 | KB-03 | No default binding uses a screen-reader modifier: Insert or CapsLock (NVDA, JAWS, Narrator, Orca) or Ctrl+Option (VoiceOver). | A11Y-06; [notes 03 §4](../research/notes/03-accessibility-hci.md) |
-| KB-04 | No Ctrl+Alt+letter (AltGr types characters on many layouts), no Ctrl+Alt+arrows (screen-reader table navigation, Windows Magnifier panning, some graphics drivers), no Alt+arrows (webview history), no Ctrl+Space (input-method switching). | Section 12 |
+| KB-04 | No Ctrl+Alt+letter (AltGr types characters on many layouts), no Ctrl+Alt+arrows (screen-reader table navigation, Windows Magnifier panning, some graphics drivers), no Alt+arrows on Windows and Linux (webview history; on macOS, Option+arrows are Jump, KB-07), no Ctrl+Space (input-method switching). | Section 12 |
 | KB-05 | F6 and Shift+F6 cycle the fixed regions in a constant order. Tab never traps focus. | A11Y-05; [design language §4](design-language.md) |
 | KB-06 | One modifier at most for frequent chart commands. No command depends on timing (no double-press, no long-press). | Motor access; WCAG 2.2.1 |
 | KB-07 | Platform conventions apply: **Primary** = Ctrl on Windows and Linux, Cmd on macOS; **Jump** = Ctrl on Windows and Linux, Option on macOS (the platforms' word-jump modifiers). On macOS, Ctrl+arrows belong to Mission Control and Spaces, so Jump uses Option there. | Section 12 |
@@ -472,9 +472,11 @@ Navigation is built on discrete commands (`nav.move(verb, direction)`), not on c
 - **A02 spike (5):** NVDA, VoiceOver and Orca walkthrough of React Aria Tree, Slider and Toolbar in a Tauri window ([roadmap](../planning/roadmap.md)); add the explorer role and Escape behaviour as [CHECK] items.
 - **B03:** automated tests for scoping, the group switch, remapping, supersession and sequencing; scripted tasks (find max, compare series, read value at x) with NVDA, JAWS, VoiceOver and Orca (B03 exit criteria).
 - **B07:** co-design round 1 tests the keymap with 10–15 BLV participants on their own AT (A11Y-34). Measures: task completion, errors, keys pressed that did nothing, requests for remapping, conflicts reported per AT. Each accepted change is a finding (`F-###`) and a change-log row here.
+- **B07 [CHECK] items for the explorer:** whether Escape in the explorer makes NVDA leave focus mode (§12); and that Option+arrows (Jump on macOS, KB-07) reach the explorer with VoiceOver on. VoiceOver's own keys are Ctrl+Option combinations (§12), so no collision is expected, but it has not been tried.
 
 ## Change log
 
 | Date | Change | By |
 |---|---|---|
 | 2026-10-18 | v0 keymap, NavTree verb mapping, announcement templates, queue policy and earcon catalogue created. Not yet validated. | Kickoff |
+| 2026-11-01 | KB-04's "no Alt+arrows" scoped to Windows and Linux: Alt+arrows are webview history in WebView2 and WebKitGTK only (WKWebView uses Cmd), and on macOS Option+arrows are Jump (KB-07). The keymap lint follows. Option+arrows with VoiceOver added to the B07 [CHECK] items. No default binding changed. Approved by the coordinator (B03-T09). | Lane U |
