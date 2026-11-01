@@ -38,6 +38,7 @@ let transport: TransportState = {
   device: null,
   live: false,
   xruns: 0,
+  excludedTracks: [],
 };
 
 function reply(next: TransportState) {
@@ -166,6 +167,7 @@ let cursor: CursorState = {
   x: null,
   node: null,
   path: [],
+  excluded: [],
   origin: null,
 };
 
@@ -177,6 +179,7 @@ function moveCursor(row: number, origin: CursorOrigin): CursorState {
     x: null,
     node: null,
     path: dataset === null ? [] : [{ level: "dataset", label: dataset.name }],
+    excluded: [],
     origin,
   };
   emit({ event: "cursor", ...cursor });

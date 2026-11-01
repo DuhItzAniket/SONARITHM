@@ -3,6 +3,8 @@
 
 import type { IpcTransport } from "@sonarithm/ipc";
 import { connect, readView } from "@sonarithm/ipc";
+import type { DenseScene } from "@sonarithm/viz";
+import { createRenderer } from "@sonarithm/viz";
 import { invoke } from "@tauri-apps/api/core";
 
 /** What the host passes to a smoke run (`src-tauri/src/smoke.rs`). */
@@ -157,6 +159,15 @@ export async function runSmoke(
     return `p95 ${pb09.p95Ms.toFixed(1)} ms over ${String(pb09.samples)} calls of ${String(pb09.bytes)} bytes (budget ${String(PB09_BUDGET_MS)} ms)`;
   });
 
+  // PB-08 (B04-T08): the dense layer and the playhead in this webview: WebView2 on
+  // Windows, WKWebView on macOS, WebKitGTK on Linux. Reported, not enforced: shared CI
+  // runners draw WebGL in software or not at all (Xvfb). Only a broken renderer fails it.
+  let pb08: Pb08 | null = null;
+  await check("pb-08-dense-layer", async () => {
+    pb08 = await measurePb08();
+    return `${pb08.backend}: p95 ${pb08.scriptP95Ms.toFixed(1)} ms per redraw of ${String(pb08.points)} points over ${String(pb08.frames)} frames (budget ${String(PB08_BUDGET_MS)} ms); playhead ${pb08.playheadFps.toFixed(0)} fps`;
+  });
+
   // B03-T04: the native announcer route raises a UI Automation notification on Windows
   // (`UiaRaiseNotificationEvent` returns success); other hosts refuse, and the announcer
   // falls back to live regions.
@@ -180,7 +191,7 @@ export async function runSmoke(
   });
 
   clearTimeout(watchdog);
-  const results = { ok: checks.every((c) => c.ok), checks, pb07, pb09 };
+  const results = { ok: checks.every((c) => c.ok), checks, pb07, pb08, pb09 };
   await send(results);
 }
 
@@ -273,6 +284,137 @@ async function measurePb09(
     maxMs: times.at(-1) ?? 0,
     budgetMs: PB09_BUDGET_MS,
     withinBudget: p95Ms <= PB09_BUDGET_MS,
+  };
+}
+
+/** PB-08: at most 8 ms of script per frame with a 1M-point series (12 §8). */
+const PB08_BUDGET_MS = 8;
+const PB08_POINTS = 1_000_000;
+/** Redraws timed, each a zoom (the worst case: the data layer is drawn again). */
+const PB08_FRAMES = 60;
+/** Frames of the playhead moving over the drawn layer (nothing redrawn). */
+const PB08_PLAYHEAD_FRAMES = 120;
+/** Each phase stops after this much wall time, so a slow runner still reports. */
+const PB08_MEASURE_MS = 8000;
+
+/** The PB-08 measurement the smoke report carries. */
+interface Pb08 {
+  /** `webgl2` or `canvas2d` (the fallback). */
+  readonly backend: string;
+  readonly points: number;
+  readonly frames: number;
+  readonly scriptP50Ms: number;
+  readonly scriptP95Ms: number;
+  readonly scriptMaxMs: number;
+  readonly budgetMs: number;
+  readonly withinBudget: boolean;
+  /** Playhead frames per second, from the animation frames' timestamps. */
+  readonly playheadFps: number;
+  readonly playheadP95IntervalMs: number;
+  /** Fewer frames than planned: the runner was too slow to finish in time. */
+  readonly cutShort: boolean;
+}
+
+function percentileOf(values: readonly number[], q: number): number {
+  const sorted = [...values].sort((a, b) => a - b);
+  return (
+    sorted[Math.min(sorted.length - 1, Math.ceil(q * sorted.length) - 1)] ?? 0
+  );
+}
+
+function nextFrame(): Promise<number> {
+  return new Promise((resolve) => {
+    requestAnimationFrame(resolve);
+  });
+}
+
+/**
+ * The PB-08 trace of `packages/ui/test/perf/dense.perf.ts`, in the app's own webview: a
+ * million-point line redrawn on zoom (script time per frame), then a playhead moved by
+ * transform over the drawn layer (frame rate). The canvas is the size of a wide plot.
+ */
+async function measurePb08(): Promise<Pb08> {
+  const canvas = document.createElement("canvas");
+  canvas.width = 1440;
+  canvas.height = 320;
+  canvas.style.position = "fixed";
+  canvas.style.insetInlineStart = "0";
+  canvas.style.insetBlockEnd = "0";
+  document.body.append(canvas);
+  const renderer = createRenderer(canvas);
+  if (renderer === null) {
+    canvas.remove();
+    throw new Error("no renderer: neither WebGL2 nor Canvas2D");
+  }
+  const x = new Float32Array(PB08_POINTS);
+  const y = new Float32Array(PB08_POINTS);
+  let seed = 1729;
+  for (let i = 0; i < PB08_POINTS; i += 1) {
+    x[i] = i;
+    seed ^= seed << 13;
+    seed ^= seed >>> 17;
+    seed ^= seed << 5;
+    y[i] =
+      0.6 * Math.sin(i / 900) +
+      0.25 * Math.sin(i / 37) +
+      0.1 * ((seed >>> 0) / 2 ** 32 - 0.5);
+  }
+  const scene = (zoom: number): DenseScene => ({
+    kind: "lines",
+    series: [{ x, y, color: [0.9, 0.62, 0] }],
+    x: { min: 0, max: (PB08_POINTS - 1) / zoom },
+    y: { min: -1, max: 1 },
+  });
+  const times: number[] = [];
+  let began = performance.now();
+  for (let frame = 0; frame < PB08_FRAMES; frame += 1) {
+    if (frame > 0 && performance.now() - began > PB08_MEASURE_MS) break;
+    const start = performance.now();
+    renderer.draw(scene(1 + frame / PB08_FRAMES));
+    times.push(performance.now() - start);
+    await nextFrame();
+  }
+  // The playhead: a line moved by transform each frame, over a layer drawn once.
+  const line = document.createElement("div");
+  line.style.position = "fixed";
+  line.style.insetBlockEnd = "0";
+  line.style.blockSize = "320px";
+  line.style.inlineSize = "2px";
+  line.style.background = "CanvasText";
+  line.style.willChange = "transform";
+  document.body.append(line);
+  const stamps: number[] = [];
+  began = performance.now();
+  for (let frame = 0; frame < PB08_PLAYHEAD_FRAMES; frame += 1) {
+    if (frame > 0 && performance.now() - began > PB08_MEASURE_MS) break;
+    line.style.transform = `translateX(${String((frame * 12) % 1440)}px)`;
+    stamps.push(await nextFrame());
+  }
+  line.remove();
+  const backend = renderer.backend;
+  renderer.destroy();
+  canvas.remove();
+  if (times.length === 0) {
+    throw new Error("no frame drew");
+  }
+  const intervals = stamps
+    .slice(1)
+    .map((stamp, i) => stamp - (stamps[i] ?? stamp));
+  const seconds = ((stamps.at(-1) ?? 0) - (stamps[0] ?? 0)) / 1000;
+  const scriptP95Ms = percentileOf(times, 0.95);
+  return {
+    backend,
+    points: PB08_POINTS,
+    frames: times.length,
+    scriptP50Ms: percentileOf(times, 0.5),
+    scriptP95Ms,
+    scriptMaxMs: Math.max(...times),
+    budgetMs: PB08_BUDGET_MS,
+    withinBudget: scriptP95Ms <= PB08_BUDGET_MS,
+    playheadFps: seconds > 0 ? intervals.length / seconds : 0,
+    playheadP95IntervalMs: percentileOf(intervals, 0.95),
+    cutShort:
+      times.length < PB08_FRAMES || stamps.length < PB08_PLAYHEAD_FRAMES,
   };
 }
 

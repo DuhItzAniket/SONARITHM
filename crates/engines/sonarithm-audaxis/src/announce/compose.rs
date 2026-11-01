@@ -248,6 +248,22 @@ struct Plan {
     with_hint: bool,
 }
 
+/// What a composer remembers between announcements: the last series named (so an
+/// unchanged series is not repeated, keyboard §8.1) and the kinds of node whose hint was
+/// given. A host that builds a composer per command keeps this between them.
+#[derive(Clone, Debug, Default, PartialEq, Eq)]
+pub struct Memory {
+    last_series: Option<NavNodeId>,
+    visited: BTreeSet<&'static str>,
+}
+
+impl Memory {
+    /// Forgets everything, such as after a recompile renumbered the nodes.
+    pub fn clear(&mut self) {
+        *self = Self::default();
+    }
+}
+
 /// Composes announcements for one localizer and settings.
 #[derive(Debug)]
 pub struct Composer<'l> {
@@ -268,6 +284,25 @@ impl<'l> Composer<'l> {
             last_series: None,
             visited: BTreeSet::new(),
             excluded: BTreeSet::new(),
+        }
+    }
+
+    /// A composer that continues from `memory`.
+    #[must_use]
+    pub fn with_memory(localizer: &'l Localizer, settings: Settings, memory: Memory) -> Self {
+        Self {
+            last_series: memory.last_series,
+            visited: memory.visited,
+            ..Self::new(localizer, settings)
+        }
+    }
+
+    /// What this composer remembers, for [`Composer::with_memory`].
+    #[must_use]
+    pub fn memory(&self) -> Memory {
+        Memory {
+            last_series: self.last_series,
+            visited: self.visited.clone(),
         }
     }
 

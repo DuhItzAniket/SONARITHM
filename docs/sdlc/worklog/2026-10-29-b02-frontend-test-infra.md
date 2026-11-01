@@ -151,6 +151,12 @@
 - A local name `view` (the decoded tile) shadowed the range state named `view`, and lint caught the dead condition.
 - Locally: desktop 47 unit tests, all 44 Chromium E2E tests, `plot.spec.ts` and `cursor.spec.ts` in WebKit (14 in both), the Plot stories, i18n 25 and 9, viz 7. No cargo beyond the i18n tests.
 
+## B04-T08: PB-08 in the three webviews, CI side (2026-11-01)
+
+- The Vitest perf project runs in Playwright's Chromium, not in a webview. The desktop smoke run already starts the real app on all three CI hosts, so the PB-08 trace now runs there (`pb-08-dense-layer`). That covers WebView2, WKWebView and WebKitGTK in debug (ci.yml) and release (desktop-nightly) builds.
+- It is reported, not gated, and it fails only when no renderer works. The `backend` field shows a software fallback. Each phase is capped at 8 s, as the perf test is (#428).
+- No number was taken locally on the shared machine. The benchmarks-log row gets CI's values once they exist. The HW-01 WebView2 run (both GPUs) is an owner step, posted as a comment on #129.
+
 ## Next steps
 
 - [ ] Commit the screenshot baselines from the first CI run's `visual-baselines` artifact.
