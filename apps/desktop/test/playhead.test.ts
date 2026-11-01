@@ -21,6 +21,7 @@ const PLAYING: TransportState = {
   device: "Speakers",
   live: false,
   xruns: 0,
+  muted: false,
   excludedTracks: [],
 };
 

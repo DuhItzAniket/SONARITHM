@@ -50,6 +50,7 @@ Owner: `sonarithm-app`.
 | `SNR-APP-086` | error | These corrections do not belong to this dataset | Corrections apply to a dataset opened from a chart, and a correction file only to            the chart it was made on (same SHA-256 and extractor, RFC-0005 §3). | — |
 | `SNR-APP-087` | error | The row is outside the dataset | A cursor row counts from 0 and is below the dataset's row count (`rows` in its summary). Nothing was changed. | — |
 | `SNR-APP-090` | error | There is nothing to explore yet | The chart explorer moves through the navigation tree of the compiled Score. Compile the spec, then explore. Nothing was changed. | — |
+| `SNR-APP-094` | error | That would silence every output | Speech, sonification and braille cannot all be off: nothing would tell you what the app is doing. Turn another one on first, or reset the toggles to your profile's defaults. Nothing was changed. | — |
 
 ## SNR-COMP
 

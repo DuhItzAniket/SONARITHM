@@ -892,6 +892,10 @@ pub enum Channel {
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, TS)]
 #[serde(rename_all = "camelCase")]
 #[non_exhaustive]
+#[expect(
+    clippy::struct_excessive_bools,
+    reason = "independent wire flags of one announcement: urgency, interruption, who spoke it, muted"
+)]
 pub struct AnnouncementInfo {
     /// Its order.
     pub seq: u64,

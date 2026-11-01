@@ -62,7 +62,6 @@ impl App {
                 choices.verbosity = Some(next);
                 ("verbosity", next == Verbosity::Verbose)
             }
-            _ => return Err(IpcError::new(&codes::BAD_REQUEST, "Unknown toggle.")),
         };
         // No lockout: at least one of speech, sonification and braille stays on.
         let after = |chosen: Option<bool>, now: bool| chosen.unwrap_or(now);

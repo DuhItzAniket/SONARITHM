@@ -129,14 +129,17 @@ function toggle(target: ToggleTarget) {
     effective().find((s) => s.key === `interaction.${key}`)?.value;
   if (target === "verbosity") {
     const next = now("verbosity") === "verbose" ? "terse" : "verbose";
-    settings = { ...settings, choices: { ...settings.choices, verbosity: next } };
+    settings = {
+      ...settings,
+      choices: { ...settings.choices, verbosity: next },
+    };
     say(next === "verbose" ? "Verbose announcements" : "Terse announcements");
     return { reply: "effective" as const, settings: effective() };
   }
   const on = now(`modalities.${target}`) !== true;
   const after = { ...settings.choices, [target]: on };
   const audible = (["speech", "sonification", "braille"] as const).some(
-    (m) => (after[m] ?? settings.modalities[m]) === true,
+    (m) => after[m] ?? settings.modalities[m],
   );
   if (!audible) {
     say(
@@ -145,7 +148,8 @@ function toggle(target: ToggleTarget) {
     );
     throw new IpcFailure({
       code: "SNR-APP-094",
-      message: "Speech, sonification and braille cannot all be off. Nothing was changed.",
+      message:
+        "Speech, sonification and braille cannot all be off. Nothing was changed.",
       hint: null,
       pointer: null,
     });

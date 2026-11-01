@@ -92,8 +92,19 @@ impl Harness {
         assert_eq!(report["ok"], true, "{report}");
     }
 
-    fn step(&mut self, verb: &str) {
+    /// Applies `verb` and returns the announcement it makes.
+    fn step(&mut self, verb: &str) -> AnnouncementInfo {
+        let before = self.announcements(0).len();
         self.ok(&json!({ "command": "nav_move", "args": { "verb": { "verb": verb } } }));
+        self.announcements(before + 1)[before].clone()
+    }
+
+    /// Down from the root to the first point, where Left and Right move between points
+    /// (a boundary is said once, then only its earcon plays).
+    fn to_point(&mut self) {
+        for _ in 0..3 {
+            self.step("into");
+        }
     }
 
     /// The announcements so far, waiting up to 5 s for at least `count`.
@@ -144,29 +155,28 @@ fn effective_in(reply: &Value, key: &str) -> (Value, String) {
 fn b03_t09_speech_off_is_said_before_announcements_go_quiet() {
     let mut h = Harness::new("speech-off");
     h.compile();
+    h.to_point();
     let reply = h.toggle("speech").unwrap();
     assert_eq!(
         effective_in(&reply, "interaction.modalities.speech"),
         (json!(false), "session".to_owned())
     );
     // "Speech off" is spoken: it was queued while speech was still on.
-    let said = h.announcements(1);
-    assert_eq!(said[0].speech, "Speech off");
-    assert!(!said[0].muted, "{said:?}");
+    let off = h.announcements(4)[3].clone();
+    assert_eq!(off.speech, "Speech off");
+    assert!(!off.muted, "{off:?}");
     // A move after it is shown and logged, but not spoken.
-    h.step("next");
-    let said = h.announcements(2);
-    assert!(said[1].muted, "{said:?}");
-    assert!(said[1].seq > said[0].seq);
+    let quiet = h.step("next");
+    assert!(quiet.muted, "{quiet:?}");
+    assert!(quiet.seq > off.seq);
     // "Speech on" is spoken: speech was on again before it was queued.
     h.toggle("speech").unwrap();
-    let said = h.announcements(3);
-    assert_eq!(said[2].speech, "Speech on");
-    assert!(!said[2].muted, "{said:?}");
-    h.step("next");
-    let said = h.announcements(4);
-    assert!(!said[3].muted, "{said:?}");
-    assert!(said[3].seq > said[2].seq);
+    let on = h.announcements(6)[5].clone();
+    assert_eq!(on.speech, "Speech on");
+    assert!(!on.muted, "{on:?}");
+    let spoken = h.step("previous");
+    assert!(!spoken.muted, "{spoken:?}");
+    assert!(spoken.seq > on.seq);
 }
 
 #[test]
@@ -185,19 +195,17 @@ fn b03_t09_sonification_off_silences_the_transport() {
 fn a11y_12_shift_t_switches_the_verbosity_of_announcements() {
     let mut h = Harness::new("verbosity");
     h.compile();
-    h.step("next");
-    let terse = h.announcements(1)[0].speech.clone();
+    h.to_point();
+    let terse = h.step("next").speech;
     h.toggle("verbosity").unwrap();
     assert_eq!(
         h.effective("interaction.verbosity"),
         (json!("verbose"), "session".to_owned())
     );
-    assert_eq!(h.announcements(2)[1].speech, "Verbose announcements");
+    assert_eq!(h.announcements(5)[4].speech, "Verbose announcements");
     // Back and forth to the same point: now said verbosely.
     h.step("previous");
-    h.announcements(3);
-    h.step("next");
-    let verbose = h.announcements(4)[3].speech.clone();
+    let verbose = h.step("next").speech;
     assert_ne!(verbose, terse);
     assert!(verbose.len() > terse.len(), "{terse:?} then {verbose:?}");
 }

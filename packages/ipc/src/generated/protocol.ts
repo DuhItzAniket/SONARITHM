@@ -72,6 +72,8 @@ export const REPLY_KINDS = {
   cursor_get: "cursor",
   nav_move: "nav",
   nav_where: "announce",
+  modality_toggle: "effective",
+  choices_reset: "effective",
 } as const;
 
 /** The channel that carries each event. */
@@ -401,7 +403,11 @@ origin: CursorOrigin, } } | { "command": "cursor_get" } | { "command": "nav_move
 /**
  * The verb.
  */
-verb: NavVerb, } } | { "command": "nav_where" } | { "command": "view_get", "args": { 
+verb: NavVerb, } } | { "command": "nav_where" } | { "command": "modality_toggle", "args": { 
+/**
+ * What to flip.
+ */
+modality: ToggleTarget, } } | { "command": "choices_reset" } | { "command": "view_get", "args": { 
 /**
  * The dataset's ID.
  */
@@ -886,6 +892,10 @@ live: boolean,
  */
 xruns: number, 
 /**
+ * Sonification is off (B03-T09): the output is silent until it is turned on again.
+ */
+muted: boolean, 
+/**
  * The compiled Score's tracks that playback leaves out, because the explorer's filters
  * took their series out (B03-T09, ADR-0017 "Navigation"). Empty when the transport
  * plays the compiled Score as it is; exports always render it whole.
@@ -1022,6 +1032,37 @@ value: number, };
  * A landmark of [`NavVerb::Landmark`].
  */
 export type NavLandmark = "xAxis" | "yAxis" | "insights" | "filters" | "dataset";
+
+/**
+ * What [`Request::ModalityToggle`] flips (keyboard §5.5).
+ */
+export type ToggleTarget = "speech" | "sonification" | "braille" | "visual" | "verbosity";
+
+/**
+ * The choices made with the explorer's toggles (keyboard §5.5, B03-T09): each one, when
+ * set, overrides every lower layer. Unset means "as the profile has it".
+ */
+export type UiChoices = { 
+/**
+ * Terse or verbose announcements (Shift+T).
+ */
+verbosity?: Verbosity | null, 
+/**
+ * Speech and text announcements (T).
+ */
+speech?: boolean | null, 
+/**
+ * Sonification: point cues and playback (S).
+ */
+sonification?: boolean | null, 
+/**
+ * Braille output (B).
+ */
+braille?: boolean | null, 
+/**
+ * The visual highlight (V).
+ */
+visual?: boolean | null, };
 
 /**
  * Where [`NavVerb::GoTo`] goes.
@@ -1446,6 +1487,12 @@ speech: SpeechSettings,
  */
 activeProfile?: string | null, 
 /**
+ * The explicit-UI-action layer (12 §3, ADR-0020 §3): what the explorer's toggles chose
+ * (B03-T09). It sits on top of the profile, so a profile never overrides a toggle, and
+ * it is kept here so the choices survive a restart; `choices_reset` clears it.
+ */
+choices: UiChoices, 
+/**
  * Which GPU the webview draws plots with (B04-T02, F-044). Read by the host when it
  * starts, so a change applies after a restart.
  */
@@ -1599,7 +1646,12 @@ selfVoiced: boolean,
 /**
  * The navigation node it describes, if any.
  */
-node: number | null, };
+node: number | null, 
+/**
+ * Speech is off (B03-T09): show and log it, but do not speak it. Errors and alarms are
+ * never muted (INFER, OD-30).
+ */
+muted: boolean, };
 
 /**
  * The class of an announcement (keyboard §9.1).

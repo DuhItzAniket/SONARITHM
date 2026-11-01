@@ -22,6 +22,7 @@ const stopped: TransportState = {
   device: null,
   live: false,
   xruns: 0,
+  muted: false,
   excludedTracks: [],
 };
 

@@ -194,14 +194,10 @@ test("b03_t09_each_toggle_key_flips_its_modality_in_the_app_core", async ({
     await page.keyboard.press(key);
   }
   await expect
-    .poll(async () =>
-      (await host(page)).evaluate((mock) => mock.toggles()),
-    )
+    .poll(async () => (await host(page)).evaluate((mock) => mock.toggles()))
     .toEqual(["braille", "visual", "verbosity", "visual", "braille"]);
   // The base settings are not written: the choice is the app core's top layer.
-  const commands = await (await host(page)).evaluate((mock) =>
-    mock.commands(),
-  );
+  const commands = await (await host(page)).evaluate((mock) => mock.commands());
   expect(commands).not.toContain("settings_set");
 });
 
@@ -236,8 +232,8 @@ test("b03_t09_the_last_non_visual_output_cannot_be_turned_off", async ({
   await expect(assertive(page)).toHaveText(
     "Speech, sonification and braille cannot all be off. Turn another one on first.",
   );
-  const muted = await (await host(page)).evaluate(
-    (mock) => mock.transport().muted,
-  );
+  const muted = await (
+    await host(page)
+  ).evaluate((mock) => mock.transport().muted);
   expect(muted).toBe(false);
 });
