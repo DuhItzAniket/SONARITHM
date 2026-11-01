@@ -68,6 +68,8 @@ export const REPLY_KINDS = {
   corrections_apply: "corrections",
   corrections_export: "corrections",
   corrections_import: "corrections_import",
+  cursor_set: "cursor",
+  cursor_get: "cursor",
 } as const;
 
 /** The channel that carries each event. */
@@ -81,6 +83,7 @@ export const EVENT_CHANNELS = {
   settings_notice: "app",
   announcement: "announcements",
   live_notice: "app",
+  cursor: "cursor",
 } as const;
 
 /** The commands whose reply is a binary view (ADR-0017 §6). */
@@ -380,7 +383,19 @@ path: string,
 /**
  * Apply it, rather than only preview it.
  */
-confirm: boolean, } } | { "command": "view_get", "args": { 
+confirm: boolean, } } | { "command": "cursor_set", "args": { 
+/**
+ * The dataset's ID.
+ */
+dataset: string, 
+/**
+ * The zero-based row in the dataset's first table: a table page's `__snr_row`.
+ */
+row: number, 
+/**
+ * Where the move came from; it decides what is spoken.
+ */
+origin: CursorOrigin, } } | { "command": "cursor_get" } | { "command": "view_get", "args": { 
 /**
  * The dataset's ID.
  */
@@ -445,7 +460,7 @@ diagnostics: Array<DiagnosticInfo>,
 /**
  * Errors, warnings and infos.
  */
-counts: Counts, } | { "reply": "compile" } & CompileReport | { "reply": "transport" } & TransportState | { "reply": "job" } & JobInfo | { "reply": "jobs", 
+counts: Counts, } | { "reply": "compile" } & CompileReport | { "reply": "transport" } & TransportState | { "reply": "cursor" } & CursorState | { "reply": "job" } & JobInfo | { "reply": "jobs", 
 /**
  * The jobs, oldest first.
  */
@@ -544,12 +559,12 @@ error: IpcError, } | { "event": "announcement" } & AnnouncementInfo | { "event":
 /**
  * What happened.
  */
-error: IpcError, };
+error: IpcError, } | { "event": "cursor" } & CursorState;
 
 /**
  * The event channels of ADR-0017 §4.
  */
-export type Channel = "clock" | "jobs" | "diagnostics" | "announcements" | "app" | "meters";
+export type Channel = "clock" | "jobs" | "diagnostics" | "announcements" | "app" | "meters" | "cursor";
 
 /**
  * An open dataset.
@@ -882,7 +897,7 @@ hostTimeS: number | null,
  * How far the heard sound lags the engine's position, in seconds (B04-T04, 06 §9): the
  * UI's playhead shows `positionS − outputLatencyS × speed`. In order of precedence:
  * the device's calibrated latency where one is stored (ADR-0016, per-device latency
- * calibration; the stored offsets are a follow-up), then the backend's reported
+ * calibration: `audio.calibratedLatencyS` in the settings), then the backend's reported
  * latency, then `None`, which the UI takes as "no correction", never as a guess. It is
  * computed on the control thread when the anchor is built, never in the audio
  * callback. Added in protocol 1 (additive, approved by the coordinator on 2026-10-30).
@@ -892,6 +907,67 @@ outputLatencyS: number | null,
  * Counts up with every anchor.
  */
 seq: number, };
+
+/**
+ * The one cursor (B04-T06; ADR-0017 "Cursor"): Rust's, the only one (A11Y-10). The table,
+ * the plot, the breadcrumb and the readout show it, and the chart explorer's movement
+ * verbs (B03-T09) read and move this same cursor.
+ */
+export type CursorState = { 
+/**
+ * Its order: higher is newer.
+ */
+seq: number, 
+/**
+ * The dataset's ID; `None` when there is no cursor.
+ */
+dataset: string | null, 
+/**
+ * The zero-based row.
+ */
+row: number | null, 
+/**
+ * The point's x value when the row is a point of the compiled Score.
+ */
+x: number | null, 
+/**
+ * The point's navigation node, when the row is one.
+ */
+node: number | null, 
+/**
+ * From the dataset down to the point; only the dataset without a compiled Score.
+ */
+path: Array<CursorPathItem>, 
+/**
+ * Where the move came from; `None` when Rust moved it (data changed under it).
+ */
+origin: CursorOrigin | null, };
+
+/**
+ * Where a cursor move came from (B04-T06, ADR-0017 "Cursor"). It decides what is spoken:
+ * a move from the table is not announced, because the screen reader already reads the
+ * focused row (INFER, OD-30); plot and explorer moves are.
+ */
+export type CursorOrigin = "table" | "plot" | "nav";
+
+/**
+ * One step of the cursor's path, from the dataset down (the breadcrumb).
+ */
+export type CursorPathItem = { 
+/**
+ * The level.
+ */
+level: PathLevel, 
+/**
+ * A data name, shown as it is: the dataset's file name, a series' track or field, a
+ * segment's span or a point's x.
+ */
+label: string, };
+
+/**
+ * A level of the cursor's path, which the UI names through its own catalogue.
+ */
+export type PathLevel = "dataset" | "series" | "segment" | "point";
 
 /**
  * What to export.
@@ -1276,7 +1352,18 @@ bufferFrames: number | null,
 /**
  * The sonification volume in dB, independent of the system volume (A11Y-15).
  */
-volumeDb: number, };
+volumeDb: number, 
+/**
+ * The measured output latency of each device, in seconds, by device ID (ADR-0016,
+ * per-device latency calibration; B04-T04). For a device listed here, clock anchors
+ * carry this instead of the backend's reported latency (ADR-0017 "Clock anchors").
+ *
+ * Privacy (ADR-0012, AGENTS rule 9): a device ID or name can contain a person's name
+ * (a headset named after its owner), so this map lives only in the local settings
+ * file. It is never written to logs, manifests, projects or exported diagnostics, and
+ * no error message names a device from it.
+ */
+calibratedLatencyS: { [key in string]: number }, };
 
 /**
  * The UI theme (design-language §5).

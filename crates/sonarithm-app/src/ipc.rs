@@ -98,6 +98,8 @@ pub const COMMANDS: &[(&str, &str)] = &[
     ("corrections_apply", "corrections"),
     ("corrections_export", "corrections"),
     ("corrections_import", "corrections_import"),
+    ("cursor_set", "cursor"),
+    ("cursor_get", "cursor"),
 ];
 
 /// The commands whose reply is a binary view (ADR-0017 §6), sent with
@@ -115,6 +117,7 @@ pub const EVENTS: &[(&str, &str)] = &[
     ("settings_notice", "app"),
     ("announcement", "announcements"),
     ("live_notice", "app"),
+    ("cursor", "cursor"),
 ];
 
 /// A command from the UI (09 §2.1).
@@ -424,6 +427,18 @@ pub enum Request {
         #[serde(default)]
         confirm: bool,
     },
+    /// Moves the one cursor to a row of a dataset (B04-T06, ADR-0017 "Cursor"). Replies
+    /// [`Reply::Cursor`] and sends a `cursor` event, which every view follows.
+    CursorSet {
+        /// The dataset's ID.
+        dataset: String,
+        /// The zero-based row in the dataset's first table: a table page's `__snr_row`.
+        row: u64,
+        /// Where the move came from; it decides what is spoken.
+        origin: CursorOrigin,
+    },
+    /// Where the cursor is. Replies [`Reply::Cursor`].
+    CursorGet,
     /// A downsampled view of two fields of a dataset for drawing (03 §7). Binary: a view of
     /// kind `m4Tile` or `lttbTile` with the columns `row`, `x` and `y` (ADR-0017 §6).
     ViewGet {
@@ -549,6 +564,8 @@ impl Request {
             Self::CorrectionsApply { .. } => "corrections_apply",
             Self::CorrectionsExport { .. } => "corrections_export",
             Self::CorrectionsImport { .. } => "corrections_import",
+            Self::CursorSet { .. } => "cursor_set",
+            Self::CursorGet => "cursor_get",
             Self::ViewGet { .. } => "view_get",
             Self::TablePage { .. } => "table_page",
         }
@@ -593,6 +610,8 @@ pub enum Reply {
     Compile(CompileReport),
     /// The transport, after the command.
     Transport(TransportState),
+    /// The one cursor (B04-T06).
+    Cursor(CursorState),
     /// One job.
     Job(JobInfo),
     /// Every job.
@@ -792,6 +811,8 @@ pub enum Event {
         /// What happened.
         error: IpcError,
     },
+    /// The one cursor moved, or the data under it changed (B04-T06, ADR-0017 "Cursor").
+    Cursor(CursorState),
 }
 
 impl Event {
@@ -807,6 +828,7 @@ impl Event {
             | Self::SettingsNotice { .. }
             | Self::LiveNotice { .. } => Channel::App,
             Self::Announcement(_) => Channel::Announcements,
+            Self::Cursor(_) => Channel::Cursor,
         }
     }
 }
@@ -828,6 +850,8 @@ pub enum Channel {
     App,
     /// Binary meter frames (B01-T04).
     Meters,
+    /// The one cursor (B04-T06).
+    Cursor,
 }
 
 /// An announcement, sequenced with sonification (B03-T07). The host sends `speech` to the
@@ -853,6 +877,71 @@ pub struct AnnouncementInfo {
     pub self_voiced: bool,
     /// The navigation node it describes, if any.
     pub node: Option<u32>,
+}
+
+/// Where a cursor move came from (B04-T06, ADR-0017 "Cursor"). It decides what is spoken:
+/// a move from the table is not announced, because the screen reader already reads the
+/// focused row (INFER, OD-30); plot and explorer moves are.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize, TS)]
+#[serde(rename_all = "camelCase")]
+#[non_exhaustive]
+pub enum CursorOrigin {
+    /// The data table's focused row.
+    Table,
+    /// A click or a key on the plot.
+    Plot,
+    /// The chart explorer's movement verbs (B03-T09).
+    Nav,
+}
+
+/// A level of the cursor's path, which the UI names through its own catalogue.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize, TS)]
+#[serde(rename_all = "camelCase")]
+#[non_exhaustive]
+pub enum PathLevel {
+    /// The dataset.
+    Dataset,
+    /// A series (a data track).
+    Series,
+    /// A segment of a series.
+    Segment,
+    /// A point.
+    Point,
+}
+
+/// One step of the cursor's path, from the dataset down (the breadcrumb).
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, TS)]
+#[serde(rename_all = "camelCase")]
+#[non_exhaustive]
+pub struct CursorPathItem {
+    /// The level.
+    pub level: PathLevel,
+    /// A data name, shown as it is: the dataset's file name, a series' track or field, a
+    /// segment's span or a point's x.
+    pub label: String,
+}
+
+/// The one cursor (B04-T06; ADR-0017 "Cursor"): Rust's, the only one (A11Y-10). The table,
+/// the plot, the breadcrumb and the readout show it, and the chart explorer's movement
+/// verbs (B03-T09) read and move this same cursor.
+#[derive(Clone, Debug, Default, PartialEq, Serialize, Deserialize, TS)]
+#[serde(rename_all = "camelCase")]
+#[non_exhaustive]
+pub struct CursorState {
+    /// Its order: higher is newer.
+    pub seq: u64,
+    /// The dataset's ID; `None` when there is no cursor.
+    pub dataset: Option<String>,
+    /// The zero-based row.
+    pub row: Option<u64>,
+    /// The point's x value when the row is a point of the compiled Score.
+    pub x: Option<f64>,
+    /// The point's navigation node, when the row is one.
+    pub node: Option<u32>,
+    /// From the dataset down to the point; only the dataset without a compiled Score.
+    pub path: Vec<CursorPathItem>,
+    /// Where the move came from; `None` when Rust moved it (data changed under it).
+    pub origin: Option<CursorOrigin>,
 }
 
 /// A stream source described for the consent prompt; nothing is open yet. Files are named
@@ -1179,7 +1268,7 @@ pub struct ClockAnchor {
     /// How far the heard sound lags the engine's position, in seconds (B04-T04, 06 §9): the
     /// UI's playhead shows `positionS − outputLatencyS × speed`. In order of precedence:
     /// the device's calibrated latency where one is stored (ADR-0016, per-device latency
-    /// calibration; the stored offsets are a follow-up), then the backend's reported
+    /// calibration: `audio.calibratedLatencyS` in the settings), then the backend's reported
     /// latency, then `None`, which the UI takes as "no correction", never as a guess. It is
     /// computed on the control thread when the anchor is built, never in the audio
     /// callback. Added in protocol 1 (additive, approved by the coordinator on 2026-10-30).
@@ -1455,6 +1544,7 @@ mod tests {
                 node: Some(7),
             }),
             Event::LiveNotice { error },
+            Event::Cursor(CursorState::default()),
         ];
         assert_eq!(events.len(), EVENTS.len());
         for (event, (name, channel)) in events.iter().zip(EVENTS) {

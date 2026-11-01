@@ -395,7 +395,10 @@ fn snr_comp_function_sources_need_curvasona() {
 fn the_manifest_owns_the_function_source() {
     let manifest = Curvasona::manifest();
     assert_eq!(manifest.id, ENGINE);
-    assert_eq!(manifest.spec_keys, ["data.source.kind=function"]);
+    assert_eq!(
+        manifest.spec_keys,
+        ["data.source.kind=function", "tracks[].audify"]
+    );
 }
 
 /// A glide breaks at each pole: the table has an empty row there (C03-T02).

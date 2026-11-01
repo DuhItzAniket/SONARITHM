@@ -66,6 +66,7 @@ function sampleArgs(style: string): MessageArgs {
     reference: "yes",
     name: "11",
     state: "on",
+    side: "above",
     stream: "13",
     event: "14",
     condition: "15",

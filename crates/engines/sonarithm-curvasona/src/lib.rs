@@ -16,6 +16,8 @@
 //! | [`sample`] | The sample grid of a domain (`samples` or `step`) under the sample budget |
 //! | [`scan`] | Poles, holes, jumps, undefined spans and off-screen spans, found from the expression's guards |
 //! | [`critical`] | Zeros, extrema, inflections and horizontal asymptotes; the `critical-points` analyzer's annotations |
+//! | [`audify`] | The `audify` mark: the SDR-31 speed-up calculator and the audification encoder (RFC-0007 §3) |
+//! | [`cues`] | The `curvasona.cues` context track: critical points as earcons or speech (RFC-0007) |
 //! | [`suite`] | The 40-curve suite with analytically known features |
 //! | [`codes`] | Diagnostic codes `SNR-ENG-400` to `499` |
 //! | engine | The `function` source |
@@ -26,8 +28,10 @@
 #![forbid(unsafe_code)]
 #![deny(missing_docs)]
 
+pub mod audify;
 pub mod codes;
 pub mod critical;
+pub mod cues;
 pub mod expr;
 pub mod sample;
 pub mod scan;
@@ -356,13 +360,21 @@ fn report(
 /// instead of sweeping across an asymptote (C03-T02), and one at each zero, extremum and
 /// inflection, so the glide passes through it and its insight lands on it (C03-T03).
 fn with_feature_rows(grid: &[f64], scan: &Scan, features: &[Feature]) -> Vec<f64> {
-    let mut xs = grid.to_vec();
+    // Rows closer than the tolerance are one row: a feature found a float step from a grid
+    // point (or from a pole) must not add a near-duplicate row, which would put an extra
+    // breakpoint in the glide and hide the feature from the analyzer's recompute. The row
+    // kept is the pole or hole if there is one (its row stays empty), else the grid point.
+    let (Some(&min), Some(&max)) = (grid.first(), grid.last()) else {
+        return grid.to_vec();
+    };
+    let tolerance = 1e-9 * (max - min).abs().max(f64::MIN_POSITIVE);
+    let mut rows: Vec<(f64, u8)> = grid.iter().map(|&x| (x, 1)).collect();
     for singularity in &scan.singularities {
         if matches!(
             singularity.kind,
             SingularityKind::Pole | SingularityKind::Hole
         ) {
-            xs.push(singularity.x);
+            rows.push((singularity.x, 0));
         }
     }
     for feature in features {
@@ -373,12 +385,22 @@ fn with_feature_rows(grid: &[f64], scan: &Scan, features: &[Feature]) -> Vec<f64
                 | FeatureKind::Minimum
                 | FeatureKind::Inflection
         ) {
-            xs.push(feature.x);
+            rows.push((feature.x, 2));
         }
     }
-    xs.sort_by(f64::total_cmp);
-    xs.dedup();
-    xs
+    rows.sort_by(|a, b| a.0.total_cmp(&b.0));
+    let mut merged: Vec<(f64, u8)> = Vec::with_capacity(rows.len());
+    for (x, rank) in rows {
+        match merged.last_mut() {
+            Some(last) if (x - last.0).abs() <= tolerance => {
+                if rank < last.1 {
+                    *last = (x, rank);
+                }
+            }
+            _ => merged.push((x, rank)),
+        }
+    }
+    merged.into_iter().map(|(x, _)| x).collect()
 }
 
 /// The table `x`, `y`, `dy` with every row `synthetic`, and the expression in its metadata.
@@ -460,7 +482,10 @@ impl Curvasona {
             "CURVASONA",
             EngineVersion(env!("CARGO_PKG_VERSION").to_owned()),
         );
-        manifest.spec_keys = vec!["data.source.kind=function".to_owned()];
+        manifest.spec_keys = vec![
+            "data.source.kind=function".to_owned(),
+            "tracks[].audify".to_owned(),
+        ];
         manifest
     }
 }
@@ -482,7 +507,12 @@ impl Engine<DataBundle> for Curvasona {
             Arc::new(CriticalPoints {
                 budgets: self.budgets,
             }),
-        )
+        )?;
+        registrar.context(Arc::new(cues::FunctionCues));
+        let audify: Arc<dyn sonarithm_core::engine::Encoder<DataBundle>> =
+            Arc::new(audify::AudifyEncoder);
+        registrar.encoder(&[sonarithm_core::engine::MarkKind::Audify], &audify)?;
+        Ok(())
     }
 }
 
@@ -555,6 +585,85 @@ impl Analyzer<DataBundle> for CriticalPoints {
     }
 }
 
+/// A function table read back: its expression (from the metadata) and its rows by `x`.
+pub(crate) struct FunctionTable<'a> {
+    pub(crate) table: &'a Table,
+    pub(crate) expr: Expr,
+    /// `(x, row)`, sorted by `x`.
+    pub(crate) rows: Vec<(f64, u64)>,
+    /// The distinct `x` values, increasing.
+    pub(crate) xs: Vec<f64>,
+}
+
+impl<'a> FunctionTable<'a> {
+    /// Reads the function table of `data`.
+    ///
+    /// # Errors
+    ///
+    /// Why it is not one, as a clause.
+    pub(crate) fn read(data: &'a DataBundle, budgets: &Budgets) -> Result<Self, String> {
+        let table = data
+            .primary()
+            .ok_or_else(|| "the data has no table".to_owned())?;
+        let metadata = table.schema().metadata();
+        let text = metadata
+            .get(META_EXPR)
+            .ok_or_else(|| "the data does not come from a function source".to_owned())?;
+        let variables: BTreeMap<String, f64> = metadata
+            .get(META_VARIABLES)
+            .map(|json| serde_json::from_str(json))
+            .transpose()
+            .map_err(|err| format!("the function's variables cannot be read ({err})"))?
+            .unwrap_or_default();
+        let expr = Expr::parse(text, &variables, &budgets.expr)
+            .map_err(|err| format!("the function's expression cannot be read ({err})"))?;
+        if table.num_rows() > u64::try_from(budgets.max_samples * 2).unwrap_or(u64::MAX) {
+            return Err("the table has more rows than the sample limit".to_owned());
+        }
+        let column = table.column("x").map_err(|err| err.to_string())?;
+        let column = column
+            .as_any()
+            .downcast_ref::<Float64Array>()
+            .ok_or_else(|| "the `x` column is not numeric".to_owned())?;
+        let mut rows: Vec<(f64, u64)> = column
+            .iter()
+            .zip(0_u64..)
+            .filter_map(|(x, row)| x.filter(|x| x.is_finite()).map(|x| (x, row)))
+            .collect();
+        rows.sort_by(|a, b| a.0.total_cmp(&b.0));
+        let mut xs: Vec<f64> = rows.iter().map(|(x, _)| *x).collect();
+        xs.dedup();
+        Ok(Self {
+            table,
+            expr,
+            rows,
+            xs,
+        })
+    }
+
+    /// The spans where the function leaves `window`, as `(start x, above, first row)`
+    /// (RFC-0007 Q5).
+    pub(crate) fn offscreen(&self, window: [f64; 2], budgets: &Budgets) -> Vec<(f64, bool, u64)> {
+        let budget = ScanBudget {
+            max_evaluations: budgets.max_evaluations,
+            max_features: ScanBudget::DEFAULT.max_features,
+        };
+        let found = scan::scan(&self.expr, &self.xs, Some(window), &budget);
+        found
+            .offscreen
+            .iter()
+            .filter_map(|span| {
+                let row = self
+                    .rows
+                    .iter()
+                    .find(|(x, _)| *x >= span.span.start)
+                    .map(|&(_, row)| row)?;
+                Some((span.span.start, span.above, row))
+            })
+            .collect()
+    }
+}
+
 /// The annotations of the function table in `data`, recomputed from the expression its
 /// metadata records, at the table's own `x` values.
 ///
@@ -563,37 +672,8 @@ impl Analyzer<DataBundle> for CriticalPoints {
 /// Why there are none, as a clause: the data is not a function table, or its expression
 /// cannot be read.
 pub fn function_features(data: &DataBundle, budgets: &Budgets) -> Result<Vec<Annotation>, String> {
-    let table = data
-        .primary()
-        .ok_or_else(|| "the data has no table".to_owned())?;
-    let metadata = table.schema().metadata();
-    let text = metadata
-        .get(META_EXPR)
-        .ok_or_else(|| "the data does not come from a function source".to_owned())?;
-    let variables: BTreeMap<String, f64> = metadata
-        .get(META_VARIABLES)
-        .map(|json| serde_json::from_str(json))
-        .transpose()
-        .map_err(|err| format!("the function's variables cannot be read ({err})"))?
-        .unwrap_or_default();
-    let expr = Expr::parse(text, &variables, &budgets.expr)
-        .map_err(|err| format!("the function's expression cannot be read ({err})"))?;
-    if table.num_rows() > u64::try_from(budgets.max_samples * 2).unwrap_or(u64::MAX) {
-        return Err("the table has more rows than the sample limit".to_owned());
-    }
-    let column = table.column("x").map_err(|err| err.to_string())?;
-    let column = column
-        .as_any()
-        .downcast_ref::<Float64Array>()
-        .ok_or_else(|| "the `x` column is not numeric".to_owned())?;
-    let mut rows: Vec<(f64, u64)> = column
-        .iter()
-        .zip(0_u64..)
-        .filter_map(|(x, row)| x.filter(|x| x.is_finite()).map(|x| (x, row)))
-        .collect();
-    rows.sort_by(|a, b| a.0.total_cmp(&b.0));
-    let mut xs: Vec<f64> = rows.iter().map(|(x, _)| *x).collect();
-    xs.dedup();
+    let function = FunctionTable::read(data, budgets)?;
+    let (table, expr, rows, xs) = (function.table, function.expr, function.rows, function.xs);
     let scan_budget = ScanBudget {
         max_evaluations: budgets.max_evaluations,
         max_features: ScanBudget::DEFAULT.max_features,

@@ -156,7 +156,7 @@ pub enum ScoreEvent {
 }
 ```
 
-**Implemented in A03** (`sonarithm_core::score`, A03-T03). Differences from the sketch above: events are serialized with a `type` tag (`Earcon` has its own `kind`); `ScoreTrack` records its resolved `pitch_range` (invariant 3, the loudness table and the spoken legend need it) and `ScoreHeader` records the `shapers` that ran (invariant 5); `Note.timbre` is `{ preset, brightness }`. IR version 1 has the `Note`, `Glide`, `Earcon` and `Speech` events; `Audify`, `Grains` and `Excite` are added, additively, when CURVASONA, TONALENS and RESONUM land (C03, D01, D02).
+**Implemented in A03** (`sonarithm_core::score`, A03-T03). Differences from the sketch above: events are serialized with a `type` tag (`Earcon` has its own `kind`); `ScoreTrack` records its resolved `pitch_range` (invariant 3, the loudness table and the spoken legend need it) and `ScoreHeader` records the `shapers` that ran (invariant 5); `Note.timbre` is `{ preset, brightness }`. IR version 1 has the `Note`, `Glide`, `Earcon` and `Speech` events; `Audify`, `Grains` and `Excite` are added, additively, when CURVASONA, TONALENS and RESONUM land (C03, D01, D02). **IR version 2** ([RFC-0007](../rfcs/0007-function-cues-and-audification.md), [ADR-0029](../decisions/0029-function-cues-and-audification.md)) adds the earcon kinds `zero`, `asymptote`, `undefined` and `offscreen` (C03-T04) and the `Audify` event (C03-T05). `IR_VERSION` is the newest version a reader understands; a Score's `header.ir_version` is the lowest version that can read it (`Score::required_ir_version`, written by the compiler), so Scores that use no addition stay at version 1 with unchanged hashes.
 
 ### 4.1 Representation choices
 

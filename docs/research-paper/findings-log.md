@@ -1016,6 +1016,52 @@ A05 (render engine, audio backends, export) uses F-050 to F-069.
 - **Affects:** C02-T09, A11Y-02, A11Y-12, A11Y-24, FR-008, OD-07, H-06
 - **Papers:** none yet
 
+### F-199 · CURVASONA's canonical form put a negative divisor in parentheses, which made it deeper than its source
+
+- **Date:** 2026-11-01 · **Phase:** C03 · **Type:** engineering (robustness) · **Status:** new
+- **Statement:** The fuzz target `expr_parse` (CI job 124637048464, on #429) found an expression that parses but whose canonical form does not: `4-x/` followed by 32 unary minuses and `4-1`. The parser counts one level of nesting per unary minus, so the input sits exactly at the depth limit of 32. The printer wrapped any negative divisor in parentheses (`x/(-4)`), although ADR-0028's grammar reads a divisor as a unary expression, so `x/-4` already means `x/(-4)`; the added parentheses were a 33rd level, and the canonical form failed with `SNR-ENG-402`. A divisor now prints with the multiplier's rule, so `x/-4` stays `x/-4` and the printer adds parentheses only where the grammar needs them, which the source text must then also have had. ADR-0028's grammar is unchanged; only the canonical spelling of a negative divisor changes.
+- **Evidence:** `crates/engines/sonarithm-curvasona/src/expr.rs` (`Node::print`); the test `f_199_a_divisor_at_the_depth_limit_reads_back`; the corpus seed `seed-regression-divisor-depth.txt`, replayed by `tests/fuzz_regressions.rs` on every run
+- **Evidence level / confidence:** EV-D / Strong (a reproduced fuzz failure, with a regression test)
+- **Affects:** C03-T01 (the expression facade), ADR-0028's canonical form
+- **Papers:** none yet
+
+### F-196 · An audification without `k` or `band` needs a target band, and no study gives one
+
+- **Date:** 2026-11-01 · **Phase:** C03 · **Type:** engineering (sound default) · **Status:** new
+- **Statement:** RFC-0001 lets `tracks[].audify` be omitted ("`k` computed from the data band"), and SDR-31 computes k "from the data band to a target audio band", but neither names the target. C03-T05 needs one, so it maps the top of the series' band (fs/2) to 4 kHz. This follows ED-06's reasoning (keep the main energy below about 4 kHz, which survives high-frequency hearing loss and small speakers, A11Y-14); it is not measured. It is recorded as SDR-44 (`INFER`, experimental) until a listening study (HP-21 or a later experiment) tests it against alternatives such as 2 kHz or 8 kHz.
+- **Evidence:** `crates/engines/sonarithm-curvasona/src/audify.rs` (`DEFAULT_TOP_HZ`) and the test `sdr_44_infer_the_default_k_puts_the_top_of_the_band_at_4_khz`; design-rules SDR-44
+- **Evidence level / confidence:** EV-D / Weak (an extrapolation)
+- **Affects:** SDR-31, SDR-44, C03-T05
+- **Papers:** none yet
+
+### F-195 · Audification resamples with a deterministic windowed-sinc, because rubato's FFT path is not bit-identical across CPUs
+
+- **Date:** 2026-11-01 · **Phase:** C03 · **Type:** engineering (determinism) · **Status:** new
+- **Statement:** RFC-0007 §3 planned to resample audified series with rubato at plan time. Golden audio relies on renders being bit-identical on Windows, Linux and macOS (F-039, ADR-0013), and rubato's fixed-ratio resamplers use FFTs through realfft and rustfft, which choose AVX, SSE or NEON code at run time, so their rounding can differ between x86 and ARM machines (TODO(verify) by rendering the same plan on both). `sonarithm_render::resample` is a windowed-sinc interpolator (Blackman window, 16 taps a side at unity, widened to low-pass at the output's Nyquist when downsampling, at most 4096 a side), computed with `libm` and IEEE arithmetic only, normalized per output sample and clamped to [−1, 1]. It is slower than an FFT resampler (about 2·16/min(1, ratio) multiply-adds per output sample), acceptable for at most 2^22 samples on a worker thread. rubato stays licence-checked (C03-T01) should a deterministic mode be needed later. The audifier voice then reads the buffer with linear interpolation at the transport speed, so speed changes and seeks need no new resampling on the audio thread.
+- **Measured (2026-11-01, HW-01, Windows 11, debug build, local):** a 440 Hz tone resampled from 8 kHz, 96 kHz and 44.1 kHz to 48 kHz measured 440.000, 439.000 and 439.000 Hz by rising zero crossings over one second (the method resolves 1 Hz); a 20 kHz tone at 96 kHz resampled to 16 kHz kept a peak of 6.0e-7 of 0.5 (about −118 dB). Linux and macOS values: TODO(verify) from CI.
+- **Evidence:** `crates/sonarithm-render/src/resample.rs` and its tests (`sdr_31_resampling_keeps_the_tone`, `downsampling_removes_what_the_output_cannot_hold`); `crates/sonarithm-render/src/graph/tests.rs` (`sdr_31_an_audified_sine_plays_the_expected_tone`); the C03-T05 PR
+- **Evidence level / confidence:** EV-D / Moderate (the SIMD rounding difference is inferred from rustfft's design, not measured)
+- **Affects:** RFC-0007 §3, 06 (audifier row), C03-T05, C03-T06
+- **Papers:** none yet
+
+### F-194 · A zero of a guard exactly on a grid point hid a second zero in the next grid step
+
+- **Date:** 2026-10-31 · **Phase:** C03 · **Type:** engineering (correctness) · **Status:** new
+- **Statement:** The property test `poles_and_holes_are_never_missed` failed on an unrelated PR's CI run (41224538690): with a pole at x = 0 and a hole at b in (0, 4), on the coarsest grid -4, 0, 4, the scan found the pole and missed the hole. The guard `x(x - b)` is exactly 0 at the grid point 0 and positive at -4 and 4, so the second zero has no sign change on the grid, and the dip search skipped grid points where the guard is 0. The zero finder of `critical` shared the gap (`x*(x - 1)` on the same grid). Both intervals beside an exact zero are now searched like a dip. Searching beside an exact zero then found some features a float step from a grid point, so the source added near-duplicate rows: extra breakpoints in a glide (the `a_parabola_score_snapshot` diff, which was refused rather than accepted) and an inflection hidden from the analyzer's recompute by two rows at almost the same x. Rows within 1e-9 of the domain width are now one row, keeping a pole or hole, else the grid point; duplicate features are merged within each kind; and a run of undefined samples within a float step of a pole or hole counts as that point. Earlier random runs passed because an exact zero on the grid needs a pole at a grid point, which proptest's shrinking towards 0 finds and uniform sampling rarely does.
+- **Evidence:** `crates/engines/sonarithm-curvasona/src/scan/tests.rs` (`a_zero_on_the_grid_does_not_hide_a_second_one_beside_it`), `src/critical/tests.rs` (`a_zero_on_the_grid_does_not_hide_its_neighbour`); `scan::dips`
+- **Evidence level / confidence:** EV-C / Strong (reproduced)
+- **Affects:** C03-T02, C03-T03 (fixed in this PR)
+
+### F-193 · NUMISONA's glide `src` ranges include their last row, against `RowRange`'s one-past-the-end contract
+
+- **Date:** 2026-10-31 · **Phase:** C03 · **Type:** engineering (correctness) · **Status:** new
+- **Statement:** C03-T04's cue track found no cue times at all: it expected one glide breakpoint per row of the glide's `src` range, but a glide over rows 0 to 120 has 121 breakpoints with `src` 0..120. `sonarithm_core::RowRange` documents `end` as "one past the last row", so NUMISONA's glide ranges stop one row short (the next glide, after an empty row at a pole, starts at 121). CURVASONA's cue track now accepts both forms. Other readers of glide `src` (AUDAXIS's point placement, linked selection in the app, the scrub preview) may assume the documented contract and miss the last row of each glide. Fixing NUMISONA changes every Score snapshot with glides, so it needs its own PR with the snapshot updates; it is outside C03.
+- **Evidence:** `crates/engines/sonarithm-curvasona/src/cues.rs` (`row_times`); a compile of `1/(x^2 - 4)` with 401 samples gives glides with `src` 0..120, 121..280, 281..401 and 121, 160, 121 breakpoints; `crates/sonarithm-core/src/ids.rs` (`RowRange::end`)
+- **Evidence level / confidence:** EV-C / Strong (reproduced)
+- **Affects:** NUMISONA's glide encoder (A06), every reader of `Glide::src`, C03-T04
+
+- **Papers:** none yet
+
 ### F-192 · exmex's symbolic derivatives overflow the stack on allowed input, so CURVASONA differentiates on its own tree
 
 - **Date:** 2026-10-31 · **Phase:** C03 · **Type:** engineering (security, correctness) · **Status:** new
@@ -1065,6 +1111,14 @@ A05 (render engine, audio backends, export) uses F-050 to F-069.
 - **Evidence level / confidence:** EV-C / Strong for the constraint. How NVDA, JAWS, VoiceOver and Orca read a window's row count next to the row-number header is TODO(verify) in the owner's walkthroughs (HP-07, HP-08)
 - **Affects:** B04-T05, A11Y-03, A11Y-24, FR-046, keyboard-and-navigation §5.6, 09 §3; B04-T06 (the focused row as the shared cursor)
 - **Papers:** none yet
+
+### F-178 · Two meanings of "latency calibration" in the code: a replacement and an added offset
+
+- **Date:** 2026-10-31 · **Phase:** B04 · **Type:** engineering · **Status:** new
+- **Statement:** ADR-0016 says the calibration is used for the playhead "instead of trusting the backend's reported latency", and ADR-0017's `outputLatencyS` takes the calibrated latency in place of the backend's. A05's `sonarithm_audio::LatencyCalibration`, which no code uses, instead stores an offset *added* to the engine's predicted time. B04-T04 stores the measured total output latency per device (`audio.calibratedLatencyS`) and uses it as a replacement. A loopback self-test (A05, Windows) must therefore report the total latency, the key-press-to-onset value of ADR-0016's confirmation step 3, not the difference from cpal's estimate.
+- **Evidence:** `crates/sonarithm-audio/src/calibration.rs` (`heard_at` adds the offset); `crates/sonarithm-app/src/transport.rs` (`anchor`); ADR-0016 §Decision
+- **Evidence level / confidence:** EV-C / Strong (source)
+- **Affects:** ADR-0016 confirmation step 3; a future loopback self-test that fills the setting; `LatencyCalibration` (to retire or re-document when the self-test lands)
 
 ### F-185 · The render manifest refuses unknown fields, so even an optional field needs a new manifest version
 

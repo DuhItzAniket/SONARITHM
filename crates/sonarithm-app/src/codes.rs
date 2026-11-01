@@ -395,6 +395,17 @@ pub const CORRECTIONS_NOT_HERE: CodeInfo = CodeInfo {
     status: CodeStatus::Active,
 };
 
+/// A cursor row outside its dataset (B04-T06).
+pub const CURSOR_ROW: CodeInfo = CodeInfo {
+    code: "SNR-APP-087",
+    severity: Severity::Error,
+    summary: "The row is outside the dataset",
+    help: "A cursor row counts from 0 and is below the dataset's row count (`rows` in its \
+           summary). Nothing was changed.",
+    rules: &[],
+    status: CodeStatus::Active,
+};
+
 /// Every `SNR-APP` code, in ascending order.
 pub const CODES: CodeTable = CodeTable {
     area: Area::App,
@@ -437,6 +448,7 @@ pub const CODES: CodeTable = CodeTable {
         CORRECTIONS_INVALID,
         CORRECTIONS_READ_ONLY,
         CORRECTIONS_NOT_HERE,
+        CURSOR_ROW,
     ],
 };
 

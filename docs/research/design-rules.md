@@ -90,6 +90,7 @@ Rules:
 | ID | Strength | Rule | Evidence | Owner |
 |---|---|---|---|---|
 | SDR-31 | DEFAULT | Audification computes the speed-up k from the data band to a target audio band and shows k, duration T/k and the audible band. It resamples (no pitch-shift). The seismic preset is k ≈ 2200. | Dombois 2001; Walker & Nees 2011 (generic k computation is inferred) | CURVASONA |
+| SDR-44 | INFER | Experimental: when an audification gives neither `k` nor `band`, k maps the top of the series' band (fs/2) to 4 kHz, so its energy stays where ageing ears keep it. | Extrapolated from sound design ED-06 (main energy below about 4 kHz, A11Y-14) and SDR-31; no study ([F-196](../research-paper/findings-log.md#f-196--an-audification-without-k-or-band-needs-a-target-band-and-no-study-gives-one)) | CURVASONA |
 | SDR-32 | DEFAULT | Granular mode for distributions and uncertainty uses 80–300 ms grains, density-weighted, with 100–1000 grains active. | Williamson & Murray-Smith 2005 | TONALENS, RESONUM |
 | SDR-33 | INFER | Model-based sonification for high-dimensional and graph data is excitation-driven (data sonogram, crystallization). It is silent without interaction. | Hermann 2008; Hermann & Ritter 2002 (application to graphs is inferred) | RESONUM |
 | SDR-34 | DEFAULT | The high-dimensional quick-look preset maps PCA components to harmonic partial amplitudes. | Dalziel & Lieck 2025 | TONALENS |
@@ -164,3 +165,4 @@ Requirements A11Y-01 to A11Y-34 keep the numbering of [notes/03-accessibility-hc
 | 2026-10-18 | Baseline created from kickoff research (SDR-01..42, A11Y-01..34). | Kickoff |
 | 2026-10-18 | A11Y-18 clarified for the webview shell chosen in ADR-0002 (tree exposed via the system webview; AccessKit only for native UI). No change to the requirement itself. | Kickoff review |
 | 2026-10-31 | SDR-43 added (`INFER`, experimental, off by default): low-confidence timbre for estimated values, behind `experimental.lowConfidenceTimbre` (RFC-0006, ADR-0027, C02-T09b). No default changes. Evidence to come from H-06 / EXP-005. | C02-T09b |
+| 2026-11-01 | SDR-44 added (`INFER`, experimental): the default audification band top of 4 kHz when a spec gives neither `k` nor `band` (C03-T05; approved by the coordinator). Old value: none (RFC-0001 left the target band unstated). New value: 4 kHz. Evidence: F-196 (an extrapolation, no experiment yet). | C03 |

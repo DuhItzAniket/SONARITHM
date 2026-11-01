@@ -68,7 +68,8 @@ Tauri offers three primitives with very different performance ([notes/05 §1](..
 | `spec_get / spec_apply(patch) / spec_validate(text)` | Spec, diagnostics | B05 |
 | `compile(spec_id)` | `CompileReport` (diagnostics, duration, track summary) | B01 |
 | `transport_play / pause / stop / seek / set_speed / set_loop` | `TransportState` (authoritative) | B01 |
-| `nav_move(verb) / nav_where / nav_query(kind)` | `NavResult` (node, highlight, announcement, cue id) | B03 |
+| `nav_move(verb) / nav_where / nav_query(kind)` | `NavResult` (node, highlight, announcement, cue id). They read and move the one cursor of `cursor_set` (ADR-0017 "Cursor"), never a second one | B03 |
+| `cursor_set(dataset, row, origin) / cursor_get` | `CursorState`, and a `cursor` event to every view (B04-T06) | B04 |
 | `inspector_set(track, channel, value)` | `SpecPatchResult` (undo token) | B05 |
 | `history_undo / history_redo` | `SpecPatchResult` | B05 |
 | `export_render(options)` | Job id; progress over a channel; `ExportResult` | B05 |

@@ -32,6 +32,7 @@ use crate::streams::{self, StreamAction};
 use crate::transport::{Action, AudioOutput, OutputConfig, Transport};
 
 mod corrections;
+mod cursor;
 mod profiles;
 mod projects;
 
@@ -133,6 +134,8 @@ pub struct App {
     /// The live worker while playback follows a stream (B06-T07).
     live: Option<crate::live::LiveWorker>,
     next_live: u64,
+    /// The one cursor (B04-T06).
+    cursor: cursor::CursorModel,
     // Dropped in this order: the live worker and jobs stop before the transport.
     jobs: JobQueue,
     transport: Transport,
@@ -201,6 +204,7 @@ impl App {
             autosaves,
             live: None,
             next_live: 1,
+            cursor: cursor::CursorModel::default(),
             jobs,
             transport,
         };
@@ -223,6 +227,15 @@ impl App {
     /// [`IpcError`] when the command cannot run; spec and data problems come back as
     /// diagnostics in the reply instead.
     pub fn dispatch(&mut self, request: Request) -> Result<Reply, IpcError> {
+        let reply = self.run(request);
+        // The cursor follows the data under it after every command (B04-T06).
+        if reply.is_ok() {
+            self.sync_cursor();
+        }
+        reply
+    }
+
+    fn run(&mut self, request: Request) -> Result<Reply, IpcError> {
         match request {
             Request::Hello { protocol } => hello(protocol),
             Request::DatasetOpen { path } => self.edit(|app| app.dataset_open(Path::new(&path))),
@@ -307,6 +320,12 @@ impl App {
             Request::ProjectRecovery => Ok(self.project_recovery()),
             Request::ProjectRecover { id } => self.project_recover(id),
             Request::ProjectDiscardRecovery => Ok(self.project_discard_recovery()),
+            Request::CursorSet {
+                dataset,
+                row,
+                origin,
+            } => self.cursor_set(&dataset, row, origin),
+            Request::CursorGet => Ok(self.cursor_get()),
             Request::ViewGet { .. } | Request::TablePage { .. } => Err(IpcError::new(
                 &codes::BAD_REQUEST,
                 "This command returns a binary view; send it with dispatch_binary.",
@@ -874,6 +893,7 @@ fn output(settings: &Settings) -> OutputConfig {
         device: settings.audio.device.clone(),
         buffer_frames: settings.audio.buffer_frames,
         volume_db: settings.audio.volume_db,
+        calibrated_latency_s: settings.audio.calibrated_latency_s.clone(),
         speech,
     }
 }

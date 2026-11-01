@@ -129,6 +129,41 @@ fn a_scripted_session_never_allocates_on_the_audio_thread() {
     );
 }
 
+/// C03-T05, AGENTS.md rule 2: playing, seeking into and speeding up an audification reads
+/// its preallocated buffer and never allocates on the audio thread.
+#[test]
+fn rt_audification_never_allocates_on_the_audio_thread() {
+    use sonarithm_core::score::{Audify, Score, ScoreEvent, ScoreHeader, ScoreTrack};
+    use sonarithm_core::{EngineId, InstrumentRef, Mode, SpecVersion, TrackId, TrackRole};
+    #[expect(clippy::cast_possible_truncation, reason = "samples are f32")]
+    let samples: Vec<f32> = (0..44_000)
+        .map(|i| (0.8 * sonarithm_core::math::sin(0.0628 * f64::from(i))) as f32)
+        .collect();
+    let event = Audify::new(Seconds::ZERO, 22_000.0, samples);
+    let mut header = ScoreHeader::new(SpecVersion::V0_1, Mode::Analysis, 7);
+    header.duration = Seconds(2.5);
+    let mut score = Score::new(header);
+    let mut track = ScoreTrack::new(
+        TrackId::new("audify"),
+        TrackRole::Data,
+        EngineId::from_static("curvasona"),
+        InstrumentRef("sine".to_owned()),
+    );
+    track.events.push(ScoreEvent::Audify(event));
+    score.tracks.push(track);
+    let plan = RenderPlan::build(&score, &PlanConfig::new(SampleRate::HZ_48000))
+        .unwrap()
+        .plan;
+    let (mut control, mut audio) = realtime(Graph::new(plan, GraphConfig::new(256)));
+    let mut out = vec![0.0; 512];
+    control.send(Command::Play);
+    blocks(&mut audio, &mut out, 100, "audify play");
+    control.send(Command::Seek(Frames(60_000)));
+    blocks(&mut audio, &mut out, 50, "audify seek");
+    control.send(Command::SetSpeed(1.5));
+    blocks(&mut audio, &mut out, 50, "audify speed");
+}
+
 /// Control: the checker is live, so an allocation inside a measured block fails the check.
 #[test]
 fn b01_t04_the_meter_window_never_allocates_and_reaches_the_control_side() {

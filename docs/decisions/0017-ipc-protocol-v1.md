@@ -70,6 +70,7 @@ Spec and data problems are results, not errors: `compile` replies with a `Compil
 | `diagnostics` | Diagnostics outside a reply (for example from a background compile) | On change |
 | `announcements` | Text for the announcer (B03) | Rate-limited per 08 §4 |
 | `app` | Rare app-wide notices: device changed or lost, settings recovered | Rare |
+| `cursor` | The one cursor: every move and every change of the data under it (see Cursor below) | On change |
 | `meters` | Binary meter frames, never JSON (see Meter frames below) | At most one every 1/30 s while playing, plus one last frame when playback stops |
 
 #### Clock anchors
@@ -80,7 +81,7 @@ A `ClockAnchor` carries the transport, `hostTimeS` (the device's playback time o
 
 The order of precedence is:
 
-1. the device's calibrated latency where one is stored (ADR-0016, "Per-device latency calibration": "a loopback self-test where the platform offers one, otherwise a stored offset"; the stored offsets are a follow-up);
+1. the device's calibrated latency where one is stored (ADR-0016, "Per-device latency calibration": "a loopback self-test where the platform offers one, otherwise a stored offset"; stored as `audio.calibratedLatencyS` in the settings, B04-T04);
 2. then the backend's reported latency;
 3. then `null`, which the UI takes as "no correction", never as a guessed value.
 
@@ -89,6 +90,33 @@ The app core computes it on the control thread when it builds the anchor, never 
 | Date | Change |
 |---|---|
 | 2026-10-30 | `outputLatencyS` added (B04-T04), citing ADR-0016 §"Per-device latency calibration"; approved by the coordinator, additive |
+| 2026-10-31 | `cursor_set`, `cursor_get` and the `cursor` event and channel added (B04-T06): Rust's one cursor, with an origin that decides what is spoken (INFER, OD-30); approved by the coordinator, additive |
+
+#### Cursor
+
+> Amended 2026-10-31, B04-T06: `cursor_set`, `cursor_get` and the `cursor` event added, approved by the coordinator, additive (as `outputLatencyS`).
+
+**One owner (A11Y-10, 09 §3).** Rust's cursor is the only cursor. The table, the plot, the breadcrumb and the readout show it. B03-T09's `nav_move` and `nav_where` must read and update this same cursor; they do not add a second one.
+
+* `cursor_set { dataset, row, origin }` moves it to a dataset row and replies `cursor`. `row` counts from 0 in the dataset's first table (a table page's `__snr_row`). A row outside the dataset fails with `SNR-APP-087`, an unknown dataset with `SNR-APP-002`.
+* `cursor_get` replies `cursor`.
+* A `cursor` event on the `cursor` channel follows every `cursor_set` and every change Rust makes, so every view shows the same cursor.
+* `CursorState { seq, dataset, row, x, node, path, origin }`:
+  * `seq` orders them.
+  * `dataset` and `row` are `null` when there is no cursor.
+  * `node` and `x` come from the compiled Score's navigation tree when the row is one of its points; a row read by several tracks takes the first series' point.
+  * `path` lists `{ level, label }` from the dataset down. `level` is `dataset`, `series`, `segment` or `point`, which the UI names through its catalogue; `label` is a data name, shown as it is.
+  * `origin` is `table`, `plot` or `nav` for a `cursor_set`, and `null` when Rust moved it.
+
+**What is spoken (INFER, OD-30).** A move from the table is not announced: the screen reader already reads the focused row, and SONARITHM speaking it too would say it twice. Moves from the plot and the explorer are announced as arriving at the point, in the listener's verbosity. No design rule covers this yet, so the choice is marked INFER; the NVDA walkthrough confirms or changes it (OD-30). The point cue on a move is not built yet: the app core has no point-cue builder (B03-T09 and B03-T12).
+
+**The data changes under it.** After every command, Rust checks the cursor against the open datasets:
+
+* a closed dataset, or a project opened or started (which replaces every dataset, even one with the same ID), clears it;
+* a dataset that lost rows (corrections, undo) clamps it to its last row;
+* a compile that makes its row a point adds `node`, `x` and the path.
+
+Each change sends a `cursor` event with `origin: null`. A `cursor` event never moves the keyboard focus (B04-T06).
 
 #### Meter frames
 
