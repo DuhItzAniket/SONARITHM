@@ -6,16 +6,19 @@ import type {
   CursorOrigin,
   CursorState,
   DatasetSummary,
+  EffectiveSetting,
   Event,
   MockHandlers,
   Request,
   Settings,
+  ToggleTarget,
   TransportState,
 } from "@sonarithm/ipc";
 import {
   createMockTransport,
   encodeView,
   EVENT_CHANNELS,
+  IpcFailure,
 } from "@sonarithm/ipc";
 import { mockIPC } from "@tauri-apps/api/mocks";
 
@@ -38,6 +41,7 @@ let transport: TransportState = {
   device: null,
   live: false,
   xruns: 0,
+  muted: false,
   excludedTracks: [],
 };
 
@@ -72,7 +76,93 @@ let settings: Settings = {
     announcer: "liveRegion",
   },
   gpu: "default",
+  choices: {},
 };
+
+const MODALITIES = ["sonification", "speech", "braille", "visual"] as const;
+let announced = 0;
+
+/** The effective modalities and verbosity: the toggles' choices over the settings. */
+function effective(): EffectiveSetting[] {
+  const { choices } = settings;
+  const layer = (chosen: unknown) =>
+    chosen === undefined || chosen === null
+      ? ("settings" as const)
+      : ("session" as const);
+  return [
+    {
+      key: "interaction.verbosity",
+      value: choices.verbosity ?? settings.verbosity,
+      layer: layer(choices.verbosity),
+    },
+    ...MODALITIES.map((modality) => ({
+      key: `interaction.modalities.${modality}`,
+      value: choices[modality] ?? settings.modalities[modality],
+      layer: layer(choices[modality]),
+    })),
+  ];
+}
+
+/** Says `text` as the app core would; `assertive` for an error. */
+function say(text: string, assertive = false): void {
+  announced += 1;
+  emit({
+    event: "announcement",
+    seq: announced,
+    speech: text,
+    display: text,
+    class: "status",
+    assertive,
+    interrupt: false,
+    selfVoiced: false,
+    node: null,
+    muted: false,
+  });
+}
+
+/**
+ * `modality_toggle` as the app core does it (B03-T09): flips the effective value, refuses
+ * to leave no non-visual output (SNR-APP-094), and says what changed.
+ */
+function toggle(target: ToggleTarget) {
+  const now = (key: string) =>
+    effective().find((s) => s.key === `interaction.${key}`)?.value;
+  if (target === "verbosity") {
+    const next = now("verbosity") === "verbose" ? "terse" : "verbose";
+    settings = { ...settings, choices: { ...settings.choices, verbosity: next } };
+    say(next === "verbose" ? "Verbose announcements" : "Terse announcements");
+    return { reply: "effective" as const, settings: effective() };
+  }
+  const on = now(`modalities.${target}`) !== true;
+  const after = { ...settings.choices, [target]: on };
+  const audible = (["speech", "sonification", "braille"] as const).some(
+    (m) => (after[m] ?? settings.modalities[m]) === true,
+  );
+  if (!audible) {
+    say(
+      "Speech, sonification and braille cannot all be off. Turn another one on first.",
+      true,
+    );
+    throw new IpcFailure({
+      code: "SNR-APP-094",
+      message: "Speech, sonification and braille cannot all be off. Nothing was changed.",
+      hint: null,
+      pointer: null,
+    });
+  }
+  settings = { ...settings, choices: after };
+  if (target === "sonification") {
+    transport = { ...transport, muted: !on };
+  }
+  const name = {
+    speech: "Speech",
+    sonification: "Sonification",
+    braille: "Braille",
+    visual: "Visual highlight",
+  }[target];
+  say(`${name} ${on ? "on" : "off"}`);
+  return { reply: "effective" as const, settings: effective() };
+}
 
 const DEVICES = [
   { id: "speakers", name: "Speakers", isDefault: true },
@@ -266,6 +356,17 @@ const handlers: MockHandlers = {
     };
   },
   nav_where: () => ({ reply: "announce" as const, queued: true }),
+  modality_toggle: (request) => toggle(request.args.modality),
+  choices_reset: () => {
+    settings = { ...settings, choices: {} };
+    transport = { ...transport, muted: false };
+    say("Toggles reset to your profile's defaults.");
+    return { reply: "effective" as const, settings: effective() };
+  },
+  settings_effective: () => ({
+    reply: "effective" as const,
+    settings: effective(),
+  }),
   announce_repeat: () => ({ reply: "announce" as const, queued: true }),
   cursor_set: (request) => ({
     reply: "cursor" as const,
@@ -412,6 +513,16 @@ Reflect.set(window, "__SONARITHM_MOCK__", {
     return host.requests.flatMap((request) =>
       request.command === "nav_move" ? [JSON.stringify(request.args.verb)] : [],
     );
+  },
+  /** What the explorer's `modality_toggle` requests flipped, oldest first. */
+  toggles(): string[] {
+    return host.requests.flatMap((request) =>
+      request.command === "modality_toggle" ? [request.args.modality] : [],
+    );
+  },
+  /** The transport as the mock host holds it. */
+  transport(): TransportState {
+    return transport;
   },
   /** The settings as the UI last saved them. */
   settings(): Settings {

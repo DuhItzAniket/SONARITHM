@@ -114,6 +114,8 @@ fn requests(dir: &TempDir) -> Vec<Value> {
         json!({ "command": "profile_import", "args": { "path": exported } }),
         json!({ "command": "profile_flip_polarity", "args": { "field": "temp" } }),
         json!({ "command": "settings_effective" }),
+        json!({ "command": "modality_toggle", "args": { "modality": "visual" } }),
+        json!({ "command": "choices_reset" }),
         json!({ "command": "spec_quick", "args": { "dataset": "d1", "x": "day", "y": "temp" } }),
         json!({ "command": "cursor_set", "args": { "dataset": "d1", "row": 0, "origin": "table" } }),
         json!({ "command": "cursor_get" }),

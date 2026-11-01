@@ -528,6 +528,22 @@ fn as_value<T: Serialize>(value: T) -> Value {
     serde_json::to_value(value).unwrap_or(Value::Null)
 }
 
+/// The explorer's toggles as the explicit-UI-action layer's preferences (B03-T09).
+#[must_use]
+pub fn choices_layer(choices: &crate::settings::UiChoices) -> InteractionPrefs {
+    let modalities = ModalityPrefs {
+        sonification: choices.sonification,
+        speech: choices.speech,
+        braille: choices.braille,
+        visual: choices.visual,
+    };
+    InteractionPrefs {
+        verbosity: choices.verbosity,
+        modalities: Some(modalities),
+        ..InteractionPrefs::default()
+    }
+}
+
 /// The effective interaction preferences of `layers` (12 §3, ADR-0020 §3).
 #[must_use]
 #[expect(

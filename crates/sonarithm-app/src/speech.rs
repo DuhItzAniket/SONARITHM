@@ -134,6 +134,24 @@ impl Sequencer {
         self.queue.push(announcement, now_ms);
     }
 
+    /// An announcement while speech is off (B03-T09): it goes to the history and is
+    /// returned for the log, never spoken. Errors and alarms are queued as usual, since
+    /// they are never muted (INFER, OD-30); then `None`.
+    pub fn push_muted(&mut self, announcement: Announcement, now_ms: u64) -> Option<Delivery> {
+        if urgent(&announcement) {
+            self.queue.push(announcement, now_ms);
+            return None;
+        }
+        let mut quiet = announcement;
+        quiet.speak = false;
+        let seq = self.queue.push(quiet.clone(), now_ms);
+        Some(Delivery {
+            seq,
+            announcement: quiet,
+            interrupt: false,
+        })
+    }
+
     /// A point cue of `length` started at `now_ms`: speech waits for its end (§9.2 item 1).
     pub fn cue(&mut self, now_ms: u64, length: Seconds) {
         self.cue_end_ms = self.cue_end_ms.max(now_ms + millis(length));
@@ -330,6 +348,7 @@ pub(crate) fn info(delivery: &Delivery, self_voiced: bool) -> AnnouncementInfo {
         interrupt: delivery.interrupt,
         self_voiced,
         node: announcement.node.map(|node| node.0),
+        muted: false,
     }
 }
 

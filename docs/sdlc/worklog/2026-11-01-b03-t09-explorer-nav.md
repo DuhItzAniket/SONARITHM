@@ -65,6 +65,13 @@ None.
 - F1 in the explorer runs `help.explorer` (§5.4). The deferral note names L (legend) and Z and Shift+Z (zoom to node).
 - The palette test walked the list from the top for each command, with a check per key, which grew quadratically. It now presses straight to each command's position and checks once.
 
+## The modality toggles (2026-11-01)
+
+- Approved by the coordinator as an additive ADR-0017 command, on three conditions, all met: the choices persist as the explicit-UI-action layer (`Settings.choices` feeding `session_prefs`), never the base settings, with `choices_reset`; "Speech off" is queued before muting and "Speech on" after unmuting; and no toggle leaves speech, sonification and braille all off (`SNR-APP-094`, announced as an error so it is heard; INFER, OD-30).
+- Speech is muted where an announcement reaches the transport, not where it would be spoken, which is what makes the order work: "Speech off" is already queued. A muted announcement is still emitted, with `muted: true`, so the log keeps it; errors and alarms are never muted (INFER, OD-30: a safety choice with no cited rule; the queue policy only says errors are never dropped).
+- Sonification off sets the master to -120 dB (`TransportState.muted`). Visual off hides the plot's crosshair; the UI reads it from `settings_effective` and the toggles' replies. Braille off is read by the braille line (#453) through the effective modalities.
+- Tests: one Rust test per toggle's effect, the order of "Speech off" and "Speech on", persistence across a restart, the reset, and the lockout; E2E for the keys, the spoken change, the highlight and the refusal; a unit test for muted delivery.
+
 ## Next steps
 
 - PR (2): the Explorer component, keymap v0, the query menu, modality and verbosity toggles, E2E for every verb.

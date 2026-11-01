@@ -74,6 +74,11 @@ pub struct Settings {
     /// The active profile's ID (ADR-0020), if any.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub active_profile: Option<String>,
+    /// The explicit-UI-action layer (12 §3, ADR-0020 §3): what the explorer's toggles chose
+    /// (B03-T09). It sits on top of the profile, so a profile never overrides a toggle, and
+    /// it is kept here so the choices survive a restart; `choices_reset` clears it.
+    #[serde(default)]
+    pub choices: UiChoices,
     /// Which GPU the webview draws plots with (B04-T02, F-044). Read by the host when it
     /// starts, so a change applies after a restart.
     #[serde(default)]
@@ -93,6 +98,7 @@ impl Default for Settings {
             speech: SpeechSettings::default(),
             active_profile: None,
             gpu: GpuPreference::default(),
+            choices: UiChoices::default(),
         }
     }
 }
@@ -151,6 +157,29 @@ impl Settings {
         }
         Ok(())
     }
+}
+
+/// The choices made with the explorer's toggles (keyboard §5.5, B03-T09): each one, when
+/// set, overrides every lower layer. Unset means "as the profile has it".
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Serialize, Deserialize, TS)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+#[non_exhaustive]
+pub struct UiChoices {
+    /// Terse or verbose announcements (Shift+T).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub verbosity: Option<Verbosity>,
+    /// Speech and text announcements (T).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub speech: Option<bool>,
+    /// Sonification: point cues and playback (S).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub sonification: Option<bool>,
+    /// Braille output (B).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub braille: Option<bool>,
+    /// The visual highlight (V).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub visual: Option<bool>,
 }
 
 /// Audio output settings.

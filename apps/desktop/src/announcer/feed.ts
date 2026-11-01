@@ -11,13 +11,14 @@ export const LOG_LIMIT = 200;
 
 /**
  * Speaks one app-core announcement and returns what the log should show. A self-voiced
- * announcement was already spoken by SONARITHM, so it is only logged (A11Y-19).
+ * announcement was already spoken by SONARITHM, and a muted one came while speech was
+ * turned off (B03-T09), so both are only logged (A11Y-19).
  */
 export function deliver(
   info: AnnouncementInfo,
   announcer: RoutedAnnouncer,
 ): AnnouncementInfo {
-  if (!info.selfVoiced) {
+  if (!info.selfVoiced && !info.muted) {
     announcer.announce({ text: info.speech, assertive: info.assertive });
   }
   return info;

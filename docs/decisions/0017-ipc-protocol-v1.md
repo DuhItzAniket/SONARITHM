@@ -92,6 +92,7 @@ The app core computes it on the control thread when it builds the anchor, never 
 | 2026-10-30 | `outputLatencyS` added (B04-T04), citing ADR-0016 §"Per-device latency calibration"; approved by the coordinator, additive |
 | 2026-10-31 | `cursor_set`, `cursor_get` and the `cursor` event and channel added (B04-T06): Rust's one cursor, with an origin that decides what is spoken (INFER, OD-30); approved by the coordinator, additive |
 | 2026-11-01 | `nav_move`, `nav_where` and the `nav` reply added (B03-T09); `CursorState.node` may be any navigation node, `path` levels gain the axes, insights and filters levels, `CursorState.excluded` lists the filtered series and `TransportState.excludedTracks` the tracks playback leaves out; approved by the coordinator, additive |
+| 2026-11-01 | `modality_toggle` and `choices_reset` added (B03-T09), with `Settings.choices`, `AnnouncementInfo.muted` and `TransportState.muted`; speech, sonification and braille are never all off (`SNR-APP-094`), and errors and alarms are never muted (both INFER, OD-30); approved by the coordinator, additive |
 
 #### Cursor
 
@@ -154,6 +155,20 @@ Each change sends a `cursor` event with `origin: null`. A `cursor` event never m
 * Exports render the whole compiled Score: the filter is session state, not part of the spec or the project. While a series is excluded, starting an export announces "Export includes all series; exclusions apply to playback only" (`announce-export-all-series`), until the export dialog (B05-T05) says it. A spec-level filter can follow with `spec_apply` (B05-T01).
 
 **Point cue (A11Y-10, A11Y-20).** A move is to play the point's cue, then speak. The transport has no one-shot cue path yet, so the cue arrives in its own change, with a `cue` field added to `NavResult` then.
+
+#### Modality toggles
+
+> Amended 2026-11-01, B03-T09: `modality_toggle`, `choices_reset`, `Settings.choices`, `AnnouncementInfo.muted` and `TransportState.muted` added, approved by the coordinator, additive.
+
+**The explicit-UI-action layer (12 §3, ADR-0020 §3).** The explorer's toggles (keyboard §5.5) write the top layer of the effective interaction preferences, above the profile and the project, never the base settings, so no profile overrides them later. The layer is saved in the user settings as `Settings.choices` (`{ verbosity?, speech?, sonification?, braille?, visual? }`, each unset meaning "as the lower layers have it"), so it survives a restart (A11Y-10). `settings_effective` reports a chosen value with layer `session`.
+
+* `modality_toggle { modality }` flips the effective value of `speech`, `sonification`, `braille` or `visual`, or switches `verbosity` between terse and verbose, and replies `effective`.
+* `choices_reset` clears `Settings.choices`, back to the profile's values, and replies `effective`.
+* Each change is announced with `E-MODE`. "Speech off" is queued before speech goes off, and "Speech on" after it is back, so the change is always heard.
+
+**What each one does.** Speech off: announcements still go out on the `announcements` channel, for the log, with `muted: true`, and the UI does not speak them. Errors and alarms are never muted (INFER, OD-30): a design choice for safety, with no cited rule; the queue policy only says errors are never dropped (keyboard §9.1). Sonification off: the master is silent and `TransportState.muted` is `true`. Braille off: the braille line is empty. Visual off: the UI hides the plot's cursor highlight. The verbosity is the composer's.
+
+**No lockout (INFER, OD-30).** A toggle that would leave speech, sonification and braille all off is refused with `SNR-APP-094`, and the refusal is announced as an error, so it is heard whatever is off. Nothing changes. A blind listener cannot silence the app by accident; the screen-reader walkthrough checks it.
 
 #### Meter frames
 

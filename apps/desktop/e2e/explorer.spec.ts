@@ -12,10 +12,8 @@ import { seriousViolations } from "./axe.ts";
 interface Mock {
   navVerbs(): string[];
   commands(): string[];
-  settings(): {
-    verbosity: string;
-    modalities: Record<string, boolean>;
-  };
+  toggles(): string[];
+  transport(): { muted: boolean };
 }
 
 const host = (page: Page) =>
@@ -179,4 +177,67 @@ test("b03_t09_h_lists_the_explorer_keys_first", async ({ page }) => {
   await expect(reference).toBeVisible();
   await expect(reference).toContainText("Next at this level");
   await expect(reference).toContainText("Where am I");
+});
+
+// The toggles (keyboard §5.5): the app core flips the effective value, saves it and says
+// it; the mock host answers as the app core does (its Rust tests assert the effects).
+const polite = (page: Page) =>
+  page.locator('[data-announcer] [aria-live="polite"]');
+const assertive = (page: Page) =>
+  page.locator('[data-announcer] [aria-live="assertive"]');
+
+test("b03_t09_each_toggle_key_flips_its_modality_in_the_app_core", async ({
+  page,
+}) => {
+  await explorer(page).focus();
+  for (const key of ["b", "v", "Shift+T", "v", "b"]) {
+    await page.keyboard.press(key);
+  }
+  await expect
+    .poll(async () =>
+      (await host(page)).evaluate((mock) => mock.toggles()),
+    )
+    .toEqual(["braille", "visual", "verbosity", "visual", "braille"]);
+  // The base settings are not written: the choice is the app core's top layer.
+  const commands = await (await host(page)).evaluate((mock) =>
+    mock.commands(),
+  );
+  expect(commands).not.toContain("settings_set");
+});
+
+test("b03_t09_speech_off_is_said_before_it_goes_quiet", async ({ page }) => {
+  await explorer(page).focus();
+  await page.keyboard.press("t");
+  await expect(polite(page)).toHaveText("Speech off");
+  await page.keyboard.press("t");
+  await expect(polite(page)).toHaveText("Speech on");
+});
+
+test("a11y_10_the_highlight_follows_the_visual_toggle", async ({ page }) => {
+  const crosshair = page.locator("[data-plot-cursor]");
+  await explorer(page).focus();
+  await page.keyboard.press("ArrowRight");
+  await expect(crosshair).toHaveJSProperty("hidden", false);
+  await page.keyboard.press("v");
+  await expect(polite(page)).toHaveText("Visual highlight off");
+  await expect(crosshair).toHaveJSProperty("hidden", true);
+  await page.keyboard.press("v");
+  await expect(crosshair).toHaveJSProperty("hidden", false);
+});
+
+test("b03_t09_the_last_non_visual_output_cannot_be_turned_off", async ({
+  page,
+}) => {
+  // Braille is off in the mock host: speech off, then sonification off, leaves nothing.
+  await explorer(page).focus();
+  await page.keyboard.press("t");
+  await expect(polite(page)).toHaveText("Speech off");
+  await page.keyboard.press("s");
+  await expect(assertive(page)).toHaveText(
+    "Speech, sonification and braille cannot all be off. Turn another one on first.",
+  );
+  const muted = await (await host(page)).evaluate(
+    (mock) => mock.transport().muted,
+  );
+  expect(muted).toBe(false);
 });

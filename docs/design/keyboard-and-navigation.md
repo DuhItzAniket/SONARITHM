@@ -203,8 +203,11 @@ Each output modality toggles independently and shares the one cursor (A11Y-10). 
 | `mod.brailleMode` | Braille review line ↔ sparkline (A11Y-21) | Shift+B | View menu, palette |
 | `mod.visual` | Visual highlight on/off | V | View menu, palette |
 | `mod.haptics` | Haptics on/off (where hardware exists) | (unbound) | View menu, palette |
+| `mod.reset` | Reset the toggles to the profile's defaults | (unbound) | Palette |
 
-Turning speech off does not silence the screen reader; it stops SONARITHM sending announcements. Every toggle is announced with the mode-change earcon and written to the log.
+Turning speech off does not silence the screen reader; it stops SONARITHM sending announcements. Every toggle is announced with the mode-change earcon and written to the log: "Speech off" before speech goes quiet, "Speech on" after it returns.
+
+A toggle is an explicit choice, so it sits above the profile and the project and is saved with the user's settings (ADR-0017 "Modality toggles"); `mod.reset` returns to the profile's values. Speech, sonification and braille cannot all be off at once: the toggle that would do it is refused and the refusal is spoken (`SNR-APP-094`; INFER, OD-30). With speech off, errors and alarms are still spoken (INFER, OD-30).
 
 ### 5.6 Table view
 
@@ -479,4 +482,5 @@ Navigation is built on discrete commands (`nav.move(verb, direction)`), not on c
 | Date | Change | By |
 |---|---|---|
 | 2026-10-18 | v0 keymap, NavTree verb mapping, announcement templates, queue policy and earcon catalogue created. Not yet validated. | Kickoff |
+| 2026-11-01 | §5.5: the toggles' choices are saved over the profile, `mod.reset` added (palette only), the order of "Speech off" and "Speech on" fixed, the no-lockout rule added, and errors and alarms kept audible with speech off (both INFER, OD-30). Approved by the coordinator (B03-T09). | Lane U |
 | 2026-11-01 | KB-04's "no Alt+arrows" scoped to Windows and Linux: Alt+arrows are webview history in WebView2 and WebKitGTK only (WKWebView uses Cmd), and on macOS Option+arrows are Jump (KB-07). The keymap lint follows. Option+arrows with VoiceOver added to the B07 [CHECK] items. No default binding changed. Approved by the coordinator (B03-T09). | Lane U |

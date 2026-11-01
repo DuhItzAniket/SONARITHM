@@ -59,11 +59,14 @@ export function DatasetPlot({
   client,
   dataset,
   cursor,
+  highlight,
   announcer,
 }: {
   readonly client: Client;
   readonly dataset: DatasetSummary;
   readonly cursor: CursorState | null;
+  /** Show the cursor's crosshair: the effective visual modality (V, B03-T09). */
+  readonly highlight: boolean;
   readonly announcer: RoutedAnnouncer;
 }) {
   const t = useLocalizer();
@@ -285,7 +288,7 @@ export function DatasetPlot({
           x={tile.x}
           series={[{ label, values: tile.y }]}
           height={HEIGHT}
-          cursor={point}
+          cursor={highlight ? point : null}
           onZoom={show}
           onPick={(value) => {
             const at = nearest(tile.x, value);

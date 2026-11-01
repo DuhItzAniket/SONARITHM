@@ -417,6 +417,18 @@ pub const NAV_NO_TREE: CodeInfo = CodeInfo {
     status: CodeStatus::Active,
 };
 
+/// A toggle that would leave no non-visual output (B03-T09; INFER, OD-30).
+pub const MODALITY_LOCKOUT: CodeInfo = CodeInfo {
+    code: "SNR-APP-094",
+    severity: Severity::Error,
+    summary: "That would silence every output",
+    help: "Speech, sonification and braille cannot all be off: nothing would tell you what \
+           the app is doing. Turn another one on first, or reset the toggles to your \
+           profile's defaults. Nothing was changed.",
+    rules: &[],
+    status: CodeStatus::Active,
+};
+
 /// Every `SNR-APP` code, in ascending order.
 pub const CODES: CodeTable = CodeTable {
     area: Area::App,
@@ -461,6 +473,7 @@ pub const CODES: CodeTable = CodeTable {
         CORRECTIONS_NOT_HERE,
         CURSOR_ROW,
         NAV_NO_TREE,
+        MODALITY_LOCKOUT,
     ],
 };
 
