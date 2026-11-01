@@ -57,10 +57,9 @@ fn a11y_21_review_line_never_cuts_a_field() {
         let mut rest = body;
         let mut next = 0;
         while !rest.is_empty() {
-            let at = texts[next..]
-                .iter()
-                .position(|text| rest.starts_with(text))
-                .unwrap_or_else(|| panic!("{cells}: {line} has a cut field"));
+            let found = texts[next..].iter().position(|text| rest.starts_with(text));
+            assert!(found.is_some(), "{cells}: {line} has a cut field");
+            let at = found.unwrap_or(0);
             rest = rest[texts[next + at].len()..].trim_start();
             next += at + 1;
         }
