@@ -44,6 +44,10 @@ pub const SPEECH_RATE_RANGE: (f64, f64) = (WordsPerMinute::MIN.0, 1_000.0);
 /// The buffer sizes a user may request, in frames.
 pub const BUFFER_RANGE: (u32, u32) = (16, 8192);
 
+/// The calibrated output latencies a user may store, in seconds: a sanity bound on the
+/// setting (an output a second late is a broken device), not a research value.
+pub const LATENCY_RANGE_S: (f64, f64) = (0.0, 1.0);
+
 /// Every user setting (12 §3). Unknown fields are refused, so a typo is an error and not a
 /// silently ignored setting.
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize, TS)]
@@ -116,6 +120,19 @@ impl Settings {
                 format!("A buffer of {frames} frames is outside 16 to 8192 frames."),
             ));
         }
+        let (low, high) = LATENCY_RANGE_S;
+        if let Some(latency) = self
+            .audio
+            .calibrated_latency_s
+            .values()
+            .find(|latency| !(low..=high).contains(*latency))
+        {
+            // The device is not named: its ID can contain a person's name (rule 9).
+            return Err(IpcError::new(
+                &codes::SETTINGS_VALUE,
+                format!("A calibrated output latency of {latency} s is outside 0 to 1 s."),
+            ));
+        }
         let rate = self.speech.rate_wpm;
         if !(SPEECH_RATE_RANGE.0..=SPEECH_RATE_RANGE.1).contains(&rate) {
             return Err(IpcError::new(
@@ -147,6 +164,16 @@ pub struct AudioSettings {
     pub buffer_frames: Option<u32>,
     /// The sonification volume in dB, independent of the system volume (A11Y-15).
     pub volume_db: f64,
+    /// The measured output latency of each device, in seconds, by device ID (ADR-0016,
+    /// per-device latency calibration; B04-T04). For a device listed here, clock anchors
+    /// carry this instead of the backend's reported latency (ADR-0017 "Clock anchors").
+    ///
+    /// Privacy (ADR-0012, AGENTS rule 9): a device ID or name can contain a person's name
+    /// (a headset named after its owner), so this map lives only in the local settings
+    /// file. It is never written to logs, manifests, projects or exported diagnostics, and
+    /// no error message names a device from it.
+    #[serde(default)]
+    pub calibrated_latency_s: BTreeMap<String, f64>,
 }
 
 /// The UI theme (design-language §5).
@@ -655,6 +682,34 @@ mod tests {
         let error = store.save(&settings).err();
         assert_eq!(error.map(|e| e.code), Some("SNR-APP-013".to_owned()));
         assert!(!store.path().exists());
+    }
+
+    #[test]
+    fn b04_t04_a_latency_outside_range_is_refused_without_naming_the_device() {
+        let mut settings = Settings::default();
+        settings
+            .audio
+            .calibrated_latency_s
+            .insert("Ada's AirPods".to_owned(), 0.142);
+        assert!(settings.validate().is_ok());
+        settings
+            .audio
+            .calibrated_latency_s
+            .insert("Ada's AirPods".to_owned(), 2.5);
+        let error = settings.validate().err();
+        assert_eq!(error.as_ref().map(|e| e.code.as_str()), Some("SNR-APP-013"));
+        assert!(error.is_some_and(|e| !e.message.contains("Ada")));
+    }
+
+    #[test]
+    fn b04_t04_settings_without_latencies_still_load() {
+        let mut value = serde_json::to_value(Settings::default()).unwrap();
+        value["audio"]
+            .as_object_mut()
+            .unwrap()
+            .remove("calibratedLatencyS");
+        let settings: Settings = serde_json::from_value(value).unwrap();
+        assert!(settings.audio.calibrated_latency_s.is_empty());
     }
 
     #[test]

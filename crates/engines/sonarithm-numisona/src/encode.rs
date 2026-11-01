@@ -298,8 +298,21 @@ struct Run<'a> {
 struct Timeline {
     rows: Vec<usize>,
     onsets: Vec<f64>,
-    /// The nominal step between points, used to hold a glide's last value.
+    /// The nominal step between points, used to hold a glide's last value: the spacing
+    /// of `pointsPerSecond` and `duration`, and for `secondsPerUnit` the mean spacing of
+    /// the onsets (#440; one unit only when there is a single point).
     step: f64,
+}
+
+/// The mean gap between consecutive sorted values, `None` with fewer than two values or no
+/// span. Under `secondsPerUnit` a glide holds its last value this many time-field units,
+/// as it holds one point's spacing under the other paces (#440).
+#[expect(clippy::cast_precision_loss, reason = "row counts stay far below 2^52")]
+fn mean_spacing(values: &[f64]) -> Option<f64> {
+    let (first, last) = (*values.first()?, *values.last()?);
+    let gaps = values.len().checked_sub(1).filter(|&gaps| gaps > 0)?;
+    let span = last - first;
+    (span > 0.0).then(|| span / gaps as f64)
 }
 
 /// A channel's values in output units, one per row in play order.
@@ -588,10 +601,10 @@ impl Run<'_> {
             Pace::SecondsPerUnit(seconds) => {
                 if let Some(keys) = &keys {
                     let first = keys.first().copied().unwrap_or(0.0);
-                    (
-                        keys.iter().map(|x| (x - first) * seconds).collect(),
-                        seconds,
-                    )
+                    // The mean gap in time-field units, then in seconds, so data one unit
+                    // apart keeps a step of exactly `seconds`.
+                    let step = mean_spacing(keys).map_or(seconds, |units| units * seconds);
+                    (keys.iter().map(|x| (x - first) * seconds).collect(), step)
                 } else {
                     let message = "`secondsPerUnit` needs a numeric time field; each row counts as one unit instead.";
                     self.report(

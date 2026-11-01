@@ -18,6 +18,7 @@
 //! swapped in while playing, the playhead is kept within a band behind the newest data
 //! ([`crate::live::LAG`]), and playback does not stop at a Score's end.
 
+use std::collections::BTreeMap;
 use std::sync::Arc;
 use std::sync::mpsc::{self, Receiver, RecvTimeoutError, Sender};
 use std::thread::JoinHandle;
@@ -105,6 +106,8 @@ pub(crate) struct OutputConfig {
     pub(crate) device: Option<String>,
     pub(crate) buffer_frames: Option<u32>,
     pub(crate) volume_db: f64,
+    /// Measured output latencies by device ID, in seconds (ADR-0016).
+    pub(crate) calibrated_latency_s: BTreeMap<String, f64>,
     pub(crate) speech: SequencerConfig,
 }
 
@@ -358,6 +361,9 @@ struct Control<B: AudioBackend, F: Fn() -> B> {
     speaker: Option<Result<Box<dyn Speaker>, ()>>,
     /// Words for device changes and losses (HS-05); `None` if the catalogue failed to load.
     localizer: Option<Localizer>,
+    /// The ID of the device the open player uses, for its calibrated latency (ADR-0016).
+    /// Kept on the control thread only, like the settings it comes from (rule 9).
+    opened_device: Option<String>,
     /// The sequencer's clock.
     epoch: Instant,
 }
@@ -394,6 +400,7 @@ impl<B: AudioBackend, F: Fn() -> B> Control<B, F> {
             meters: Pacer::new(METER_PERIOD),
             meter_seq: 0,
             metering: false,
+            opened_device: None,
         }
     }
 
@@ -537,6 +544,7 @@ impl<B: AudioBackend, F: Fn() -> B> Control<B, F> {
     fn configure(&mut self, config: OutputConfig) {
         let reopen = config.device != self.config.device
             || config.buffer_frames != self.config.buffer_frames;
+        let latencies_changed = config.calibrated_latency_s != self.config.calibrated_latency_s;
         let volume = config.volume_db;
         let volume_changed = (volume - self.config.volume_db).abs() > f64::EPSILON;
         self.sequencer.set_config(config.speech);
@@ -551,8 +559,15 @@ impl<B: AudioBackend, F: Fn() -> B> Control<B, F> {
             self.close();
             self.model.device = None;
             self.anchor();
-        } else if volume_changed && let Some(player) = &mut self.player {
-            player.send(Command::SetGain(GainTarget::Master, Db(volume)));
+        } else {
+            if volume_changed && let Some(player) = &mut self.player {
+                player.send(Command::SetGain(GainTarget::Master, Db(volume)));
+            }
+            // A new calibration moves the playhead at once (B04-T04).
+            if latencies_changed && self.player.is_some() {
+                self.opened_device = self.opened_device_id();
+                self.anchor();
+            }
         }
     }
 
@@ -664,6 +679,7 @@ impl<B: AudioBackend, F: Fn() -> B> Control<B, F> {
             .unwrap_or_default();
         self.rate = SampleRate::new(rate).unwrap_or(SampleRate::HZ_48000);
         self.model.device = Some(device);
+        self.opened_device = self.opened_device_id();
         self.player = Some(player);
         if self.model.position_s > 0.0 {
             self.seek_engine(self.model.position_s);
@@ -882,6 +898,25 @@ impl<B: AudioBackend, F: Fn() -> B> Control<B, F> {
         }
         self.model.xruns_closed = self.model.xruns;
         self.player = None;
+        self.opened_device = None;
+    }
+
+    /// The ID of the device just opened: the chosen one, or the system default's from the
+    /// device list. The list is read only when some latency is stored, on the control
+    /// thread when the device opens, never in the audio callback.
+    fn opened_device_id(&self) -> Option<String> {
+        if self.config.calibrated_latency_s.is_empty() {
+            return None;
+        }
+        if let Some(id) = &self.config.device {
+            return Some(id.clone());
+        }
+        (self.make)()
+            .devices()
+            .ok()?
+            .into_iter()
+            .find(|device| device.is_default)
+            .map(|device| device.id)
     }
 
     /// In live mode, where the playhead belongs when `position` has left the band behind
@@ -1019,14 +1054,21 @@ impl<B: AudioBackend, F: Fn() -> B> Control<B, F> {
             .as_mut()
             .and_then(|player| player.state().host_time)
             .map(|time| time.as_secs_f64());
-        // No stored calibration yet (ADR-0016's stored offsets are a follow-up): the
-        // backend's reported latency, or none.
-        let output_latency_s = self
-            .player
+        // The open device's calibrated latency (ADR-0016), else the backend's reported
+        // latency, else none (ADR-0017 "Clock anchors").
+        let calibrated = self
+            .opened_device
             .as_ref()
-            .and_then(|player| player.stream())
-            .and_then(|stream| stream.latency().reported)
-            .map(|latency| latency.as_secs_f64());
+            .and_then(|id| self.config.calibrated_latency_s.get(id))
+            .copied()
+            .filter(|_| self.player.is_some());
+        let output_latency_s = calibrated.or_else(|| {
+            self.player
+                .as_ref()
+                .and_then(|player| player.stream())
+                .and_then(|stream| stream.latency().reported)
+                .map(|latency| latency.as_secs_f64())
+        });
         self.sink.emit(Event::Clock(ClockAnchor {
             transport: self.state(),
             host_time_s,

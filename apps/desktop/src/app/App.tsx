@@ -18,6 +18,7 @@ import { useLocalizer } from "../i18n.ts";
 import { Preferences } from "../preferences/Preferences.tsx";
 import { TransportBar } from "../transport/TransportBar.tsx";
 import { CursorReadout } from "../cursor/CursorReadout.tsx";
+import { DatasetPlot } from "../plot/DatasetPlot.tsx";
 import { useCursor } from "../cursor/useCursor.ts";
 import { DatasetTable } from "../table/DatasetTable.tsx";
 import { useTransport } from "../transport/useTransport.ts";
@@ -159,7 +160,17 @@ export function App({
               <Tab id="table">{t.format("ui-tab-table")}</Tab>
               <Tab id="spec">{t.format("ui-tab-spec")}</Tab>
             </TabList>
-            <TabPanel id="plot">{startText}</TabPanel>
+            <TabPanel id="plot">
+              {client !== null && dataset !== null ? (
+                <DatasetPlot
+                  client={client}
+                  dataset={dataset}
+                  cursor={cursor}
+                />
+              ) : (
+                startText
+              )}
+            </TabPanel>
             <TabPanel id="table">
               {client !== null && dataset !== null ? (
                 <DatasetTable

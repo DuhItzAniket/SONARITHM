@@ -54,6 +54,23 @@ function focusedCell(
   return { row: rowIndex - 2, column: Number.isInteger(column) ? column : 1 };
 }
 
+/**
+ * Scrolls row `row` (0-based, in a window of `count` rows) near the top of the grid, so the
+ * virtualizer renders it. Scrolling never moves the focus.
+ */
+function scrollToRow(element: HTMLElement, count: number, row: number): void {
+  const grid = element.querySelector<HTMLElement>('[role="grid"]');
+  const scroller = [grid, element].find(
+    (candidate) =>
+      candidate !== null && candidate.scrollHeight > candidate.clientHeight,
+  );
+  if (scroller !== undefined && scroller !== null) {
+    // Row height is the compact row (DataTable); the header takes one row.
+    const rowPx = scroller.scrollHeight / (count + 1);
+    scroller.scrollTop = Math.max(0, (row - 1) * rowPx);
+  }
+}
+
 /** Waits for the next frame, so the virtualizer has rendered what a scroll exposed. */
 function frame(): Promise<void> {
   return new Promise((resolve) => {
@@ -169,16 +186,7 @@ export function DatasetTable({
     }
     pendingFocus.current = null;
     const row = target.row === "last" ? window.rows.length - 1 : target.row;
-    const grid = element.querySelector<HTMLElement>('[role="grid"]');
-    const scroller = [grid, element].find(
-      (candidate) =>
-        candidate !== null && candidate.scrollHeight > candidate.clientHeight,
-    );
-    if (scroller !== undefined && scroller !== null) {
-      // Row height is the compact row (DataTable); the header takes one row.
-      const rowPx = scroller.scrollHeight / (window.rows.length + 1);
-      scroller.scrollTop = Math.max(0, (row - 1) * rowPx);
-    }
+    scrollToRow(element, window.rows.length, row);
     void (async () => {
       for (let attempt = 0; attempt < 5; attempt += 1) {
         await frame();
@@ -283,6 +291,22 @@ export function DatasetTable({
     focusInside,
     load,
   ]);
+
+  // A cursor moved elsewhere scrolls its row into view, while the focus is outside the
+  // table; scrolling is not a focus move.
+  useEffect(() => {
+    const element = container.current;
+    if (
+      element === null ||
+      window === null ||
+      selectedPosition < 0 ||
+      cursor?.origin === "table" ||
+      focusInside
+    ) {
+      return;
+    }
+    scrollToRow(element, window.rows.length, selectedPosition);
+  }, [window, selectedPosition, cursor?.seq, cursor?.origin, focusInside]);
 
   // Sends the focused row as the cursor (origin `table`) whenever the focus lands on
   // another row: the focus moves, the cursor follows (keyboard §5.6).

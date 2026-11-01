@@ -104,6 +104,14 @@
 
 - #419's frontend-browser job failed in `dense.perf.ts`: the test ran past Vitest's 15 s browser timeout, because 60 software-rendered redraws of a million points were too slow on that runner, and no trace was written. No budget check failed; the test only records. Measuring now stops after 8 s (`cutShort` in the report), the test timeout is 120 s, and it still fails if nothing draws. Not run locally (the builder and browser slots were others'); CI runs it.
 
+## B04-T04 (b): stored latencies (2026-10-31)
+
+- `audio.calibratedLatencyS`: a map from device ID to seconds, `#[serde(default)]` so older files load. A range error does not name the device.
+- The stream knows the device's name, not its ID, so the control thread records the opened ID when it opens the device (the chosen ID, or the default's from the device list, read only when a latency is stored) and drops it on close. A settings change recomputes it and sends an anchor at once.
+- **Model.** The stored value replaces the backend's estimate (ADR-0016: "instead of trusting the backend's reported latency"). The unused `LatencyCalibration` in `sonarithm-audio` describes an offset added to the prediction instead. F-178 records the difference; that type is unchanged.
+- Privacy test: a project saved after storing a latency for "Ada's AirPods" has neither the name nor the value in any member.
+- The code was written while the builder slot was CURVASONA's. The Rust build, codegen and tests ran once the slot was handed over.
+
 ## B04-T06 (1): the one cursor (2026-11-01)
 
 - **Contract, approved with five conditions.**
@@ -116,6 +124,25 @@
 - **Gap.** The app core has no point-cue builder, so a cursor move plays no cue yet (B03-T09, B03-T12).
 - **UI.** `useCursor` (`cursor_get`, then events, newest `seq` wins). `CursorReadout` with `@sonarithm/ui`'s new `Breadcrumbs`: only the current level is a link, with `aria-current="page"`, and the separators are CSS. The table sends `cursor_set` on `focusin` and shows the cursor row selected. A cursor in another window loads it only when the focus is outside the table. Table rows now carry `__snr_row`, so a sorted table still names the dataset row.
 - Locally, between low-memory pauses: codegen, clippy and all 134 `sonarithm-app` tests, `sonarithm-i18n` 25, the frontend typecheck, lint and unit tests, the Breadcrumbs and DataTable stories, and all 39 Chromium E2E tests. The first cursor test caught an empty `cursor` event on the session's first command; the model now starts as "no cursor, already sent". The E2E caught that a cursor's window never loaded after the focus left the table: whether the focus is inside is now state, so leaving re-runs the load.
+
+## B04-T06 (2): the plot and its crosshair (2026-11-01)
+
+- `Plot` gains `cursor` and `onPick`. The crosshair and the ring live in uPlot's overlay, placed with `valToPos` and moved by transform, so a cursor move redraws nothing. The click is a native listener on the overlay, so the image gets no JSX handler. The design system has no full radius, so the ring is a square with `--radius-1`.
+- `DatasetPlot` with `axesOf` (the first temporal or numeric field, then the next numeric one) and `nearest` (binary search over the tile's x). M4 keeps some rows only, so a cursor row outside the tile reads its values from a one-row `table_page`.
+- **What the E2E caught.** In the virtualized table, the cursor's row could be loaded but scrolled out of the DOM. A cursor moved elsewhere now scrolls its row into view (never the focus) while the focus is outside the table.
+- **Pseudo-locale.** The test forbids unaccented letters in the output, and the `axis` sample is the letter "x", so the plot's label takes the x header as `text`.
+- Locally: desktop 43 unit tests, all 40 Chromium E2E tests, `cursor.spec.ts` in WebKit (3), the Plot stories, `sonarithm-i18n` 25 and the TypeScript i18n 9.
+
+## Smoke run watchdog (2026-11-01)
+
+- #436's Linux smoke step timed out after 5 minutes without a report. The log ends at WebKit's usual libEGL warnings, so nothing showed whether a check hung or the page never loaded.
+- `public/smoke-guard.js` (classic, before the modules) reports a page error before the run starts, or no start within 60 s. `runSmoke` gains a 120 s watchdog that names the check still waiting. The normal path is unchanged; CI exercises it, since a smoke run needs the desktop build.
+
+## POSIX "C" locale crash (2026-11-01)
+
+- The smoke watchdog's first report: "page error before the smoke run started: RangeError: invalid language tag: C". CI's Linux runner has `LANG=C`, and WebKitGTK reports the process locale as `navigator.language`. uPlot 1.6.32 runs `new Intl.NumberFormat(navigator.language)` at module scope (`uPlot.esm.js:442`), so the page stopped before any of our code ran. Real Linux users with `LANG=C` or `POSIX` would hit it too.
+- `normalizeLocale` in `@sonarithm/i18n` drops `.encoding` and `@modifier`, turns `_` into `-`, maps C and POSIX to the fallback, and canonicalizes with `Intl.getCanonicalLocales` (the fallback for anything it rejects). `createLocalizer` uses it. The desktop's first import, `src/locale.ts`, replaces an invalid `navigator.language` and `languages` before any other module runs. ES modules evaluate their imports in order.
+- Tests: the i18n cases asked for (C, C.UTF-8, POSIX, en_US.UTF-8, de_DE@euro) and more; `fixNavigatorLocale` with fakes. An E2E sets `navigator.language` to "C" before the page loads. Without the fix it reproduces CI's `RangeError`; with it the app starts and the plot draws, in Chromium and WebKit. The Rust side uses a fixed `en-US` and needed no change. A Node test loads the real uPlot module with `navigator.language` "C": a `RangeError` without the shim, a clean load with it. Recorded as F-210 (the coordinator gave Lane U F-210–219), which names uPlot's module-scope `Intl` as a possible upstream report for the owner.
 
 ## Next steps
 

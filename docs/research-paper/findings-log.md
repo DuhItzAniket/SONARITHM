@@ -1016,6 +1016,14 @@ A05 (render engine, audio backends, export) uses F-050 to F-069.
 - **Affects:** C02-T09, A11Y-02, A11Y-12, A11Y-24, FR-008, OD-07, H-06
 - **Papers:** none yet
 
+### F-199 · CURVASONA's canonical form put a negative divisor in parentheses, which made it deeper than its source
+
+- **Date:** 2026-11-01 · **Phase:** C03 · **Type:** engineering (robustness) · **Status:** new
+- **Statement:** The fuzz target `expr_parse` (CI job 124637048464, on #429) found an expression that parses but whose canonical form does not: `4-x/` followed by 32 unary minuses and `4-1`. The parser counts one level of nesting per unary minus, so the input sits exactly at the depth limit of 32. The printer wrapped any negative divisor in parentheses (`x/(-4)`), although ADR-0028's grammar reads a divisor as a unary expression, so `x/-4` already means `x/(-4)`; the added parentheses were a 33rd level, and the canonical form failed with `SNR-ENG-402`. A divisor now prints with the multiplier's rule, so `x/-4` stays `x/-4` and the printer adds parentheses only where the grammar needs them, which the source text must then also have had. ADR-0028's grammar is unchanged; only the canonical spelling of a negative divisor changes.
+- **Evidence:** `crates/engines/sonarithm-curvasona/src/expr.rs` (`Node::print`); the test `f_199_a_divisor_at_the_depth_limit_reads_back`; the corpus seed `seed-regression-divisor-depth.txt`, replayed by `tests/fuzz_regressions.rs` on every run
+- **Evidence level / confidence:** EV-D / Strong (a reproduced fuzz failure, with a regression test)
+- **Affects:** C03-T01 (the expression facade), ADR-0028's canonical form
+
 ### F-198 · An unboxed `Expr` was 19 KB, and sampling a function overflowed the CLI's 1 MB main-thread stack in debug builds
 
 - **Date:** 2026-11-01 · **Phase:** C03 · **Type:** engineering (robustness) · **Status:** new
@@ -1032,6 +1040,7 @@ A05 (render engine, audio backends, export) uses F-050 to F-069.
 - **Evidence:** `crates/sonarithm-compiler/src/pipeline.rs` (`add_context`); `crates/sonarithm/src/api.rs` (`uses_curvasona`); the test `specs_that_do_not_use_curvasona_compile_without_it`
 - **Evidence level / confidence:** EV-D / Strong (code reading, with a test)
 - **Affects:** C03-T07, the facade's default engines, every later engine with a context provider
+
 - **Papers:** none yet
 
 ### F-196 · An audification without `k` or `band` needs a target band, and no study gives one
@@ -1053,6 +1062,14 @@ A05 (render engine, audio backends, export) uses F-050 to F-069.
 - **Affects:** RFC-0007 §3, 06 (audifier row), C03-T05, C03-T06
 - **Papers:** none yet
 
+### F-194 · A zero of a guard exactly on a grid point hid a second zero in the next grid step
+
+- **Date:** 2026-10-31 · **Phase:** C03 · **Type:** engineering (correctness) · **Status:** new
+- **Statement:** The property test `poles_and_holes_are_never_missed` failed on an unrelated PR's CI run (41224538690): with a pole at x = 0 and a hole at b in (0, 4), on the coarsest grid -4, 0, 4, the scan found the pole and missed the hole. The guard `x(x - b)` is exactly 0 at the grid point 0 and positive at -4 and 4, so the second zero has no sign change on the grid, and the dip search skipped grid points where the guard is 0. The zero finder of `critical` shared the gap (`x*(x - 1)` on the same grid). Both intervals beside an exact zero are now searched like a dip. Searching beside an exact zero then found some features a float step from a grid point, so the source added near-duplicate rows: extra breakpoints in a glide (the `a_parabola_score_snapshot` diff, which was refused rather than accepted) and an inflection hidden from the analyzer's recompute by two rows at almost the same x. Rows within 1e-9 of the domain width are now one row, keeping a pole or hole, else the grid point; duplicate features are merged within each kind; and a run of undefined samples within a float step of a pole or hole counts as that point. Earlier random runs passed because an exact zero on the grid needs a pole at a grid point, which proptest's shrinking towards 0 finds and uniform sampling rarely does.
+- **Evidence:** `crates/engines/sonarithm-curvasona/src/scan/tests.rs` (`a_zero_on_the_grid_does_not_hide_a_second_one_beside_it`), `src/critical/tests.rs` (`a_zero_on_the_grid_does_not_hide_its_neighbour`); `scan::dips`
+- **Evidence level / confidence:** EV-C / Strong (reproduced)
+- **Affects:** C03-T02, C03-T03 (fixed in this PR)
+
 ### F-193 · NUMISONA's glide `src` ranges include their last row, against `RowRange`'s one-past-the-end contract
 
 - **Date:** 2026-10-31 · **Phase:** C03 · **Type:** engineering (correctness) · **Status:** new
@@ -1060,6 +1077,7 @@ A05 (render engine, audio backends, export) uses F-050 to F-069.
 - **Evidence:** `crates/engines/sonarithm-curvasona/src/cues.rs` (`row_times`); a compile of `1/(x^2 - 4)` with 401 samples gives glides with `src` 0..120, 121..280, 281..401 and 121, 160, 121 breakpoints; `crates/sonarithm-core/src/ids.rs` (`RowRange::end`)
 - **Evidence level / confidence:** EV-C / Strong (reproduced)
 - **Affects:** NUMISONA's glide encoder (A06), every reader of `Glide::src`, C03-T04
+
 - **Papers:** none yet
 
 ### F-192 · exmex's symbolic derivatives overflow the stack on allowed input, so CURVASONA differentiates on its own tree
@@ -1112,6 +1130,14 @@ A05 (render engine, audio backends, export) uses F-050 to F-069.
 - **Affects:** B04-T05, A11Y-03, A11Y-24, FR-046, keyboard-and-navigation §5.6, 09 §3; B04-T06 (the focused row as the shared cursor)
 - **Papers:** none yet
 
+### F-178 · Two meanings of "latency calibration" in the code: a replacement and an added offset
+
+- **Date:** 2026-10-31 · **Phase:** B04 · **Type:** engineering · **Status:** new
+- **Statement:** ADR-0016 says the calibration is used for the playhead "instead of trusting the backend's reported latency", and ADR-0017's `outputLatencyS` takes the calibrated latency in place of the backend's. A05's `sonarithm_audio::LatencyCalibration`, which no code uses, instead stores an offset *added* to the engine's predicted time. B04-T04 stores the measured total output latency per device (`audio.calibratedLatencyS`) and uses it as a replacement. A loopback self-test (A05, Windows) must therefore report the total latency, the key-press-to-onset value of ADR-0016's confirmation step 3, not the difference from cpal's estimate.
+- **Evidence:** `crates/sonarithm-audio/src/calibration.rs` (`heard_at` adds the offset); `crates/sonarithm-app/src/transport.rs` (`anchor`); ADR-0016 §Decision
+- **Evidence level / confidence:** EV-C / Strong (source)
+- **Affects:** ADR-0016 confirmation step 3; a future loopback self-test that fills the setting; `LatencyCalibration` (to retire or re-document when the self-test lands)
+
 ### F-185 · The render manifest refuses unknown fields, so even an optional field needs a new manifest version
 
 - **Date:** 2026-10-31 · **Phase:** C02 · **Type:** engineering · **Status:** new
@@ -1119,4 +1145,29 @@ A05 (render engine, audio backends, export) uses F-050 to F-069.
 - **Evidence:** `crates/sonarithm-export/src/manifest.rs` (`deny_unknown_fields`, `MANIFEST_VERSION`); `crates/sonarithm-export/tests/manifest.rs` (`manifest_version_2_records_experiments_and_version_1_still_reads`); RFC-0006 §4 and Q6
 - **Evidence level / confidence:** EV-C / Strong (code and test)
 - **Affects:** ADR-0013, RFC-0006, ADR-0027, 06 §7; RFC template ("Affects" should name reader strictness)
+- **Papers:** none yet
+
+### F-210 · A POSIX "C" locale stopped the desktop app before its code ran
+
+- **Date:** 2026-11-01 · **Phase:** B04 · **Type:** engineering (portability) · **Status:** new
+- **Statement:** On CI's Linux runner (`LANG=C`), the desktop smoke run hung until the step limit. The smoke watchdog (#436) then reported "page error before the smoke run started: RangeError: invalid language tag: C". WebKitGTK reports the process locale as `navigator.language`, and uPlot 1.6.32 runs `new Intl.NumberFormat(navigator.language)` at module scope (`dist/uPlot.esm.js:442`). "C" is not a BCP 47 tag, so loading uPlot threw, and with it the whole module graph, before any SONARITHM code ran. Any Linux user with `LANG=C` or `POSIX` would hit it; Windows and macOS report valid tags.
+- **Fix:** `normalizeLocale` (`@sonarithm/i18n`) maps C and POSIX (with any `.encoding` or `@modifier`) and anything `Intl.getCanonicalLocales` rejects to the fallback locale, and turns POSIX names such as `en_US.UTF-8` into tags. `createLocalizer` uses it. The desktop's first import (`apps/desktop/src/locale.ts`) replaces an invalid `navigator.language` and `languages` before any other module runs.
+- **Evidence:**
+  - `packages/i18n/test/locale.test.ts`
+  - `apps/desktop/test/locale.test.ts`
+  - `apps/desktop/test/uplot-locale.test.ts`, which loads uPlot with `navigator.language` "C": a `RangeError` without the shim, a clean load with it.
+  - `apps/desktop/e2e/locale.spec.ts`, which reproduces CI's error without the fix and passes with it, in Chromium and WebKit.
+  - #436's smoke-run report.
+- **Evidence level / confidence:** EV-C / Strong (reproduced and fixed). The WebKitGTK behaviour is inferred from the CI report; TODO(verify) on a desktop Linux with `LANG=C` (HP-02).
+- **Upstream:** uPlot's module-scope `Intl.NumberFormat(navigator.language)` (1.6.32, `uPlot.esm.js:442`) could be reported upstream: guard the tag, or create the formatter lazily. Whether to open a public issue is the owner's decision.
+- **Affects:** B04-T06, any library that reads `navigator.language` at import; 12 §5 (locales); B07-T07 (the locale setting must pass through `normalizeLocale`)
+- **Papers:** none yet
+
+### F-220 · A glide paced by `secondsPerUnit` held its last value for a whole time-field unit, not one point's spacing
+
+- **Date:** 2026-11-01 · **Phase:** C03 (found), A06 code · **Type:** engineering · **Status:** new
+- **Statement:** NUMISONA holds a glide's last value for one step between points, so the last value is heard (A06-T04, #151). Under `pointsPerSecond` and `duration` that step is the spacing, 1/rate or duration/n. Under `secondsPerUnit` the encoder used one unit of the time field instead, which equals the spacing only when points sit one unit apart. A CURVASONA function sampled 1003 times over x = −3…3 at 4/3 s per unit therefore ended at 9.333 s, a whole unit (1.333 s) after its last point at 8 s (#440). The hold is now the mean spacing of the points in time-field units times the seconds per unit (one unit for a single point), so that glide ends about 8 ms after its last point (computed, 6/1002 × 4/3 s). The spacing is taken in units before scaling, so data one unit apart keeps a hold of exactly one unit. Nothing in the replication gallery, the golden-audio cases or the Score snapshots changed. Notes were never affected: a note's length is its `duration` channel. No doc or ADR had defined a one-unit hold; doc 07 (NUMISONA) now states the rule for every pace.
+- **Evidence:** `crates/engines/sonarithm-numisona/tests/encode.rs` (`glides_hold_one_point_spacing_under_seconds_per_unit`); `cargo xtask replication` (all 86 generated files match) and `cargo xtask golden` (every case identical) after the fix; #440
+- **Evidence level / confidence:** EV-C / Strong (code and tests)
+- **Affects:** 07 NUMISONA (timing), RFC-0001 §5 pace (`secondsPerUnit`), #441 (CURVASONA's function specs on x-linear time, which this unblocks)
 - **Papers:** none yet

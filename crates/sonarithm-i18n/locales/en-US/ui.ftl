@@ -117,6 +117,11 @@ ui-cursor-step =
 # The cursor's row in the dataset's own order, from 1; $index is a number.
 ui-cursor-row = Data row { $index }
 ui-cursor-none = No row is selected.
+# The Plot tab's image name and description (A11Y-01): $field is the y column's header and $text
+# the x column's; $name is the dataset and $total its row count.
+ui-plot-label = { $field } against { $text } in { $name }
+ui-plot-description = { $total } rows. The Table tab lists every value, and the cursor readout gives the selected row.
+ui-plot-no-fields = This dataset has no two numeric fields to plot.
 
 ## Application frame (B02-T06; design-language §4, keyboard-and-navigation §3).
 
@@ -143,6 +148,9 @@ ui-output-device = Output device
 ui-system-default-device = System default
 ui-sonification-volume = Sonification volume
 ui-volume-note = Sets the level of SONARITHM's sound only; the system volume does not change.
+# ADR-0016, B04-T04: a latency measured for the selected device, used for the playhead.
+ui-output-latency = Measured output latency
+ui-output-latency-note = For the selected device, from a loopback or cable test. The playhead uses it instead of the system's estimate; leave it empty to use the estimate.
 ui-display = Display
 ui-gpu-high-performance = Use the high-performance GPU for plots
 ui-gpu-restart-hint = Takes effect after a restart.

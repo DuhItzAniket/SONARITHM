@@ -17,8 +17,12 @@
 import { FluentBundle, FluentNumber, FluentResource } from "@fluent/bundle";
 import type { FluentVariable } from "@fluent/bundle";
 
+import { normalizeLocale } from "./locale.ts";
+
 /** The locale every message is written in first. */
 export const SOURCE_LOCALE = "en-US";
+
+export { normalizeLocale };
 /** The pseudo-locale: English text, accented, padded and marked. */
 export const PSEUDO_LOCALE = "en-XA";
 /** Opens every message in the pseudo-locale. */
@@ -158,9 +162,11 @@ function toFluent(name: string, arg: MessageArg): FluentVariable {
  * @throws {LocalizationError} if a source does not parse or defines a message twice.
  */
 export function createLocalizer(
-  locale: string,
+  requested: string,
   sources: readonly string[],
 ): Localizer {
+  // A system locale such as "C" or "en_US.UTF-8" is not a tag Intl or Fluent accept.
+  const locale = normalizeLocale(requested, SOURCE_LOCALE);
   const pseudo = locale === PSEUDO_LOCALE;
   // Bidi isolation marks are off, as in Rust: they reach speech synthesizers as
   // characters, and full right-to-left support is post-1.0 (12 §5).

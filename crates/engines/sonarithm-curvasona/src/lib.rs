@@ -360,13 +360,21 @@ fn report(
 /// instead of sweeping across an asymptote (C03-T02), and one at each zero, extremum and
 /// inflection, so the glide passes through it and its insight lands on it (C03-T03).
 fn with_feature_rows(grid: &[f64], scan: &Scan, features: &[Feature]) -> Vec<f64> {
-    let mut xs = grid.to_vec();
+    // Rows closer than the tolerance are one row: a feature found a float step from a grid
+    // point (or from a pole) must not add a near-duplicate row, which would put an extra
+    // breakpoint in the glide and hide the feature from the analyzer's recompute. The row
+    // kept is the pole or hole if there is one (its row stays empty), else the grid point.
+    let (Some(&min), Some(&max)) = (grid.first(), grid.last()) else {
+        return grid.to_vec();
+    };
+    let tolerance = 1e-9 * (max - min).abs().max(f64::MIN_POSITIVE);
+    let mut rows: Vec<(f64, u8)> = grid.iter().map(|&x| (x, 1)).collect();
     for singularity in &scan.singularities {
         if matches!(
             singularity.kind,
             SingularityKind::Pole | SingularityKind::Hole
         ) {
-            xs.push(singularity.x);
+            rows.push((singularity.x, 0));
         }
     }
     for feature in features {
@@ -377,12 +385,22 @@ fn with_feature_rows(grid: &[f64], scan: &Scan, features: &[Feature]) -> Vec<f64
                 | FeatureKind::Minimum
                 | FeatureKind::Inflection
         ) {
-            xs.push(feature.x);
+            rows.push((feature.x, 2));
         }
     }
-    xs.sort_by(f64::total_cmp);
-    xs.dedup();
-    xs
+    rows.sort_by(|a, b| a.0.total_cmp(&b.0));
+    let mut merged: Vec<(f64, u8)> = Vec::with_capacity(rows.len());
+    for (x, rank) in rows {
+        match merged.last_mut() {
+            Some(last) if (x - last.0).abs() <= tolerance => {
+                if rank < last.1 {
+                    *last = (x, rank);
+                }
+            }
+            _ => merged.push((x, rank)),
+        }
+    }
+    merged.into_iter().map(|(x, _)| x).collect()
 }
 
 /// The table `x`, `y`, `dy` with every row `synthetic`, and the expression in its metadata.
