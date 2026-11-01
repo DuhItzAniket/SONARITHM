@@ -1144,3 +1144,17 @@ A05 (render engine, audio backends, export) uses F-050 to F-069.
 - **Upstream:** uPlot's module-scope `Intl.NumberFormat(navigator.language)` (1.6.32, `uPlot.esm.js:442`) could be reported upstream: guard the tag, or create the formatter lazily. Whether to open a public issue is the owner's decision.
 - **Affects:** B04-T06, any library that reads `navigator.language` at import; 12 §5 (locales); B07-T07 (the locale setting must pass through `normalizeLocale`)
 - **Papers:** none yet
+
+### F-211 · A stolen voice is replaced at once, so a steal clicks
+
+- **Date:** 2026-11-01 · **Phase:** B03 · **Type:** engineering (real-time audio) · **Status:** new
+- **Statement:** At a full voice pool, `VoicePool::allocate` steals the oldest voice, and `Voice::start` replaces it whole (`*self = Self { .. }`, `crates/sonarithm-render/src/voice.rs:410`). Nothing fades it, so its output drops to 0 in one sample: a click. The B03-T09 point cue reaches this whenever more than 4 cues overlap (key repeat). Playback voices are sized per Score at twice the exact event overlap, but two paths still reach a steal:
+  - **Notes shorter than two ramps.** A voice sounds at least 2 × `MIN_RAMP` = 10 ms, while the overlap count uses planned event lengths. Specs may set durations that short; the spec property tests generate them from 1 ms.
+  - **A seek inside a 10 ms seek or loop crossfade.** This needs up to 3 × the overlap, against a pool of 2 ×.
+- **Fix:**
+  - Cues: 8 preallocated slots with at most 4 sounding, and the oldest fades over its ramp, in the point-cue PR (06 §3).
+  - Playback: issue #443. Count each event's sounding length in `polyphony()`, and fade stolen voices.
+- **Evidence:** code reading (`voice.rs` `Voice::start` and `VoicePool::allocate`; `plan/build.rs` `polyphony`; `graph.rs` `SEEK_FADE`). Neither path is reproduced yet: TODO(verify), with a test that sees `GraphStats::stolen > 0` and a golden check of the step at the steal sample.
+- **Evidence level / confidence:** EV-D / Moderate. Inferred from the code, not measured.
+- **Affects:** B03-T09 (point cue), A05 render voice pools, 06 §3 and §5
+- **Papers:** none yet
