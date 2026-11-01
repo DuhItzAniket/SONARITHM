@@ -25,6 +25,7 @@
 //! Time is passed in, in milliseconds on any monotonic clock, so the sequencer is
 //! deterministic and its rules are tested without a clock (ADR-0013).
 
+use std::collections::BTreeSet;
 use std::sync::Arc;
 
 use serde::{Deserialize, Serialize};
@@ -81,6 +82,10 @@ pub enum Output {
     Duck(bool),
     /// Speak this announcement now, through the route.
     Deliver(Delivery),
+    /// Show and log this announcement without speaking it: it was queued while speech was
+    /// off (B03-T09). It went through the same queue, so the log holds exactly what would
+    /// have been spoken.
+    Log(Delivery),
 }
 
 /// Sequences speech with sonification; see the module documentation.
@@ -100,6 +105,10 @@ pub struct Sequencer {
     ducked: bool,
     /// The last announcement spoken, for "repeat".
     last: Option<Announcement>,
+    /// Speech is off (B03-T09): what is queued from now on is logged, not spoken.
+    speech_off: bool,
+    /// The queued announcements that arrived while speech was off, by order.
+    muted: BTreeSet<u64>,
 }
 
 impl Sequencer {
@@ -115,6 +124,8 @@ impl Sequencer {
             speech_end_ms: 0,
             ducked: false,
             last: None,
+            speech_off: false,
+            muted: BTreeSet::new(),
         }
     }
 
@@ -129,27 +140,21 @@ impl Sequencer {
         self.config = config;
     }
 
-    /// Queues `announcement`, composed at `now_ms`.
+    /// Queues `announcement`, composed at `now_ms`. While speech is off it is muted: it
+    /// takes the same path through the queue and comes out as [`Output::Log`]. Errors and
+    /// alarms are never muted (INFER, OD-30).
     pub fn push(&mut self, announcement: Announcement, now_ms: u64) {
-        self.queue.push(announcement, now_ms);
+        let muted = self.speech_off && !urgent(&announcement);
+        let seq = self.queue.push(announcement, now_ms);
+        if muted {
+            self.muted.insert(seq);
+        }
     }
 
-    /// An announcement while speech is off (B03-T09): it goes to the history and is
-    /// returned for the log, never spoken. Errors and alarms are queued as usual, since
-    /// they are never muted (INFER, OD-30); then `None`.
-    pub fn push_muted(&mut self, announcement: Announcement, now_ms: u64) -> Option<Delivery> {
-        if urgent(&announcement) {
-            self.queue.push(announcement, now_ms);
-            return None;
-        }
-        let mut quiet = announcement;
-        quiet.speak = false;
-        let seq = self.queue.push(quiet.clone(), now_ms);
-        Some(Delivery {
-            seq,
-            announcement: quiet,
-            interrupt: false,
-        })
+    /// Turns speech off or on for what is queued from now on (B03-T09). What is already
+    /// queued keeps its state, so "Speech off", queued just before, is still spoken.
+    pub fn set_speech_off(&mut self, off: bool) {
+        self.speech_off = off;
     }
 
     /// A point cue of `length` started at `now_ms`: speech waits for its end (§9.2 item 1).
@@ -169,7 +174,7 @@ impl Sequencer {
             return false;
         };
         last.class = Class::Response;
-        self.queue.push(last, now_ms);
+        self.push(last, now_ms);
         true
     }
 
@@ -177,6 +182,7 @@ impl Sequencer {
     pub fn silence(&mut self) -> Vec<Output> {
         while self.queue.pop().is_some() {}
         self.held.clear();
+        self.muted.clear();
         self.speech_end_ms = 0;
         self.cue_end_ms = 0;
         if self.ducked {
@@ -229,7 +235,9 @@ impl Sequencer {
             } else if playing {
                 match announcement.class {
                     Class::Response => {
-                        if !self.config.duck_instead_of_pause {
+                        // A muted response has nothing to pause for.
+                        if !self.config.duck_instead_of_pause && !self.muted.contains(&delivery.seq)
+                        {
                             out.push(Output::Pause);
                             playing = false;
                         }
@@ -272,10 +280,22 @@ impl Sequencer {
         for delivery in ready {
             self.deliver(delivery, now_ms, playing, &mut out);
         }
+        // The queue is empty now: a muted order not held back was superseded or expired.
+        let held: BTreeSet<u64> = self.held.iter().map(|(delivery, _)| delivery.seq).collect();
+        self.muted.retain(|seq| held.contains(seq));
         out
     }
 
     fn deliver(&mut self, delivery: Delivery, now_ms: u64, playing: bool, out: &mut Vec<Output>) {
+        if self.muted.remove(&delivery.seq) {
+            // Nothing is spoken, so nothing to wait for or duck under; "repeat" still
+            // repeats it, as it would have been spoken.
+            if delivery.announcement.class != Class::Stream {
+                self.last = Some(delivery.announcement.clone());
+            }
+            out.push(Output::Log(delivery));
+            return;
+        }
         let length = millis(spoken_duration(
             &delivery.announcement.speech,
             self.config.rate,

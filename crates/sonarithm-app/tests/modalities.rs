@@ -179,6 +179,41 @@ fn b03_t09_speech_off_is_said_before_announcements_go_quiet() {
     assert!(spoken.seq > on.seq);
 }
 
+/// The same explorer moves with speech on and off: the log holds the same items, in the
+/// same order, muted only when speech is off. Right at the root is a history-only
+/// boundary, which the old muted path logged anyway.
+#[test]
+fn b03_t09_the_log_is_the_same_with_speech_on_and_off() {
+    let run = |speech_off: bool| -> Vec<AnnouncementInfo> {
+        let mut h = Harness::new(if speech_off { "log-off" } else { "log-on" });
+        h.compile();
+        let mut skip = 0;
+        if speech_off {
+            h.toggle("speech").unwrap();
+            assert_eq!(h.announcements(1)[0].speech, "Speech off");
+            skip = 1;
+        }
+        // A boundary at the root is history only: neither run may log it.
+        h.ok(&json!({ "command": "nav_move", "args": { "verb": { "verb": "next" } } }));
+        h.to_point();
+        h.step("next");
+        h.step("previous");
+        let count = h.announcements(0).len();
+        h.ok(&json!({ "command": "announce_repeat" }));
+        h.announcements(count + 1).split_off(skip)
+    };
+    let on = run(false);
+    let off = run(true);
+    let shown = |log: &[AnnouncementInfo]| {
+        log.iter()
+            .map(|info| (info.display.clone(), info.class))
+            .collect::<Vec<_>>()
+    };
+    assert_eq!(shown(&off), shown(&on));
+    assert!(on.iter().all(|info| !info.muted), "{on:?}");
+    assert!(off.iter().all(|info| info.muted), "{off:?}");
+}
+
 #[test]
 fn b03_t09_sonification_off_silences_the_transport() {
     let mut h = Harness::new("sonification-off");

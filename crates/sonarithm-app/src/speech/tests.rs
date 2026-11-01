@@ -207,3 +207,84 @@ fn stop_all_silences_everything_and_releases_the_duck() {
         Vec::<String>::new()
     );
 }
+
+/// What the sequencer gives out, as (text, logged only), for one fixed input: a key
+/// repeat that supersedes, a history-only announcement, a cue, playback with a response,
+/// navigation and a status notice, an error, and a repeat.
+fn run(speech_off: bool) -> Vec<(String, bool)> {
+    let mut sequencer = Sequencer::new(config());
+    sequencer.set_speech_off(speech_off);
+    let mut out = Vec::new();
+    let mut collect = |outputs: Vec<Output>| {
+        out.extend(outputs.into_iter().filter_map(|output| match output {
+            Output::Deliver(delivery) => Some((delivery.announcement.display, false)),
+            Output::Log(delivery) => Some((delivery.announcement.display, true)),
+            _ => None,
+        }));
+    };
+    sequencer.key_repeat(true);
+    for (at, value) in [(0, "1"), (50, "2"), (100, "3")] {
+        sequencer.cue(at, Seconds(0.03));
+        sequencer.push(of(Class::Navigation, value), at);
+        collect(sequencer.poll(at + 40, false, None));
+    }
+    sequencer.key_repeat(false);
+    collect(sequencer.poll(200, false, None));
+    let mut quiet = of(Class::EarconText, "Last");
+    quiet.speak = false;
+    sequencer.push(quiet, 300);
+    sequencer.cue(400, Seconds(0.15));
+    sequencer.push(of(Class::Navigation, "12.5"), 400);
+    collect(sequencer.poll(450, false, None));
+    collect(sequencer.poll(600, false, None));
+    sequencer.push(of(Class::Navigation, "follows the playhead"), 700);
+    sequencer.push(of(Class::Status, "Export finished"), 700);
+    sequencer.push(of(Class::Response, "Paused. 9.25"), 700);
+    collect(sequencer.poll(710, true, None));
+    collect(sequencer.poll(5_000, false, None));
+    sequencer.push(Announcement::error("Device lost", "Device lost"), 6_000);
+    sequencer.repeat(6_000);
+    collect(sequencer.poll(6_010, false, None));
+    out
+}
+
+/// B03-T09: with speech off the log holds exactly what would have been spoken, in the same
+/// order, through the same queue policy; errors are still spoken (INFER, OD-30).
+#[test]
+fn b03_t09_speech_off_logs_exactly_what_would_be_spoken() {
+    let on = run(false);
+    let off = run(true);
+    let texts = |run: &[(String, bool)]| run.iter().map(|(text, _)| text.clone()).collect::<Vec<_>>();
+    assert_eq!(texts(&off), texts(&on));
+    assert!(!on.is_empty() && on.iter().all(|(_, logged)| !logged), "{on:?}");
+    for (text, logged) in &off {
+        assert_eq!(*logged, text != "Device lost", "{off:?}");
+    }
+    assert!(!texts(&on).contains(&"Last".to_owned()), "history only: {on:?}");
+}
+
+/// B03-T09: a muted response does not pause playback, and nothing muted ducks it.
+#[test]
+fn b03_t09_muted_speech_neither_pauses_nor_ducks_playback() {
+    let mut sequencer = Sequencer::new(config());
+    sequencer.set_speech_off(true);
+    sequencer.push(of(Class::Response, "Paused. 9.25"), 0);
+    let out = sequencer.poll(10, true, None);
+    assert!(matches!(out.as_slice(), [Output::Log(_)]), "{out:?}");
+    assert!(!sequencer.ducked());
+}
+
+/// B03-T09: what was queued before speech went off is still spoken ("Speech off").
+#[test]
+fn b03_t09_what_was_queued_before_speech_went_off_is_spoken() {
+    let mut sequencer = Sequencer::new(config());
+    sequencer.push(of(Class::Status, "Speech off"), 0);
+    sequencer.set_speech_off(true);
+    sequencer.push(of(Class::Navigation, "12.5"), 0);
+    let out = sequencer.poll(10, false, None);
+    assert!(
+        matches!(out.as_slice(), [Output::Deliver(spoken), Output::Log(logged)]
+            if spoken.announcement.display == "Speech off" && logged.announcement.display == "12.5"),
+        "{out:?}"
+    );
+}

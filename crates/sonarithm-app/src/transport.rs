@@ -493,17 +493,9 @@ impl<B: AudioBackend, F: Fn() -> B> Control<B, F> {
             }
             Message::Announce(announcement) => {
                 let now = self.now_ms();
-                // Muted when it arrives, not when it would be spoken, so "Speech off",
-                // sent just before speech goes off, is still heard (B03-T09).
-                if self.config.speech_muted {
-                    if let Some(delivery) = self.sequencer.push_muted(*announcement, now) {
-                        let mut info = crate::speech::info(&delivery, false);
-                        info.muted = true;
-                        self.sink.emit(Event::Announcement(info));
-                    }
-                } else {
-                    self.sequencer.push(*announcement, now);
-                }
+                // Muted when it is queued, not when it would be spoken, so "Speech off",
+                // queued just before speech goes off, is still heard (B03-T09).
+                self.sequencer.push(*announcement, now);
             }
             Message::Repeat(reply) => {
                 let now = self.now_ms();
@@ -586,6 +578,7 @@ impl<B: AudioBackend, F: Fn() -> B> Control<B, F> {
         let volume = config.master_db();
         let volume_changed = (volume - self.config.master_db()).abs() > f64::EPSILON;
         self.sequencer.set_config(config.speech);
+        self.sequencer.set_speech_off(config.speech_muted);
         if config.speech.route != SpeechRoute::SelfVoicing
             && let Some(Ok(speaker)) = &mut self.speaker
         {
@@ -1072,6 +1065,11 @@ impl<B: AudioBackend, F: Fn() -> B> Control<B, F> {
                 self.send(Command::SetGain(GainTarget::Duck, level));
             }
             Output::Deliver(delivery) => self.deliver(&delivery),
+            Output::Log(delivery) => {
+                let mut info = crate::speech::info(&delivery, false);
+                info.muted = true;
+                self.sink.emit(Event::Announcement(info));
+            }
         }
     }
 
