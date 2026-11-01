@@ -58,13 +58,18 @@ const TOGGLES: readonly (readonly [string, ToggleTarget])[] = [
  * (`modality_toggle`), which saves the choice over the profile, acts on it and announces
  * it; `onEffective` gets the effective settings it replies with. A refusal (the last
  * non-visual output, SNR-APP-094) is announced by the app core.
+ *
+ * Q (`query.menu`, keyboard §7) asks the app to open the explorer's query menu, which
+ * lives with the explorer in the Plot tab (`onQueryMenu`).
  */
 export function ExplorerCommands({
   client,
   onEffective,
+  onQueryMenu,
 }: {
   readonly client: Client | null;
   readonly onEffective: (settings: readonly EffectiveSetting[]) => void;
+  readonly onQueryMenu: () => void;
 }) {
   const [dialog, setDialog] = useState<ValueKind | null>(null);
   const move = (verb: NavVerb) => {
@@ -86,6 +91,7 @@ export function ExplorerCommands({
   useCommand("nav.findValue", () => {
     setDialog("find");
   });
+  useCommand("query.menu", onQueryMenu);
   useCommand("nav.whereAmI", () => {
     void client?.call({ command: "nav_where" }).catch(() => undefined);
   });

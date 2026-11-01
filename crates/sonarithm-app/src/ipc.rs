@@ -108,6 +108,7 @@ pub const COMMANDS: &[(&str, &str)] = &[
     ("modality_toggle", "effective"),
     ("choices_reset", "effective"),
     ("braille_route", "cursor"),
+    ("nav_query", "announce"),
 ];
 
 /// The commands whose reply is a binary view (ADR-0017 §6), sent with
@@ -523,6 +524,12 @@ pub enum Request {
         /// The cell, from 0.
         cell: u32,
     },
+    /// Answers a query of the query menu about the cursor's series (keyboard §7, B03-T09):
+    /// announced as a response; the cursor does not move. Replies [`Reply::Announce`].
+    NavQuery {
+        /// The question.
+        query: NavQuery,
+    },
     /// A downsampled view of two fields of a dataset for drawing (03 §7). Binary: a view of
     /// kind `m4Tile` or `lttbTile` with the columns `row`, `x` and `y` (ADR-0017 §6).
     ViewGet {
@@ -658,6 +665,7 @@ impl Request {
             Self::ModalityToggle { .. } => "modality_toggle",
             Self::ChoicesReset => "choices_reset",
             Self::BrailleRoute { .. } => "braille_route",
+            Self::NavQuery { .. } => "nav_query",
             Self::ViewGet { .. } => "view_get",
             Self::TablePage { .. } => "table_page",
         }
@@ -1220,6 +1228,30 @@ pub enum ToggleTarget {
     Visual,
     /// Terse or verbose announcements (Shift+T).
     Verbosity,
+}
+
+/// A question of the query menu (keyboard-and-navigation §7; the B03 subset).
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize, TS)]
+#[serde(
+    tag = "query",
+    rename_all = "camelCase",
+    rename_all_fields = "camelCase"
+)]
+#[non_exhaustive]
+pub enum NavQuery {
+    /// The series' name, points and range.
+    Summary,
+    /// Its smallest value and where it is.
+    Minimum,
+    /// Its largest value and where it is.
+    Maximum,
+    /// Its range and span.
+    Range,
+    /// The value at the point nearest an x.
+    ValueAt {
+        /// The x value.
+        x: NavX,
+    },
 }
 
 /// A landmark of [`NavVerb::Landmark`].

@@ -11,6 +11,7 @@ import { seriousViolations } from "./axe.ts";
 
 interface Mock {
   navVerbs(): string[];
+  navQueries(): string[];
   commands(): string[];
   toggles(): string[];
   transport(): { muted: boolean };
@@ -236,4 +237,39 @@ test("b03_t09_the_last_non_visual_output_cannot_be_turned_off", async ({
     await host(page)
   ).evaluate((mock) => mock.transport().muted);
   expect(muted).toBe(false);
+});
+
+test("keyboard_7_q_asks_about_the_series_and_moves_nothing", async ({
+  page,
+}) => {
+  const queries = async () =>
+    (await host(page)).evaluate((mock) => mock.navQueries());
+  await explorer(page).focus();
+  await page.keyboard.press("q");
+  const menu = page.getByRole("menu", { name: "Ask" });
+  await expect(menu).toBeVisible();
+  await expect(menu.getByRole("menuitem", { name: "Summary" })).toBeFocused();
+  // Type-ahead: M goes to Minimum, then Maximum.
+  await page.keyboard.press("m");
+  await page.keyboard.press("m");
+  await page.keyboard.press("Enter");
+  await expect(menu).toBeHidden();
+  await expect.poll(queries).toEqual([JSON.stringify({ query: "maximum" })]);
+  // React Aria returns the focus in an animation frame (F-176), to the explorer.
+  await expect
+    .poll(() => explorer(page).evaluate((e) => e === document.activeElement))
+    .toBe(true);
+  // Value at x asks for the x first.
+  await page.keyboard.press("q");
+  await menu.getByRole("menuitem", { name: "Value at x…" }).click();
+  const dialog = page.getByRole("dialog", { name: "Value at an x value" });
+  await dialog.getByRole("textbox", { name: "X value" }).fill("3");
+  await page.keyboard.press("Enter");
+  await expect
+    .poll(queries)
+    .toEqual([
+      JSON.stringify({ query: "maximum" }),
+      JSON.stringify({ query: "valueAt", x: { number: 3 } }),
+    ]);
+  expect(await navVerbs(page)).toEqual([]);
 });

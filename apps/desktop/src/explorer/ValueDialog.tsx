@@ -6,8 +6,31 @@ import { useRef, useState } from "react";
 
 import { useLocalizer } from "../i18n.ts";
 
-/** What the dialog asks for: an x value to go to (G), or a value to find (Primary+F). */
-export type ValueKind = "goTo" | "find";
+/**
+ * What the dialog asks for: an x value to go to (G), a value to find (Primary+F), or an x
+ * whose value the query menu reports.
+ */
+export type ValueKind = "goTo" | "find" | "valueAt";
+
+const TEXT: Readonly<
+  Record<ValueKind, { title: string; field: string; action: string }>
+> = {
+  goTo: {
+    title: "ui-explorer-go-to",
+    field: "ui-explorer-go-to-value",
+    action: "ui-explorer-go-to-action",
+  },
+  find: {
+    title: "ui-explorer-find",
+    field: "ui-explorer-find-value",
+    action: "ui-explorer-find-action",
+  },
+  valueAt: {
+    title: "ui-explorer-value-at",
+    field: "ui-explorer-go-to-value",
+    action: "ui-explorer-value-at-action",
+  },
+};
 
 /**
  * The explorer's value field (B03-T09; keyboard-and-navigation §4.2): "Go to x" for G and
@@ -32,9 +55,7 @@ export function ValueDialog({
   const shown = kind ?? "goTo";
   return (
     <ModalDialog
-      title={t.format(
-        shown === "goTo" ? "ui-explorer-go-to" : "ui-explorer-find",
-      )}
+      title={t.format(TEXT[shown].title)}
       isOpen={kind !== null}
       onOpenChange={(open) => {
         if (!open) onClose();
@@ -51,11 +72,7 @@ export function ValueDialog({
           }}
         >
           <NumberField
-            label={t.format(
-              shown === "goTo"
-                ? "ui-explorer-go-to-value"
-                : "ui-explorer-find-value",
-            )}
+            label={t.format(TEXT[shown].field)}
             value={value}
             onChange={(next) => {
               latest.current = next;
@@ -64,13 +81,7 @@ export function ValueDialog({
           />
           <DialogActions>
             <Button onPress={close}>{t.format("ui-cancel")}</Button>
-            <Button type="submit">
-              {t.format(
-                shown === "goTo"
-                  ? "ui-explorer-go-to-action"
-                  : "ui-explorer-find-action",
-              )}
-            </Button>
+            <Button type="submit">{t.format(TEXT[shown].action)}</Button>
           </DialogActions>
         </form>
       )}

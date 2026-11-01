@@ -339,6 +339,7 @@ impl App {
             Request::ModalityToggle { modality } => self.modality_toggle(modality),
             Request::ChoicesReset => self.choices_reset(),
             Request::BrailleRoute { cell } => self.braille_route(cell),
+            Request::NavQuery { query } => self.nav_query(&query),
             Request::ViewGet { .. } | Request::TablePage { .. } => Err(IpcError::new(
                 &codes::BAD_REQUEST,
                 "This command returns a binary view; send it with dispatch_binary.",

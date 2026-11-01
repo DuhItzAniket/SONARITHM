@@ -79,6 +79,13 @@ None.
 - **The steal clicked** (F-211): `Voice::start` replaces a voice at once. Now there are 8 cue slots with at most 4 sounding, and the oldest sounding cue fades over the ramp. Tests: the step at the fade stays within twice a sine's own steepest step; a full pool steals a fading voice and counts it; `no_alloc` sends ten cues in one block.
 - Not measured: the 50 ms key-to-onset budget, which needs the loopback harness on HW-01 (an owner step on #129).
 
+## The query menu (2026-11-01)
+
+- AUDAXIS `Composer::query`, with the composer's own formatting (values with spoken and symbol units, x labels): summary, minimum, maximum, range with its span, and the value at an x. It finds its targets with the cursor's own verbs (`Minimum`, `Maximum`, `GoTo`) on a copy, so the cursor never moves (keyboard §7).
+- `nav_query` replies `announce`; the answer is a response announcement.
+- Q (`query.menu`) is registered with the other explorer commands in `ExplorerCommands`, so the palette runs it from any tab: the app selects the Plot tab and opens the explorer's menu (`MenuButton` can now be opened by a command), with type-ahead. Value at x… asks for the x in a value dialog. Focus returns to the explorer.
+- The statistics (mean, median, mode, standard deviation, sum, count) wait for ECHOMETRIC.
+
 ## Next steps
 
 - PR (2): the Explorer component, keymap v0, the query menu, modality and verbosity toggles, E2E for every verb.

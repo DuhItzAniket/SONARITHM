@@ -146,6 +146,15 @@ export function App({
     });
     explorer.current?.focus();
   });
+  // The query menu (Q; keyboard §7) belongs to the explorer, so asking for it from another
+  // tab selects the Plot tab first.
+  const [queryOpen, setQueryOpen] = useState(false);
+  const openQueryMenu = () => {
+    flushSync(() => {
+      setWorkspaceTab("plot");
+    });
+    setQueryOpen(true);
+  };
   const [preferencesOpen, setPreferencesOpen] = useState(false);
   useCommand("app.preferences", () => {
     setPreferencesOpen(true);
@@ -201,9 +210,12 @@ export function App({
               {client !== null && dataset !== null ? (
                 <>
                   <Explorer
+                    client={client}
                     dataset={dataset}
                     cursor={cursor}
                     surface={explorer}
+                    queryOpen={queryOpen}
+                    onQueryOpenChange={setQueryOpen}
                   />
                   <DatasetPlot
                     client={client}
@@ -261,6 +273,7 @@ export function App({
         onEffective={(settings) => {
           setVisual(visualOn(settings));
         }}
+        onQueryMenu={openQueryMenu}
       />
       <Preferences
         client={client}
