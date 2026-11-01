@@ -1016,6 +1016,14 @@ A05 (render engine, audio backends, export) uses F-050 to F-069.
 - **Affects:** C02-T09, A11Y-02, A11Y-12, A11Y-24, FR-008, OD-07, H-06
 - **Papers:** none yet
 
+### F-199 · CURVASONA's canonical form put a negative divisor in parentheses, which made it deeper than its source
+
+- **Date:** 2026-11-01 · **Phase:** C03 · **Type:** engineering (robustness) · **Status:** new
+- **Statement:** The fuzz target `expr_parse` (CI job 124637048464, on #429) found an expression that parses but whose canonical form does not: `4-x/` followed by 32 unary minuses and `4-1`. The parser counts one level of nesting per unary minus, so the input sits exactly at the depth limit of 32. The printer wrapped any negative divisor in parentheses (`x/(-4)`), although ADR-0028's grammar reads a divisor as a unary expression, so `x/-4` already means `x/(-4)`; the added parentheses were a 33rd level, and the canonical form failed with `SNR-ENG-402`. A divisor now prints with the multiplier's rule, so `x/-4` stays `x/-4` and the printer adds parentheses only where the grammar needs them, which the source text must then also have had. ADR-0028's grammar is unchanged; only the canonical spelling of a negative divisor changes.
+- **Evidence:** `crates/engines/sonarithm-curvasona/src/expr.rs` (`Node::print`); the test `f_199_a_divisor_at_the_depth_limit_reads_back`; the corpus seed `seed-regression-divisor-depth.txt`, replayed by `tests/fuzz_regressions.rs` on every run
+- **Evidence level / confidence:** EV-D / Strong (a reproduced fuzz failure, with a regression test)
+- **Affects:** C03-T01 (the expression facade), ADR-0028's canonical form
+
 ### F-198 · An unboxed `Expr` was 19 KB, and sampling a function overflowed the CLI's 1 MB main-thread stack in debug builds
 
 - **Date:** 2026-11-01 · **Phase:** C03 · **Type:** engineering (robustness) · **Status:** new
@@ -1032,6 +1040,7 @@ A05 (render engine, audio backends, export) uses F-050 to F-069.
 - **Evidence:** `crates/sonarithm-compiler/src/pipeline.rs` (`add_context`); `crates/sonarithm/src/api.rs` (`uses_curvasona`); the test `specs_that_do_not_use_curvasona_compile_without_it`
 - **Evidence level / confidence:** EV-D / Strong (code reading, with a test)
 - **Affects:** C03-T07, the facade's default engines, every later engine with a context provider
+
 - **Papers:** none yet
 
 ### F-196 · An audification without `k` or `band` needs a target band, and no study gives one
@@ -1053,6 +1062,14 @@ A05 (render engine, audio backends, export) uses F-050 to F-069.
 - **Affects:** RFC-0007 §3, 06 (audifier row), C03-T05, C03-T06
 - **Papers:** none yet
 
+### F-194 · A zero of a guard exactly on a grid point hid a second zero in the next grid step
+
+- **Date:** 2026-10-31 · **Phase:** C03 · **Type:** engineering (correctness) · **Status:** new
+- **Statement:** The property test `poles_and_holes_are_never_missed` failed on an unrelated PR's CI run (41224538690): with a pole at x = 0 and a hole at b in (0, 4), on the coarsest grid -4, 0, 4, the scan found the pole and missed the hole. The guard `x(x - b)` is exactly 0 at the grid point 0 and positive at -4 and 4, so the second zero has no sign change on the grid, and the dip search skipped grid points where the guard is 0. The zero finder of `critical` shared the gap (`x*(x - 1)` on the same grid). Both intervals beside an exact zero are now searched like a dip. Searching beside an exact zero then found some features a float step from a grid point, so the source added near-duplicate rows: extra breakpoints in a glide (the `a_parabola_score_snapshot` diff, which was refused rather than accepted) and an inflection hidden from the analyzer's recompute by two rows at almost the same x. Rows within 1e-9 of the domain width are now one row, keeping a pole or hole, else the grid point; duplicate features are merged within each kind; and a run of undefined samples within a float step of a pole or hole counts as that point. Earlier random runs passed because an exact zero on the grid needs a pole at a grid point, which proptest's shrinking towards 0 finds and uniform sampling rarely does.
+- **Evidence:** `crates/engines/sonarithm-curvasona/src/scan/tests.rs` (`a_zero_on_the_grid_does_not_hide_a_second_one_beside_it`), `src/critical/tests.rs` (`a_zero_on_the_grid_does_not_hide_its_neighbour`); `scan::dips`
+- **Evidence level / confidence:** EV-C / Strong (reproduced)
+- **Affects:** C03-T02, C03-T03 (fixed in this PR)
+
 ### F-193 · NUMISONA's glide `src` ranges include their last row, against `RowRange`'s one-past-the-end contract
 
 - **Date:** 2026-10-31 · **Phase:** C03 · **Type:** engineering (correctness) · **Status:** new
@@ -1060,6 +1077,7 @@ A05 (render engine, audio backends, export) uses F-050 to F-069.
 - **Evidence:** `crates/engines/sonarithm-curvasona/src/cues.rs` (`row_times`); a compile of `1/(x^2 - 4)` with 401 samples gives glides with `src` 0..120, 121..280, 281..401 and 121, 160, 121 breakpoints; `crates/sonarithm-core/src/ids.rs` (`RowRange::end`)
 - **Evidence level / confidence:** EV-C / Strong (reproduced)
 - **Affects:** NUMISONA's glide encoder (A06), every reader of `Glide::src`, C03-T04
+
 - **Papers:** none yet
 
 ### F-192 · exmex's symbolic derivatives overflow the stack on allowed input, so CURVASONA differentiates on its own tree
@@ -1111,6 +1129,14 @@ A05 (render engine, audio backends, export) uses F-050 to F-069.
 - **Evidence level / confidence:** EV-C / Strong for the constraint. How NVDA, JAWS, VoiceOver and Orca read a window's row count next to the row-number header is TODO(verify) in the owner's walkthroughs (HP-07, HP-08)
 - **Affects:** B04-T05, A11Y-03, A11Y-24, FR-046, keyboard-and-navigation §5.6, 09 §3; B04-T06 (the focused row as the shared cursor)
 - **Papers:** none yet
+
+### F-178 · Two meanings of "latency calibration" in the code: a replacement and an added offset
+
+- **Date:** 2026-10-31 · **Phase:** B04 · **Type:** engineering · **Status:** new
+- **Statement:** ADR-0016 says the calibration is used for the playhead "instead of trusting the backend's reported latency", and ADR-0017's `outputLatencyS` takes the calibrated latency in place of the backend's. A05's `sonarithm_audio::LatencyCalibration`, which no code uses, instead stores an offset *added* to the engine's predicted time. B04-T04 stores the measured total output latency per device (`audio.calibratedLatencyS`) and uses it as a replacement. A loopback self-test (A05, Windows) must therefore report the total latency, the key-press-to-onset value of ADR-0016's confirmation step 3, not the difference from cpal's estimate.
+- **Evidence:** `crates/sonarithm-audio/src/calibration.rs` (`heard_at` adds the offset); `crates/sonarithm-app/src/transport.rs` (`anchor`); ADR-0016 §Decision
+- **Evidence level / confidence:** EV-C / Strong (source)
+- **Affects:** ADR-0016 confirmation step 3; a future loopback self-test that fills the setting; `LatencyCalibration` (to retire or re-document when the self-test lands)
 
 ### F-185 · The render manifest refuses unknown fields, so even an optional field needs a new manifest version
 

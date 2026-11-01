@@ -6,6 +6,7 @@ import {
   Button,
   DialogActions,
   ModalDialog,
+  NumberField,
   Option,
   Select,
   Slider,
@@ -21,6 +22,9 @@ const SYSTEM_DEFAULT = "system-default";
 
 /** The sonification volume range in dB (settings.rs: −60 to 0 dB, A11Y-15). */
 const VOLUME = { min: -60, max: 0 } as const;
+
+/** The calibrated latency range in milliseconds (settings.rs `LATENCY_RANGE_S`: 0 to 1 s). */
+const LATENCY_MS = { min: 0, max: 1000 } as const;
 
 /**
  * Only WebView2 (Windows) can be asked for the discrete GPU (F-044); the host passes the
@@ -108,6 +112,43 @@ export function Preferences({
     );
   };
 
+  // The device the latency belongs to: the chosen one, or the system default's ID.
+  const latencyDevice =
+    settings?.audio.device ??
+    devices.find((device) => device.isDefault)?.id ??
+    null;
+  const storedLatencyS =
+    latencyDevice === null
+      ? undefined
+      : settings?.audio.calibratedLatencyS[latencyDevice];
+
+  /**
+   * Stores the measured latency of the current device (ADR-0016; B04-T04), or removes it
+   * when the field is emptied, so the playhead goes back to the system's estimate. The
+   * device ID stays in the local settings file only (rule 9).
+   */
+  const saveLatency = (milliseconds: number) => {
+    if (client === null || settings === null || latencyDevice === null) {
+      return;
+    }
+    const latencies = { ...settings.audio.calibratedLatencyS };
+    if (Number.isNaN(milliseconds)) {
+      Reflect.deleteProperty(latencies, latencyDevice);
+    } else {
+      latencies[latencyDevice] = milliseconds / 1000;
+    }
+    const next: Settings = {
+      ...settings,
+      audio: { ...settings.audio, calibratedLatencyS: latencies },
+    };
+    client.call({ command: "settings_set", args: { settings: next } }).then(
+      (saved) => {
+        setSettings(settingsOf(saved));
+      },
+      () => undefined,
+    );
+  };
+
   const saveGpu = (highPerformance: boolean) => {
     if (client === null || settings === null) {
       return;
@@ -173,6 +214,21 @@ export function Preferences({
               onChangeEnd={saveVolume}
             />
             <p className={styles.note}>{t.format("ui-volume-note")}</p>
+            <NumberField
+              label={t.format("ui-output-latency")}
+              description={t.format("ui-output-latency-note")}
+              value={
+                storedLatencyS === undefined
+                  ? Number.NaN
+                  : Math.round(storedLatencyS * 1000)
+              }
+              minValue={LATENCY_MS.min}
+              maxValue={LATENCY_MS.max}
+              step={1}
+              formatOptions={{ style: "unit", unit: "millisecond" }}
+              isDisabled={latencyDevice === null}
+              onChange={saveLatency}
+            />
           </section>
           <section
             aria-labelledby="preferences-display"

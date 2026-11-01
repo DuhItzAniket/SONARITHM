@@ -42,6 +42,7 @@ Every effective value is inspectable through `sonarithm inspect --settings` and 
 **Settings fields added in Stage B.**
 
 - `speech.announcer` (B03-T04): `liveRegion` (default) or `native`, the OD-05 announcer route ([08 §4](08-interaction-and-accessibility.md#4-announcement-pipeline)).
+- `audio.calibratedLatencyS` (B04-T04, ADR-0016): the measured output latency of each device in seconds (0 to 1), by device ID. Clock anchors carry it instead of the backend's estimate for that device. Device IDs and names can contain a person's name, so the map stays in the local settings file and never reaches logs, manifests, projects or exported diagnostics (rule 9); a range error does not name the device.
 - `gpu` (B04-T02, F-044; approved by the coordinator on 2026-10-30): `default` (the default) or `highPerformance`.
   - Only WebView2 (Windows) can be asked. The host reads the setting at start-up and adds `--force_high_performance_gpu` to wry's default browser arguments ([09 §7](09-desktop-app.md#7-startup-sequence-target--2-s-cold)), so a change applies after a restart.
   - Elsewhere the Preferences switch is disabled, with the reason in visible text.

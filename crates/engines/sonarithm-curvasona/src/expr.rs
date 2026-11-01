@@ -861,10 +861,13 @@ impl Node {
                 child(inner, UNARY, out);
             }
             Self::Bin(op, left, right) => {
+                // A right operand of `*` or `/` is a unary expression in the grammar, so a
+                // negative divisor needs no parentheses (`x/-4`). Adding them would make the
+                // canonical form deeper than the text it came from, and a chain of 32
+                // unary minuses would then exceed the depth limit when read back (F-199).
                 let (lmin, rmin) = match op {
                     Op::Add | Op::Sub => (SUM, PRODUCT),
-                    Op::Mul => (PRODUCT, UNARY),
-                    Op::Div => (PRODUCT, POWER),
+                    Op::Mul | Op::Div => (PRODUCT, UNARY),
                     Op::Pow => (ATOM, UNARY),
                 };
                 child(left, lmin, out);
