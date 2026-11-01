@@ -35,7 +35,10 @@ use std::fmt;
 use exmex::{Express, FlatEx};
 use sonarithm_core::Diagnostic;
 
+use self::ops::LibmOps;
 use crate::codes;
+
+mod ops;
 
 /// Size limits for one expression. Engineering safety limits, not research defaults.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -979,7 +982,7 @@ impl Slots {
 /// A compiled expression: exmex's flat form plus the values of its slots.
 #[derive(Clone, Debug)]
 struct Compiled {
-    flat: FlatEx<f64>,
+    flat: FlatEx<f64, LibmOps>,
     /// One value per exmex variable, in exmex's order; `x` is a placeholder.
     values: Vec<f64>,
     /// The position of `x` in `values`, if the expression reads `x`.
@@ -987,7 +990,7 @@ struct Compiled {
 }
 
 impl Compiled {
-    fn bind(flat: FlatEx<f64>, slots: &Slots) -> Self {
+    fn bind(flat: FlatEx<f64, LibmOps>, slots: &Slots) -> Self {
         let mut x = None;
         let values = flat
             .var_names()
@@ -1104,7 +1107,7 @@ impl Expr {
         };
         let mut lowered = String::new();
         node.lower(&mut slots, &mut lowered);
-        let flat = exmex::parse::<f64>(&lowered).map_err(|err| {
+        let flat = FlatEx::<f64, LibmOps>::parse(&lowered).map_err(|err| {
             // The lowered form is built to be valid exmex, so this is a facade bug; it is
             // reported as a syntax error rather than a panic.
             syntax(1, format!("the expression cannot be prepared ({err})"))
@@ -1234,7 +1237,8 @@ fn bin(op: Op, a: Node, b: Node) -> Node {
             Op::Sub => x - y,
             Op::Mul => x * y,
             Op::Div => x / y,
-            Op::Pow => x.powf(*y),
+            // libm, as exmex evaluates `^` (ADR-0013 §1, F-204).
+            Op::Pow => libm::pow(*x, *y),
         };
         if folded.is_finite() {
             return num(folded);
@@ -1518,7 +1522,8 @@ impl fmt::Display for Expr {
 #[must_use]
 pub fn numeric_derivative(expr: &Expr, x: f64) -> f64 {
     // The step that balances truncation and rounding error for central differences.
-    let h = f64::EPSILON.cbrt() * x.abs().max(1.0);
+    // libm's cube root: `std`'s may differ in the last bit by platform (ADR-0013 §1).
+    let h = libm::cbrt(f64::EPSILON) * x.abs().max(1.0);
     let (left, mid, right) = (expr.eval(x - h), expr.eval(x), expr.eval(x + h));
     if left.is_finite() && right.is_finite() {
         (right - left) / (2.0 * h)

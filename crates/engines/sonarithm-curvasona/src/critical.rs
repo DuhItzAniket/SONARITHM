@@ -151,7 +151,8 @@ impl Calculus {
             return numeric_derivative(d1, x);
         }
         // A second difference with the step that balances truncation and rounding error.
-        let h = f64::EPSILON.powf(0.25) * x.abs().max(1.0);
+        // EPSILON^(1/4) = 2^-13, written out: no platform `powf` (ADR-0013 §1).
+        let h = (1.0 / 8192.0) * x.abs().max(1.0);
         let (l, m, r) = (self.f.eval(x - h), self.f.eval(x), self.f.eval(x + h));
         (r - 2.0 * m + l) / (h * h)
     }

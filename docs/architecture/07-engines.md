@@ -112,7 +112,7 @@ Each engine is one crate under `crates/engines/` and implements `Engine`. This p
 
 | Module | Responsibility |
 |---|---|
-| `expr` | The expression language (ADR-0028): its own parser and symbolic derivatives, a sandboxed variable set; exmex evaluates the lowered form. **Never evalexpr (AGPL)** |
+| `expr` | The expression language (ADR-0028): its own parser and symbolic derivatives, a sandboxed variable set; exmex evaluates the lowered form with an operator set whose functions and `^` are `libm`'s, so a function samples bit-identically on every platform (ADR-0013 §1, F-204). **Never evalexpr (AGPL)** |
 | `sample` | Adaptive domain sampling (denser near high curvature and discontinuities); undefined-region detection |
 | `critical` | Zeros, extrema, inflections, asymptotes, discontinuities, off-screen spans → annotations (A11Y-28) |
 | `cues` | Derivative-sign timbre, zero-crossing earcons, undefined/off-screen cues |
