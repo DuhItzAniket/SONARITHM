@@ -117,6 +117,11 @@ ui-cursor-step =
 # The cursor's row in the dataset's own order, from 1; $index is a number.
 ui-cursor-row = Data row { $index }
 ui-cursor-none = No row is selected.
+# The Plot tab's image name and description (A11Y-01): $field is the y column's header and $text
+# the x column's; $name is the dataset and $total its row count.
+ui-plot-label = { $field } against { $text } in { $name }
+ui-plot-description = { $total } rows. The Table tab lists every value, and the cursor readout gives the selected row.
+ui-plot-no-fields = This dataset has no two numeric fields to plot.
 
 ## Application frame (B02-T06; design-language §4, keyboard-and-navigation §3).
 

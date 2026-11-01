@@ -1155,3 +1155,19 @@ A05 (render engine, audio backends, export) uses F-050 to F-069.
 - **Evidence level / confidence:** EV-C / Strong (code and test)
 - **Affects:** ADR-0013, RFC-0006, ADR-0027, 06 §7; RFC template ("Affects" should name reader strictness)
 - **Papers:** none yet
+
+### F-210 · A POSIX "C" locale stopped the desktop app before its code ran
+
+- **Date:** 2026-11-01 · **Phase:** B04 · **Type:** engineering (portability) · **Status:** new
+- **Statement:** On CI's Linux runner (`LANG=C`), the desktop smoke run hung until the step limit. The smoke watchdog (#436) then reported "page error before the smoke run started: RangeError: invalid language tag: C". WebKitGTK reports the process locale as `navigator.language`, and uPlot 1.6.32 runs `new Intl.NumberFormat(navigator.language)` at module scope (`dist/uPlot.esm.js:442`). "C" is not a BCP 47 tag, so loading uPlot threw, and with it the whole module graph, before any SONARITHM code ran. Any Linux user with `LANG=C` or `POSIX` would hit it; Windows and macOS report valid tags.
+- **Fix:** `normalizeLocale` (`@sonarithm/i18n`) maps C and POSIX (with any `.encoding` or `@modifier`) and anything `Intl.getCanonicalLocales` rejects to the fallback locale, and turns POSIX names such as `en_US.UTF-8` into tags. `createLocalizer` uses it. The desktop's first import (`apps/desktop/src/locale.ts`) replaces an invalid `navigator.language` and `languages` before any other module runs.
+- **Evidence:**
+  - `packages/i18n/test/locale.test.ts`
+  - `apps/desktop/test/locale.test.ts`
+  - `apps/desktop/test/uplot-locale.test.ts`, which loads uPlot with `navigator.language` "C": a `RangeError` without the shim, a clean load with it.
+  - `apps/desktop/e2e/locale.spec.ts`, which reproduces CI's error without the fix and passes with it, in Chromium and WebKit.
+  - #436's smoke-run report.
+- **Evidence level / confidence:** EV-C / Strong (reproduced and fixed). The WebKitGTK behaviour is inferred from the CI report; TODO(verify) on a desktop Linux with `LANG=C` (HP-02).
+- **Upstream:** uPlot's module-scope `Intl.NumberFormat(navigator.language)` (1.6.32, `uPlot.esm.js:442`) could be reported upstream: guard the tag, or create the formatter lazily. Whether to open a public issue is the owner's decision.
+- **Affects:** B04-T06, any library that reads `navigator.language` at import; 12 §5 (locales); B07-T07 (the locale setting must pass through `normalizeLocale`)
+- **Papers:** none yet

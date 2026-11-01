@@ -11,6 +11,8 @@ From phase A07, release-plz maintains this file: it generates each release's ent
 ### Added
 
 - Functions in the command line and Python (C03-T07): `sonarithm quick --function "sin(x)/x" --domain -20,20` plays a function as a glide with earcons at its zeros, extrema and asymptotes, and first prints its critical points as text, such as "Local maximum at x = 1.5708, y = 1.". `sonarithm inspect` lists a function spec's critical points and prints an audification's speed-up, length and audible band. Python gains `read_function`. The `sonarithm-curvasona` crate is published as experimental.
+- Smoke-run diagnostics (#436): a desktop smoke run that hangs or whose page fails to load now ends with a failing report that names the stuck check, instead of waiting until CI's time limit.
+- The Plot tab (B04-T06): it draws the dataset as a line, with the shared cursor as a dashed crosshair. Clicking the plot moves the cursor to the nearest point, which is announced, and the table and the Status region follow.
 - Measured output latency (B04-T04): Preferences takes the latency you measured for the selected output device, in milliseconds, and the playhead uses it instead of the system's estimate. It is kept only in your local settings.
 - One cursor (B04-T06): the row you focus in the data table is the cursor that every view shows. It is selected in the table, and the Status region shows its data row and its place (dataset, series, segment, point) as a breadcrumb. Moving it from the table does not repeat what your screen reader already reads, and nothing moves your focus when the cursor moves elsewhere.
 - The playhead (B04-T04): it moves smoothly over plots, extrapolated from the audio engine's clock anchors, with no redraw of the data and no per-frame message from the engine.
@@ -20,6 +22,10 @@ From phase A07, release-plz maintains this file: it generates each release's ent
 - Audio preferences and stop all audio (B01-T08): Ctrl+Comma (Cmd+Comma) opens Preferences, where you pick the output device and set SONARITHM's own volume in decibels, which never changes the system volume. Ctrl+Period (Cmd+Period) stops all sound and speech from anywhere, even inside a dialog. When the audio device changes or fails, SONARITHM says so in words.
 - Start-up (B01-T07): the app opens with the keyboard focus in the Project region, and never waits for the audio device, which opens on the first play.
 - Plots (B04-T01): `@sonarithm/viz` draws line charts whose eight series colours are tuned per theme to stay visible and distinguishable for colour-blind viewers, each with its own dash pattern; a plot is one named, described image for screen readers. Spectrogram colormaps viridis and magma are included.
+
+### Fixed
+
+- The desktop app starts and draws plots under a POSIX "C" locale (for example `LANG=C` on Linux), which made the plot library throw while loading (#436).
 
 ## [0.1.0-alpha] - 2026-10-30
 
