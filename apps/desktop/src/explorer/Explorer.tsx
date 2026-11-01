@@ -43,10 +43,10 @@ const MOVES: readonly (readonly [string, NavVerb])[] = [
 
 /** The modality toggles (keyboard §5.5) and the settings field each flips. */
 const MODALITIES = [
-  ["modality.speech", "speech"],
-  ["modality.sonification", "sonification"],
-  ["modality.braille", "braille"],
-  ["modality.visual", "visual"],
+  ["mod.speech", "speech"],
+  ["mod.sonification", "sonification"],
+  ["mod.braille", "braille"],
+  ["mod.visual", "visual"],
 ] as const;
 
 type Modality = (typeof MODALITIES)[number][1];
@@ -147,7 +147,7 @@ export function Explorer({
       },
     ]),
   );
-  useCommand("verbosity.toggle", () => {
+  useCommand("mod.verbosity", () => {
     void client
       .call({ command: "settings_get" })
       .then(({ verbosity }) => {

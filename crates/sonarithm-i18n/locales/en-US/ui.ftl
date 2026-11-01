@@ -254,12 +254,12 @@ command-nav-go-to = Go to an x value…
 command-nav-find-value = Find a value…
 command-nav-where-am-i = Where am I
 command-nav-repeat = Repeat the last announcement
-command-nav-help = Explorer keys
-command-modality-speech = Speech on or off
-command-verbosity-toggle = Terse or verbose announcements
-command-modality-sonification = Sonification on or off
-command-modality-braille = Braille on or off
-command-modality-visual = Visual highlight on or off
+command-help-explorer = Explorer keys
+command-mod-speech = Speech on or off
+command-mod-verbosity = Terse or verbose announcements
+command-mod-sonification = Sonification on or off
+command-mod-braille = Braille on or off
+command-mod-visual = Visual highlight on or off
 # The palette's result count, announced as it filters; $count is a number.
 command-results =
     { $count ->
