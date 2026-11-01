@@ -406,6 +406,26 @@ pub const CURSOR_ROW: CodeInfo = CodeInfo {
     status: CodeStatus::Active,
 };
 
+/// A function's expression or variables are too large to read (C03-T08).
+pub const FUNCTION_INPUT_TOO_LARGE: CodeInfo = CodeInfo {
+    code: "SNR-APP-088",
+    severity: Severity::Error,
+    summary: "The function is too large to read",
+    help: "An expression is at most 4096 bytes and names at most 64 variables before it is read; the expression language then allows 1024 characters and 16 variables (ADR-0028). Shorten it, or split it with variables.",
+    rules: &[],
+    status: CodeStatus::Active,
+};
+
+/// A project with a function dataset cannot be saved yet (C03-T08).
+pub const FUNCTION_NOT_SAVED: CodeInfo = CodeInfo {
+    code: "SNR-APP-089",
+    severity: Severity::Error,
+    summary: "A function dataset cannot be saved in a project yet",
+    help: "Project files do not store functions yet: saving the samples would lose the function, so nothing was saved. Close the function dataset to save the project, or keep the function's spec. The project format gains functions in a later release.",
+    rules: &[],
+    status: CodeStatus::Active,
+};
+
 /// A chart explorer verb with nothing to explore (B03-T09).
 pub const NAV_NO_TREE: CodeInfo = CodeInfo {
     code: "SNR-APP-090",
@@ -460,6 +480,8 @@ pub const CODES: CodeTable = CodeTable {
         CORRECTIONS_READ_ONLY,
         CORRECTIONS_NOT_HERE,
         CURSOR_ROW,
+        FUNCTION_INPUT_TOO_LARGE,
+        FUNCTION_NOT_SAVED,
         NAV_NO_TREE,
     ],
 };

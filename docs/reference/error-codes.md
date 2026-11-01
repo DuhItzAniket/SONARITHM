@@ -49,6 +49,8 @@ Owner: `sonarithm-app`.
 | `SNR-APP-085` | error | These corrections cannot change now | A project keeps a chart's corrections and their history, but not the chart file.            Open the chart file again to correct it; export works as it is. | — |
 | `SNR-APP-086` | error | These corrections do not belong to this dataset | Corrections apply to a dataset opened from a chart, and a correction file only to            the chart it was made on (same SHA-256 and extractor, RFC-0005 §3). | — |
 | `SNR-APP-087` | error | The row is outside the dataset | A cursor row counts from 0 and is below the dataset's row count (`rows` in its summary). Nothing was changed. | — |
+| `SNR-APP-088` | error | The function is too large to read | An expression is at most 4096 bytes and names at most 64 variables before it is read; the expression language then allows 1024 characters and 16 variables (ADR-0028). Shorten it, or split it with variables. | — |
+| `SNR-APP-089` | error | A function dataset cannot be saved in a project yet | Project files do not store functions yet: saving the samples would lose the function, so nothing was saved. Close the function dataset to save the project, or keep the function's spec. The project format gains functions in a later release. | — |
 | `SNR-APP-090` | error | There is nothing to explore yet | The chart explorer moves through the navigation tree of the compiled Score. Compile the spec, then explore. Nothing was changed. | — |
 
 ## SNR-COMP

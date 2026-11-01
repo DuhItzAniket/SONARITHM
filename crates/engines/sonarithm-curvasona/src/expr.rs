@@ -124,6 +124,19 @@ pub enum ExprError {
     },
 }
 
+impl ExprError {
+    /// Where reading stopped, as `(at, len)` in characters (as the message counts them),
+    /// for errors that have a place: syntax and unknown names. An editor marks it
+    /// (C03-T08's `function_check`).
+    #[must_use]
+    pub const fn span(&self) -> Option<(usize, usize)> {
+        match self {
+            Self::Syntax { at, len, .. } | Self::UnknownName { at, len, .. } => Some((*at, *len)),
+            _ => None,
+        }
+    }
+}
+
 /// "at character 4" or "at characters 4 to 8".
 fn place(at: usize, len: usize) -> String {
     if len <= 1 {
