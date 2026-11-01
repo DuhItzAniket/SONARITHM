@@ -22,7 +22,7 @@
 | Golden cases changed | 0 of 10 (30 checks identical) | `cargo xtask golden`, Windows | this worklog |
 | Replication files changed | 0 of 86 | `cargo xtask replication` | this worklog |
 | Parity Score and render | unchanged | `cargo test -p sonarithm --test parity` | this worklog |
-| Snapshots changed | 5 CLI snapshots, the `SNR-COMP-023` message text only | workspace tests | PR body |
+| Snapshots changed | 7 CLI snapshots, the `SNR-COMP-023` message text only (2 sat behind the first snapshot of the same test) | workspace tests | PR body |
 
 ## Decisions
 
