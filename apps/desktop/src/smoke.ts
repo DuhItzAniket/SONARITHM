@@ -64,6 +64,10 @@ export async function runSmoke(
 ): Promise<void> {
   Reflect.set(window, "__SONARITHM_SMOKE_STARTED__", true);
   const checks: Check[] = [];
+  // The measurements, declared first so a watchdog report keeps those already taken.
+  let pb07: Pb07 | null = null;
+  let pb08: Pb08 | null = null;
+  let pb09: Pb09 | null = null;
   let waiting = "start";
   let reported = false;
   const send = async (results: object) => {
@@ -82,6 +86,9 @@ export async function runSmoke(
           detail: `still waiting after ${String(SMOKE_WATCHDOG_MS / 1000)} s (watchdog)`,
         },
       ],
+      pb07,
+      pb08,
+      pb09,
     });
   }, SMOKE_WATCHDOG_MS);
   const check = async (name: string, run: () => Promise<string>) => {
@@ -120,7 +127,6 @@ export async function runSmoke(
   // focus in a region (09 §7). Reported, not enforced here: ci.yml runs a debug build on
   // shared runners, and desktop-nightly a release build. The benchmarks log records the
   // HW-01 runs.
-  let pb07: Pb07 | null = null;
   await check("pb-07-cold-start", async () => {
     pb07 = await measurePb07(config);
     return `${pb07.coldStartMs.toFixed(0)} ms to an interactive workspace (budget ${String(PB07_BUDGET_MS)} ms)`;
@@ -153,19 +159,9 @@ export async function runSmoke(
   // PB-09 (B01-T04): a 1 MB binary view, request to ArrayBuffer, p95 over repeated calls.
   // Reported, not enforced here: CI runs a debug build on shared runners, so the number is
   // an upper bound. The benchmarks log records the release-build runs (HW-01).
-  let pb09: Pb09 | null = null;
   await check("pb-09-binary-view", async () => {
     pb09 = await measurePb09(transport, config);
     return `p95 ${pb09.p95Ms.toFixed(1)} ms over ${String(pb09.samples)} calls of ${String(pb09.bytes)} bytes (budget ${String(PB09_BUDGET_MS)} ms)`;
-  });
-
-  // PB-08 (B04-T08): the dense layer and the playhead in this webview: WebView2 on
-  // Windows, WKWebView on macOS, WebKitGTK on Linux. Reported, not enforced: shared CI
-  // runners draw WebGL in software or not at all (Xvfb). Only a broken renderer fails it.
-  let pb08: Pb08 | null = null;
-  await check("pb-08-dense-layer", async () => {
-    pb08 = await measurePb08();
-    return `${pb08.backend}: p95 ${pb08.scriptP95Ms.toFixed(1)} ms per redraw of ${String(pb08.points)} points over ${String(pb08.frames)} frames (budget ${String(PB08_BUDGET_MS)} ms); playhead ${pb08.playheadFps.toFixed(0)} fps`;
   });
 
   // B03-T04: the native announcer route raises a UI Automation notification on Windows
@@ -188,6 +184,16 @@ export async function runSmoke(
       throw new Error("a native route answered outside Windows");
     }
     return "UI Automation notification raised";
+  });
+
+  // PB-08 runs last: it is the longest check, and a webview that stops drawing (hidden or
+  // throttled) must not hold up the others.
+  // PB-08 (B04-T08): the dense layer and the playhead in this webview: WebView2 on
+  // Windows, WKWebView on macOS, WebKitGTK on Linux. Reported, not enforced: shared CI
+  // runners draw WebGL in software or not at all (Xvfb). Only a broken renderer fails it.
+  await check("pb-08-dense-layer", async () => {
+    pb08 = await measurePb08();
+    return `${pb08.backend}: p95 ${pb08.scriptP95Ms.toFixed(1)} ms per redraw of ${String(pb08.points)} points over ${String(pb08.frames)} frames (budget ${String(PB08_BUDGET_MS)} ms); playhead ${pb08.playheadFps.toFixed(0)} fps`;
   });
 
   clearTimeout(watchdog);
@@ -294,8 +300,17 @@ const PB08_POINTS = 1_000_000;
 const PB08_FRAMES = 60;
 /** Frames of the playhead moving over the drawn layer (nothing redrawn). */
 const PB08_PLAYHEAD_FRAMES = 120;
-/** Each phase stops after this much wall time, so a slow runner still reports. */
+/**
+ * No new frame starts after this much wall time in a phase, so a slow runner still
+ * reports. The frame in progress finishes, and the first redraw always runs.
+ */
 const PB08_MEASURE_MS = 8000;
+/**
+ * The longest wait for one animation frame. A webview that is hidden, minimized or
+ * throttled stops delivering them; the phase then ends, marked `stalled`, instead of
+ * waiting for the smoke run's watchdog.
+ */
+const PB08_FRAME_TIMEOUT_MS = 1000;
 
 /** The PB-08 measurement the smoke report carries. */
 interface Pb08 {
@@ -311,8 +326,10 @@ interface Pb08 {
   /** Playhead frames per second, from the animation frames' timestamps. */
   readonly playheadFps: number;
   readonly playheadP95IntervalMs: number;
-  /** Fewer frames than planned: the runner was too slow to finish in time. */
+  /** Fewer frames than planned: the runner was too slow, or frames stopped. */
   readonly cutShort: boolean;
+  /** The webview stopped delivering animation frames (hidden or throttled). */
+  readonly stalled: boolean;
 }
 
 function percentileOf(values: readonly number[], q: number): number {
@@ -322,9 +339,17 @@ function percentileOf(values: readonly number[], q: number): number {
   );
 }
 
-function nextFrame(): Promise<number> {
+/** The next animation frame's timestamp, or `null` if none comes within `timeoutMs`. */
+function nextFrame(timeoutMs: number): Promise<number | null> {
   return new Promise((resolve) => {
-    requestAnimationFrame(resolve);
+    const timer = setTimeout(() => {
+      cancelAnimationFrame(frame);
+      resolve(null);
+    }, timeoutMs);
+    const frame = requestAnimationFrame((stamp) => {
+      clearTimeout(timer);
+      resolve(stamp);
+    });
   });
 }
 
@@ -366,13 +391,17 @@ async function measurePb08(): Promise<Pb08> {
     y: { min: -1, max: 1 },
   });
   const times: number[] = [];
+  let stalled = false;
   let began = performance.now();
   for (let frame = 0; frame < PB08_FRAMES; frame += 1) {
     if (frame > 0 && performance.now() - began > PB08_MEASURE_MS) break;
     const start = performance.now();
     renderer.draw(scene(1 + frame / PB08_FRAMES));
     times.push(performance.now() - start);
-    await nextFrame();
+    if ((await nextFrame(PB08_FRAME_TIMEOUT_MS)) === null) {
+      stalled = true;
+      break;
+    }
   }
   // The playhead: a line moved by transform each frame, over a layer drawn once.
   const line = document.createElement("div");
@@ -385,10 +414,15 @@ async function measurePb08(): Promise<Pb08> {
   document.body.append(line);
   const stamps: number[] = [];
   began = performance.now();
-  for (let frame = 0; frame < PB08_PLAYHEAD_FRAMES; frame += 1) {
+  for (let frame = 0; frame < PB08_PLAYHEAD_FRAMES && !stalled; frame += 1) {
     if (frame > 0 && performance.now() - began > PB08_MEASURE_MS) break;
     line.style.transform = `translateX(${String((frame * 12) % 1440)}px)`;
-    stamps.push(await nextFrame());
+    const stamp = await nextFrame(PB08_FRAME_TIMEOUT_MS);
+    if (stamp === null) {
+      stalled = true;
+      break;
+    }
+    stamps.push(stamp);
   }
   line.remove();
   const backend = renderer.backend;
@@ -415,6 +449,7 @@ async function measurePb08(): Promise<Pb08> {
     playheadP95IntervalMs: percentileOf(intervals, 0.95),
     cutShort:
       times.length < PB08_FRAMES || stamps.length < PB08_PLAYHEAD_FRAMES,
+    stalled,
   };
 }
 
