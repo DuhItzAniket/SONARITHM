@@ -29,16 +29,26 @@ const explorer = (page: Page) =>
 
 const readout = (page: Page) => page.locator("[data-cursor-readout]");
 
-/** Jump is Ctrl on Windows and Linux and Option on macOS (KB-07). */
-const JUMP = process.platform === "darwin" ? "Alt" : "Control";
-const PRIMARY = process.platform === "darwin" ? "Meta" : "Control";
+/**
+ * The modifiers as the app sees them (KB-07): it picks its bindings from the user agent,
+ * and Playwright's WebKit project reports a Mac one, whatever OS runs the test. Jump is
+ * Ctrl on Windows and Linux and Option on macOS; Primary is Ctrl or Cmd.
+ */
+async function modifiers(
+  page: Page,
+): Promise<{ jump: "Alt" | "Control"; primary: "Meta" | "Control" }> {
+  const mac = await page.evaluate(() => navigator.userAgent.includes("Mac"));
+  return mac
+    ? { jump: "Alt", primary: "Meta" }
+    : { jump: "Control", primary: "Control" };
+}
 
 /** Every movement key of keymap v0 and the verb it sends (keyboard §4.2). */
-const KEYS: readonly (readonly [string, object])[] = [
+const keys = (jump: string): readonly (readonly [string, object])[] => [
   ["ArrowRight", { verb: "next" }],
   ["ArrowLeft", { verb: "previous" }],
-  [`${JUMP}+ArrowRight`, { verb: "jumpForward" }],
-  [`${JUMP}+ArrowLeft`, { verb: "jumpBack" }],
+  [`${jump}+ArrowRight`, { verb: "jumpForward" }],
+  [`${jump}+ArrowLeft`, { verb: "jumpBack" }],
   ["Home", { verb: "first" }],
   ["End", { verb: "last" }],
   ["ArrowDown", { verb: "into" }],
@@ -47,8 +57,8 @@ const KEYS: readonly (readonly [string, object])[] = [
   ["Backspace", { verb: "out" }],
   ["PageDown", { verb: "nextSeries" }],
   ["PageUp", { verb: "previousSeries" }],
-  [`${JUMP}+ArrowUp`, { verb: "maximum" }],
-  [`${JUMP}+ArrowDown`, { verb: "minimum" }],
+  [`${jump}+ArrowUp`, { verb: "maximum" }],
+  [`${jump}+ArrowDown`, { verb: "minimum" }],
   ["n", { verb: "nextInsight" }],
   ["Shift+N", { verb: "previousInsight" }],
   ["x", { verb: "landmark", landmark: "xAxis" }],
@@ -77,19 +87,21 @@ test("b03_t09_the_explorer_is_a_named_and_described_tab_stop", async ({
   await expect(explorer(page)).not.toHaveAttribute("aria-activedescendant");
   // The global command reaches it from anywhere (keyboard §5.1).
   await page.getByRole("tab", { name: "Plot" }).focus();
-  await page.keyboard.press(`${PRIMARY}+Shift+C`);
+  const { primary } = await modifiers(page);
+  await page.keyboard.press(`${primary}+Shift+C`);
   await expect(explorer(page)).toBeFocused();
   expect(await seriousViolations(page)).toEqual([]);
 });
 
 test("b03_t09_every_movement_key_sends_its_verb", async ({ page }) => {
+  const table = keys((await modifiers(page)).jump);
   await explorer(page).focus();
-  for (const [key] of KEYS) {
+  for (const [key] of table) {
     await page.keyboard.press(key);
   }
   await expect
     .poll(() => navVerbs(page))
-    .toEqual(KEYS.map(([, verb]) => JSON.stringify(verb)));
+    .toEqual(table.map(([, verb]) => JSON.stringify(verb)));
   // The explorer never took the focus away from itself.
   await expect(explorer(page)).toBeFocused();
 });
