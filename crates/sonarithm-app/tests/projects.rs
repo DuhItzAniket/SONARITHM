@@ -563,3 +563,153 @@ fn project_paths_are_checked_and_never_echoed() {
     );
     assert_eq!(reopened["fileName"], "p.sonarithm");
 }
+
+/// The manifest of the bundle at `path`, as JSON.
+fn manifest_of(path: &Path) -> Value {
+    let mut archive = zip::ZipArchive::new(std::fs::File::open(path).unwrap()).unwrap();
+    let mut text = String::new();
+    std::io::Read::read_to_string(&mut archive.by_name("manifest.json").unwrap(), &mut text)
+        .unwrap();
+    serde_json::from_str(&text).unwrap()
+}
+
+/// RFC-0002 §12: a dataset with a storage this version does not know (the fixture's
+/// `future-kind`, with a field of its own) opens as unavailable with `SNR-APP-035`, and
+/// saving writes the entry back unchanged, in a 1.1 bundle.
+#[test]
+fn rfc_0002_12_an_unknown_storage_opens_unavailable_and_is_kept_on_re_save() {
+    let dir = TempDir::new("future-kind");
+    let spec = spec("d2").into_bytes();
+    let mut crafted = manifest("1.1", &[member("specs/main.json", &spec)]);
+    let entry = json!({
+        "id": "d2", "name": "later.dat", "storage": "future-kind",
+        "futureDetail": { "level": 3 }, "fingerprint": "0".repeat(64), "rows": 3
+    });
+    crafted["datasets"] = json!([entry.clone()]);
+    let path = dir.path().join("future.sonarithm");
+    craft(
+        &path,
+        &[("specs/main.json", spec, CompressionMethod::Deflated)],
+        &crafted,
+    );
+    let mut app = self::app(dir.path());
+    let opened = ok(
+        &mut app,
+        &json!({ "command": "project_open", "args": { "path": path } }),
+    );
+    let warning = opened["diagnostics"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .find(|d| d["code"] == "SNR-APP-035")
+        .unwrap_or_else(|| panic!("{opened}"));
+    let message = warning["message"].as_str().unwrap();
+    assert!(message.contains("`later.dat`") && message.contains("future-kind"), "{message}");
+    assert_eq!(opened["datasets"][0]["available"], false, "{opened}");
+    let saved = dir.path().join("saved.sonarithm");
+    ok(
+        &mut app,
+        &json!({ "command": "project_save_as", "args": { "path": saved, "embedData": true } }),
+    );
+    let written = manifest_of(&saved);
+    assert_eq!(written["formatVersion"], "1.1");
+    assert_eq!(written["datasets"], json!([entry]), "kept byte for byte");
+}
+
+/// RFC-0002 §12: a function dataset is saved as its definition (canonical expression,
+/// domain, the grid written out), with no data member, in a 1.1 bundle; it opens sampled
+/// again and saves again to the same bytes. A project without functions stays 1.0.
+#[test]
+fn rfc_0002_12_a_function_dataset_round_trips_as_its_definition() {
+    let dir = TempDir::new("function-project");
+    let mut app = self::app(dir.path());
+    ok(
+        &mut app,
+        &json!({ "command": "function_open", "args": { "expr": "x ^ 3 - 3 * x", "domain": [-3, 3] } }),
+    );
+    let glide = json!({
+        "specVersion": "0.4",
+        "data": { "source": { "kind": "dataset", "id": "d1" } },
+        "tracks": [{ "id": "f", "mark": "glide", "channels": { "pitch": { "field": "y" } } }]
+    });
+    ok(
+        &mut app,
+        &json!({ "command": "spec_set", "args": { "text": glide.to_string() } }),
+    );
+    let path = dir.path().join("cubic.sonarithm");
+    ok(
+        &mut app,
+        &json!({ "command": "project_save_as", "args": { "path": path, "embedData": true } }),
+    );
+    let manifest = manifest_of(&path);
+    assert_eq!(manifest["formatVersion"], "1.1");
+    let entry = &manifest["datasets"][0];
+    assert_eq!(entry["storage"], "function");
+    let function = &entry["function"];
+    assert_eq!(function["expr"], "x^3 - 3*x", "canonical: {function}");
+    assert_eq!(function["samples"], 1000, "the default grid written out: {function}");
+    let domain: Vec<f64> = function["domain"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .filter_map(Value::as_f64)
+        .collect();
+    assert_eq!(domain, [-3.0, 3.0]);
+    assert!(entry.get("path").is_none());
+    assert!(
+        manifest["members"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .all(|m| !m["path"].as_str().unwrap().starts_with("data/")),
+        "no data member: {manifest}"
+    );
+    let first = std::fs::read(&path).unwrap();
+    let mut app = self::app(dir.path());
+    let opened = ok(
+        &mut app,
+        &json!({ "command": "project_open", "args": { "path": path } }),
+    );
+    assert_eq!(opened["datasets"][0]["available"], true, "{opened}");
+    assert_eq!(opened["diagnostics"], json!([]), "{opened}");
+    ok(&mut app, &json!({ "command": "project_save" }));
+    assert_eq!(std::fs::read(&path).unwrap(), first, "saves to the same bytes");
+    let report = ok(&mut app, &json!({ "command": "compile" }));
+    assert_eq!(report["ok"], true, "{report}");
+
+    let mut plain = session(dir.path());
+    let csv_project = dir.path().join("plain.sonarithm");
+    ok(
+        &mut plain,
+        &json!({ "command": "project_save_as", "args": { "path": csv_project, "embedData": true } }),
+    );
+    assert_eq!(manifest_of(&csv_project)["formatVersion"], "1.0");
+}
+
+/// RFC-0002 §12: a function whose samples differ from the saved fingerprint (CURVASONA
+/// sampling differently) opens with the new samples and a warning (`SNR-APP-034`).
+#[test]
+fn rfc_0002_12_a_changed_function_fingerprint_is_a_warning() {
+    let dir = TempDir::new("function-fingerprint");
+    let spec = spec("d1").into_bytes();
+    let mut crafted = manifest("1.1", &[member("specs/main.json", &spec)]);
+    crafted["datasets"] = json!([{
+        "id": "d1", "name": "f(x) = x^2", "storage": "function",
+        "function": { "expr": "x^2", "domain": [-1.0, 1.0], "samples": 11 },
+        "fingerprint": "0".repeat(64), "rows": 11
+    }]);
+    let path = dir.path().join("changed.sonarithm");
+    craft(
+        &path,
+        &[("specs/main.json", spec, CompressionMethod::Deflated)],
+        &crafted,
+    );
+    let opened = project::open(&path, &mut || 1).unwrap();
+    assert_eq!(opened.warnings.len(), 1, "{:?}", opened.warnings);
+    assert_eq!(opened.warnings[0].code, "SNR-APP-034");
+    assert!(opened.warnings[0].message.contains("samples differently"));
+    let dataset = &opened.project.datasets[0];
+    assert!(dataset.table.is_some());
+    assert!(dataset.function.is_some());
+    assert_ne!(dataset.fingerprint, "0".repeat(64), "the new fingerprint is recorded");
+}

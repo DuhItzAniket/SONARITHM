@@ -3,7 +3,7 @@
 
 //! Functions in the app core (C03-T08; ADR-0017 "Functions"): `function_check` for live
 //! diagnostics, `function_open` as a dataset the cursor and the cues work on, the SDR-31
-//! calculator, and projects that refuse to save a function rather than drop it.
+//! calculator. Projects save a function as its definition (tests/projects.rs, RFC-0002 §12).
 
 #![allow(
     clippy::unwrap_used,
@@ -20,7 +20,8 @@ use sonarithm_app::{App, AppConfig, AudioOutput, CollectingSink};
 
 struct Harness {
     app: App,
-    dir: TempDir,
+    /// Kept so the config folder lives as long as the app.
+    _dir: TempDir,
 }
 
 impl Harness {
@@ -28,7 +29,7 @@ impl Harness {
         let dir = TempDir::new(name);
         let config = AppConfig::new(dir.path().join("config")).with_audio(AudioOutput::null());
         let app = App::new(config, Arc::new(CollectingSink::new())).unwrap();
-        Self { app, dir }
+        Self { app, _dir: dir }
     }
 
     fn send(&mut self, request: &Value) -> Result<Value, IpcError> {
@@ -194,29 +195,4 @@ fn sdr_31_the_calculator_agrees_with_the_compile() {
         .send(&json!({ "command": "audify_calculate", "args": { "dataset": "d1", "k": 0 } }))
         .unwrap_err();
     assert_eq!(err.code, "SNR-ENG-463", "{err}");
-}
-
-/// Projects cannot store a function yet (a project-format amendment will add it): saving one
-/// fails with a coded error naming the dataset, and nothing is written or dropped.
-#[test]
-fn saving_a_project_with_a_function_fails_and_names_it() {
-    let mut h = Harness::new("function-save");
-    h.ok(&cubic());
-    let spec = json!({
-        "specVersion": "0.4",
-        "data": { "source": { "kind": "dataset", "id": "d1" } },
-        "tracks": [{ "id": "f", "mark": "glide", "channels": { "pitch": { "field": "y" } } }]
-    });
-    h.ok(&json!({ "command": "spec_set", "args": { "text": spec.to_string() } }));
-    let path = h.dir.path().join("cubic.sonarithm");
-    let err = h
-        .send(&json!({ "command": "project_save_as", "args": { "path": path, "embedData": true } }))
-        .unwrap_err();
-    assert_eq!(err.code, "SNR-APP-089", "{err}");
-    assert!(err.message.contains("d1"), "{err}");
-    assert!(err.message.contains("f(x) = x^3 - 3*x"), "{err}");
-    assert!(!path.exists(), "nothing was written");
-    h.ok(&json!({ "command": "dataset_close", "args": { "id": "d1" } }));
-    h.ok(&json!({ "command": "project_save_as", "args": { "path": path, "embedData": true } }));
-    assert!(path.exists());
 }

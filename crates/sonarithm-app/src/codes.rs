@@ -416,14 +416,15 @@ pub const FUNCTION_INPUT_TOO_LARGE: CodeInfo = CodeInfo {
     status: CodeStatus::Active,
 };
 
-/// A project with a function dataset cannot be saved yet (C03-T08).
+/// A project with a function dataset could not be saved (C03-T08a). Retired with format
+/// 1.1, which saves a function as its definition (RFC-0002 §12); never reused.
 pub const FUNCTION_NOT_SAVED: CodeInfo = CodeInfo {
     code: "SNR-APP-089",
     severity: Severity::Error,
-    summary: "A function dataset cannot be saved in a project yet",
-    help: "Project files do not store functions yet: saving the samples would lose the function, so nothing was saved. Close the function dataset to save the project, or keep the function's spec. The project format gains functions in a later release.",
+    summary: "A function dataset could not be saved in a project",
+    help: "Retired: project format 1.1 saves a function dataset as its definition (RFC-0002 §12).",
     rules: &[],
-    status: CodeStatus::Active,
+    status: CodeStatus::Retired,
 };
 
 /// Every `SNR-APP` code, in ascending order.

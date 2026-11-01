@@ -1,7 +1,8 @@
 // SPDX-FileCopyrightText: 2026 SONARITHM contributors
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
-//! `.sonarithm` project bundles, version 1 ([RFC-0002], [ADR-0018]; B05-T04).
+//! `.sonarithm` project bundles, version 1 ([RFC-0002], [ADR-0018]; B05-T04), with
+//! format 1.1's function datasets and unknown storages (RFC-0002 §12; C03-T08).
 //!
 //! A bundle is a ZIP file: `manifest.json` first, then the specs, embedded data snapshots
 //! (stored Parquet), and the reserved `profiles/`, `annotations/` and `renders/` members,
@@ -34,8 +35,14 @@ use crate::ipc::IpcError;
 
 /// The bundle format's name in the manifest.
 pub const FORMAT: &str = "sonarithm-project";
-/// The format version this build writes, `MAJOR.MINOR`.
-pub const FORMAT_VERSION: (u32, u32) = (1, 0);
+/// The newest format version this build reads and writes, `MAJOR.MINOR`. It writes 1.1
+/// only when a project needs it (a function dataset, or an entry it keeps unread), and
+/// [`BASE_VERSION`] otherwise, so projects without them stay byte-identical (RFC-0002 §12).
+pub const FORMAT_VERSION: (u32, u32) = (1, 1);
+/// The version written when nothing of 1.1 is used.
+pub const BASE_VERSION: (u32, u32) = (1, 0);
+/// The storages this build reads; any other is kept unread (RFC-0002 §12).
+const KNOWN_STORAGES: [&str; 3] = ["embedded", "linked", "function"];
 /// The extension of project files.
 pub const EXTENSION: &str = "sonarithm";
 
@@ -55,7 +62,7 @@ const DATA_EXTENSIONS: [&str; 8] = [
     "csv", "tsv", "json", "ndjson", "parquet", "arrow", "xlsx", "ods",
 ];
 
-#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 struct Manifest {
     format: String,
@@ -87,9 +94,11 @@ struct SpecEntry {
 enum Storage {
     Embedded,
     Linked,
+    /// A function's definition, sampled again on read (format 1.1).
+    Function,
 }
 
-#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 struct DatasetEntry {
     id: String,
@@ -99,8 +108,50 @@ struct DatasetEntry {
     path: Option<String>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     link: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    function: Option<FunctionDef>,
     fingerprint: String,
     rows: u64,
+}
+
+/// A function dataset's definition (format 1.1): the canonical expression, the domain, the
+/// grid and the named constants.
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+struct FunctionDef {
+    expr: String,
+    domain: [f64; 2],
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    samples: Option<u32>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    step: Option<f64>,
+    #[serde(default, skip_serializing_if = "BTreeMap::is_empty")]
+    variables: BTreeMap<String, f64>,
+}
+
+impl FunctionDef {
+    /// The definition of `function`, with its expression in canonical form and the default
+    /// grid written out.
+    fn of(function: &sonarithm::FunctionSpec) -> Self {
+        let canonical = sonarithm::check_expression(&function.expr, &function.variables)
+            .canonical
+            .unwrap_or_else(|| function.expr.clone());
+        Self {
+            expr: canonical,
+            domain: function.domain,
+            samples: function.step.is_none().then(|| function.samples.unwrap_or(1000)),
+            step: function.step,
+            variables: function.variables.clone(),
+        }
+    }
+
+    fn spec(&self) -> sonarithm::FunctionSpec {
+        let mut function = sonarithm::FunctionSpec::new(self.expr.clone(), self.domain);
+        function.samples = self.samples;
+        function.step = self.step;
+        function.variables.clone_from(&self.variables);
+        function
+    }
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
@@ -131,6 +182,11 @@ pub struct ProjectDataset {
     pub fingerprint: String,
     /// Rows, as recorded.
     pub rows: u64,
+    /// For a function dataset, its definition (format 1.1): saved instead of its samples.
+    pub function: Option<sonarithm::FunctionSpec>,
+    /// For an entry whose storage this build does not know, the entry as read: unavailable,
+    /// and written back unchanged (RFC-0002 §12).
+    pub kept: Option<serde_json::Value>,
 }
 
 impl ProjectDataset {
@@ -147,6 +203,23 @@ impl ProjectDataset {
             linked: false,
             link: None,
             fingerprint,
+            function: None,
+            kept: None,
+        }
+    }
+
+    /// A function dataset: saved as its definition, not its samples (format 1.1).
+    #[must_use]
+    pub fn function(
+        id: &str,
+        name: &str,
+        table: Table,
+        fingerprint: String,
+        function: sonarithm::FunctionSpec,
+    ) -> Self {
+        Self {
+            function: Some(function),
+            ..Self::embedded(id, name, table, fingerprint)
         }
     }
 }
@@ -297,14 +370,22 @@ pub fn write(project: &Project, target: &Path, embed_all: bool) -> Result<Vec<u8
     let datasets = project
         .datasets
         .iter()
+        .filter(|dataset| dataset.kept.is_none())
         .map(|dataset| dataset_member(dataset, folder, embed_all, &mut members))
         .collect::<Result<Vec<_>, _>>()?;
+    let kept: Vec<&serde_json::Value> = project
+        .datasets
+        .iter()
+        .filter_map(|dataset| dataset.kept.as_ref())
+        .collect();
+    let newer = !kept.is_empty() || datasets.iter().any(|d| d.storage == Storage::Function);
+    let version = if newer { FORMAT_VERSION } else { BASE_VERSION };
     for (path, bytes) in &project.reserved {
         members.insert(path.clone(), bytes.clone());
     }
     let manifest = Manifest {
         format: FORMAT.to_owned(),
-        format_version: format!("{}.{}", FORMAT_VERSION.0, FORMAT_VERSION.1),
+        format_version: format!("{}.{}", version.0, version.1),
         generator: Generator {
             name: "sonarithm".to_owned(),
             version: env!("CARGO_PKG_VERSION").to_owned(),
@@ -322,6 +403,17 @@ pub fn write(project: &Project, target: &Path, embed_all: bool) -> Result<Vec<u8
             })
             .collect(),
     };
+    let mut manifest = serde_json::to_value(&manifest).map_err(|err| {
+        IpcError::new(
+            &codes::EXPORT_FAILED,
+            format!("The manifest could not be written: {err}."),
+        )
+    })?;
+    // Entries kept unread go back as they came, among the others by ID.
+    if let Some(list) = manifest["datasets"].as_array_mut() {
+        list.extend(kept.into_iter().cloned());
+        list.sort_by(|a, b| a["id"].as_str().cmp(&b["id"].as_str()));
+    }
     let manifest = sonarithm_spec::canonical::to_canonical(&manifest).map_err(|err| {
         IpcError::new(
             &codes::EXPORT_FAILED,
@@ -380,6 +472,19 @@ fn dataset_member(
                 ),
             ));
         }
+        // A function is saved as its definition, with no data member (format 1.1).
+        if let Some(function) = &dataset.function {
+            return Ok(DatasetEntry {
+                id: dataset.id.clone(),
+                name: dataset.name.clone(),
+                storage: Storage::Function,
+                path: None,
+                link: None,
+                function: Some(FunctionDef::of(function)),
+                fingerprint: dataset.fingerprint.clone(),
+                rows: dataset.rows,
+            });
+        }
         let link = match (&dataset.origin, &dataset.table) {
             // Data from a file is linked unless the user embeds everything.
             (Some(origin), Some(_)) if !embed_all => {
@@ -405,6 +510,7 @@ fn dataset_member(
                 storage: Storage::Linked,
                 path: None,
                 link: Some(link),
+                function: None,
                 fingerprint: dataset.fingerprint.clone(),
                 rows: dataset.rows,
             });
@@ -432,6 +538,7 @@ fn dataset_member(
             storage: Storage::Embedded,
             path: Some(path),
             link: None,
+            function: None,
             fingerprint: dataset.fingerprint.clone(),
             rows: dataset.rows,
         })
@@ -558,7 +665,7 @@ pub fn open(path: &Path, table_ids: &mut dyn FnMut() -> u32) -> Result<Opened, I
     let entries = scan(&mut archive, &mut warnings)?;
     // The manifest, then every listed member against its hash.
     let text = read_member(&mut archive, MANIFEST, MAX_JSON)?;
-    let manifest = parse_manifest(&text, &mut warnings)?;
+    let (manifest, kept) = parse_manifest(&text, &mut warnings)?;
     let texts = verify(&file, &mut archive, &manifest, &entries)?;
     let listed: BTreeSet<&str> = manifest.members.iter().map(|m| m.path.as_str()).collect();
     let mut project = Project {
@@ -596,8 +703,25 @@ pub fn open(path: &Path, table_ids: &mut dyn FnMut() -> u32) -> Result<Opened, I
         let dataset = match entry.storage {
             Storage::Embedded => embedded(&file, entry, &listed, &entries, &options)?,
             Storage::Linked => linked_dataset(folder, entry, &options, &mut warnings),
+            Storage::Function => function_dataset(entry, ids, &mut warnings)?,
         };
         project.datasets.push(dataset);
+    }
+    for value in kept {
+        // Every dataset takes an ID, so the caller's numbering matches the list.
+        let _ = table_ids();
+        project.datasets.push(ProjectDataset {
+            id: value["id"].as_str().unwrap_or_default().to_owned(),
+            name: value["name"].as_str().unwrap_or_default().to_owned(),
+            table: None,
+            origin: None,
+            linked: false,
+            link: None,
+            fingerprint: value["fingerprint"].as_str().unwrap_or_default().to_owned(),
+            rows: value["rows"].as_u64().unwrap_or(0),
+            function: None,
+            kept: Some(value),
+        });
     }
     Ok(Opened { project, warnings })
 }
@@ -751,6 +875,69 @@ fn embedded(
         linked: false,
         link: None,
         fingerprint,
+        function: None,
+        kept: None,
+    })
+}
+
+/// A function dataset (format 1.1): sampled again from its definition. A different
+/// fingerprint (CURVASONA samples differently from the saving build) is a warning, and
+/// the new samples are used; an expression this build cannot read leaves it unavailable,
+/// its definition kept for the next save.
+fn function_dataset(
+    entry: &DatasetEntry,
+    ids: u32,
+    warnings: &mut Vec<IpcError>,
+) -> Result<ProjectDataset, IpcError> {
+    let definition = entry
+        .function
+        .as_ref()
+        .ok_or_else(|| damaged("a function dataset has no definition"))?;
+    let spec = definition.spec();
+    let name = file_name(&entry.name);
+    let sampled = sonarithm::read_function_with_ids(&spec, BundleId(u64::from(ids)), TableId(ids))
+        .ok()
+        .and_then(|function| function.into_bundle().primary().cloned());
+    let Some(table) = sampled else {
+        warnings.push(IpcError::new(
+            &codes::LINKED_DATA,
+            format!("The function `{name}` cannot be sampled by this version, so it is unavailable."),
+        ));
+        return Ok(ProjectDataset {
+            id: entry.id.clone(),
+            name: entry.name.clone(),
+            table: None,
+            origin: None,
+            linked: false,
+            link: None,
+            fingerprint: entry.fingerprint.clone(),
+            rows: entry.rows,
+            function: Some(spec),
+            kept: None,
+        });
+    };
+    let fingerprint = table_fingerprint(&table)
+        .map_err(|_| damaged("a function dataset cannot be fingerprinted"))?
+        .to_string();
+    if fingerprint != entry.fingerprint {
+        warnings.push(IpcError::new(
+            &codes::LINKED_DATA,
+            format!(
+                "The function `{name}` samples differently in this version; it opens with the new samples, and saving records them."
+            ),
+        ));
+    }
+    Ok(ProjectDataset {
+        id: entry.id.clone(),
+        name: entry.name.clone(),
+        rows: table.num_rows(),
+        table: Some(table),
+        origin: None,
+        linked: false,
+        link: None,
+        fingerprint,
+        function: Some(spec),
+        kept: None,
     })
 }
 
@@ -784,6 +971,8 @@ fn linked_dataset(
         link: entry.link.clone(),
         fingerprint: entry.fingerprint.clone(),
         rows: entry.rows,
+        function: None,
+        kept: None,
     }
 }
 
@@ -848,7 +1037,10 @@ fn linked(
 }
 
 /// Parses the manifest: the format, the version, then the fields this version knows.
-fn parse_manifest(text: &[u8], warnings: &mut Vec<IpcError>) -> Result<Manifest, IpcError> {
+fn parse_manifest(
+    text: &[u8],
+    warnings: &mut Vec<IpcError>,
+) -> Result<(Manifest, Vec<serde_json::Value>), IpcError> {
     let mut value: serde_json::Value =
         serde_json::from_slice(text).map_err(|_| damaged("the manifest is not JSON"))?;
     if value["format"] != FORMAT {
@@ -883,10 +1075,45 @@ fn parse_manifest(text: &[u8], warnings: &mut Vec<IpcError>) -> Result<Manifest,
                 FORMAT_VERSION.0, FORMAT_VERSION.1, FORMAT_VERSION.0, FORMAT_VERSION.1
             ),
         ));
+    }
+    // Entries with a storage this build does not know are kept unread (RFC-0002 §12),
+    // before unknown fields are stripped, so they go back exactly as they came.
+    let kept = take_unknown_storages(&mut value, warnings);
+    if minor > FORMAT_VERSION.1 {
         strip_unknown(&mut value);
     }
-    serde_json::from_value(value)
-        .map_err(|_| damaged("the manifest does not have the format's fields"))
+    let manifest = serde_json::from_value(value)
+        .map_err(|_| damaged("the manifest does not have the format's fields"))?;
+    Ok((manifest, kept))
+}
+
+/// Removes the dataset entries whose `storage` this build does not know, warning for each
+/// (`SNR-APP-035`): they are unavailable and kept as they are for the next save.
+fn take_unknown_storages(
+    value: &mut serde_json::Value,
+    warnings: &mut Vec<IpcError>,
+) -> Vec<serde_json::Value> {
+    let Some(list) = value["datasets"].as_array_mut() else {
+        return Vec::new();
+    };
+    let (known, unknown): (Vec<_>, Vec<_>) = std::mem::take(list).into_iter().partition(|entry| {
+        entry["storage"]
+            .as_str()
+            .is_some_and(|storage| KNOWN_STORAGES.contains(&storage))
+    });
+    *list = known;
+    for entry in &unknown {
+        warnings.push(IpcError::new(
+            &codes::PROJECT_NEWER,
+            format!(
+                "The dataset `{}` ({}) is stored as `{}`, which this version does not know; it is unavailable, and saving keeps it as it is.",
+                file_name(entry["name"].as_str().unwrap_or_default()),
+                entry["id"].as_str().unwrap_or_default(),
+                entry["storage"].as_str().unwrap_or("?")
+            ),
+        ));
+    }
+    unknown
 }
 
 /// Removes fields a newer minor version may have added, at every level this version reads.
@@ -920,6 +1147,7 @@ fn strip_unknown(value: &mut serde_json::Value) {
                 "storage",
                 "path",
                 "link",
+                "function",
                 "fingerprint",
                 "rows",
             ][..],
@@ -929,6 +1157,12 @@ fn strip_unknown(value: &mut serde_json::Value) {
         if let Some(items) = value[list].as_array_mut() {
             for item in items {
                 keep(item, known);
+                if list == "datasets" && item.get("function").is_some() {
+                    keep(
+                        &mut item["function"],
+                        &["expr", "domain", "samples", "step", "variables"],
+                    );
+                }
             }
         }
     }
