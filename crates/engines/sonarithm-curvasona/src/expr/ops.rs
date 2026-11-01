@@ -10,13 +10,19 @@
 
 use exmex::{BinOp, MakeOperators, Operator};
 
+/// A one-argument function.
+type Unary = fn(f64) -> f64;
+
+/// A two-argument function.
+type Binary = fn(f64, f64) -> f64;
+
 /// exmex's operator set with `libm` maths.
 #[derive(Clone, Debug)]
 pub(crate) struct LibmOps;
 
 /// The unary functions the lowered form calls: every [`super::Func1`] name except `sec`,
 /// `csc` and `cot`, which lower to `1/cos`, `1/sin` and `1/tan`.
-pub(crate) const UNARY: [(&str, fn(f64) -> f64); 23] = [
+pub(crate) const UNARY: [(&str, Unary); 23] = [
     ("abs", libm::fabs),
     ("acos", libm::acos),
     ("acosh", libm::acosh),
@@ -43,13 +49,13 @@ pub(crate) const UNARY: [(&str, fn(f64) -> f64); 23] = [
 ];
 
 /// The two-argument functions, as [`super::Func2`] names them.
-pub(crate) const BINARY: [(&str, fn(f64, f64) -> f64); 3] = [
+pub(crate) const BINARY: [(&str, Binary); 3] = [
     ("atan2", libm::atan2),
     ("max", libm::fmax),
     ("min", libm::fmin),
 ];
 
-const fn bin(apply: fn(f64, f64) -> f64, prio: i64, is_commutative: bool) -> BinOp<f64> {
+const fn bin(apply: Binary, prio: i64, is_commutative: bool) -> BinOp<f64> {
     BinOp {
         apply,
         prio,

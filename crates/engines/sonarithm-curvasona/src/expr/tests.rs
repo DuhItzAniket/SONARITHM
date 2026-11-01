@@ -504,15 +504,14 @@ fn adr_0013_every_function_evaluates_with_libm_bit_for_bit() {
                 ("csc", 1) => ("csc(x)".to_owned(), 1.0 / libm::sin(x)),
                 ("cot", 1) => ("cot(x)".to_owned(), 1.0 / libm::tan(x)),
                 (_, 1) => {
-                    let f = libm_of(name).unwrap_or_else(|| panic!("{name} has no libm operator"));
+                    let f = libm_of(name).expect("every admitted function has a libm operator");
                     (format!("{name}(x)"), f(x))
                 }
                 (_, _) => {
-                    let f = ops::BINARY
+                    let (_, f) = ops::BINARY
                         .iter()
                         .find(|(n, _)| *n == name)
-                        .map(|&(_, f)| f)
-                        .unwrap_or_else(|| panic!("{name} has no libm operator"));
+                        .expect("every admitted function has a libm operator");
                     (format!("{name}(x, 0.7)"), f(x, 0.7))
                 }
             };
