@@ -93,7 +93,9 @@ impl App {
         });
         self.place_nav();
         let state = self.send_cursor(Some(origin), true);
-        if origin != CursorOrigin::Table
+        // The table and braille routing keys are not announced: the screen reader already
+        // reads the focused row or the braille field (INFER, OD-30).
+        if !matches!(origin, CursorOrigin::Table | CursorOrigin::Braille)
             && let Some(node) = state.node.map(NavNodeId)
             && let Some(announcement) = self.cursor_announcement(node)
         {
@@ -219,6 +221,7 @@ impl App {
                 _ => self.cursor.nav.as_ref().and_then(Cursor::x),
             };
             state.path.extend(path_of(tree, node));
+            state.braille = self.braille_state(node);
         }
         state.excluded = self
             .cursor

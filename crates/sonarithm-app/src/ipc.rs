@@ -103,6 +103,7 @@ pub const COMMANDS: &[(&str, &str)] = &[
     ("nav_move", "nav"),
     ("nav_where", "announce"),
     ("nav_query", "announce"),
+    ("braille_route", "cursor"),
 ];
 
 /// The commands whose reply is a binary view (ADR-0017 §6), sent with
@@ -459,6 +460,13 @@ pub enum Request {
         /// The question.
         query: NavQuery,
     },
+    /// A braille routing-key press on cell `cell` of the braille field (B03-T10, keyboard
+    /// §14). In sparkline mode it moves the one cursor to the point under the cell, with
+    /// origin `braille`; in review mode it changes nothing. Replies [`Reply::Cursor`].
+    BrailleRoute {
+        /// The cell, from 0.
+        cell: u32,
+    },
     /// A downsampled view of two fields of a dataset for drawing (03 §7). Binary: a view of
     /// kind `m4Tile` or `lttbTile` with the columns `row`, `x` and `y` (ADR-0017 §6).
     ViewGet {
@@ -589,6 +597,8 @@ impl Request {
             Self::NavMove { .. } => "nav_move",
             Self::NavWhere => "nav_where",
             Self::NavQuery { .. } => "nav_query",
+    },
+            Self::BrailleRoute { .. } => "braille_route",
             Self::ViewGet { .. } => "view_get",
             Self::TablePage { .. } => "table_page",
         }
@@ -917,6 +927,40 @@ pub enum CursorOrigin {
     Plot,
     /// The chart explorer's movement verbs (B03-T09).
     Nav,
+    /// A braille display's routing key on the sparkline (B03-T10, keyboard §14). Treated
+    /// like the table: nothing is announced, because the display and the screen reader
+    /// already show the field (INFER, OD-30).
+    Braille,
+}
+
+/// What the braille field shows (B03-T10, keyboard §10; A11Y-21).
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Serialize, Deserialize, TS)]
+#[serde(rename_all = "camelCase")]
+#[non_exhaustive]
+pub enum BrailleMode {
+    /// The cursor's value, unit, x and position.
+    #[default]
+    Review,
+    /// One 8-dot cell per point of the cursor's segment (Shift+B).
+    Sparkline,
+}
+
+/// The braille line for the cursor (B03-T10; keyboard §10, §14). The UI shows `text` in a
+/// read-only text field with the caret at `caret`; a routing-key press there sends
+/// `braille_route` with the caret's cell.
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, TS)]
+#[serde(rename_all = "camelCase")]
+#[non_exhaustive]
+pub struct BrailleState {
+    /// Review line or sparkline.
+    pub mode: BrailleMode,
+    /// The line: symbol-form text, or 8-dot braille cells (U+2800 to U+28FF).
+    pub text: String,
+    /// The caret's cell: the cursor's point in a sparkline, 0 in review mode.
+    pub caret: u32,
+    /// The display's cell count from the settings; `None` when the line is not fitted and
+    /// the screen reader pans it.
+    pub cells: Option<u16>,
 }
 
 /// A level of the cursor's path, which the UI names through its own catalogue.
@@ -985,6 +1029,8 @@ pub struct CursorState {
     pub excluded: Vec<SeriesRef>,
     /// Where the move came from; `None` when Rust moved it (data changed under it).
     pub origin: Option<CursorOrigin>,
+    /// The braille line, when braille output is on and the cursor is on a node (B03-T10).
+    pub braille: Option<BrailleState>,
 }
 
 /// A series named for the UI: its navigation node and its data name.

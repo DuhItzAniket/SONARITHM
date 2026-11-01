@@ -83,6 +83,24 @@ pub struct Settings {
     /// starts, so a change applies after a restart.
     #[serde(default)]
     pub gpu: GpuPreference,
+    /// The braille line's mode and the display's cell count (B03-T10). Added after
+    /// settings version 1 was written, so files without it read the default.
+    #[serde(default)]
+    pub braille: BrailleSettings,
+}
+
+/// Braille output settings (B03-T10, keyboard §10). They belong to the user's device, not to
+/// a profile.
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Serialize, Deserialize, TS)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+#[non_exhaustive]
+pub struct BrailleSettings {
+    /// Review line or sparkline (Shift+B).
+    pub mode: crate::ipc::BrailleMode,
+    /// The display's cell count. A web page cannot read it, so the user sets it; `None`
+    /// fits nothing and the screen reader pans the line.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub cells: Option<u16>,
 }
 
 impl Default for Settings {
@@ -99,6 +117,7 @@ impl Default for Settings {
             speech: SpeechSettings::default(),
             active_profile: None,
             gpu: GpuPreference::default(),
+            braille: BrailleSettings::default(),
         }
     }
 }
@@ -152,6 +171,12 @@ impl Settings {
                 format!(
                     "{chord} is reserved and cannot be bound to {command} (keyboard §13 rule 6)."
                 ),
+            ));
+        }
+        if self.braille.cells == Some(0) {
+            return Err(IpcError::new(
+                &codes::SETTINGS_VALUE,
+                "A braille display has at least one cell; leave the cell count unset to fit nothing.",
             ));
         }
         if self.settings_version != SETTINGS_VERSION {

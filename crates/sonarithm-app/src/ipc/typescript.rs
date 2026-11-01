@@ -120,6 +120,8 @@ pub fn typescript() -> String {
     declare::<ClockAnchor>(&mut out, &cfg);
     declare::<crate::ipc::CursorState>(&mut out, &cfg);
     declare::<crate::ipc::CursorOrigin>(&mut out, &cfg);
+    declare::<crate::ipc::BrailleMode>(&mut out, &cfg);
+    declare::<crate::ipc::BrailleState>(&mut out, &cfg);
     declare::<crate::ipc::CursorPathItem>(&mut out, &cfg);
     declare::<crate::ipc::PathLevel>(&mut out, &cfg);
     declare::<crate::ipc::SeriesRef>(&mut out, &cfg);
@@ -156,6 +158,7 @@ pub fn typescript() -> String {
     declare::<crate::settings::SpeechSettings>(&mut out, &cfg);
     declare::<crate::settings::AnnouncerRoute>(&mut out, &cfg);
     declare::<crate::settings::GpuPreference>(&mut out, &cfg);
+    declare::<crate::settings::BrailleSettings>(&mut out, &cfg);
     declare::<crate::speech::SpeechRoute>(&mut out, &cfg);
     declare::<crate::ipc::AnnouncementInfo>(&mut out, &cfg);
     declare::<crate::ipc::AnnouncementClass>(&mut out, &cfg);

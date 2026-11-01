@@ -390,6 +390,69 @@ impl<'l> Composer<'l> {
         self.node_with(tree, node, None, self.settings.verbosity)
     }
 
+    /// The parts of `node` for the braille review line (B03-T10, keyboard §10): in symbol
+    /// form, in the listener's terse order (A11Y-12), not joined, so the line can keep or
+    /// leave out whole parts ([`crate::braille::review_line`]). The level and hint parts
+    /// are left out, the position is added after the value and x when the order lacks it
+    /// (keyboard §10 names it), and the provenance part stays, as everywhere.
+    ///
+    /// # Errors
+    ///
+    /// As [`Composer::outcome`].
+    pub fn review_fields(
+        &self,
+        tree: &NavTree,
+        node: NavNodeId,
+    ) -> Result<Vec<crate::braille::ReviewField>, I18nError> {
+        let Some(found) = tree.node(node) else {
+            return Ok(Vec::new());
+        };
+        let plan = Plan {
+            verbosity: Verbosity::Terse,
+            with_series: false,
+            with_hint: false,
+        };
+        let pieces = self.pieces(tree, node, found, None, plan, UnitStyle::Symbol)?;
+        let mut order: Vec<Part> = self
+            .settings
+            .order(Verbosity::Terse)
+            .into_iter()
+            .filter(|part| !matches!(part, Part::Level | Part::Hint))
+            .collect();
+        if !order.contains(&Part::Position) {
+            let after = order
+                .iter()
+                .rposition(|part| matches!(part, Part::Value | Part::X))
+                .map_or(order.len(), |at| at + 1);
+            order.insert(after, Part::Position);
+        }
+        let mut fields: Vec<crate::braille::ReviewField> = pieces
+            .name
+            .iter()
+            .map(|text| crate::braille::ReviewField {
+                part: Part::Series,
+                text: text.clone(),
+            })
+            .collect();
+        for part in order {
+            let texts: Vec<String> = match part {
+                Part::Series => pieces.series.iter().cloned().collect(),
+                Part::X => pieces.x.iter().cloned().collect(),
+                Part::Value => pieces.value.iter().cloned().collect(),
+                Part::Position => pieces.position.iter().cloned().collect(),
+                Part::Tags => pieces.tags.clone(),
+                Part::Provenance => pieces.provenance.iter().cloned().collect(),
+                Part::Level | Part::Hint => Vec::new(),
+            };
+            fields.extend(
+                texts
+                    .into_iter()
+                    .map(|text| crate::braille::ReviewField { part, text }),
+            );
+        }
+        Ok(fields)
+    }
+
     /// The full verbose description of `node` (Enter on a point), whatever the verbosity.
     ///
     /// # Errors

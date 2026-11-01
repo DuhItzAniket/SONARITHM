@@ -73,6 +73,7 @@ export const REPLY_KINDS = {
   nav_move: "nav",
   nav_where: "announce",
   nav_query: "announce",
+  braille_route: "cursor",
 } as const;
 
 /** The channel that carries each event. */
@@ -406,7 +407,11 @@ verb: NavVerb, } } | { "command": "nav_where" } | { "command": "nav_query", "arg
 /**
  * The question.
  */
-query: NavQuery, } } | { "command": "view_get", "args": { 
+query: NavQuery, } } | { "command": "braille_route", "args": { 
+/**
+ * The cell, from 0.
+ */
+cell: number, } } | { "command": "view_get", "args": { 
 /**
  * The dataset's ID.
  */
@@ -964,14 +969,47 @@ excluded: Array<SeriesRef>,
 /**
  * Where the move came from; `None` when Rust moved it (data changed under it).
  */
-origin: CursorOrigin | null, };
+origin: CursorOrigin | null, 
+/**
+ * The braille line, when braille output is on and the cursor is on a node (B03-T10).
+ */
+braille: BrailleState | null, };
 
 /**
  * Where a cursor move came from (B04-T06, ADR-0017 "Cursor"). It decides what is spoken:
  * a move from the table is not announced, because the screen reader already reads the
  * focused row (INFER, OD-30); plot and explorer moves are.
  */
-export type CursorOrigin = "table" | "plot" | "nav";
+export type CursorOrigin = "table" | "plot" | "nav" | "braille";
+
+/**
+ * What the braille field shows (B03-T10, keyboard §10; A11Y-21).
+ */
+export type BrailleMode = "review" | "sparkline";
+
+/**
+ * The braille line for the cursor (B03-T10; keyboard §10, §14). The UI shows `text` in a
+ * read-only text field with the caret at `caret`; a routing-key press there sends
+ * `braille_route` with the caret's cell.
+ */
+export type BrailleState = { 
+/**
+ * Review line or sparkline.
+ */
+mode: BrailleMode, 
+/**
+ * The line: symbol-form text, or 8-dot braille cells (U+2800 to U+28FF).
+ */
+text: string, 
+/**
+ * The caret's cell: the cursor's point in a sparkline, 0 in review mode.
+ */
+caret: number, 
+/**
+ * The display's cell count from the settings; `None` when the line is not fitted and
+ * the screen reader pans it.
+ */
+cells: number | null, };
 
 /**
  * One step of the cursor's path, from the dataset down (the breadcrumb).
@@ -1469,7 +1507,12 @@ activeProfile?: string | null,
  * Which GPU the webview draws plots with (B04-T02, F-044). Read by the host when it
  * starts, so a change applies after a restart.
  */
-gpu: GpuPreference, };
+gpu: GpuPreference, 
+/**
+ * The braille line's mode and the display's cell count (B03-T10). Added after
+ * settings version 1 was written, so files without it read the default.
+ */
+braille: BrailleSettings, };
 
 /**
  * Audio output settings.
@@ -1588,6 +1631,21 @@ export type AnnouncerRoute = "liveRegion" | "native";
  * ignore it, and the UI says so. There is no detection and no telemetry.
  */
 export type GpuPreference = "default" | "highPerformance";
+
+/**
+ * Braille output settings (B03-T10, keyboard §10). They belong to the user's device, not to
+ * a profile.
+ */
+export type BrailleSettings = { 
+/**
+ * Review line or sparkline (Shift+B).
+ */
+mode: BrailleMode, 
+/**
+ * The display's cell count. A web page cannot read it, so the user sets it; `None`
+ * fits nothing and the screen reader pans the line.
+ */
+cells?: number | null, };
 
 /**
  * Where announcements are spoken (A11Y-19).
