@@ -1,0 +1,14 @@
+/* SPDX-FileCopyrightText: 2026 SONARITHM contributors */
+/* SPDX-License-Identifier: MIT OR Apache-2.0 */
+
+/* The Plot tab (B04-T06): the plot fills the panel's width. */
+.plot {
+  inline-size: 100%;
+}
+
+.status {
+  margin: 0;
+  color: var(--text-2);
+  font-size: var(--type-13-size);
+  line-height: var(--type-13-line);
+}
