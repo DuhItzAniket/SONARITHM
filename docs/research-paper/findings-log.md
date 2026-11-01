@@ -1016,6 +1016,14 @@ A05 (render engine, audio backends, export) uses F-050 to F-069.
 - **Affects:** C02-T09, A11Y-02, A11Y-12, A11Y-24, FR-008, OD-07, H-06
 - **Papers:** none yet
 
+### F-201 · A hole on a pole's steep slope was taken for a jump, because the sides were compared with a fixed tolerance
+
+- **Date:** 2026-11-01 · **Phase:** C03 · **Type:** engineering (robustness) · **Status:** new
+- **Statement:** The property test `poles_and_holes_are_never_missed` (CI on #438, Windows job 124726369301) found a hole at b = 2.0748585424618367 only 0.0042 from a pole at a = 2.0790137126487966, on a 3-sample grid. The scan reported it as a jump, with left −240.66171264649452 and right −240.66634618052169. The scan classifies a candidate by its one-sided limits, read at 10^-2 to 10^-8 grid steps, and called the sides different when they disagreed by more than a relative 1e-6. Beside a pole the slope is about 1/0.004² ≈ 60 000, so the two sides of a smooth point differ by about the slope times the probe distance, 2e-5 relative here, and the fixed tolerance failed. Now the sides also count as equal when their signed difference D(h), extrapolated to h = 0 through the two closest probes (a decade apart, D₀ = (10·D₆ − D₅)/9), is 0 to a relative 1e-6. To first order D(h) = D₀ + C·h, with D₀ = 0 at a hole and the jump at a jump. A first version judged the gap's size instead (fivefold smaller over two decades). Lane U's review showed that this drops a real jump: for `floor(x) + 1/(x − 2.0001)` at 101 samples, the gaps were 15, 0.6 and 0.84, because the slope term dwarfed the jump before the gap settled at it. A rule that only asks the gap to halve each decade fails too, with the pole 5e-5 away (gaps of about 63, 5.4 and 0.36). The extrapolated D₀ gives −1 in both cases. ADR-0028 is unchanged.
+- **Evidence:** `crates/engines/sonarithm-curvasona/src/scan.rs` (`closing`, `classify`); the tests `f_201_a_hole_beside_a_pole_is_not_a_jump` (the counterexample, pinned), `f_201_a_jump_beside_a_pole_is_still_a_jump` and `f_201_a_jump_on_a_steep_slope_stays_a_jump` (the review's repro, the 5e-5 case and a wide domain)
+- **Evidence level / confidence:** EV-D / Strong (a reproduced property-test failure, with regression tests)
+- **Affects:** C03-T02 (the scan), the function cues and the critical-point list
+
 ### F-200 · A function's glide is paced by row, so the rows CURVASONA inserts bend its timeline against x
 
 - **Date:** 2026-11-01 · **Phase:** C03 · **Type:** engineering (timing, determinism) · **Status:** new

@@ -202,6 +202,68 @@ fn a_zero_on_the_grid_does_not_hide_a_second_one_beside_it() {
     }
 }
 
+/// F-201: a hole 0.004 from a pole lies on the pole's steep slope, so its two sides differ
+/// by more than a relative 1e-6 at the probe distances; it is still a hole, not a jump.
+/// The counterexample of `poles_and_holes_are_never_missed` on #438 (CI job 124726369301).
+#[test]
+fn f_201_a_hole_beside_a_pole_is_not_a_jump() {
+    let (a, b) = (2.079_013_712_648_796_6_f64, 2.074_858_542_461_836_7_f64);
+    let f = parse(&format!("(x - ({b}))/((x - ({a}))*(x - ({b})))"));
+    let found = scan(&f, &grid([-4.0, 4.0], 3), None, &ScanBudget::DEFAULT);
+    assert!(
+        matches(&of_kind(&found, SingularityKind::Pole), &[a]),
+        "{found:?}"
+    );
+    assert!(
+        matches(&of_kind(&found, SingularityKind::Hole), &[b]),
+        "{found:?}"
+    );
+    assert!(
+        of_kind(&found, SingularityKind::Jump).is_empty(),
+        "{found:?}"
+    );
+}
+
+/// F-201: the closing-gap test does not turn a jump into a hole. A jump of 1 at x = 2,
+/// 0.004 from a pole, keeps a gap of about 1 however close the probes come.
+#[test]
+fn f_201_a_jump_beside_a_pole_is_still_a_jump() {
+    let f = parse("floor(x) + 1/(x - 2.004)");
+    let found = scan(&f, &grid([-4.0, 4.0], 101), None, &ScanBudget::DEFAULT);
+    let at_two = |kind| of_kind(&found, kind).iter().any(|&x| near(x, 2.0));
+    assert!(at_two(SingularityKind::Jump), "{found:?}");
+    assert!(!at_two(SingularityKind::Hole), "{found:?}");
+    assert!(
+        matches(&of_kind(&found, SingularityKind::Pole), &[2.004]),
+        "{found:?}"
+    );
+}
+
+/// F-201, Lane U's review of #445: a jump on a pole's steep slope stays a jump even when
+/// the slope term dwarfs the jump at the probe distances, so the gap between the sides
+/// shrinks before it settles at the jump: a pole 1e-4 from the jump (the review's repro),
+/// 5e-5 from it (where the gap halves at every decade and still converges to the jump),
+/// and 1e-3 from it on a wide domain.
+#[test]
+fn f_201_a_jump_on_a_steep_slope_stays_a_jump() {
+    for (text, domain, jump, pole) in [
+        ("floor(x) + 1/(x - 2.0001)", [-4.0, 4.0], 2.0, 2.0001),
+        ("floor(x) + 1/(x - 2.00005)", [-4.0, 4.0], 2.0, 2.000_05),
+        (
+            "floor(x/100) + 1/(x - 200.001)",
+            [-400.0, 400.0],
+            200.0,
+            200.001,
+        ),
+    ] {
+        let found = scan(&parse(text), &grid(domain, 101), None, &ScanBudget::DEFAULT);
+        let at = |kind, x: f64| of_kind(&found, kind).iter().any(|&f| near(f, x));
+        assert!(at(SingularityKind::Jump, jump), "{text}: {found:?}");
+        assert!(!at(SingularityKind::Hole, jump), "{text}: {found:?}");
+        assert!(at(SingularityKind::Pole, pole), "{text}: {found:?}");
+    }
+}
+
 proptest! {
     /// A pole and a hole anywhere in the domain are found at any grid size, and the scan is
     /// the same every time (C03-T02).
