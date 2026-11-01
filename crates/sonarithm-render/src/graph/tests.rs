@@ -314,6 +314,59 @@ fn a_cue_plays_in_the_next_block() {
     assert!(!graph.stats().playing);
 }
 
+/// A cue of `seconds` at 440 Hz, a sine so its own steepest step is known.
+fn sine_cue(seconds: f64) -> Cue {
+    Cue {
+        frequency: Hz(440.0),
+        gain: Db(-12.0),
+        pan: Pan::CENTRE,
+        instrument: Instrument::Sine,
+        duration: Seconds(seconds),
+    }
+}
+
+/// F-211, B03-T09: a fifth overlapping cue fades the oldest out over the ramp instead of
+/// replacing it, so the output steps no more than the tones themselves do (a replaced voice
+/// drops to 0 in one sample: a click).
+#[test]
+fn f_211_a_fifth_cue_fades_the_oldest_without_a_click() {
+    // Stopped transport: only the cues sound.
+    let mut graph = graph(&drone(), 256);
+    let mut out = vec![0.0; 2 * 256 * 40];
+    for (block, chunk) in out.chunks_mut(2 * 256).enumerate() {
+        if block < CUE_SOUNDING + 1 {
+            graph.apply(Command::Cue(sine_cue(0.5)));
+        }
+        graph.process(chunk);
+    }
+    assert_eq!(graph.stats().cue_fades, 1, "the oldest of five faded");
+    assert_eq!(graph.stats().stolen, 0, "a free slot took the fifth");
+    let samples = left(&out);
+    let peak = samples.iter().fold(0.0_f32, |m, s| m.max(s.abs()));
+    assert!(peak > 0.0);
+    assert!(
+        worst_step(&samples) <= 2.0 * natural_step(peak),
+        "step {} against {}",
+        worst_step(&samples),
+        natural_step(peak)
+    );
+}
+
+/// F-211: with every slot busy (cues faster than one ramp), the new cue takes the oldest
+/// slot, one already fading, and the steal is counted.
+#[test]
+fn f_211_a_full_cue_pool_steals_a_fading_voice() {
+    let mut graph = graph(&drone(), 256);
+    for _ in 0..=CUE_SLOTS {
+        graph.apply(Command::Cue(sine_cue(0.5)));
+    }
+    let mut out = vec![0.0; 2 * 256];
+    graph.process(&mut out);
+    let stats = graph.stats();
+    assert_eq!(stats.stolen, 1, "{stats:?}");
+    assert_eq!(stats.cue_fades, (CUE_SLOTS + 1 - CUE_SOUNDING) as u64);
+}
+
 /// Bus and master levels move smoothly to their targets (coding-standards §11.3).
 #[test]
 fn gain_changes_are_smoothed() {

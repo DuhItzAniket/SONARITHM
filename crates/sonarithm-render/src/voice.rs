@@ -456,6 +456,11 @@ impl Voice {
         }
     }
 
+    /// Whether a forced fade-out is under way.
+    pub(crate) fn is_fading(&self) -> bool {
+        self.fade.is_some()
+    }
+
     /// Fades the voice out over `frames` (at least one), from whatever it is playing.
     pub(crate) fn fade_out(&mut self, frames: u32) {
         if self.active {

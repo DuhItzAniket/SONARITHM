@@ -32,6 +32,7 @@ use sonarithm_audio::{
 use sonarithm_core::{Db, Frames, SampleRate, Score, Seconds};
 use sonarithm_i18n::{Args, Localizer};
 use sonarithm_render::graph::SPEED_RANGE;
+use sonarithm_render::graph::Cue;
 use sonarithm_render::{Command, DUCK_LEVEL, GainTarget, LoopRange, PlanConfig};
 use sonarithm_speech::Speaker;
 
@@ -132,6 +133,7 @@ enum Message {
     Configure(OutputConfig, Reply<TransportState>),
     Devices(Reply<Vec<DeviceInfo>>),
     Announce(Box<Announcement>),
+    Cue(Cue),
     Repeat(Reply<bool>),
     StreamOpen(
         Box<(
@@ -207,6 +209,14 @@ impl Transport {
     /// Queues an announcement for the sequencer.
     pub(crate) fn announce(&self, announcement: Announcement) {
         let _ = self.sender.send(Message::Announce(Box::new(announcement)));
+    }
+
+    /// Plays a point cue now (B03-T09). Dropped while playback plays (keyboard §9.2 item
+    /// 3). The output opens on the first cue and stays open until a load or a device change
+    /// closes it, so later cues start within one block (sound-design §3.2's 50 ms budget,
+    /// TODO(verify) on HW-01). Speech waits for the cue's end (A11Y-20).
+    pub(crate) fn cue(&self, cue: Cue) {
+        let _ = self.sender.send(Message::Cue(cue));
     }
 
     /// Queues the last announcement again; `false` when there is none.
@@ -471,6 +481,7 @@ impl<B: AudioBackend, F: Fn() -> B> Control<B, F> {
                 });
                 let _ = reply.send(devices);
             }
+            Message::Cue(cue) => self.cue(cue),
             Message::Announce(announcement) => {
                 let now = self.now_ms();
                 self.sequencer.push(*announcement, now);
@@ -768,6 +779,22 @@ impl<B: AudioBackend, F: Fn() -> B> Control<B, F> {
         if let Some(player) = &mut self.player {
             player.send(command);
         }
+    }
+
+    /// A point cue (B03-T09): not during playback, where the cursor follows the playhead
+    /// silently (keyboard §9.2 item 3); otherwise on an open output, then the sequencer
+    /// holds speech until it ends (A11Y-20, §9.2 item 1).
+    fn cue(&mut self, cue: Cue) {
+        if self.model.status == PlaybackStatus::Playing {
+            return;
+        }
+        // An output that cannot open plays no cue; the announcement still follows.
+        if self.player.is_none() && self.open().is_err() {
+            return;
+        }
+        self.send(Command::Cue(cue));
+        let now = self.now_ms();
+        self.sequencer.cue(now, cue.duration);
     }
 
     fn mark_stale(&mut self) {
@@ -1095,6 +1122,66 @@ fn position(frames: Frames, rate: SampleRate) -> f64 {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    /// A control thread's state on the null backend, without its thread.
+    fn null_control() -> Control<NullBackend, impl Fn() -> NullBackend> {
+        let null = NullConfig::new(48_000, BLOCK);
+        let mut control = Control::new(
+            move || NullBackend::new(null),
+            unplug_null,
+            OutputConfig::default(),
+            Arc::new(crate::events::NullSink),
+            None,
+        );
+        control.load(Some(Arc::new(sonarithm_render::fixtures::benchmark_score(
+            2.0, 1,
+        ))));
+        control
+    }
+
+    fn point_cue() -> Cue {
+        Cue {
+            frequency: sonarithm_core::Hz(660.0),
+            gain: sonarithm_core::Db(-6.0),
+            pan: sonarithm_core::Pan::CENTRE,
+            instrument: sonarithm_render::Instrument::default(),
+            duration: Seconds(0.12),
+        }
+    }
+
+    fn delivered(outputs: &[crate::speech::Output]) -> bool {
+        outputs
+            .iter()
+            .any(|output| matches!(output, crate::speech::Output::Deliver(_)))
+    }
+
+    /// A11Y-20 (keyboard §9.2 item 1): the first cue opens the output, and an
+    /// announcement queued with it waits for the cue's end.
+    #[test]
+    fn a11y_20_speech_waits_for_the_point_cue() {
+        let mut control = null_control();
+        assert!(control.player.is_none());
+        let now = control.now_ms();
+        control.cue(point_cue());
+        assert!(control.player.is_some(), "the first cue opens the output");
+        control
+            .sequencer
+            .push(Announcement::status("Point", "Point"), now);
+        assert!(!delivered(&control.sequencer.poll(now + 1, false, None)));
+        // The cue lasts 120 ms; 200 ms later the announcement is due.
+        let after = now + 200;
+        assert!(delivered(&control.sequencer.poll(after, false, None)));
+    }
+
+    /// Keyboard §9.2 item 3: during playback the cursor follows the playhead silently, so a
+    /// cue is dropped before it reaches the output.
+    #[test]
+    fn keyboard_9_2_no_point_cue_during_playback() {
+        let mut control = null_control();
+        control.model.status = PlaybackStatus::Playing;
+        control.cue(point_cue());
+        assert!(control.player.is_none(), "dropped, so nothing opened");
+    }
 
     #[test]
     fn b01_t04_anchors_are_due_at_once_then_every_2_s() {

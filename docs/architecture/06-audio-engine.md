@@ -70,6 +70,7 @@ flowchart LR
 | Component | Implementation | Notes |
 |---|---|---|
 | Voices | `trait Voice { fn note_on(..); fn note_off(..); fn set_param(..); fn process(&mut self, out: &mut [f32]) }`, built from fundsp graphs or custom nodes | Preallocated. Polyphony is fixed per plan. Voice stealing takes the oldest or quietest voice and raises a counted diagnostic |
+| Live cue voices | `CUE_SLOTS` = 8 preallocated voices on the data bus, with at most `CUE_SOUNDING` = 4 sounding at once. A cue past four fades the oldest sounding one out over the ramp, so the newest position is heard and nothing clicks; only with all 8 busy is a voice stolen, and then one already fading | **2026-11-01, B03-T09 (F-211):** was 4 voices with an oldest-first steal that replaced the voice at once, a click. Approved by the coordinator. Playback voices' steal is issue #443 |
 | Envelopes | ADSR with **mandatory ramps ≥ 5 ms** (default about 40 ms onset per SDR-22) | Never zero |
 | Oscillators | fundsp PolyBLEP saw/square, sine, triangle; wavetable (custom); FM | The square preset serves BLV chart reading (SDR-29). A05 builds them in `sonarithm-dsp`. A voice renders in runs: a filtered oscillator generates and filters in one loop, the envelope works a stage at a time, and phases are computed a chunk ahead so the waveform arithmetic vectorizes. Each path computes the same operations as the per-sample one (#185, F-134) |
 | Granular | Custom node: grain pool, density-driven scheduler, Hann windows | SDR-32; D01 |

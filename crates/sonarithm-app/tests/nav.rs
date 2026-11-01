@@ -296,6 +296,45 @@ fn b03_t09_an_export_while_a_series_is_excluded_says_it_includes_all_series() {
     }
 }
 
+fn device(h: &mut Harness) -> Value {
+    h.ok(&json!({ "command": "transport_state" }))["device"].clone()
+}
+
+/// A11Y-10: the one cursor drives the cue from every origin, the table, the plot and the
+/// explorer. The first cue opens the output, which the transport then reports as a device;
+/// nothing else here opens it (B03-T09).
+#[test]
+fn a11y_10_every_cursor_origin_plays_the_point_cue() {
+    for origin in ["table", "plot", "nav"] {
+        let mut h = Harness::new(&format!("cue-{origin}"));
+        h.compile(&["temp"]);
+        assert_eq!(device(&mut h), Value::Null, "{origin}");
+        if origin == "nav" {
+            assert_eq!(h.step("into")["cue"], false, "a series is not a point");
+            h.step("into");
+            assert_eq!(h.step("into")["cue"], true);
+        } else {
+            h.ok(&json!({ "command": "cursor_set", "args": { "dataset": "d1", "row": 1, "origin": origin } }));
+        }
+        assert!(device(&mut h).is_string(), "{origin}: the cue opened the output");
+    }
+}
+
+/// Sound-design §3.2: the sonification toggle silences cues and playback together.
+#[test]
+fn sonification_off_plays_no_point_cue() {
+    let mut h = Harness::new("cue-off");
+    let mut settings = h.ok(&json!({ "command": "settings_get" }));
+    let settings = settings.as_object_mut().unwrap();
+    settings.remove("reply");
+    settings.get_mut("modalities").unwrap()["sonification"] = json!(false);
+    h.ok(&json!({ "command": "settings_set", "args": { "settings": settings } }));
+    h.compile(&["temp"]);
+    h.ok(&json!({ "command": "cursor_set", "args": { "dataset": "d1", "row": 1, "origin": "table" } }));
+    assert_eq!(h.step("next")["cue"], false);
+    assert_eq!(device(&mut h), Value::Null);
+}
+
 /// ADR-0017 "Cursor": closing the dataset clears the row, and the explorer leaves its node.
 #[test]
 fn b03_t09_closing_the_dataset_clears_the_explorer_node() {

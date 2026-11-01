@@ -152,7 +152,7 @@ Each change sends a `cursor` event with `origin: null`. A `cursor` event never m
 * The exclusion is recorded where it applies, so what is playing is never taken for the canonical Score: `CursorState.excluded` in the session, and `TransportState.excludedTracks` (the removed track IDs, empty when the compiled Score plays as it is) in the transport. A live Score plays whole and clears it.
 * Exports render the whole compiled Score: the filter is session state, not part of the spec or the project. While a series is excluded, starting an export announces "Export includes all series; exclusions apply to playback only" (`announce-export-all-series`), until the export dialog (B05-T05) says it. A spec-level filter can follow with `spec_apply` (B05-T01).
 
-**Point cue (A11Y-10, A11Y-20).** A move is to play the point's cue, then speak. The transport has no one-shot cue path yet, so the cue arrives in its own change, with a `cue` field added to `NavResult` then.
+**Point cue (A11Y-10, A11Y-20).** A move onto a point plays the point's cue, then speaks: from the table, the plot or the explorer. The cue is the point's own note in the compiled Score (pitch, level, pan and the track's instrument; sound-design §3.2), played on the render graph's live cue voices. It is not played during playback (keyboard §9.2 item 3) or with sonification off. The output opens on the first cue and stays open until a load or a device change. `NavResult.cue` (added 2026-11-01, additive) says whether a cue was sent. The key-to-onset budget of 50 ms p95 is TODO(verify) on HW-01.
 
 #### Meter frames
 

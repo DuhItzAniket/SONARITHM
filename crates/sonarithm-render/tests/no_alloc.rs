@@ -79,16 +79,23 @@ fn a_scripted_session_never_allocates_on_the_audio_thread() {
     ));
     control.send(Command::SetSpeed(1.5));
     blocks(&mut audio, &mut out, 50, "gain and speed");
+    // More cues than may sound (the oldest fades) and, in one block, more than the slots
+    // hold (a fading voice is stolen): F-211, B03-T09.
+    let cue = Cue {
+        frequency: Hz(660.0),
+        gain: Db(-12.0),
+        pan: Pan::CENTRE,
+        instrument: Instrument::Square,
+        duration: Seconds(0.12),
+    };
     for _ in 0..6 {
-        control.send(Command::Cue(Cue {
-            frequency: Hz(660.0),
-            gain: Db(-12.0),
-            pan: Pan::CENTRE,
-            instrument: Instrument::Square,
-            duration: Seconds(0.12),
-        }));
+        control.send(Command::Cue(cue));
         blocks(&mut audio, &mut out, 5, "cue");
     }
+    for _ in 0..10 {
+        control.send(Command::Cue(cue));
+    }
+    blocks(&mut audio, &mut out, 5, "cue pool full");
     // Every earcon live, more than the earcon pool holds (B03-T06).
     for sound in EarconSound::ALL {
         control.send(Command::Earcon(sound));

@@ -38,8 +38,12 @@ pub const PAUSE_FADE: Seconds = Seconds(0.020);
 pub const SPEED_RANGE: (f64, f64) = (0.25, 4.0);
 /// Events examined per track when looking for notes still sounding at a seek target.
 const MAX_RESUME_SCAN: usize = 256;
-/// Voices for live cues (06 §3: "Live cue voices", routed to the data bus).
-const CUE_VOICES: usize = 4;
+/// Live cues that may sound at once (06 §3: "Live cue voices", routed to the data bus).
+/// A fifth fades the oldest out over its ramp instead of cutting it (F-211).
+pub const CUE_SOUNDING: usize = 4;
+/// Preallocated cue voices: room for the cues fading out beside the ones sounding, so a new
+/// cue starts at once without stealing (B03-T09, F-211).
+pub const CUE_SLOTS: usize = 2 * CUE_SOUNDING;
 /// Voices for live earcons, on the earcon bus (keyboard §11; B03-T06).
 const EARCON_VOICES: usize = 4;
 
@@ -137,6 +141,8 @@ pub struct GraphStats {
     pub dispatched: u64,
     /// Voices stolen because a pool was full.
     pub stolen: u64,
+    /// Cues faded out early because [`CUE_SOUNDING`] were already sounding (B03-T09).
+    pub cue_fades: u64,
     /// Voices sounding at the end of the block.
     pub active_voices: u32,
     /// Peak absolute sample of the last block, left and right.
@@ -293,15 +299,15 @@ impl Graph {
                 bus: Bus::Data,
                 gain: 1.0,
                 instrument: Instrument::default(),
-                polyphony: CUE_VOICES,
-                voices: CUE_VOICES,
+                polyphony: CUE_SOUNDING,
+                voices: CUE_SLOTS,
                 longest: 0,
                 noise_seed: 0,
                 events: Vec::new(),
                 breakpoints: Vec::new(),
                 buffers: Vec::new(),
             },
-            cues: VoicePool::new(CUE_VOICES),
+            cues: VoicePool::new(CUE_SLOTS),
             earcon_track: TrackPlan {
                 id: sonarithm_core::TrackId::new("earcon"),
                 bus: Bus::Earcon,
@@ -546,7 +552,28 @@ impl Graph {
                 ramp,
             }),
         };
-        let (voice, _) = self.cues.allocate();
+        // At most CUE_SOUNDING cues sound: the oldest one still sounding fades out over the
+        // ramp, so the newest position is always heard and nothing clicks (F-211). Bounded
+        // by the pool size.
+        let sounding = self
+            .cues
+            .iter_mut()
+            .filter(|voice| voice.is_active() && !voice.is_fading())
+            .count();
+        if sounding >= CUE_SOUNDING
+            && let Some(oldest) = self
+                .cues
+                .iter_mut()
+                .filter(|voice| voice.is_active() && !voice.is_fading())
+                .min_by_key(|voice| voice.age())
+        {
+            oldest.fade_out(ramp);
+            self.stats.cue_fades += 1;
+        }
+        // A free slot, or, with every slot busy (cues faster than one ramp), the oldest:
+        // one already fading.
+        let (voice, stolen) = self.cues.allocate();
+        self.stats.stolen += u64::from(stolen);
         voice.start(
             &event,
             &self.cue_track,

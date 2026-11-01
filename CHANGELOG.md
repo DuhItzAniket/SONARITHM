@@ -10,6 +10,8 @@ From phase A07, release-plz maintains this file: it generates each release's ent
 
 ### Added
 
+- Point cues (B03-T09): moving the cursor onto a point, from the table, the plot or the chart explorer, plays that point's tone, as playback would, and the announcement follows it. No cue plays during playback or with sonification off.
+
 - Smoke-run diagnostics (#436): a desktop smoke run that hangs or whose page fails to load now ends with a failing report that names the stuck check, instead of waiting until CI's time limit.
 - The Plot tab (B04-T06): it draws the dataset as a line, with the shared cursor as a dashed crosshair. Clicking the plot moves the cursor to the nearest point, which is announced, and the table and the Status region follow.
 - Measured output latency (B04-T04): Preferences takes the latency you measured for the selected output device, in milliseconds, and the playhead uses it instead of the system's estimate. It is kept only in your local settings.

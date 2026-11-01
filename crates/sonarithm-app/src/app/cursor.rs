@@ -93,6 +93,12 @@ impl App {
         });
         self.place_nav();
         let state = self.send_cursor(Some(origin), true);
+        // Every origin plays the point's cue (keyboard §5, the table; A11Y-10); only the
+        // speech depends on where the move came from. The cue goes first, so the
+        // announcement waits for it (A11Y-20).
+        if let Some(node) = state.node.map(NavNodeId) {
+            self.play_cue(node);
+        }
         if origin != CursorOrigin::Table
             && let Some(node) = state.node.map(NavNodeId)
             && let Some(announcement) = self.cursor_announcement(node)

@@ -32,6 +32,7 @@ use crate::streams::{self, StreamAction};
 use crate::transport::{Action, AudioOutput, OutputConfig, Transport};
 
 mod corrections;
+mod cue;
 mod cursor;
 mod nav;
 mod profiles;
