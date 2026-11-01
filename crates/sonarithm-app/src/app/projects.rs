@@ -183,7 +183,7 @@ impl App {
         if keys {
             self.sink.emit(crate::ipc::Event::SettingsNotice {
                 error: IpcError::new(
-                    &codes::KEYMAP_REFUSED,
+                    &codes::KEYMAP_FROM_PROJECT,
                     "This project's profile sets keys; they were not applied, because a project \
                      cannot change your keyboard. Set keys in Preferences › Keyboard.",
                 ),

@@ -66,7 +66,7 @@ None.
 
 ## Remapping (2026-11-01)
 
-- **App core.** `sonarithm_app::keymap` mirrors §13 rule 6, which the desktop lint also enforces. `Settings::validate` refuses a reserved chord (`SNR-APP-091`). A hand-edited file loses only that binding, gets a notice, and is written back, so the notice comes once. `Settings.keyboard.singleKeyCommands` defaults to true, so older files load. The keymap merge skips the project layer, and opening a project whose profile sets keys sends `SNR-APP-091` as a settings notice.
+- **App core.** `sonarithm_app::keymap` mirrors §13 rule 6, which the desktop lint also enforces. `Settings::validate` refuses a reserved chord (`SNR-APP-091`). A hand-edited file loses only that binding, gets a notice, and is written back, so the notice comes once. `Settings.keyboard.singleKeyCommands` defaults to true, so older files load. The keymap merge skips the project layer, and opening a project whose profile sets keys sends `SNR-APP-092` as a settings notice.
 - **UI.** `CommandRegistry.configure` applies the effective keymap (`settings_effective`: the settings and the active profile) and the group switch. Off unbinds letters, Shift+letters and punctuation, while arrows, Home, End, the Page keys and chords stay. Preferences › Keyboard holds the switch, the "Default" and "No single-key commands" presets, and a table of every command with Change… and Reset. The recorder (`commands/recorder.ts`) refuses what the lint refuses, with the reason, and names a command in the same scope that already uses the keys.
 - Tests: Rust for reserved chords, persistence across a reload, the hand-edited file, and the project layer; Node for overrides, the group switch and the recorder; E2E for the switch and the recorder.
 

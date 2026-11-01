@@ -417,16 +417,28 @@ pub const NAV_NO_TREE: CodeInfo = CodeInfo {
     status: CodeStatus::Active,
 };
 
-/// A key binding that cannot be used: a reserved combination, or keys a project tried to
-/// set (B03-T09; keyboard §13).
-pub const KEYMAP_REFUSED: CodeInfo = CodeInfo {
+/// A reserved key combination in the keymap (B03-T09; keyboard §13 rule 6).
+pub const KEYMAP_RESERVED: CodeInfo = CodeInfo {
     code: "SNR-APP-091",
     severity: Severity::Error,
-    summary: "This key binding cannot be used",
+    summary: "This key combination is reserved",
     help: "Tab, Shift+Tab, F6, Shift+F6, Escape, Insert and CapsLock combinations, Win or \
-           Super combinations, Ctrl+Option on macOS, Alt+F4, Alt+Space and Cmd+Q are reserved \
-           (keyboard §13 rule 6). Keys are yours to set: a project or a spec cannot change \
-           them. Choose another combination in Preferences › Keyboard.",
+           Super combinations, Ctrl+Option on macOS, Alt+F4, Alt+Space and Cmd+Q belong to the \
+           system, the screen reader or moving between regions (keyboard §13 rule 6). Choose \
+           another combination in Preferences › Keyboard.",
+    rules: &[],
+    status: CodeStatus::Active,
+};
+
+/// A project's profile tried to set keys, and they were not applied (B03-T09; keyboard
+/// §13).
+pub const KEYMAP_FROM_PROJECT: CodeInfo = CodeInfo {
+    code: "SNR-APP-092",
+    severity: Severity::Warning,
+    summary: "A project cannot change your keys",
+    help: "Keys are yours: a shared project must not rebind someone's keyboard, so the keys \
+           in this project's profile were ignored. Everything else in it applies. Set keys in \
+           Preferences › Keyboard.",
     rules: &[],
     status: CodeStatus::Active,
 };
@@ -475,7 +487,8 @@ pub const CODES: CodeTable = CodeTable {
         CORRECTIONS_NOT_HERE,
         CURSOR_ROW,
         NAV_NO_TREE,
-        KEYMAP_REFUSED,
+        KEYMAP_RESERVED,
+        KEYMAP_FROM_PROJECT,
     ],
 };
 

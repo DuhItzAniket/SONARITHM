@@ -341,6 +341,53 @@ fn the_project_profile_travels_in_the_bundle() {
     assert_eq!(other.effective("sound.timbre.temp").1, "project");
 }
 
+/// Keyboard §13 (B03-T09): keys in a project's profile are never applied, and opening the
+/// project says so (`SNR-APP-092`), while the rest of that profile still applies.
+#[test]
+fn keyboard_13_a_projects_keys_are_ignored_with_a_notice() {
+    let dir = Arc::new(TempDir::new("projectkeys"));
+    let mut h = Harness::in_dir(Arc::clone(&dir));
+    h.compile(&spec(&json!({})));
+    h.ok(
+        &json!({ "command": "profile_save", "args": { "id": "project",
+        "profile": profile(&json!({}), &json!({ "verbosity": "verbose", "keymap": { "nav.next": "L" } })) } }),
+    );
+    let bundle = dir.path().join("keys.sonarithm");
+    h.ok(&json!({ "command": "project_save_as", "args": { "path": bundle, "embedData": true } }));
+    drop(h);
+    let sink = sonarithm_app::CollectingSink::new();
+    let config = AppConfig::new(dir.path().join("config")).with_audio(AudioOutput::null());
+    let mut app = App::new(config, Arc::new(sink.clone())).unwrap();
+    let open = json!({ "command": "project_open", "args": { "path": bundle } });
+    app.dispatch_json(&open.to_string()).unwrap();
+    let notices: Vec<String> = sink
+        .events()
+        .into_iter()
+        .filter_map(|event| match event {
+            sonarithm_app::ipc::Event::SettingsNotice { error } => Some(error.code),
+            _ => None,
+        })
+        .collect();
+    assert_eq!(notices, ["SNR-APP-092"]);
+    let effective = app
+        .dispatch_json(&json!({ "command": "settings_effective" }).to_string())
+        .unwrap();
+    let keys: Vec<&Value> = effective["settings"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .filter(|s| s["key"].as_str().is_some_and(|k| k.starts_with("interaction.keymap.")))
+        .collect();
+    assert!(keys.is_empty(), "{keys:?}");
+    let verbosity = effective["settings"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .find(|s| s["key"] == "interaction.verbosity")
+        .cloned();
+    assert_eq!(verbosity.map(|s| s["layer"].clone()), Some(json!("project")));
+}
+
 /// ADR-0020's acceptance condition: a Score compiled with a profile re-renders from the
 /// spec its manifest records, with no profile at all, to the same Score hash.
 #[test]

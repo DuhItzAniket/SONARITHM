@@ -611,7 +611,7 @@ pub fn effective(layers: &Layers<'_>) -> Interaction {
     );
     // The keymap merges key by key. A project's profile never sets keys: a shared file
     // must not rebind someone's keyboard (B03-T09; keyboard §13). Opening such a project
-    // sends `SNR-APP-091` as a settings notice.
+    // sends `SNR-APP-092` as a settings notice.
     let mut keymap: BTreeMap<String, (String, Layer)> = layers
         .settings
         .keymap

@@ -148,7 +148,7 @@ impl Settings {
         }
         if let Some((command, chord)) = crate::keymap::first_reserved(&self.keymap) {
             return Err(IpcError::new(
-                &codes::KEYMAP_REFUSED,
+                &codes::KEYMAP_RESERVED,
                 format!(
                     "{chord} is reserved and cannot be bound to {command} (keyboard §13 rule 6)."
                 ),
@@ -446,7 +446,7 @@ impl SettingsStore {
                 while let Some((command, chord)) = crate::keymap::first_reserved(&settings.keymap)
                 {
                     notices.push(IpcError::new(
-                        &codes::KEYMAP_REFUSED,
+                        &codes::KEYMAP_RESERVED,
                         format!(
                             "{chord} is reserved, so the settings file's binding for {command} \
                              was left out (keyboard §13 rule 6)."
