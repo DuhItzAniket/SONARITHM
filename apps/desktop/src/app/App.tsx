@@ -21,6 +21,7 @@ import { useLocalizer } from "../i18n.ts";
 import { Preferences } from "../preferences/Preferences.tsx";
 import { TransportBar } from "../transport/TransportBar.tsx";
 import { CursorReadout } from "../cursor/CursorReadout.tsx";
+import { BrailleField } from "../braille/BrailleField.tsx";
 import { Explorer } from "../explorer/Explorer.tsx";
 import { visualOn } from "../explorer/effective.ts";
 import { ExplorerCommands } from "../explorer/ExplorerCommands.tsx";
@@ -220,6 +221,10 @@ export function App({
                     queryOpen={queryOpen}
                     onQueryOpenChange={setQueryOpen}
                   />
+                  {/* With braille on, the one cursor's braille line (B03-T10). */}
+                  {cursor?.braille != null && (
+                    <BrailleField client={client} braille={cursor.braille} />
+                  )}
                   <DatasetPlot
                     client={client}
                     dataset={dataset}
@@ -273,6 +278,7 @@ export function App({
       />
       <ExplorerCommands
         client={client}
+        announcer={announcer}
         onEffective={(settings) => {
           setVisual(visualOn(settings));
         }}
