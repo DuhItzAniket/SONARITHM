@@ -1195,3 +1195,12 @@ A05 (render engine, audio backends, export) uses F-050 to F-069.
 - **Evidence level / confidence:** EV-C / Strong for the reproductions and the fix (tests); the de-click's audibility was not judged by ear, only by the size of the output step
 - **Affects:** F-211, #443, 05 §5 (pool sizing), 06 §3 (voices), PB-03 (bigger pools for dense short-note tracks: allocation and the render loop scan every voice of a pool for activity, so a capped 512-voice pool costs a scan of 512 flags per segment; not measured)
 - **Papers:** none yet
+
+### F-220 · A glide paced by `secondsPerUnit` held its last value for a whole time-field unit, not one point's spacing
+
+- **Date:** 2026-11-01 · **Phase:** C03 (found), A06 code · **Type:** engineering · **Status:** new
+- **Statement:** NUMISONA holds a glide's last value for one step between points, so the last value is heard (A06-T04, #151). Under `pointsPerSecond` and `duration` that step is the spacing, 1/rate or duration/n. Under `secondsPerUnit` the encoder used one unit of the time field instead, which equals the spacing only when points sit one unit apart. A CURVASONA function sampled 1003 times over x = −3…3 at 4/3 s per unit therefore ended at 9.333 s, a whole unit (1.333 s) after its last point at 8 s (#440). The hold is now the mean spacing of the points in time-field units times the seconds per unit (one unit for a single point), so that glide ends about 8 ms after its last point (computed, 6/1002 × 4/3 s). The spacing is taken in units before scaling, so data one unit apart keeps a hold of exactly one unit. Nothing in the replication gallery, the golden-audio cases or the Score snapshots changed. Notes were never affected: a note's length is its `duration` channel. No doc or ADR had defined a one-unit hold; doc 07 (NUMISONA) now states the rule for every pace.
+- **Evidence:** `crates/engines/sonarithm-numisona/tests/encode.rs` (`glides_hold_one_point_spacing_under_seconds_per_unit`); `cargo xtask replication` (all 86 generated files match) and `cargo xtask golden` (every case identical) after the fix; #440
+- **Evidence level / confidence:** EV-C / Strong (code and tests)
+- **Affects:** 07 NUMISONA (timing), RFC-0001 §5 pace (`secondsPerUnit`), #441 (CURVASONA's function specs on x-linear time, which this unblocks)
+- **Papers:** none yet

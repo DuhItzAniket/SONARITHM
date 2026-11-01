@@ -35,6 +35,8 @@ Each engine is one crate under `crates/engines/` and implements `Engine`. This p
 | `templates` | Reusable designs ("sonecules", SDR-03): `line-overview`, `bar-discrete`, `scatter-xy`, `histogram`, `box-five-number`, `heatmap-rowscan`, with named slots bound to a dataset's fields; `box-five-number` computes its quartiles itself (no aggregate has them) and marks them `derived`. Since C01-T09 each is registered with the compiler (`TemplateSet`) for spec v0.2's `template` key, and `Template::sections` gives the sections it designs; `Template::apply` still writes a whole v0.1 spec |
 | `import::erie` | Erie spec subset → SONARITHM spec (A06), broader in C05 |
 
+**Timing as built (A06-T04, #440).** Rows are placed by the pace: `pointsPerSecond` and `duration` space them evenly (`duration` is `n` points over the whole series, so its last point sounds one spacing before the end), and `secondsPerUnit` places them in proportion to the time field (the first value at 0 s). A `glide` holds its last value for one point's spacing, so the last value is heard: 1/rate, duration/n, or under `secondsPerUnit` the mean spacing of the points in time-field units times the seconds per unit (one unit for a single point). Before #440 the `secondsPerUnit` hold was always one unit, which points closer than a unit apart made far too long (F-220). Notes are not affected: a note's length is its `duration` channel.
+
 **Tests:** one named conformance test per owned rule (`sdr_08_default_range`, `sdr_15_polarity_flip_symmetry`, …); property tests on scale monotonicity and range bounds; snapshots of each template on the example datasets.
 
 ## AUDAXIS (`sonarithm-audaxis`), B03 (HRTF in D03)
