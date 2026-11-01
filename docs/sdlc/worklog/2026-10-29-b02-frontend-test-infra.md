@@ -138,6 +138,12 @@
 - #436's Linux smoke step timed out after 5 minutes without a report. The log ends at WebKit's usual libEGL warnings, so nothing showed whether a check hung or the page never loaded.
 - `public/smoke-guard.js` (classic, before the modules) reports a page error before the run starts, or no start within 60 s. `runSmoke` gains a 120 s watchdog that names the check still waiting. The normal path is unchanged; CI exercises it, since a smoke run needs the desktop build.
 
+## POSIX "C" locale crash (2026-11-01)
+
+- The smoke watchdog's first report: "page error before the smoke run started: RangeError: invalid language tag: C". CI's Linux runner has `LANG=C`, and WebKitGTK reports the process locale as `navigator.language`. uPlot 1.6.32 runs `new Intl.NumberFormat(navigator.language)` at module scope (`uPlot.esm.js:442`), so the page stopped before any of our code ran. Real Linux users with `LANG=C` or `POSIX` would hit it too.
+- `normalizeLocale` in `@sonarithm/i18n` drops `.encoding` and `@modifier`, turns `_` into `-`, maps C and POSIX to the fallback, and canonicalizes with `Intl.getCanonicalLocales` (the fallback for anything it rejects). `createLocalizer` uses it. The desktop's first import, `src/locale.ts`, replaces an invalid `navigator.language` and `languages` before any other module runs. ES modules evaluate their imports in order.
+- Tests: the i18n cases asked for (C, C.UTF-8, POSIX, en_US.UTF-8, de_DE@euro) and more; `fixNavigatorLocale` with fakes. An E2E sets `navigator.language` to "C" before the page loads. Without the fix it reproduces CI's `RangeError`; with it the app starts and the plot draws, in Chromium and WebKit. The Rust side uses a fixed `en-US` and needed no change.
+
 ## Next steps
 
 - [ ] Commit the screenshot baselines from the first CI run's `visual-baselines` artifact.
