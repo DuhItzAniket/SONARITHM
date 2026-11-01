@@ -97,8 +97,8 @@ function mockDataset(): DatasetSummary | null {
   }
   const field = (name: string, unit: string) => ({
     name,
-    dataType: "f64",
-    fieldType: null,
+    dataType: "Float64",
+    fieldType: name === "time" ? "temporal" : "quantitative",
     role: null,
     unit,
     concept: null,
@@ -186,6 +186,28 @@ function moveCursor(row: number, origin: CursorOrigin): CursorState {
   return cursor;
 }
 
+/**
+ * A plot tile of the mock dataset (B04-T06): `pxWidth` rows spread evenly over the table,
+ * with the columns `row`, `x` (time) and `y` (temperature), as `view_get` sends them. It
+ * thins the rows rather than computing M4, which is enough for the cursor's tests.
+ */
+function viewTile(pxWidth: number): ArrayBuffer {
+  const total = dataset?.rows ?? 0;
+  const count = Math.min(total, Math.max(1, pxWidth));
+  const rows = Array.from({ length: count }, (_, i) =>
+    count === 1 ? 0 : Math.round((i * (total - 1)) / (count - 1)),
+  );
+  return encodeView({
+    kind: 1,
+    generation: 1,
+    columns: [
+      { name: "row", dataType: "i64", values: rows.map((r) => BigInt(r)) },
+      { name: "x", dataType: "f64", values: rows.map((r) => r / 10) },
+      { name: "y", dataType: "f64", values: rows.map((r) => 15 + (r % 7)) },
+    ],
+  });
+}
+
 const handlers: MockHandlers = {
   cursor_set: (request) => ({
     reply: "cursor" as const,
@@ -240,6 +262,10 @@ const host = createMockTransport(handlers, {
     table_page: (request) =>
       request.command === "table_page"
         ? tablePage(request.args)
+        : new ArrayBuffer(0),
+    view_get: (request) =>
+      request.command === "view_get"
+        ? viewTile(request.args.pxWidth)
         : new ArrayBuffer(0),
   },
 });

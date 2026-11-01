@@ -4,7 +4,7 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { Plot } from "@sonarithm/viz";
 import type { PlotSeries } from "@sonarithm/viz";
-import { expect, within } from "storybook/test";
+import { expect, fn, userEvent, waitFor, within } from "storybook/test";
 
 // The `@sonarithm/viz` plot (B04-T01) in every theme: its series colours come from the
 // theme's tokens. The summary and series names are data (from the NavTree and the dataset),
@@ -75,5 +75,30 @@ export const EightSeries: StoryObj<typeof meta> = {
       [...lines].map((line) => line.getAttribute("stroke-dasharray")),
     );
     await expect(dashes.size).toBe(8);
+  },
+};
+
+/**
+ * B04-T06: the shared cursor as a dashed crosshair and a ring at its point, placed from data
+ * units; a click reports the x value under it, so the caller can move the cursor there.
+ */
+export const WithCursor: StoryObj<typeof meta> = {
+  args: { cursor: { x: 180, y: 2 }, onPick: fn() },
+  play: async ({ args, canvasElement }) => {
+    const line = await waitFor(() => {
+      const found =
+        canvasElement.querySelector<HTMLElement>("[data-plot-cursor]");
+      if (found === null || found.hidden) throw new Error("no crosshair yet");
+      return found;
+    });
+    await expect(line.dataset.cursorX).toBe("180");
+    // The plot stays one image, not a control: the crosshair adds no focus stop.
+    await expect(within(canvasElement).queryAllByRole("button")).toHaveLength(
+      0,
+    );
+    const over = canvasElement.querySelector<HTMLElement>(".u-over");
+    if (over === null) throw new Error("no plotting area");
+    await userEvent.pointer({ keys: "[MouseLeft]", target: over });
+    await expect(args.onPick).toHaveBeenCalledTimes(1);
   },
 };
