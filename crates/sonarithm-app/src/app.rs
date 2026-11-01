@@ -33,6 +33,7 @@ use crate::transport::{Action, AudioOutput, OutputConfig, Transport};
 
 mod corrections;
 mod cursor;
+mod nav;
 mod profiles;
 mod projects;
 
@@ -326,6 +327,8 @@ impl App {
                 origin,
             } => self.cursor_set(&dataset, row, origin),
             Request::CursorGet => Ok(self.cursor_get()),
+            Request::NavMove { verb } => self.nav_move(&verb),
+            Request::NavWhere => self.nav_where(),
             Request::ViewGet { .. } | Request::TablePage { .. } => Err(IpcError::new(
                 &codes::BAD_REQUEST,
                 "This command returns a binary view; send it with dispatch_binary.",
@@ -686,9 +689,12 @@ impl App {
         match self.snr.compile_with(&spec, &datasets) {
             Ok(compiled) => {
                 let report = report(true, compiled.diagnostics().iter(), Some(&compiled));
-                self.transport
-                    .load(Some(Arc::new(compiled.score().clone())));
+                // The filters' excluded series carry over by label (B03-T09), so the
+                // transport plays the new Score without them.
+                let excluded = self.excluded_labels();
                 self.compiled = Some(compiled);
+                self.renumber_nav(&excluded);
+                self.transport.load(self.playback_score());
                 Ok(Reply::Compile(report))
             }
             Err(err) => {

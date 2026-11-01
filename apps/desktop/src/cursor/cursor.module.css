@@ -18,3 +18,13 @@
   margin: 0;
   color: var(--text-1);
 }
+
+/* The filtered series (B03-T09): words, not colour, say they are out. */
+.excluded {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}

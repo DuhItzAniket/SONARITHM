@@ -100,6 +100,8 @@ pub const COMMANDS: &[(&str, &str)] = &[
     ("corrections_import", "corrections_import"),
     ("cursor_set", "cursor"),
     ("cursor_get", "cursor"),
+    ("nav_move", "nav"),
+    ("nav_where", "announce"),
 ];
 
 /// The commands whose reply is a binary view (ADR-0017 §6), sent with
@@ -439,6 +441,17 @@ pub enum Request {
     },
     /// Where the cursor is. Replies [`Reply::Cursor`].
     CursorGet,
+    /// Moves the one cursor with a chart explorer verb (B03-T09, ADR-0017 "Navigation";
+    /// keyboard-and-navigation §4.2). Replies [`Reply::Nav`], sends a `cursor` event with
+    /// origin `nav` and announces the outcome.
+    NavMove {
+        /// The verb.
+        verb: NavVerb,
+    },
+    /// Announces where the cursor is: every level with its position, the neighbours and the
+    /// excluded series (keyboard §6, A11Y-07). The cursor does not move. Replies
+    /// [`Reply::Announce`].
+    NavWhere,
     /// A downsampled view of two fields of a dataset for drawing (03 §7). Binary: a view of
     /// kind `m4Tile` or `lttbTile` with the columns `row`, `x` and `y` (ADR-0017 §6).
     ViewGet {
@@ -566,6 +579,8 @@ impl Request {
             Self::CorrectionsImport { .. } => "corrections_import",
             Self::CursorSet { .. } => "cursor_set",
             Self::CursorGet => "cursor_get",
+            Self::NavMove { .. } => "nav_move",
+            Self::NavWhere => "nav_where",
             Self::ViewGet { .. } => "view_get",
             Self::TablePage { .. } => "table_page",
         }
@@ -612,6 +627,8 @@ pub enum Reply {
     Transport(TransportState),
     /// The one cursor (B04-T06).
     Cursor(CursorState),
+    /// What a chart explorer verb did (B03-T09).
+    Nav(NavResult),
     /// One job.
     Job(JobInfo),
     /// Every job.
@@ -907,6 +924,20 @@ pub enum PathLevel {
     Segment,
     /// A point.
     Point,
+    /// The axes group (B03-T09).
+    Axes,
+    /// One axis.
+    Axis,
+    /// The insights group.
+    Insights,
+    /// A group of insights of one kind.
+    InsightGroup,
+    /// One insight.
+    Insight,
+    /// The filters group.
+    Filters,
+    /// The filter of one series.
+    Filter,
 }
 
 /// One step of the cursor's path, from the dataset down (the breadcrumb).
@@ -936,12 +967,163 @@ pub struct CursorState {
     pub row: Option<u64>,
     /// The point's x value when the row is a point of the compiled Score.
     pub x: Option<f64>,
-    /// The point's navigation node, when the row is one.
+    /// The cursor's navigation node: the row's point, or, after an explorer move, any
+    /// node (a series, a segment, an axis, an insight, a filter, ADR-0017 "Navigation").
     pub node: Option<u32>,
-    /// From the dataset down to the point; only the dataset without a compiled Score.
+    /// From the dataset down to the node; only the dataset without a compiled Score.
     pub path: Vec<CursorPathItem>,
+    /// The series the explorer's filters took out of playback and view, in node order.
+    /// Exports still render every series: the filter is session state (B03-T09).
+    pub excluded: Vec<SeriesRef>,
     /// Where the move came from; `None` when Rust moved it (data changed under it).
     pub origin: Option<CursorOrigin>,
+}
+
+/// A series named for the UI: its navigation node and its data name.
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, TS)]
+#[serde(rename_all = "camelCase")]
+#[non_exhaustive]
+pub struct SeriesRef {
+    /// The series' navigation node.
+    pub node: u32,
+    /// Its track or field name, shown as it is.
+    pub label: String,
+}
+
+/// A chart explorer verb (B03-T09, ADR-0017 "Navigation"): the AUDAXIS verbs one to one,
+/// with their keys in keyboard-and-navigation §4.2.
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize, TS)]
+#[serde(
+    tag = "verb",
+    rename_all = "camelCase",
+    rename_all_fields = "camelCase"
+)]
+#[non_exhaustive]
+pub enum NavVerb {
+    /// The next node at this level (Right).
+    Next,
+    /// The previous node at this level (Left).
+    Previous,
+    /// Forward by 10 % of the nodes at this level (Jump+Right).
+    JumpForward,
+    /// Back by 10 % (Jump+Left).
+    JumpBack,
+    /// The first node at this level (Home).
+    First,
+    /// The last node at this level (End).
+    Last,
+    /// Into the child at the current x (Down).
+    Into,
+    /// Out to the parent (Up, Backspace).
+    Out,
+    /// Enter: a point's full description, a filter's toggle, else Into.
+    Activate,
+    /// The next series at the same x (`PageDown`).
+    NextSeries,
+    /// The previous series (`PageUp`).
+    PreviousSeries,
+    /// The current series' maximum (Jump+Up).
+    Maximum,
+    /// The current series' minimum (Jump+Down).
+    Minimum,
+    /// The next insight of the series (N).
+    NextInsight,
+    /// The previous insight (Shift+N).
+    PreviousInsight,
+    /// A landmark (X, Y, I, F, D).
+    Landmark {
+        /// Which.
+        landmark: NavLandmark,
+    },
+    /// The point nearest an x value (G).
+    GoTo {
+        /// The x value.
+        x: NavX,
+    },
+    /// The next point equal to or crossing a value (Primary+F in the explorer).
+    FindValue {
+        /// The value.
+        value: f64,
+    },
+}
+
+/// A landmark of [`NavVerb::Landmark`].
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize, TS)]
+#[serde(rename_all = "camelCase")]
+#[non_exhaustive]
+pub enum NavLandmark {
+    /// The x axis (X).
+    XAxis,
+    /// The first value axis (Y).
+    YAxis,
+    /// The insights group (I).
+    Insights,
+    /// The filters group (F).
+    Filters,
+    /// The dataset root (D).
+    Dataset,
+}
+
+/// Where [`NavVerb::GoTo`] goes.
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize, TS)]
+#[serde(rename_all = "camelCase")]
+#[non_exhaustive]
+pub enum NavX {
+    /// A number, a date (days since 1970-01-01) or an instant (seconds since the epoch).
+    Number(f64),
+    /// A category label, compared without case.
+    Category(String),
+}
+
+/// What kind of thing a verb did.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize, TS)]
+#[serde(rename_all = "camelCase")]
+#[non_exhaustive]
+pub enum NavOutcome {
+    /// The cursor moved.
+    Moved,
+    /// The cursor stayed: the move would leave the structure.
+    Boundary,
+    /// The cursor stayed: the verb does not apply here.
+    Invalid,
+    /// Enter on a point: its full description was spoken; the cursor stayed.
+    Describe,
+    /// Enter on a filter: its series is now in or out of playback and view.
+    Toggled,
+}
+
+/// The result of `nav_move` (B03-T09; 09 §3).
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize, TS)]
+#[serde(rename_all = "camelCase")]
+#[non_exhaustive]
+pub struct NavResult {
+    /// The cursor after the verb, as the `cursor` event sent with it.
+    pub cursor: CursorState,
+    /// What the verb did.
+    pub outcome: NavOutcome,
+    /// For a boundary: `first`, `last`, `top` or `bottom` (keyboard §11).
+    pub edge: Option<String>,
+    /// For an invalid verb, why, such as `noInsights` or `notHere`.
+    pub reason: Option<String>,
+    /// For a toggle: whether the series is now included.
+    pub included: Option<bool>,
+    /// The earcon of the outcome, such as `E-BOUNDARY` (A11Y-08).
+    pub earcon: Option<String>,
+    /// The x span to highlight: the node's, when it has one.
+    pub highlight: Option<NavSpan>,
+    /// Whether the outcome was announced (on the `announcements` channel, never here).
+    pub announced: bool,
+}
+
+/// An x span, inclusive.
+#[derive(Clone, Copy, Debug, PartialEq, Serialize, Deserialize, TS)]
+#[serde(rename_all = "camelCase")]
+#[non_exhaustive]
+pub struct NavSpan {
+    /// The first x.
+    pub start: f64,
+    /// The last x.
+    pub end: f64,
 }
 
 /// A stream source described for the consent prompt; nothing is open yet. Files are named
