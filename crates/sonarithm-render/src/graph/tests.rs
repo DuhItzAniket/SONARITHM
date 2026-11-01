@@ -488,6 +488,88 @@ fn every_earcon_plays_live_on_the_earcon_bus() {
     }
 }
 
+/// An audified sine: `cycles_per_sample` cycles per sample, played at `rate` samples per
+/// second, for `count` samples.
+fn audified(cycles_per_sample: f64, rate: f64, count: usize) -> Score {
+    let samples: Vec<f32> = (0..count)
+        .map(|i| {
+            let s = 0.8
+                * sonarithm_core::math::sin(core::f64::consts::TAU * cycles_per_sample * i as f64);
+            s as f32
+        })
+        .collect();
+    let event = sonarithm_core::Audify::new(Seconds(0.1), rate, samples);
+    let duration = 0.1 + event.duration().0 + 0.1;
+    score(
+        duration,
+        vec![track(
+            "sine",
+            TrackRole::Data,
+            vec![ScoreEvent::Audify(event)],
+        )],
+    )
+}
+
+/// Rising zero crossings per second over the middle of a signal.
+fn tone_frequency(samples: &[f32]) -> f64 {
+    let start = samples.iter().position(|s| s.abs() > 1e-3).unwrap_or(0) + 4_800;
+    let end = samples
+        .iter()
+        .rposition(|s| s.abs() > 1e-3)
+        .unwrap_or(0)
+        .saturating_sub(4_800);
+    let middle = &samples[start..end.max(start + 1)];
+    let rising = middle
+        .windows(2)
+        .filter(|w| w[0] < 0.0 && w[1] >= 0.0)
+        .count();
+    rising as f64 / (middle.len() as f64 / 48_000.0)
+}
+
+/// SDR-31, C03-T05: a sine in gives the expected tone out. A series with 1/100 cycle per
+/// sample, played at 44 000 samples per second (k = 2200 on a 20 Hz series), sounds at
+/// 440 Hz, whatever the output rate (resampling, not pitch shifting).
+#[test]
+fn sdr_31_an_audified_sine_plays_the_expected_tone() {
+    let score = audified(0.01, 44_000.0, 44_000);
+    let out = left(&render(&score, 256));
+    let f = tone_frequency(&out);
+    assert!((f - 440.0).abs() < 3.0, "{f} Hz");
+    let plan = RenderPlan::build(&score, &PlanConfig::new(RATE))
+        .unwrap()
+        .plan;
+    let track = &plan.tracks[0];
+    assert_eq!(track.buffers.len(), 1);
+    // One second of samples at 44 kHz is one second at 48 kHz.
+    assert!(track.buffers[0].len().abs_diff(48_000) <= 1);
+}
+
+/// SDR-22: audified output fades in and out over the minimum ramp, with no step.
+#[test]
+fn sdr_22_audification_has_ramps() {
+    let out = left(&render(&audified(0.01, 44_000.0, 44_000), 256));
+    let first = out.iter().position(|s| s.abs() > 1e-6).unwrap();
+    assert!(out[first].abs() < 0.05, "starts at {}", out[first]);
+    let last = out.iter().rposition(|s| s.abs() > 1e-6).unwrap();
+    assert!(out[last].abs() < 0.05, "ends at {}", out[last]);
+    assert!(worst_step(&out) < 0.1, "{}", worst_step(&out));
+}
+
+/// A seek into an audification resumes the series where the seek lands.
+#[test]
+fn audification_resumes_after_a_seek() {
+    let score = audified(0.01, 44_000.0, 44_000);
+    let mut graph = graph(&score, 256);
+    graph.apply(Command::Seek(Frames(24_000)));
+    graph.apply(Command::Play);
+    let mut out = vec![0.0; 2 * 24_000];
+    for chunk in out.chunks_mut(512) {
+        graph.process(chunk);
+    }
+    let f = tone_frequency(&left(&out));
+    assert!((f - 440.0).abs() < 5.0, "{f} Hz after a seek");
+}
+
 /// RFC-0007's function-cue earcons (C03-T04, proposals until HP-21).
 const FUNCTION_CUES: [crate::EarconSound; 4] = [
     crate::EarconSound::Zero,

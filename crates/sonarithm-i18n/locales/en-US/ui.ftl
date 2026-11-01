@@ -148,6 +148,9 @@ ui-output-device = Output device
 ui-system-default-device = System default
 ui-sonification-volume = Sonification volume
 ui-volume-note = Sets the level of SONARITHM's sound only; the system volume does not change.
+# ADR-0016, B04-T04: a latency measured for the selected device, used for the playhead.
+ui-output-latency = Measured output latency
+ui-output-latency-note = For the selected device, from a loopback or cable test. The playhead uses it instead of the system's estimate; leave it empty to use the estimate.
 ui-display = Display
 ui-gpu-high-performance = Use the high-performance GPU for plots
 ui-gpu-restart-hint = Takes effect after a restart.

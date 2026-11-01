@@ -261,8 +261,11 @@ pub fn features(calculus: &Calculus, xs: &[f64], scan: &Scan, max_features: usiz
             ));
         }
     }
-    out.sort_by(|a, b| a.x.total_cmp(&b.x).then(a.kind.cmp(&b.kind)));
+    // Duplicates of one feature (a zero found from both sides of a grid point) are merged
+    // within each kind, then the features are put in x order.
+    out.sort_by(|a, b| a.kind.cmp(&b.kind).then(a.x.total_cmp(&b.x)));
     out.dedup_by(|b, a| a.kind == b.kind && (a.x - b.x).abs() <= tolerance);
+    out.sort_by(|a, b| a.x.total_cmp(&b.x).then(a.kind.cmp(&b.kind)));
     out.truncate(max_features);
     out
 }

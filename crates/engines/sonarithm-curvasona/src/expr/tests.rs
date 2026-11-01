@@ -247,6 +247,9 @@ fn canonical_form_has_ordinary_precedence() {
         ("(x + 1)^(1/2)", "(x + 1)^(1/2)"),
         ("x - (1 - x)", "x - (1 - x)"),
         ("x / (2 * x)", "x/(2*x)"),
+        ("x / (-2)", "x/-2"),
+        ("x * (-2)", "x*-2"),
+        ("x / -(x + 1)", "x/-(x + 1)"),
         ("x * (2 / x)", "x*(2/x)"),
         ("2^3^2", "2^3^2"),
         ("(2^3)^2", "(2^3)^2"),
@@ -461,4 +464,17 @@ proptest! {
             prop_assert!(code(&error).starts_with("SNR-ENG-40"));
         }
     }
+}
+
+/// F-199: the canonical form is never deeper than the text it came from. The fuzz input
+/// `4-x/` + 32 unary minuses + `4-1` parses at exactly the depth limit; its canonical form
+/// once wrapped the divisor in parentheses and no longer parsed.
+#[test]
+fn f_199_a_divisor_at_the_depth_limit_reads_back() {
+    let text = format!("4-x/{}4-1", "-".repeat(32));
+    let expr = parse(&text).unwrap();
+    assert_eq!(expr.canonical(), format!("4 - x/{}4 - 1", "-".repeat(32)));
+    let again = parse(expr.canonical()).unwrap();
+    assert_eq!(again.canonical(), expr.canonical());
+    assert!(parse(&format!("4-x/{}4-1", "-".repeat(33))).is_err());
 }

@@ -201,6 +201,26 @@ fn check_event(at: Location, event: &ScoreEvent, duration: f64) -> Check {
         ScoreEvent::Speech(speech) => {
             within(at, "t", speech.t.0, 0.0, duration)?;
         }
+        ScoreEvent::Audify(audify) => {
+            within(at, "t", audify.t.0, 0.0, f64::MAX)
+                .map_err(|_| InvariantViolation::Unsorted { at })?;
+            within(at, "rate", audify.rate, f64::MIN_POSITIVE, f64::MAX)?;
+            finite(at, "gain", audify.gain.0)?;
+            if audify.samples.len() > crate::score::Audify::MAX_SAMPLES
+                || audify
+                    .samples
+                    .iter()
+                    .any(|s| !s.is_finite() || s.abs() > 1.0)
+            {
+                return Err(InvariantViolation::OutOfRange {
+                    at,
+                    field: "samples",
+                });
+            }
+            if audify.t.0 + audify.duration().0 > duration {
+                return Err(InvariantViolation::PastEnd { at });
+            }
+        }
     }
     Ok(())
 }

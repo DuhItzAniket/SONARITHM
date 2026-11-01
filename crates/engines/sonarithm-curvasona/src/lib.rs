@@ -16,6 +16,7 @@
 //! | [`sample`] | The sample grid of a domain (`samples` or `step`) under the sample budget |
 //! | [`scan`] | Poles, holes, jumps, undefined spans and off-screen spans, found from the expression's guards |
 //! | [`critical`] | Zeros, extrema, inflections and horizontal asymptotes; the `critical-points` analyzer's annotations |
+//! | [`audify`] | The `audify` mark: the SDR-31 speed-up calculator and the audification encoder (RFC-0007 §3) |
 //! | [`cues`] | The `curvasona.cues` context track: critical points as earcons or speech (RFC-0007) |
 //! | [`suite`] | The 40-curve suite with analytically known features |
 //! | [`codes`] | Diagnostic codes `SNR-ENG-400` to `499` |
@@ -27,6 +28,7 @@
 #![forbid(unsafe_code)]
 #![deny(missing_docs)]
 
+pub mod audify;
 pub mod codes;
 pub mod critical;
 pub mod cues;
@@ -358,13 +360,21 @@ fn report(
 /// instead of sweeping across an asymptote (C03-T02), and one at each zero, extremum and
 /// inflection, so the glide passes through it and its insight lands on it (C03-T03).
 fn with_feature_rows(grid: &[f64], scan: &Scan, features: &[Feature]) -> Vec<f64> {
-    let mut xs = grid.to_vec();
+    // Rows closer than the tolerance are one row: a feature found a float step from a grid
+    // point (or from a pole) must not add a near-duplicate row, which would put an extra
+    // breakpoint in the glide and hide the feature from the analyzer's recompute. The row
+    // kept is the pole or hole if there is one (its row stays empty), else the grid point.
+    let (Some(&min), Some(&max)) = (grid.first(), grid.last()) else {
+        return grid.to_vec();
+    };
+    let tolerance = 1e-9 * (max - min).abs().max(f64::MIN_POSITIVE);
+    let mut rows: Vec<(f64, u8)> = grid.iter().map(|&x| (x, 1)).collect();
     for singularity in &scan.singularities {
         if matches!(
             singularity.kind,
             SingularityKind::Pole | SingularityKind::Hole
         ) {
-            xs.push(singularity.x);
+            rows.push((singularity.x, 0));
         }
     }
     for feature in features {
@@ -375,12 +385,22 @@ fn with_feature_rows(grid: &[f64], scan: &Scan, features: &[Feature]) -> Vec<f64
                 | FeatureKind::Minimum
                 | FeatureKind::Inflection
         ) {
-            xs.push(feature.x);
+            rows.push((feature.x, 2));
         }
     }
-    xs.sort_by(f64::total_cmp);
-    xs.dedup();
-    xs
+    rows.sort_by(|a, b| a.0.total_cmp(&b.0));
+    let mut merged: Vec<(f64, u8)> = Vec::with_capacity(rows.len());
+    for (x, rank) in rows {
+        match merged.last_mut() {
+            Some(last) if (x - last.0).abs() <= tolerance => {
+                if rank < last.1 {
+                    *last = (x, rank);
+                }
+            }
+            _ => merged.push((x, rank)),
+        }
+    }
+    merged.into_iter().map(|(x, _)| x).collect()
 }
 
 /// The table `x`, `y`, `dy` with every row `synthetic`, and the expression in its metadata.
@@ -462,7 +482,10 @@ impl Curvasona {
             "CURVASONA",
             EngineVersion(env!("CARGO_PKG_VERSION").to_owned()),
         );
-        manifest.spec_keys = vec!["data.source.kind=function".to_owned()];
+        manifest.spec_keys = vec![
+            "data.source.kind=function".to_owned(),
+            "tracks[].audify".to_owned(),
+        ];
         manifest
     }
 }
@@ -486,6 +509,9 @@ impl Engine<DataBundle> for Curvasona {
             }),
         )?;
         registrar.context(Arc::new(cues::FunctionCues));
+        let audify: Arc<dyn sonarithm_core::engine::Encoder<DataBundle>> =
+            Arc::new(audify::AudifyEncoder);
+        registrar.encoder(&[sonarithm_core::engine::MarkKind::Audify], &audify)?;
         Ok(())
     }
 }

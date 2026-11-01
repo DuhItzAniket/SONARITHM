@@ -652,6 +652,38 @@ fn b01_t04_anchors_come_on_changes_not_on_every_tick() {
 }
 
 #[test]
+fn b04_t04_a_stored_latency_replaces_the_backends_on_the_anchors() {
+    let mut h = Harness::new("calibrated");
+    h.open_and_compile();
+    // ADR-0016: a stored latency for the open device (the null device, the system default
+    // here) comes before the backend's report, which the null device does not give.
+    let mut settings: Value = h.ok(&json!({ "command": "settings_get" }));
+    settings.as_object_mut().unwrap().remove("reply");
+    settings["audio"]["calibratedLatencyS"] = json!({ "null": 0.071 });
+    h.ok(&json!({ "command": "settings_set", "args": { "settings": settings.clone() } }));
+    h.ok(&json!({ "command": "transport_set_loop", "args": { "range": { "startS": 0.0, "endS": 1.0 } } }));
+    h.ok(&json!({ "command": "transport_play" }));
+    let latest = |h: &Harness| {
+        h.sink.events().iter().rev().find_map(|event| match event {
+            Event::Clock(anchor) => Some(anchor.output_latency_s),
+            _ => None,
+        })
+    };
+    assert_eq!(latest(&h), Some(Some(0.071)));
+    // Removing it while playing sends a new anchor at once, back to the backend's report:
+    // none at first, then the null device's one buffer (256 frames at 48 kHz) once it runs.
+    settings["audio"]["calibratedLatencyS"] = json!({});
+    let before = anchors(&h);
+    h.ok(&json!({ "command": "settings_set", "args": { "settings": settings } }));
+    assert!(anchors(&h) > before);
+    let fallback = latest(&h).flatten();
+    assert!(
+        fallback.is_none_or(|latency| (latency - 256.0 / 48_000.0).abs() < 1e-6),
+        "{fallback:?}"
+    );
+}
+
+#[test]
 fn b01_t04_meters_are_binary_frames_at_most_30_a_second_while_playing() {
     use sonarithm_app::ipc::meters::MeterFrame;
     let mut h = Harness::new("meters");

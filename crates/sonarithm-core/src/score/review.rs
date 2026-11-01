@@ -48,6 +48,7 @@ impl Score {
             Err(err) => json!({ "error": err.to_string() }),
         };
         summarize(self, &mut value, options);
+        summarize_samples(&mut value);
         round(&mut value, None);
         let mut text = serde_json::to_string_pretty(&value)
             .unwrap_or_else(|err| format!("{{\"error\": \"{err}\"}}"));
@@ -90,6 +91,42 @@ fn summarize(score: &Score, value: &mut Value, options: &ReviewOptions) {
                 "last": last,
             }
         });
+    }
+}
+
+/// Replaces the `samples` of every `Audify` event with its count, extremes and the
+/// SHA-256 of its full-precision JSON, so a review stays legible (05 §4.3).
+fn summarize_samples(value: &mut Value) {
+    match value {
+        Value::Object(map) => {
+            let audify = map.get("type").and_then(Value::as_str) == Some("audify");
+            if audify && let Some(samples) = map.get_mut("samples") {
+                let all: Vec<f64> = samples
+                    .as_array()
+                    .map(|items| items.iter().filter_map(Value::as_f64).collect())
+                    .unwrap_or_default();
+                let hash = serde_json::to_vec(samples)
+                    .map(|bytes| Sha256Digest::of(&bytes).to_string())
+                    .unwrap_or_default();
+                let min = all.iter().copied().fold(f64::INFINITY, f64::min);
+                let max = all.iter().copied().fold(f64::NEG_INFINITY, f64::max);
+                *samples = json!({
+                    "count": all.len(),
+                    "min": if min.is_finite() { min } else { 0.0 },
+                    "max": if max.is_finite() { max } else { 0.0 },
+                    "sha256": hash,
+                });
+            }
+            for item in map.values_mut() {
+                summarize_samples(item);
+            }
+        }
+        Value::Array(items) => {
+            for item in items {
+                summarize_samples(item);
+            }
+        }
+        _ => {}
     }
 }
 

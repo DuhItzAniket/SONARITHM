@@ -40,7 +40,8 @@ pub use invariants::InvariantViolation;
 /// that regenerates every snapshot and golden hash and contains nothing else
 /// (testing-strategy §4).
 ///
-/// Version 2 (RFC-0007): the earcon kinds `zero`, `asymptote`, `undefined` and `offscreen`.
+/// Version 2 (RFC-0007): the earcon kinds `zero`, `asymptote`, `undefined` and `offscreen`,
+/// and the [`Audify`] event.
 pub const IR_VERSION: u32 = 2;
 
 /// The first Score IR version (A03), which every Score without later additions records.
@@ -170,6 +171,7 @@ impl Score {
             .flat_map(|track| &track.events)
             .map(|event| match event {
                 ScoreEvent::Earcon(earcon) => earcon.kind.ir_version(),
+                ScoreEvent::Audify(_) => 2,
                 _ => IR_VERSION_BASE,
             })
             .max()
@@ -209,6 +211,7 @@ impl Score {
                     }
                     ScoreEvent::Earcon(earcon) => shift(&mut earcon.t),
                     ScoreEvent::Speech(speech) => shift(&mut speech.t),
+                    ScoreEvent::Audify(audify) => shift(&mut audify.t),
                 }
             }
         }
@@ -360,6 +363,8 @@ pub enum ScoreEvent {
     Earcon(Earcon),
     /// Speech text.
     Speech(Speech),
+    /// An audified series (CURVASONA, SDR-31; IR version 2).
+    Audify(Audify),
 }
 
 impl ScoreEvent {
@@ -371,6 +376,58 @@ impl ScoreEvent {
             Self::Glide(glide) => glide.t0,
             Self::Earcon(earcon) => earcon.t,
             Self::Speech(speech) => speech.t,
+            Self::Audify(audify) => audify.t,
+        }
+    }
+}
+
+/// An audified series (RFC-0007 §3, SDR-31): the samples of a series, played at `rate`
+/// samples per second, which the plan builder resamples to the output rate (never a
+/// pitch shift). The samples are inline, so the Score stays self-contained and its hash
+/// covers everything audible (ADR-0013).
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+#[non_exhaustive]
+pub struct Audify {
+    /// Onset.
+    pub t: Seconds,
+    /// Playback samples per second: k times the series' own rate.
+    pub rate: f64,
+    /// The series, normalized to [−1, 1]; undefined values are 0.
+    pub samples: Vec<f32>,
+    /// Gain relative to the track.
+    pub gain: Db,
+    /// The rows the series comes from.
+    pub src: Option<RowRange>,
+}
+
+impl Audify {
+    /// The most samples one event may hold (RFC-0007 Q4: 2^22, 16 MB as f32).
+    pub const MAX_SAMPLES: usize = 1 << 22;
+
+    /// An event at 0 dB with no source rows.
+    #[must_use]
+    pub fn new(t: Seconds, rate: f64, samples: Vec<f32>) -> Self {
+        Self {
+            t,
+            rate,
+            samples,
+            gain: Db(0.0),
+            src: None,
+        }
+    }
+
+    /// How long it plays: the sample count over the rate.
+    #[must_use]
+    pub fn duration(&self) -> Seconds {
+        #[expect(
+            clippy::cast_precision_loss,
+            reason = "at most 2^22 samples, exact in f64"
+        )]
+        let count = self.samples.len() as f64;
+        if self.rate > 0.0 {
+            Seconds(count / self.rate)
+        } else {
+            Seconds::ZERO
         }
     }
 }

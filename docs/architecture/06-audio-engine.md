@@ -73,7 +73,7 @@ flowchart LR
 | Envelopes | ADSR with **mandatory ramps ≥ 5 ms** (default about 40 ms onset per SDR-22) | Never zero |
 | Oscillators | fundsp PolyBLEP saw/square, sine, triangle; wavetable (custom); FM | The square preset serves BLV chart reading (SDR-29). A05 builds them in `sonarithm-dsp`. A voice renders in runs: a filtered oscillator generates and filters in one loop, the envelope works a stage at a time, and phases are computed a chunk ahead so the waveform arithmetic vectorizes. Each path computes the same operations as the per-sample one (#185, F-134) |
 | Granular | Custom node: grain pool, density-driven scheduler, Hann windows | SDR-32; D01 |
-| Audifier | Custom node: resampling playback of `Arc<[f32]>` with rubato | SDR-31; C03 |
+| Audifier | Playback of an `Arc<[f32]>` resampled at plan time by a windowed-sinc resampler on `libm` (`sonarithm_render::resample`; not rubato, whose FFT path is not bit-identical across CPUs, F-195, ADR-0030), read with linear interpolation at the transport speed, SDR-22 ramps at both ends | SDR-31; C03-T05 |
 | Modal | Custom resonator bank (excitation → damped sinusoids) | SDR-33; D02 |
 | Loudness compensation | Per-voice gain from an ISO 226:2023-derived table indexed by pitch | SDR-24; precomputed in the plan. A05: ISO 226:2023 Formula (1) with Table 1 at 60 phon (provisional), normalized so the least sensitive pitch of the track's range plays at 0 dB and nothing is boosted; skipped if the Score's header lists a loudness shaper |
 | Spatializer | Constant-power pan; ITD/ILD; SOFA HRTF convolution via sofar (D03) | SDR-30 |
@@ -197,7 +197,7 @@ The **Score IR is the strict artifact** (byte-identical). Audio is compared with
 - The heard position is the engine's position minus the output latency times the speed.
 - `Playhead` moves a 2 px line with a CSS transform every animation frame, through refs: no React render and no redraw of the data.
 - **Tests:** a drift test with seeded 0–8 ms delays (within one frame over a minute, at speeds 1 and 2), the latency correction, and a story whose React Profiler counts no commit while the playhead moves for 30 frames.
-- **Latency source.** Each anchor carries `outputLatencyS` (ADR-0017 "Clock anchors", approved 2026-10-30). In order of precedence it is the device's calibrated latency (ADR-0016; the stored offsets are a follow-up PR), then the backend's reported latency, then `null`, which means no correction. The desktop app's `usePlayheadClock` feeds the clock from the `clock` channel.
+- **Latency source.** Each anchor carries `outputLatencyS` (ADR-0017 "Clock anchors", approved 2026-10-30). In order of precedence it is the device's calibrated latency (ADR-0016; `audio.calibratedLatencyS` in the settings, by device ID, set in Preferences), then the backend's reported latency, then `null`, which means no correction. The desktop app's `usePlayheadClock` feeds the clock from the `clock` channel.
 
 ## 10. Hearing safety and levels
 
