@@ -261,8 +261,9 @@ fn cubic_earcons() -> (Vec<(f64, u64)>, sonarithm::Compiled) {
 /// F-200, #441: a function's time follows x, so each cue sounds exactly at
 /// (x − min)/(max − min) · T for the x of its row, whatever rows the source adds at
 /// critical points: exactly for every cue of the cubic. On the 40-curve suite a cue that
-/// merged with an earlier one (closer than 150 ms) keeps the earlier time and names the
-/// higher-priority point's row, so there it may sound up to 150 ms before that row's time.
+/// merged with an earlier one keeps the earlier time and names the higher-priority point's
+/// row (RFC-0007 §2's 150 ms merge window, ADR-0029), so there it may sound up to 150 ms
+/// before that row's time.
 #[test]
 fn f_200_cue_times_follow_x_exactly() {
     let snr = Sonarithm::new();
