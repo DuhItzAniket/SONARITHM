@@ -395,6 +395,19 @@ export const DEFAULT_KEYMAP: readonly CommandSpec[] = [
     keys: ["V"],
   },
   {
+    // B04-T07 (A11Y-26): the alternative to dragging the plot sideways; palette and toolbar.
+    id: "view.panLeft",
+    name: "command-view-pan-left",
+    scope: "global",
+    keys: [],
+  },
+  {
+    id: "view.panRight",
+    name: "command-view-pan-right",
+    scope: "global",
+    keys: [],
+  },
+  {
     // Keyboard §5.6 (B04-T05): from the palette while a data table is open.
     id: "table.goToRow",
     name: "command-table-go-to-row",

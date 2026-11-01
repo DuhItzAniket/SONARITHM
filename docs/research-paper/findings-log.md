@@ -1016,6 +1016,23 @@ A05 (render engine, audio backends, export) uses F-050 to F-069.
 - **Affects:** C02-T09, A11Y-02, A11Y-12, A11Y-24, FR-008, OD-07, H-06
 - **Papers:** none yet
 
+### F-201 · A hole on a pole's steep slope was taken for a jump, because the sides were compared with a fixed tolerance
+
+- **Date:** 2026-11-01 · **Phase:** C03 · **Type:** engineering (robustness) · **Status:** new
+- **Statement:** The property test `poles_and_holes_are_never_missed` (CI on #438, Windows job 124726369301) found a hole at b = 2.0748585424618367 only 0.0042 from a pole at a = 2.0790137126487966, on a 3-sample grid. The scan reported it as a jump, with left −240.66171264649452 and right −240.66634618052169. The scan classifies a candidate by its one-sided limits, read at 10^-2 to 10^-8 grid steps, and called the sides different when they disagreed by more than a relative 1e-6. Beside a pole the slope is about 1/0.004² ≈ 60 000, so the two sides of a smooth point differ by about the slope times the probe distance, 2e-5 relative here, and the fixed tolerance failed. Now the sides also count as equal when their signed difference D(h), extrapolated to h = 0 through the two closest probes (a decade apart, D₀ = (10·D₆ − D₅)/9), is 0 to a relative 1e-6. To first order D(h) = D₀ + C·h, with D₀ = 0 at a hole and the jump at a jump. A first version judged the gap's size instead (fivefold smaller over two decades). Lane U's review showed that this drops a real jump: for `floor(x) + 1/(x − 2.0001)` at 101 samples, the gaps were 15, 0.6 and 0.84, because the slope term dwarfed the jump before the gap settled at it. A rule that only asks the gap to halve each decade fails too, with the pole 5e-5 away (gaps of about 63, 5.4 and 0.36). The extrapolated D₀ gives −1 in both cases. ADR-0028 is unchanged.
+- **Evidence:** `crates/engines/sonarithm-curvasona/src/scan.rs` (`closing`, `classify`); the tests `f_201_a_hole_beside_a_pole_is_not_a_jump` (the counterexample, pinned), `f_201_a_jump_beside_a_pole_is_still_a_jump` and `f_201_a_jump_on_a_steep_slope_stays_a_jump` (the review's repro, the 5e-5 case and a wide domain)
+- **Evidence level / confidence:** EV-D / Strong (a reproduced property-test failure, with regression tests)
+- **Affects:** C03-T02 (the scan), the function cues and the critical-point list
+
+### F-200 · A function's glide is paced by row, so the rows CURVASONA inserts bend its timeline against x
+
+- **Date:** 2026-11-01 · **Phase:** C03 · **Type:** engineering (timing, determinism) · **Status:** new
+- **Statement:** After `main` (with #429) was merged into C03-T07, the CLI snapshot `quick_function` changed from cues at "1.689 to 6.303 seconds" to "1.691 to 6.301 seconds". It changed identically on HW-01 (Windows 11), on CI Windows and on CI macOS arm64, so it is not a platform difference. Applying #429 alone to the pre-merge branch reproduces it on one machine. The cause: the function spec's `pace: { duration: 8 s }` makes NUMISONA space the glide's rows evenly in time (8/1003 s, about 8 ms each, for the cubic's 1000 samples plus three critical-point rows), by row position, not by x. Every row the function source inserts at a critical point shifts the rest of the timeline by one step, so #429, which changed how many rows are inserted (F-194), moved the cues by about 2 ms. Each cue still sounds exactly when the glide reaches its point (tested bit for bit), but against x the cubic's cues sit 0.3 to 8 ms from (x − min)/(max − min) · T (the zero at √3: 6.301 s rather than 6.309 s). With `secondsPerUnit` pacing on `x`, every cue lands on its x-linear time exactly, but NUMISONA then ends the glide one unit late (9.333 s for 8 s), so that switch waits for a look at NUMISONA.
+- **Evidence:** CI jobs 124721139173 (macOS) and 124721139250 (Windows); the tests `f_200_the_cubic_cue_times_are_pinned` and `f_200_each_earcon_sounds_at_its_rows_glide_breakpoint` in `crates/sonarithm/tests/functions.rs`; a local probe of the glide's breakpoints against x
+- **Evidence level / confidence:** EV-D / Strong (measured on three platforms and reproduced by bisection)
+- **Affects:** C03-T07 (`Function::spec`, `quick --function`), C03-T06 (the 40-curve gallery), the 04 §6.3 example; follow-ups for NUMISONA's `secondsPerUnit` tail and for x-linear function time
+- **Papers:** none yet
+
 ### F-199 · CURVASONA's canonical form put a negative divisor in parentheses, which made it deeper than its source
 
 - **Date:** 2026-11-01 · **Phase:** C03 · **Type:** engineering (robustness) · **Status:** new
@@ -1023,6 +1040,24 @@ A05 (render engine, audio backends, export) uses F-050 to F-069.
 - **Evidence:** `crates/engines/sonarithm-curvasona/src/expr.rs` (`Node::print`); the test `f_199_a_divisor_at_the_depth_limit_reads_back`; the corpus seed `seed-regression-divisor-depth.txt`, replayed by `tests/fuzz_regressions.rs` on every run
 - **Evidence level / confidence:** EV-D / Strong (a reproduced fuzz failure, with a regression test)
 - **Affects:** C03-T01 (the expression facade), ADR-0028's canonical form
+
+### F-198 · An unboxed `Expr` was 19 KB, and sampling a function overflowed the CLI's 1 MB main-thread stack in debug builds
+
+- **Date:** 2026-11-01 · **Phase:** C03 · **Type:** engineering (robustness) · **Status:** new
+- **Statement:** exmex's compiled form (`FlatEx<f64>`) keeps its buffers inline, so CURVASONA's `Expr` was 19,296 bytes and `Calculus` (f, f′, f″) 57,888 bytes. A debug build copies these values through many frames. Sampling `x^3 - 3*x` needed between 768 KB and 1 MB of stack, and the facade's `read_function` between 1 and 1.5 MB, with no recursion involved. That overflowed the 1 MB main thread on Windows, where the CLI runs: both new CLI tests crashed with `STATUS_STACK_OVERFLOW`. Python calls run on the caller's thread, so they were exposed the same way. Boxing the compiled form makes `Expr` 136 bytes, and `read_function` then runs in 512 KB but not in 256 KB. Measured on HW-01 (Windows 11, debug build); release builds use less stack and were not measured.
+- **Evidence:** `crates/engines/sonarithm-curvasona/src/expr.rs` (`compiled: Box<Compiled>`); the test `a_function_reads_and_compiles_on_a_1_mb_stack`; stack probes at 256 KB to 4 MB during C03-T07
+- **Evidence level / confidence:** EV-D / Strong (measured, one machine)
+- **Affects:** C03-T07, every host that runs CURVASONA on a main thread (CLI, Python, the app's command thread)
+- **Papers:** none yet
+
+### F-197 · A registered context provider is recorded in every Score, so the facade adds CURVASONA only where a spec uses it
+
+- **Date:** 2026-11-01 · **Phase:** C03 · **Type:** engineering (determinism, diagnostics) · **Status:** new
+- **Statement:** The compiler's context stage records every registered context provider as a contributing engine, whether or not it adds a track, and it warns that context cues need AUDAXIS (`SNR-COMP-023`) only when no provider is registered. CURVASONA provides the `curvasona.cues` context track, so registering it for every compile in the facade (C03-T07) would have put `curvasona` into every Score header, changing every Score hash and golden snapshot, and would have hidden `SNR-COMP-023` from every CLI and Python compile that has no AUDAXIS. The facade therefore adds CURVASONA only to compiles whose spec uses it: a `function` source, an `audify` track, or `critical-points` in `analysis.detect` (its manifest's spec keys). Found by reading `pipeline.rs`, not measured; a compiler-level fix (record a provider only when it adds a track, and warn when no provider handles `context`) would change the app's Score headers and is left as a follow-up.
+- **Evidence:** `crates/sonarithm-compiler/src/pipeline.rs` (`add_context`); `crates/sonarithm/src/api.rs` (`uses_curvasona`); the test `specs_that_do_not_use_curvasona_compile_without_it`
+- **Evidence level / confidence:** EV-D / Strong (code reading, with a test)
+- **Affects:** C03-T07, the facade's default engines, every later engine with a context provider
+
 - **Papers:** none yet
 
 ### F-196 · An audification without `k` or `band` needs a target band, and no study gives one
@@ -1143,6 +1178,71 @@ A05 (render engine, audio backends, export) uses F-050 to F-069.
 - **Evidence level / confidence:** EV-C / Strong (reproduced and fixed). The WebKitGTK behaviour is inferred from the CI report; TODO(verify) on a desktop Linux with `LANG=C` (HP-02).
 - **Upstream:** uPlot's module-scope `Intl.NumberFormat(navigator.language)` (1.6.32, `uPlot.esm.js:442`) could be reported upstream: guard the tag, or create the formatter lazily. Whether to open a public issue is the owner's decision.
 - **Affects:** B04-T06, any library that reads `navigator.language` at import; 12 §5 (locales); B07-T07 (the locale setting must pass through `normalizeLocale`)
+
+### F-179 · uPlot's drag selection missed in WebKit because it positions from a cached box
+
+- **Date:** 2026-11-01 · **Phase:** B04 · **Type:** engineering · **Status:** new
+- **Statement:** B04-T07's first drag-to-zoom used uPlot 1.6.32's cursor drag selection. It zoomed in Chromium, but in Playwright's WebKit a drag across the plot selected nothing. uPlot computes the selection from a bounding box it caches and refreshes only on its own resize, scroll and enter events; after a layout shift the cached box no longer matched the plot. The drag is now SONARITHM's own: pointer events on uPlot's overlay, positioned from `getBoundingClientRect()` at each event, with pointer capture. That works in Chromium and WebKit. uPlot's cursor stays off, which also keeps the hover readout out (DL-X11).
+- **Evidence:** `apps/desktop/e2e/plot.spec.ts` (`a11y_26_a_drag_zooms_and_does_not_move_the_cursor`, Chromium and WebKit); `packages/viz/src/Plot.tsx`
+- **Evidence level / confidence:** EV-C / Moderate. The cached-box cause is inferred from uPlot's documented behaviour and the fix; WebKitGTK and WKWebView inside Tauri are untested (TODO(verify), B04-T08)
+- **Affects:** B04-T07, A11Y-26; any later uPlot interaction (B04-T08 traces in three webviews)
+- **Papers:** none yet
+
+### F-221 · Voice steals came from playback speed and double seeks, not from short notes at 1×, and a steal clicked by up to 0.29
+
+- **Date:** 2026-11-01 · **Phase:** B04 (render, A05 code) · **Type:** engineering (real-time audio) · **Status:** new
+- **Statement:** #443 (from F-211) inferred two ways a playback voice pool could overflow and a stolen voice click. Reproduced on main:
+  - **Short notes.** The first path does not happen at 1×: the planner already stretches every note to two ramps, and the pool is sized from those lengths. It happens at higher speed. At 4×, a note plays four times shorter while its 5 ms ramps do not, so 2 ms notes 3 ms apart stole 12 voices.
+  - **Double seek.** A second seek 1 ms into a seek crossfade stole one voice. Replacing the voice outright stepped the output by 0.293, over twice the sine's own largest step.
+- **The fix:**
+  - **Sizing:** pools count each voice's sounding length at the fastest supported speed, at least two ramps × 4, so no Score steals at any speed. Each track is capped at 256 voices of polyphony (pool ≤ 512 × 520 bytes ≈ 266 KB), the most events a seek restarts.
+  - **Steal choice:** a voice already fading out goes first.
+  - **De-click:** a steal adds the stolen voice's last output to the track's bus and fades it to zero over 5 ms. That needs no extra voice and no allocation.
+- **Result:** both reproductions pass. A forced steal (a pool of one voice) and a pathological track (0.5 ms notes every 0.05 ms, about 800 deep at 4×, past the cap) steal without stepping the output. The golden-audio cases and the replication gallery are unchanged at 1×.
+- **Evidence:** `crates/sonarithm-render/src/graph/tests.rs` (`issue_443_short_notes_are_not_stolen`, `issue_443_a_seek_inside_a_crossfade_does_not_click`, `issue_443_a_stolen_voice_fades_instead_of_clicking`, `issue_443_the_polyphony_cap_holds_and_steals_stay_smooth`); `crates/sonarithm-render/tests/no_alloc.rs` (`rt_voice_steals_never_allocate_on_the_audio_thread`); `cargo xtask golden` (every case identical) and `cargo xtask replication` (86 files match)
+- **Evidence level / confidence:** EV-C / Strong for the reproductions and the fix (tests); the de-click's audibility was not judged by ear, only by the size of the output step
+- **Affects:** F-211, #443, 05 §5 (pool sizing), 06 §3 (voices), PB-03 (bigger pools for dense short-note tracks: allocation and the render loop scan every voice of a pool for activity, so a capped 512-voice pool costs a scan of 512 flags per segment; not measured)
+- **Papers:** none yet
+
+### F-220 · A glide paced by `secondsPerUnit` held its last value for a whole time-field unit, not one point's spacing
+
+- **Date:** 2026-11-01 · **Phase:** C03 (found), A06 code · **Type:** engineering · **Status:** new
+- **Statement:** NUMISONA holds a glide's last value for one step between points, so the last value is heard (A06-T04, #151). Under `pointsPerSecond` and `duration` that step is the spacing, 1/rate or duration/n. Under `secondsPerUnit` the encoder used one unit of the time field instead, which equals the spacing only when points sit one unit apart. A CURVASONA function sampled 1003 times over x = −3…3 at 4/3 s per unit therefore ended at 9.333 s, a whole unit (1.333 s) after its last point at 8 s (#440). The hold is now the mean spacing of the points in time-field units times the seconds per unit (one unit for a single point), so that glide ends about 8 ms after its last point (computed, 6/1002 × 4/3 s). The spacing is taken in units before scaling, so data one unit apart keeps a hold of exactly one unit. Nothing in the replication gallery, the golden-audio cases or the Score snapshots changed. Notes were never affected: a note's length is its `duration` channel. No doc or ADR had defined a one-unit hold; doc 07 (NUMISONA) now states the rule for every pace.
+- **Evidence:** `crates/engines/sonarithm-numisona/tests/encode.rs` (`glides_hold_one_point_spacing_under_seconds_per_unit`); `cargo xtask replication` (all 86 generated files match) and `cargo xtask golden` (every case identical) after the fix; #440
+- **Evidence level / confidence:** EV-C / Strong (code and tests)
+- **Affects:** 07 NUMISONA (timing), RFC-0001 §5 pace (`secondsPerUnit`), #441 (CURVASONA's function specs on x-linear time, which this unblocks)
+- **Papers:** none yet
+
+### F-212 · PB-08's script time is over budget on every CI webview, by 14 times under Xvfb
+
+- **Date:** 2026-11-01 · **Phase:** B04 · **Type:** performance · **Status:** new
+- **Statement:** The desktop smoke check `pb-08-dense-layer` redraws a 1M-point dense line in the app's own webview. In #439's CI runs at `e1f0fedf`, no webview met the 8 ms per-frame script budget:
+  - WebView2: p95 15.6 ms debug, 13.7 ms release.
+  - WKWebView: p95 26 ms debug, 21.0 ms release.
+  - WebKitGTK under Xvfb: p95 110 ms debug, 87 ms release.
+  The playhead held 59–64 fps everywhere.
+- **Reading:**
+  - The runners are shared and have no GPU, so these are upper bounds.
+  - Xvfb in particular draws WebGL in software even though `backend` reports webgl2. It is not a WebKitGTK figure.
+  - The playhead is unaffected because it moves by transform, not by redrawing.
+  - Whether a real GPU meets the budget is the HW-01 run (owner, #129) and, for Linux, HP-02. Until then PB-08 stays unconfirmed, not failed.
+- **Evidence:** the `smoke.json` printed in the job logs ([debug](https://github.com/DuhItzAniket/SONARITHM/actions/runs/41267649561), [release](https://github.com/DuhItzAniket/SONARITHM/actions/runs/41267649558)), benchmarks-log rows "B04 (B04-T08)".
+- **Evidence level / confidence:** EV-C / Moderate. Measured, but on runners unlike the target hardware.
+- **Affects:** PB-08, B04-T08, B04-T02 (dense layer); 09 §3
+- **Papers:** none yet
+
+### F-211 · A stolen voice is replaced at once, so a steal clicks
+
+- **Date:** 2026-11-01 · **Phase:** B03 · **Type:** engineering (real-time audio) · **Status:** new
+- **Statement:** At a full voice pool, `VoicePool::allocate` steals the oldest voice, and `Voice::start` replaces it whole (`*self = Self { .. }`, `crates/sonarithm-render/src/voice.rs:410`). Nothing fades it, so its output drops to 0 in one sample: a click. The B03-T09 point cue reaches this whenever more than 4 cues overlap (key repeat). Playback voices are sized per Score at twice the exact event overlap, but two paths still reach a steal:
+  - **Notes shorter than two ramps.** A voice sounds at least 2 × `MIN_RAMP` = 10 ms, while the overlap count uses planned event lengths. Specs may set durations that short; the spec property tests generate them from 1 ms.
+  - **A seek inside a 10 ms seek or loop crossfade.** This needs up to 3 × the overlap, against a pool of 2 ×.
+- **Fix:**
+  - Cues: 8 preallocated slots with at most 4 sounding, and the oldest fades over its ramp, in the point-cue PR (06 §3).
+  - Playback: issue #443. Count each event's sounding length in `polyphony()`, and fade stolen voices.
+- **Evidence:** code reading (`voice.rs` `Voice::start` and `VoicePool::allocate`; `plan/build.rs` `polyphony`; `graph.rs` `SEEK_FADE`). Neither path is reproduced yet: TODO(verify), with a test that sees `GraphStats::stolen > 0` and a golden check of the step at the steal sample.
+- **Evidence level / confidence:** EV-D / Moderate. Inferred from the code, not measured.
+- **Affects:** B03-T09 (point cue), A05 render voice pools, 06 §3 and §5
 - **Papers:** none yet
 
 ### F-211 · A stolen voice is replaced at once, so a steal clicks

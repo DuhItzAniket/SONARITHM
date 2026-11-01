@@ -5147,6 +5147,7 @@ dependencies = [
 name = "sonarithm"
 version = "0.1.0-alpha"
 dependencies = [
+ "arrow-array",
  "insta",
  "serde",
  "serde_json",
@@ -5154,6 +5155,7 @@ dependencies = [
  "sonarithm-audaxis",
  "sonarithm-compiler",
  "sonarithm-core",
+ "sonarithm-curvasona",
  "sonarithm-data",
  "sonarithm-dsp",
  "sonarithm-export",

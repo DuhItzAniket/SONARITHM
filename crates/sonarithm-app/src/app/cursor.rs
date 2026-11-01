@@ -95,8 +95,11 @@ impl App {
         let state = self.send_cursor(Some(origin), true);
         if origin != CursorOrigin::Table
             && let Some(node) = state.node.map(NavNodeId)
-            && let Some(announcement) = self.cursor_announcement(node)
+            && let Some((announcement, memory)) = self.cursor_announcement(node)
         {
+            // The explorer's composer memory carries over, so a series named here is not
+            // named again by the next explorer move (keyboard §8.1).
+            self.cursor.memory = memory;
             self.transport.announce(announcement);
         }
         Ok(Reply::Cursor(state))
@@ -145,6 +148,11 @@ impl App {
 
     /// The point of the cursor's row in the compiled Score, if the row is one.
     pub(super) fn row_point(&self) -> Option<NavNodeId> {
+        self.row_point_in(self.cursor.nav.as_ref().and_then(Cursor::series))
+    }
+
+    /// The point of the cursor's row, in `prefer` when the row is a point there.
+    pub(super) fn row_point_in(&self, prefer: Option<NavNodeId>) -> Option<NavNodeId> {
         let at = self.cursor.at.as_ref()?;
         let open = self
             .datasets
@@ -152,7 +160,7 @@ impl App {
             .find(|o| o.summary.id == at.dataset)?;
         let table = open.bundle.primary().map(sonarithm_data::Table::id)?;
         let tree = self.compiled.as_ref()?.nav()?;
-        point_of(tree, table, at.row)
+        point_of(tree, table, at.row, prefer, &self.cursor.excluded)
     }
 
     /// Sends the cursor as an event when `always`, or when what it shows changed.
@@ -251,22 +259,60 @@ impl App {
     fn cursor_announcement(
         &self,
         node: NavNodeId,
-    ) -> Option<sonarithm_audaxis::announce::Announcement> {
+    ) -> Option<(sonarithm_audaxis::announce::Announcement, Memory)> {
         let tree = self.compiled.as_ref()?.nav()?;
         let localizer = self.localizer.as_ref()?;
-        Composer::new(localizer, self.composer_settings())
-            .node(tree, node)
-            .ok()
+        let mut composer = Composer::with_memory(
+            localizer,
+            self.composer_settings(),
+            self.cursor.memory.clone(),
+        );
+        let announcement = composer.node(tree, node).ok()?;
+        Some((announcement, composer.memory()))
     }
 }
 
-/// The first series' point for `row` of `table`: a row read by several tracks is a point
-/// in each, and the cursor takes the first, as the playhead's current value does.
-fn point_of(tree: &NavTree, table: TableId, row: u64) -> Option<NavNodeId> {
-    tree.iter().find_map(|(id, node)| match &node.kind {
-        NavKind::Point(point) if point.row.table == table && point.row.row == row => Some(id),
-        _ => None,
-    })
+/// The point for `row` of `table`. A row read by several tracks is a point in each: the
+/// cursor takes the one in `prefer` (the explorer's series), else the first in a series the
+/// filters keep, else the first, as the playhead's current value does.
+fn point_of(
+    tree: &NavTree,
+    table: TableId,
+    row: u64,
+    prefer: Option<NavNodeId>,
+    excluded: &BTreeSet<NavNodeId>,
+) -> Option<NavNodeId> {
+    let is_row = |id: NavNodeId| {
+        matches!(tree.node(id).map(|node| &node.kind),
+            Some(NavKind::Point(point)) if point.row.table == table && point.row.row == row)
+    };
+    if let Some(series) = prefer
+        && let Some(point) = tree.points(series).into_iter().find(|&p| is_row(p))
+    {
+        return Some(point);
+    }
+    let mut first = None;
+    for (id, _) in tree.iter() {
+        if is_row(id) {
+            if series_of(tree, id).is_none_or(|series| !excluded.contains(&series)) {
+                return Some(id);
+            }
+            first.get_or_insert(id);
+        }
+    }
+    first
+}
+
+/// The series above `node`, if any.
+fn series_of(tree: &NavTree, node: NavNodeId) -> Option<NavNodeId> {
+    let mut at = Some(node);
+    while let Some(id) = at {
+        if matches!(tree.node(id).map(|n| &n.kind), Some(NavKind::Series(_))) {
+            return Some(id);
+        }
+        at = tree.parent(id);
+    }
+    None
 }
 
 /// The levels above and at `node` below the dataset, outermost first. Labels are data

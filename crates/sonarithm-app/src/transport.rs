@@ -448,8 +448,9 @@ impl<B: AudioBackend, F: Fn() -> B> Control<B, F> {
     fn handle(&mut self, message: Message) {
         match message {
             Message::Load(score, excluded) => {
-                self.load(score);
+                // Set first: `load` sends a clock anchor, which carries the exclusions.
                 self.model.excluded_tracks = excluded;
+                self.load(score);
             }
             Message::Act(action, reply) => {
                 let result = self.act(action);
@@ -942,6 +943,21 @@ impl<B: AudioBackend, F: Fn() -> B> Control<B, F> {
     /// `play` otherwise. While playing, the playhead moves only when it has left the band
     /// behind the newest data; a transport that is not playing waits at the live edge.
     fn live_score(&mut self, score: Arc<Score>) {
+        // The explorer's filters apply to live windows too (B03-T09): the tracks they took
+        // out before monitoring started stay out of every window.
+        let score = if self.model.excluded_tracks.is_empty() {
+            score
+        } else {
+            let mut kept = Score::clone(&score);
+            kept.tracks.retain(|track| {
+                !self
+                    .model
+                    .excluded_tracks
+                    .iter()
+                    .any(|id| id == track.id.as_str())
+            });
+            Arc::new(kept)
+        };
         if let Some(player) = &mut self.player {
             match player.swap(Score::clone(&score)) {
                 Ok(()) => {}
@@ -959,8 +975,6 @@ impl<B: AudioBackend, F: Fn() -> B> Control<B, F> {
             }
         }
         self.score = Some(score);
-        // A live Score is the live compiler's, whole.
-        self.model.excluded_tracks.clear();
         self.refresh();
         let target = if self.model.status == PlaybackStatus::Playing {
             self.live_target(self.model.position_s)

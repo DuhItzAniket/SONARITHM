@@ -39,10 +39,23 @@
   pointer-events: none;
 }
 
+/* The range a drag selects (B04-T07). */
+.selection {
+  position: absolute;
+  inset-block: 0;
+  outline: var(--border-width) dashed var(--accent);
+  background: var(--surface-3);
+  pointer-events: none;
+}
+
 @media (forced-colors: active) {
   .crosshair,
   .marker {
     border-color: Highlight;
+  }
+
+  .selection {
+    outline-color: Highlight;
   }
 }
 

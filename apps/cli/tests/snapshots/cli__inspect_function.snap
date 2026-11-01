@@ -1,0 +1,35 @@
+---
+source: apps/cli/tests/cli.rs
+expression: inspect.transcript()
+---
+exit code: 0
+--- stdout
+function.spec.json: spec version 0.4, analysis mode, seed 0.
+Duration: 6.000 seconds.
+Engines: curvasona [version], numisona [version].
+Track f: data track, 1 events (1 glide), 0.000 to 6.000 seconds, pitch 400.00 to 1400.00 Hz, instrument mallet.
+Track curvasona.cues: earcon track, 7 events (7 earcons), 0.000 to 5.274 seconds, instrument sine.
+Score hash: [score hash].
+Diagnostics: 0 errors, 1 warning, 29 applied defaults and choices.
+Function: f(x) = x^3 - 3*x from x = -3 to 3, 601 samples: 1 span below the window, 3 zeros, 1 local maximum, 1 inflection point, 1 local minimum, 1 span above the window.
+Critical points:
+Below the window from x = -3 to -2.279.
+Zero at x = -1.7321.
+Local maximum at x = -1, y = 2.
+Zero at x = 0.
+Inflection point at x = 0, y = 0.
+Local minimum at x = 1, y = -2.
+Zero at x = 1.7321.
+Above the window from x = 2.279 to 3.
+--- stderr
+NUMISONA: track `f`: 146 values of field `y` lie outside the `pitch` domain and sound at its nearest end (03 §5).
+    Diagnostic severity: warning
+Begin snippet for function.spec.json starting at line 12, column 1
+
+snippet line 12:       "mark": "glide",
+snippet line 13:       "channels": { "pitch": { "field": "y", "scale": { "domain": [-5, 5] } } }
+    label at line 13, columns 55 to 75: /tracks/0/channels/pitch/scale
+snippet line 14:     }
+diagnostic code: SNR-ENG-046
+
+note: --verbose lists the applied defaults and automatic choices.

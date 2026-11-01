@@ -34,6 +34,7 @@ __all__ = [
     "Chart",
     "Compiled",
     "Dataset",
+    "Function",
     "SonarithmError",
     "Spec",
     "__version__",
@@ -41,6 +42,7 @@ __all__ = [
     "dataset",
     "quick",
     "read_chart",
+    "read_function",
     "schema",
 ]
 
@@ -372,6 +374,77 @@ def read_chart(path: PathLike) -> Chart:
     Raises ``SonarithmError`` with ``diagnostics`` when the file is not a chart it reads.
     """
     return Chart(_core.read_chart(os.fspath(path)))
+
+
+class Function:
+    """A function of ``x`` as CURVASONA sampled it (C03-T07).
+
+    ``critical_points()`` lists its zeros, extrema, inflections, asymptotes, holes, jumps
+    and undefined spans, each with a ``text`` such as ``"local maximum at x = 1.5708, y = 1"``:
+    the text equivalent of the earcons its spec plays.
+    """
+
+    __slots__ = ("_inner",)
+
+    def __init__(self, inner: _core.Function) -> None:
+        self._inner = inner
+
+    @property
+    def expr(self) -> str:
+        """The expression in its canonical form."""
+        return self._inner.expr
+
+    @property
+    def summary(self) -> str:
+        """The expression, the domain and how many of each feature, as one sentence."""
+        return self._inner.summary
+
+    def critical_points(self) -> list[dict[str, Any]]:
+        """The critical points and spans in increasing ``x``, as ``inspect --json`` lists them."""
+        return self._inner.critical_points()
+
+    def spec(self, duration: float | None = None) -> Spec:
+        """A spec that plays the function as a glide over ``duration`` seconds (default 8),
+        with its critical points as earcons."""
+        return Spec(self._inner.spec(duration))
+
+    def dataset(self) -> Dataset:
+        """The sampled table: ``x``, ``y`` and ``dy``, provenance ``synthetic``."""
+        return self._inner.dataset()
+
+    def compile(self, duration: float | None = None) -> Compiled:
+        """Compiles :meth:`spec`."""
+        return compile(self.spec(duration))
+
+    def __repr__(self) -> str:
+        return f"Function({self.summary!r})"
+
+
+def read_function(
+    expr: str,
+    domain: tuple[float, float],
+    *,
+    samples: int | None = None,
+    step: float | None = None,
+    variables: Mapping[str, float] | None = None,
+) -> Function:
+    """Samples ``expr``, a function of ``x`` such as ``"sin(x)/x"``, over ``domain``
+    (``samples`` points, default 1000, or points ``step`` apart) and finds its critical
+    points. Products are written with ``*``; ``variables`` names constants.
+
+    Raises ``SonarithmError`` with ``diagnostics`` (``SNR-ENG-400`` to ``404``) when the
+    expression cannot be read or the grid is too large.
+    """
+    low, high = domain
+    return Function(
+        _core.read_function(
+            expr,
+            (float(low), float(high)),
+            samples=samples,
+            step=step,
+            variables=None if variables is None else dict(variables),
+        )
+    )
 
 
 def schema(kind: str = "spec") -> dict[str, Any]:

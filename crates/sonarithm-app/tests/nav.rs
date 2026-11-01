@@ -18,7 +18,7 @@ use std::time::{Duration, Instant};
 
 use serde_json::{Value, json};
 use sonarithm_app::ipc::{CursorOrigin, CursorState, Event, IpcError};
-use sonarithm_app::testing::TempDir;
+use sonarithm_app::testing::{FileFeed, TempDir};
 use sonarithm_app::{App, AppConfig, AudioOutput, CollectingSink};
 
 const CSV: &str = "day,temp,rain\n1,8.5,3\n2,9.25,0\n3,7.0,1.5\n";
@@ -53,9 +53,15 @@ impl Harness {
 
     /// Compiles one track per field.
     fn compile(&mut self, fields: &[&str]) {
-        let tracks: Vec<Value> = fields
+        let tracks: Vec<(&str, &str)> = fields.iter().map(|f| (*f, *f)).collect();
+        self.compile_tracks(&tracks);
+    }
+
+    /// Compiles one track per `(id, field)`.
+    fn compile_tracks(&mut self, tracks: &[(&str, &str)]) {
+        let tracks: Vec<Value> = tracks
             .iter()
-            .map(|field| json!({ "id": field, "mark": "tone", "channels": { "pitch": { "field": field } } }))
+            .map(|(id, field)| json!({ "id": id, "mark": "tone", "channels": { "pitch": { "field": field } } }))
             .collect();
         let spec = json!({
             "specVersion": "0.1",
@@ -294,6 +300,173 @@ fn b03_t09_an_export_while_a_series_is_excluded_says_it_includes_all_series() {
         assert!(start.elapsed() < Duration::from_secs(5), "{:?}", spoken(&h));
         std::thread::sleep(Duration::from_millis(10));
     }
+}
+
+fn excluded_tracks(h: &mut Harness) -> Value {
+    h.ok(&json!({ "command": "transport_state" }))["excludedTracks"].clone()
+}
+
+/// The path's series label, from the cursor state.
+fn series_label(state: &Value) -> Value {
+    state["path"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .find(|item| item["level"] == "series")
+        .map_or(Value::Null, |item| item["label"].clone())
+}
+
+/// #447 review (1): live monitoring is never dropped by a filter. Enter on a filter while
+/// a live stream is monitored is refused and says why; the exclusions made before
+/// monitoring started stay out of every live window.
+#[test]
+fn b03_t09_filters_do_not_end_live_monitoring() {
+    let mut h = Harness::new("nav-live");
+    h.compile_tracks(&[("v", "temp"), ("w", "rain")]);
+    h.nav(&json!({ "verb": "landmark", "landmark": "filters" }));
+    h.step("into");
+    h.step("next");
+    assert_eq!(
+        h.step("activate")["included"],
+        false,
+        "w is out before going live"
+    );
+    let file = h.dir.path().join("live.ndjson");
+    std::fs::write(&file, "").unwrap();
+    let offer =
+        h.ok(&json!({ "command": "stream_offer", "args": { "transport": "tail", "path": file } }));
+    h.ok(&json!({ "command": "stream_connect", "args": { "token": offer["token"] } }));
+    let spec = json!({
+        "specVersion": "0.1",
+        "data": { "source": { "kind": "stream", "transport": "tail", "path": file, "window": { "s": 5 } } },
+        "substrate": { "time": { "field": "t", "pace": { "secondsPerUnit": 1 } } },
+        "tracks": [
+            { "id": "v", "mark": "glide", "channels": { "pitch": { "field": "v" } } },
+            { "id": "w", "mark": "glide", "channels": { "pitch": { "field": "v" } } }
+        ]
+    });
+    h.ok(&json!({ "command": "spec_set", "args": { "text": spec.to_string() } }));
+    let _feed = FileFeed::start(&file, 200.0);
+    assert_eq!(
+        h.ok(&json!({ "command": "live_start", "args": { "stream": "s1" } }))["live"],
+        true
+    );
+    // A live window arrives and keeps the exclusion.
+    let start = Instant::now();
+    loop {
+        let state = h.ok(&json!({ "command": "transport_state" }));
+        if state["loaded"] == true && state["durationS"].as_f64().unwrap_or(0.0) > 0.5 {
+            assert_eq!(state["excludedTracks"], json!(["w"]), "{state}");
+            break;
+        }
+        assert!(
+            start.elapsed() < Duration::from_secs(5),
+            "no live window: {state}"
+        );
+        std::thread::sleep(Duration::from_millis(20));
+    }
+    // Enter on the filter now is refused, and monitoring goes on.
+    let refused = h.step("activate");
+    assert_eq!(refused["outcome"], "invalid", "{refused}");
+    assert_eq!(refused["reason"], "liveMonitoring");
+    assert_eq!(refused["earcon"], "E-INVALID");
+    let state = h.ok(&json!({ "command": "transport_state" }));
+    assert_eq!(state["live"], true, "{state}");
+    assert_eq!(state["excludedTracks"], json!(["w"]));
+    let said = |h: &Harness| {
+        h.sink.events().into_iter().any(|event| match event {
+            Event::Announcement(info) => info.speech.starts_with("Filters cannot change"),
+            _ => false,
+        })
+    };
+    let start = Instant::now();
+    while !said(&h) {
+        assert!(
+            start.elapsed() < Duration::from_secs(5),
+            "no refusal announced"
+        );
+        std::thread::sleep(Duration::from_millis(10));
+    }
+}
+
+/// #447 review (2): a table or plot move keeps the explorer's series (keyboard §4.2: the
+/// series changes only with a lateral move), and never lands on a series a filter took out.
+#[test]
+fn a11y_10_a_table_move_keeps_the_explorers_series() {
+    let mut h = Harness::new("nav-series");
+    h.compile(&["temp", "rain"]);
+    h.step("into");
+    h.step("into");
+    h.step("into");
+    let on_rain = h.step("nextSeries");
+    let rain = series_label(&on_rain["cursor"]);
+    assert_ne!(rain, Value::Null, "{on_rain}");
+    let moved = h.ok(&json!({ "command": "cursor_set", "args": { "dataset": "d1", "row": 2, "origin": "table" } }));
+    assert_eq!(series_label(&moved), rain, "{moved}");
+    assert_eq!(moved["row"], 2);
+
+    // A series the filters took out is skipped when the explorer has no series of its own.
+    let mut h = Harness::new("nav-series-excluded");
+    h.compile(&["temp", "rain"]);
+    h.nav(&json!({ "verb": "landmark", "landmark": "filters" }));
+    h.step("into");
+    let toggled = h.step("activate");
+    let temp = toggled["cursor"]["excluded"][0]["label"].clone();
+    let moved = h.ok(&json!({ "command": "cursor_set", "args": { "dataset": "d1", "row": 1, "origin": "table" } }));
+    assert_ne!(series_label(&moved), temp, "{moved}");
+    assert_ne!(series_label(&moved), Value::Null, "{moved}");
+}
+
+/// #447 review (3): exclusions survive a recompile by track, not by label. Two tracks can
+/// read one field and share its label; only the one taken out stays out.
+#[test]
+fn b03_t09_exclusions_follow_the_track_across_a_recompile() {
+    let mut h = Harness::new("nav-same-field");
+    h.compile_tracks(&[("a", "temp"), ("b", "temp")]);
+    h.nav(&json!({ "verb": "landmark", "landmark": "filters" }));
+    h.step("into");
+    h.step("next");
+    assert_eq!(h.step("activate")["included"], false);
+    assert_eq!(excluded_tracks(&mut h), json!(["b"]));
+    h.compile_tracks(&[("a", "temp"), ("b", "temp")]);
+    assert_eq!(excluded_tracks(&mut h), json!(["b"]), "only b, not both");
+    let state = h.ok(&json!({ "command": "cursor_get" }));
+    assert_eq!(
+        state["excluded"].as_array().map(Vec::len),
+        Some(1),
+        "{state}"
+    );
+}
+
+/// #447 review (4): the clock anchor a filter toggle sends already carries the new
+/// `excludedTracks`, so the UI never sees the old exclusions with the new Score.
+#[test]
+fn b03_t09_the_toggles_clock_anchor_carries_the_exclusions() {
+    let mut h = Harness::new("nav-clock");
+    h.compile(&["temp", "rain"]);
+    let clocks = |h: &Harness| -> Vec<Vec<String>> {
+        h.sink
+            .events()
+            .into_iter()
+            .filter_map(|event| match event {
+                Event::Clock(anchor) => Some(anchor.transport.excluded_tracks),
+                _ => None,
+            })
+            .collect()
+    };
+    let before = clocks(&h).len();
+    h.nav(&json!({ "verb": "landmark", "landmark": "filters" }));
+    h.step("into");
+    assert_eq!(h.step("activate")["included"], false);
+    let start = Instant::now();
+    let first = loop {
+        if let Some(first) = clocks(&h).get(before).cloned() {
+            break first;
+        }
+        assert!(start.elapsed() < Duration::from_secs(5), "no clock anchor");
+        std::thread::sleep(Duration::from_millis(10));
+    };
+    assert_eq!(first, ["temp"]);
 }
 
 /// ADR-0017 "Cursor": closing the dataset clears the row, and the explorer leaves its node.

@@ -128,7 +128,7 @@ The UI calls an `IpcTransport` interface (`invoke`, `subscribe`, `binary`). The 
 - **WebGL2 first, Canvas2D otherwise.** WebGL2 is probed once on a throwaway canvas: a context opens and the shaders compile. A canvas that took a WebGL2 context cannot give a 2D one, so the real canvas asks for the context that works. The Canvas2D fallback reduces dense lines to M4 per pixel column, and `forceCanvas` takes it anyway.
 - **Drawn once.** Positions are normalized to [0, 1] on upload, so 32-bit floats keep full precision. The data is drawn when the scene, size or theme changes, never per frame. What moves, such as the playhead (B04-T04), goes in the layer's overlay.
 - **Accessible as one image.** Like `Plot`, the layer is named by the summary's L1, described by its L2, and not focusable.
-- **PB-08.** The `perf` Vitest project records the script time of up to 60 zoom redraws of a million-point line, measuring for at most 8 s so a slow runner still writes the trace (it notes `cutShort`). CI's frontend-browser job reports it without gating (SwiftShader on a shared runner). HW-01 and the three webviews are B04-T08's.
+- **PB-08.** The `perf` Vitest project records the script time of up to 60 zoom redraws of a million-point line, measuring for at most 8 s so a slow runner still writes the trace (it notes `cutShort`). CI's frontend-browser job reports it without gating (SwiftShader on a shared runner). B04-T08 runs the same trace in the app's own webview through the desktop smoke run (`pb08` in `smoke.json`) on all three CI hosts; the HW-01 WebView2 run is the owner's (#129).
 - **Discrete GPU (F-044).** The `gpu` setting (12 §3) chooses the high-performance GPU on Windows; see the start-up arguments in §7.
 
 **As built (B04-T05): the data table.**
@@ -147,6 +147,13 @@ The UI calls an `IpcTransport` interface (`invoke`, `subscribe`, `binary`). The 
 - **Plot tab.** It draws the dataset's first time or numeric field as x and the next numeric field as y, from an M4 tile (`view_get`) as wide as the plot in device pixels. The cursor is a dashed crosshair with a square ring at the point, in the selection accent (`Highlight` under forced colours), moved without redrawing the plot. If the tile does not hold the cursor's row, its two values come from a one-row `table_page`.
 - **Click to move.** A click on the plot moves the cursor to the nearest drawn point (origin `plot`), which Rust announces. The plot stays one image (A11Y-01): the click is a pointer convenience, and the table and the chart explorer (B03-T09) are the keyboard ways. B04-T07 adds the other non-drag alternatives.
 - **Readout.** The Status region shows "Data row N" and the breadcrumb. It is not a live region.
+
+**As built (B04-T07): zoom and pan without dragging (A11Y-26).**
+
+- **Drag zoom.** A drag across the plot selects an x range, and the plot zooms to it (`view_get` with that range). A press and release in place is a click, which moves the cursor; a drag never also moves it. Pointer events on uPlot's overlay read the overlay's box at each event (F-179).
+- **Alternatives.** Every drag has one that needs neither a drag nor a pointer: a "Plot view" toolbar (React Aria Toolbar) with Zoom in, Zoom out, Reset zoom, Pan left and Pan right. The same commands come from the keyboard (`view.zoomIn` Ctrl+Plus, `view.zoomOut` Ctrl+Minus, `view.zoomReset` Ctrl+0; Cmd on macOS) and from the palette (`view.panLeft`, `view.panRight`, unbound).
+- **Behaviour.** Zooming halves or doubles the view around the cursor when it is in view (it keeps its place), else around the middle. Panning moves a quarter of the view and stops at the data's ends. The shown range is visible text ("Showing time (s) from 0 to 99.9") and is announced politely when it changes.
+- **Targets.** Every toolbar button is at least 24 × 24 CSS pixels (WCAG 2.5.8; the controls' `--row-default` and `--target-min`), checked by an E2E test.
 
 ## 4. Security model
 
