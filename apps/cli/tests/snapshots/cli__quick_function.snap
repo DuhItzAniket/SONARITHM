@@ -5,12 +5,12 @@ expression: quick.transcript()
 exit code: 0
 --- stdout
 function.spec.json: spec version 0.4, analysis mode, seed 0.
-Duration: 8.000 seconds.
+Duration: 8.008 seconds.
 Engines: curvasona [version], numisona [version].
-Track f: data track, 1 events (1 glide), 0.000 to 8.000 seconds, pitch 400.00 to 1400.00 Hz, instrument mallet.
-Track curvasona.cues: earcon track, 5 events (5 earcons), 1.691 to 6.301 seconds, instrument sine.
+Track f: data track, 1 events (1 glide), 0.000 to 8.008 seconds, pitch 400.00 to 1400.00 Hz, instrument mallet.
+Track curvasona.cues: earcon track, 5 events (5 earcons), 1.691 to 6.309 seconds, instrument sine.
 Score hash: [score hash].
-Diagnostics: 0 errors, 0 warnings, 30 applied defaults and choices.
+Diagnostics: 0 errors, 0 warnings, 29 applied defaults and choices.
 Function: f(x) = x^3 - 3*x from x = -3 to 3, 1000 samples: 3 zeros, 1 local maximum, 1 inflection point, 1 local minimum.
 Critical points:
 Zero at x = -1.7321.
@@ -20,10 +20,10 @@ Inflection point at x = 0, y = 0.
 Local minimum at x = 1, y = -2.
 Zero at x = 1.7321.
 Description:
-function: 1 data track, 8.00 seconds, analysis mode.
-Track f: 1 glide from 0.00 to 8.00 seconds. Pitch follows y, 400 to 1400 Hz.
-In f, the highest pitch, 1400 Hz, is at 7.99 seconds; the lowest, 400 Hz, at 0.00 seconds.
-Playing function.spec.json, 8.00 seconds, on null.
-Finished at 8.00 seconds.
+function: 1 data track, 8.01 seconds, analysis mode.
+Track f: 1 glide from 0.00 to 8.01 seconds. Pitch follows y, 400 to 1400 Hz; time follows x.
+In f, the highest pitch, 1400 Hz, is at 8.00 seconds; the lowest, 400 Hz, at 0.00 seconds.
+Playing function.spec.json, 8.01 seconds, on null.
+Finished at 8.01 seconds.
 --- stderr
 note: --verbose lists the applied defaults and automatic choices.

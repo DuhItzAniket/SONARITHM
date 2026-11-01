@@ -176,8 +176,8 @@ fn offscreen(data: &DataBundle, window: [f64; 2]) -> Vec<Annotation> {
 }
 
 /// Row → time, from the first data track's events that name their rows: a glide has one
-/// breakpoint per row of its `src` range (whose end NUMISONA includes), a note names its
-/// row.
+/// breakpoint per row of its `src` range, then a hold breakpoint that is not a row (F-203);
+/// a note names its row.
 fn row_times(score: &Score) -> BTreeMap<u64, f64> {
     let mut times = BTreeMap::new();
     let Some(track) = score
@@ -191,13 +191,16 @@ fn row_times(score: &Score) -> BTreeMap<u64, f64> {
         match event {
             ScoreEvent::Glide(glide) => {
                 let Some(src) = glide.src else { continue };
-                // NUMISONA's glide `src` ends at its last row (inclusive): one breakpoint
-                // per row from `start` to `end`. An exclusive range is accepted too.
+                // A glide has one breakpoint per row of its `src` (one past the end, as
+                // `RowRange` says), then one more where it holds its last value for one
+                // point spacing. That hold is not a row: given to the next row (an empty
+                // row at a pole), it would time a pole's cue at the hold's end rather than
+                // at its x (F-203, which corrects F-193).
                 let count = u64::try_from(glide.curve.len()).unwrap_or(0);
                 if count != src.len() + 1 && count != src.len() {
                     continue;
                 }
-                for (row, point) in (src.start..).zip(&glide.curve) {
+                for (row, point) in (src.start..src.end).zip(&glide.curve) {
                     times.insert(row, point.t.0);
                 }
             }
@@ -231,8 +234,27 @@ fn time_at(timed: &[(f64, f64)], x: f64) -> Option<f64> {
         (Some(&(x0, t0)), Some(&(x1, t1))) if x1 > x0 => {
             Some(t0 + (t1 - t0) * (x - x0) / (x1 - x0))
         }
-        (Some(&(_, t)), None) | (None, Some(&(_, t))) => Some(t),
+        // Outside the timed rows (a pole after an undefined span, say): extend the line
+        // through the two nearest, so the cue keeps the x-to-time slope (F-203).
+        (None, Some(_)) => Some(extend(timed.first(), timed.get(1), x)),
+        (Some(_), None) => Some(extend(
+            timed.get(timed.len().wrapping_sub(2)),
+            timed.last(),
+            x,
+        )),
         _ => None,
+    }
+}
+
+/// The time at `x` on the line through `a` and `b`, never before 0 s; `a`'s or `b`'s own time
+/// when there is only one of them or they share an `x`.
+fn extend(a: Option<&(f64, f64)>, b: Option<&(f64, f64)>, x: f64) -> f64 {
+    match (a, b) {
+        (Some(&(x0, t0)), Some(&(x1, t1))) if x1 > x0 => {
+            (t0 + (t1 - t0) * (x - x0) / (x1 - x0)).max(0.0)
+        }
+        (Some(&(_, t)), _) | (None, Some(&(_, t))) => t,
+        (None, None) => 0.0,
     }
 }
 

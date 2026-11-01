@@ -20,10 +20,9 @@
   "specVersion": "0.4",
   "substrate": {
     "time": {
+      "field": "x",
       "pace": {
-        "duration": {
-          "s": 8.0
-        }
+        "secondsPerUnit": 1.6
       }
     }
   },

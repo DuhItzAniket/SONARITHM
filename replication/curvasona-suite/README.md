@@ -2,7 +2,7 @@
 
 > **Generated** by `cargo xtask replication` from `sonarithm_curvasona::suite`; do not edit by hand.
 
-Not a published design: this group renders the 40 curves whose critical points are known analytically, the suite CURVASONA is tested against (07 CURVASONA, C03-T02 and C03-T03). Each spec plays its curve as one 8-second glide, y as pitch with the default range, and its critical points as earcons (`analysis.detect: ["critical-points"]`, RFC-0007 §2). The list below is what CURVASONA finds at the default 1000 samples, the text equivalent of each render's cues. Horizontal asymptotes are listed but have no earcon.
+Not a published design: this group renders the 40 curves whose critical points are known analytically, the suite CURVASONA is tested against (07 CURVASONA, C03-T02 and C03-T03). Each spec plays its curve as one glide over 8 seconds of x-linear time, so each cue sounds at its x, y as pitch with the default range, and its critical points as earcons (`analysis.detect: ["critical-points"]`, RFC-0007 §2). The list below is what CURVASONA finds at the default 1000 samples, the text equivalent of each render's cues. Horizontal asymptotes are listed but have no earcon.
 
 | Spec | f(x) | Domain | Critical points |
 |---|---|---|---|

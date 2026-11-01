@@ -1016,6 +1016,24 @@ A05 (render engine, audio backends, export) uses F-050 to F-069.
 - **Affects:** C02-T09, A11Y-02, A11Y-12, A11Y-24, FR-008, OD-07, H-06
 - **Papers:** none yet
 
+### F-203 · A glide's last breakpoint is a hold, not a row: F-193 misread it as an inclusive range end
+
+- **Date:** 2026-11-01 · **Phase:** C03 · **Type:** engineering (correctness) · **Status:** new · **Supersedes:** F-193
+- **Statement:** NUMISONA's glide `src` ranges are one past the end, as `RowRange` documents. A glide over n rows has n + 1 breakpoints because the last one holds the final value for one point spacing (#446): the cubic's 1007-row table ends with a glide over rows 978 to 1006, `src` 978..1007, with 30 breakpoints. F-193 took that extra breakpoint for an inclusive last row, and CURVASONA's cue timing gave it to the row after the glide: at a pole, the empty row between two glides. Under `duration` pacing the hold's time equals that row's slot, so nothing showed. On x-linear time (#441) it put `tan(x)`'s pole cue at −3π/2 2.1 ms late (0.232177 s, not 0.230089 s). The cue timing now maps one breakpoint per row of the one-past-the-end range and leaves out the hold. A row outside the timed rows, such as `ln(x)`'s pole at 0 just after its undefined span, now has its time extended along the line through the two nearest timed rows, instead of taking the first one's time; it lands on its x-linear time (2.2857 s, not 2.2903 s). The "undefined" cue at the start of a span that opens the domain (`ln`, `sqrt`, the semicircle, `atanh`, `x^(1/3)`) then sounds at 0 s, at its own x, instead of merging with the next cue. Other readers of glide `src` that F-193 worried about need no change.
+- **Evidence:** `crates/engines/sonarithm-curvasona/src/cues.rs` (`row_times`, `time_at`, `extend`); a probe of `tan(x)` over [−5, 5]: glides `src` 0..29, 30..345, 346..661, 662..977, 978..1007 with 30, 316, 316, 316 and 30 breakpoints on a 1007-row table; the test `f_200_cue_times_follow_x_exactly` over the 40-curve suite; the curvasona-suite records (5 curves gain their opening "undefined" cue)
+- **Evidence level / confidence:** EV-D / Strong (measured, with a test over 40 curves)
+- **Affects:** C03-T04 (cue timing), C03-T07, C03-T06; corrects F-193
+- **Papers:** none yet
+
+### F-202 · On x-linear time every function cue lands on its x exactly
+
+- **Date:** 2026-11-01 · **Phase:** C03 · **Type:** engineering (timing) · **Status:** new
+- **Statement:** With function specs on `substrate.time { field: "x", pace: { secondsPerUnit: T/(max − min) } }` (#441, after NUMISONA's #446 glide hold), each cue of the cubic `x^3 − 3x` over [−3, 3] at T = 8 s sounds within 1e-9 s of (x + 3)/6 · 8: the zeros at ∓√3 at 1.6906 and 6.3094 s, against 1.6909 and 6.3011 s with `duration` pacing (F-200). Across the 40-curve suite, every cue does too, except cues merged within RFC-0007's 150 ms window, which keep the earlier time. The rows inserted at critical points no longer move anything. A function spec now lasts T plus the glide's hold of one point spacing: 8.008 s for 1003 points, against 8.000 s before. Curves undefined at the right end of their domain end at their last defined point (6.1 to 6.8 s for the semicircle, `atanh`, `asin` and `acos`).
+- **Evidence:** the test `f_200_cue_times_follow_x_exactly`; the `quick_function` CLI snapshot (cue span 1.691 to 6.309 s, duration 8.008 s); `cargo xtask replication`, where only the 40 curvasona-suite specs and records moved
+- **Evidence level / confidence:** EV-D / Strong (measured, tested over 40 curves)
+- **Affects:** C03-T07 (`Function::spec`, `quick --function`), C03-T06 (the 40-curve gallery), the 04 §6.3 example; addresses F-200
+- **Papers:** none yet
+
 ### F-200 · A function's glide is paced by row, so the rows CURVASONA inserts bend its timeline against x
 
 - **Date:** 2026-11-01 · **Phase:** C03 · **Type:** engineering (timing, determinism) · **Status:** addressed (#441: function specs on x-linear time; F-202)
@@ -1081,7 +1099,7 @@ A05 (render engine, audio backends, export) uses F-050 to F-069.
 
 ### F-193 · NUMISONA's glide `src` ranges include their last row, against `RowRange`'s one-past-the-end contract
 
-- **Date:** 2026-10-31 · **Phase:** C03 · **Type:** engineering (correctness) · **Status:** new
+- **Date:** 2026-10-31 · **Phase:** C03 · **Type:** engineering (correctness) · **Status:** superseded by F-203
 - **Statement:** C03-T04's cue track found no cue times at all: it expected one glide breakpoint per row of the glide's `src` range, but a glide over rows 0 to 120 has 121 breakpoints with `src` 0..120. `sonarithm_core::RowRange` documents `end` as "one past the last row", so NUMISONA's glide ranges stop one row short (the next glide, after an empty row at a pole, starts at 121). CURVASONA's cue track now accepts both forms. Other readers of glide `src` (AUDAXIS's point placement, linked selection in the app, the scrub preview) may assume the documented contract and miss the last row of each glide. Fixing NUMISONA changes every Score snapshot with glides, so it needs its own PR with the snapshot updates; it is outside C03.
 - **Evidence:** `crates/engines/sonarithm-curvasona/src/cues.rs` (`row_times`); a compile of `1/(x^2 - 4)` with 401 samples gives glides with `src` 0..120, 121..280, 281..401 and 121, 160, 121 breakpoints; `crates/sonarithm-core/src/ids.rs` (`RowRange::end`)
 - **Evidence level / confidence:** EV-C / Strong (reproduced)

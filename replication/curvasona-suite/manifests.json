@@ -2,7 +2,7 @@
   "01-parabola": {
     "cues": null,
     "data": {
-      "fingerprint": "sha256:cfb4d8d3a95f3d596fe7c786903887107fb9ed887b8f7b2e035e9db1eca4099c",
+      "fingerprint": "sha256:d5032a7632869f7248f6c65f2ee825582e620210228c3e69f97b8d9c27813088",
       "provenance": {},
       "source": {
         "kind": "inline",
@@ -15,16 +15,16 @@
       "channels": 2,
       "file": "01-parabola.wav",
       "format": "wav",
-      "frames": 384000,
+      "frames": 384384,
       "gainDb": 0.0,
-      "integratedLufs": -26.64,
+      "integratedLufs": -26.65,
       "limitedFrames": 0,
-      "sha256": "sha256:4df2198bda8273497a5de5f14d2ad34c294001d6d691a8ac37355ace6bcaf68f",
-      "truePeakDbtp": -9.55
+      "sha256": "sha256:f24d8e3e6620d623aa381ec9614e89b9f922e333181c1c759b24c93c3ca67864",
+      "truePeakDbtp": -8.58
     },
     "render": {
       "blockSize": 256,
-      "durationS": 8.0,
+      "durationS": 8.008,
       "loudnessCompensationPhon": 60.0,
       "mode": "analysis",
       "sampleRate": 48000,
@@ -32,11 +32,11 @@
     },
     "score": {
       "irVersion": 2,
-      "releaseIndependentHash": "sha256:3ace93e13175e1e55b2d937c273bdf26ba16f25c50edb5872ec55dc4ce6adb02"
+      "releaseIndependentHash": "sha256:a54194006465e363859e2a45c185d3ebb963460fcefe639f55cbb9adfc3cd213"
     },
     "spec": {
       "embedded": null,
-      "hash": "sha256:c200802150945ba29c9532a3563fe32a79fb35c7fe792ec989188982c63d61b4",
+      "hash": "sha256:6510398d2cc84051cfc4c02fd3872fe4d21579794d4f655d02b35ed1b1ae58c9",
       "version": "0.4"
     },
     "tracks": [
@@ -65,7 +65,7 @@
   "02-cubic": {
     "cues": null,
     "data": {
-      "fingerprint": "sha256:ce544aa08831081d49b82d1ffe43745c6d59d2a134d93f172bfcf8d2163ab672",
+      "fingerprint": "sha256:d3c447e96ef76245ac3f5c403ab47ffd89c090bf261fb5194795c0f5b411f410",
       "provenance": {},
       "source": {
         "kind": "inline",
@@ -78,16 +78,16 @@
       "channels": 2,
       "file": "02-cubic.wav",
       "format": "wav",
-      "frames": 384000,
+      "frames": 384383,
       "gainDb": 0.0,
-      "integratedLufs": -25.59,
+      "integratedLufs": -25.6,
       "limitedFrames": 0,
-      "sha256": "sha256:06d3ad4f8ff8a9dfb3edd816e5ccc6cd4c5a1d5839e65d4c182fa5298c7567b2",
-      "truePeakDbtp": -8.36
+      "sha256": "sha256:1838ea2a5c3697cbdc4b49b3f5513631270ccf663486b09649f9c241ce00cf5e",
+      "truePeakDbtp": -8.68
     },
     "render": {
       "blockSize": 256,
-      "durationS": 8.0,
+      "durationS": 8.007979166666667,
       "loudnessCompensationPhon": 60.0,
       "mode": "analysis",
       "sampleRate": 48000,
@@ -95,11 +95,11 @@
     },
     "score": {
       "irVersion": 2,
-      "releaseIndependentHash": "sha256:011ca461b97712cc51eedd8b5ca17868fa068191db071c099debcc53e50faa25"
+      "releaseIndependentHash": "sha256:298a23c84909efb77d9d8acd7071120bbf3a4f517d41efcf73f999965496da23"
     },
     "spec": {
       "embedded": null,
-      "hash": "sha256:7945ed74aa96bddb0d93c5fed50a5463067103b7a3b1d41d77e12e4313188e73",
+      "hash": "sha256:06893967b258bf0b902017d8d5628ba7fc44806923c64e7c968a352d854955a4",
       "version": "0.4"
     },
     "tracks": [
@@ -128,7 +128,7 @@
   "03-sine": {
     "cues": null,
     "data": {
-      "fingerprint": "sha256:71485904a6b287bc55a7c7f4e4750e892f6d3ee6b407e85eb682d39675103d82",
+      "fingerprint": "sha256:5468d3adc3ca9f1c1fb7b9ab2d1b79adfd2b52def07ff9f0bfb9075c6f65ccca",
       "provenance": {},
       "source": {
         "kind": "inline",
@@ -141,16 +141,16 @@
       "channels": 2,
       "file": "03-sine.wav",
       "format": "wav",
-      "frames": 384000,
+      "frames": 384379,
       "gainDb": 0.0,
       "integratedLufs": -22.57,
       "limitedFrames": 0,
-      "sha256": "sha256:4e5826a4996f45a21c6c84b19292f10b4ac9a7ab84fd779959c6b6702921bcd3",
-      "truePeakDbtp": -8.02
+      "sha256": "sha256:07b771aef5342c672735018ba4709a692fb7486c19720bd19ced9b294220f5b7",
+      "truePeakDbtp": -8.05
     },
     "render": {
       "blockSize": 256,
-      "durationS": 8.0,
+      "durationS": 8.007895833333333,
       "loudnessCompensationPhon": 60.0,
       "mode": "analysis",
       "sampleRate": 48000,
@@ -158,11 +158,11 @@
     },
     "score": {
       "irVersion": 2,
-      "releaseIndependentHash": "sha256:f123d6b3eb29f564f07bdf51277abad84644e45f48465532b7f5d0f6bb54bdbd"
+      "releaseIndependentHash": "sha256:0315be06e5f46f9d46cf9c389140e32fd610817fc47fb08923b5d244f4843fe1"
     },
     "spec": {
       "embedded": null,
-      "hash": "sha256:0a5fcfa5e068a00e70d681fd76315855857210a79d063b36cf561d9d2da7b161",
+      "hash": "sha256:9e8376cfe39f2e6d288aaf8e2dbaeea4abcc08a631c6e7db5253b5bb92f93852",
       "version": "0.4"
     },
     "tracks": [
@@ -191,7 +191,7 @@
   "04-cosine": {
     "cues": null,
     "data": {
-      "fingerprint": "sha256:376ec4ff6d0bd73834838e10fbafebf493103dc24520f03da2774e9dbef2185f",
+      "fingerprint": "sha256:94f6f5cbb6ea0264b57cc3d3c1bc7e1fc3f1ccf43d73fa3323ecc9134bf0c4f4",
       "provenance": {},
       "source": {
         "kind": "inline",
@@ -204,16 +204,16 @@
       "channels": 2,
       "file": "04-cosine.wav",
       "format": "wav",
-      "frames": 384000,
+      "frames": 384379,
       "gainDb": 0.0,
-      "integratedLufs": -22.46,
+      "integratedLufs": -22.45,
       "limitedFrames": 0,
-      "sha256": "sha256:929517639ed22ed0009f092d501d1eac03c6d4835c2bc4989c463811fc31f751",
-      "truePeakDbtp": -7.98
+      "sha256": "sha256:463b822b6c30c553c4ca183dce622c659e6eb9e60754a0141ffe77046e38fdc1",
+      "truePeakDbtp": -8.03
     },
     "render": {
       "blockSize": 256,
-      "durationS": 8.0,
+      "durationS": 8.007895833333333,
       "loudnessCompensationPhon": 60.0,
       "mode": "analysis",
       "sampleRate": 48000,
@@ -221,11 +221,11 @@
     },
     "score": {
       "irVersion": 2,
-      "releaseIndependentHash": "sha256:630009040a4d3cf29b8bd557180df11706dc16d653c43ab357bf82dc61972d8a"
+      "releaseIndependentHash": "sha256:dad039fb57b6ec0e17954179dabd13b1e3473928f61fd31255c754c3cac9e4b9"
     },
     "spec": {
       "embedded": null,
-      "hash": "sha256:ab8831a7584368fcb686ed9f5eac87964819a452656f669d3b44f60c7e11f860",
+      "hash": "sha256:8470f28fc95bc0ffffa6bf4ab5c3056202dd64809469e3e2cb655871824cb7da",
       "version": "0.4"
     },
     "tracks": [
@@ -254,7 +254,7 @@
   "05-tangent": {
     "cues": null,
     "data": {
-      "fingerprint": "sha256:75ff99d5487c76e397c3694fea6ebd93f46050b4d7a3127abad63ffe88ed2438",
+      "fingerprint": "sha256:fcfeb23819df083378ccd158b2516d858c55b15199c1b72a2837965c190cb00b",
       "provenance": {},
       "source": {
         "kind": "inline",
@@ -267,16 +267,16 @@
       "channels": 2,
       "file": "05-tangent.wav",
       "format": "wav",
-      "frames": 384000,
+      "frames": 384382,
       "gainDb": 0.0,
-      "integratedLufs": -21.69,
-      "limitedFrames": 53294,
-      "sha256": "sha256:ccd71ca71021fb99dbbb8bed6065d3ffedb034024776e796626fb6fa9f9e92cb",
+      "integratedLufs": -21.66,
+      "limitedFrames": 51424,
+      "sha256": "sha256:c4eee95a719f92f026f411fcd6b957859392b587a6df158cac73c412980f3d96",
       "truePeakDbtp": -1.18
     },
     "render": {
       "blockSize": 256,
-      "durationS": 8.0,
+      "durationS": 8.007958333333333,
       "loudnessCompensationPhon": 60.0,
       "mode": "analysis",
       "sampleRate": 48000,
@@ -284,11 +284,11 @@
     },
     "score": {
       "irVersion": 2,
-      "releaseIndependentHash": "sha256:49bab01ccf74556b64398b79f4bf5f3f68bd17a39aa29e39ddc1acdbc764675f"
+      "releaseIndependentHash": "sha256:004b9f8b6f63caecf52e9c36353b21bebec8353d5411f81672adea4e3fdba9b4"
     },
     "spec": {
       "embedded": null,
-      "hash": "sha256:77e2a75fcba9ba8b4dece7a4b388e8a2b90c949e559a59b2f5696b1ad581cd47",
+      "hash": "sha256:971aa89552b7decb95eb14f6b78116b842700add1e91b54b04a5f1b4cfbfc020",
       "version": "0.4"
     },
     "tracks": [
@@ -330,16 +330,16 @@
       "channels": 2,
       "file": "06-reciprocal.wav",
       "format": "wav",
-      "frames": 384000,
+      "frames": 384384,
       "gainDb": 0.0,
       "integratedLufs": -25.64,
-      "limitedFrames": 20804,
-      "sha256": "sha256:c40700dffa97033f6843baae968e989a420b4830f069017fdf45b44ff2bb2571",
+      "limitedFrames": 21758,
+      "sha256": "sha256:f437123b6c024d417547c4c2b062dfa3dce4efe3a58fe12d236aaec249727f43",
       "truePeakDbtp": -1.2
     },
     "render": {
       "blockSize": 256,
-      "durationS": 8.0,
+      "durationS": 8.008,
       "loudnessCompensationPhon": 60.0,
       "mode": "analysis",
       "sampleRate": 48000,
@@ -347,11 +347,11 @@
     },
     "score": {
       "irVersion": 2,
-      "releaseIndependentHash": "sha256:d4e39e1987def96617503a405301c7862e7376f7a6e5d7a3703fe4a51c109960"
+      "releaseIndependentHash": "sha256:965dd61a24415c0e882eb2caec7be2058d028b93e347315d599f53598a4ec12a"
     },
     "spec": {
       "embedded": null,
-      "hash": "sha256:5511d485a79b3ff707ab2197b01df89dc7374918548aea91d715f6a7b15333c7",
+      "hash": "sha256:176d877f9a491c587678110bd730f81c031809e6475907eb9688cfe501dff6d6",
       "version": "0.4"
     },
     "tracks": [
@@ -393,16 +393,16 @@
       "channels": 2,
       "file": "07-shifted-reciprocal.wav",
       "format": "wav",
-      "frames": 384000,
+      "frames": 384384,
       "gainDb": 0.0,
-      "integratedLufs": -25.48,
-      "limitedFrames": 16339,
-      "sha256": "sha256:d0a118b448aef50d7bd9b686e5d0130ac778dc4437fb827cb1a9c0d1e136ec3e",
+      "integratedLufs": -25.65,
+      "limitedFrames": 22691,
+      "sha256": "sha256:2b5d63668c70a24941d3cbcf4f50b7b61309ea2a974d403afd2052f505c137d9",
       "truePeakDbtp": -1.2
     },
     "render": {
       "blockSize": 256,
-      "durationS": 8.0,
+      "durationS": 8.008,
       "loudnessCompensationPhon": 60.0,
       "mode": "analysis",
       "sampleRate": 48000,
@@ -410,11 +410,11 @@
     },
     "score": {
       "irVersion": 2,
-      "releaseIndependentHash": "sha256:d696da2fecf5cfcf49a204fdd6018edc03add26c49baa88dd25a295266107a67"
+      "releaseIndependentHash": "sha256:3ed19e0bfb9f5ac4f2d0bd6714bb3015644d7d939d6b95b98d80239cb3e0749a"
     },
     "spec": {
       "embedded": null,
-      "hash": "sha256:693d193ef30e0539bbd1b9cd9acd8bc5f77642cbc6a292ad50fe79c122c2816d",
+      "hash": "sha256:2fa5688f3c23bfea222dfb14188fdee9f2452cb608f3e5d0b3a78701f4f38999",
       "version": "0.4"
     },
     "tracks": [
@@ -456,16 +456,16 @@
       "channels": 2,
       "file": "08-inverse-square.wav",
       "format": "wav",
-      "frames": 384000,
+      "frames": 384384,
       "gainDb": 0.0,
-      "integratedLufs": -23.99,
-      "limitedFrames": 18307,
-      "sha256": "sha256:cec4bb9c5dde0036563b0a80eaf4a81e7868f32f264820855ac4e959d2106714",
+      "integratedLufs": -24.09,
+      "limitedFrames": 22434,
+      "sha256": "sha256:2701a135e1e098243b0dd965724547da271e988337c5c99df3f0d96eb20a5cd8",
       "truePeakDbtp": -1.2
     },
     "render": {
       "blockSize": 256,
-      "durationS": 8.0,
+      "durationS": 8.008,
       "loudnessCompensationPhon": 60.0,
       "mode": "analysis",
       "sampleRate": 48000,
@@ -473,11 +473,11 @@
     },
     "score": {
       "irVersion": 2,
-      "releaseIndependentHash": "sha256:b1162e5ba172397cd58b8447a33dc08b19189289c5a186db2d7b5a5a21ab4a19"
+      "releaseIndependentHash": "sha256:4610a3ba51a0fae2bd9fb87ef15c5bd57733ff96a7a9cca914cacb13831da6eb"
     },
     "spec": {
       "embedded": null,
-      "hash": "sha256:7248693df46adb72ef2a17cfd7b4f98e0f39a7759b53312b26a4fd484a501b9d",
+      "hash": "sha256:0a9d2fb7f984c28207e83d5e2932af29145bfd0ce25f0039e853da64a6439084",
       "version": "0.4"
     },
     "tracks": [
@@ -506,7 +506,7 @@
   "09-line-with-a-hole": {
     "cues": null,
     "data": {
-      "fingerprint": "sha256:ee7bfff21f32da87bbec9738b345c04c0c14b03ed74a907f21ed298ba5cf7883",
+      "fingerprint": "sha256:91c2fba7ec519731b3ca435b703586f8e2b5a19aca4e93874dcab5a50f3c6be9",
       "provenance": {},
       "source": {
         "kind": "inline",
@@ -519,16 +519,16 @@
       "channels": 2,
       "file": "09-line-with-a-hole.wav",
       "format": "wav",
-      "frames": 384000,
+      "frames": 384384,
       "gainDb": 0.0,
       "integratedLufs": -26.11,
       "limitedFrames": 0,
-      "sha256": "sha256:471de685642715af870ddb5975a5308c2407e3987732e088bc4009b77c531e95",
-      "truePeakDbtp": -9.41
+      "sha256": "sha256:d7aac8fa2aa58fd2d1d117d32e3edeaf3fc310200f29ac4e5c149fd9b5b71fc6",
+      "truePeakDbtp": -8.96
     },
     "render": {
       "blockSize": 256,
-      "durationS": 8.0,
+      "durationS": 8.008,
       "loudnessCompensationPhon": 60.0,
       "mode": "analysis",
       "sampleRate": 48000,
@@ -536,11 +536,11 @@
     },
     "score": {
       "irVersion": 2,
-      "releaseIndependentHash": "sha256:420da0998b24782673fa0c201d755487f725a93099eba899d2fe5e24cebb2d00"
+      "releaseIndependentHash": "sha256:9158866f16441af8bf70e89b15f270004c574188d75187174b47719fdcd618bf"
     },
     "spec": {
       "embedded": null,
-      "hash": "sha256:23e68bc48a3900f0f49c0b861f4dcbebac99b8940fb870468a35b96ce7eefb0a",
+      "hash": "sha256:d4f412d8ff286867437c6baa8ca8a60ec0d7e820387c7aee13a1b71fabf763c8",
       "version": "0.4"
     },
     "tracks": [
@@ -582,16 +582,16 @@
       "channels": 2,
       "file": "10-sinc.wav",
       "format": "wav",
-      "frames": 384000,
+      "frames": 384371,
       "gainDb": 0.0,
-      "integratedLufs": -20.52,
+      "integratedLufs": -20.51,
       "limitedFrames": 0,
-      "sha256": "sha256:d27434fd7516f835f848a8feb39e0ca818ae2482dcaf9bbf22884dced580a878",
-      "truePeakDbtp": -7.99
+      "sha256": "sha256:f4b40d84fe611a5dcfb7ed6c4cc076708bc27e87a61f4d59a91a9aad74f4445f",
+      "truePeakDbtp": -8.17
     },
     "render": {
       "blockSize": 256,
-      "durationS": 8.0,
+      "durationS": 8.007729166666667,
       "loudnessCompensationPhon": 60.0,
       "mode": "analysis",
       "sampleRate": 48000,
@@ -599,11 +599,11 @@
     },
     "score": {
       "irVersion": 2,
-      "releaseIndependentHash": "sha256:b9aa8540ce059cd4de52225929391b7825aa97901f0a6e7b54a2c53f6e0210e9"
+      "releaseIndependentHash": "sha256:0d374086231b26b4942dd38fba60ab3f4ced69d3e2ac4c457876ca40d0da25da"
     },
     "spec": {
       "embedded": null,
-      "hash": "sha256:0a02f7e05fa29be52fa21231ebee2888c364ac91b077895d27cc98c51960d327",
+      "hash": "sha256:8dc8cb453b58060d4224cb007c9a66e430f6fb51011c3897cac886bf90d427a1",
       "version": "0.4"
     },
     "tracks": [
@@ -645,16 +645,16 @@
       "channels": 2,
       "file": "11-natural-logarithm.wav",
       "format": "wav",
-      "frames": 384000,
+      "frames": 384384,
       "gainDb": 0.0,
-      "integratedLufs": -23.5,
-      "limitedFrames": 22865,
-      "sha256": "sha256:15072eeb6215dc160bb310bdea6ea502781ddce7d9ca590c137dd7a23130116a",
-      "truePeakDbtp": -1.2
+      "integratedLufs": -23.4,
+      "limitedFrames": 19148,
+      "sha256": "sha256:5f733badf1ae47f17776b81a2110dcd1ab63e0685cc39e39167fdf90a62f3caf",
+      "truePeakDbtp": -1.19
     },
     "render": {
       "blockSize": 256,
-      "durationS": 8.0,
+      "durationS": 8.008,
       "loudnessCompensationPhon": 60.0,
       "mode": "analysis",
       "sampleRate": 48000,
@@ -662,11 +662,11 @@
     },
     "score": {
       "irVersion": 2,
-      "releaseIndependentHash": "sha256:cd7d22527174f137706ab77cf58d59d6cb9dd9ab0a2768e7eeae714e217ff3fd"
+      "releaseIndependentHash": "sha256:d12d2ee2a6be80081568a2e12fc63bbee92aa1d8a977d8a9aee8203d2fa11e08"
     },
     "spec": {
       "embedded": null,
-      "hash": "sha256:4ad282d8e0ece5f16984babc908666f7f2862d7ae7dad4925de2cb2922f9fc1a",
+      "hash": "sha256:5656841095006fe7f79104689bee2cf96be0ce6303d1f25888802c0a2cf72773",
       "version": "0.4"
     },
     "tracks": [
@@ -681,7 +681,7 @@
         "pitchHz": null
       },
       {
-        "events": 2,
+        "events": 3,
         "firstOnsetS": null,
         "id": "curvasona.cues",
         "instrument": "sine",
@@ -708,16 +708,16 @@
       "channels": 2,
       "file": "12-square-root.wav",
       "format": "wav",
-      "frames": 384000,
+      "frames": 384384,
       "gainDb": 0.0,
-      "integratedLufs": -27.06,
+      "integratedLufs": -26.72,
       "limitedFrames": 0,
-      "sha256": "sha256:a194926b4c627bc4f11b30d48fcc067198bf343f56e15ef246648292a49ce97d",
-      "truePeakDbtp": -14.58
+      "sha256": "sha256:79fdb05ce2c3b92674a9442d0e8f29ed1d99bd417bbbece92c7663b3ce93e9a9",
+      "truePeakDbtp": -10.11
     },
     "render": {
       "blockSize": 256,
-      "durationS": 8.0,
+      "durationS": 8.008,
       "loudnessCompensationPhon": 60.0,
       "mode": "analysis",
       "sampleRate": 48000,
@@ -725,11 +725,11 @@
     },
     "score": {
       "irVersion": 2,
-      "releaseIndependentHash": "sha256:0b979db2a5abc7c5c1edeb51549cd4daa76587677a0e4758a89c74c0cdb11cd4"
+      "releaseIndependentHash": "sha256:a6622cc71d341906b502b211702923918e5cd39a98ad653b1bd0ecb9de626f28"
     },
     "spec": {
       "embedded": null,
-      "hash": "sha256:51ba31f9f96e6f5dca1d5a4227c6dbcdb3c0c017587f65accffb0b70f18871a1",
+      "hash": "sha256:52e41e4ed695911226d2c60367cf8502788dcf9aebf4cc0c96b2778f445b2dc1",
       "version": "0.4"
     },
     "tracks": [
@@ -744,7 +744,7 @@
         "pitchHz": null
       },
       {
-        "events": 1,
+        "events": 2,
         "firstOnsetS": null,
         "id": "curvasona.cues",
         "instrument": "sine",
@@ -771,16 +771,16 @@
       "channels": 2,
       "file": "13-semicircle.wav",
       "format": "wav",
-      "frames": 292704,
+      "frames": 292800,
       "gainDb": 0.0,
-      "integratedLufs": -24.85,
+      "integratedLufs": -24.74,
       "limitedFrames": 0,
-      "sha256": "sha256:6d75f0f5e3e7ea3fdf5225a5642b27cff40ef1d6a023dfa33724bbbda4f7e5d5",
-      "truePeakDbtp": -8.0
+      "sha256": "sha256:200a18024225ac4adf79c809e30f983a62c6b6d480350901fa25f68ade547818",
+      "truePeakDbtp": -8.83
     },
     "render": {
       "blockSize": 256,
-      "durationS": 6.098,
+      "durationS": 6.1,
       "loudnessCompensationPhon": 60.0,
       "mode": "analysis",
       "sampleRate": 48000,
@@ -788,11 +788,11 @@
     },
     "score": {
       "irVersion": 2,
-      "releaseIndependentHash": "sha256:665ef6c4b9f5324fea0844fba3d78df554a4520f3c202ed3949acfe5c4af3edf"
+      "releaseIndependentHash": "sha256:924b4e17083df50e461d79b7480faf31ff81f17ec53e4af87617435669ae4a5c"
     },
     "spec": {
       "embedded": null,
-      "hash": "sha256:0ab3e071847e3506053bfbae200f783cf1885f5639b3a3027f64c187409114d9",
+      "hash": "sha256:8dcf09884934d3046edbb47a6e417e94ff8c71402f2679b2a2e4dec0f160d55b",
       "version": "0.4"
     },
     "tracks": [
@@ -807,7 +807,7 @@
         "pitchHz": null
       },
       {
-        "events": 3,
+        "events": 4,
         "firstOnsetS": null,
         "id": "curvasona.cues",
         "instrument": "sine",
@@ -834,16 +834,16 @@
       "channels": 2,
       "file": "14-narrow-gap.wav",
       "format": "wav",
-      "frames": 384000,
+      "frames": 384384,
       "gainDb": 0.0,
-      "integratedLufs": -27.12,
+      "integratedLufs": -27.13,
       "limitedFrames": 0,
-      "sha256": "sha256:74debffbf1c3739e8042941626d00865aeb9b8c216ad4207317964a70ca80e06",
-      "truePeakDbtp": -13.1
+      "sha256": "sha256:e0c165406939bfcb9e765b287045bcd334848633aebb8e63793fbdff3dd9f01d",
+      "truePeakDbtp": -14.35
     },
     "render": {
       "blockSize": 256,
-      "durationS": 8.0,
+      "durationS": 8.008,
       "loudnessCompensationPhon": 60.0,
       "mode": "analysis",
       "sampleRate": 48000,
@@ -851,11 +851,11 @@
     },
     "score": {
       "irVersion": 2,
-      "releaseIndependentHash": "sha256:604c6cb4cc0ff2d73272e4fa1dae67ca0831aaaa10e35b35c44409cf654ccd24"
+      "releaseIndependentHash": "sha256:66d458b9131a83b3428e44120d80d2f5e78ce384365de87022e74908129e64ac"
     },
     "spec": {
       "embedded": null,
-      "hash": "sha256:b2e80011fbd004c240019b483af61d8e42bd01fb6ad5ccccdcad7b56296e534e",
+      "hash": "sha256:0546d8ba86dc43b01f25d5f4752b17a1c068caa926d3b1569714441be0f28298",
       "version": "0.4"
     },
     "tracks": [
@@ -897,16 +897,16 @@
       "channels": 2,
       "file": "15-two-poles.wav",
       "format": "wav",
-      "frames": 384000,
+      "frames": 384383,
       "gainDb": 0.0,
       "integratedLufs": -23.2,
-      "limitedFrames": 21028,
-      "sha256": "sha256:6f2d9d2140a2242d0a94510a455c13aa8b052b7ee8efad5c97694879ff1ca270",
+      "limitedFrames": 21800,
+      "sha256": "sha256:ee9214deaaed64ddca1ea03f013deb5b2f61f441377aa5c6bfd202c621c6b870",
       "truePeakDbtp": -1.2
     },
     "render": {
       "blockSize": 256,
-      "durationS": 8.0,
+      "durationS": 8.007979166666667,
       "loudnessCompensationPhon": 60.0,
       "mode": "analysis",
       "sampleRate": 48000,
@@ -914,11 +914,11 @@
     },
     "score": {
       "irVersion": 2,
-      "releaseIndependentHash": "sha256:c8dad2bd600dead8c27b0f066d9f7c0c90089acae07db4c33db70c2c2c9fa950"
+      "releaseIndependentHash": "sha256:e9adfacadd2b904748ba71d25644090f4d3d9ad1e3de7de70dd417850e727ded"
     },
     "spec": {
       "embedded": null,
-      "hash": "sha256:2fb5b41e2f6ed00ba0706975bb4b0616ee32eb911e1dae1b79954af35a1818c9",
+      "hash": "sha256:8d7f341c9e20c91b61e3a86e15890a628f82787741c21448d8f843d189c0b5ed",
       "version": "0.4"
     },
     "tracks": [
@@ -960,16 +960,16 @@
       "channels": 2,
       "file": "16-bounded-rational.wav",
       "format": "wav",
-      "frames": 384000,
+      "frames": 384382,
       "gainDb": 0.0,
       "integratedLufs": -24.0,
       "limitedFrames": 0,
-      "sha256": "sha256:43f1759b3882b204c49de892a021a4cf6a44f94986361ab1a6e16413c88cca66",
-      "truePeakDbtp": -8.06
+      "sha256": "sha256:9636f72098253aa1ddc21580f498a58670f47e767146cbdd45db9e6c74f68934",
+      "truePeakDbtp": -7.98
     },
     "render": {
       "blockSize": 256,
-      "durationS": 8.0,
+      "durationS": 8.007958333333333,
       "loudnessCompensationPhon": 60.0,
       "mode": "analysis",
       "sampleRate": 48000,
@@ -977,11 +977,11 @@
     },
     "score": {
       "irVersion": 2,
-      "releaseIndependentHash": "sha256:add2824a39c42639368d7d633d861a639a3b7d12d0b19e128539b8e76695c5df"
+      "releaseIndependentHash": "sha256:eda04aebbaf207ce8189f1acd5fae7a92d304fa20479d9045acda0376fb00b61"
     },
     "spec": {
       "embedded": null,
-      "hash": "sha256:035323e90752208c8fddffc244f28b34de45852d7140dc8b4ad74799fb71068d",
+      "hash": "sha256:be276919548907cf0392160c3610ef0d07a19f1d67509d483a87fc5c06de61c2",
       "version": "0.4"
     },
     "tracks": [
@@ -1023,16 +1023,16 @@
       "channels": 2,
       "file": "17-exponential.wav",
       "format": "wav",
-      "frames": 384000,
+      "frames": 384384,
       "gainDb": 0.0,
       "integratedLufs": -26.45,
       "limitedFrames": 0,
-      "sha256": "sha256:1559c314c05bb511b96deb80401b1e07eb2863ee9dfd17e8388254d3cadff802",
+      "sha256": "sha256:8b5bbd5e2944481f8cb9413b22c31e47342e72940b3ee693ea8607514d6b1990",
       "truePeakDbtp": -23.57
     },
     "render": {
       "blockSize": 256,
-      "durationS": 8.0,
+      "durationS": 8.008,
       "loudnessCompensationPhon": 60.0,
       "mode": "analysis",
       "sampleRate": 48000,
@@ -1040,11 +1040,11 @@
     },
     "score": {
       "irVersion": 1,
-      "releaseIndependentHash": "sha256:99e17b18a981eb567c43a849acc1259b571d8cfbe213d9242644bc7cb8991e11"
+      "releaseIndependentHash": "sha256:181c53050666186a63c3b0831576e379a0ea1449547d8080616856c29a09ee88"
     },
     "spec": {
       "embedded": null,
-      "hash": "sha256:572a6ef5520ff3d9a0f8f0d61f9a5fd17456e5a7dce746136f4a61ad5d8aa306",
+      "hash": "sha256:89abd9c075ede1a8533bed69c8ae803d36feb558518d45fb6760f1959e5b63d2",
       "version": "0.4"
     },
     "tracks": [
@@ -1076,16 +1076,16 @@
       "channels": 2,
       "file": "18-bell.wav",
       "format": "wav",
-      "frames": 384000,
+      "frames": 384383,
       "gainDb": 0.0,
-      "integratedLufs": -24.42,
+      "integratedLufs": -24.55,
       "limitedFrames": 0,
-      "sha256": "sha256:f64452da8250ab0f4214f8becca183c63b4438cd67fafa3a6dc64b26db3ddb8e",
-      "truePeakDbtp": -8.47
+      "sha256": "sha256:fba15f3c41484e26054a88bf2f4a3cc00969f830e6a5756ea8fa839cdc68af8d",
+      "truePeakDbtp": -8.06
     },
     "render": {
       "blockSize": 256,
-      "durationS": 8.0,
+      "durationS": 8.007979166666667,
       "loudnessCompensationPhon": 60.0,
       "mode": "analysis",
       "sampleRate": 48000,
@@ -1093,11 +1093,11 @@
     },
     "score": {
       "irVersion": 1,
-      "releaseIndependentHash": "sha256:2c57007dd21eda3a03c761469140bd0e5c0a1cf8370c14aa96d462f9b459d8be"
+      "releaseIndependentHash": "sha256:f1edf858db3776e6ce12da2c0dde26ba613cadc90010dfd2ad3bf6c07af05665"
     },
     "spec": {
       "embedded": null,
-      "hash": "sha256:3eb2b69ef9e9107f260151736e6d845911a2fdde32edba73b3ca10d8dfe09935",
+      "hash": "sha256:07e60b1ee8d9a355a3d74cd0c95a4a5f85e5f0db835e7a3a9e7c41390959eeba",
       "version": "0.4"
     },
     "tracks": [
@@ -1139,16 +1139,16 @@
       "channels": 2,
       "file": "19-floor.wav",
       "format": "wav",
-      "frames": 384000,
+      "frames": 384384,
       "gainDb": 0.0,
-      "integratedLufs": -23.99,
+      "integratedLufs": -24.0,
       "limitedFrames": 0,
-      "sha256": "sha256:b8cfd5508467ac222eea000a8de39f0e8213cad4aa0616645ad535d7f1b28525",
-      "truePeakDbtp": -8.43
+      "sha256": "sha256:d891977ac249839b7777c19f99cda76a9464811f851fbde3b2108976ef58eef1",
+      "truePeakDbtp": -8.45
     },
     "render": {
       "blockSize": 256,
-      "durationS": 8.0,
+      "durationS": 8.008,
       "loudnessCompensationPhon": 60.0,
       "mode": "analysis",
       "sampleRate": 48000,
@@ -1156,11 +1156,11 @@
     },
     "score": {
       "irVersion": 1,
-      "releaseIndependentHash": "sha256:cbcfdde06785a8a8ff2ae3ef494337179faf11a12e8169d960625083f08b33fa"
+      "releaseIndependentHash": "sha256:1a680569b284c36baf73caa543253a024d509ed7a1bbd59b763d782f9e89aee9"
     },
     "spec": {
       "embedded": null,
-      "hash": "sha256:f5f962253214522d1166bf7214701676031626f2e36becf4b3db22764c2b3bda",
+      "hash": "sha256:fdf41dd3f74e52fd5dfc0b0aeba1c8d9462982550493f4175c192dd0b5244b80",
       "version": "0.4"
     },
     "tracks": [
@@ -1202,16 +1202,16 @@
       "channels": 2,
       "file": "20-sign-by-division.wav",
       "format": "wav",
-      "frames": 384000,
+      "frames": 384384,
       "gainDb": 0.0,
       "integratedLufs": -24.54,
       "limitedFrames": 0,
-      "sha256": "sha256:d94920f8589be63667fe35cf5d1753d65a27887c35558dfc2a41acbdd3e4c1fb",
-      "truePeakDbtp": -8.85
+      "sha256": "sha256:53a3841217675a76754527f84e3379b719c2f7d94b56e0044b74f1ded9f4aaf6",
+      "truePeakDbtp": -8.6
     },
     "render": {
       "blockSize": 256,
-      "durationS": 8.0,
+      "durationS": 8.008,
       "loudnessCompensationPhon": 60.0,
       "mode": "analysis",
       "sampleRate": 48000,
@@ -1219,11 +1219,11 @@
     },
     "score": {
       "irVersion": 1,
-      "releaseIndependentHash": "sha256:e0c4f96b6641075ba293c5d142b1e9c42aad05abc699d27197bf1f59de88724d"
+      "releaseIndependentHash": "sha256:70c7f8abc083b638c801662d1d21286a98e22fbf8fb4bba3b1348296830892aa"
     },
     "spec": {
       "embedded": null,
-      "hash": "sha256:da701c54fab8f5d0ac3ed9b6be4e8ece66cff4c54e58936f56322b08eb1747b1",
+      "hash": "sha256:c4502f76c576200bfbb601fd5d48139177bc817baf728bce9c9e8a0691161593",
       "version": "0.4"
     },
     "tracks": [
@@ -1252,7 +1252,7 @@
   "21-absolute-value": {
     "cues": null,
     "data": {
-      "fingerprint": "sha256:d640a9c3276c700323afda28925a909ddfdcbe636f68b08cf13013bdd07d8260",
+      "fingerprint": "sha256:0ac5bb7317ce5c41b287a1cfd32aea1186cb12eb72b0a0611c7aa5d7a1203ce4",
       "provenance": {},
       "source": {
         "kind": "inline",
@@ -1265,16 +1265,16 @@
       "channels": 2,
       "file": "21-absolute-value.wav",
       "format": "wav",
-      "frames": 384000,
+      "frames": 384384,
       "gainDb": 0.0,
-      "integratedLufs": -26.89,
+      "integratedLufs": -26.9,
       "limitedFrames": 0,
-      "sha256": "sha256:1578743855c2e725f86c6f1c32814216a818877f0d70ca56c3a846fab33ccbac",
-      "truePeakDbtp": -9.55
+      "sha256": "sha256:9e2ae0ce5f7b0976e874e91c9034558ecdca9905296efa54e35c496610c50a87",
+      "truePeakDbtp": -8.42
     },
     "render": {
       "blockSize": 256,
-      "durationS": 8.0,
+      "durationS": 8.008,
       "loudnessCompensationPhon": 60.0,
       "mode": "analysis",
       "sampleRate": 48000,
@@ -1282,11 +1282,11 @@
     },
     "score": {
       "irVersion": 2,
-      "releaseIndependentHash": "sha256:8e348eb94a4a27569460b732f9dd30af20f3375dbd8228d4c8c74d5a8b9bf607"
+      "releaseIndependentHash": "sha256:6f2e86b8a84cbb36561c9b7207b979fea5cfc22250f843c4f7eff1f785cb6bf6"
     },
     "spec": {
       "embedded": null,
-      "hash": "sha256:073c11297a4e10e2ebc2d89564c86c74bf4af25b84922c8b539a469fc643d6cf",
+      "hash": "sha256:699a07701cbd720d5322cb8b4c44ff8e3e230e2a500838e616b8fde707e7455a",
       "version": "0.4"
     },
     "tracks": [
@@ -1328,16 +1328,16 @@
       "channels": 2,
       "file": "22-secant.wav",
       "format": "wav",
-      "frames": 384000,
+      "frames": 384382,
       "gainDb": 0.0,
-      "integratedLufs": -22.55,
-      "limitedFrames": 17958,
-      "sha256": "sha256:184170459743674a0804a67245b576dd2f6253ac3fd97334f694a5d3c3a30192",
-      "truePeakDbtp": -1.19
+      "integratedLufs": -22.5,
+      "limitedFrames": 10128,
+      "sha256": "sha256:5092d901340dc26052e3dd47748ade759ad1eef916d64afc5ea3385dcfd8146f",
+      "truePeakDbtp": -1.2
     },
     "render": {
       "blockSize": 256,
-      "durationS": 8.0,
+      "durationS": 8.007958333333333,
       "loudnessCompensationPhon": 60.0,
       "mode": "analysis",
       "sampleRate": 48000,
@@ -1345,11 +1345,11 @@
     },
     "score": {
       "irVersion": 2,
-      "releaseIndependentHash": "sha256:ce978e3bd5338f66a8557be2f4382a20ee26b8f17efb90d8e305d914c4264727"
+      "releaseIndependentHash": "sha256:f81ed85582ec919287722924cb072bed8ed8316ea7e4cec00f97588ef17aac5b"
     },
     "spec": {
       "embedded": null,
-      "hash": "sha256:d3d77f597acd5277bbda8b2b474b84d71f5932397eefc12bf9ab152dbcc4a238",
+      "hash": "sha256:0a22c1c8e31c7ab8d1d5c1dee3da4ba6815d4677e978dc96c7e9b330004ac21d",
       "version": "0.4"
     },
     "tracks": [
@@ -1378,7 +1378,7 @@
   "23-cotangent": {
     "cues": null,
     "data": {
-      "fingerprint": "sha256:a651a4c6bfce3cb78e63b5f0901aae14cb743cdf33cebce33b6866566bed4dac",
+      "fingerprint": "sha256:2cb8739e8490b48d61329e5438cfcc1c05be4a2acd008c783ab2f429ee1dcb3b",
       "provenance": {},
       "source": {
         "kind": "inline",
@@ -1391,16 +1391,16 @@
       "channels": 2,
       "file": "23-cotangent.wav",
       "format": "wav",
-      "frames": 384000,
+      "frames": 384383,
       "gainDb": 0.0,
-      "integratedLufs": -25.08,
-      "limitedFrames": 15749,
-      "sha256": "sha256:63c8597e07641e399e0db7203299c3f3143c516d8063a5dc68c79b94b8f204c6",
-      "truePeakDbtp": -1.21
+      "integratedLufs": -25.02,
+      "limitedFrames": 0,
+      "sha256": "sha256:3c21d08a22f88d2681950edcb893e80842e914f32b36a3dffd6648ea4bbacc5f",
+      "truePeakDbtp": -1.37
     },
     "render": {
       "blockSize": 256,
-      "durationS": 8.0,
+      "durationS": 8.007979166666667,
       "loudnessCompensationPhon": 60.0,
       "mode": "analysis",
       "sampleRate": 48000,
@@ -1408,11 +1408,11 @@
     },
     "score": {
       "irVersion": 2,
-      "releaseIndependentHash": "sha256:1c54fb548952b34d2cbeb5c7a396be972fe0302da7f04619de35e8f20779ba6f"
+      "releaseIndependentHash": "sha256:f895b8e86789e0294fd94319c96d02bafdb1ac2b03cb060262afef71101bacc2"
     },
     "spec": {
       "embedded": null,
-      "hash": "sha256:03190796b40b1083f8ecfa9d8a133f2d4ac9e9870d94dde5e7cd911736868115",
+      "hash": "sha256:a22bd5bba5fa4b9f2fa7543a2c630f63bd98c2fd9cb5deca04f2494c7a554431",
       "version": "0.4"
     },
     "tracks": [
@@ -1454,16 +1454,16 @@
       "channels": 2,
       "file": "24-cosecant.wav",
       "format": "wav",
-      "frames": 384000,
+      "frames": 384383,
       "gainDb": 0.0,
-      "integratedLufs": -23.68,
-      "limitedFrames": 16778,
-      "sha256": "sha256:a6af483d5af5be5bac6f2fda137969db86d7bcbd6098fd08ca21c37dd53ece08",
+      "integratedLufs": -23.64,
+      "limitedFrames": 14630,
+      "sha256": "sha256:c4b53171c289a20f594a19cef27998989b945b8326b33a9726f934e1bcdcb954",
       "truePeakDbtp": -1.19
     },
     "render": {
       "blockSize": 256,
-      "durationS": 8.0,
+      "durationS": 8.007979166666667,
       "loudnessCompensationPhon": 60.0,
       "mode": "analysis",
       "sampleRate": 48000,
@@ -1471,11 +1471,11 @@
     },
     "score": {
       "irVersion": 2,
-      "releaseIndependentHash": "sha256:2b2797d5ff23e717208ea8c42ac3fe8c6864ee39b6c461e562e2f1063ac43b1d"
+      "releaseIndependentHash": "sha256:7f4976cae94c9edef63d69f294d946659c6d2f2121393cbb84c96b5be13a4413"
     },
     "spec": {
       "embedded": null,
-      "hash": "sha256:d48d857b25f72bf674e07e0038df604355171484cd22c6b5ce1844a3827dc352",
+      "hash": "sha256:4ca72d26033c21cdf8a89e35b9f4be113ce4a23f57b44339d21a0c2eaf235fc3",
       "version": "0.4"
     },
     "tracks": [
@@ -1504,7 +1504,7 @@
   "25-inverse-hyperbolic-tangent": {
     "cues": null,
     "data": {
-      "fingerprint": "sha256:844a69ed3126f356f7d5eee7764d6fe81210193e644ce50fad04af594692f398",
+      "fingerprint": "sha256:f780590b2f5a1e48b22a1bb1966c0f369407980e06c1fd15a4f41ee32ce59571",
       "provenance": {},
       "source": {
         "kind": "inline",
@@ -1519,9 +1519,9 @@
       "format": "wav",
       "frames": 293760,
       "gainDb": 0.0,
-      "integratedLufs": -23.19,
-      "limitedFrames": 21796,
-      "sha256": "sha256:0dc0549527c1088508f02c6334fda56e0c545f91bd9ee4d891fd561ba30ad8ee",
+      "integratedLufs": -23.23,
+      "limitedFrames": 21240,
+      "sha256": "sha256:8635ffb0914266ce2d4712c4aaa281db01e79b1e9f2a1f319a2d592a0181688d",
       "truePeakDbtp": -1.2
     },
     "render": {
@@ -1534,11 +1534,11 @@
     },
     "score": {
       "irVersion": 2,
-      "releaseIndependentHash": "sha256:c5efdf7283fa0512c2d2f0cbcf470aa2a937ea4d8621a07238659f3ae6cab00e"
+      "releaseIndependentHash": "sha256:9143e227e289c2e49791d830dd8767fc0bade6f7eed9416ce056ca7aa90e0184"
     },
     "spec": {
       "embedded": null,
-      "hash": "sha256:75cbfaa9478feab65576dddfb49cabcf59f0742429dd145ef61fd87bbe1544a2",
+      "hash": "sha256:3512cf63e54aa5808031fba09f1bab31e124987bfa7f214ea53ab043c26083eb",
       "version": "0.4"
     },
     "tracks": [
@@ -1553,7 +1553,7 @@
         "pitchHz": null
       },
       {
-        "events": 3,
+        "events": 4,
         "firstOnsetS": null,
         "id": "curvasona.cues",
         "instrument": "sine",
@@ -1567,7 +1567,7 @@
   "26-arcsine": {
     "cues": null,
     "data": {
-      "fingerprint": "sha256:ca484ebda19e5684632ccf70d19e7f46d6b20fe7d267b930de0acc614998ca51",
+      "fingerprint": "sha256:2c11d67a7910321709d4884ea0a90252a7b7ef98f0ee1a6500fc9d35cd74a552",
       "provenance": {},
       "source": {
         "kind": "inline",
@@ -1580,16 +1580,16 @@
       "channels": 2,
       "file": "26-arcsine.wav",
       "format": "wav",
-      "frames": 292992,
+      "frames": 293088,
       "gainDb": 0.0,
-      "integratedLufs": -27.1,
+      "integratedLufs": -27.33,
       "limitedFrames": 0,
-      "sha256": "sha256:1abf0899a82e2e4490a6c808b2af1885a3096f648e230f24aad2fbc2e8b7a8a2",
-      "truePeakDbtp": -9.33
+      "sha256": "sha256:ceba257084a337cf1b96aaa4360e2629724d84a07e7353e50071ee7d84380753",
+      "truePeakDbtp": -10.42
     },
     "render": {
       "blockSize": 256,
-      "durationS": 6.104,
+      "durationS": 6.106,
       "loudnessCompensationPhon": 60.0,
       "mode": "analysis",
       "sampleRate": 48000,
@@ -1597,11 +1597,11 @@
     },
     "score": {
       "irVersion": 2,
-      "releaseIndependentHash": "sha256:b1e4497436766cbf21666151cc70f611c94415170ee168bab1591334f24e50ff"
+      "releaseIndependentHash": "sha256:a49b6ee4d7165a44a0639a957778d284237c16165a19b76e7ae9324f5d486feb"
     },
     "spec": {
       "embedded": null,
-      "hash": "sha256:16a5d18f727e9a703a3123135ca19c982bf321e5750c0de8d2c60b48915076f5",
+      "hash": "sha256:e543433dafa7992fb10135fda0b3fa553321d78c527a4808a89c798b68cdb5eb",
       "version": "0.4"
     },
     "tracks": [
@@ -1643,16 +1643,16 @@
       "channels": 2,
       "file": "27-log-of-the-absolute-value.wav",
       "format": "wav",
-      "frames": 384000,
+      "frames": 384384,
       "gainDb": 0.0,
-      "integratedLufs": -23.67,
-      "limitedFrames": 14446,
-      "sha256": "sha256:8cf5aa7f82d5ec164b490ed97243d9f6e8f0c004010ab16e0fd60f960ed00b36",
-      "truePeakDbtp": -1.19
+      "integratedLufs": -23.69,
+      "limitedFrames": 17528,
+      "sha256": "sha256:d8072cb48d400e27426c6972fea0805dfe15747d334925a255b93bba743daa91",
+      "truePeakDbtp": -1.2
     },
     "render": {
       "blockSize": 256,
-      "durationS": 8.0,
+      "durationS": 8.008,
       "loudnessCompensationPhon": 60.0,
       "mode": "analysis",
       "sampleRate": 48000,
@@ -1660,11 +1660,11 @@
     },
     "score": {
       "irVersion": 2,
-      "releaseIndependentHash": "sha256:c3cef3016f83ecf82824b2dbb5e9c2ed2247886c4d893a92ebb179b1274b2e03"
+      "releaseIndependentHash": "sha256:bffc66c9ef7e00048ecee98e2cf1e8a35cd54418414bb8d57431fa1abc1bd6cd"
     },
     "spec": {
       "embedded": null,
-      "hash": "sha256:d417c6b68fe2887a2f034b91d37d3a4a63ace3e93cecbd64956bedd1cc0efdc5",
+      "hash": "sha256:bf6a7d321cdc280077fdd6742a0c1e500fd44c2366d59f000cb2137222b0a9b7",
       "version": "0.4"
     },
     "tracks": [
@@ -1706,16 +1706,16 @@
       "channels": 2,
       "file": "28-cubic-over-a-line.wav",
       "format": "wav",
-      "frames": 384000,
+      "frames": 384384,
       "gainDb": 0.0,
-      "integratedLufs": -26.28,
+      "integratedLufs": -26.29,
       "limitedFrames": 0,
-      "sha256": "sha256:b915f6a06c7a89df812ab1f7ebecd76ba47ba95414e67eda11e02ec9c8a0c60d",
+      "sha256": "sha256:7177e57522f5f4c400b706927524392afde2b50c3bcadb80446ceb30f75c46f3",
       "truePeakDbtp": -9.41
     },
     "render": {
       "blockSize": 256,
-      "durationS": 8.0,
+      "durationS": 8.008,
       "loudnessCompensationPhon": 60.0,
       "mode": "analysis",
       "sampleRate": 48000,
@@ -1723,11 +1723,11 @@
     },
     "score": {
       "irVersion": 1,
-      "releaseIndependentHash": "sha256:8471e845055b12f9d348f27bdd21f3bbee3f77a0625c3fda727d5576d3095afb"
+      "releaseIndependentHash": "sha256:9dc70d951b555ce121f748e0aa53ce254d8028343d48a01d1d1bd3dd00d9e09d"
     },
     "spec": {
       "embedded": null,
-      "hash": "sha256:552f5da18f435f79de69f65f0447e1c3efd667f662122364a25688c96bca98c7",
+      "hash": "sha256:221cf3701a12634ebd0b3284bf2449330e2a1cdf5146542e8261a3f747acfe76",
       "version": "0.4"
     },
     "tracks": [
@@ -1769,16 +1769,16 @@
       "channels": 2,
       "file": "29-logistic.wav",
       "format": "wav",
-      "frames": 384000,
+      "frames": 384384,
       "gainDb": 0.0,
-      "integratedLufs": -25.31,
+      "integratedLufs": -25.3,
       "limitedFrames": 0,
-      "sha256": "sha256:3724c3a4cf0b18358916d43acd4c9aeaba690e8ae198057561957faf06fd2c10",
-      "truePeakDbtp": -8.45
+      "sha256": "sha256:5627b8c723e1c424bea6379dcadd7173e7bfc56f2fc3c3fd1f83c58e5bedb9a7",
+      "truePeakDbtp": -8.9
     },
     "render": {
       "blockSize": 256,
-      "durationS": 8.0,
+      "durationS": 8.008,
       "loudnessCompensationPhon": 60.0,
       "mode": "analysis",
       "sampleRate": 48000,
@@ -1786,11 +1786,11 @@
     },
     "score": {
       "irVersion": 1,
-      "releaseIndependentHash": "sha256:790e1f1ddd7dc71b0a5191f4a51a0df6d8e79f41548fa976094e511d7e1c43f0"
+      "releaseIndependentHash": "sha256:ec501c5e8b81f9e2c979d54778e98e387a6ab8f018041eed27a655d59ff6b1ba"
     },
     "spec": {
       "embedded": null,
-      "hash": "sha256:b3e9e377b175c347b0deb959bf8c209d5d8c4e7d2049359e208ef9b492b71560",
+      "hash": "sha256:5614f1644ad674a3ff763259599f5371880cb48911e6c559fe6e194a4053bb45",
       "version": "0.4"
     },
     "tracks": [
@@ -1832,16 +1832,16 @@
       "channels": 2,
       "file": "30-fractional-power.wav",
       "format": "wav",
-      "frames": 384000,
+      "frames": 384384,
       "gainDb": 0.0,
-      "integratedLufs": -26.71,
+      "integratedLufs": -26.41,
       "limitedFrames": 0,
-      "sha256": "sha256:72a96af406808d8eda5fb1c9cf3023c7910387dbcd3f722f6969514ea2eb55d4",
-      "truePeakDbtp": -15.41
+      "sha256": "sha256:0cc2af94d25e7ebc03a4d90538070f1794371004651e3bdb023b4d4e5097073d",
+      "truePeakDbtp": -10.01
     },
     "render": {
       "blockSize": 256,
-      "durationS": 8.0,
+      "durationS": 8.008,
       "loudnessCompensationPhon": 60.0,
       "mode": "analysis",
       "sampleRate": 48000,
@@ -1849,11 +1849,11 @@
     },
     "score": {
       "irVersion": 2,
-      "releaseIndependentHash": "sha256:ae7aa393468d8d51d7e20b430fe27b058957a5f8ffac0a6bf230628661cf8e03"
+      "releaseIndependentHash": "sha256:6f7ca3fefca874c2148f4e57a0615a624840f9a662824a549b052a529e35a1cd"
     },
     "spec": {
       "embedded": null,
-      "hash": "sha256:9f149aafcfd5a569eba8cc936e5c8ddff855ba764639bdbc9ca782dea7048bcc",
+      "hash": "sha256:e26113f0d8ec62f7c2f3fbd8fc042a0dcf7ed27e5e1eeb5e93e92ae6b33e070b",
       "version": "0.4"
     },
     "tracks": [
@@ -1868,7 +1868,7 @@
         "pitchHz": null
       },
       {
-        "events": 1,
+        "events": 2,
         "firstOnsetS": null,
         "id": "curvasona.cues",
         "instrument": "sine",
@@ -1882,7 +1882,7 @@
   "31-cube-root": {
     "cues": null,
     "data": {
-      "fingerprint": "sha256:d21d38a85fa1ad1d40e7856703ada979f209684c6b78c0affe326e344d85dcbd",
+      "fingerprint": "sha256:c0cb8e14642a0adf9bab31f8e3fad9dba734efb4e7f871f0794a56a4ffec9e1c",
       "provenance": {},
       "source": {
         "kind": "inline",
@@ -1895,16 +1895,16 @@
       "channels": 2,
       "file": "31-cube-root.wav",
       "format": "wav",
-      "frames": 384000,
+      "frames": 384384,
       "gainDb": 0.0,
-      "integratedLufs": -25.95,
+      "integratedLufs": -25.94,
       "limitedFrames": 0,
-      "sha256": "sha256:5e8f4f07c2ada4c9b2b4de32e5b17629985392cce7eb71736567a4dd8d213a96",
-      "truePeakDbtp": -10.07
+      "sha256": "sha256:4214fa66c3d4ec506258c4f016acdea20170f68664012622ab9e4ca5a0a92a9b",
+      "truePeakDbtp": -10.4
     },
     "render": {
       "blockSize": 256,
-      "durationS": 8.0,
+      "durationS": 8.008,
       "loudnessCompensationPhon": 60.0,
       "mode": "analysis",
       "sampleRate": 48000,
@@ -1912,11 +1912,11 @@
     },
     "score": {
       "irVersion": 2,
-      "releaseIndependentHash": "sha256:0dc88e80ca382d943e66abf7c2ee4310d91de28263de8014f459c5fc2db51874"
+      "releaseIndependentHash": "sha256:c6db15b73568903dba898b66f90b254a1e3bb19ea88600f0f45612740261c03c"
     },
     "spec": {
       "embedded": null,
-      "hash": "sha256:d06939ff164c929f0e569a7a5955c64cdc4e51493a7b486807206a7c356f69df",
+      "hash": "sha256:b637cb6129b01cf7256c23e5a5835921d1e0e8ca00ad319562c07b719dbd85fb",
       "version": "0.4"
     },
     "tracks": [
@@ -1945,7 +1945,7 @@
   "32-hole-and-pole": {
     "cues": null,
     "data": {
-      "fingerprint": "sha256:c907227edf3a84e4dd36d1a63d6380b02959641c39a40da44754c27af09e9a63",
+      "fingerprint": "sha256:bdea284a299f7e37acecec247f5ede12e35bcc93e2418703cdc5ce4c53216969",
       "provenance": {},
       "source": {
         "kind": "inline",
@@ -1958,16 +1958,16 @@
       "channels": 2,
       "file": "32-hole-and-pole.wav",
       "format": "wav",
-      "frames": 384000,
+      "frames": 384384,
       "gainDb": 0.0,
       "integratedLufs": -24.99,
-      "limitedFrames": 19938,
-      "sha256": "sha256:e45ad91d97077d9a051c05963545fbd027686e2a6409b000ca28d0887baf6f54",
+      "limitedFrames": 20095,
+      "sha256": "sha256:1e22df143949113df9448b2e0dd2a353fca7270744915f210f22e73f8861ce26",
       "truePeakDbtp": -1.19
     },
     "render": {
       "blockSize": 256,
-      "durationS": 8.0,
+      "durationS": 8.008,
       "loudnessCompensationPhon": 60.0,
       "mode": "analysis",
       "sampleRate": 48000,
@@ -1975,11 +1975,11 @@
     },
     "score": {
       "irVersion": 2,
-      "releaseIndependentHash": "sha256:fa91cb4803798f305b5165ca53d5576ef3ddeae0e47c911e5104b6584dc93b02"
+      "releaseIndependentHash": "sha256:36e03bf359078804c49a596acff77f4c304fcf75a2ece92efff3427abddc99b2"
     },
     "spec": {
       "embedded": null,
-      "hash": "sha256:514eb271728b73423ced33930e2c330bab61147764c157680781b38a1139b177",
+      "hash": "sha256:34364c368a640d6c15d813aec3df29cff200c8a0b6fd2ed63687b99ddbdbde92",
       "version": "0.4"
     },
     "tracks": [
@@ -2021,16 +2021,16 @@
       "channels": 2,
       "file": "33-round.wav",
       "format": "wav",
-      "frames": 384000,
+      "frames": 384384,
       "gainDb": 0.0,
       "integratedLufs": -24.44,
       "limitedFrames": 0,
-      "sha256": "sha256:8adf0dad5e3b07d63fc6e9b8865317513d78da507d45ac257d4cd6fa1da4dcf0",
-      "truePeakDbtp": -8.42
+      "sha256": "sha256:48803cfb585a3cf7cac780c34f7f48189e34c02a2ea5dbea9416c7c364c3e299",
+      "truePeakDbtp": -8.45
     },
     "render": {
       "blockSize": 256,
-      "durationS": 8.0,
+      "durationS": 8.008,
       "loudnessCompensationPhon": 60.0,
       "mode": "analysis",
       "sampleRate": 48000,
@@ -2038,11 +2038,11 @@
     },
     "score": {
       "irVersion": 1,
-      "releaseIndependentHash": "sha256:cca69ea232ec83e8a983166b0b63dd74793a9637496f7e9a820418f61cfba1ad"
+      "releaseIndependentHash": "sha256:31003d08297353f000b0b078954d2c3cc039bf6a7fc1083b00ff17751b6294a6"
     },
     "spec": {
       "embedded": null,
-      "hash": "sha256:4f73aa72dbdd1e21c243e493bceab71b4dfcd4f04a68f55e887bbb8a751c9de9",
+      "hash": "sha256:1805207c9532c20edac7a25df40c5b5c27e24a58cd7e10c14f88d1fdf9fc685e",
       "version": "0.4"
     },
     "tracks": [
@@ -2084,16 +2084,16 @@
       "channels": 2,
       "file": "34-two-linear-poles.wav",
       "format": "wav",
-      "frames": 384000,
+      "frames": 384383,
       "gainDb": 0.0,
-      "integratedLufs": -23.22,
-      "limitedFrames": 21741,
-      "sha256": "sha256:04694a0c2a2dcaf72881f3451d7cb6b2baee52bbb627c70092060a99f4cd614e",
+      "integratedLufs": -23.19,
+      "limitedFrames": 19311,
+      "sha256": "sha256:48247852b0d7692ced1bcca599dd859679d47977861ee9b8e5f98e7a9e9ff823",
       "truePeakDbtp": -1.2
     },
     "render": {
       "blockSize": 256,
-      "durationS": 8.0,
+      "durationS": 8.007979166666667,
       "loudnessCompensationPhon": 60.0,
       "mode": "analysis",
       "sampleRate": 48000,
@@ -2101,11 +2101,11 @@
     },
     "score": {
       "irVersion": 2,
-      "releaseIndependentHash": "sha256:bea7140a2f08343a80e194a7c646eb6ee1a067486df446f5023fb1a003719ae5"
+      "releaseIndependentHash": "sha256:af61aa39b99ac9d4586291ae57ca8a60eb4bc9463455d83948258c0d8a05850e"
     },
     "spec": {
       "embedded": null,
-      "hash": "sha256:32b0b04871b0d8ab002abab80479e6a05d799e6620cefdf2dc4f8342c2c78804",
+      "hash": "sha256:53bb5606d099f48ceaad8e42678ff6c19a18b55a75f07b2c56c70dd31e9e8b37",
       "version": "0.4"
     },
     "tracks": [
@@ -2147,16 +2147,16 @@
       "channels": 2,
       "file": "35-one-sided-pole.wav",
       "format": "wav",
-      "frames": 384000,
+      "frames": 384384,
       "gainDb": 0.0,
-      "integratedLufs": -23.5,
-      "limitedFrames": 0,
-      "sha256": "sha256:3764396f9c49e3641def605e73655d9ad50789a827cdd36fecc8153f5fd30fc6",
-      "truePeakDbtp": -1.56
+      "integratedLufs": -23.59,
+      "limitedFrames": 20353,
+      "sha256": "sha256:ed36fe37a650b7bc150a918219d35c648e62a21e82ee4646cf5c2091dfba5045",
+      "truePeakDbtp": -1.19
     },
     "render": {
       "blockSize": 256,
-      "durationS": 8.0,
+      "durationS": 8.008,
       "loudnessCompensationPhon": 60.0,
       "mode": "analysis",
       "sampleRate": 48000,
@@ -2164,11 +2164,11 @@
     },
     "score": {
       "irVersion": 2,
-      "releaseIndependentHash": "sha256:d2360b570faf2affeff4bade93dca9ef128737b96083c35394b387c24dde956c"
+      "releaseIndependentHash": "sha256:67f01d7a2a4b723501bb19cf3f8e8e5d1aa21eab9ac7d4d341a6be846f3bc196"
     },
     "spec": {
       "embedded": null,
-      "hash": "sha256:7286dacc4b6e38d49bea8d32fa24bc47e8c9bf42323abe054581f1de511524b0",
+      "hash": "sha256:463cd829ab2195e560d8e669e00cc23b526d2d12dda7be1bd1a78299f9cf3a63",
       "version": "0.4"
     },
     "tracks": [
@@ -2197,7 +2197,7 @@
   "36-half-angle-tangent": {
     "cues": null,
     "data": {
-      "fingerprint": "sha256:a13c80fc38a0ae6ad3e684ca3de5e63659f35de06e3fef15fdaf541249214d9f",
+      "fingerprint": "sha256:0f472aa93a4da729117257dc30604a509a774c4d275321d4ed06047a726449de",
       "provenance": {},
       "source": {
         "kind": "inline",
@@ -2210,16 +2210,16 @@
       "channels": 2,
       "file": "36-half-angle-tangent.wav",
       "format": "wav",
-      "frames": 384000,
+      "frames": 384382,
       "gainDb": 0.0,
-      "integratedLufs": -21.69,
-      "limitedFrames": 53294,
-      "sha256": "sha256:ccd71ca71021fb99dbbb8bed6065d3ffedb034024776e796626fb6fa9f9e92cb",
+      "integratedLufs": -21.66,
+      "limitedFrames": 51424,
+      "sha256": "sha256:c4eee95a719f92f026f411fcd6b957859392b587a6df158cac73c412980f3d96",
       "truePeakDbtp": -1.18
     },
     "render": {
       "blockSize": 256,
-      "durationS": 8.0,
+      "durationS": 8.007958333333333,
       "loudnessCompensationPhon": 60.0,
       "mode": "analysis",
       "sampleRate": 48000,
@@ -2227,11 +2227,11 @@
     },
     "score": {
       "irVersion": 2,
-      "releaseIndependentHash": "sha256:c2bf4ba81d6a45663afc6939b6fae9d17984c6c7451bb58aefa1a9098f823882"
+      "releaseIndependentHash": "sha256:8bc1b587e9b41b33c45ea445903c44f99627dcba2086c32e962d5f7c3246f24b"
     },
     "spec": {
       "embedded": null,
-      "hash": "sha256:3b6b7500447e6ac4e6416d3d317a940b0e5911241953b820fd8add0b7c328f9e",
+      "hash": "sha256:679a1d06c7fff6b723b0dc8949066ba3d7002b789ac80912335bbe55a24c79e2",
       "version": "0.4"
     },
     "tracks": [
@@ -2273,16 +2273,16 @@
       "channels": 2,
       "file": "37-oblique-asymptote.wav",
       "format": "wav",
-      "frames": 384000,
+      "frames": 384384,
       "gainDb": 0.0,
-      "integratedLufs": -25.53,
-      "limitedFrames": 20647,
-      "sha256": "sha256:cab7ff435d7b5e65b2926b26557e747a4d939f08991c835b6e22898ac077761d",
-      "truePeakDbtp": -1.2
+      "integratedLufs": -25.47,
+      "limitedFrames": 18956,
+      "sha256": "sha256:dea71c3488dc4d0a5dbf6b37633cceff634bdaed17feb5d2d0c22633e52dc279",
+      "truePeakDbtp": -1.19
     },
     "render": {
       "blockSize": 256,
-      "durationS": 8.0,
+      "durationS": 8.008,
       "loudnessCompensationPhon": 60.0,
       "mode": "analysis",
       "sampleRate": 48000,
@@ -2290,11 +2290,11 @@
     },
     "score": {
       "irVersion": 2,
-      "releaseIndependentHash": "sha256:7a24d0dcdc57e1a8893b87fce338b666063216044f824d50edeb777d7bebf32a"
+      "releaseIndependentHash": "sha256:a4e7497e30144c5b39e36aac18095ea6590a3ab7a6e371c255f9e363c5d4eeb5"
     },
     "spec": {
       "embedded": null,
-      "hash": "sha256:71a891c73f67799280ab19a2038cd66abfb76c9c1d2bf0776b02c30b0bce6429",
+      "hash": "sha256:80c3543ba15687666cd00ba0068ee0e69f532c14f59619ad3861a6ab1fc9c344",
       "version": "0.4"
     },
     "tracks": [
@@ -2323,7 +2323,7 @@
   "38-log-of-a-parabola": {
     "cues": null,
     "data": {
-      "fingerprint": "sha256:820645b8cf77a157f8f3528bec5d118e5a66a9270c3d52bc4206e99e15b01ab5",
+      "fingerprint": "sha256:7773364c7cf4a7e984f58ee4a1cf9c014ca1b0193c87b3a63ffb764d376c2957",
       "provenance": {},
       "source": {
         "kind": "inline",
@@ -2336,16 +2336,16 @@
       "channels": 2,
       "file": "38-log-of-a-parabola.wav",
       "format": "wav",
-      "frames": 384000,
+      "frames": 384384,
       "gainDb": 0.0,
       "integratedLufs": -21.78,
       "limitedFrames": 16231,
-      "sha256": "sha256:abc4d637f8220cfc996ae8aa4def0c85836b97af0b07cd4e789dd35b23b9586a",
+      "sha256": "sha256:2cf893c6a37412d8dc697badb06047999a2daa38fe68f187e873cdaacfdb7115",
       "truePeakDbtp": -1.19
     },
     "render": {
       "blockSize": 256,
-      "durationS": 8.0,
+      "durationS": 8.008,
       "loudnessCompensationPhon": 60.0,
       "mode": "analysis",
       "sampleRate": 48000,
@@ -2353,11 +2353,11 @@
     },
     "score": {
       "irVersion": 2,
-      "releaseIndependentHash": "sha256:0e382b901c9858b26e5a2d0288f1ada7b1f56d428fcae4f9b0616d77ba345b50"
+      "releaseIndependentHash": "sha256:9c0f00244464364b33073b3bcad677fe1ee8bd1e4516b37da03049340d25f1f4"
     },
     "spec": {
       "embedded": null,
-      "hash": "sha256:30230c184f3d6ae44dd13f636d02e4a35248468f252c5c64655df10960e4ab1a",
+      "hash": "sha256:7dcb5d62862126ae44ac65bacc1bc5d8964e85a4e15faf3534e92c45a4deefe9",
       "version": "0.4"
     },
     "tracks": [
@@ -2399,16 +2399,16 @@
       "channels": 2,
       "file": "39-shifted-sinc.wav",
       "format": "wav",
-      "frames": 384000,
+      "frames": 384383,
       "gainDb": 0.0,
-      "integratedLufs": -24.89,
+      "integratedLufs": -24.9,
       "limitedFrames": 0,
-      "sha256": "sha256:2880161a97c49280a9630f9b400d9283a58d9372a85987ddc36794513c1801b0",
-      "truePeakDbtp": -9.27
+      "sha256": "sha256:a44c7a2e3a4252b2ff8fa6c847829faf3458768d64c0128d662ef8a80c888eb9",
+      "truePeakDbtp": -8.77
     },
     "render": {
       "blockSize": 256,
-      "durationS": 8.0,
+      "durationS": 8.007979166666667,
       "loudnessCompensationPhon": 60.0,
       "mode": "analysis",
       "sampleRate": 48000,
@@ -2416,11 +2416,11 @@
     },
     "score": {
       "irVersion": 2,
-      "releaseIndependentHash": "sha256:3250e9c001d1b707843bb9e6dc05aa1c76ecf689725377fec230f76d84ca14a1"
+      "releaseIndependentHash": "sha256:288ac35f2aa9325a6d8db8c9104e3bf480235d2717f1e56035cc8271a6708b93"
     },
     "spec": {
       "embedded": null,
-      "hash": "sha256:132788f517ee26e60e653db3e81d12da9335d0fa57ad20ac4b7905540215e8da",
+      "hash": "sha256:4b701b693dec052f062d7b2e3449954d8bbb1252dd0216a8ef9644d210dc6643",
       "version": "0.4"
     },
     "tracks": [
@@ -2462,16 +2462,16 @@
       "channels": 2,
       "file": "40-arccosine.wav",
       "format": "wav",
-      "frames": 324417,
+      "frames": 324800,
       "gainDb": 0.0,
-      "integratedLufs": -26.45,
+      "integratedLufs": -26.59,
       "limitedFrames": 0,
-      "sha256": "sha256:d681b21c1e723f747e5047fcacd09cfcaec6eb928f2847a217fe1b8f81d2c3b3",
-      "truePeakDbtp": -8.85
+      "sha256": "sha256:b771c038dc76a38ff00b66a436c1f3f3946d0c277301ef6ec10a2f9b602c46a9",
+      "truePeakDbtp": -9.09
     },
     "render": {
       "blockSize": 256,
-      "durationS": 6.7586875,
+      "durationS": 6.766666666666667,
       "loudnessCompensationPhon": 60.0,
       "mode": "analysis",
       "sampleRate": 48000,
@@ -2479,11 +2479,11 @@
     },
     "score": {
       "irVersion": 2,
-      "releaseIndependentHash": "sha256:859619448863e613371b670f0be6d9f9d18247105831c755e0e5b3fdc9899e13"
+      "releaseIndependentHash": "sha256:bcda449ed9849de3946437d5e353a7755c39a54aaf6198fd37b0a6dce3cf07ec"
     },
     "spec": {
       "embedded": null,
-      "hash": "sha256:e40eb12e254c69d10325b6c9129edc4ed84757895a33e63db5c7b4e512def222",
+      "hash": "sha256:aa4d9abf61e2af22e3e03d8dd0c62ebde0f58b106c3ba6937657284eb8806213",
       "version": "0.4"
     },
     "tracks": [

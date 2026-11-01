@@ -145,6 +145,8 @@ The `function` source adds a row at each zero, extremum and inflection (as at po
 
 **As built (C03-T07).** CURVASONA is one of the facade's default engines, but it joins a compile only when the spec uses it (a `function` source, an `audify` track or `critical-points` detection), because a registered context provider is recorded in every Score's header (F-197). `offscreen_features(data, window)` gives the spans that leave a pitch window as features, and `cues::window` reads that window from a spec, so a text list can match the off-screen cues. The facade's `read_function` (`Function`: `critical_points`, `summary`, `spec`) is described in 11 §1.
 
+**As built (#441).** Function specs put `x` on time (`secondsPerUnit` = T/(max − min)), so a cue sounds at its x whatever rows the source inserts (F-200, F-202). The cue timing reads one glide breakpoint per row of a glide's one-past-the-end `src`, not the hold breakpoint after it. A row outside the timed rows has its time extended along the nearest two (F-203, which corrects F-193).
+
 ## AXONOTE (`sonarithm-axonote`), C04
 
 **Registers:** Shaper `Quantize` (presentation only); VoiceProvider for the instrument library; Sinks for MIDI file, live MIDI and OSC. The engine crate stays pure and builds for `wasm32`; live MIDI ports and OSC sockets live in the leaf crate `sonarithm-axonote-live` ([02 §2](02-repository-and-crate-layout.md#2-crate-catalogue), placement decided in C04-T01).
