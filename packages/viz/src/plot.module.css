@@ -15,6 +15,37 @@
   background: var(--surface-0);
 }
 
+/* The shared cursor (B04-T06): a dashed vertical line and a square ring at the point, in the
+   selection accent; dashed, so it is not the solid playhead. Moved by transform only. */
+.crosshair {
+  position: absolute;
+  inset-block: 0;
+  inset-inline-start: 0;
+  border-inline-start: var(--border-width) dashed var(--accent);
+  pointer-events: none;
+}
+
+.marker {
+  position: absolute;
+  inset-block-start: 0;
+  inset-inline-start: 0;
+  box-sizing: border-box;
+  inline-size: var(--space-3);
+  block-size: var(--space-3);
+  margin-block-start: calc(var(--space-3) / -2);
+  margin-inline-start: calc(var(--space-3) / -2);
+  border: var(--focus-ring-width) solid var(--accent);
+  border-radius: var(--radius-1);
+  pointer-events: none;
+}
+
+@media (forced-colors: active) {
+  .crosshair,
+  .marker {
+    border-color: Highlight;
+  }
+}
+
 .legend {
   display: flex;
   flex-wrap: wrap;

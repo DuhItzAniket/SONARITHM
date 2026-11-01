@@ -141,6 +141,14 @@ The UI calls an `IpcTransport` interface (`invoke`, `subscribe`, `binary`). The 
 - **Provenance (AGENTS rule 7).** A page with `__snr_prov` and `__snr_conf` gets a Provenance column. Estimates use speech's own messages (`announce-provenance`, `announce-provenance-confidence`, two decimals), so the table and speech say the same thing. Values stated plainly read "exact", "calibrated" or "edited". A missing value reads "no value", never a blank cell.
 - **Not yet.** The Table tab shows the first open dataset until the project tree chooses one (B03). Space to play from the focused row, and the focused row as the shared cursor, are B04-T06. Primary+F search needs a search command.
 
+**As built (B04-T06): the linked cursor.**
+
+- **One cursor.** Rust owns it (ADR-0017 "Cursor"). The table, the plot, the readout and the breadcrumb show the same `cursor` event in the same render, so they never disagree.
+- **Table.** Its focused row is the cursor (origin `table`, not announced; OD-30), and the cursor's row is shown selected. A cursor moved elsewhere loads its window and scrolls its row into view only while the focus is outside the table; it never moves the focus.
+- **Plot tab.** It draws the dataset's first time or numeric field as x and the next numeric field as y, from an M4 tile (`view_get`) as wide as the plot in device pixels. The cursor is a dashed crosshair with a square ring at the point, in the selection accent (`Highlight` under forced colours), moved without redrawing the plot. If the tile does not hold the cursor's row, its two values come from a one-row `table_page`.
+- **Click to move.** A click on the plot moves the cursor to the nearest drawn point (origin `plot`), which Rust announces. The plot stays one image (A11Y-01): the click is a pointer convenience, and the table and the chart explorer (B03-T09) are the keyboard ways. B04-T07 adds the other non-drag alternatives.
+- **Readout.** The Status region shows "Data row N" and the breadcrumb. It is not a live region.
+
 ## 4. Security model
 
 | Control | Setting |
@@ -188,6 +196,7 @@ The UI calls an `IpcTransport` interface (`invoke`, `subscribe`, `binary`). The 
 - With `gpu` set to `highPerformance`, the host builds the window with WebView2 browser arguments: wry's defaults (`--disable-features=msWebOOUI,msPdfOOUI,msSmartScreenProtection`) plus `--force_high_performance_gpu`, because passing arguments replaces the defaults.
 - **Fallback.** WebView2 refuses arguments that differ from a running instance's on the same user-data folder: a second window, or the last run still closing. If creating the window fails with the switch, the host builds it once more without it. The UI then says, and shows in the Status region, that the setting applies after a full restart. The setting never stops the app from starting.
 - The start-up facts reach the UI through the window's initialization script (`window.__SONARITHM_START__`), as the smoke configuration does.
+- **Smoke runs never hang silently.** A classic script, `public/smoke-guard.js`, loads before the app's modules. In a smoke run it sends a failing report if a page error comes before the run starts, or if the run has not started after 60 s (a module that fails to load runs no code). Once `runSmoke` starts, its watchdog fails the run after 120 s and names the check still waiting, with the checks done so far. CI's step limit is 5 minutes.
 
 **As built (B01-T08): devices, volume and stop all audio.**
 
