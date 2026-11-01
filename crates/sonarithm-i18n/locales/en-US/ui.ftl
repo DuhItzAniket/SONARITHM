@@ -130,6 +130,30 @@ ui-cursor-excluded = { $name } excluded from playback and view
 ## Preferences › Keyboard (B03-T09; keyboard-and-navigation §13). $name is a command's
 ## name, $keys a key combination as shown, $other another command's name.
 
+ui-braille = Braille
+ui-braille-cells = Braille display cells
+ui-braille-cells-note = A web page cannot read your display's size. Leave this empty and the screen reader pans the line; set it and the line is fitted to the display, whole parts only.
+
+## The braille line (B03-T10; keyboard-and-navigation §10, §14). $mode is review or
+## sparkline.
+
+ui-braille-line =
+    { $mode ->
+        [sparkline] Braille sparkline
+       *[review] Braille line
+    }
+ui-braille-hint =
+    { $mode ->
+        [sparkline] One cell per point of the segment; a routing key moves the cursor to that point. Shift+B in the chart explorer shows the review line.
+       *[review] The cursor's value and position. Shift+B in the chart explorer shows a sparkline of the segment.
+    }
+# Said after Shift+B.
+ui-braille-mode-changed =
+    { $mode ->
+        [sparkline] Braille sparkline
+       *[review] Braille review line
+    }
+
 ui-keyboard = Keyboard
 ui-single-keys = Single-key commands in the chart explorer
 ui-single-keys-note = Off: letters do nothing in the explorer. Arrows, Home, End and the Page keys still work, and every command stays in the menus and the palette.
@@ -298,6 +322,7 @@ command-mod-speech = Speech on or off
 command-mod-verbosity = Terse or verbose announcements
 command-mod-sonification = Sonification on or off
 command-mod-braille = Braille on or off
+command-mod-braille-mode = Braille review line or sparkline
 command-mod-visual = Visual highlight on or off
 # The palette's result count, announced as it filters; $count is a number.
 command-results =

@@ -10,6 +10,8 @@ From phase A07, release-plz maintains this file: it generates each release's ent
 
 ### Added
 
+- The braille line (B03-T10): with braille on (B in the chart explorer), a read-only field under the explorer holds the cursor's value and position, or with Shift+B a sparkline of the segment, for your braille display. Pressing a routing key on a sparkline cell moves the cursor to that point. Preferences › Braille sets your display's cell count, so the line fits it; empty, the screen reader pans.
+
 - Keyboard preferences (B03-T09): Preferences › Keyboard lists every command with its keys. Change… records new keys and says whether they are free, used by another command, or reserved (Tab, F6, Escape, screen-reader keys and the like cannot be used). "Single-key commands in the chart explorer" turns the explorer's letter keys off, and two presets restore the default keys or remove the single keys. Keys are saved in your settings; a project never changes them.
 
 - The query menu (B03-T09): Q in the chart explorer, or its Ask button, answers about the current series: its summary, minimum, maximum, range, or the value at an x you type. Answers are spoken and logged, and the cursor stays where it is.

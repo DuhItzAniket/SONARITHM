@@ -174,6 +174,23 @@ let cursor: CursorState = {
   braille: null,
 };
 
+/**
+ * The braille line as the app core would send it (B03-T10), simplified: a fake line of
+ * ten cells around the row while braille is on, the caret on the row's cell.
+ */
+function brailleOf(row: number): CursorState["braille"] {
+  if (!settings.modalities.braille || dataset === null) return null;
+  const sparkline = settings.braille.mode === "sparkline";
+  return {
+    mode: sparkline ? "sparkline" : "review",
+    text: sparkline
+      ? "⣀⣠⣤⣴⣶⣾⣿⣷⣦⣄"
+      : `15.${String(row % 10)} °C day ${String(row + 1)}`,
+    caret: sparkline ? row % 10 : 0,
+    cells: settings.braille.cells ?? null,
+  };
+}
+
 function moveCursor(row: number, origin: CursorOrigin): CursorState {
   cursor = {
     seq: cursor.seq + 1,
@@ -184,7 +201,7 @@ function moveCursor(row: number, origin: CursorOrigin): CursorState {
     path: dataset === null ? [] : [{ level: "dataset", label: dataset.name }],
     excluded: [],
     origin,
-    braille: null,
+    braille: brailleOf(row),
   };
   emit({ event: "cursor", ...cursor });
   return cursor;
@@ -260,6 +277,15 @@ const handlers: MockHandlers = {
     };
   },
   nav_where: () => ({ reply: "announce" as const, queued: true }),
+  // A sparkline cell moves the cursor to its point, silently; the review line does not.
+  braille_route: (request) => {
+    const line = cursor.braille;
+    if (line?.mode !== "sparkline" || cursor.row === null) {
+      return { reply: "cursor" as const, ...cursor };
+    }
+    const row = cursor.row - line.caret + request.args.cell;
+    return { reply: "cursor" as const, ...moveCursor(row, "braille") };
+  },
   nav_query: () => ({ reply: "announce" as const, queued: true }),
   announce_repeat: () => ({ reply: "announce" as const, queued: true }),
   cursor_set: (request) => ({
@@ -289,6 +315,8 @@ const handlers: MockHandlers = {
   }),
   settings_set: (request) => {
     settings = request.args.settings;
+    // The cursor's braille line follows the modality and mode, as the app core's does.
+    if (cursor.row !== null) moveCursor(cursor.row, "nav");
     return { reply: "settings" as const, ...settings };
   },
   devices_list: () => ({

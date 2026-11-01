@@ -159,6 +159,23 @@ export function Explorer({
       },
     ]),
   );
+  // Shift+B (keyboard §5.5, B03-T10): the braille line shows the review line or the
+  // sparkline; a device setting, so it is saved in the settings, not a profile.
+  useCommand("mod.brailleMode", () => {
+    void client
+      .call({ command: "settings_get" })
+      .then(({ braille }) => {
+        const mode = braille.mode === "sparkline" ? "review" : "sparkline";
+        update(
+          (settings) => ({
+            ...settings,
+            braille: { ...settings.braille, mode },
+          }),
+          t.format("ui-braille-mode-changed", { mode }),
+        );
+      })
+      .catch(() => undefined);
+  });
   useCommand("mod.verbosity", () => {
     void client
       .call({ command: "settings_get" })
