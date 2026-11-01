@@ -64,6 +64,7 @@ let settings: Settings = {
     visual: true,
   },
   keymap: {},
+  keyboard: { singleKeyCommands: true },
   consent: { updateCheck: null },
   speech: {
     route: "screenReader",
@@ -274,6 +275,15 @@ const handlers: MockHandlers = {
         : transport,
     ),
   settings_get: () => ({ reply: "settings" as const, ...settings }),
+  // The user layer only: the mock host has no profiles.
+  settings_effective: () => ({
+    reply: "effective" as const,
+    settings: Object.entries(settings.keymap).map(([command, keys]) => ({
+      key: `interaction.keymap.${command}`,
+      value: keys,
+      layer: "settings" as const,
+    })),
+  }),
   settings_set: (request) => {
     settings = request.args.settings;
     return { reply: "settings" as const, ...settings };

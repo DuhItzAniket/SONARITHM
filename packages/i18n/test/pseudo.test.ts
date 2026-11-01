@@ -78,6 +78,10 @@ function sampleArgs(style: string): MessageArgs {
     verbosity: "verbose",
     // The query answers (B03-T09).
     span: "19",
+    // Preferences › Keyboard (B03-T09).
+    keys: "20",
+    rule: "reserved",
+    other: "21",
   };
 }
 

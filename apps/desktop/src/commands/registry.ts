@@ -3,6 +3,7 @@
 
 import type { Chord, Platform } from "./chords.ts";
 import { normalize, parseChord } from "./chords.ts";
+import { isCharacter } from "./lint.ts";
 import type { CommandSpec } from "./keymap.ts";
 import { bindingsFor } from "./keymap.ts";
 import type { ActiveScopes } from "./scopes.ts";
@@ -43,6 +44,10 @@ export class CommandRegistry {
   private readonly listeners = new Set<() => void>();
   private readonly ran = new Set<(id: string) => void>();
   private snapshot: readonly AvailableCommand[] = [];
+  /** The user's bindings by command (keyboard §13): they replace the defaults. */
+  private overrides = new Map<string, readonly Chord[]>();
+  /** The group switch of KB-02 (§13 rule 3). */
+  private singleKeys = true;
   private readonly specs: readonly CommandSpec[];
   readonly platform: Platform;
 
@@ -74,7 +79,41 @@ export class CommandRegistry {
   /** The current bindings of a command on this platform. */
   bindings(id: string): readonly Chord[] {
     const spec = this.specs.find((s) => s.id === id);
-    return spec === undefined ? [] : bindingsFor(spec, this.platform);
+    return spec === undefined ? [] : this.current(spec);
+  }
+
+  /**
+   * Applies the user's keymap (B03-T09; keyboard §13): `keymap` maps a command ID to its
+   * chords, separated by spaces, or the empty string to unbind it. With `singleKeyCommands`
+   * off, every single-character binding (letters, Shift+letters, punctuation) is unbound
+   * (KB-02, §13 rule 3); arrows, Home, End, Page Up, Page Down, Space and Escape stay.
+   */
+  configure(
+    keymap: Readonly<Record<string, string>>,
+    singleKeyCommands: boolean,
+  ): void {
+    this.overrides = new Map(
+      Object.entries(keymap).map(([id, keys]) => [
+        id,
+        keys.split(" ").filter((chord) => chord !== ""),
+      ]),
+    );
+    this.singleKeys = singleKeyCommands;
+    this.changed();
+  }
+
+  /** The bindings of `spec` after the user's keymap and the group switch. */
+  private current(spec: CommandSpec): readonly Chord[] {
+    const chords =
+      this.overrides.get(spec.id) ?? bindingsFor(spec, this.platform);
+    if (this.singleKeys) {
+      return chords;
+    }
+    return chords.filter((chord) => {
+      const { mods, key } = parseChord(chord);
+      const onlyShift = [...mods].every((m) => m === "Shift");
+      return !(onlyShift && isCharacter(key));
+    });
   }
 
   /**
@@ -129,7 +168,7 @@ export class CommandRegistry {
   private changed(): void {
     this.snapshot = this.specs
       .filter((spec) => this.handlers.has(spec.id))
-      .map((spec) => ({ spec, bindings: bindingsFor(spec, this.platform) }));
+      .map((spec) => ({ spec, bindings: this.current(spec) }));
     for (const listener of this.listeners) {
       listener();
     }

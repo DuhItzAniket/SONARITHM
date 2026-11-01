@@ -14,7 +14,7 @@ export interface BindingProblem {
 const ARROWS = new Set(["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"]);
 
 /** A key that types a character: letters, digits and punctuation. */
-function isCharacter(key: string): boolean {
+export function isCharacter(key: string): boolean {
   return (
     /^[A-Z0-9]$/.test(key) ||
     [

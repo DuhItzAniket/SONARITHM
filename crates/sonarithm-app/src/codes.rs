@@ -417,6 +417,20 @@ pub const NAV_NO_TREE: CodeInfo = CodeInfo {
     status: CodeStatus::Active,
 };
 
+/// A key binding that cannot be used: a reserved combination, or keys a project tried to
+/// set (B03-T09; keyboard §13).
+pub const KEYMAP_REFUSED: CodeInfo = CodeInfo {
+    code: "SNR-APP-091",
+    severity: Severity::Error,
+    summary: "This key binding cannot be used",
+    help: "Tab, Shift+Tab, F6, Shift+F6, Escape, Insert and CapsLock combinations, Win or \
+           Super combinations, Ctrl+Option on macOS, Alt+F4, Alt+Space and Cmd+Q are reserved \
+           (keyboard §13 rule 6). Keys are yours to set: a project or a spec cannot change \
+           them. Choose another combination in Preferences › Keyboard.",
+    rules: &[],
+    status: CodeStatus::Active,
+};
+
 /// Every `SNR-APP` code, in ascending order.
 pub const CODES: CodeTable = CodeTable {
     area: Area::App,
@@ -461,6 +475,7 @@ pub const CODES: CodeTable = CodeTable {
         CORRECTIONS_NOT_HERE,
         CURSOR_ROW,
         NAV_NO_TREE,
+        KEYMAP_REFUSED,
     ],
 };
 

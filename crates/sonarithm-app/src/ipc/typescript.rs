@@ -19,7 +19,9 @@ use crate::ipc::{
     LoopSpan, PlaybackStatus, Reply, Request, ScoreInfo, SpecPatchResult, SpecState, TableSort,
     TrackInfo, TransportState, ViewMethod, ViewRange,
 };
-use crate::settings::{AudioSettings, Consent, Modalities, Settings, Theme, Verbosity};
+use crate::settings::{
+    AudioSettings, Consent, KeyboardSettings, Modalities, Settings, Theme, Verbosity,
+};
 
 /// Where the file goes, relative to the workspace root.
 pub const PATH: &str = "packages/ipc/src/generated/protocol.ts";
@@ -149,6 +151,7 @@ pub fn typescript() -> String {
     declare::<Theme>(&mut out, &cfg);
     declare::<Verbosity>(&mut out, &cfg);
     declare::<Modalities>(&mut out, &cfg);
+    declare::<KeyboardSettings>(&mut out, &cfg);
     declare::<Consent>(&mut out, &cfg);
     declare::<crate::settings::SpeechSettings>(&mut out, &cfg);
     declare::<crate::settings::AnnouncerRoute>(&mut out, &cfg);

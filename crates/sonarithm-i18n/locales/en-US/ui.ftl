@@ -127,6 +127,35 @@ ui-cursor-step =
 # its data name.
 ui-cursor-excluded = { $name } excluded from playback and view
 
+## Preferences › Keyboard (B03-T09; keyboard-and-navigation §13). $name is a command's
+## name, $keys a key combination as shown, $other another command's name.
+
+ui-keyboard = Keyboard
+ui-single-keys = Single-key commands in the chart explorer
+ui-single-keys-note = Off: letters do nothing in the explorer. Arrows, Home, End and the Page keys still work, and every command stays in the menus and the palette.
+ui-keys-preset-default = Use the default keys
+ui-keys-preset-no-single = No single-key commands
+ui-keys-caption = Every command and its keys. Keys are saved in your settings, never in a project.
+ui-keys-command = Command
+ui-keys-keys = Keys
+ui-keys-actions = Change
+ui-keys-change = Change…
+ui-keys-change-for = Change keys for { $name }
+ui-keys-reset = Reset
+ui-keys-reset-for = Reset keys for { $name }
+ui-keys-recorder = New keys
+ui-keys-press = Press the new keys. Tab moves on and Escape cancels.
+ui-keys-refused =
+    { $keys } cannot be used: { $rule ->
+        [KB-02] single keys work only in the chart explorer
+        [KB-03] a screen reader uses it
+        [KB-04] it conflicts with a keyboard layout or a screen reader
+       *[reserved] it is reserved
+    }.
+ui-keys-shadows = { $keys } is already used by { $other }. Save to give it to both; the one listed first runs.
+ui-keys-free = { $keys } is free.
+ui-keys-save = Save
+
 ## The chart explorer (B03-T09; 08 §5, keyboard-and-navigation §4, §5.5). $name is the
 ## dataset's name, shown as it is.
 

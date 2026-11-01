@@ -64,8 +64,13 @@ pub struct Settings {
     pub verbosity: Verbosity,
     /// Which output modalities are on; they share one cursor (A11Y-10).
     pub modalities: Modalities,
-    /// Keymap overrides: command ID → key combination (keyboard-and-navigation §13).
+    /// Keymap overrides: command ID → keys (keyboard-and-navigation §13): chords separated
+    /// by spaces, or the empty string to unbind the command. Reserved chords are refused
+    /// (`SNR-APP-091`, §13 rule 6).
     pub keymap: BTreeMap<String, String>,
+    /// Keyboard choices beyond single bindings (B03-T09).
+    #[serde(default)]
+    pub keyboard: KeyboardSettings,
     /// Consent for features that use the network (ADR-0012). `None` means not asked yet.
     pub consent: Consent,
     /// How announcements are spoken and sequenced with sonification (08 §4).
@@ -89,6 +94,7 @@ impl Default for Settings {
             verbosity: Verbosity::Terse,
             modalities: Modalities::default(),
             keymap: BTreeMap::new(),
+            keyboard: KeyboardSettings::default(),
             consent: Consent::default(),
             speech: SpeechSettings::default(),
             active_profile: None,
@@ -140,6 +146,14 @@ impl Settings {
                 format!("A speaking rate of {rate} words per minute is outside 30 to 1000."),
             ));
         }
+        if let Some((command, chord)) = crate::keymap::first_reserved(&self.keymap) {
+            return Err(IpcError::new(
+                &codes::KEYMAP_REFUSED,
+                format!(
+                    "{chord} is reserved and cannot be bound to {command} (keyboard §13 rule 6)."
+                ),
+            ));
+        }
         if self.settings_version != SETTINGS_VERSION {
             return Err(IpcError::new(
                 &codes::SETTINGS_VALUE,
@@ -150,6 +164,26 @@ impl Settings {
             ));
         }
         Ok(())
+    }
+}
+
+/// Keyboard choices beyond single bindings (keyboard-and-navigation §13).
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize, TS)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+#[non_exhaustive]
+pub struct KeyboardSettings {
+    /// The group switch of KB-02 and §13 rule 3: "Single-key commands in the chart
+    /// explorer". Off unbinds every single-character binding there (letters, Shift+letters,
+    /// punctuation); arrows, Home, End, Page Up, Page Down, Space and Escape stay. On by
+    /// default: focus scoping already satisfies WCAG 2.1.4.
+    pub single_key_commands: bool,
+}
+
+impl Default for KeyboardSettings {
+    fn default() -> Self {
+        Self {
+            single_key_commands: true,
+        }
     }
 }
 
@@ -405,8 +439,25 @@ impl SettingsStore {
             };
         }
         let migrated = migrate(value, version);
+        let mut cleaned = false;
         let settings = migrated
             .and_then(|value| serde_json::from_value::<Settings>(value).ok())
+            .map(|mut settings| {
+                while let Some((command, chord)) = crate::keymap::first_reserved(&settings.keymap)
+                {
+                    notices.push(IpcError::new(
+                        &codes::KEYMAP_REFUSED,
+                        format!(
+                            "{chord} is reserved, so the settings file's binding for {command} \
+                             was left out (keyboard §13 rule 6)."
+                        ),
+                    ));
+                    let command = command.to_owned();
+                    settings.keymap.remove(&command);
+                    cleaned = true;
+                }
+                settings
+            })
             .filter(|settings| settings.validate().is_ok());
         let Some(settings) = settings else {
             notices.push(IpcError::new(
@@ -425,7 +476,8 @@ impl SettingsStore {
                 "The settings file is damaged, so the last good copy is in use.",
             ));
         }
-        if (version < SETTINGS_VERSION || recovered)
+        // A file that lost a reserved binding is written back, so the notice is said once.
+        if (version < SETTINGS_VERSION || recovered || cleaned)
             && let Err(error) = self.save(&settings)
         {
             notices.push(error);
@@ -724,5 +776,49 @@ mod tests {
         assert_eq!(loaded.notices[0].code, "SNR-APP-012");
         assert!(store.save(&Settings::default()).is_err());
         assert_eq!(std::fs::read_to_string(&path).unwrap_or_default(), newer);
+    }
+
+    /// Keyboard §13 rule 6 (B03-T09): saving a reserved chord is refused with
+    /// `SNR-APP-091`, and nothing is written.
+    #[test]
+    fn keyboard_13_a_reserved_chord_is_refused_on_save() {
+        let dir = TempDir::new("settings-reserved");
+        let store = SettingsStore::new(dir.path());
+        let mut settings = Settings::default();
+        settings.keymap.insert("nav.next".to_owned(), "Shift+Tab".to_owned());
+        let error = store.save(&settings).err();
+        assert_eq!(error.map(|e| e.code), Some("SNR-APP-091".to_owned()));
+        assert!(!store.path().exists());
+    }
+
+    /// B03-T09: keys and the group switch persist, and a hand-edited file with a reserved
+    /// chord loses only that binding, with a notice, not every setting.
+    #[test]
+    fn keyboard_13_keys_persist_and_a_hand_edited_reserved_chord_is_left_out() {
+        let dir = TempDir::new("settings-keys");
+        let mut store = SettingsStore::new(dir.path());
+        let mut settings = Settings::default();
+        settings.keymap.insert("nav.next".to_owned(), "L".to_owned());
+        settings.keyboard.single_key_commands = false;
+        settings.verbosity = Verbosity::Verbose;
+        assert!(store.save(&settings).is_ok());
+        assert_eq!(store.load().settings, settings);
+
+        let mut value = serde_json::to_value(&settings).unwrap();
+        value["keymap"]["nav.previous"] = serde_json::json!("Tab");
+        std::fs::write(store.path(), value.to_string()).unwrap();
+        let loaded = store.load();
+        assert_eq!(loaded.settings, settings, "only the reserved binding is gone");
+        assert_eq!(loaded.notices.len(), 1);
+        assert_eq!(loaded.notices[0].code, "SNR-APP-091");
+        assert_eq!(store.load().notices, Vec::new(), "written back, so said once");
+    }
+
+    #[test]
+    fn b03_t09_settings_without_the_keyboard_section_still_load() {
+        let mut value = serde_json::to_value(Settings::default()).unwrap();
+        value.as_object_mut().unwrap().remove("keyboard");
+        let settings: Settings = serde_json::from_value(value).unwrap();
+        assert!(settings.keyboard.single_key_commands);
     }
 }

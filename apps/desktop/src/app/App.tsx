@@ -11,6 +11,7 @@ import { useAnnouncementFeed } from "../announcer/feed.ts";
 import { AnnouncementLog } from "../announcer/AnnouncementLog.tsx";
 import { CommandPalette } from "../commands/CommandPalette.tsx";
 import { useCommand, useCommands, useKeymap } from "../commands/context.tsx";
+import { useKeymapSettings } from "../commands/useKeymapSettings.ts";
 import { KeyboardReference } from "../commands/KeyboardReference.tsx";
 import type { Scope } from "../commands/scopes.ts";
 import { activeScopes } from "../commands/scopes.ts";
@@ -75,6 +76,8 @@ export function App({
   const transportView = useTransport(client);
   const registry = useCommands();
   useKeymap(registry);
+  // The user's keys and the single-key switch (B03-T09; keyboard §13).
+  const reloadKeys = useKeymapSettings(client, registry);
   const [paletteOpen, setPaletteOpen] = useState(false);
   const [referenceScopes, setReferenceScopes] = useState<
     readonly Scope[] | null
@@ -227,6 +230,7 @@ export function App({
         client={client}
         isOpen={preferencesOpen}
         onOpenChange={setPreferencesOpen}
+        onKeysChange={reloadKeys}
       />
       <CommandPalette
         isOpen={paletteOpen}

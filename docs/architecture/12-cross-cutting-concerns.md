@@ -31,7 +31,7 @@
 
 | Store | Contents | Format |
 |---|---|---|
-| Settings | Device, buffer size, theme, keymap overrides, modalities, update channel, consent flags | JSON + schema, versioned with migrations |
+| Settings | Device, buffer size, theme, keymap overrides and the single-key switch (B03-T09), modalities, update channel, consent flags | JSON + schema, versioned with migrations; additive fields have defaults, so older files load |
 | Profiles | Perceptual and interaction preferences (SDR-38) | Portable JSON |
 | Project | Specs, data snapshots, per-project overrides | `.sonarithm` bundle (§4) |
 

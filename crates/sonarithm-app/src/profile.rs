@@ -609,7 +609,9 @@ pub fn effective(layers: &Layers<'_>) -> Interaction {
         as_value(ss.rate_wpm),
         upper(&|p| p.speech.and_then(|s| s.rate_wpm).map(as_value)),
     );
-    // The keymap merges key by key.
+    // The keymap merges key by key. A project's profile never sets keys: a shared file
+    // must not rebind someone's keyboard (B03-T09; keyboard §13). Opening such a project
+    // sends `SNR-APP-091` as a settings notice.
     let mut keymap: BTreeMap<String, (String, Layer)> = layers
         .settings
         .keymap
@@ -618,7 +620,6 @@ pub fn effective(layers: &Layers<'_>) -> Interaction {
         .collect();
     for (layer, prefs) in [
         (Layer::Profile, profile.as_ref()),
-        (Layer::Project, project.as_ref()),
         (Layer::Session, session.as_ref()),
     ] {
         for (command, keys) in prefs.map(|p| &p.keymap).into_iter().flatten() {

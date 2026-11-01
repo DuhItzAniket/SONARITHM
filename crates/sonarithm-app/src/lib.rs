@@ -40,6 +40,7 @@ mod events;
 mod history;
 pub mod ipc;
 mod jobs;
+pub mod keymap;
 mod live;
 pub mod patch;
 pub mod profile;

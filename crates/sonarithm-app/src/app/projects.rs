@@ -174,6 +174,21 @@ impl App {
         state.name = project.name;
         state.active_spec.clone_from(&project.active_spec);
         state.reserved = project.reserved;
+        // A project's profile may carry keys; they are never applied (keyboard §13).
+        let keys = state
+            .reserved
+            .get(super::profiles::PROJECT_MEMBER)
+            .and_then(|bytes| crate::profile::parse(bytes).ok())
+            .is_some_and(|(profile, _)| !profile.interaction.keymap.is_empty());
+        if keys {
+            self.sink.emit(crate::ipc::Event::SettingsNotice {
+                error: IpcError::new(
+                    &codes::KEYMAP_REFUSED,
+                    "This project's profile sets keys; they were not applied, because a project \
+                     cannot change your keyboard. Set keys in Preferences › Keyboard.",
+                ),
+            });
+        }
         for (id, text) in project.specs {
             if id == state.active_spec {
                 self.spec = Some(text);

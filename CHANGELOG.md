@@ -10,6 +10,8 @@ From phase A07, release-plz maintains this file: it generates each release's ent
 
 ### Added
 
+- Keyboard preferences (B03-T09): Preferences › Keyboard lists every command with its keys. Change… records new keys and says whether they are free, used by another command, or reserved (Tab, F6, Escape, screen-reader keys and the like cannot be used). "Single-key commands in the chart explorer" turns the explorer's letter keys off, and two presets restore the default keys or remove the single keys. Keys are saved in your settings; a project never changes them.
+
 - The query menu (B03-T09): Q in the chart explorer, or its Ask button, answers about the current series: its summary, minimum, maximum, range, or the value at an x you type. Answers are spoken and logged, and the cursor stays where it is.
 
 - The chart explorer (B03-T09): in the Plot tab, one Tab stop (Ctrl+Shift+C, Cmd+Shift+C from anywhere) whose keys move through the chart: arrows along and between levels, Home and End, Page Up and Page Down across series, Jump with arrows for 10 % steps and the maximum and minimum, letters for insights and landmarks, G to go to an x value, Ctrl+F to find a value, W for where am I and R to repeat. T, S, B and V turn speech, sonification, braille and the visual highlight on or off, and Shift+T switches between terse and verbose; they are saved in your settings. H lists the keys. The table, the plot and the readout follow every move.
