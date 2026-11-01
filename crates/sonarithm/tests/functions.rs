@@ -241,3 +241,67 @@ fn a_function_reads_and_compiles_on_a_1_mb_stack() {
         .join()
         .unwrap();
 }
+
+/// The cubic's earcons as `(t, row)`, in time order.
+fn cubic_earcons() -> (Vec<(f64, u64)>, sonarithm::Compiled) {
+    let function = read_function(&FunctionSpec::new("x^3 - 3*x", [-3.0, 3.0])).unwrap();
+    let compiled = Sonarithm::new().compile(&function.spec()).unwrap();
+    let earcons = cue_track(compiled.score())
+        .unwrap()
+        .events
+        .iter()
+        .filter_map(|event| match event {
+            ScoreEvent::Earcon(earcon) => Some((earcon.t.0, earcon.src.unwrap().row)),
+            _ => None,
+        })
+        .collect();
+    (earcons, compiled)
+}
+
+/// F-200: the cubic's cue times are pinned, so a change in sampling, scanning or timing on
+/// any platform fails here, not only in a CLI snapshot. With `pace.duration`, NUMISONA
+/// spaces the 1003 rows (1000 samples and three critical-point rows) evenly over 8 s, so
+/// row r sounds at r × 8 / 1003 s; the zero and the inflection at 0 share one cue.
+#[test]
+fn f_200_the_cubic_cue_times_are_pinned() {
+    let (earcons, _) = cubic_earcons();
+    let expected: [(f64, u64); 5] = [
+        (1.690_927_218_344_965, 212),
+        (2.664_007_976_071_784_5, 334),
+        (3.996_011_964_107_677, 501),
+        (5.328_015_952_143_569, 668),
+        (6.301_096_709_870_388_5, 790),
+    ];
+    assert_eq!(earcons.len(), expected.len(), "{earcons:?}");
+    for ((t, row), (want_t, want_row)) in earcons.iter().zip(expected) {
+        assert_eq!(*row, want_row, "{earcons:?}");
+        assert!((t - want_t).abs() < 1e-12, "{t} != {want_t}: {earcons:?}");
+    }
+}
+
+/// F-200: each cue sounds when the glide reaches its point. An earcon's time is, bit for
+/// bit, the glide breakpoint time of the row it names.
+#[test]
+fn f_200_each_earcon_sounds_at_its_rows_glide_breakpoint() {
+    let (earcons, compiled) = cubic_earcons();
+    let glide = compiled
+        .score()
+        .tracks
+        .iter()
+        .flat_map(|track| &track.events)
+        .find_map(|event| match event {
+            ScoreEvent::Glide(glide) => Some(glide),
+            _ => None,
+        })
+        .unwrap();
+    let start = glide.src.unwrap().start;
+    for (t, row) in earcons {
+        let index = usize::try_from(row - start).unwrap();
+        let breakpoint = glide.curve[index].t.0;
+        assert_eq!(
+            t.to_bits(),
+            breakpoint.to_bits(),
+            "row {row}: {t} != {breakpoint}"
+        );
+    }
+}
