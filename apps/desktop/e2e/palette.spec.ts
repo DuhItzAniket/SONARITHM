@@ -80,11 +80,14 @@ test("kb_01_every_registered_command_runs_from_the_palette", async ({
       )
       .toBe(id);
     // These open a dialog of their own, just after the palette closes: the palette again,
-    // the key references (nav.help is the explorer's, B03-T09) and Preferences.
+    // the key references (help.explorer is the explorer's, B03-T09) and Preferences.
     if (
-      ["app.palette", "help.keyboard", "nav.help", "app.preferences"].includes(
-        id,
-      )
+      [
+        "app.palette",
+        "help.keyboard",
+        "help.explorer",
+        "app.preferences",
+      ].includes(id)
     ) {
       await expect(page.getByRole("dialog")).toHaveCount(1);
     }
