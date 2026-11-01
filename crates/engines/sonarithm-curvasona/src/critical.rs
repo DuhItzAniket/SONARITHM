@@ -418,8 +418,11 @@ fn limit_at_infinity(f: &Expr, edge: f64, right: bool) -> Option<f64> {
     let start = edge.abs().max(1.0);
     let sign = if right { 1.0 } else { -1.0 };
     let mut values = Vec::with_capacity(31);
-    for k in 0..=30 {
-        let v = f.eval(sign * start * 4_f64.powi(k));
+    // 4^k by repeated exact multiplication: no platform `powi` (ADR-0013 §1, F-204).
+    let mut scale = 1.0;
+    for _ in 0..=30 {
+        let v = f.eval(sign * start * scale);
+        scale *= 4.0;
         if !v.is_finite() {
             return None;
         }

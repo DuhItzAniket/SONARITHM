@@ -1,0 +1,41 @@
+# Clippy configuration for a crate whose output reaches the Score IR. Clippy uses the
+# nearest clippy.toml and does not merge it with the root one, so the first block repeats
+# the workspace settings (/clippy.toml). Keep the copies in sync.
+allow-unwrap-in-tests = true
+allow-expect-in-tests = true
+allow-dbg-in-tests = true
+allow-print-in-tests = true
+doc-valid-idents = ["WebView2", "WKWebView", "WebKitGTK", ".."]
+
+# The std float functions can differ in the last bits between platforms, and a function's
+# samples reach the Score (ADR-0013 §1, F-204). Expressions evaluate through expr/ops.rs,
+# whose operators are libm's; anything else uses libm or sonarithm_core::math. `sqrt`,
+# `abs` and rounding are exact in IEEE 754 and stay allowed.
+disallowed-methods = [
+    { path = "f64::sin", reason = "platform-dependent; use libm::sin (ADR-0013, F-204)" },
+    { path = "f64::cos", reason = "platform-dependent; use libm::cos (ADR-0013, F-204)" },
+    { path = "f64::tan", reason = "platform-dependent; use libm::tan (ADR-0013, F-204)" },
+    { path = "f64::sin_cos", reason = "platform-dependent; use libm::sincos (ADR-0013, F-204)" },
+    { path = "f64::asin", reason = "platform-dependent; use libm::asin (ADR-0013, F-204)" },
+    { path = "f64::acos", reason = "platform-dependent; use libm::acos (ADR-0013, F-204)" },
+    { path = "f64::atan", reason = "platform-dependent; use libm::atan (ADR-0013, F-204)" },
+    { path = "f64::atan2", reason = "platform-dependent; use libm::atan2 (ADR-0013, F-204)" },
+    { path = "f64::sinh", reason = "platform-dependent; use libm::sinh (ADR-0013, F-204)" },
+    { path = "f64::cosh", reason = "platform-dependent; use libm::cosh (ADR-0013, F-204)" },
+    { path = "f64::tanh", reason = "platform-dependent; use libm::tanh (ADR-0013, F-204)" },
+    { path = "f64::asinh", reason = "platform-dependent; use libm::asinh (ADR-0013, F-204)" },
+    { path = "f64::acosh", reason = "platform-dependent; use libm::acosh (ADR-0013, F-204)" },
+    { path = "f64::atanh", reason = "platform-dependent; use libm::atanh (ADR-0013, F-204)" },
+    { path = "f64::exp", reason = "platform-dependent; use libm::exp (ADR-0013, F-204)" },
+    { path = "f64::exp2", reason = "platform-dependent; use libm::exp2 (ADR-0013, F-204)" },
+    { path = "f64::exp_m1", reason = "platform-dependent; use libm::expm1 (ADR-0013, F-204)" },
+    { path = "f64::ln", reason = "platform-dependent; use libm::log (ADR-0013, F-204)" },
+    { path = "f64::ln_1p", reason = "platform-dependent; use libm::log1p (ADR-0013, F-204)" },
+    { path = "f64::log", reason = "platform-dependent; use libm::log (ADR-0013, F-204)" },
+    { path = "f64::log2", reason = "platform-dependent; use libm::log2 (ADR-0013, F-204)" },
+    { path = "f64::log10", reason = "platform-dependent; use libm::log10 (ADR-0013, F-204)" },
+    { path = "f64::powf", reason = "platform-dependent; use libm::pow (ADR-0013, F-204)" },
+    { path = "f64::powi", reason = "platform-dependent; use libm::pow or exact multiplication (ADR-0013, F-204)" },
+    { path = "f64::cbrt", reason = "platform-dependent; use libm::cbrt (ADR-0013, F-204)" },
+    { path = "f64::hypot", reason = "platform-dependent; use libm::hypot (ADR-0013, F-204)" },
+]

@@ -26,6 +26,7 @@ From phase A07, release-plz maintains this file: it generates each release's ent
 
 ### Fixed
 
+- A function now sounds and exports the same on Windows, macOS and Linux. Its values were computed with each system's own maths library, whose results differ in the last digits, so the same function gave slightly different samples, Scores and renders on each system (F-204).
 - The desktop app starts and draws plots under a POSIX "C" locale (for example `LANG=C` on Linux), which made the plot library throw while loading (#436).
 
 ## [0.1.0-alpha] - 2026-10-30

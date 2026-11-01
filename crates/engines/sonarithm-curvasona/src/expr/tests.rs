@@ -233,9 +233,9 @@ fn variables_are_named_constants() {
     let variables = BTreeMap::from([("a".to_owned(), 2.0), ("omega".to_owned(), 3.0)]);
     let expr = Expr::parse("a * sin(omega * x)", &variables, &Limits::DEFAULT).unwrap();
     assert_eq!(expr.canonical(), "a*sin(omega*x)");
-    assert!(close(expr.eval(1.0), 2.0 * 3.0_f64.sin()));
+    assert!(close(expr.eval(1.0), 2.0 * libm::sin(3.0)));
     let dy = expr.derivative().unwrap();
-    assert!(close(dy.eval(1.0), 6.0 * 3.0_f64.cos()));
+    assert!(close(dy.eval(1.0), 6.0 * libm::cos(3.0)));
 }
 
 #[test]
@@ -267,12 +267,14 @@ fn symbolic_derivatives_match_the_calculus() {
     let cases: [Case; 9] = [
         ("x^2", |x| 2.0 * x),
         ("x^3 - 3*x", |x| 3.0 * x * x - 3.0),
-        ("sin(x) / x", |x| (x * x.cos() - x.sin()) / (x * x)),
-        ("exp(-x^2)", |x| -2.0 * x * (-x * x).exp()),
+        ("sin(x) / x", |x| {
+            (x * libm::cos(x) - libm::sin(x)) / (x * x)
+        }),
+        ("exp(-x^2)", |x| -2.0 * x * libm::exp(-x * x)),
         ("ln(x)", |x| 1.0 / x),
         ("sqrt(x)", |x| 0.5 / x.sqrt()),
-        ("tan(x)", |x| 1.0 / (x.cos() * x.cos())),
-        ("sec(x)", |x| x.sin() / (x.cos() * x.cos())),
+        ("tan(x)", |x| 1.0 / (libm::cos(x) * libm::cos(x))),
+        ("sec(x)", |x| libm::sin(x) / (libm::cos(x) * libm::cos(x))),
         ("1 / (x - 1)", |x| -1.0 / ((x - 1.0) * (x - 1.0))),
     ];
     for (text, exact) in cases {
@@ -423,12 +425,12 @@ fn reference(node: &Node, x: f64, a: f64) -> f64 {
         Node::Bin(Op::Sub, l, rr) => r(l) - r(rr),
         Node::Bin(Op::Mul, l, rr) => r(l) * r(rr),
         Node::Bin(Op::Div, l, rr) => r(l) / r(rr),
-        Node::Bin(Op::Pow, l, rr) => r(l).powf(r(rr)),
-        Node::Call1(Func1::Sin, n) => r(n).sin(),
-        Node::Call1(Func1::Exp, n) => r(n).exp(),
+        Node::Bin(Op::Pow, l, rr) => libm::pow(r(l), r(rr)),
+        Node::Call1(Func1::Sin, n) => libm::sin(r(n)),
+        Node::Call1(Func1::Exp, n) => libm::exp(r(n)),
         Node::Call1(Func1::Sqrt, n) => r(n).sqrt(),
         Node::Call1(Func1::Abs, n) => r(n).abs(),
-        Node::Call1(Func1::Cot, n) => 1.0 / r(n).tan(),
+        Node::Call1(Func1::Cot, n) => 1.0 / libm::tan(r(n)),
         Node::Call2(Func2::Max, l, rr) => r(l).max(r(rr)),
         other => unreachable!("not generated: {other:?}"),
     }
