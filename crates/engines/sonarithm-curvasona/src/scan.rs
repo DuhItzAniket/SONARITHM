@@ -371,13 +371,18 @@ fn golden_minimum(g: &Expr, mut a: f64, mut b: f64, sign: f64, counter: &mut Cou
     if fc < fd { c } else { d }
 }
 
-/// The function's behaviour on one side of `x`, from samples at `x ± step·10^-k`.
-fn approach(f: &Expr, x: f64, step: f64, sign: f64, counter: &mut Counter) -> Approach {
+/// `f` at `x + sign·h` for `h` = 10^-2 to 10^-8 grid steps: the probes of one side.
+fn probe(f: &Expr, x: f64, step: f64, sign: f64, counter: &mut Counter) -> [f64; 7] {
     let mut values = [0.0; 7];
     for (k, value) in values.iter_mut().enumerate() {
         let h = step * 10_f64.powi(-2 - i32::try_from(k).unwrap_or(0));
         *value = counter.eval(f, x + sign * h);
     }
+    values
+}
+
+/// The one-sided limit the probes of [`probe`] show.
+fn approach_of(values: &[f64; 7]) -> Approach {
     let Some(&last) = values.last() else {
         return Approach::Undefined;
     };
@@ -429,12 +434,14 @@ fn classify(
     counter: &mut Counter,
 ) -> Option<Singularity> {
     let x = candidate.x;
-    let left = approach(f, x, step, -1.0, counter);
-    let right = approach(f, x, step, 1.0, counter);
+    let below = probe(f, x, step, -1.0, counter);
+    let above = probe(f, x, step, 1.0, counter);
+    let (left, right) = (approach_of(&below), approach_of(&above));
     let kind = match (left, right) {
         _ if left.is_infinite() || right.is_infinite() => SingularityKind::Pole,
         (Approach::Value(l), Approach::Value(r)) => {
-            let same = (l - r).abs() <= 1e-6 * (1.0 + l.abs().max(r.abs()));
+            let same =
+                (l - r).abs() <= 1e-6 * (1.0 + l.abs().max(r.abs())) || closing(&below, &above);
             if !same {
                 SingularityKind::Jump
             } else if candidate.kind == GuardKind::Denominator || !counter.eval(f, x).is_finite() {
@@ -451,6 +458,29 @@ fn classify(
         left,
         right,
     })
+}
+
+/// Whether the two sides meet at the point, judged from their signed difference at the
+/// two closest probes rather than from its size. The difference D(h) between the left and
+/// the right value at probe distance h is, to first order, D₀ + C·h, both at a hole (where
+/// D₀ = 0 and C = −2f′; the h² terms cancel) and at a jump (D₀ = the jump). The probes are
+/// a decade apart (h₅ = 10·h₆), so the line through them meets h = 0 at
+/// D₀ = (10·D₆ − D₅)/9. On a pole's steep slope C·h can dwarf a jump, so the gap alone can
+/// shrink fivefold over two decades and still converge to the jump (Lane U's review of
+/// #445); the extrapolated D₀ tells "converging to 0" from "converging to J" (F-201).
+fn closing(below: &[f64; 7], above: &[f64; 7]) -> bool {
+    let (Some(&l5), Some(&r5), Some(&l6), Some(&r6)) =
+        (below.get(5), above.get(5), below.get(6), above.get(6))
+    else {
+        return false;
+    };
+    let (d5, d6) = (l5 - r5, l6 - r6);
+    if !(d5.is_finite() && d6.is_finite()) {
+        return false;
+    }
+    let limit = (10.0 * d6 - d5) / 9.0;
+    let scale = l6.abs().max(r6.abs());
+    limit.abs() <= 1e-6 * (1.0 + scale)
 }
 
 /// The last point between `defined` and `undefined` where `f` is not `NaN`.

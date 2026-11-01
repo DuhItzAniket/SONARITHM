@@ -213,6 +213,15 @@ announce-legend-cues =
             }
     }
 
+## The explorer's filters (B03-T09): Enter on a filter while a live stream is monitored.
+
+announce-filter-live = Filters cannot change while a live stream is monitored. Stop monitoring first.
+
+## Export (B03-T09): said when an export starts while the explorer's filters exclude a
+## series, because exports render every series.
+
+announce-export-all-series = Export includes all series; exclusions apply to playback only.
+
 ## Audio output (B01-T08, HS-05): the device changed or failed. $device is the new device's
 ## name; $detail is the system's message; $paused is yes when playback was paused by it.
 

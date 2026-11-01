@@ -71,6 +71,8 @@ fn requests(dir: &TempDir) -> Vec<Value> {
         json!({ "command": "transport_play" }),
         json!({ "command": "transport_pause" }),
         json!({ "command": "announce_repeat" }),
+        json!({ "command": "nav_move", "args": { "verb": { "verb": "into" } } }),
+        json!({ "command": "nav_where" }),
         json!({ "command": "stream_offer", "args": { "transport": "tail", "path": csv } }),
         // The first offer's token.
         json!({ "command": "stream_connect", "args": { "token": 1 } }),

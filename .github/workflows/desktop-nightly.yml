@@ -130,6 +130,8 @@ jobs:
           # Absolute report paths: the AppImage's AppRun changes the working directory.
           ${DISPLAY_WRAP:-} "$APP" --smoke "$GITHUB_WORKSPACE/smoke.json"
           echo '### Installed nightly smoke test (${{ runner.os }})' >> "$GITHUB_STEP_SUMMARY"
+          # Also in the log: step summaries have no API, logs do, so PB-08 values can be read (B04-T08).
+          cat smoke.json
           { echo '```json'; cat smoke.json; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
       - if: failure() && hashFiles('smoke.json') != ''
         run: cat smoke.json

@@ -120,6 +120,13 @@ pub fn typescript() -> String {
     declare::<crate::ipc::CursorOrigin>(&mut out, &cfg);
     declare::<crate::ipc::CursorPathItem>(&mut out, &cfg);
     declare::<crate::ipc::PathLevel>(&mut out, &cfg);
+    declare::<crate::ipc::SeriesRef>(&mut out, &cfg);
+    declare::<crate::ipc::NavVerb>(&mut out, &cfg);
+    declare::<crate::ipc::NavLandmark>(&mut out, &cfg);
+    declare::<crate::ipc::NavX>(&mut out, &cfg);
+    declare::<crate::ipc::NavOutcome>(&mut out, &cfg);
+    declare::<crate::ipc::NavResult>(&mut out, &cfg);
+    declare::<crate::ipc::NavSpan>(&mut out, &cfg);
     declare::<ExportRequest>(&mut out, &cfg);
     declare::<ExportResult>(&mut out, &cfg);
     declare::<JobKind>(&mut out, &cfg);

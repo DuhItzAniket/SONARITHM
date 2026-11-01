@@ -330,6 +330,26 @@ fn enter_toggles_filters_and_describes_points() {
     );
 }
 
+/// A11Y-10: a move from outside the verbs (a table row, a plot click) keeps the series
+/// the filters took out, and refuses a node the tree does not have (B03-T09).
+#[test]
+fn a11y_10_placing_the_cursor_keeps_the_excluded_series() {
+    let tree = fixture();
+    let filter = tree.children(tree.landmark("filters").unwrap())[0];
+    let mut cursor = Cursor::at(&tree, filter).unwrap();
+    let Outcome::Toggled { series, .. } = cursor.apply(&tree, &Verb::Activate) else {
+        panic!("Enter toggles");
+    };
+    let point = tree.points(tree.series().next().unwrap())[1];
+    assert!(cursor.place(&tree, point));
+    assert_eq!(cursor.node(), point);
+    assert!(cursor.is_excluded(series));
+    assert!(!cursor.place(&tree, NavNodeId(u32::MAX)));
+    assert_eq!(cursor.node(), point);
+    cursor.set_excluded([]);
+    assert!(!cursor.is_excluded(series));
+}
+
 /// A11Y-07: "where am I" is defined at every node, from the root to the cursor, with
 /// positions counted among peers ("point 13 of 20", "series 1 of 2").
 #[test]
