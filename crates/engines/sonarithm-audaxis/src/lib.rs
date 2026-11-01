@@ -93,6 +93,11 @@ impl<D: Borrow<DataBundle>> ContextProvider<D> for Context {
         context::tracks(&spec, score, data.borrow(), annotations, cx)
     }
 
+    /// AUDAXIS serves `context`: ticks, the reference tone, the legend and earcons.
+    fn serves_context_cues(&self) -> bool {
+        true
+    }
+
     fn nav_tree(
         &self,
         spec: &SpecFragment,
