@@ -27,7 +27,9 @@ export interface CommandSpec {
  * scoped to the explorer: its single keys work only there (KB-02, WCAG 2.1.4), Jump is Ctrl
  * on Windows and Linux and Option on macOS, and no binding takes a screen reader's keys
  * (§12: never Insert, CapsLock, the numpad or Ctrl+Option). Compare (C), selection
- * (Shift+arrows), polarity (P), the query menu (Q) and the braille mode (Shift+B) join with
+ * (Shift+arrows), polarity (P), the query menu (Q), the legend (L), zoom to the node (Z,
+ * Shift+Z), and the modality and verbosity toggles (T, S, B, Shift+B, V, Shift+T: they need
+ * the app core to act on the effective modalities, B03-T09 follow-up) join with
  * their features; A, J, K, M, O and U stay free and E reserved.
  */
 export const DEFAULT_KEYMAP: readonly CommandSpec[] = [
@@ -362,37 +364,7 @@ export const DEFAULT_KEYMAP: readonly CommandSpec[] = [
     id: "help.explorer",
     name: "command-help-explorer",
     scope: "explorer",
-    keys: ["H"],
-  },
-  {
-    id: "mod.speech",
-    name: "command-mod-speech",
-    scope: "explorer",
-    keys: ["T"],
-  },
-  {
-    id: "mod.verbosity",
-    name: "command-mod-verbosity",
-    scope: "explorer",
-    keys: ["Shift+T"],
-  },
-  {
-    id: "mod.sonification",
-    name: "command-mod-sonification",
-    scope: "explorer",
-    keys: ["S"],
-  },
-  {
-    id: "mod.braille",
-    name: "command-mod-braille",
-    scope: "explorer",
-    keys: ["B"],
-  },
-  {
-    id: "mod.visual",
-    name: "command-mod-visual",
-    scope: "explorer",
-    keys: ["V"],
+    keys: ["H", "F1"],
   },
   {
     // B04-T07 (A11Y-26): the alternative to dragging the plot sideways; palette and toolbar.

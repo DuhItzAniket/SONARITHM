@@ -160,26 +160,16 @@ test("b03_t09_go_to_asks_for_an_x_and_returns_the_focus", async ({ page }) => {
     .toBe(true);
 });
 
-test("b03_t09_modality_and_verbosity_toggles_save_the_settings", async ({
-  page,
-}) => {
-  const settings = async () =>
-    (await host(page)).evaluate((mock) => mock.settings());
-  await explorer(page).focus();
-  await page.keyboard.press("s");
-  await expect
-    .poll(async () => (await settings()).modalities.sonification)
-    .toBe(false);
-  await page.keyboard.press("Shift+T");
-  await expect.poll(async () => (await settings()).verbosity).toBe("verbose");
-  await page.keyboard.press("s");
-  await expect
-    .poll(async () => (await settings()).modalities.sonification)
-    .toBe(true);
-  // Each toggle says what it did, politely.
-  await expect(
-    page.locator('[data-announcer] [aria-live="polite"]'),
-  ).toHaveText("Sonification on");
+test("kb_01_the_explorer_is_reached_from_any_tab", async ({ page }) => {
+  // From the Table tab, "Go to the chart explorer" selects Plot and focuses the explorer.
+  await page.getByRole("tab", { name: "Table" }).click();
+  await expect(explorer(page)).toHaveCount(0);
+  const { primary } = await modifiers(page);
+  await page.keyboard.press(`${primary}+Shift+C`);
+  await expect(explorer(page)).toBeFocused();
+  // F1 in the explorer is its own help (keyboard §5.4).
+  await page.keyboard.press("F1");
+  await expect(page.getByRole("dialog")).toContainText("Next at this level");
 });
 
 test("b03_t09_h_lists_the_explorer_keys_first", async ({ page }) => {

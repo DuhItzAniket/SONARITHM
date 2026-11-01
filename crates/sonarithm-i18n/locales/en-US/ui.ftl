@@ -139,23 +139,6 @@ ui-explorer-go-to-action = Go
 ui-explorer-find = Find a value
 ui-explorer-find-value = Value
 ui-explorer-find-action = Find
-# Said after a modality toggle (T, S, B, V); $on is yes or no.
-ui-modality-changed =
-    { $modality ->
-        [speech] Speech
-        [sonification] Sonification
-        [braille] Braille
-       *[visual] Visual highlight
-    } { $on ->
-        [yes] on
-       *[no] off
-    }
-# Said after Shift+T.
-ui-verbosity-changed =
-    { $verbosity ->
-        [verbose] Verbose announcements
-       *[terse] Terse announcements
-    }
 # The cursor's row in the dataset's own order, from 1; $index is a number.
 ui-cursor-row = Data row { $index }
 ui-cursor-none = No row is selected.
@@ -261,11 +244,6 @@ command-nav-find-value = Find a value…
 command-nav-where-am-i = Where am I
 command-nav-repeat = Repeat the last announcement
 command-help-explorer = Explorer keys
-command-mod-speech = Speech on or off
-command-mod-verbosity = Terse or verbose announcements
-command-mod-sonification = Sonification on or off
-command-mod-braille = Braille on or off
-command-mod-visual = Visual highlight on or off
 # The palette's result count, announced as it filters; $count is a number.
 command-results =
     { $count ->
