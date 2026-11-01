@@ -836,7 +836,11 @@ impl<'l> Composer<'l> {
             }
             NavKind::Insight(insight) => {
                 let word = self.message("announce-insight", &Args::new())?;
-                let label = node.label.as_deref().map(|l| self.text(l)).transpose()?;
+                let label = node
+                    .label
+                    .as_deref()
+                    .map(|l| self.insight_label(insight.analyzer.as_str(), l))
+                    .transpose()?;
                 pieces.name = Some(
                     self.join(
                         &[Some(word), label]
@@ -888,11 +892,30 @@ impl<'l> Composer<'l> {
     fn insight_tags(&self, tree: &NavTree, id: NavNodeId) -> Result<Vec<String>, I18nError> {
         tree.iter()
             .filter_map(|(_, node)| match &node.kind {
-                NavKind::Insight(insight) if insight.target == Some(id) => node.label.as_deref(),
+                NavKind::Insight(insight) if insight.target == Some(id) => node
+                    .label
+                    .as_deref()
+                    .map(|label| (insight.analyzer.as_str(), label)),
                 _ => None,
             })
-            .map(|label| self.text(label))
+            .map(|(analyzer, label)| self.insight_label(analyzer, label))
             .collect()
+    }
+
+    /// An insight's label: the catalogue's `insight-<analyzer>-<label>` when it has one
+    /// (CURVASONA's critical points, function.ftl), else the label as written, as data
+    /// (F-191). The ID uses the analyzer and the label with spaces as hyphens.
+    fn insight_label(&self, analyzer: &str, label: &str) -> Result<String, I18nError> {
+        let id = format!(
+            "insight-{}-{}",
+            analyzer.replace(' ', "-"),
+            label.replace(' ', "-")
+        );
+        if self.localizer.has_message(&id) {
+            self.message(&id, &Args::new())
+        } else {
+            self.text(label)
+        }
     }
 
     fn provenance(

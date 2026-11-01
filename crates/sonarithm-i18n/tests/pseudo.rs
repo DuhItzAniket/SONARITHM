@@ -74,6 +74,16 @@ fn sample_args(style: UnitStyle) -> Args {
         .text("condition", "15")
         .text("device", "16")
         .text("paused", "yes")
+        // Functions (function.ftl): the label is a catalogue message, the rest data.
+        .text("label", "19")
+        .text("y", "20")
+        .text("end", "21")
+        .text("expr", "22")
+        .text("min", "23")
+        .text("max", "24")
+        .text("grid", "25")
+        .text("counts", "26")
+        .text("step", "27")
 }
 
 #[test]

@@ -143,6 +143,8 @@ The `function` source adds a row at each zero, extremum and inflection (as at po
 
 **As built (C03-T07).** CURVASONA is one of the facade's default engines, but it joins a compile only when the spec uses it (a `function` source, an `audify` track or `critical-points` detection), because a registered context provider is recorded in every Score's header (F-197). `offscreen_features(data, window)` gives the spans that leave a pitch window as features, and `cues::window` reads that window from a spec, so a text list can match the off-screen cues. The facade's `read_function` (`Function`: `critical_points`, `summary`, `spec`) is described in 11 §1.
 
+**As built (C03-T08, text).** A function's critical-point list and summary come from the catalogue `function.ftl` (`function-kind-*`, `function-count-*` with plurals, the entry templates and `function-summary`), in any locale (`critical_points_in`, `summary_in`); numbers are formatted by the locale without grouping, so the English text is the same as before byte for byte. AUDAXIS announces an insight of analyzer A with label L through `insight-A-L` when the catalogue has it, else L as written; `function.ftl` names CURVASONA's twelve kinds, so a critical point is spoken in the listener's language (F-191). No core type changed.
+
 ## AXONOTE (`sonarithm-axonote`), C04
 
 **Registers:** Shaper `Quantize` (presentation only); VoiceProvider for the instrument library; Sinks for MIDI file, live MIDI and OSC. The engine crate stays pure and builds for `wasm32`; live MIDI ports and OSC sockets live in the leaf crate `sonarithm-axonote-live` ([02 §2](02-repository-and-crate-layout.md#2-crate-catalogue), placement decided in C04-T01).

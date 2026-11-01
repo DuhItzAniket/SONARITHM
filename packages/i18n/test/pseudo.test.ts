@@ -72,6 +72,16 @@ function sampleArgs(style: string): MessageArgs {
     condition: "15",
     device: "16",
     paused: "yes",
+    // Functions (function.ftl): the label is a catalogue message, the rest data.
+    label: "19",
+    y: "20",
+    end: "21",
+    expr: "22",
+    min: "23",
+    max: "24",
+    grid: "25",
+    counts: "26",
+    step: "27",
   };
 }
 

@@ -27,6 +27,7 @@ use sonarithm_curvasona::{
     offscreen_features, sample_function,
 };
 use sonarithm_data::{BundleId, DataBundle};
+use sonarithm_i18n::{Args, I18nError, Localizer, Number, NumberOptions};
 
 use crate::error::Error;
 use crate::spec::Spec;
@@ -185,6 +186,25 @@ impl Function {
     /// no cue, are listed too), so the list is their text equivalent (A11Y-24, A11Y-28).
     #[must_use]
     pub fn critical_points(&self) -> Vec<CriticalPoint> {
+        Localizer::new(sonarithm_i18n::SOURCE_LOCALE)
+            .and_then(|l| self.critical_points_with(&l))
+            .unwrap_or_else(|_| self.critical_points_english())
+    }
+
+    /// [`Function::critical_points`] with their text in `locale` (or the pseudo-locale
+    /// `en-XA`), from the catalogue (`function.ftl`).
+    ///
+    /// # Errors
+    ///
+    /// [`Error::Render`] with the catalogue's error when the locale has no catalogue.
+    pub fn critical_points_in(&self, locale: &str) -> Result<Vec<CriticalPoint>, Error> {
+        Localizer::new(locale)
+            .and_then(|l| self.critical_points_with(&l))
+            .map_err(|err| Error::Render(err.to_string()))
+    }
+
+    /// The features in increasing `x` with their first rows.
+    fn sorted_features(&self) -> Vec<(Feature, Option<u64>)> {
         let mut features: Vec<Feature> = self.sampled.features.clone();
         if let Some(window) = self.window {
             features.extend(offscreen_features(
@@ -196,11 +216,27 @@ impl Function {
         features.sort_by(|a, b| a.x.total_cmp(&b.x).then(a.kind.cmp(&b.kind)));
         let rows =
             sonarithm_curvasona::feature_rows(&self.sampled.bundle, &features, &Budgets::DEFAULT);
-        features
+        features.into_iter().zip(rows).collect()
+    }
+
+    fn critical_points_with(&self, l: &Localizer) -> Result<Vec<CriticalPoint>, I18nError> {
+        self.sorted_features()
             .iter()
-            .zip(rows)
+            .map(|(feature, row)| {
+                Ok(CriticalPoint {
+                    row: *row,
+                    text: entry_text(l, feature)?,
+                    ..critical_point(feature)
+                })
+            })
+            .collect()
+    }
+
+    fn critical_points_english(&self) -> Vec<CriticalPoint> {
+        self.sorted_features()
+            .iter()
             .map(|(feature, row)| CriticalPoint {
-                row,
+                row: *row,
                 ..critical_point(feature)
             })
             .collect()
@@ -210,6 +246,65 @@ impl Function {
     /// "f(x) = x^2 - 1 from x = -2 to 2, 1000 samples: 2 zeros, 1 local minimum".
     #[must_use]
     pub fn summary(&self) -> String {
+        Localizer::new(sonarithm_i18n::SOURCE_LOCALE)
+            .and_then(|l| self.summary_with(&l))
+            .unwrap_or_else(|_| self.summary_english())
+    }
+
+    /// [`Function::summary`] in `locale` (or the pseudo-locale `en-XA`).
+    ///
+    /// # Errors
+    ///
+    /// [`Error::Render`] with the catalogue's error when the locale has no catalogue.
+    pub fn summary_in(&self, locale: &str) -> Result<String, Error> {
+        Localizer::new(locale)
+            .and_then(|l| self.summary_with(&l))
+            .map_err(|err| Error::Render(err.to_string()))
+    }
+
+    fn summary_with(&self, l: &Localizer) -> Result<String, I18nError> {
+        let [low, high] = self.source.domain;
+        let grid = match (self.source.step, self.source.samples) {
+            (Some(step), _) => l.format(
+                "function-grid-step",
+                &Args::new().number_with("step", text_number(step)),
+            )?,
+            (None, samples) => l.format(
+                "function-grid-samples",
+                &Args::new().number_with("count", count_number(samples.map_or(1000, |s| usize::try_from(s).unwrap_or(usize::MAX)))),
+            )?,
+        };
+        let mut counts: Vec<(&'static str, usize)> = Vec::new();
+        for (feature, _) in self.sorted_features() {
+            let kind = feature.kind.label();
+            match counts.iter_mut().find(|(k, _)| *k == kind) {
+                Some((_, count)) => *count += 1,
+                None => counts.push((kind, 1)),
+            }
+        }
+        let args = Args::new()
+            .text("expr", self.expr())
+            .number_with("min", text_number(low))
+            .number_with("max", text_number(high))
+            .text("grid", grid);
+        if counts.is_empty() {
+            return l.format("function-summary-none", &args);
+        }
+        let parts = counts
+            .iter()
+            .map(|(kind, count)| {
+                l.format(
+                    &format!("function-count-{}", slug(kind)),
+                    &Args::new().number_with("count", count_number(*count)),
+                )
+            })
+            .collect::<Result<Vec<_>, _>>()?;
+        let separator = l.format("function-list-separator", &Args::new())?;
+        l.format("function-summary", &args.text("counts", parts.join(&separator)))
+    }
+
+    /// The summary without the catalogue, if it cannot be read.
+    fn summary_english(&self) -> String {
         let [low, high] = self.source.domain;
         let grid = match (self.source.step, self.source.samples) {
             (Some(step), _) => format!("a step of {}", number(step)),
@@ -222,7 +317,7 @@ impl Function {
             number(low),
             number(high)
         );
-        let points = self.critical_points();
+        let points = self.critical_points_english();
         let mut counts: Vec<(&'static str, usize)> = Vec::new();
         for point in &points {
             match counts.iter_mut().find(|(kind, _)| *kind == point.kind) {
@@ -315,6 +410,59 @@ pub fn check_expression(expr: &str, variables: &BTreeMap<String, f64>) -> Expres
             canonical: None,
             span: err.span(),
             diagnostic: Some(err.to_diagnostic()),
+        },
+    }
+}
+
+/// A catalogue message ID's form of a label: `local maximum` → `local-maximum`.
+fn slug(label: &str) -> String {
+    label.replace(' ', "-")
+}
+
+/// A coordinate for text: at most four fraction digits, no grouping, never `-0`, in the
+/// locale's digits; in English the same text as [`number`].
+fn text_number(value: f64) -> Number {
+    let value = if value.abs() < 5e-5 { 0.0 } else { value };
+    let mut options = NumberOptions::default().without_grouping();
+    options.max_fraction = Some(4);
+    Number::with_options(value, options)
+}
+
+/// A count for text, without grouping ("1000 samples", as the CLI prints).
+fn count_number(count: usize) -> Number {
+    let value = u32::try_from(count).map_or(f64::from(u32::MAX), f64::from);
+    Number::with_options(value, NumberOptions::default().without_grouping())
+}
+
+/// An entry of the list from the catalogue (`function.ftl`).
+fn entry_text(l: &Localizer, feature: &Feature) -> Result<String, I18nError> {
+    let label = l.format(
+        &format!("function-kind-{}", slug(feature.kind.label())),
+        &Args::new(),
+    )?;
+    let args = Args::new().text("label", label.clone());
+    let x = text_number(feature.x);
+    match feature.kind {
+        FeatureKind::HorizontalAsymptote { .. } => match feature.y {
+            Some(y) => l.format(
+                "function-asymptote-value",
+                &args.number_with("y", text_number(y)),
+            ),
+            None => Ok(label),
+        },
+        FeatureKind::Zero => l.format("function-point", &args.number_with("x", x)),
+        _ if !feature.is_point() => l.format(
+            "function-span",
+            &args
+                .number_with("x", x)
+                .number_with("end", text_number(feature.end)),
+        ),
+        _ => match feature.y {
+            Some(y) => l.format(
+                "function-point-value",
+                &args.number_with("x", x).number_with("y", text_number(y)),
+            ),
+            None => l.format("function-point", &args.number_with("x", x)),
         },
     }
 }

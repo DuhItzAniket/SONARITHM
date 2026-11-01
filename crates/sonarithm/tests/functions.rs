@@ -305,3 +305,63 @@ fn f_200_each_earcon_sounds_at_its_rows_glide_breakpoint() {
         );
     }
 }
+
+/// F-191, C03-T08: a function's text comes from the catalogue (function.ftl). English is
+/// what the CLI prints; the pseudo-locale transforms every word of it, so none is
+/// hard-coded.
+#[test]
+fn f_191_function_text_comes_from_the_catalogue() {
+    let function = read_function(&FunctionSpec::new("x^3 - 3*x", [-3.0, 3.0])).unwrap();
+    let english: Vec<String> = function
+        .critical_points()
+        .into_iter()
+        .map(|p| p.text)
+        .collect();
+    let pseudo = function
+        .critical_points_in(sonarithm_i18n::PSEUDO_LOCALE)
+        .unwrap();
+    assert_eq!(pseudo.len(), english.len());
+    for (p, e) in pseudo.iter().zip(&english) {
+        assert_ne!(&p.text, e);
+        sonarithm_i18n::check_pseudo(&p.text).unwrap_or_else(|issue| panic!("{issue}: {}", p.text));
+    }
+    let summary = function.summary_in(sonarithm_i18n::PSEUDO_LOCALE).unwrap();
+    sonarithm_i18n::check_pseudo(&summary).unwrap_or_else(|issue| panic!("{issue}: {summary}"));
+    assert!(!summary.contains("local maximum"), "{summary}");
+}
+
+/// F-191, C03-T08: AUDAXIS announces a critical point's insight with the catalogue's name
+/// for it (`insight-critical-points-local-minimum`), so another locale says it in its own
+/// words; English is unchanged.
+#[test]
+fn f_191_critical_point_insights_are_announced_from_the_catalogue() {
+    use sonarithm_audaxis::announce::{Composer, Settings};
+    use sonarithm_core::nav::NavKind;
+    use sonarithm_i18n::{Localizer, PSEUDO_LOCALE, SOURCE_LOCALE};
+
+    let snr = Sonarithm::builder()
+        .with_default_engines()
+        .with_navigation()
+        .build()
+        .unwrap();
+    let function = read_function(&FunctionSpec::new("x^2 - 1", [-2.0, 2.0])).unwrap();
+    let compiled = snr.compile(&function.spec()).unwrap();
+    let tree = compiled.nav().unwrap();
+    let node = tree
+        .iter()
+        .find(|(_, n)| {
+            matches!(n.kind, NavKind::Insight(_)) && n.label.as_deref() == Some("local minimum")
+        })
+        .map(|(id, _)| id)
+        .unwrap();
+    let english = Localizer::new(SOURCE_LOCALE).unwrap();
+    let said = Composer::new(&english, Settings::default())
+        .node(tree, node)
+        .unwrap();
+    assert!(said.speech.contains("local minimum"), "{}", said.speech);
+    let pseudo = Localizer::new(PSEUDO_LOCALE).unwrap();
+    let said = Composer::new(&pseudo, Settings::default())
+        .node(tree, node)
+        .unwrap();
+    assert!(!said.speech.contains("local minimum"), "{}", said.speech);
+}
