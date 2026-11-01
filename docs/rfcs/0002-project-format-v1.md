@@ -191,6 +191,7 @@ A fuzz target (`project_open`) runs the reader on arbitrary bytes in `nightly.ym
 | Date | Change | Approved |
 |---|---|---|
 | 2026-11-01 | `formatVersion` 1.1: `storage: "function"`; unknown storages read as unavailable datasets and kept on re-save; 1.1 written only when needed | Coordinator, under the owner's delegation of contract approvals (C03-T08) |
+| 2026-11-01 | Implemented in `sonarithm_app::project` (C03-T08): the tests of the list below, with the `future-kind` fixture crafted by hand; `SNR-APP-089` retired | — |
 
 **Why.** C03-T08 opens a function as a dataset (ADR-0017 "Functions"): its table is sampled from an expression, so no file backs it. Format 1.0 can only link a file or embed a Parquet snapshot. Embedding the samples would save numbers that look like data and lose the function: the expression, the domain and the critical points CURVASONA finds from it (07 CURVASONA). A project reopened that way would no longer be a function, and its cues would come from whatever the analyzer could still read. So until this amendment is implemented, saving a project with a function dataset is refused with `SNR-APP-089` (C03-T08a), and the format gains a storage that holds the definition instead.
 

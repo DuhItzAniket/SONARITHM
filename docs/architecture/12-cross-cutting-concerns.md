@@ -74,7 +74,7 @@ project.sonarithm
 - Projects never store secrets (API keys) or absolute user paths.
 - Version 1 of the format is fixed by [RFC-0002](../rfcs/0002-project-format-v1.md) ([ADR-0018](../decisions/0018-project-format-v1.md)).
 
-**Amendment (2026-11-01, format 1.1).** A dataset may be stored as a function's definition (`storage: "function"`) and is re-sampled on read; a dataset with a storage the reader does not know opens as unavailable and is kept on re-save ([RFC-0002 §12](../rfcs/0002-project-format-v1.md#12-amendment-1-2026-11-01-format-11-function-datasets-and-unknown-storages)). Until it is implemented, saving a project with a function dataset is refused (`SNR-APP-089`).
+**Amendment (2026-11-01, format 1.1).** A dataset may be stored as a function's definition (`storage: "function"`) and is re-sampled on read; a dataset with a storage the reader does not know opens as unavailable and is kept on re-save ([RFC-0002 §12](../rfcs/0002-project-format-v1.md#12-amendment-1-2026-11-01-format-11-function-datasets-and-unknown-storages)). Implemented in C03-T08: `sonarithm_app::project` reads and writes 1.1, and `SNR-APP-089` is retired.
 
 ## 5. Internationalization and localization
 
