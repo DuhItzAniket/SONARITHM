@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: 2026 SONARITHM contributors
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
-// First: fixes navigator.language before any module reads it (uPlot does at load; #436).
+// First: fixes navigator.language before any module reads it (uPlot does at load; F-210).
 import "./locale.ts";
 import "@sonarithm/ui/tokens.css";
 import "@sonarithm/ui/fonts.css";

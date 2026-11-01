@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: 2026 SONARITHM contributors
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
-// The app under a POSIX "C" locale (#436): WebKitGTK reports the process locale as
+// The app under a POSIX "C" locale (F-210): WebKitGTK reports the process locale as
 // navigator.language, and uPlot formats with it when its module loads. The page must start
 // and the plot must draw anyway.
 import { expect, test } from "@playwright/test";

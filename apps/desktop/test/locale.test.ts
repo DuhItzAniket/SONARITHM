@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: 2026 SONARITHM contributors
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
-// navigator.language under LANG=C (#436's Linux smoke run).
+// navigator.language under LANG=C (F-210; #436's Linux smoke run).
 import assert from "node:assert/strict";
 import { test } from "node:test";
 

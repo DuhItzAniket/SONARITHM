@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
 /**
- * A locale tag that `Intl` and Fluent accept, from whatever the system reports.
+ * A locale tag that `Intl` and Fluent accept, from whatever the system reports (F-210).
  *
  * POSIX locale names are not BCP 47 tags: `C` and `POSIX` (with or without
  * `.UTF-8` or an `@modifier`) name no language, and `en_US.UTF-8` or `de_DE@euro`

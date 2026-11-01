@@ -10,7 +10,7 @@ interface LocaleSource {
 }
 
 /**
- * Makes `navigator.language` and `navigator.languages` tags that `Intl` accepts.
+ * Makes `navigator.language` and `navigator.languages` tags that `Intl` accepts (F-210).
  * WebKitGTK reports the process locale, so under `LANG=C` they are "C", and uPlot 1.6.32
  * runs `new Intl.NumberFormat(navigator.language)` when its module loads, which throws and
  * stops the page. Only invalid values are replaced, with `normalizeLocale`'s result; valid

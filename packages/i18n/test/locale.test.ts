@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: 2026 SONARITHM contributors
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
-// System locale names that Intl rejects (#436's Linux smoke run under LANG=C).
+// System locale names that Intl rejects (F-210; #436's Linux smoke run under LANG=C).
 import assert from "node:assert/strict";
 import { test } from "node:test";
 
