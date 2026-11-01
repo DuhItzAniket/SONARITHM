@@ -100,3 +100,51 @@ test("b04_t06_a_cursor_moved_elsewhere_selects_its_row_and_never_moves_focus", a
   await expect.poll(() => selectedRows(page)).toEqual(["5,001"]);
   await expect(page.getByRole("tab", { name: "Table" })).toBeFocused();
 });
+
+/** The readout's row and the crosshair's x, read in one evaluation: the same frame. */
+const shown = (page: Page) =>
+  page.evaluate(() => {
+    const line = document.querySelector<HTMLElement>("[data-plot-cursor]");
+    return {
+      readout:
+        document.querySelector("[data-cursor-readout] p")?.textContent ?? null,
+      crosshair:
+        line === null || line.hidden ? null : (line.dataset.cursorX ?? null),
+    };
+  });
+
+test("b04_t06_t_10_the_table_and_the_plot_show_the_same_cursor", async ({
+  page,
+}) => {
+  // Table to plot: the focused row's x is where the plot's crosshair stands.
+  await grid(page).getByRole("rowheader").first().focus();
+  await page.keyboard.press("ArrowDown");
+  await page.keyboard.press("ArrowDown");
+  await expect(readout(page)).toContainText("Data row 3");
+  await page.getByRole("tab", { name: "Plot" }).click();
+  const plot = page.getByRole("img", { name: /temperature/ });
+  await expect(plot).toBeVisible();
+  await expect
+    .poll(() => shown(page))
+    .toEqual({ readout: "Data row 3", crosshair: "0.2" });
+
+  // Plot to table: a click moves the cursor (origin plot) to the nearest drawn row.
+  const over = page.locator(".u-over");
+  const box = await over.boundingBox();
+  if (box === null) throw new Error("no plotting area");
+  await page.mouse.click(box.x + box.width / 2, box.y + box.height / 2);
+  await expect
+    .poll(
+      async () => (await (await host(page)).evaluate((m) => m.cursor())).origin,
+    )
+    .toBe("plot");
+  const row = (await (await host(page)).evaluate((m) => m.cursor())).row ?? 0;
+  const number = (row + 1).toLocaleString("en-US");
+  // Both views follow the one cursor event in the same frame.
+  await expect
+    .poll(() => shown(page))
+    .toEqual({ readout: `Data row ${number}`, crosshair: String(row / 10) });
+  await page.getByRole("tab", { name: "Table" }).click();
+  await expect.poll(() => selectedRows(page)).toEqual([number]);
+  expect(await seriousViolations(page)).toEqual([]);
+});

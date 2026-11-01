@@ -37,6 +37,22 @@ export interface PlotProps {
   readonly series: readonly PlotSeries[];
   /** The plot area's height in CSS pixels; the width follows the container. */
   readonly height: number;
+  /**
+   * The shared cursor's point (B04-T06): a crosshair at `x` and a marker at `y` when it is
+   * known. Rust owns the cursor; the plot only shows it.
+   */
+  readonly cursor?: PlotCursor | null;
+  /**
+   * Called with the x value under a click (B04-T06): the caller moves the cursor to the
+   * nearest row. Pointers only; the table and the chart explorer are the keyboard ways.
+   */
+  readonly onPick?: (x: number) => void;
+}
+
+/** Where the cursor is on the plot, in data units. */
+export interface PlotCursor {
+  readonly x: number;
+  readonly y: number | null;
 }
 
 /** Changes whenever the theme can change: the `data-theme` setting or the OS preferences. */
@@ -80,10 +96,48 @@ function useThemeVersion(): number {
  * (DL-X11); the linked cursor arrives with B04-T06. Colours are read from the tokens and
  * the plot is redrawn when the theme changes.
  */
-export function Plot({ summary, x, series, height }: PlotProps) {
+export function Plot({
+  summary,
+  x,
+  series,
+  height,
+  cursor,
+  onPick,
+}: PlotProps) {
   const descriptionId = useId();
   const area = useRef<HTMLDivElement>(null);
   const theme = useThemeVersion();
+  const plotRef = useRef<uPlot | null>(null);
+  const overlay = useRef<{
+    line: HTMLDivElement;
+    marker: HTMLDivElement;
+  } | null>(null);
+  // Read by uPlot's hooks and the click listener, so a new cursor or callback does not
+  // rebuild the plot.
+  const latest = useRef({ cursor, onPick });
+  useEffect(() => {
+    latest.current = { cursor, onPick };
+  });
+
+  /** Puts the crosshair and the marker at the cursor, or hides them. */
+  const place = (plot: uPlot) => {
+    const parts = overlay.current;
+    if (parts === null) return;
+    const point = latest.current.cursor;
+    if (point === null || point === undefined) {
+      parts.line.hidden = true;
+      parts.marker.hidden = true;
+      return;
+    }
+    const left = plot.valToPos(point.x, "x");
+    const inside = left >= 0 && left <= plot.over.clientWidth;
+    parts.line.hidden = !inside;
+    parts.line.style.transform = `translateX(${String(left)}px)`;
+    parts.line.dataset.cursorX = String(point.x);
+    const top = point.y === null ? Number.NaN : plot.valToPos(point.y, "y");
+    parts.marker.hidden = !inside || Number.isNaN(top);
+    parts.marker.style.transform = `translate(${String(left)}px, ${String(top)}px)`;
+  };
 
   useEffect(() => {
     const element = area.current;
@@ -126,15 +180,39 @@ export function Plot({ summary, x, series, height }: PlotProps) {
       ...series.map((s) => Array.from(s.values)),
     ] as uPlot.AlignedData;
     const plot = new uPlot(options, data, element);
+    plotRef.current = plot;
+    // The cursor's crosshair and marker live in uPlot's overlay, over the plotting area.
+    const line = document.createElement("div");
+    line.className = styles.crosshair ?? "";
+    line.dataset.plotCursor = "";
+    const marker = document.createElement("div");
+    marker.className = styles.marker ?? "";
+    plot.over.append(line, marker);
+    overlay.current = { line, marker };
+    place(plot);
+    const pick = (event: MouseEvent) => {
+      const value = plot.posToVal(event.offsetX, "x");
+      if (Number.isFinite(value)) latest.current.onPick?.(value);
+    };
+    plot.over.addEventListener("click", pick);
     const resize = new ResizeObserver(() => {
       plot.setSize({ width: Math.max(element.clientWidth, 1), height });
+      place(plot);
     });
     resize.observe(element);
     return () => {
       resize.disconnect();
+      plot.over.removeEventListener("click", pick);
+      overlay.current = null;
+      plotRef.current = null;
       plot.destroy();
     };
   }, [x, series, height, theme]);
+
+  // A cursor move repositions the crosshair without rebuilding or redrawing the plot.
+  useEffect(() => {
+    if (plotRef.current !== null) place(plotRef.current);
+  }, [cursor?.x, cursor?.y]);
 
   return (
     <div
