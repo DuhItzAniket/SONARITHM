@@ -1,0 +1,2512 @@
+{
+  "01-parabola": {
+    "cues": null,
+    "data": {
+      "fingerprint": "sha256:d5032a7632869f7248f6c65f2ee825582e620210228c3e69f97b8d9c27813088",
+      "provenance": {},
+      "source": {
+        "kind": "inline",
+        "name": "inline"
+      }
+    },
+    "manifestVersion": 2,
+    "output": {
+      "bitsPerSample": 24,
+      "channels": 2,
+      "file": "01-parabola.wav",
+      "format": "wav",
+      "frames": 384000,
+      "gainDb": 0.0,
+      "integratedLufs": -26.65,
+      "limitedFrames": 0,
+      "sha256": "sha256:066205bbf2fab8fc418f493d5796559e72938f5a925c12d1368cc86050b79949",
+      "truePeakDbtp": -8.97
+    },
+    "render": {
+      "blockSize": 256,
+      "durationS": 8.0,
+      "loudnessCompensationPhon": 60.0,
+      "mode": "analysis",
+      "sampleRate": 48000,
+      "seed": 0
+    },
+    "score": {
+      "irVersion": 2,
+      "releaseIndependentHash": "sha256:33d4fd22e1725715d38a73e311923d7f7af3ef5a2b1a25553fef93854b20650f"
+    },
+    "spec": {
+      "embedded": null,
+      "hash": "sha256:c200802150945ba29c9532a3563fe32a79fb35c7fe792ec989188982c63d61b4",
+      "version": "0.4"
+    },
+    "tracks": [
+      {
+        "events": 1,
+        "firstOnsetS": null,
+        "id": "f",
+        "instrument": "mallet",
+        "lastOnsetS": null,
+        "noteDurationsS": [],
+        "notes": 0,
+        "pitchHz": null
+      },
+      {
+        "events": 1,
+        "firstOnsetS": null,
+        "id": "curvasona.cues",
+        "instrument": "sine",
+        "lastOnsetS": null,
+        "noteDurationsS": [],
+        "notes": 0,
+        "pitchHz": null
+      }
+    ]
+  },
+  "02-cubic": {
+    "cues": null,
+    "data": {
+      "fingerprint": "sha256:d3c447e96ef76245ac3f5c403ab47ffd89c090bf261fb5194795c0f5b411f410",
+      "provenance": {},
+      "source": {
+        "kind": "inline",
+        "name": "inline"
+      }
+    },
+    "manifestVersion": 2,
+    "output": {
+      "bitsPerSample": 24,
+      "channels": 2,
+      "file": "02-cubic.wav",
+      "format": "wav",
+      "frames": 384000,
+      "gainDb": 0.0,
+      "integratedLufs": -25.59,
+      "limitedFrames": 0,
+      "sha256": "sha256:59d53d80ee6dd7331a52a9e9af5f8c54a8615c94e0a8bcf8024a985bd61a35b9",
+      "truePeakDbtp": -8.88
+    },
+    "render": {
+      "blockSize": 256,
+      "durationS": 8.0,
+      "loudnessCompensationPhon": 60.0,
+      "mode": "analysis",
+      "sampleRate": 48000,
+      "seed": 0
+    },
+    "score": {
+      "irVersion": 2,
+      "releaseIndependentHash": "sha256:bc7337769f24ab6c64d7f6519ff04140d87957d032e110e809774e0b4d8cd12a"
+    },
+    "spec": {
+      "embedded": null,
+      "hash": "sha256:7945ed74aa96bddb0d93c5fed50a5463067103b7a3b1d41d77e12e4313188e73",
+      "version": "0.4"
+    },
+    "tracks": [
+      {
+        "events": 1,
+        "firstOnsetS": null,
+        "id": "f",
+        "instrument": "mallet",
+        "lastOnsetS": null,
+        "noteDurationsS": [],
+        "notes": 0,
+        "pitchHz": null
+      },
+      {
+        "events": 5,
+        "firstOnsetS": null,
+        "id": "curvasona.cues",
+        "instrument": "sine",
+        "lastOnsetS": null,
+        "noteDurationsS": [],
+        "notes": 0,
+        "pitchHz": null
+      }
+    ]
+  },
+  "03-sine": {
+    "cues": null,
+    "data": {
+      "fingerprint": "sha256:5468d3adc3ca9f1c1fb7b9ab2d1b79adfd2b52def07ff9f0bfb9075c6f65ccca",
+      "provenance": {},
+      "source": {
+        "kind": "inline",
+        "name": "inline"
+      }
+    },
+    "manifestVersion": 2,
+    "output": {
+      "bitsPerSample": 24,
+      "channels": 2,
+      "file": "03-sine.wav",
+      "format": "wav",
+      "frames": 384000,
+      "gainDb": 0.0,
+      "integratedLufs": -22.55,
+      "limitedFrames": 0,
+      "sha256": "sha256:bb3c23544ffc3b654c85f742998a195d200a72c7e4b3a7b4230dc0b082fb16f8",
+      "truePeakDbtp": -8.02
+    },
+    "render": {
+      "blockSize": 256,
+      "durationS": 8.0,
+      "loudnessCompensationPhon": 60.0,
+      "mode": "analysis",
+      "sampleRate": 48000,
+      "seed": 0
+    },
+    "score": {
+      "irVersion": 2,
+      "releaseIndependentHash": "sha256:1a323b60a31df926c2a309fa54922782f232b28c55c656c15b1af8a27d406c33"
+    },
+    "spec": {
+      "embedded": null,
+      "hash": "sha256:0a5fcfa5e068a00e70d681fd76315855857210a79d063b36cf561d9d2da7b161",
+      "version": "0.4"
+    },
+    "tracks": [
+      {
+        "events": 1,
+        "firstOnsetS": null,
+        "id": "f",
+        "instrument": "mallet",
+        "lastOnsetS": null,
+        "noteDurationsS": [],
+        "notes": 0,
+        "pitchHz": null
+      },
+      {
+        "events": 13,
+        "firstOnsetS": null,
+        "id": "curvasona.cues",
+        "instrument": "sine",
+        "lastOnsetS": null,
+        "noteDurationsS": [],
+        "notes": 0,
+        "pitchHz": null
+      }
+    ]
+  },
+  "04-cosine": {
+    "cues": null,
+    "data": {
+      "fingerprint": "sha256:94f6f5cbb6ea0264b57cc3d3c1bc7e1fc3f1ccf43d73fa3323ecc9134bf0c4f4",
+      "provenance": {},
+      "source": {
+        "kind": "inline",
+        "name": "inline"
+      }
+    },
+    "manifestVersion": 2,
+    "output": {
+      "bitsPerSample": 24,
+      "channels": 2,
+      "file": "04-cosine.wav",
+      "format": "wav",
+      "frames": 384000,
+      "gainDb": 0.0,
+      "integratedLufs": -22.45,
+      "limitedFrames": 0,
+      "sha256": "sha256:ebc10eb34beca764cb9a0a27cd3f5692a078cac121f6e7a2e79e2f25776992ee",
+      "truePeakDbtp": -7.99
+    },
+    "render": {
+      "blockSize": 256,
+      "durationS": 8.0,
+      "loudnessCompensationPhon": 60.0,
+      "mode": "analysis",
+      "sampleRate": 48000,
+      "seed": 0
+    },
+    "score": {
+      "irVersion": 2,
+      "releaseIndependentHash": "sha256:379f99f58f8d1dc990088edd2edbaf4fb8a7c55e1260aa6798983debb095015c"
+    },
+    "spec": {
+      "embedded": null,
+      "hash": "sha256:ab8831a7584368fcb686ed9f5eac87964819a452656f669d3b44f60c7e11f860",
+      "version": "0.4"
+    },
+    "tracks": [
+      {
+        "events": 1,
+        "firstOnsetS": null,
+        "id": "f",
+        "instrument": "mallet",
+        "lastOnsetS": null,
+        "noteDurationsS": [],
+        "notes": 0,
+        "pitchHz": null
+      },
+      {
+        "events": 13,
+        "firstOnsetS": null,
+        "id": "curvasona.cues",
+        "instrument": "sine",
+        "lastOnsetS": null,
+        "noteDurationsS": [],
+        "notes": 0,
+        "pitchHz": null
+      }
+    ]
+  },
+  "05-tangent": {
+    "cues": null,
+    "data": {
+      "fingerprint": "sha256:fcfeb23819df083378ccd158b2516d858c55b15199c1b72a2837965c190cb00b",
+      "provenance": {},
+      "source": {
+        "kind": "inline",
+        "name": "inline"
+      }
+    },
+    "manifestVersion": 2,
+    "output": {
+      "bitsPerSample": 24,
+      "channels": 2,
+      "file": "05-tangent.wav",
+      "format": "wav",
+      "frames": 384000,
+      "gainDb": 0.0,
+      "integratedLufs": -21.68,
+      "limitedFrames": 48687,
+      "sha256": "sha256:b569dc1c5f3b6b0c426684bb8ebdab139de796076e317468d1dad94ab8268620",
+      "truePeakDbtp": -1.18
+    },
+    "render": {
+      "blockSize": 256,
+      "durationS": 8.0,
+      "loudnessCompensationPhon": 60.0,
+      "mode": "analysis",
+      "sampleRate": 48000,
+      "seed": 0
+    },
+    "score": {
+      "irVersion": 2,
+      "releaseIndependentHash": "sha256:f61aeb8d93cbd9f395c47dd91c6304758d1541925ecc9ab162059b3bdfd379d4"
+    },
+    "spec": {
+      "embedded": null,
+      "hash": "sha256:77e2a75fcba9ba8b4dece7a4b388e8a2b90c949e559a59b2f5696b1ad581cd47",
+      "version": "0.4"
+    },
+    "tracks": [
+      {
+        "events": 5,
+        "firstOnsetS": null,
+        "id": "f",
+        "instrument": "mallet",
+        "lastOnsetS": null,
+        "noteDurationsS": [],
+        "notes": 0,
+        "pitchHz": null
+      },
+      {
+        "events": 7,
+        "firstOnsetS": null,
+        "id": "curvasona.cues",
+        "instrument": "sine",
+        "lastOnsetS": null,
+        "noteDurationsS": [],
+        "notes": 0,
+        "pitchHz": null
+      }
+    ]
+  },
+  "06-reciprocal": {
+    "cues": null,
+    "data": {
+      "fingerprint": "sha256:646c565d14b86349d1cb9aa3b0a2d1f1fa73f84729a4b14fce8acf2e47fc3c43",
+      "provenance": {},
+      "source": {
+        "kind": "inline",
+        "name": "inline"
+      }
+    },
+    "manifestVersion": 2,
+    "output": {
+      "bitsPerSample": 24,
+      "channels": 2,
+      "file": "06-reciprocal.wav",
+      "format": "wav",
+      "frames": 384000,
+      "gainDb": 0.0,
+      "integratedLufs": -25.64,
+      "limitedFrames": 20804,
+      "sha256": "sha256:c40700dffa97033f6843baae968e989a420b4830f069017fdf45b44ff2bb2571",
+      "truePeakDbtp": -1.2
+    },
+    "render": {
+      "blockSize": 256,
+      "durationS": 8.0,
+      "loudnessCompensationPhon": 60.0,
+      "mode": "analysis",
+      "sampleRate": 48000,
+      "seed": 0
+    },
+    "score": {
+      "irVersion": 2,
+      "releaseIndependentHash": "sha256:d4e39e1987def96617503a405301c7862e7376f7a6e5d7a3703fe4a51c109960"
+    },
+    "spec": {
+      "embedded": null,
+      "hash": "sha256:5511d485a79b3ff707ab2197b01df89dc7374918548aea91d715f6a7b15333c7",
+      "version": "0.4"
+    },
+    "tracks": [
+      {
+        "events": 2,
+        "firstOnsetS": null,
+        "id": "f",
+        "instrument": "mallet",
+        "lastOnsetS": null,
+        "noteDurationsS": [],
+        "notes": 0,
+        "pitchHz": null
+      },
+      {
+        "events": 1,
+        "firstOnsetS": null,
+        "id": "curvasona.cues",
+        "instrument": "sine",
+        "lastOnsetS": null,
+        "noteDurationsS": [],
+        "notes": 0,
+        "pitchHz": null
+      }
+    ]
+  },
+  "07-shifted-reciprocal": {
+    "cues": null,
+    "data": {
+      "fingerprint": "sha256:3151115b13110e77d3bd55beaf97953364e1742bf43d9deedf1ffcb44e19b432",
+      "provenance": {},
+      "source": {
+        "kind": "inline",
+        "name": "inline"
+      }
+    },
+    "manifestVersion": 2,
+    "output": {
+      "bitsPerSample": 24,
+      "channels": 2,
+      "file": "07-shifted-reciprocal.wav",
+      "format": "wav",
+      "frames": 384000,
+      "gainDb": 0.0,
+      "integratedLufs": -25.48,
+      "limitedFrames": 16339,
+      "sha256": "sha256:d0a118b448aef50d7bd9b686e5d0130ac778dc4437fb827cb1a9c0d1e136ec3e",
+      "truePeakDbtp": -1.2
+    },
+    "render": {
+      "blockSize": 256,
+      "durationS": 8.0,
+      "loudnessCompensationPhon": 60.0,
+      "mode": "analysis",
+      "sampleRate": 48000,
+      "seed": 0
+    },
+    "score": {
+      "irVersion": 2,
+      "releaseIndependentHash": "sha256:d696da2fecf5cfcf49a204fdd6018edc03add26c49baa88dd25a295266107a67"
+    },
+    "spec": {
+      "embedded": null,
+      "hash": "sha256:693d193ef30e0539bbd1b9cd9acd8bc5f77642cbc6a292ad50fe79c122c2816d",
+      "version": "0.4"
+    },
+    "tracks": [
+      {
+        "events": 2,
+        "firstOnsetS": null,
+        "id": "f",
+        "instrument": "mallet",
+        "lastOnsetS": null,
+        "noteDurationsS": [],
+        "notes": 0,
+        "pitchHz": null
+      },
+      {
+        "events": 1,
+        "firstOnsetS": null,
+        "id": "curvasona.cues",
+        "instrument": "sine",
+        "lastOnsetS": null,
+        "noteDurationsS": [],
+        "notes": 0,
+        "pitchHz": null
+      }
+    ]
+  },
+  "08-inverse-square": {
+    "cues": null,
+    "data": {
+      "fingerprint": "sha256:8e2fbb2d344009e1a035479678808537cdfc2232d173890149983ce7a99e9ef3",
+      "provenance": {},
+      "source": {
+        "kind": "inline",
+        "name": "inline"
+      }
+    },
+    "manifestVersion": 2,
+    "output": {
+      "bitsPerSample": 24,
+      "channels": 2,
+      "file": "08-inverse-square.wav",
+      "format": "wav",
+      "frames": 384000,
+      "gainDb": 0.0,
+      "integratedLufs": -23.99,
+      "limitedFrames": 18307,
+      "sha256": "sha256:cec4bb9c5dde0036563b0a80eaf4a81e7868f32f264820855ac4e959d2106714",
+      "truePeakDbtp": -1.2
+    },
+    "render": {
+      "blockSize": 256,
+      "durationS": 8.0,
+      "loudnessCompensationPhon": 60.0,
+      "mode": "analysis",
+      "sampleRate": 48000,
+      "seed": 0
+    },
+    "score": {
+      "irVersion": 2,
+      "releaseIndependentHash": "sha256:b1162e5ba172397cd58b8447a33dc08b19189289c5a186db2d7b5a5a21ab4a19"
+    },
+    "spec": {
+      "embedded": null,
+      "hash": "sha256:7248693df46adb72ef2a17cfd7b4f98e0f39a7759b53312b26a4fd484a501b9d",
+      "version": "0.4"
+    },
+    "tracks": [
+      {
+        "events": 2,
+        "firstOnsetS": null,
+        "id": "f",
+        "instrument": "mallet",
+        "lastOnsetS": null,
+        "noteDurationsS": [],
+        "notes": 0,
+        "pitchHz": null
+      },
+      {
+        "events": 1,
+        "firstOnsetS": null,
+        "id": "curvasona.cues",
+        "instrument": "sine",
+        "lastOnsetS": null,
+        "noteDurationsS": [],
+        "notes": 0,
+        "pitchHz": null
+      }
+    ]
+  },
+  "09-line-with-a-hole": {
+    "cues": null,
+    "data": {
+      "fingerprint": "sha256:91c2fba7ec519731b3ca435b703586f8e2b5a19aca4e93874dcab5a50f3c6be9",
+      "provenance": {},
+      "source": {
+        "kind": "inline",
+        "name": "inline"
+      }
+    },
+    "manifestVersion": 2,
+    "output": {
+      "bitsPerSample": 24,
+      "channels": 2,
+      "file": "09-line-with-a-hole.wav",
+      "format": "wav",
+      "frames": 384000,
+      "gainDb": 0.0,
+      "integratedLufs": -26.11,
+      "limitedFrames": 0,
+      "sha256": "sha256:471de685642715af870ddb5975a5308c2407e3987732e088bc4009b77c531e95",
+      "truePeakDbtp": -9.41
+    },
+    "render": {
+      "blockSize": 256,
+      "durationS": 8.0,
+      "loudnessCompensationPhon": 60.0,
+      "mode": "analysis",
+      "sampleRate": 48000,
+      "seed": 0
+    },
+    "score": {
+      "irVersion": 2,
+      "releaseIndependentHash": "sha256:ecd4cbce4421d80bc48b4bb35293ece9a10a91aee0d1d7e347c7350d89fecbe8"
+    },
+    "spec": {
+      "embedded": null,
+      "hash": "sha256:23e68bc48a3900f0f49c0b861f4dcbebac99b8940fb870468a35b96ce7eefb0a",
+      "version": "0.4"
+    },
+    "tracks": [
+      {
+        "events": 2,
+        "firstOnsetS": null,
+        "id": "f",
+        "instrument": "mallet",
+        "lastOnsetS": null,
+        "noteDurationsS": [],
+        "notes": 0,
+        "pitchHz": null
+      },
+      {
+        "events": 2,
+        "firstOnsetS": null,
+        "id": "curvasona.cues",
+        "instrument": "sine",
+        "lastOnsetS": null,
+        "noteDurationsS": [],
+        "notes": 0,
+        "pitchHz": null
+      }
+    ]
+  },
+  "10-sinc": {
+    "cues": null,
+    "data": {
+      "fingerprint": "sha256:053c788b9f2f6bb19a2cf8770bfb9d9238521c668cc53b0309bd94c8b53086f4",
+      "provenance": {},
+      "source": {
+        "kind": "inline",
+        "name": "inline"
+      }
+    },
+    "manifestVersion": 2,
+    "output": {
+      "bitsPerSample": 24,
+      "channels": 2,
+      "file": "10-sinc.wav",
+      "format": "wav",
+      "frames": 384000,
+      "gainDb": 0.0,
+      "integratedLufs": -20.52,
+      "limitedFrames": 0,
+      "sha256": "sha256:d27434fd7516f835f848a8feb39e0ca818ae2482dcaf9bbf22884dced580a878",
+      "truePeakDbtp": -7.99
+    },
+    "render": {
+      "blockSize": 256,
+      "durationS": 8.0,
+      "loudnessCompensationPhon": 60.0,
+      "mode": "analysis",
+      "sampleRate": 48000,
+      "seed": 0
+    },
+    "score": {
+      "irVersion": 2,
+      "releaseIndependentHash": "sha256:b9aa8540ce059cd4de52225929391b7825aa97901f0a6e7b54a2c53f6e0210e9"
+    },
+    "spec": {
+      "embedded": null,
+      "hash": "sha256:0a02f7e05fa29be52fa21231ebee2888c364ac91b077895d27cc98c51960d327",
+      "version": "0.4"
+    },
+    "tracks": [
+      {
+        "events": 2,
+        "firstOnsetS": null,
+        "id": "f",
+        "instrument": "mallet",
+        "lastOnsetS": null,
+        "noteDurationsS": [],
+        "notes": 0,
+        "pitchHz": null
+      },
+      {
+        "events": 25,
+        "firstOnsetS": null,
+        "id": "curvasona.cues",
+        "instrument": "sine",
+        "lastOnsetS": null,
+        "noteDurationsS": [],
+        "notes": 0,
+        "pitchHz": null
+      }
+    ]
+  },
+  "11-natural-logarithm": {
+    "cues": null,
+    "data": {
+      "fingerprint": "sha256:c344dd63d3c9fac8a0c8157d651af515a1cf910a19300dbaaed3a972a4aa3452",
+      "provenance": {},
+      "source": {
+        "kind": "inline",
+        "name": "inline"
+      }
+    },
+    "manifestVersion": 2,
+    "output": {
+      "bitsPerSample": 24,
+      "channels": 2,
+      "file": "11-natural-logarithm.wav",
+      "format": "wav",
+      "frames": 384000,
+      "gainDb": 0.0,
+      "integratedLufs": -23.5,
+      "limitedFrames": 22865,
+      "sha256": "sha256:15072eeb6215dc160bb310bdea6ea502781ddce7d9ca590c137dd7a23130116a",
+      "truePeakDbtp": -1.2
+    },
+    "render": {
+      "blockSize": 256,
+      "durationS": 8.0,
+      "loudnessCompensationPhon": 60.0,
+      "mode": "analysis",
+      "sampleRate": 48000,
+      "seed": 0
+    },
+    "score": {
+      "irVersion": 2,
+      "releaseIndependentHash": "sha256:cd7d22527174f137706ab77cf58d59d6cb9dd9ab0a2768e7eeae714e217ff3fd"
+    },
+    "spec": {
+      "embedded": null,
+      "hash": "sha256:4ad282d8e0ece5f16984babc908666f7f2862d7ae7dad4925de2cb2922f9fc1a",
+      "version": "0.4"
+    },
+    "tracks": [
+      {
+        "events": 1,
+        "firstOnsetS": null,
+        "id": "f",
+        "instrument": "mallet",
+        "lastOnsetS": null,
+        "noteDurationsS": [],
+        "notes": 0,
+        "pitchHz": null
+      },
+      {
+        "events": 2,
+        "firstOnsetS": null,
+        "id": "curvasona.cues",
+        "instrument": "sine",
+        "lastOnsetS": null,
+        "noteDurationsS": [],
+        "notes": 0,
+        "pitchHz": null
+      }
+    ]
+  },
+  "12-square-root": {
+    "cues": null,
+    "data": {
+      "fingerprint": "sha256:fc4e109b99b6b0874eca96d200961623de72f9ebdff1a96e52b67b65dfb609fe",
+      "provenance": {},
+      "source": {
+        "kind": "inline",
+        "name": "inline"
+      }
+    },
+    "manifestVersion": 2,
+    "output": {
+      "bitsPerSample": 24,
+      "channels": 2,
+      "file": "12-square-root.wav",
+      "format": "wav",
+      "frames": 384000,
+      "gainDb": 0.0,
+      "integratedLufs": -27.06,
+      "limitedFrames": 0,
+      "sha256": "sha256:a194926b4c627bc4f11b30d48fcc067198bf343f56e15ef246648292a49ce97d",
+      "truePeakDbtp": -14.58
+    },
+    "render": {
+      "blockSize": 256,
+      "durationS": 8.0,
+      "loudnessCompensationPhon": 60.0,
+      "mode": "analysis",
+      "sampleRate": 48000,
+      "seed": 0
+    },
+    "score": {
+      "irVersion": 2,
+      "releaseIndependentHash": "sha256:0b979db2a5abc7c5c1edeb51549cd4daa76587677a0e4758a89c74c0cdb11cd4"
+    },
+    "spec": {
+      "embedded": null,
+      "hash": "sha256:51ba31f9f96e6f5dca1d5a4227c6dbcdb3c0c017587f65accffb0b70f18871a1",
+      "version": "0.4"
+    },
+    "tracks": [
+      {
+        "events": 1,
+        "firstOnsetS": null,
+        "id": "f",
+        "instrument": "mallet",
+        "lastOnsetS": null,
+        "noteDurationsS": [],
+        "notes": 0,
+        "pitchHz": null
+      },
+      {
+        "events": 1,
+        "firstOnsetS": null,
+        "id": "curvasona.cues",
+        "instrument": "sine",
+        "lastOnsetS": null,
+        "noteDurationsS": [],
+        "notes": 0,
+        "pitchHz": null
+      }
+    ]
+  },
+  "13-semicircle": {
+    "cues": null,
+    "data": {
+      "fingerprint": "sha256:e7922da0d9fe4cf6c21547e347610e5411084bb684c80dbda9a8e72778273028",
+      "provenance": {},
+      "source": {
+        "kind": "inline",
+        "name": "inline"
+      }
+    },
+    "manifestVersion": 2,
+    "output": {
+      "bitsPerSample": 24,
+      "channels": 2,
+      "file": "13-semicircle.wav",
+      "format": "wav",
+      "frames": 292704,
+      "gainDb": 0.0,
+      "integratedLufs": -24.85,
+      "limitedFrames": 0,
+      "sha256": "sha256:6d75f0f5e3e7ea3fdf5225a5642b27cff40ef1d6a023dfa33724bbbda4f7e5d5",
+      "truePeakDbtp": -8.0
+    },
+    "render": {
+      "blockSize": 256,
+      "durationS": 6.098,
+      "loudnessCompensationPhon": 60.0,
+      "mode": "analysis",
+      "sampleRate": 48000,
+      "seed": 0
+    },
+    "score": {
+      "irVersion": 2,
+      "releaseIndependentHash": "sha256:665ef6c4b9f5324fea0844fba3d78df554a4520f3c202ed3949acfe5c4af3edf"
+    },
+    "spec": {
+      "embedded": null,
+      "hash": "sha256:0ab3e071847e3506053bfbae200f783cf1885f5639b3a3027f64c187409114d9",
+      "version": "0.4"
+    },
+    "tracks": [
+      {
+        "events": 1,
+        "firstOnsetS": null,
+        "id": "f",
+        "instrument": "mallet",
+        "lastOnsetS": null,
+        "noteDurationsS": [],
+        "notes": 0,
+        "pitchHz": null
+      },
+      {
+        "events": 3,
+        "firstOnsetS": null,
+        "id": "curvasona.cues",
+        "instrument": "sine",
+        "lastOnsetS": null,
+        "noteDurationsS": [],
+        "notes": 0,
+        "pitchHz": null
+      }
+    ]
+  },
+  "14-narrow-gap": {
+    "cues": null,
+    "data": {
+      "fingerprint": "sha256:0627ff7cfd858256b844ab0d31c7b9103ad839a4d3963016d869e62fb6e1369e",
+      "provenance": {},
+      "source": {
+        "kind": "inline",
+        "name": "inline"
+      }
+    },
+    "manifestVersion": 2,
+    "output": {
+      "bitsPerSample": 24,
+      "channels": 2,
+      "file": "14-narrow-gap.wav",
+      "format": "wav",
+      "frames": 384000,
+      "gainDb": 0.0,
+      "integratedLufs": -27.12,
+      "limitedFrames": 0,
+      "sha256": "sha256:74debffbf1c3739e8042941626d00865aeb9b8c216ad4207317964a70ca80e06",
+      "truePeakDbtp": -13.1
+    },
+    "render": {
+      "blockSize": 256,
+      "durationS": 8.0,
+      "loudnessCompensationPhon": 60.0,
+      "mode": "analysis",
+      "sampleRate": 48000,
+      "seed": 0
+    },
+    "score": {
+      "irVersion": 2,
+      "releaseIndependentHash": "sha256:604c6cb4cc0ff2d73272e4fa1dae67ca0831aaaa10e35b35c44409cf654ccd24"
+    },
+    "spec": {
+      "embedded": null,
+      "hash": "sha256:b2e80011fbd004c240019b483af61d8e42bd01fb6ad5ccccdcad7b56296e534e",
+      "version": "0.4"
+    },
+    "tracks": [
+      {
+        "events": 1,
+        "firstOnsetS": null,
+        "id": "f",
+        "instrument": "mallet",
+        "lastOnsetS": null,
+        "noteDurationsS": [],
+        "notes": 0,
+        "pitchHz": null
+      },
+      {
+        "events": 1,
+        "firstOnsetS": null,
+        "id": "curvasona.cues",
+        "instrument": "sine",
+        "lastOnsetS": null,
+        "noteDurationsS": [],
+        "notes": 0,
+        "pitchHz": null
+      }
+    ]
+  },
+  "15-two-poles": {
+    "cues": null,
+    "data": {
+      "fingerprint": "sha256:76bc5938d0457e22e5208aebece7c958cdfd8b033bb18d9ab0aef907f93bc126",
+      "provenance": {},
+      "source": {
+        "kind": "inline",
+        "name": "inline"
+      }
+    },
+    "manifestVersion": 2,
+    "output": {
+      "bitsPerSample": 24,
+      "channels": 2,
+      "file": "15-two-poles.wav",
+      "format": "wav",
+      "frames": 384000,
+      "gainDb": 0.0,
+      "integratedLufs": -23.2,
+      "limitedFrames": 21028,
+      "sha256": "sha256:6f2d9d2140a2242d0a94510a455c13aa8b052b7ee8efad5c97694879ff1ca270",
+      "truePeakDbtp": -1.2
+    },
+    "render": {
+      "blockSize": 256,
+      "durationS": 8.0,
+      "loudnessCompensationPhon": 60.0,
+      "mode": "analysis",
+      "sampleRate": 48000,
+      "seed": 0
+    },
+    "score": {
+      "irVersion": 2,
+      "releaseIndependentHash": "sha256:c8dad2bd600dead8c27b0f066d9f7c0c90089acae07db4c33db70c2c2c9fa950"
+    },
+    "spec": {
+      "embedded": null,
+      "hash": "sha256:2fb5b41e2f6ed00ba0706975bb4b0616ee32eb911e1dae1b79954af35a1818c9",
+      "version": "0.4"
+    },
+    "tracks": [
+      {
+        "events": 3,
+        "firstOnsetS": null,
+        "id": "f",
+        "instrument": "mallet",
+        "lastOnsetS": null,
+        "noteDurationsS": [],
+        "notes": 0,
+        "pitchHz": null
+      },
+      {
+        "events": 3,
+        "firstOnsetS": null,
+        "id": "curvasona.cues",
+        "instrument": "sine",
+        "lastOnsetS": null,
+        "noteDurationsS": [],
+        "notes": 0,
+        "pitchHz": null
+      }
+    ]
+  },
+  "16-bounded-rational": {
+    "cues": null,
+    "data": {
+      "fingerprint": "sha256:aeae73de02e1052c65c4fe290bb42dca9eebc56b8354808b94ee5c4eb1117508",
+      "provenance": {},
+      "source": {
+        "kind": "inline",
+        "name": "inline"
+      }
+    },
+    "manifestVersion": 2,
+    "output": {
+      "bitsPerSample": 24,
+      "channels": 2,
+      "file": "16-bounded-rational.wav",
+      "format": "wav",
+      "frames": 384000,
+      "gainDb": 0.0,
+      "integratedLufs": -24.0,
+      "limitedFrames": 0,
+      "sha256": "sha256:43f1759b3882b204c49de892a021a4cf6a44f94986361ab1a6e16413c88cca66",
+      "truePeakDbtp": -8.06
+    },
+    "render": {
+      "blockSize": 256,
+      "durationS": 8.0,
+      "loudnessCompensationPhon": 60.0,
+      "mode": "analysis",
+      "sampleRate": 48000,
+      "seed": 0
+    },
+    "score": {
+      "irVersion": 2,
+      "releaseIndependentHash": "sha256:add2824a39c42639368d7d633d861a639a3b7d12d0b19e128539b8e76695c5df"
+    },
+    "spec": {
+      "embedded": null,
+      "hash": "sha256:035323e90752208c8fddffc244f28b34de45852d7140dc8b4ad74799fb71068d",
+      "version": "0.4"
+    },
+    "tracks": [
+      {
+        "events": 1,
+        "firstOnsetS": null,
+        "id": "f",
+        "instrument": "mallet",
+        "lastOnsetS": null,
+        "noteDurationsS": [],
+        "notes": 0,
+        "pitchHz": null
+      },
+      {
+        "events": 5,
+        "firstOnsetS": null,
+        "id": "curvasona.cues",
+        "instrument": "sine",
+        "lastOnsetS": null,
+        "noteDurationsS": [],
+        "notes": 0,
+        "pitchHz": null
+      }
+    ]
+  },
+  "17-exponential": {
+    "cues": null,
+    "data": {
+      "fingerprint": "sha256:d4b7f984cf3deec6e06669a61c8ffe980d3436bb25b358ac07fe9a3fd9f83ac1",
+      "provenance": {},
+      "source": {
+        "kind": "inline",
+        "name": "inline"
+      }
+    },
+    "manifestVersion": 2,
+    "output": {
+      "bitsPerSample": 24,
+      "channels": 2,
+      "file": "17-exponential.wav",
+      "format": "wav",
+      "frames": 384000,
+      "gainDb": 0.0,
+      "integratedLufs": -26.45,
+      "limitedFrames": 0,
+      "sha256": "sha256:1559c314c05bb511b96deb80401b1e07eb2863ee9dfd17e8388254d3cadff802",
+      "truePeakDbtp": -23.57
+    },
+    "render": {
+      "blockSize": 256,
+      "durationS": 8.0,
+      "loudnessCompensationPhon": 60.0,
+      "mode": "analysis",
+      "sampleRate": 48000,
+      "seed": 0
+    },
+    "score": {
+      "irVersion": 1,
+      "releaseIndependentHash": "sha256:99e17b18a981eb567c43a849acc1259b571d8cfbe213d9242644bc7cb8991e11"
+    },
+    "spec": {
+      "embedded": null,
+      "hash": "sha256:572a6ef5520ff3d9a0f8f0d61f9a5fd17456e5a7dce746136f4a61ad5d8aa306",
+      "version": "0.4"
+    },
+    "tracks": [
+      {
+        "events": 1,
+        "firstOnsetS": null,
+        "id": "f",
+        "instrument": "mallet",
+        "lastOnsetS": null,
+        "noteDurationsS": [],
+        "notes": 0,
+        "pitchHz": null
+      }
+    ]
+  },
+  "18-bell": {
+    "cues": null,
+    "data": {
+      "fingerprint": "sha256:b419b0c4147c16952678d98771369ab1f21764a246e244bdc33e0d822fca1726",
+      "provenance": {},
+      "source": {
+        "kind": "inline",
+        "name": "inline"
+      }
+    },
+    "manifestVersion": 2,
+    "output": {
+      "bitsPerSample": 24,
+      "channels": 2,
+      "file": "18-bell.wav",
+      "format": "wav",
+      "frames": 384000,
+      "gainDb": 0.0,
+      "integratedLufs": -24.42,
+      "limitedFrames": 0,
+      "sha256": "sha256:f64452da8250ab0f4214f8becca183c63b4438cd67fafa3a6dc64b26db3ddb8e",
+      "truePeakDbtp": -8.47
+    },
+    "render": {
+      "blockSize": 256,
+      "durationS": 8.0,
+      "loudnessCompensationPhon": 60.0,
+      "mode": "analysis",
+      "sampleRate": 48000,
+      "seed": 0
+    },
+    "score": {
+      "irVersion": 1,
+      "releaseIndependentHash": "sha256:2c57007dd21eda3a03c761469140bd0e5c0a1cf8370c14aa96d462f9b459d8be"
+    },
+    "spec": {
+      "embedded": null,
+      "hash": "sha256:3eb2b69ef9e9107f260151736e6d845911a2fdde32edba73b3ca10d8dfe09935",
+      "version": "0.4"
+    },
+    "tracks": [
+      {
+        "events": 1,
+        "firstOnsetS": null,
+        "id": "f",
+        "instrument": "mallet",
+        "lastOnsetS": null,
+        "noteDurationsS": [],
+        "notes": 0,
+        "pitchHz": null
+      },
+      {
+        "events": 3,
+        "firstOnsetS": null,
+        "id": "curvasona.cues",
+        "instrument": "sine",
+        "lastOnsetS": null,
+        "noteDurationsS": [],
+        "notes": 0,
+        "pitchHz": null
+      }
+    ]
+  },
+  "19-floor": {
+    "cues": null,
+    "data": {
+      "fingerprint": "sha256:089b85031f5fdb2a8c71e2965cfa08620dc46b69afac450e95fd580727042064",
+      "provenance": {},
+      "source": {
+        "kind": "inline",
+        "name": "inline"
+      }
+    },
+    "manifestVersion": 2,
+    "output": {
+      "bitsPerSample": 24,
+      "channels": 2,
+      "file": "19-floor.wav",
+      "format": "wav",
+      "frames": 384000,
+      "gainDb": 0.0,
+      "integratedLufs": -23.99,
+      "limitedFrames": 0,
+      "sha256": "sha256:b8cfd5508467ac222eea000a8de39f0e8213cad4aa0616645ad535d7f1b28525",
+      "truePeakDbtp": -8.43
+    },
+    "render": {
+      "blockSize": 256,
+      "durationS": 8.0,
+      "loudnessCompensationPhon": 60.0,
+      "mode": "analysis",
+      "sampleRate": 48000,
+      "seed": 0
+    },
+    "score": {
+      "irVersion": 1,
+      "releaseIndependentHash": "sha256:cbcfdde06785a8a8ff2ae3ef494337179faf11a12e8169d960625083f08b33fa"
+    },
+    "spec": {
+      "embedded": null,
+      "hash": "sha256:f5f962253214522d1166bf7214701676031626f2e36becf4b3db22764c2b3bda",
+      "version": "0.4"
+    },
+    "tracks": [
+      {
+        "events": 1,
+        "firstOnsetS": null,
+        "id": "f",
+        "instrument": "mallet",
+        "lastOnsetS": null,
+        "noteDurationsS": [],
+        "notes": 0,
+        "pitchHz": null
+      },
+      {
+        "events": 5,
+        "firstOnsetS": null,
+        "id": "curvasona.cues",
+        "instrument": "sine",
+        "lastOnsetS": null,
+        "noteDurationsS": [],
+        "notes": 0,
+        "pitchHz": null
+      }
+    ]
+  },
+  "20-sign-by-division": {
+    "cues": null,
+    "data": {
+      "fingerprint": "sha256:a2107216499a77119f3d3aaaf008c65c305b69baf4068399f5ddf6a250104c35",
+      "provenance": {},
+      "source": {
+        "kind": "inline",
+        "name": "inline"
+      }
+    },
+    "manifestVersion": 2,
+    "output": {
+      "bitsPerSample": 24,
+      "channels": 2,
+      "file": "20-sign-by-division.wav",
+      "format": "wav",
+      "frames": 384000,
+      "gainDb": 0.0,
+      "integratedLufs": -24.54,
+      "limitedFrames": 0,
+      "sha256": "sha256:d94920f8589be63667fe35cf5d1753d65a27887c35558dfc2a41acbdd3e4c1fb",
+      "truePeakDbtp": -8.85
+    },
+    "render": {
+      "blockSize": 256,
+      "durationS": 8.0,
+      "loudnessCompensationPhon": 60.0,
+      "mode": "analysis",
+      "sampleRate": 48000,
+      "seed": 0
+    },
+    "score": {
+      "irVersion": 1,
+      "releaseIndependentHash": "sha256:e0c4f96b6641075ba293c5d142b1e9c42aad05abc699d27197bf1f59de88724d"
+    },
+    "spec": {
+      "embedded": null,
+      "hash": "sha256:da701c54fab8f5d0ac3ed9b6be4e8ece66cff4c54e58936f56322b08eb1747b1",
+      "version": "0.4"
+    },
+    "tracks": [
+      {
+        "events": 1,
+        "firstOnsetS": null,
+        "id": "f",
+        "instrument": "mallet",
+        "lastOnsetS": null,
+        "noteDurationsS": [],
+        "notes": 0,
+        "pitchHz": null
+      },
+      {
+        "events": 1,
+        "firstOnsetS": null,
+        "id": "curvasona.cues",
+        "instrument": "sine",
+        "lastOnsetS": null,
+        "noteDurationsS": [],
+        "notes": 0,
+        "pitchHz": null
+      }
+    ]
+  },
+  "21-absolute-value": {
+    "cues": null,
+    "data": {
+      "fingerprint": "sha256:0ac5bb7317ce5c41b287a1cfd32aea1186cb12eb72b0a0611c7aa5d7a1203ce4",
+      "provenance": {},
+      "source": {
+        "kind": "inline",
+        "name": "inline"
+      }
+    },
+    "manifestVersion": 2,
+    "output": {
+      "bitsPerSample": 24,
+      "channels": 2,
+      "file": "21-absolute-value.wav",
+      "format": "wav",
+      "frames": 384000,
+      "gainDb": 0.0,
+      "integratedLufs": -26.89,
+      "limitedFrames": 0,
+      "sha256": "sha256:a643d5233165798b316dd95f4eb97dfa92003dec6869ae989b24d73673e500ba",
+      "truePeakDbtp": -9.59
+    },
+    "render": {
+      "blockSize": 256,
+      "durationS": 8.0,
+      "loudnessCompensationPhon": 60.0,
+      "mode": "analysis",
+      "sampleRate": 48000,
+      "seed": 0
+    },
+    "score": {
+      "irVersion": 2,
+      "releaseIndependentHash": "sha256:169c340c3d3309dac9ca5be402c0f4014db37b7dd3e8237e01762a80be599950"
+    },
+    "spec": {
+      "embedded": null,
+      "hash": "sha256:073c11297a4e10e2ebc2d89564c86c74bf4af25b84922c8b539a469fc643d6cf",
+      "version": "0.4"
+    },
+    "tracks": [
+      {
+        "events": 1,
+        "firstOnsetS": null,
+        "id": "f",
+        "instrument": "mallet",
+        "lastOnsetS": null,
+        "noteDurationsS": [],
+        "notes": 0,
+        "pitchHz": null
+      },
+      {
+        "events": 1,
+        "firstOnsetS": null,
+        "id": "curvasona.cues",
+        "instrument": "sine",
+        "lastOnsetS": null,
+        "noteDurationsS": [],
+        "notes": 0,
+        "pitchHz": null
+      }
+    ]
+  },
+  "22-secant": {
+    "cues": null,
+    "data": {
+      "fingerprint": "sha256:a965d13e9eb8b36b9113ccb74d8a9876c96ce641246f4ee759308f43be1f0861",
+      "provenance": {},
+      "source": {
+        "kind": "inline",
+        "name": "inline"
+      }
+    },
+    "manifestVersion": 2,
+    "output": {
+      "bitsPerSample": 24,
+      "channels": 2,
+      "file": "22-secant.wav",
+      "format": "wav",
+      "frames": 384000,
+      "gainDb": 0.0,
+      "integratedLufs": -22.55,
+      "limitedFrames": 17958,
+      "sha256": "sha256:184170459743674a0804a67245b576dd2f6253ac3fd97334f694a5d3c3a30192",
+      "truePeakDbtp": -1.19
+    },
+    "render": {
+      "blockSize": 256,
+      "durationS": 8.0,
+      "loudnessCompensationPhon": 60.0,
+      "mode": "analysis",
+      "sampleRate": 48000,
+      "seed": 0
+    },
+    "score": {
+      "irVersion": 2,
+      "releaseIndependentHash": "sha256:ce978e3bd5338f66a8557be2f4382a20ee26b8f17efb90d8e305d914c4264727"
+    },
+    "spec": {
+      "embedded": null,
+      "hash": "sha256:d3d77f597acd5277bbda8b2b474b84d71f5932397eefc12bf9ab152dbcc4a238",
+      "version": "0.4"
+    },
+    "tracks": [
+      {
+        "events": 3,
+        "firstOnsetS": null,
+        "id": "f",
+        "instrument": "mallet",
+        "lastOnsetS": null,
+        "noteDurationsS": [],
+        "notes": 0,
+        "pitchHz": null
+      },
+      {
+        "events": 5,
+        "firstOnsetS": null,
+        "id": "curvasona.cues",
+        "instrument": "sine",
+        "lastOnsetS": null,
+        "noteDurationsS": [],
+        "notes": 0,
+        "pitchHz": null
+      }
+    ]
+  },
+  "23-cotangent": {
+    "cues": null,
+    "data": {
+      "fingerprint": "sha256:2cb8739e8490b48d61329e5438cfcc1c05be4a2acd008c783ab2f429ee1dcb3b",
+      "provenance": {},
+      "source": {
+        "kind": "inline",
+        "name": "inline"
+      }
+    },
+    "manifestVersion": 2,
+    "output": {
+      "bitsPerSample": 24,
+      "channels": 2,
+      "file": "23-cotangent.wav",
+      "format": "wav",
+      "frames": 384000,
+      "gainDb": 0.0,
+      "integratedLufs": -25.07,
+      "limitedFrames": 14038,
+      "sha256": "sha256:bec299634de7c390a10e1925fb41f51fde7b5b2c34580602be991e0f25aa8189",
+      "truePeakDbtp": -1.21
+    },
+    "render": {
+      "blockSize": 256,
+      "durationS": 8.0,
+      "loudnessCompensationPhon": 60.0,
+      "mode": "analysis",
+      "sampleRate": 48000,
+      "seed": 0
+    },
+    "score": {
+      "irVersion": 2,
+      "releaseIndependentHash": "sha256:f362b57dd95e00ab0d8f58d6ae7d1c0bd7aa85435974cb383129a05a0f9d3b72"
+    },
+    "spec": {
+      "embedded": null,
+      "hash": "sha256:03190796b40b1083f8ecfa9d8a133f2d4ac9e9870d94dde5e7cd911736868115",
+      "version": "0.4"
+    },
+    "tracks": [
+      {
+        "events": 2,
+        "firstOnsetS": null,
+        "id": "f",
+        "instrument": "mallet",
+        "lastOnsetS": null,
+        "noteDurationsS": [],
+        "notes": 0,
+        "pitchHz": null
+      },
+      {
+        "events": 3,
+        "firstOnsetS": null,
+        "id": "curvasona.cues",
+        "instrument": "sine",
+        "lastOnsetS": null,
+        "noteDurationsS": [],
+        "notes": 0,
+        "pitchHz": null
+      }
+    ]
+  },
+  "24-cosecant": {
+    "cues": null,
+    "data": {
+      "fingerprint": "sha256:4bddbc704c175c97f5c4d2472cd90b7d301e7b46590043fb2901c1ef8a250956",
+      "provenance": {},
+      "source": {
+        "kind": "inline",
+        "name": "inline"
+      }
+    },
+    "manifestVersion": 2,
+    "output": {
+      "bitsPerSample": 24,
+      "channels": 2,
+      "file": "24-cosecant.wav",
+      "format": "wav",
+      "frames": 384000,
+      "gainDb": 0.0,
+      "integratedLufs": -23.68,
+      "limitedFrames": 16778,
+      "sha256": "sha256:a6af483d5af5be5bac6f2fda137969db86d7bcbd6098fd08ca21c37dd53ece08",
+      "truePeakDbtp": -1.19
+    },
+    "render": {
+      "blockSize": 256,
+      "durationS": 8.0,
+      "loudnessCompensationPhon": 60.0,
+      "mode": "analysis",
+      "sampleRate": 48000,
+      "seed": 0
+    },
+    "score": {
+      "irVersion": 2,
+      "releaseIndependentHash": "sha256:2b2797d5ff23e717208ea8c42ac3fe8c6864ee39b6c461e562e2f1063ac43b1d"
+    },
+    "spec": {
+      "embedded": null,
+      "hash": "sha256:d48d857b25f72bf674e07e0038df604355171484cd22c6b5ce1844a3827dc352",
+      "version": "0.4"
+    },
+    "tracks": [
+      {
+        "events": 2,
+        "firstOnsetS": null,
+        "id": "f",
+        "instrument": "mallet",
+        "lastOnsetS": null,
+        "noteDurationsS": [],
+        "notes": 0,
+        "pitchHz": null
+      },
+      {
+        "events": 3,
+        "firstOnsetS": null,
+        "id": "curvasona.cues",
+        "instrument": "sine",
+        "lastOnsetS": null,
+        "noteDurationsS": [],
+        "notes": 0,
+        "pitchHz": null
+      }
+    ]
+  },
+  "25-inverse-hyperbolic-tangent": {
+    "cues": null,
+    "data": {
+      "fingerprint": "sha256:f780590b2f5a1e48b22a1bb1966c0f369407980e06c1fd15a4f41ee32ce59571",
+      "provenance": {},
+      "source": {
+        "kind": "inline",
+        "name": "inline"
+      }
+    },
+    "manifestVersion": 2,
+    "output": {
+      "bitsPerSample": 24,
+      "channels": 2,
+      "file": "25-inverse-hyperbolic-tangent.wav",
+      "format": "wav",
+      "frames": 293664,
+      "gainDb": 0.0,
+      "integratedLufs": -23.2,
+      "limitedFrames": 21783,
+      "sha256": "sha256:0ef755e5dcda56135d135555dacf8eee4690ec20a3f004f897d889ae4774ecc6",
+      "truePeakDbtp": -1.2
+    },
+    "render": {
+      "blockSize": 256,
+      "durationS": 6.118,
+      "loudnessCompensationPhon": 60.0,
+      "mode": "analysis",
+      "sampleRate": 48000,
+      "seed": 0
+    },
+    "score": {
+      "irVersion": 2,
+      "releaseIndependentHash": "sha256:bf2e2c3428a69c059fad4c6710b66622f500e2d1ec23223b5ea407c19f466235"
+    },
+    "spec": {
+      "embedded": null,
+      "hash": "sha256:75cbfaa9478feab65576dddfb49cabcf59f0742429dd145ef61fd87bbe1544a2",
+      "version": "0.4"
+    },
+    "tracks": [
+      {
+        "events": 1,
+        "firstOnsetS": null,
+        "id": "f",
+        "instrument": "mallet",
+        "lastOnsetS": null,
+        "noteDurationsS": [],
+        "notes": 0,
+        "pitchHz": null
+      },
+      {
+        "events": 3,
+        "firstOnsetS": null,
+        "id": "curvasona.cues",
+        "instrument": "sine",
+        "lastOnsetS": null,
+        "noteDurationsS": [],
+        "notes": 0,
+        "pitchHz": null
+      }
+    ]
+  },
+  "26-arcsine": {
+    "cues": null,
+    "data": {
+      "fingerprint": "sha256:2c11d67a7910321709d4884ea0a90252a7b7ef98f0ee1a6500fc9d35cd74a552",
+      "provenance": {},
+      "source": {
+        "kind": "inline",
+        "name": "inline"
+      }
+    },
+    "manifestVersion": 2,
+    "output": {
+      "bitsPerSample": 24,
+      "channels": 2,
+      "file": "26-arcsine.wav",
+      "format": "wav",
+      "frames": 292896,
+      "gainDb": 0.0,
+      "integratedLufs": -27.13,
+      "limitedFrames": 0,
+      "sha256": "sha256:d8717279f0f6be669ca2103acdf9a0c01b9bbdcc002a24107de6ec7387ca3add",
+      "truePeakDbtp": -9.17
+    },
+    "render": {
+      "blockSize": 256,
+      "durationS": 6.102,
+      "loudnessCompensationPhon": 60.0,
+      "mode": "analysis",
+      "sampleRate": 48000,
+      "seed": 0
+    },
+    "score": {
+      "irVersion": 2,
+      "releaseIndependentHash": "sha256:8c00f89b2be1a5b94e4e2218de2141607f349c651fd2a2fba4ab49d89c0b8041"
+    },
+    "spec": {
+      "embedded": null,
+      "hash": "sha256:16a5d18f727e9a703a3123135ca19c982bf321e5750c0de8d2c60b48915076f5",
+      "version": "0.4"
+    },
+    "tracks": [
+      {
+        "events": 1,
+        "firstOnsetS": null,
+        "id": "f",
+        "instrument": "mallet",
+        "lastOnsetS": null,
+        "noteDurationsS": [],
+        "notes": 0,
+        "pitchHz": null
+      },
+      {
+        "events": 3,
+        "firstOnsetS": null,
+        "id": "curvasona.cues",
+        "instrument": "sine",
+        "lastOnsetS": null,
+        "noteDurationsS": [],
+        "notes": 0,
+        "pitchHz": null
+      }
+    ]
+  },
+  "27-log-of-the-absolute-value": {
+    "cues": null,
+    "data": {
+      "fingerprint": "sha256:52ef7a475c54476facb1edd525ca7277ccb6479f9efd51eed83e470d2bac38c5",
+      "provenance": {},
+      "source": {
+        "kind": "inline",
+        "name": "inline"
+      }
+    },
+    "manifestVersion": 2,
+    "output": {
+      "bitsPerSample": 24,
+      "channels": 2,
+      "file": "27-log-of-the-absolute-value.wav",
+      "format": "wav",
+      "frames": 384000,
+      "gainDb": 0.0,
+      "integratedLufs": -23.67,
+      "limitedFrames": 14446,
+      "sha256": "sha256:8cf5aa7f82d5ec164b490ed97243d9f6e8f0c004010ab16e0fd60f960ed00b36",
+      "truePeakDbtp": -1.19
+    },
+    "render": {
+      "blockSize": 256,
+      "durationS": 8.0,
+      "loudnessCompensationPhon": 60.0,
+      "mode": "analysis",
+      "sampleRate": 48000,
+      "seed": 0
+    },
+    "score": {
+      "irVersion": 2,
+      "releaseIndependentHash": "sha256:c3cef3016f83ecf82824b2dbb5e9c2ed2247886c4d893a92ebb179b1274b2e03"
+    },
+    "spec": {
+      "embedded": null,
+      "hash": "sha256:d417c6b68fe2887a2f034b91d37d3a4a63ace3e93cecbd64956bedd1cc0efdc5",
+      "version": "0.4"
+    },
+    "tracks": [
+      {
+        "events": 2,
+        "firstOnsetS": null,
+        "id": "f",
+        "instrument": "mallet",
+        "lastOnsetS": null,
+        "noteDurationsS": [],
+        "notes": 0,
+        "pitchHz": null
+      },
+      {
+        "events": 3,
+        "firstOnsetS": null,
+        "id": "curvasona.cues",
+        "instrument": "sine",
+        "lastOnsetS": null,
+        "noteDurationsS": [],
+        "notes": 0,
+        "pitchHz": null
+      }
+    ]
+  },
+  "28-cubic-over-a-line": {
+    "cues": null,
+    "data": {
+      "fingerprint": "sha256:65ae4684ca53c724dce2deee8cdcd9d7f1ae9bc17f6ae61497a9c23a29e36837",
+      "provenance": {},
+      "source": {
+        "kind": "inline",
+        "name": "inline"
+      }
+    },
+    "manifestVersion": 2,
+    "output": {
+      "bitsPerSample": 24,
+      "channels": 2,
+      "file": "28-cubic-over-a-line.wav",
+      "format": "wav",
+      "frames": 384000,
+      "gainDb": 0.0,
+      "integratedLufs": -26.28,
+      "limitedFrames": 0,
+      "sha256": "sha256:b915f6a06c7a89df812ab1f7ebecd76ba47ba95414e67eda11e02ec9c8a0c60d",
+      "truePeakDbtp": -9.41
+    },
+    "render": {
+      "blockSize": 256,
+      "durationS": 8.0,
+      "loudnessCompensationPhon": 60.0,
+      "mode": "analysis",
+      "sampleRate": 48000,
+      "seed": 0
+    },
+    "score": {
+      "irVersion": 1,
+      "releaseIndependentHash": "sha256:8471e845055b12f9d348f27bdd21f3bbee3f77a0625c3fda727d5576d3095afb"
+    },
+    "spec": {
+      "embedded": null,
+      "hash": "sha256:552f5da18f435f79de69f65f0447e1c3efd667f662122364a25688c96bca98c7",
+      "version": "0.4"
+    },
+    "tracks": [
+      {
+        "events": 2,
+        "firstOnsetS": null,
+        "id": "f",
+        "instrument": "mallet",
+        "lastOnsetS": null,
+        "noteDurationsS": [],
+        "notes": 0,
+        "pitchHz": null
+      },
+      {
+        "events": 1,
+        "firstOnsetS": null,
+        "id": "curvasona.cues",
+        "instrument": "sine",
+        "lastOnsetS": null,
+        "noteDurationsS": [],
+        "notes": 0,
+        "pitchHz": null
+      }
+    ]
+  },
+  "29-logistic": {
+    "cues": null,
+    "data": {
+      "fingerprint": "sha256:48aa617820c5a498626b59baab4af529116064c1281ec4328506dfd4229e8d94",
+      "provenance": {},
+      "source": {
+        "kind": "inline",
+        "name": "inline"
+      }
+    },
+    "manifestVersion": 2,
+    "output": {
+      "bitsPerSample": 24,
+      "channels": 2,
+      "file": "29-logistic.wav",
+      "format": "wav",
+      "frames": 384000,
+      "gainDb": 0.0,
+      "integratedLufs": -25.31,
+      "limitedFrames": 0,
+      "sha256": "sha256:3724c3a4cf0b18358916d43acd4c9aeaba690e8ae198057561957faf06fd2c10",
+      "truePeakDbtp": -8.45
+    },
+    "render": {
+      "blockSize": 256,
+      "durationS": 8.0,
+      "loudnessCompensationPhon": 60.0,
+      "mode": "analysis",
+      "sampleRate": 48000,
+      "seed": 0
+    },
+    "score": {
+      "irVersion": 1,
+      "releaseIndependentHash": "sha256:790e1f1ddd7dc71b0a5191f4a51a0df6d8e79f41548fa976094e511d7e1c43f0"
+    },
+    "spec": {
+      "embedded": null,
+      "hash": "sha256:b3e9e377b175c347b0deb959bf8c209d5d8c4e7d2049359e208ef9b492b71560",
+      "version": "0.4"
+    },
+    "tracks": [
+      {
+        "events": 1,
+        "firstOnsetS": null,
+        "id": "f",
+        "instrument": "mallet",
+        "lastOnsetS": null,
+        "noteDurationsS": [],
+        "notes": 0,
+        "pitchHz": null
+      },
+      {
+        "events": 1,
+        "firstOnsetS": null,
+        "id": "curvasona.cues",
+        "instrument": "sine",
+        "lastOnsetS": null,
+        "noteDurationsS": [],
+        "notes": 0,
+        "pitchHz": null
+      }
+    ]
+  },
+  "30-fractional-power": {
+    "cues": null,
+    "data": {
+      "fingerprint": "sha256:79ca6d3a1b17a965de2513bd7d7e7635719df94bb33d2154157513a90d9a4d84",
+      "provenance": {},
+      "source": {
+        "kind": "inline",
+        "name": "inline"
+      }
+    },
+    "manifestVersion": 2,
+    "output": {
+      "bitsPerSample": 24,
+      "channels": 2,
+      "file": "30-fractional-power.wav",
+      "format": "wav",
+      "frames": 384000,
+      "gainDb": 0.0,
+      "integratedLufs": -26.71,
+      "limitedFrames": 0,
+      "sha256": "sha256:72a96af406808d8eda5fb1c9cf3023c7910387dbcd3f722f6969514ea2eb55d4",
+      "truePeakDbtp": -15.41
+    },
+    "render": {
+      "blockSize": 256,
+      "durationS": 8.0,
+      "loudnessCompensationPhon": 60.0,
+      "mode": "analysis",
+      "sampleRate": 48000,
+      "seed": 0
+    },
+    "score": {
+      "irVersion": 2,
+      "releaseIndependentHash": "sha256:ae7aa393468d8d51d7e20b430fe27b058957a5f8ffac0a6bf230628661cf8e03"
+    },
+    "spec": {
+      "embedded": null,
+      "hash": "sha256:9f149aafcfd5a569eba8cc936e5c8ddff855ba764639bdbc9ca782dea7048bcc",
+      "version": "0.4"
+    },
+    "tracks": [
+      {
+        "events": 1,
+        "firstOnsetS": null,
+        "id": "f",
+        "instrument": "mallet",
+        "lastOnsetS": null,
+        "noteDurationsS": [],
+        "notes": 0,
+        "pitchHz": null
+      },
+      {
+        "events": 1,
+        "firstOnsetS": null,
+        "id": "curvasona.cues",
+        "instrument": "sine",
+        "lastOnsetS": null,
+        "noteDurationsS": [],
+        "notes": 0,
+        "pitchHz": null
+      }
+    ]
+  },
+  "31-cube-root": {
+    "cues": null,
+    "data": {
+      "fingerprint": "sha256:c0cb8e14642a0adf9bab31f8e3fad9dba734efb4e7f871f0794a56a4ffec9e1c",
+      "provenance": {},
+      "source": {
+        "kind": "inline",
+        "name": "inline"
+      }
+    },
+    "manifestVersion": 2,
+    "output": {
+      "bitsPerSample": 24,
+      "channels": 2,
+      "file": "31-cube-root.wav",
+      "format": "wav",
+      "frames": 384000,
+      "gainDb": 0.0,
+      "integratedLufs": -25.94,
+      "limitedFrames": 0,
+      "sha256": "sha256:630cf6cd63bfb34a12cd775daaa7a5af98ede3f9bccf07418ff16f77ed3b1a25",
+      "truePeakDbtp": -10.01
+    },
+    "render": {
+      "blockSize": 256,
+      "durationS": 8.0,
+      "loudnessCompensationPhon": 60.0,
+      "mode": "analysis",
+      "sampleRate": 48000,
+      "seed": 0
+    },
+    "score": {
+      "irVersion": 2,
+      "releaseIndependentHash": "sha256:d418488b502e3aa30339e22e5e5d6b1280b55934fe6f7a864c48cead83ecf133"
+    },
+    "spec": {
+      "embedded": null,
+      "hash": "sha256:d06939ff164c929f0e569a7a5955c64cdc4e51493a7b486807206a7c356f69df",
+      "version": "0.4"
+    },
+    "tracks": [
+      {
+        "events": 1,
+        "firstOnsetS": null,
+        "id": "f",
+        "instrument": "mallet",
+        "lastOnsetS": null,
+        "noteDurationsS": [],
+        "notes": 0,
+        "pitchHz": null
+      },
+      {
+        "events": 1,
+        "firstOnsetS": null,
+        "id": "curvasona.cues",
+        "instrument": "sine",
+        "lastOnsetS": null,
+        "noteDurationsS": [],
+        "notes": 0,
+        "pitchHz": null
+      }
+    ]
+  },
+  "32-hole-and-pole": {
+    "cues": null,
+    "data": {
+      "fingerprint": "sha256:bdea284a299f7e37acecec247f5ede12e35bcc93e2418703cdc5ce4c53216969",
+      "provenance": {},
+      "source": {
+        "kind": "inline",
+        "name": "inline"
+      }
+    },
+    "manifestVersion": 2,
+    "output": {
+      "bitsPerSample": 24,
+      "channels": 2,
+      "file": "32-hole-and-pole.wav",
+      "format": "wav",
+      "frames": 384000,
+      "gainDb": 0.0,
+      "integratedLufs": -24.99,
+      "limitedFrames": 19938,
+      "sha256": "sha256:e45ad91d97077d9a051c05963545fbd027686e2a6409b000ca28d0887baf6f54",
+      "truePeakDbtp": -1.19
+    },
+    "render": {
+      "blockSize": 256,
+      "durationS": 8.0,
+      "loudnessCompensationPhon": 60.0,
+      "mode": "analysis",
+      "sampleRate": 48000,
+      "seed": 0
+    },
+    "score": {
+      "irVersion": 2,
+      "releaseIndependentHash": "sha256:dfd5cd56eb8ac8ba1c3dfee9eabc50c4f548eee64b8853138b6fb4512f8775ba"
+    },
+    "spec": {
+      "embedded": null,
+      "hash": "sha256:514eb271728b73423ced33930e2c330bab61147764c157680781b38a1139b177",
+      "version": "0.4"
+    },
+    "tracks": [
+      {
+        "events": 3,
+        "firstOnsetS": null,
+        "id": "f",
+        "instrument": "mallet",
+        "lastOnsetS": null,
+        "noteDurationsS": [],
+        "notes": 0,
+        "pitchHz": null
+      },
+      {
+        "events": 2,
+        "firstOnsetS": null,
+        "id": "curvasona.cues",
+        "instrument": "sine",
+        "lastOnsetS": null,
+        "noteDurationsS": [],
+        "notes": 0,
+        "pitchHz": null
+      }
+    ]
+  },
+  "33-round": {
+    "cues": null,
+    "data": {
+      "fingerprint": "sha256:a9ff1075651001b556d91fea571ad5a8fd3eca3ac5402ff6fef2dabe7cd7ebe0",
+      "provenance": {},
+      "source": {
+        "kind": "inline",
+        "name": "inline"
+      }
+    },
+    "manifestVersion": 2,
+    "output": {
+      "bitsPerSample": 24,
+      "channels": 2,
+      "file": "33-round.wav",
+      "format": "wav",
+      "frames": 384000,
+      "gainDb": 0.0,
+      "integratedLufs": -24.44,
+      "limitedFrames": 0,
+      "sha256": "sha256:8adf0dad5e3b07d63fc6e9b8865317513d78da507d45ac257d4cd6fa1da4dcf0",
+      "truePeakDbtp": -8.42
+    },
+    "render": {
+      "blockSize": 256,
+      "durationS": 8.0,
+      "loudnessCompensationPhon": 60.0,
+      "mode": "analysis",
+      "sampleRate": 48000,
+      "seed": 0
+    },
+    "score": {
+      "irVersion": 1,
+      "releaseIndependentHash": "sha256:cca69ea232ec83e8a983166b0b63dd74793a9637496f7e9a820418f61cfba1ad"
+    },
+    "spec": {
+      "embedded": null,
+      "hash": "sha256:4f73aa72dbdd1e21c243e493bceab71b4dfcd4f04a68f55e887bbb8a751c9de9",
+      "version": "0.4"
+    },
+    "tracks": [
+      {
+        "events": 1,
+        "firstOnsetS": null,
+        "id": "f",
+        "instrument": "mallet",
+        "lastOnsetS": null,
+        "noteDurationsS": [],
+        "notes": 0,
+        "pitchHz": null
+      },
+      {
+        "events": 4,
+        "firstOnsetS": null,
+        "id": "curvasona.cues",
+        "instrument": "sine",
+        "lastOnsetS": null,
+        "noteDurationsS": [],
+        "notes": 0,
+        "pitchHz": null
+      }
+    ]
+  },
+  "34-two-linear-poles": {
+    "cues": null,
+    "data": {
+      "fingerprint": "sha256:09122e7696c95860dc2981e32d7419c60c3ac5fb9082b615fe1d847a4fc83a26",
+      "provenance": {},
+      "source": {
+        "kind": "inline",
+        "name": "inline"
+      }
+    },
+    "manifestVersion": 2,
+    "output": {
+      "bitsPerSample": 24,
+      "channels": 2,
+      "file": "34-two-linear-poles.wav",
+      "format": "wav",
+      "frames": 384000,
+      "gainDb": 0.0,
+      "integratedLufs": -23.22,
+      "limitedFrames": 21741,
+      "sha256": "sha256:04694a0c2a2dcaf72881f3451d7cb6b2baee52bbb627c70092060a99f4cd614e",
+      "truePeakDbtp": -1.2
+    },
+    "render": {
+      "blockSize": 256,
+      "durationS": 8.0,
+      "loudnessCompensationPhon": 60.0,
+      "mode": "analysis",
+      "sampleRate": 48000,
+      "seed": 0
+    },
+    "score": {
+      "irVersion": 2,
+      "releaseIndependentHash": "sha256:bea7140a2f08343a80e194a7c646eb6ee1a067486df446f5023fb1a003719ae5"
+    },
+    "spec": {
+      "embedded": null,
+      "hash": "sha256:32b0b04871b0d8ab002abab80479e6a05d799e6620cefdf2dc4f8342c2c78804",
+      "version": "0.4"
+    },
+    "tracks": [
+      {
+        "events": 3,
+        "firstOnsetS": null,
+        "id": "f",
+        "instrument": "mallet",
+        "lastOnsetS": null,
+        "noteDurationsS": [],
+        "notes": 0,
+        "pitchHz": null
+      },
+      {
+        "events": 3,
+        "firstOnsetS": null,
+        "id": "curvasona.cues",
+        "instrument": "sine",
+        "lastOnsetS": null,
+        "noteDurationsS": [],
+        "notes": 0,
+        "pitchHz": null
+      }
+    ]
+  },
+  "35-one-sided-pole": {
+    "cues": null,
+    "data": {
+      "fingerprint": "sha256:4248deccbe5f9bc1c155e73042afeb96163b04ca2a8e629661baa8c2ea42003f",
+      "provenance": {},
+      "source": {
+        "kind": "inline",
+        "name": "inline"
+      }
+    },
+    "manifestVersion": 2,
+    "output": {
+      "bitsPerSample": 24,
+      "channels": 2,
+      "file": "35-one-sided-pole.wav",
+      "format": "wav",
+      "frames": 384000,
+      "gainDb": 0.0,
+      "integratedLufs": -23.5,
+      "limitedFrames": 0,
+      "sha256": "sha256:3764396f9c49e3641def605e73655d9ad50789a827cdd36fecc8153f5fd30fc6",
+      "truePeakDbtp": -1.56
+    },
+    "render": {
+      "blockSize": 256,
+      "durationS": 8.0,
+      "loudnessCompensationPhon": 60.0,
+      "mode": "analysis",
+      "sampleRate": 48000,
+      "seed": 0
+    },
+    "score": {
+      "irVersion": 2,
+      "releaseIndependentHash": "sha256:d2360b570faf2affeff4bade93dca9ef128737b96083c35394b387c24dde956c"
+    },
+    "spec": {
+      "embedded": null,
+      "hash": "sha256:7286dacc4b6e38d49bea8d32fa24bc47e8c9bf42323abe054581f1de511524b0",
+      "version": "0.4"
+    },
+    "tracks": [
+      {
+        "events": 2,
+        "firstOnsetS": null,
+        "id": "f",
+        "instrument": "mallet",
+        "lastOnsetS": null,
+        "noteDurationsS": [],
+        "notes": 0,
+        "pitchHz": null
+      },
+      {
+        "events": 2,
+        "firstOnsetS": null,
+        "id": "curvasona.cues",
+        "instrument": "sine",
+        "lastOnsetS": null,
+        "noteDurationsS": [],
+        "notes": 0,
+        "pitchHz": null
+      }
+    ]
+  },
+  "36-half-angle-tangent": {
+    "cues": null,
+    "data": {
+      "fingerprint": "sha256:0f472aa93a4da729117257dc30604a509a774c4d275321d4ed06047a726449de",
+      "provenance": {},
+      "source": {
+        "kind": "inline",
+        "name": "inline"
+      }
+    },
+    "manifestVersion": 2,
+    "output": {
+      "bitsPerSample": 24,
+      "channels": 2,
+      "file": "36-half-angle-tangent.wav",
+      "format": "wav",
+      "frames": 384000,
+      "gainDb": 0.0,
+      "integratedLufs": -21.68,
+      "limitedFrames": 48687,
+      "sha256": "sha256:b569dc1c5f3b6b0c426684bb8ebdab139de796076e317468d1dad94ab8268620",
+      "truePeakDbtp": -1.18
+    },
+    "render": {
+      "blockSize": 256,
+      "durationS": 8.0,
+      "loudnessCompensationPhon": 60.0,
+      "mode": "analysis",
+      "sampleRate": 48000,
+      "seed": 0
+    },
+    "score": {
+      "irVersion": 2,
+      "releaseIndependentHash": "sha256:edd5d10351b0bb0634231e674081bce5664636c94c62a5cd066c1be2b007a7e3"
+    },
+    "spec": {
+      "embedded": null,
+      "hash": "sha256:3b6b7500447e6ac4e6416d3d317a940b0e5911241953b820fd8add0b7c328f9e",
+      "version": "0.4"
+    },
+    "tracks": [
+      {
+        "events": 5,
+        "firstOnsetS": null,
+        "id": "f",
+        "instrument": "mallet",
+        "lastOnsetS": null,
+        "noteDurationsS": [],
+        "notes": 0,
+        "pitchHz": null
+      },
+      {
+        "events": 7,
+        "firstOnsetS": null,
+        "id": "curvasona.cues",
+        "instrument": "sine",
+        "lastOnsetS": null,
+        "noteDurationsS": [],
+        "notes": 0,
+        "pitchHz": null
+      }
+    ]
+  },
+  "37-oblique-asymptote": {
+    "cues": null,
+    "data": {
+      "fingerprint": "sha256:97812da929485452d8f8a74bb8124aba8ea862c16e942683a1d0b5ef11e389d8",
+      "provenance": {},
+      "source": {
+        "kind": "inline",
+        "name": "inline"
+      }
+    },
+    "manifestVersion": 2,
+    "output": {
+      "bitsPerSample": 24,
+      "channels": 2,
+      "file": "37-oblique-asymptote.wav",
+      "format": "wav",
+      "frames": 384000,
+      "gainDb": 0.0,
+      "integratedLufs": -25.53,
+      "limitedFrames": 20647,
+      "sha256": "sha256:cab7ff435d7b5e65b2926b26557e747a4d939f08991c835b6e22898ac077761d",
+      "truePeakDbtp": -1.2
+    },
+    "render": {
+      "blockSize": 256,
+      "durationS": 8.0,
+      "loudnessCompensationPhon": 60.0,
+      "mode": "analysis",
+      "sampleRate": 48000,
+      "seed": 0
+    },
+    "score": {
+      "irVersion": 2,
+      "releaseIndependentHash": "sha256:7a24d0dcdc57e1a8893b87fce338b666063216044f824d50edeb777d7bebf32a"
+    },
+    "spec": {
+      "embedded": null,
+      "hash": "sha256:71a891c73f67799280ab19a2038cd66abfb76c9c1d2bf0776b02c30b0bce6429",
+      "version": "0.4"
+    },
+    "tracks": [
+      {
+        "events": 2,
+        "firstOnsetS": null,
+        "id": "f",
+        "instrument": "mallet",
+        "lastOnsetS": null,
+        "noteDurationsS": [],
+        "notes": 0,
+        "pitchHz": null
+      },
+      {
+        "events": 2,
+        "firstOnsetS": null,
+        "id": "curvasona.cues",
+        "instrument": "sine",
+        "lastOnsetS": null,
+        "noteDurationsS": [],
+        "notes": 0,
+        "pitchHz": null
+      }
+    ]
+  },
+  "38-log-of-a-parabola": {
+    "cues": null,
+    "data": {
+      "fingerprint": "sha256:7773364c7cf4a7e984f58ee4a1cf9c014ca1b0193c87b3a63ffb764d376c2957",
+      "provenance": {},
+      "source": {
+        "kind": "inline",
+        "name": "inline"
+      }
+    },
+    "manifestVersion": 2,
+    "output": {
+      "bitsPerSample": 24,
+      "channels": 2,
+      "file": "38-log-of-a-parabola.wav",
+      "format": "wav",
+      "frames": 384000,
+      "gainDb": 0.0,
+      "integratedLufs": -21.78,
+      "limitedFrames": 16231,
+      "sha256": "sha256:abc4d637f8220cfc996ae8aa4def0c85836b97af0b07cd4e789dd35b23b9586a",
+      "truePeakDbtp": -1.19
+    },
+    "render": {
+      "blockSize": 256,
+      "durationS": 8.0,
+      "loudnessCompensationPhon": 60.0,
+      "mode": "analysis",
+      "sampleRate": 48000,
+      "seed": 0
+    },
+    "score": {
+      "irVersion": 2,
+      "releaseIndependentHash": "sha256:435577eae18d1b21c9ac30d2928735bf7f427d1359d049641ae4fb41083c1d76"
+    },
+    "spec": {
+      "embedded": null,
+      "hash": "sha256:30230c184f3d6ae44dd13f636d02e4a35248468f252c5c64655df10960e4ab1a",
+      "version": "0.4"
+    },
+    "tracks": [
+      {
+        "events": 2,
+        "firstOnsetS": null,
+        "id": "f",
+        "instrument": "mallet",
+        "lastOnsetS": null,
+        "noteDurationsS": [],
+        "notes": 0,
+        "pitchHz": null
+      },
+      {
+        "events": 4,
+        "firstOnsetS": null,
+        "id": "curvasona.cues",
+        "instrument": "sine",
+        "lastOnsetS": null,
+        "noteDurationsS": [],
+        "notes": 0,
+        "pitchHz": null
+      }
+    ]
+  },
+  "39-shifted-sinc": {
+    "cues": null,
+    "data": {
+      "fingerprint": "sha256:6c3cd072f742340396b6b85362cc9a0adb51987bb45133c7bbb6684092339ef6",
+      "provenance": {},
+      "source": {
+        "kind": "inline",
+        "name": "inline"
+      }
+    },
+    "manifestVersion": 2,
+    "output": {
+      "bitsPerSample": 24,
+      "channels": 2,
+      "file": "39-shifted-sinc.wav",
+      "format": "wav",
+      "frames": 384000,
+      "gainDb": 0.0,
+      "integratedLufs": -24.89,
+      "limitedFrames": 0,
+      "sha256": "sha256:2880161a97c49280a9630f9b400d9283a58d9372a85987ddc36794513c1801b0",
+      "truePeakDbtp": -9.27
+    },
+    "render": {
+      "blockSize": 256,
+      "durationS": 8.0,
+      "loudnessCompensationPhon": 60.0,
+      "mode": "analysis",
+      "sampleRate": 48000,
+      "seed": 0
+    },
+    "score": {
+      "irVersion": 2,
+      "releaseIndependentHash": "sha256:3250e9c001d1b707843bb9e6dc05aa1c76ecf689725377fec230f76d84ca14a1"
+    },
+    "spec": {
+      "embedded": null,
+      "hash": "sha256:132788f517ee26e60e653db3e81d12da9335d0fa57ad20ac4b7905540215e8da",
+      "version": "0.4"
+    },
+    "tracks": [
+      {
+        "events": 2,
+        "firstOnsetS": null,
+        "id": "f",
+        "instrument": "mallet",
+        "lastOnsetS": null,
+        "noteDurationsS": [],
+        "notes": 0,
+        "pitchHz": null
+      },
+      {
+        "events": 4,
+        "firstOnsetS": null,
+        "id": "curvasona.cues",
+        "instrument": "sine",
+        "lastOnsetS": null,
+        "noteDurationsS": [],
+        "notes": 0,
+        "pitchHz": null
+      }
+    ]
+  },
+  "40-arccosine": {
+    "cues": null,
+    "data": {
+      "fingerprint": "sha256:b6e03390faa8c6475193d00bccb1065d9515870114eaedd11063b81f06244616",
+      "provenance": {},
+      "source": {
+        "kind": "inline",
+        "name": "inline"
+      }
+    },
+    "manifestVersion": 2,
+    "output": {
+      "bitsPerSample": 24,
+      "channels": 2,
+      "file": "40-arccosine.wav",
+      "format": "wav",
+      "frames": 324417,
+      "gainDb": 0.0,
+      "integratedLufs": -26.45,
+      "limitedFrames": 0,
+      "sha256": "sha256:d681b21c1e723f747e5047fcacd09cfcaec6eb928f2847a217fe1b8f81d2c3b3",
+      "truePeakDbtp": -8.85
+    },
+    "render": {
+      "blockSize": 256,
+      "durationS": 6.7586875,
+      "loudnessCompensationPhon": 60.0,
+      "mode": "analysis",
+      "sampleRate": 48000,
+      "seed": 0
+    },
+    "score": {
+      "irVersion": 2,
+      "releaseIndependentHash": "sha256:859619448863e613371b670f0be6d9f9d18247105831c755e0e5b3fdc9899e13"
+    },
+    "spec": {
+      "embedded": null,
+      "hash": "sha256:e40eb12e254c69d10325b6c9129edc4ed84757895a33e63db5c7b4e512def222",
+      "version": "0.4"
+    },
+    "tracks": [
+      {
+        "events": 1,
+        "firstOnsetS": null,
+        "id": "f",
+        "instrument": "mallet",
+        "lastOnsetS": null,
+        "noteDurationsS": [],
+        "notes": 0,
+        "pitchHz": null
+      },
+      {
+        "events": 3,
+        "firstOnsetS": null,
+        "id": "curvasona.cues",
+        "instrument": "sine",
+        "lastOnsetS": null,
+        "noteDurationsS": [],
+        "notes": 0,
+        "pitchHz": null
+      }
+    ]
+  }
+}

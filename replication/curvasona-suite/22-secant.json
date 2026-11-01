@@ -1,0 +1,41 @@
+{
+  "analysis": {
+    "cue": "earcon",
+    "detect": [
+      "critical-points"
+    ]
+  },
+  "data": {
+    "source": {
+      "domain": [
+        -4.0,
+        4.0
+      ],
+      "expr": "sec(x)",
+      "kind": "function"
+    }
+  },
+  "description": "f(x) = sec(x) over [-4, 4], one curve of the 40-curve suite with analytically known critical points (C03-T03), as a glide with its critical points as earcons. Curve gallery, C03-T06.",
+  "name": "CURVASONA suite: secant",
+  "specVersion": "0.4",
+  "substrate": {
+    "time": {
+      "pace": {
+        "duration": {
+          "s": 8.0
+        }
+      }
+    }
+  },
+  "tracks": [
+    {
+      "channels": {
+        "pitch": {
+          "field": "y"
+        }
+      },
+      "id": "f",
+      "mark": "glide"
+    }
+  ]
+}

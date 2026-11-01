@@ -138,6 +138,15 @@ precedence = "closest"
 SPDX-FileCopyrightText = "2026 SONARITHM contributors"
 SPDX-License-Identifier = "CC-BY-4.0"
 
+# The Dombois (2001) gallery item's seismograms (C03-T06, OD-31): clips of the GEOFON Seismic
+# Network, doi:10.14470/TR560404, CC BY 4.0 per its DataCite record, modified (clipped, DC
+# offset removed, converted to Parquet). Credit and steps: replication/dombois-2001/README.md.
+[[annotations]]
+path = ["replication/dombois-2001/data/*.parquet"]
+precedence = "override"
+SPDX-FileCopyrightText = "2020-2021 GEOFON Data Centre, GFZ German Research Centre for Geosciences (GEOFON Seismic Network, doi:10.14470/TR560404)"
+SPDX-License-Identifier = "CC-BY-4.0"
+
 # IBM Plex Sans and Mono (B02-T02): IBM's unmodified WOFF2 files and IBM's licence file, the
 # only OFL-1.1 files in the repository. The supply-chain policy allows OFL-1.1 for fonts only
 # (docs/engineering/supply-chain-and-licensing.md, "Assets"). Provenance and hashes:

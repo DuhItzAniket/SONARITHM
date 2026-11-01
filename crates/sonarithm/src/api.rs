@@ -267,34 +267,11 @@ impl Builder {
     }
 }
 
-/// Whether the spec `text` uses CURVASONA: a `function` source, a track with the `audify`
-/// mark, or `critical-points` in `analysis.detect` (its manifest's spec keys, 07). A spec
+/// Whether the spec `text` uses CURVASONA ([`sonarithm_curvasona::is_used_by`]). A spec
 /// that is not JSON does not, and its compile reports why.
 fn uses_curvasona(text: &str) -> bool {
-    let Ok(spec) = serde_json::from_str::<serde_json::Value>(text) else {
-        return false;
-    };
-    let function = spec
-        .pointer("/data/source/kind")
-        .and_then(serde_json::Value::as_str)
-        == Some("function");
-    let audify = spec
-        .get("tracks")
-        .and_then(serde_json::Value::as_array)
-        .is_some_and(|tracks| {
-            tracks
-                .iter()
-                .any(|t| t.get("mark").and_then(serde_json::Value::as_str) == Some("audify"))
-        });
-    let detects = spec
-        .pointer("/analysis/detect")
-        .and_then(serde_json::Value::as_array)
-        .is_some_and(|detect| {
-            detect
-                .iter()
-                .any(|d| d.as_str() == Some(sonarithm_curvasona::CRITICAL_POINTS.as_str()))
-        });
-    function || audify || detects
+    serde_json::from_str::<serde_json::Value>(text)
+        .is_ok_and(|spec| sonarithm_curvasona::is_used_by(&spec))
 }
 
 /// Data the caller holds, by ID, for `dataset` sources.

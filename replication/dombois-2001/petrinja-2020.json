@@ -1,0 +1,45 @@
+{
+  "specVersion": "0.4",
+  "name": "Dombois (2001): Petrinja 2020 at MORC (near, about 4.4°)",
+  "description": "The Mw 6.4 Petrinja (Croatia) earthquake of 2020-12-29 11:19:55 UTC, about 4.4° from GEOFON station MORC: 10 minutes of the vertical component from 11:19:25 UTC, audified 2,200 times faster as Dombois (2001) did, so a near quake sounds as a short sharp event. Data: GEOFON Seismic Network (GFZ), doi:10.14470/TR560404, CC BY 4.0. Replication gallery, C03-T06.",
+  "data": {
+    "source": {
+      "kind": "file",
+      "path": "data/petrinja-2020-morc-bhz.parquet"
+    },
+    "fields": {
+      "time": {
+        "role": "time",
+        "description": "Sample time, UTC"
+      },
+      "z": {
+        "role": "y",
+        "unit": "counts",
+        "label": "Vertical ground velocity, DC removed",
+        "description": "Raw counts of the BHZ channel minus the window's mean"
+      }
+    }
+  },
+  "substrate": {
+    "time": {
+      "field": "time"
+    }
+  },
+  "tracks": [
+    {
+      "id": "z",
+      "mark": "audify",
+      "audify": {
+        "k": 2200
+      }
+    }
+  ],
+  "x-attribution": {
+    "source": "GEOFON Data Centre (1993): GEOFON Seismic Network. Deutsches GeoForschungsZentrum GFZ. doi:10.14470/TR560404",
+    "doi": "10.14470/TR560404",
+    "licence": "CC-BY-4.0",
+    "channel": "GE.MORC..BHZ (STS-2/N, 20 samples per second), Moravsky Beroun, Czech Republic",
+    "modified": "Clip of one channel; the window's mean removed as an integer offset; converted from miniSEED to Parquet by convert.py",
+    "request": "https://geofon.gfz.de/fdsnws/dataselect/1/query?network=GE&station=MORC&location=--&channel=BHZ, 2020-12-29T11:19:25 to 2020-12-29T11:29:25 UTC"
+  }
+}
