@@ -86,7 +86,7 @@ export function App({
     setReferenceScopes(activeScopes(document.activeElement).scopes);
   });
   // H in the chart explorer: its own keys first (keyboard §5.4).
-  useCommand("nav.help", () => {
+  useCommand("help.explorer", () => {
     setReferenceScopes(["explorer", "global"]);
   });
   // Stop all audio from any scope, even in a dialog (A11Y-15, T-13): sonification,
