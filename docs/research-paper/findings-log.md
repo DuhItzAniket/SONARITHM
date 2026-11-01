@@ -1204,3 +1204,21 @@ A05 (render engine, audio backends, export) uses F-050 to F-069.
 - **Evidence level / confidence:** EV-C / Strong (code and tests)
 - **Affects:** 07 NUMISONA (timing), RFC-0001 §5 pace (`secondsPerUnit`), #441 (CURVASONA's function specs on x-linear time, which this unblocks)
 - **Papers:** none yet
+
+### F-212 · PB-08's script time is over budget on every CI webview, by 14 times under Xvfb
+
+- **Date:** 2026-11-01 · **Phase:** B04 · **Type:** performance · **Status:** new
+- **Statement:** The desktop smoke check `pb-08-dense-layer` redraws a 1M-point dense line in the app's own webview. In #439's CI runs at `e1f0fedf`, no webview met the 8 ms per-frame script budget:
+  - WebView2: p95 15.6 ms debug, 13.7 ms release.
+  - WKWebView: p95 26 ms debug, 21.0 ms release.
+  - WebKitGTK under Xvfb: p95 110 ms debug, 87 ms release.
+  The playhead held 59–64 fps everywhere.
+- **Reading:**
+  - The runners are shared and have no GPU, so these are upper bounds.
+  - Xvfb in particular draws WebGL in software even though `backend` reports webgl2. It is not a WebKitGTK figure.
+  - The playhead is unaffected because it moves by transform, not by redrawing.
+  - Whether a real GPU meets the budget is the HW-01 run (owner, #129) and, for Linux, HP-02. Until then PB-08 stays unconfirmed, not failed.
+- **Evidence:** the `smoke.json` printed in the job logs ([debug](https://github.com/DuhItzAniket/SONARITHM/actions/runs/41267649561), [release](https://github.com/DuhItzAniket/SONARITHM/actions/runs/41267649558)), benchmarks-log rows "B04 (B04-T08)".
+- **Evidence level / confidence:** EV-C / Moderate. Measured, but on runners unlike the target hardware.
+- **Affects:** PB-08, B04-T08, B04-T02 (dense layer); 09 §3
+- **Papers:** none yet
