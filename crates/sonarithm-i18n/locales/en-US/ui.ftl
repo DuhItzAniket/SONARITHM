@@ -139,6 +139,15 @@ ui-explorer-go-to-action = Go
 ui-explorer-find = Find a value
 ui-explorer-find-value = Value
 ui-explorer-find-action = Find
+# The query menu (Q; keyboard §7): answers are announced and never move the cursor.
+ui-explorer-query = Ask
+ui-query-summary = Summary
+ui-query-minimum = Minimum
+ui-query-maximum = Maximum
+ui-query-range = Range
+ui-query-value-at = Value at x…
+ui-explorer-value-at = Value at an x value
+ui-explorer-value-at-action = Ask
 # Said after a modality toggle (T, S, B, V); $on is yes or no.
 ui-modality-changed =
     { $modality ->
@@ -254,6 +263,7 @@ command-nav-go-to = Go to an x value…
 command-nav-find-value = Find a value…
 command-nav-where-am-i = Where am I
 command-nav-repeat = Repeat the last announcement
+command-nav-query = Ask about this series…
 command-nav-help = Explorer keys
 command-modality-speech = Speech on or off
 command-verbosity-toggle = Terse or verbose announcements

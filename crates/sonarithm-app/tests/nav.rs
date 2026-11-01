@@ -258,6 +258,40 @@ fn b03_t09_a_filter_excludes_its_series_until_the_data_is_replaced() {
     );
 }
 
+/// Keyboard §7 (B03-T09): a query answers about the cursor's series as an announcement,
+/// and neither moves the cursor nor sends a `cursor` event.
+#[test]
+fn keyboard_7_a_query_is_announced_and_moves_nothing() {
+    let mut h = Harness::new("nav-query");
+    h.compile(&["temp"]);
+    h.ok(&json!({ "command": "cursor_set", "args": { "dataset": "d1", "row": 1, "origin": "table" } }));
+    let events = h.cursors().len();
+    let before = h.ok(&json!({ "command": "cursor_get" }));
+    for query in [
+        json!({ "query": "summary" }),
+        json!({ "query": "minimum" }),
+        json!({ "query": "maximum" }),
+        json!({ "query": "range" }),
+        json!({ "query": "valueAt", "x": { "number": 3.0 } }),
+    ] {
+        let reply = h.ok(&json!({ "command": "nav_query", "args": { "query": query } }));
+        assert_eq!(reply, json!({ "reply": "announce", "queued": true }), "{query}");
+    }
+    assert_eq!(h.cursors().len(), events);
+    assert_eq!(h.ok(&json!({ "command": "cursor_get" })), before);
+    let start = Instant::now();
+    let said = |h: &Harness| {
+        h.sink.events().into_iter().any(|event| match event {
+            Event::Announcement(info) => info.speech.starts_with("Range of "),
+            _ => false,
+        })
+    };
+    while !said(&h) {
+        assert!(start.elapsed() < Duration::from_secs(5), "no range answer");
+        std::thread::sleep(Duration::from_millis(10));
+    }
+}
+
 /// ADR-0017 "Navigation": an export renders every series, so while a filter excludes one,
 /// starting an export says so; with nothing excluded it says nothing about it.
 #[test]

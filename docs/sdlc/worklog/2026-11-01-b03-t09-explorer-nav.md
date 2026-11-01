@@ -57,6 +57,13 @@ None.
 - Not yet: the query menu with `nav_query`, remapping and the group switch (PR 3), compare, selection and polarity (their features).
 - The E2E checks which verb each key sends against the mock host; the app core's tests cover what each verb does.
 
+## The query menu (2026-11-01)
+
+- AUDAXIS `Composer::query`, with the composer's own formatting (values with spoken and symbol units, x labels): summary, minimum, maximum, range with its span, and the value at an x. It finds its targets with the cursor's own verbs (`Minimum`, `Maximum`, `GoTo`) on a copy, so the cursor never moves (keyboard §7).
+- `nav_query` replies `announce`; the answer is a response announcement.
+- Q opens the menu (`MenuButton` can now be opened by a command), with type-ahead; Value at x… asks for the x in the explorer's value dialog. Focus returns to the explorer.
+- The statistics (mean, median, mode, standard deviation, sum, count) wait for ECHOMETRIC.
+
 ## Next steps
 
 - PR (2): the Explorer component, keymap v0, the query menu, modality and verbosity toggles, E2E for every verb.

@@ -329,6 +329,7 @@ impl App {
             Request::CursorGet => Ok(self.cursor_get()),
             Request::NavMove { verb } => self.nav_move(&verb),
             Request::NavWhere => self.nav_where(),
+            Request::NavQuery { query } => self.nav_query(&query),
             Request::ViewGet { .. } | Request::TablePage { .. } => Err(IpcError::new(
                 &codes::BAD_REQUEST,
                 "This command returns a binary view; send it with dispatch_binary.",

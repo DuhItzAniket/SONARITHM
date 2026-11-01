@@ -5,9 +5,11 @@ import type {
   Client,
   CursorState,
   DatasetSummary,
+  NavQuery,
   NavVerb,
   Settings,
 } from "@sonarithm/ipc";
+import { MenuButton, MenuItem } from "@sonarithm/ui";
 import { useId, useRef, useState } from "react";
 
 import type { RoutedAnnouncer } from "../announcer/announcer.ts";
@@ -15,6 +17,7 @@ import { useCommand, useCommandTable } from "../commands/context.tsx";
 import { useLocalizer } from "../i18n.ts";
 import { settingsOf } from "../preferences/settings.ts";
 import styles from "./explorer.module.css";
+import type { ValueKind } from "./ValueDialog.tsx";
 import { ValueDialog } from "./ValueDialog.tsx";
 
 /** The explorer's movement commands and the AUDAXIS verb each sends (keyboard §4.2). */
@@ -77,7 +80,13 @@ export function Explorer({
   const t = useLocalizer();
   const surface = useRef<HTMLDivElement>(null);
   const hint = useId();
-  const [dialog, setDialog] = useState<"goTo" | "find" | null>(null);
+  const [dialog, setDialog] = useState<ValueKind | null>(null);
+  const [queryOpen, setQueryOpen] = useState(false);
+  const ask = (query: NavQuery) => {
+    void client
+      .call({ command: "nav_query", args: { query } })
+      .catch(() => undefined);
+  };
 
   const move = (verb: NavVerb) => {
     void client
@@ -97,6 +106,9 @@ export function Explorer({
   });
   useCommand("nav.findValue", () => {
     setDialog("find");
+  });
+  useCommand("nav.query", () => {
+    setQueryOpen(true);
   });
   useCommand("nav.whereAmI", () => {
     void client.call({ command: "nav_where" }).catch(() => undefined);
@@ -187,6 +199,35 @@ export function Explorer({
       <p id={hint} className={styles.hint}>
         {t.format("ui-explorer-hint")}
       </p>
+      {/* The query menu (Q; keyboard §7): answers are announced by the app core and never
+          move the cursor. Opened from the explorer, it returns the focus there. */}
+      <MenuButton
+        label={t.format("ui-explorer-query")}
+        isOpen={queryOpen}
+        onOpenChange={(open) => {
+          setQueryOpen(open);
+          if (!open) requestAnimationFrame(() => surface.current?.focus());
+        }}
+        autoFocus="first"
+        onAction={(key) => {
+          if (key === "valueAt") {
+            setDialog("valueAt");
+          } else if (
+            key === "summary" ||
+            key === "minimum" ||
+            key === "maximum" ||
+            key === "range"
+          ) {
+            ask({ query: key });
+          }
+        }}
+      >
+        <MenuItem id="summary">{t.format("ui-query-summary")}</MenuItem>
+        <MenuItem id="minimum">{t.format("ui-query-minimum")}</MenuItem>
+        <MenuItem id="maximum">{t.format("ui-query-maximum")}</MenuItem>
+        <MenuItem id="range">{t.format("ui-query-range")}</MenuItem>
+        <MenuItem id="valueAt">{t.format("ui-query-value-at")}</MenuItem>
+      </MenuButton>
       <ValueDialog
         kind={dialog}
         onClose={() => {
@@ -194,11 +235,15 @@ export function Explorer({
           surface.current?.focus();
         }}
         onGo={(kind, value) => {
-          move(
-            kind === "goTo"
-              ? { verb: "goTo", x: { number: value } }
-              : { verb: "findValue", value },
-          );
+          if (kind === "valueAt") {
+            ask({ query: "valueAt", x: { number: value } });
+          } else {
+            move(
+              kind === "goTo"
+                ? { verb: "goTo", x: { number: value } }
+                : { verb: "findValue", value },
+            );
+          }
         }}
       />
     </div>

@@ -76,6 +76,8 @@ function sampleArgs(style: string): MessageArgs {
     modality: "speech",
     on: "yes",
     verbosity: "verbose",
+    // The query answers (B03-T09).
+    span: "19",
   };
 }
 

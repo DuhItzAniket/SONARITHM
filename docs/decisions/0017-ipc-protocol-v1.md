@@ -133,7 +133,8 @@ Each change sends a `cursor` event with `origin: null`. A `cursor` event never m
 
 * `nav_move { verb }` applies a verb (keyboard-and-navigation §4.2) and replies `nav`. `verb` is tagged by `verb`: `next`, `previous`, `jumpForward`, `jumpBack`, `first`, `last`, `into`, `out`, `activate`, `nextSeries`, `previousSeries`, `maximum`, `minimum`, `nextInsight`, `previousInsight`, `{ verb: "landmark", landmark }` (`xAxis`, `yAxis`, `insights`, `filters`, `dataset`), `{ verb: "goTo", x }` (`{ number }` or `{ category }`) and `{ verb: "findValue", value }`. It sends a `cursor` event with origin `nav` for every verb, also one that kept the cursor.
 * `nav_where` announces "where am I" (keyboard §6, A11Y-07) and replies `announce`. The cursor does not move, and no `cursor` event is sent.
-* Either fails with `SNR-APP-090` when no compiled Score has a navigation tree.
+* `nav_query { query }` answers a question of the query menu about the cursor's series (keyboard §7), as a response announcement, and replies `announce`. `query` is tagged by `query`: `summary`, `minimum`, `maximum`, `range` or `{ query: "valueAt", x }` (the B03 subset; the statistics join with ECHOMETRIC). The targets are found on a copy of the cursor, so it does not move, and no `cursor` event is sent. Added 2026-11-01, additive.
+* Each fails with `SNR-APP-090` when no compiled Score has a navigation tree.
 
 **`NavResult`.** `{ cursor, outcome, edge, reason, included, earcon, highlight, announced }`:
 

@@ -123,6 +123,7 @@ pub fn typescript() -> String {
     declare::<crate::ipc::SeriesRef>(&mut out, &cfg);
     declare::<crate::ipc::NavVerb>(&mut out, &cfg);
     declare::<crate::ipc::NavLandmark>(&mut out, &cfg);
+    declare::<crate::ipc::NavQuery>(&mut out, &cfg);
     declare::<crate::ipc::NavX>(&mut out, &cfg);
     declare::<crate::ipc::NavOutcome>(&mut out, &cfg);
     declare::<crate::ipc::NavResult>(&mut out, &cfg);

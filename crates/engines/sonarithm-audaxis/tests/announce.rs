@@ -557,3 +557,35 @@ fn estimates_at_terse_and_verbose() {
     }
     insta::assert_snapshot!(text);
 }
+
+/// Keyboard §7 (B03-T09): the query menu answers about the cursor's series, as a response,
+/// in both renderings, and asks nothing of the cursor itself.
+#[test]
+fn keyboard_7_queries_answer_about_the_cursors_series() {
+    use sonarithm_audaxis::announce::Query;
+    let tree = weather();
+    let series = tree.series().next().unwrap();
+    let cursor = Cursor::at(&tree, tree.points(series)[2]).unwrap();
+    let before = cursor.clone();
+    let localizer = english();
+    let mut composer = Composer::new(&localizer, Settings::default());
+    let ask = |composer: &mut Composer<'_>, query: Query| {
+        composer.query(&tree, &cursor, &query).unwrap()
+    };
+    let max = ask(&mut composer, Query::Maximum);
+    assert_eq!(max.class, Class::Response);
+    assert!(max.speech.starts_with("Maximum of Temperature: "), "{}", max.speech);
+    assert!(max.speech.contains("degrees Celsius"), "{}", max.speech);
+    assert!(max.display.contains("°C"), "{}", max.display);
+    let min = ask(&mut composer, Query::Minimum);
+    assert!(min.speech.starts_with("Minimum of Temperature: "), "{}", min.speech);
+    assert_ne!(min.node, max.node);
+    let range = ask(&mut composer, Query::Range);
+    assert!(range.speech.starts_with("Range of Temperature: "), "{}", range.speech);
+    assert!(range.speech.contains(", span "), "{}", range.speech);
+    let at = ask(&mut composer, Query::ValueAt(XTarget::Number(5.0)));
+    assert!(at.speech.starts_with("At "), "{}", at.speech);
+    let summary = ask(&mut composer, Query::Summary);
+    assert!(summary.speech.contains("Temperature"), "{}", summary.speech);
+    assert_eq!(cursor, before, "a query never moves the cursor");
+}

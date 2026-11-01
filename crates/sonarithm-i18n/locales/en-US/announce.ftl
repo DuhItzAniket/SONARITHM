@@ -213,6 +213,15 @@ announce-legend-cues =
             }
     }
 
+## Queries (B03-T09; keyboard-and-navigation §7): answers about the series under the
+## cursor. $series is its name, $value and $x a point's value and position, $from, $to and
+## $span quantities with units.
+
+announce-query-minimum = Minimum of { $series }: { $value } at { $x }
+announce-query-maximum = Maximum of { $series }: { $value } at { $x }
+announce-query-range = Range of { $series }: { $from } to { $to }, span { $span }
+announce-query-value-at = At { $x }: { $value }
+
 ## Export (B03-T09): said when an export starts while the explorer's filters exclude a
 ## series, because exports render every series.
 

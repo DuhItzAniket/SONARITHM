@@ -101,6 +101,8 @@ fn sample_args(style: UnitStyle) -> Args {
         .text("modality", "speech")
         .text("on", "yes")
         .text("verbosity", "verbose")
+        // The query answers (B03-T09).
+        .text("span", "19")
 }
 
 #[test]

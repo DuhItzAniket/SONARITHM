@@ -29,6 +29,10 @@ export interface MenuButtonProps<T extends object> extends Omit<
 > {
   /** The trigger's visible label, which also names the menu. */
   readonly label: string;
+  /** Whether the menu is open, for a menu a command opens too (the explorer's Q). */
+  readonly isOpen?: boolean;
+  /** Called when the menu opens or closes. */
+  readonly onOpenChange?: (isOpen: boolean) => void;
 }
 
 /**
@@ -37,10 +41,15 @@ export interface MenuButtonProps<T extends object> extends Omit<
  */
 export function MenuButton<T extends object>({
   label,
+  isOpen,
+  onOpenChange,
   ...menu
 }: MenuButtonProps<T>) {
   return (
-    <MenuTrigger>
+    <MenuTrigger
+      {...(isOpen === undefined ? {} : { isOpen })}
+      {...(onOpenChange === undefined ? {} : { onOpenChange })}
+    >
       <AriaButton className={cx(styles.control)}>{label}</AriaButton>
       <Popover className={cx(overlays.popover)} placement="bottom start">
         <AriaMenu {...menu} aria-label={label} className={cx(overlays.menu)} />

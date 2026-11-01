@@ -29,7 +29,7 @@ use sonarithm_i18n::{
 use sonarithm_spec::sections::LegendPart;
 
 use crate::earcons::EarconId;
-use crate::nav::cursor::{Cursor, Edge, Invalid, Move, Outcome, WhereAmI};
+use crate::nav::cursor::{Cursor, Edge, Invalid, Move, Outcome, Verb, WhereAmI, XTarget};
 
 /// How much an announcement says (A11Y-12).
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
@@ -262,6 +262,24 @@ impl Memory {
     pub fn clear(&mut self) {
         *self = Self::default();
     }
+}
+
+/// A question of the query menu (keyboard-and-navigation §7), asked of the series under the
+/// cursor. The B03 subset (B03-T09); mean, median, mode, standard deviation, sum and count
+/// come with ECHOMETRIC's statistics.
+#[derive(Clone, Debug, PartialEq)]
+#[non_exhaustive]
+pub enum Query {
+    /// The series' summary: its name, points and range.
+    Summary,
+    /// Its smallest value and where it is.
+    Minimum,
+    /// Its largest value and where it is.
+    Maximum,
+    /// Its value range and span.
+    Range,
+    /// The value at the point nearest an x.
+    ValueAt(XTarget),
 }
 
 /// Composes announcements for one localizer and settings.
@@ -538,6 +556,134 @@ impl<'l> Composer<'l> {
             }
         }
         Ok(out)
+    }
+
+    /// The answer to a query (keyboard §7), about the series under `cursor` (or the first
+    /// series when the cursor is in none). It is a response: announced, written to the log,
+    /// and it never moves the cursor; the targets are found on a copy of it.
+    ///
+    /// # Errors
+    ///
+    /// As [`Composer::outcome`].
+    pub fn query(
+        &mut self,
+        tree: &NavTree,
+        cursor: &Cursor,
+        query: &Query,
+    ) -> Result<Announcement, I18nError> {
+        let Some(series) = cursor.series().or_else(|| tree.series().next()) else {
+            let text = self.message(
+                "announce-invalid",
+                &Args::new().text("reason", reason_key(Invalid::NotInSeries)),
+            )?;
+            return Ok(self.earcon_text(text, cursor.node(), EarconId::Invalid));
+        };
+        if *query == Query::Summary {
+            return self.describe(tree, series);
+        }
+        // The targets come from the cursor's own verbs, run on a copy in this series.
+        let mut probe = cursor.clone();
+        if probe.series() != Some(series) {
+            let Some(first) = first_point(tree, series).and_then(|p| Cursor::at(tree, p)) else {
+                return self.invalid_query(cursor, Invalid::NoValues);
+            };
+            probe = first;
+            probe.set_excluded(cursor.excluded());
+        }
+        let verb = match query {
+            Query::Minimum => Some(Verb::Minimum),
+            Query::Maximum => Some(Verb::Maximum),
+            Query::ValueAt(x) => Some(Verb::GoTo(x.clone())),
+            _ => None,
+        };
+        let target = match verb.map(|verb| probe.apply(tree, &verb)) {
+            Some(Outcome::Moved(m)) => Some(m.to),
+            // Already on the extreme or the nearest point: the cursor's own node.
+            Some(Outcome::Boundary { at, .. }) => Some(at),
+            Some(Outcome::Invalid { reason, .. }) => return self.invalid_query(cursor, reason),
+            _ => None,
+        };
+        let name = tree
+            .node(series)
+            .and_then(|node| node.label.as_deref())
+            .map(|label| self.text(label))
+            .transpose()?
+            .unwrap_or_default();
+        let mut out = Vec::with_capacity(2);
+        for units in [UnitStyle::Verbose, UnitStyle::Symbol] {
+            let text = match (query, target) {
+                (Query::Range, _) => {
+                    let range = match tree.node(series).map(|n| &n.kind) {
+                        Some(NavKind::Series(s)) => s.range,
+                        _ => None,
+                    };
+                    let Some(range) = range else {
+                        return self.invalid_query(cursor, Invalid::NoValues);
+                    };
+                    let point = first_point(tree, series).unwrap_or(series);
+                    self.message(
+                        "announce-query-range",
+                        &Args::new()
+                            .text("series", name.as_str())
+                            .text("from", self.point_value(tree, point, Some(range.min), units)?)
+                            .text("to", self.point_value(tree, point, Some(range.max), units)?)
+                            .text(
+                                "span",
+                                self.point_value(tree, point, Some(range.max - range.min), units)?,
+                            ),
+                    )?
+                }
+                (_, Some(point)) => {
+                    let Some(NavKind::Point(p)) = tree.node(point).map(|n| &n.kind) else {
+                        return self.invalid_query(cursor, Invalid::NotHere);
+                    };
+                    let value = self.point_value(tree, point, p.value, units)?;
+                    let x = match self.x_label(tree, p.x.as_ref(), true)? {
+                        Some(x) => x,
+                        None => self.message(
+                            "announce-position",
+                            &Args::new()
+                                .number("index", count(p.index + 1))
+                                .number("total", count(1)),
+                        )?,
+                    };
+                    let id = match query {
+                        Query::Minimum => "announce-query-minimum",
+                        Query::Maximum => "announce-query-maximum",
+                        _ => "announce-query-value-at",
+                    };
+                    self.message(
+                        id,
+                        &Args::new()
+                            .text("series", name.as_str())
+                            .text("value", value)
+                            .text("x", x),
+                    )?
+                }
+                _ => return self.invalid_query(cursor, Invalid::NotHere),
+            };
+            out.push(text);
+        }
+        let display = out.pop().unwrap_or_default();
+        let speech = out.pop().unwrap_or_default();
+        Ok(Announcement {
+            class: Class::Response,
+            politeness: Politeness::Polite,
+            speech,
+            display,
+            node: target.or(Some(series)),
+            earcon: None,
+            speak: true,
+            error: false,
+        })
+    }
+
+    fn invalid_query(&self, cursor: &Cursor, reason: Invalid) -> Result<Announcement, I18nError> {
+        let text = self.message(
+            "announce-invalid",
+            &Args::new().text("reason", reason_key(reason)),
+        )?;
+        Ok(self.earcon_text(text, cursor.node(), EarconId::Invalid))
     }
 
     /// The "where am I" report (keyboard §6, A11Y-07), verbose whatever the setting: every

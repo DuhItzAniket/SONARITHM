@@ -256,6 +256,7 @@ const handlers: MockHandlers = {
     };
   },
   nav_where: () => ({ reply: "announce" as const, queued: true }),
+  nav_query: () => ({ reply: "announce" as const, queued: true }),
   announce_repeat: () => ({ reply: "announce" as const, queued: true }),
   cursor_set: (request) => ({
     reply: "cursor" as const,
@@ -390,6 +391,14 @@ Reflect.set(window, "__SONARITHM_MOCK__", {
   /** The commands the UI sent through `ipc_dispatch`, oldest first. */
   commands(): string[] {
     return host.requests.map((request) => request.command);
+  },
+  /** The questions of the explorer's `nav_query` requests, oldest first, as JSON. */
+  navQueries(): string[] {
+    return host.requests.flatMap((request) =>
+      request.command === "nav_query"
+        ? [JSON.stringify(request.args.query)]
+        : [],
+    );
   },
   /** The verbs of the explorer's `nav_move` requests, oldest first, as JSON. */
   navVerbs(): string[] {

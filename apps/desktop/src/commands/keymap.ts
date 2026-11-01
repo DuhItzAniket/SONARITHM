@@ -27,7 +27,7 @@ export interface CommandSpec {
  * scoped to the explorer: its single keys work only there (KB-02, WCAG 2.1.4), Jump is Ctrl
  * on Windows and Linux and Option on macOS, and no binding takes a screen reader's keys
  * (§12: never Insert, CapsLock, the numpad or Ctrl+Option). Compare (C), selection
- * (Shift+arrows), polarity (P), the query menu (Q) and the braille mode (Shift+B) join with
+ * (Shift+arrows), polarity (P) and the braille mode (Shift+B) join with
  * their features; A, J, K, M, O and U stay free and E reserved.
  */
 export const DEFAULT_KEYMAP: readonly CommandSpec[] = [
@@ -357,6 +357,12 @@ export const DEFAULT_KEYMAP: readonly CommandSpec[] = [
     name: "command-nav-repeat",
     scope: "explorer",
     keys: ["R"],
+  },
+  {
+    id: "nav.query",
+    name: "command-nav-query",
+    scope: "explorer",
+    keys: ["Q"],
   },
   {
     id: "nav.help",
