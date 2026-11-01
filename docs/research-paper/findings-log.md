@@ -1016,6 +1016,15 @@ A05 (render engine, audio backends, export) uses F-050 to F-069.
 - **Affects:** C02-T09, A11Y-02, A11Y-12, A11Y-24, FR-008, OD-07, H-06
 - **Papers:** none yet
 
+### F-200 · A function's glide is paced by row, so the rows CURVASONA inserts bend its timeline against x
+
+- **Date:** 2026-11-01 · **Phase:** C03 · **Type:** engineering (timing, determinism) · **Status:** new
+- **Statement:** After `main` (with #429) was merged into C03-T07, the CLI snapshot `quick_function` changed from cues at "1.689 to 6.303 seconds" to "1.691 to 6.301 seconds". It changed identically on HW-01 (Windows 11), on CI Windows and on CI macOS arm64, so it is not a platform difference. Applying #429 alone to the pre-merge branch reproduces it on one machine. The cause: the function spec's `pace: { duration: 8 s }` makes NUMISONA space the glide's rows evenly in time (8/1003 s, about 8 ms each, for the cubic's 1000 samples plus three critical-point rows), by row position, not by x. Every row the function source inserts at a critical point shifts the rest of the timeline by one step, so #429, which changed how many rows are inserted (F-194), moved the cues by about 2 ms. Each cue still sounds exactly when the glide reaches its point (tested bit for bit), but against x the cubic's cues sit 0.3 to 8 ms from (x − min)/(max − min) · T (the zero at √3: 6.301 s rather than 6.309 s). With `secondsPerUnit` pacing on `x`, every cue lands on its x-linear time exactly, but NUMISONA then ends the glide one unit late (9.333 s for 8 s), so that switch waits for a look at NUMISONA.
+- **Evidence:** CI jobs 124721139173 (macOS) and 124721139250 (Windows); the tests `f_200_the_cubic_cue_times_are_pinned` and `f_200_each_earcon_sounds_at_its_rows_glide_breakpoint` in `crates/sonarithm/tests/functions.rs`; a local probe of the glide's breakpoints against x
+- **Evidence level / confidence:** EV-D / Strong (measured on three platforms and reproduced by bisection)
+- **Affects:** C03-T07 (`Function::spec`, `quick --function`), C03-T06 (the 40-curve gallery), the 04 §6.3 example; follow-ups for NUMISONA's `secondsPerUnit` tail and for x-linear function time
+- **Papers:** none yet
+
 ### F-199 · CURVASONA's canonical form put a negative divisor in parentheses, which made it deeper than its source
 
 - **Date:** 2026-11-01 · **Phase:** C03 · **Type:** engineering (robustness) · **Status:** new
@@ -1023,6 +1032,24 @@ A05 (render engine, audio backends, export) uses F-050 to F-069.
 - **Evidence:** `crates/engines/sonarithm-curvasona/src/expr.rs` (`Node::print`); the test `f_199_a_divisor_at_the_depth_limit_reads_back`; the corpus seed `seed-regression-divisor-depth.txt`, replayed by `tests/fuzz_regressions.rs` on every run
 - **Evidence level / confidence:** EV-D / Strong (a reproduced fuzz failure, with a regression test)
 - **Affects:** C03-T01 (the expression facade), ADR-0028's canonical form
+
+### F-198 · An unboxed `Expr` was 19 KB, and sampling a function overflowed the CLI's 1 MB main-thread stack in debug builds
+
+- **Date:** 2026-11-01 · **Phase:** C03 · **Type:** engineering (robustness) · **Status:** new
+- **Statement:** exmex's compiled form (`FlatEx<f64>`) keeps its buffers inline, so CURVASONA's `Expr` was 19,296 bytes and `Calculus` (f, f′, f″) 57,888 bytes. A debug build copies these values through many frames. Sampling `x^3 - 3*x` needed between 768 KB and 1 MB of stack, and the facade's `read_function` between 1 and 1.5 MB, with no recursion involved. That overflowed the 1 MB main thread on Windows, where the CLI runs: both new CLI tests crashed with `STATUS_STACK_OVERFLOW`. Python calls run on the caller's thread, so they were exposed the same way. Boxing the compiled form makes `Expr` 136 bytes, and `read_function` then runs in 512 KB but not in 256 KB. Measured on HW-01 (Windows 11, debug build); release builds use less stack and were not measured.
+- **Evidence:** `crates/engines/sonarithm-curvasona/src/expr.rs` (`compiled: Box<Compiled>`); the test `a_function_reads_and_compiles_on_a_1_mb_stack`; stack probes at 256 KB to 4 MB during C03-T07
+- **Evidence level / confidence:** EV-D / Strong (measured, one machine)
+- **Affects:** C03-T07, every host that runs CURVASONA on a main thread (CLI, Python, the app's command thread)
+- **Papers:** none yet
+
+### F-197 · A registered context provider is recorded in every Score, so the facade adds CURVASONA only where a spec uses it
+
+- **Date:** 2026-11-01 · **Phase:** C03 · **Type:** engineering (determinism, diagnostics) · **Status:** new
+- **Statement:** The compiler's context stage records every registered context provider as a contributing engine, whether or not it adds a track, and it warns that context cues need AUDAXIS (`SNR-COMP-023`) only when no provider is registered. CURVASONA provides the `curvasona.cues` context track, so registering it for every compile in the facade (C03-T07) would have put `curvasona` into every Score header, changing every Score hash and golden snapshot, and would have hidden `SNR-COMP-023` from every CLI and Python compile that has no AUDAXIS. The facade therefore adds CURVASONA only to compiles whose spec uses it: a `function` source, an `audify` track, or `critical-points` in `analysis.detect` (its manifest's spec keys). Found by reading `pipeline.rs`, not measured; a compiler-level fix (record a provider only when it adds a track, and warn when no provider handles `context`) would change the app's Score headers and is left as a follow-up.
+- **Evidence:** `crates/sonarithm-compiler/src/pipeline.rs` (`add_context`); `crates/sonarithm/src/api.rs` (`uses_curvasona`); the test `specs_that_do_not_use_curvasona_compile_without_it`
+- **Evidence level / confidence:** EV-D / Strong (code reading, with a test)
+- **Affects:** C03-T07, the facade's default engines, every later engine with a context provider
+
 - **Papers:** none yet
 
 ### F-196 · An audification without `k` or `band` needs a target band, and no study gives one

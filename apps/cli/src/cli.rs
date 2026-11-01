@@ -182,7 +182,38 @@ pub(crate) struct Inspect {
 #[derive(Debug, Args)]
 pub(crate) struct Quick {
     /// The data file: CSV, TSV, JSON, NDJSON, Parquet, Arrow IPC, XLSX or ODS.
-    pub(crate) data: PathBuf,
+    #[arg(required_unless_present = "function")]
+    pub(crate) data: Option<PathBuf>,
+    /// A function of x to play instead of a data file, such as `sin(x)/x` (ADR-0028), as a
+    /// glide with its critical points as earcons (C03-T07).
+    #[arg(
+        long,
+        value_name = "EXPR",
+        conflicts_with_all = ["data", "x", "y", "concept"],
+        requires = "domain",
+        allow_hyphen_values = true
+    )]
+    pub(crate) function: Option<String>,
+    /// The function's domain, as MIN,MAX.
+    #[arg(
+        long,
+        value_name = "MIN,MAX",
+        requires = "function",
+        value_parser = parse_domain,
+        allow_hyphen_values = true
+    )]
+    pub(crate) domain: Option<(f64, f64)>,
+    /// How many samples of the function (default 1000).
+    #[arg(long, requires = "function", value_parser = clap::value_parser!(u32).range(2..))]
+    pub(crate) samples: Option<u32>,
+    /// How long the function plays, in seconds (default 8, the example of 04 §6.3).
+    #[arg(
+        long,
+        value_name = "SECONDS",
+        requires = "function",
+        value_parser = parse_seconds
+    )]
+    pub(crate) duration: Option<f64>,
     /// The field along time; by default the field with the x role, or the first number.
     #[arg(long)]
     pub(crate) x: Option<String>,
@@ -301,6 +332,36 @@ fn parse_range(text: &str) -> Result<(f64, f64), String> {
     Ok((low, high))
 }
 
+/// `MIN,MAX` of a function's domain: finite numbers, the first below the second.
+fn parse_domain(text: &str) -> Result<(f64, f64), String> {
+    let (low, high) = text
+        .split_once(',')
+        .ok_or_else(|| "write the domain as MIN,MAX, for example -6.28,6.28".to_owned())?;
+    let number = |part: &str| {
+        part.trim()
+            .parse::<f64>()
+            .ok()
+            .filter(|value| value.is_finite())
+            .ok_or_else(|| format!("`{}` is not a finite number", part.trim()))
+    };
+    let (low, high) = (number(low)?, number(high)?);
+    if low >= high {
+        return Err(format!(
+            "the minimum ({low}) must be below the maximum ({high})"
+        ));
+    }
+    Ok((low, high))
+}
+
+/// A positive, finite number of seconds.
+fn parse_seconds(text: &str) -> Result<f64, String> {
+    text.trim()
+        .parse::<f64>()
+        .ok()
+        .filter(|value| value.is_finite() && *value > 0.0)
+        .ok_or_else(|| format!("`{}` is not a positive number of seconds", text.trim()))
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -313,6 +374,18 @@ mod tests {
         assert!(parse_range("300").is_err());
         assert!(parse_range("-1,5").is_err());
         assert!(parse_range("a,5").is_err());
+    }
+
+    #[test]
+    fn domains_and_durations_parse_and_are_checked() {
+        assert_eq!(parse_domain("-6.5,6.5"), Ok((-6.5, 6.5)));
+        assert_eq!(parse_domain(" -1 , 0 "), Ok((-1.0, 0.0)));
+        assert!(parse_domain("1,-1").is_err());
+        assert!(parse_domain("1").is_err());
+        assert!(parse_domain("inf,2").is_err());
+        assert_eq!(parse_seconds("8"), Ok(8.0));
+        assert!(parse_seconds("0").is_err());
+        assert!(parse_seconds("-2").is_err());
     }
 
     #[test]
