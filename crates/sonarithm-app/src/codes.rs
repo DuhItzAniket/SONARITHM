@@ -426,6 +426,17 @@ pub const FUNCTION_NOT_SAVED: CodeInfo = CodeInfo {
     status: CodeStatus::Active,
 };
 
+/// A chart explorer verb with nothing to explore (B03-T09).
+pub const NAV_NO_TREE: CodeInfo = CodeInfo {
+    code: "SNR-APP-090",
+    severity: Severity::Error,
+    summary: "There is nothing to explore yet",
+    help: "The chart explorer moves through the navigation tree of the compiled Score. \
+           Compile the spec, then explore. Nothing was changed.",
+    rules: &[],
+    status: CodeStatus::Active,
+};
+
 /// Every `SNR-APP` code, in ascending order.
 pub const CODES: CodeTable = CodeTable {
     area: Area::App,
@@ -471,6 +482,7 @@ pub const CODES: CodeTable = CodeTable {
         CURSOR_ROW,
         FUNCTION_INPUT_TOO_LARGE,
         FUNCTION_NOT_SAVED,
+        NAV_NO_TREE,
     ],
 };
 

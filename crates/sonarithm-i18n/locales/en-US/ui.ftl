@@ -103,8 +103,9 @@ ui-go-to-row = Go to row
 ui-go-to-row-number = Row number
 ui-go-to-row-action = Go
 
-## The cursor (B04-T06; 08 §1). Level words name the breadcrumb's levels; $name is a data
-## name, shown as it is.
+## The cursor (B04-T06, B03-T09; 08 §1). Level words name the breadcrumb's levels; $name is
+## a data name, shown as it is, and empty for a group (axes, insights, filters). A level
+## this build does not know shows its name alone.
 
 ui-cursor-trail = Cursor position
 ui-cursor-step =
@@ -112,8 +113,19 @@ ui-cursor-step =
         [dataset] Dataset { $name }
         [series] Series { $name }
         [segment] Segment { $name }
-       *[point] Point { $name }
+        [point] Point { $name }
+        [axes] Axes
+        [axis] Axis { $name }
+        [insights] Insights
+        [insightGroup] Insights { $name }
+        [insight] Insight { $name }
+        [filters] Filters
+        [filter] Filter { $name }
+       *[other] { $name }
     }
+# A series the explorer's filters took out (B03-T09; keyboard-and-navigation §3); $name is
+# its data name.
+ui-cursor-excluded = { $name } excluded from playback and view
 # The cursor's row in the dataset's own order, from 1; $index is a number.
 ui-cursor-row = Data row { $index }
 ui-cursor-none = No row is selected.

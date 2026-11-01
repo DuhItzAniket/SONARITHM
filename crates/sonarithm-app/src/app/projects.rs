@@ -193,7 +193,7 @@ impl App {
         self.clear_cursor();
         self.tiles = sonarithm_data::TileCache::new(crate::views::TILE_CACHE);
         self.compiled = None;
-        self.transport.load(None);
+        self.transport.load(None, Vec::new());
         self.history = History::default();
         let project = opened.project;
         let mut state = super::projects::ProjectState::new();

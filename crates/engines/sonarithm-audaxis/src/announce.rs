@@ -8,6 +8,7 @@ pub mod compose;
 pub mod queue;
 
 pub use compose::{
-    Announcement, Class, Composer, KeyNames, LegendCues, Part, Politeness, Settings, Verbosity,
+    Announcement, Class, Composer, KeyNames, LegendCues, Memory, Part, Politeness, Settings,
+    Verbosity,
 };
 pub use queue::{AnnouncementQueue, Delivery, HistoryEntry, Priority};

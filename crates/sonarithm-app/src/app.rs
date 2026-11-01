@@ -34,6 +34,7 @@ use crate::transport::{Action, AudioOutput, OutputConfig, Transport};
 mod corrections;
 mod cursor;
 mod functions;
+mod nav;
 mod profiles;
 mod projects;
 
@@ -333,6 +334,8 @@ impl App {
             request @ (Request::FunctionCheck { .. }
             | Request::FunctionOpen { .. }
             | Request::AudifyCalculate { .. }) => self.functions(request),
+            Request::NavMove { verb } => self.nav_move(&verb),
+            Request::NavWhere => self.nav_where(),
             Request::ViewGet { .. } | Request::TablePage { .. } => Err(IpcError::new(
                 &codes::BAD_REQUEST,
                 "This command returns a binary view; send it with dispatch_binary.",
@@ -694,9 +697,12 @@ impl App {
         match self.snr.compile_with(&spec, &datasets) {
             Ok(compiled) => {
                 let report = report(true, compiled.diagnostics().iter(), Some(&compiled));
-                self.transport
-                    .load(Some(Arc::new(compiled.score().clone())));
+                // The filters' excluded series carry over by label (B03-T09), so the
+                // transport plays the new Score without them.
+                let (excluded, series) = (self.excluded_tracks(), self.nav_series_track());
                 self.compiled = Some(compiled);
+                self.renumber_nav(&excluded, series.as_ref());
+                self.load_playback();
                 Ok(Reply::Compile(report))
             }
             Err(err) => {
@@ -765,7 +771,10 @@ impl App {
                 true_peak_dbtp: output.true_peak_dbtp,
             }))
         });
-        self.jobs.submit(JobKind::Export, work).map(Reply::Job)
+        let reply = self.jobs.submit(JobKind::Export, work).map(Reply::Job)?;
+        // The filters are playback state: say the export holds every series (B03-T09).
+        self.announce_export_scope();
+        Ok(reply)
     }
 
     fn step(&mut self, back: bool) -> Reply {

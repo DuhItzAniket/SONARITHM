@@ -92,6 +92,7 @@ The app core computes it on the control thread when it builds the anchor, never 
 | 2026-10-30 | `outputLatencyS` added (B04-T04), citing ADR-0016 §"Per-device latency calibration"; approved by the coordinator, additive |
 | 2026-10-31 | `cursor_set`, `cursor_get` and the `cursor` event and channel added (B04-T06): Rust's one cursor, with an origin that decides what is spoken (INFER, OD-30); approved by the coordinator, additive |
 | 2026-11-01 | `function_check`, `function_open` and `audify_calculate` added (C03-T08): a function opens as a dataset the cursor and the cues work on, and the SDR-31 calculator; approved by the coordinator, additive |
+| 2026-11-01 | `nav_move`, `nav_where` and the `nav` reply added (B03-T09); `CursorState.node` may be any navigation node, `path` levels gain the axes, insights and filters levels, `CursorState.excluded` lists the filtered series and `TransportState.excludedTracks` the tracks playback leaves out; approved by the coordinator, additive |
 
 #### Cursor
 
@@ -132,6 +133,42 @@ Each change sends a `cursor` event with `origin: null`. A `cursor` event never m
 * **Projects.** The project format has no place for a function's definition yet (a project-format amendment will add one). Until then, saving a project with an open function dataset fails with `SNR-APP-089`, naming the dataset, and writes nothing; it never drops the function or saves its samples in its place. Autosave never stops silently: it saves the rest of the session without the function dataset, and the first time it does, it announces that it leaves the function out and that it must be opened again after a crash. `function_open` holds a source to the same checks as a spec's function source (`SNR-SPEC-051`: the domain, at least 2 samples, a positive step, not both `samples` and `step`).
 
 No event is added. A `cursor` event follows only under the rules above (Cursor).
+
+#### Navigation
+
+> Amended 2026-11-01, B03-T09: `nav_move`, `nav_where` and the `nav` reply added, and `CursorState` widened, approved by the coordinator, additive.
+
+**The same cursor (A11Y-10).** The chart explorer's verbs move the cursor of `cursor_set`. Beside the row, the cursor keeps the explorer's node, its x position, its series and the series the filters took out (AUDAXIS's `Cursor`).
+
+* A table or plot move puts the node on the row's point, keeping the excluded series. A row that is not a point leaves no node.
+* A verb moves the node, and the row follows it: a point's own row; for a series or a segment, the series' point nearest the cursor's x. An axis, an insight group or a filter leaves the row where it was.
+* A compile renumbers the nodes, so the node is found again from the row, and the excluded series and the explorer's series by their tracks (labels need not be unique: two tracks can read one field).
+* A table or plot move keeps the explorer's series when the row is a point there; otherwise it takes the first series the filters keep.
+
+**Commands.**
+
+* `nav_move { verb }` applies a verb (keyboard-and-navigation §4.2) and replies `nav`. `verb` is tagged by `verb`: `next`, `previous`, `jumpForward`, `jumpBack`, `first`, `last`, `into`, `out`, `activate`, `nextSeries`, `previousSeries`, `maximum`, `minimum`, `nextInsight`, `previousInsight`, `{ verb: "landmark", landmark }` (`xAxis`, `yAxis`, `insights`, `filters`, `dataset`), `{ verb: "goTo", x }` (`{ number }` or `{ category }`) and `{ verb: "findValue", value }`. It sends a `cursor` event with origin `nav` for every verb, also one that kept the cursor.
+* `nav_where` announces "where am I" (keyboard §6, A11Y-07) and replies `announce`. The cursor does not move, and no `cursor` event is sent.
+* Either fails with `SNR-APP-090` when no compiled Score has a navigation tree.
+
+**`NavResult`.** `{ cursor, outcome, edge, reason, included, earcon, highlight, announced }`:
+
+* `cursor` is the `CursorState` the `cursor` event carried.
+* `outcome` is `moved`, `boundary`, `invalid`, `describe` (Enter on a point) or `toggled` (Enter on a filter).
+* `edge` (`first`, `last`, `top`, `bottom`), `reason` (such as `oneSeries`, `noInsights`, `notHere`) and `included` belong to a boundary, an invalid verb and a toggle.
+* `earcon` is the outcome's earcon ID, such as `E-BOUNDARY` (A11Y-08). `highlight` is the node's x span.
+* `announced` says whether an announcement was queued. Its text goes out on the `announcements` channel only, never in the reply, so nothing is spoken twice. Explorer moves are announced, as plot moves are (INFER, OD-30).
+
+**`CursorState`, widened.** `node` may be any node of the navigation tree, not only a point. `path` levels add `axes`, `axis`, `insights`, `insightGroup`, `insight`, `filters` and `filter`; a group's label is empty. A reader that meets a level it does not know shows the label alone. `excluded` lists `{ node, label }` for each series a filter took out.
+
+**Filters and playback (keyboard §3).** A filter takes its series out of playback and view.
+
+* The transport plays a copy of the compiled Score with the excluded series' tracks removed and nothing else changed: the header, the markers and every other track are the compiled Score's own, bit for bit (tested). It is still the compiler's Score IR (ADR-0005); nothing new synthesizes sound, and nothing changes on the audio thread.
+* Loading it pauses playback, which never continues on its own (A11Y-15).
+* The exclusion is recorded where it applies, so what is playing is never taken for the canonical Score: `CursorState.excluded` in the session, and `TransportState.excludedTracks` (the removed track IDs, empty when the compiled Score plays as it is) in the transport. Live windows keep the exclusions made before monitoring started. While a live stream is monitored a filter cannot change, because reloading playback would end monitoring: Enter on a filter is invalid (`reason: "liveMonitoring"`, `E-INVALID`) and announced.
+* Exports render the whole compiled Score: the filter is session state, not part of the spec or the project. While a series is excluded, starting an export announces "Export includes all series; exclusions apply to playback only" (`announce-export-all-series`), until the export dialog (B05-T05) says it. A spec-level filter can follow with `spec_apply` (B05-T01).
+
+**Point cue (A11Y-10, A11Y-20).** A move is to play the point's cue, then speak. The transport has no one-shot cue path yet, so the cue arrives in its own change, with a `cue` field added to `NavResult` then.
 
 #### Meter frames
 

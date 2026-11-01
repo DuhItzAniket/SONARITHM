@@ -1016,6 +1016,14 @@ A05 (render engine, audio backends, export) uses F-050 to F-069.
 - **Affects:** C02-T09, A11Y-02, A11Y-12, A11Y-24, FR-008, OD-07, H-06
 - **Papers:** none yet
 
+### F-201 · A hole on a pole's steep slope was taken for a jump, because the sides were compared with a fixed tolerance
+
+- **Date:** 2026-11-01 · **Phase:** C03 · **Type:** engineering (robustness) · **Status:** new
+- **Statement:** The property test `poles_and_holes_are_never_missed` (CI on #438, Windows job 124726369301) found a hole at b = 2.0748585424618367 only 0.0042 from a pole at a = 2.0790137126487966, on a 3-sample grid. The scan reported it as a jump, with left −240.66171264649452 and right −240.66634618052169. The scan classifies a candidate by its one-sided limits, read at 10^-2 to 10^-8 grid steps, and called the sides different when they disagreed by more than a relative 1e-6. Beside a pole the slope is about 1/0.004² ≈ 60 000, so the two sides of a smooth point differ by about the slope times the probe distance, 2e-5 relative here, and the fixed tolerance failed. Now the sides also count as equal when their signed difference D(h), extrapolated to h = 0 through the two closest probes (a decade apart, D₀ = (10·D₆ − D₅)/9), is 0 to a relative 1e-6. To first order D(h) = D₀ + C·h, with D₀ = 0 at a hole and the jump at a jump. A first version judged the gap's size instead (fivefold smaller over two decades). Lane U's review showed that this drops a real jump: for `floor(x) + 1/(x − 2.0001)` at 101 samples, the gaps were 15, 0.6 and 0.84, because the slope term dwarfed the jump before the gap settled at it. A rule that only asks the gap to halve each decade fails too, with the pole 5e-5 away (gaps of about 63, 5.4 and 0.36). The extrapolated D₀ gives −1 in both cases. ADR-0028 is unchanged.
+- **Evidence:** `crates/engines/sonarithm-curvasona/src/scan.rs` (`closing`, `classify`); the tests `f_201_a_hole_beside_a_pole_is_not_a_jump` (the counterexample, pinned), `f_201_a_jump_beside_a_pole_is_still_a_jump` and `f_201_a_jump_on_a_steep_slope_stays_a_jump` (the review's repro, the 5e-5 case and a wide domain)
+- **Evidence level / confidence:** EV-D / Strong (a reproduced property-test failure, with regression tests)
+- **Affects:** C03-T02 (the scan), the function cues and the critical-point list
+
 ### F-200 · A function's glide is paced by row, so the rows CURVASONA inserts bend its timeline against x
 
 - **Date:** 2026-11-01 · **Phase:** C03 · **Type:** engineering (timing, determinism) · **Status:** new
@@ -1203,4 +1211,36 @@ A05 (render engine, audio backends, export) uses F-050 to F-069.
 - **Evidence:** `crates/engines/sonarithm-numisona/tests/encode.rs` (`glides_hold_one_point_spacing_under_seconds_per_unit`); `cargo xtask replication` (all 86 generated files match) and `cargo xtask golden` (every case identical) after the fix; #440
 - **Evidence level / confidence:** EV-C / Strong (code and tests)
 - **Affects:** 07 NUMISONA (timing), RFC-0001 §5 pace (`secondsPerUnit`), #441 (CURVASONA's function specs on x-linear time, which this unblocks)
+- **Papers:** none yet
+
+### F-212 · PB-08's script time is over budget on every CI webview, by 14 times under Xvfb
+
+- **Date:** 2026-11-01 · **Phase:** B04 · **Type:** performance · **Status:** new
+- **Statement:** The desktop smoke check `pb-08-dense-layer` redraws a 1M-point dense line in the app's own webview. In #439's CI runs at `e1f0fedf`, no webview met the 8 ms per-frame script budget:
+  - WebView2: p95 15.6 ms debug, 13.7 ms release.
+  - WKWebView: p95 26 ms debug, 21.0 ms release.
+  - WebKitGTK under Xvfb: p95 110 ms debug, 87 ms release.
+  The playhead held 59–64 fps everywhere.
+- **Reading:**
+  - The runners are shared and have no GPU, so these are upper bounds.
+  - Xvfb in particular draws WebGL in software even though `backend` reports webgl2. It is not a WebKitGTK figure.
+  - The playhead is unaffected because it moves by transform, not by redrawing.
+  - Whether a real GPU meets the budget is the HW-01 run (owner, #129) and, for Linux, HP-02. Until then PB-08 stays unconfirmed, not failed.
+- **Evidence:** the `smoke.json` printed in the job logs ([debug](https://github.com/DuhItzAniket/SONARITHM/actions/runs/41267649561), [release](https://github.com/DuhItzAniket/SONARITHM/actions/runs/41267649558)), benchmarks-log rows "B04 (B04-T08)".
+- **Evidence level / confidence:** EV-C / Moderate. Measured, but on runners unlike the target hardware.
+- **Affects:** PB-08, B04-T08, B04-T02 (dense layer); 09 §3
+- **Papers:** none yet
+
+### F-211 · A stolen voice is replaced at once, so a steal clicks
+
+- **Date:** 2026-11-01 · **Phase:** B03 · **Type:** engineering (real-time audio) · **Status:** new
+- **Statement:** At a full voice pool, `VoicePool::allocate` steals the oldest voice, and `Voice::start` replaces it whole (`*self = Self { .. }`, `crates/sonarithm-render/src/voice.rs:410`). Nothing fades it, so its output drops to 0 in one sample: a click. The B03-T09 point cue reaches this whenever more than 4 cues overlap (key repeat). Playback voices are sized per Score at twice the exact event overlap, but two paths still reach a steal:
+  - **Notes shorter than two ramps.** A voice sounds at least 2 × `MIN_RAMP` = 10 ms, while the overlap count uses planned event lengths. Specs may set durations that short; the spec property tests generate them from 1 ms.
+  - **A seek inside a 10 ms seek or loop crossfade.** This needs up to 3 × the overlap, against a pool of 2 ×.
+- **Fix:**
+  - Cues: 8 preallocated slots with at most 4 sounding, and the oldest fades over its ramp, in the point-cue PR (06 §3).
+  - Playback: issue #443. Count each event's sounding length in `polyphony()`, and fade stolen voices.
+- **Evidence:** code reading (`voice.rs` `Voice::start` and `VoicePool::allocate`; `plan/build.rs` `polyphony`; `graph.rs` `SEEK_FADE`). Neither path is reproduced yet: TODO(verify), with a test that sees `GraphStats::stolen > 0` and a golden check of the step at the steal sample.
+- **Evidence level / confidence:** EV-D / Moderate. Inferred from the code, not measured.
+- **Affects:** B03-T09 (point cue), A05 render voice pools, 06 §3 and §5
 - **Papers:** none yet

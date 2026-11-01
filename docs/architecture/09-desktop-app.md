@@ -68,7 +68,7 @@ Tauri offers three primitives with very different performance ([notes/05 §1](..
 | `spec_get / spec_apply(patch) / spec_validate(text)` | Spec, diagnostics | B05 |
 | `compile(spec_id)` | `CompileReport` (diagnostics, duration, track summary) | B01 |
 | `transport_play / pause / stop / seek / set_speed / set_loop` | `TransportState` (authoritative) | B01 |
-| `nav_move(verb) / nav_where / nav_query(kind)` | `NavResult` (node, highlight, announcement, cue id). They read and move the one cursor of `cursor_set` (ADR-0017 "Cursor"), never a second one | B03 |
+| `nav_move(verb) / nav_where / nav_query(kind)` | `nav_move`: `NavResult` (the cursor, the outcome, its earcon, the highlight span, whether it was announced; the cue ID follows with the point cue). `nav_where` and `nav_query`: `announce`. They read and move the one cursor of `cursor_set`, never a second one ([ADR-0017 "Navigation"](../decisions/0017-ipc-protocol-v1.md#navigation)). `nav_query` follows in B03-T09's next change | B03 |
 | `cursor_set(dataset, row, origin) / cursor_get` | `CursorState`, and a `cursor` event to every view (B04-T06) | B04 |
 | `inspector_set(track, channel, value)` | `SpecPatchResult` (undo token) | B05 |
 | `history_undo / history_redo` | `SpecPatchResult` | B05 |
@@ -129,7 +129,7 @@ The UI calls an `IpcTransport` interface (`invoke`, `subscribe`, `binary`). The 
 - **WebGL2 first, Canvas2D otherwise.** WebGL2 is probed once on a throwaway canvas: a context opens and the shaders compile. A canvas that took a WebGL2 context cannot give a 2D one, so the real canvas asks for the context that works. The Canvas2D fallback reduces dense lines to M4 per pixel column, and `forceCanvas` takes it anyway.
 - **Drawn once.** Positions are normalized to [0, 1] on upload, so 32-bit floats keep full precision. The data is drawn when the scene, size or theme changes, never per frame. What moves, such as the playhead (B04-T04), goes in the layer's overlay.
 - **Accessible as one image.** Like `Plot`, the layer is named by the summary's L1, described by its L2, and not focusable.
-- **PB-08.** The `perf` Vitest project records the script time of up to 60 zoom redraws of a million-point line, measuring for at most 8 s so a slow runner still writes the trace (it notes `cutShort`). CI's frontend-browser job reports it without gating (SwiftShader on a shared runner). HW-01 and the three webviews are B04-T08's.
+- **PB-08.** The `perf` Vitest project records the script time of up to 60 zoom redraws of a million-point line, measuring for at most 8 s so a slow runner still writes the trace (it notes `cutShort`). CI's frontend-browser job reports it without gating (SwiftShader on a shared runner). B04-T08 runs the same trace in the app's own webview through the desktop smoke run (`pb08` in `smoke.json`) on all three CI hosts; the HW-01 WebView2 run is the owner's (#129).
 - **Discrete GPU (F-044).** The `gpu` setting (12 §3) chooses the high-performance GPU on Windows; see the start-up arguments in §7.
 
 **As built (B04-T05): the data table.**
