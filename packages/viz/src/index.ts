@@ -24,6 +24,7 @@ export {
 } from "./dense/scene.ts";
 export {
   Plot,
+  type PlotCursor,
   type PlotProps,
   type PlotSeries,
   type PlotSummary,

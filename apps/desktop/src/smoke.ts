@@ -37,6 +37,12 @@ export function smokeConfig(scope: object): SmokeConfig | null {
     : null;
 }
 
+/**
+ * How long a smoke run may take before its watchdog reports the check still waiting:
+ * well under CI's 5-minute step limit, and well over a normal run (a few seconds).
+ */
+export const SMOKE_WATCHDOG_MS = 120_000;
+
 /** The binary view must reach this size to count as the F-042 check (1 MB). */
 const BINARY_BYTES = 1_000_000;
 
@@ -44,13 +50,40 @@ const BINARY_BYTES = 1_000_000;
  * The CI smoke test (B01-T03): the empty workspace is shown and named, the protocol
  * handshake passes, and a 1 MB view arrives as an `ArrayBuffer` under the app's CSP
  * (F-042). The host adds its own checks, writes the report and exits.
+ *
+ * A check that never settles would hold the run until CI's step limit with nothing to read.
+ * A watchdog sends a failing report after `SMOKE_WATCHDOG_MS` that names the check still
+ * waiting and keeps the checks done so far. `public/smoke-guard.js` covers the time before
+ * this function starts.
  */
 export async function runSmoke(
   transport: IpcTransport,
   config: SmokeConfig,
 ): Promise<void> {
+  Reflect.set(window, "__SONARITHM_SMOKE_STARTED__", true);
   const checks: Check[] = [];
+  let waiting = "start";
+  let reported = false;
+  const send = async (results: object) => {
+    if (reported) return;
+    reported = true;
+    await invoke("smoke_report", { results });
+  };
+  const watchdog = setTimeout(() => {
+    void send({
+      ok: false,
+      checks: [
+        ...checks,
+        {
+          name: waiting,
+          ok: false,
+          detail: `still waiting after ${String(SMOKE_WATCHDOG_MS / 1000)} s (watchdog)`,
+        },
+      ],
+    });
+  }, SMOKE_WATCHDOG_MS);
   const check = async (name: string, run: () => Promise<string>) => {
+    waiting = name;
     try {
       checks.push({ name, ok: true, detail: await run() });
     } catch (error) {
@@ -146,8 +179,9 @@ export async function runSmoke(
     return "UI Automation notification raised";
   });
 
+  clearTimeout(watchdog);
   const results = { ok: checks.every((c) => c.ok), checks, pb07, pb09 };
-  await invoke("smoke_report", { results });
+  await send(results);
 }
 
 /** PB-07: 2 s from launch to an interactive workspace (12 §8). */
