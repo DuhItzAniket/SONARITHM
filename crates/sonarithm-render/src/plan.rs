@@ -15,7 +15,7 @@ mod build;
 #[cfg(test)]
 mod tests;
 
-pub use build::{PlanError, Planned, earcon_duration};
+pub use build::{MAX_TRACK_POLYPHONY, PlanError, Planned, earcon_duration};
 
 use sonarithm_core::{Frames, Hz, SampleRate, TrackId, TrackRole};
 use sonarithm_dsp::PanGains;
@@ -263,7 +263,8 @@ pub struct TrackPlan {
     pub gain: f32,
     /// The track's default instrument.
     pub instrument: Instrument,
-    /// The most events sounding at once.
+    /// The most voices sounding at once at any supported speed, counting each voice's
+    /// two-ramp minimum (#443), at most [`MAX_TRACK_POLYPHONY`].
     pub polyphony: usize,
     /// The voice-pool size: twice the polyphony, so voices fading out during a seek or loop
     /// crossfade (06 §5) never force a steal.

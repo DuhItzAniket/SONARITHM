@@ -1,0 +1,9 @@
+{
+  "specVersion": "0.4",
+  "name": "Audified sine",
+  "description": "A sampled sine played 100 times faster by audification (SDR-31).",
+  "data": {
+    "source": { "kind": "function", "expr": "sin(x)", "domain": [0, 100], "samples": 2000 }
+  },
+  "tracks": [{ "id": "a", "mark": "audify", "audify": { "k": 100 } }]
+}

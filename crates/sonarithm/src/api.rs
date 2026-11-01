@@ -8,6 +8,7 @@ use std::collections::BTreeMap;
 use sonarithm_audaxis::Audaxis;
 use sonarithm_compiler::{Compiler, Failure, Platform};
 use sonarithm_core::engine::{CancelToken, Engine, EngineManifest};
+use sonarithm_curvasona::Curvasona;
 use sonarithm_data::{DataBundle, Snapshot};
 use sonarithm_numisona::Numisona;
 use sonarithm_numisona::polarity::PolarityProfile;
@@ -54,7 +55,8 @@ impl Default for Sonarithm {
 }
 
 impl Sonarithm {
-    /// SONARITHM with the default engines (the data platform, NUMISONA and PLOTSONA).
+    /// SONARITHM with the default engines (the data platform, NUMISONA, PLOTSONA and
+    /// CURVASONA).
     #[must_use]
     pub fn new() -> Self {
         Self {
@@ -75,6 +77,7 @@ impl Sonarithm {
         if let Some(numisona) = &self.numisona {
             engines.push(Engine::<DataBundle>::manifest(numisona));
             engines.push(Plotsona::manifest());
+            engines.push(Curvasona::manifest());
         }
         if let Some(audaxis) = &self.audaxis {
             engines.push(Engine::<DataBundle>::manifest(audaxis));
@@ -82,8 +85,8 @@ impl Sonarithm {
         engines
     }
 
-    /// Compiles a spec whose data comes from its own source (`inline` records, or `file`
-    /// and `chart` sources relative to [`Spec::base_dir`]).
+    /// Compiles a spec whose data comes from its own source (`inline` records, `function`
+    /// expressions, or `file` and `chart` sources relative to [`Spec::base_dir`]).
     ///
     /// # Errors
     ///
@@ -155,10 +158,14 @@ impl Sonarithm {
         let plotsona = spec
             .base_dir()
             .map_or_else(Plotsona::new, Plotsona::with_base_dir);
+        let curvasona = Curvasona::new();
         let mut engines: Vec<&dyn Engine<DataBundle>> = vec![&platform];
         if let Some(numisona) = &self.numisona {
             engines.push(numisona);
             engines.push(&plotsona);
+            if uses_curvasona(spec.text()) {
+                engines.push(&curvasona);
+            }
         }
         if let Some(audaxis) = &self.audaxis {
             engines.push(audaxis);
@@ -196,9 +203,14 @@ pub struct Builder {
 }
 
 impl Builder {
-    /// Registers the default engines: NUMISONA (parameter mapping and its templates) and
-    /// PLOTSONA (`chart` sources and chart-type templates, C01). The data platform
+    /// Registers the default engines: NUMISONA (parameter mapping and its templates),
+    /// PLOTSONA (`chart` sources and chart-type templates, C01) and CURVASONA (`function`
+    /// sources, critical-point cues and the `audify` mark, C03). The data platform
     /// (`inline`, `file` and `dataset` sources) is always registered.
+    ///
+    /// CURVASONA joins only the compiles whose spec uses it, because it also provides
+    /// context tracks: registered for every spec, it would be recorded in every Score's
+    /// header and hide the warning that context cues need AUDAXIS (`SNR-COMP-023`).
     pub fn with_default_engines(mut self) -> Self {
         self.default_engines = true;
         self
@@ -236,10 +248,12 @@ impl Builder {
         // Registering once here surfaces conflicts at build time, not at the first compile.
         let platform = Platform::new();
         let plotsona = Plotsona::new();
+        let curvasona = Curvasona::new();
         let mut engines: Vec<&dyn Engine<DataBundle>> = vec![&platform];
         if let Some(numisona) = &snr.numisona {
             engines.push(numisona);
             engines.push(&plotsona);
+            engines.push(&curvasona);
         }
         if let Some(audaxis) = &snr.audaxis {
             engines.push(audaxis);
@@ -251,6 +265,36 @@ impl Builder {
         })?;
         Ok(snr)
     }
+}
+
+/// Whether the spec `text` uses CURVASONA: a `function` source, a track with the `audify`
+/// mark, or `critical-points` in `analysis.detect` (its manifest's spec keys, 07). A spec
+/// that is not JSON does not, and its compile reports why.
+fn uses_curvasona(text: &str) -> bool {
+    let Ok(spec) = serde_json::from_str::<serde_json::Value>(text) else {
+        return false;
+    };
+    let function = spec
+        .pointer("/data/source/kind")
+        .and_then(serde_json::Value::as_str)
+        == Some("function");
+    let audify = spec
+        .get("tracks")
+        .and_then(serde_json::Value::as_array)
+        .is_some_and(|tracks| {
+            tracks
+                .iter()
+                .any(|t| t.get("mark").and_then(serde_json::Value::as_str) == Some("audify"))
+        });
+    let detects = spec
+        .pointer("/analysis/detect")
+        .and_then(serde_json::Value::as_array)
+        .is_some_and(|detect| {
+            detect
+                .iter()
+                .any(|d| d.as_str() == Some(sonarithm_curvasona::CRITICAL_POINTS.as_str()))
+        });
+    function || audify || detects
 }
 
 /// Data the caller holds, by ID, for `dataset` sources.
