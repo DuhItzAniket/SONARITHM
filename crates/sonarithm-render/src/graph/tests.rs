@@ -665,3 +665,44 @@ fn mode_earcons_rise_for_on_and_fall_for_off() {
     let off = live_earcon(crate::EarconSound::ModeOff);
     assert!(rate(&off, 0.065, 0.110) < rate(&off, 0.005, 0.050));
 }
+
+/// #443, path 1 (F-211): a voice lasts at least two ramps (2 × 5 ms), longer than a 2 ms
+/// note. Notes 3 ms apart therefore overlap about four deep while the plan counts one, so
+/// the pool of two steals voices.
+#[test]
+fn issue_443_short_notes_are_not_stolen() {
+    let notes = (0..20)
+        .map(|k| note(0.1 + f64::from(k) * 0.003, 0.002, 0.0))
+        .collect();
+    let mut graph = graph(
+        &score(0.5, vec![track("sine", TrackRole::Data, notes)]),
+        256,
+    );
+    graph.apply(Command::Play);
+    let mut out = vec![0.0; 2 * 24_000];
+    graph.process(&mut out);
+    assert_eq!(graph.stats().stolen, 0);
+}
+
+/// #443, path 2 (F-211): a second seek inside the 10 ms seek crossfade needs the fading
+/// voices of both seeks plus the new ones, three times the overlap against a pool of two.
+/// Any voice it takes must fade, not cut: the output never steps.
+#[test]
+fn issue_443_a_seek_inside_a_crossfade_does_not_click() {
+    let mut graph = graph(&drone(), 256);
+    graph.apply(Command::Play);
+    let mut out = vec![0.0; 2 * 4_800];
+    graph.process(&mut out);
+    graph.apply(Command::Seek(Frames(96_000)));
+    graph.process(&mut out[..2 * 48]);
+    graph.apply(Command::Seek(Frames(120_000)));
+    graph.process(&mut out[2 * 48..]);
+    let samples = left(&out);
+    let peak = samples.iter().fold(0.0_f32, |m, s| m.max(s.abs()));
+    assert!(
+        worst_step(&samples) <= 2.0 * natural_step(peak),
+        "step {} (stolen {})",
+        worst_step(&samples),
+        graph.stats().stolen
+    );
+}
