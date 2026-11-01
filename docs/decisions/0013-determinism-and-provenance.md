@@ -38,6 +38,8 @@ Chosen option:
 
    Paths are relative or redacted ([06 §7](../architecture/06-audio-engine.md#7-export)).
 
+**Note (2026-11-01, #434).** "Engine versions" above, and the manifest's `engines`, are the Score header's `engines`: the engines that contributed content, with their versions. That means the engines whose template, source, detector or encoder the spec used, every context provider that added a track, and every shaper that ran ([05 §4](../architecture/05-compiler-and-score-ir.md#4-score-ir)). A registered context provider that adds nothing is not recorded. The decision is unchanged; this states what the record means, and no committed Score changed.
+
 ### Consequences
 
 * Good: any result in a paper or bug report can be regenerated exactly at the Score level.

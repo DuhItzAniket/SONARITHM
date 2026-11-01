@@ -157,6 +157,11 @@
 - It is reported, not gated, and it fails only when no renderer works. The `backend` field shows a software fallback. Each phase is capped at 8 s, as the perf test is (#428).
 - No number was taken locally on the shared machine. The benchmarks-log row gets CI's values once they exist. The HW-01 WebView2 run (both GPUs) is an owner step, posted as a comment on #129.
 
+## PB-08 frame timeout (2026-11-01, after #439)
+
+- CURVASONA's review of #439: the 8 s cap was checked only after a frame resolved, and an animation frame never comes in a hidden or throttled webview, so the check would hang until the 120 s watchdog, whose report then dropped pb07 and pb09 and skipped the announcer check.
+- Each frame wait now gives up after 1 s and ends the phase, marked `stalled` and `cutShort`. PB-08 runs last, and the watchdog report keeps the measurements already taken. The benchmarks log states each row's `backend`, and its method note says exactly what the 8 s cap stops.
+
 ## Next steps
 
 - [ ] Commit the screenshot baselines from the first CI run's `visual-baselines` artifact.
