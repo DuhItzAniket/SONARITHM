@@ -146,7 +146,10 @@ impl App {
     /// The point of the cursor's row in the compiled Score, if the row is one.
     pub(super) fn row_point(&self) -> Option<NavNodeId> {
         let at = self.cursor.at.as_ref()?;
-        let open = self.datasets.values().find(|o| o.summary.id == at.dataset)?;
+        let open = self
+            .datasets
+            .values()
+            .find(|o| o.summary.id == at.dataset)?;
         let table = open.bundle.primary().map(sonarithm_data::Table::id)?;
         let tree = self.compiled.as_ref()?.nav()?;
         point_of(tree, table, at.row)

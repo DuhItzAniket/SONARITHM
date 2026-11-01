@@ -69,12 +69,12 @@ impl Harness {
         assert_eq!(report["ok"], true, "{report}");
     }
 
-    fn nav(&mut self, verb: Value) -> Value {
+    fn nav(&mut self, verb: &Value) -> Value {
         self.ok(&json!({ "command": "nav_move", "args": { "verb": verb } }))
     }
 
     fn step(&mut self, verb: &str) -> Value {
-        self.nav(json!({ "verb": verb }))
+        self.nav(&json!({ "verb": verb }))
     }
 
     fn cursors(&self) -> Vec<CursorState> {
@@ -138,7 +138,10 @@ fn a11y_10_explorer_verbs_move_the_one_cursor_and_its_row() {
     assert_eq!(series["reply"], "nav");
     assert_eq!(series["outcome"], "moved");
     assert_eq!(levels(&series["cursor"]), ["dataset", "series"]);
-    assert_eq!(series["cursor"]["row"], 0, "a series stands for its point nearest x");
+    assert_eq!(
+        series["cursor"]["row"], 0,
+        "a series stands for its point nearest x"
+    );
     h.step("into");
     let point = h.step("into");
     assert_eq!(levels(&point["cursor"]).last().unwrap(), "point");
@@ -150,8 +153,14 @@ fn a11y_10_explorer_verbs_move_the_one_cursor_and_its_row() {
     let event = h.cursors().pop().unwrap();
     assert_eq!(event.origin, Some(CursorOrigin::Nav));
     assert_eq!(event.row, Some(1));
-    assert_eq!(serde_json::to_value(&event).unwrap()["seq"], next["cursor"]["seq"]);
-    assert_eq!(h.ok(&json!({ "command": "cursor_get" }))["node"], next["cursor"]["node"]);
+    assert_eq!(
+        serde_json::to_value(&event).unwrap()["seq"],
+        next["cursor"]["seq"]
+    );
+    assert_eq!(
+        h.ok(&json!({ "command": "cursor_get" }))["node"],
+        next["cursor"]["node"]
+    );
     h.wait_for_announcements(4);
 }
 
@@ -185,11 +194,14 @@ fn a11y_08_boundaries_and_invalid_verbs_keep_the_cursor() {
     assert_eq!(lateral["outcome"], "invalid");
     assert_eq!(lateral["reason"], "oneSeries");
     assert_eq!(lateral["earcon"], "E-INVALID");
-    let go = h.nav(json!({ "verb": "goTo", "x": { "number": 2.2 } }));
+    let go = h.nav(&json!({ "verb": "goTo", "x": { "number": 2.2 } }));
     assert_eq!(go["cursor"]["row"], 1);
-    let landmark = h.nav(json!({ "verb": "landmark", "landmark": "xAxis" }));
+    let landmark = h.nav(&json!({ "verb": "landmark", "landmark": "xAxis" }));
     assert_eq!(levels(&landmark["cursor"]).last().unwrap(), "axis");
-    assert_eq!(landmark["cursor"]["row"], 1, "an axis leaves the row where it was");
+    assert_eq!(
+        landmark["cursor"]["row"], 1,
+        "an axis leaves the row where it was"
+    );
 }
 
 /// A11Y-07: "where am I" is announced and moves nothing.
@@ -213,7 +225,7 @@ fn a11y_07_where_am_i_announces_without_moving() {
 fn b03_t09_a_filter_excludes_its_series_until_the_data_is_replaced() {
     let mut h = Harness::new("nav-filter");
     h.compile(&["temp", "rain"]);
-    h.nav(json!({ "verb": "landmark", "landmark": "filters" }));
+    h.nav(&json!({ "verb": "landmark", "landmark": "filters" }));
     h.step("into");
     let toggled = h.step("activate");
     assert_eq!(toggled["outcome"], "toggled");
@@ -235,12 +247,15 @@ fn b03_t09_a_filter_excludes_its_series_until_the_data_is_replaced() {
     assert_eq!(labels(&after["excluded"]), labels(&Value::Array(excluded)));
 
     // Enter again puts it back.
-    h.nav(json!({ "verb": "landmark", "landmark": "filters" }));
+    h.nav(&json!({ "verb": "landmark", "landmark": "filters" }));
     h.step("into");
     assert_eq!(h.step("activate")["included"], true);
     h.step("activate");
     h.ok(&json!({ "command": "project_new" }));
-    assert_eq!(h.ok(&json!({ "command": "cursor_get" }))["excluded"], json!([]));
+    assert_eq!(
+        h.ok(&json!({ "command": "cursor_get" }))["excluded"],
+        json!([])
+    );
 }
 
 /// ADR-0017 "Navigation": an export renders every series, so while a filter excludes one,
@@ -263,9 +278,13 @@ fn b03_t09_an_export_while_a_series_is_excluded_says_it_includes_all_series() {
     let wav = h.dir.path().join("all.wav");
     h.ok(&json!({ "command": "export_render", "args": { "options": { "path": wav } } }));
     std::thread::sleep(Duration::from_millis(300));
-    assert!(!spoken(&h).iter().any(|s| s.contains(note)), "{:?}", spoken(&h));
+    assert!(
+        !spoken(&h).iter().any(|s| s.contains(note)),
+        "{:?}",
+        spoken(&h)
+    );
 
-    h.nav(json!({ "verb": "landmark", "landmark": "filters" }));
+    h.nav(&json!({ "verb": "landmark", "landmark": "filters" }));
     h.step("into");
     assert_eq!(h.step("activate")["included"], false);
     let wav = h.dir.path().join("filtered.wav");
@@ -286,5 +305,8 @@ fn b03_t09_closing_the_dataset_clears_the_explorer_node() {
     h.step("next");
     h.ok(&json!({ "command": "dataset_close", "args": { "id": "d1" } }));
     let cleared = h.cursors().pop().unwrap();
-    assert_eq!((cleared.dataset, cleared.row, cleared.node), (None, None, None));
+    assert_eq!(
+        (cleared.dataset, cleared.row, cleared.node),
+        (None, None, None)
+    );
 }

@@ -174,7 +174,13 @@ fn the_series_name_stays_left_out_across_composers_with_memory() {
         ..Settings::default()
     };
     let mut first = Composer::new(&localizer, verbose.clone());
-    assert!(first.node(&tree, points[0]).unwrap().speech.starts_with("Temperature."));
+    assert!(
+        first
+            .node(&tree, points[0])
+            .unwrap()
+            .speech
+            .starts_with("Temperature.")
+    );
     let mut memory = first.memory();
     let second = Composer::with_memory(&localizer, verbose.clone(), memory.clone())
         .node(&tree, points[1])

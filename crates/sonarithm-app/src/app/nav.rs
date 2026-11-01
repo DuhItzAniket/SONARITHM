@@ -20,8 +20,8 @@ use std::sync::Arc;
 
 use sonarithm_audaxis::announce::Composer;
 use sonarithm_audaxis::nav::{Cursor, Edge, Invalid, Landmark, Outcome, Verb, XTarget};
-use sonarithm_core::{Score, TrackId};
 use sonarithm_core::nav::{NavKind, NavNodeId, NavTree};
+use sonarithm_core::{Score, TrackId};
 
 use super::App;
 use super::cursor::CursorAt;
@@ -78,10 +78,13 @@ impl App {
             memory = composer.memory();
             announcement
         });
-        let highlight = tree.node(cursor.node()).and_then(|node| node.span).map(|span| NavSpan {
-            start: span.start,
-            end: span.end,
-        });
+        let highlight = tree
+            .node(cursor.node())
+            .and_then(|node| node.span)
+            .map(|span| NavSpan {
+                start: span.start,
+                end: span.end,
+            });
         let step = Step {
             outcome,
             row,
@@ -92,11 +95,11 @@ impl App {
         self.cursor.memory = memory;
         self.cursor.excluded = excluded;
         self.cursor.nav = Some(cursor);
-        self.finish_move(step)
+        Ok(self.finish_move(step))
     }
 
     /// Stores the row, reloads playback after a toggle, announces and replies.
-    fn finish_move(&mut self, step: Step) -> Result<Reply, IpcError> {
+    fn finish_move(&mut self, step: Step) -> Reply {
         if let Some(at) = step.row {
             self.cursor.at = Some(at);
         }
@@ -120,7 +123,7 @@ impl App {
             Outcome::Toggled { included, .. } => (NavOutcome::Toggled, None, None, Some(included)),
             _ => (NavOutcome::Invalid, None, Some("notHere".to_owned()), None),
         };
-        Ok(Reply::Nav(NavResult {
+        Reply::Nav(NavResult {
             cursor,
             outcome,
             edge,
@@ -129,7 +132,7 @@ impl App {
             earcon: step.outcome.earcon().map(|earcon| earcon.id().to_owned()),
             highlight: step.highlight,
             announced,
-        }))
+        })
     }
 
     /// `nav_where`: announces where the cursor is (keyboard §6, A11Y-07). The cursor does
@@ -145,13 +148,12 @@ impl App {
             .as_ref()
             .and_then(sonarithm::Compiled::nav)
             .ok_or_else(no_tree)?;
-        let report = match &self.cursor.nav {
-            Some(cursor) => cursor.where_am_i(tree),
-            None => {
-                let mut cursor = Cursor::new();
-                cursor.set_excluded(self.cursor.excluded.iter().copied());
-                cursor.where_am_i(tree)
-            }
+        let report = if let Some(cursor) = &self.cursor.nav {
+            cursor.where_am_i(tree)
+        } else {
+            let mut cursor = Cursor::new();
+            cursor.set_excluded(self.cursor.excluded.iter().copied());
+            cursor.where_am_i(tree)
         };
         let announcement = self.localizer.as_ref().and_then(|localizer| {
             Composer::with_memory(localizer, settings, self.cursor.memory.clone())
@@ -178,9 +180,11 @@ impl App {
         }) else {
             return;
         };
-        self.transport.announce(
-            sonarithm_audaxis::announce::Announcement::status(text.clone(), text),
-        );
+        self.transport
+            .announce(sonarithm_audaxis::announce::Announcement::status(
+                text.clone(),
+                text,
+            ));
     }
 
     /// Loads the playback Score into the transport, with the tracks it leaves out.
@@ -258,7 +262,10 @@ impl App {
     /// no node when the row is not a point.
     pub(super) fn place_nav(&mut self) {
         let point = self.row_point();
-        let nav = match (self.compiled.as_ref().and_then(sonarithm::Compiled::nav), point) {
+        let nav = match (
+            self.compiled.as_ref().and_then(sonarithm::Compiled::nav),
+            point,
+        ) {
             (Some(tree), Some(point)) => {
                 let mut cursor = self.cursor.nav.take().unwrap_or_default();
                 cursor.set_excluded(self.cursor.excluded.iter().copied());
@@ -403,7 +410,10 @@ mod tests {
             "nothing excluded: playback is the compiled Score, byte for byte"
         );
         let toggled = app
-            .dispatch_json(&json!({ "command": "nav_move", "args": { "verb": { "verb": "activate" } } }).to_string())
+            .dispatch_json(
+                &json!({ "command": "nav_move", "args": { "verb": { "verb": "activate" } } })
+                    .to_string(),
+            )
             .unwrap();
         assert_eq!(toggled["included"], false);
         let playing = app.playback_score().unwrap();
@@ -417,7 +427,10 @@ mod tests {
         assert_eq!(gone.len(), 1, "{gone:?}");
         assert_eq!(playing.tracks.len(), canonical.tracks.len() - 1);
         // Everything else is the compiled Score's own, bit for bit and in order.
-        let kept = canonical.tracks.iter().filter(|track| track.id.as_str() != gone[0]);
+        let kept = canonical
+            .tracks
+            .iter()
+            .filter(|track| track.id.as_str() != gone[0]);
         for (playing, compiled) in playing.tracks.iter().zip(kept) {
             assert_eq!(bytes(playing), bytes(compiled), "track {}", compiled.id);
         }
@@ -425,7 +438,12 @@ mod tests {
         assert_eq!(bytes(&playing.markers), bytes(&canonical.markers));
         // The compiled Score, which exports render, keeps every track.
         assert_eq!(
-            app.compiled.as_ref().unwrap().score().canonical_json().unwrap(),
+            app.compiled
+                .as_ref()
+                .unwrap()
+                .score()
+                .canonical_json()
+                .unwrap(),
             canonical.canonical_json().unwrap()
         );
         // The transport says what it leaves out, so what plays is not taken for the Score.
@@ -435,7 +453,7 @@ mod tests {
         assert_eq!(transport["excludedTracks"], json!([gone[0]]));
     }
 
-    /// Serialized bytes, for a bit-for-bit comparison (serde_json writes every f64 so that
+    /// Serialized bytes, for a bit-for-bit comparison (`serde_json` writes every `f64` so that
     /// it reads back exactly).
     fn bytes<T: serde::Serialize>(value: &T) -> Vec<u8> {
         serde_json::to_vec(value).unwrap()
