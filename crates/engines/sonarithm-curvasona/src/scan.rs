@@ -440,8 +440,8 @@ fn classify(
     let kind = match (left, right) {
         _ if left.is_infinite() || right.is_infinite() => SingularityKind::Pole,
         (Approach::Value(l), Approach::Value(r)) => {
-            let same = (l - r).abs() <= 1e-6 * (1.0 + l.abs().max(r.abs()))
-                || closing(&below, &above);
+            let same =
+                (l - r).abs() <= 1e-6 * (1.0 + l.abs().max(r.abs())) || closing(&below, &above);
             if !same {
                 SingularityKind::Jump
             } else if candidate.kind == GuardKind::Denominator || !counter.eval(f, x).is_finite() {
@@ -474,7 +474,10 @@ fn closing(below: &[f64; 7], above: &[f64; 7]) -> bool {
     if !(far.is_finite() && near.is_finite()) {
         return false;
     }
-    let scale = below.get(6).map_or(0.0, |v| v.abs()).max(above.get(6).map_or(0.0, |v| v.abs()));
+    let scale = below
+        .get(6)
+        .map_or(0.0, |v| v.abs())
+        .max(above.get(6).map_or(0.0, |v| v.abs()));
     near <= 0.2 * far || near <= 1e-12 * (1.0 + scale)
 }
 

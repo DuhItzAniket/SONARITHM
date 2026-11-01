@@ -210,9 +210,18 @@ fn f_201_a_hole_beside_a_pole_is_not_a_jump() {
     let (a, b) = (2.079_013_712_648_796_6_f64, 2.074_858_542_461_836_7_f64);
     let f = parse(&format!("(x - ({b}))/((x - ({a}))*(x - ({b})))"));
     let found = scan(&f, &grid([-4.0, 4.0], 3), None, &ScanBudget::DEFAULT);
-    assert!(matches(&of_kind(&found, SingularityKind::Pole), &[a]), "{found:?}");
-    assert!(matches(&of_kind(&found, SingularityKind::Hole), &[b]), "{found:?}");
-    assert!(of_kind(&found, SingularityKind::Jump).is_empty(), "{found:?}");
+    assert!(
+        matches(&of_kind(&found, SingularityKind::Pole), &[a]),
+        "{found:?}"
+    );
+    assert!(
+        matches(&of_kind(&found, SingularityKind::Hole), &[b]),
+        "{found:?}"
+    );
+    assert!(
+        of_kind(&found, SingularityKind::Jump).is_empty(),
+        "{found:?}"
+    );
 }
 
 /// F-201: the closing-gap test does not turn a jump into a hole. A jump of 1 at x = 2,
@@ -224,7 +233,10 @@ fn f_201_a_jump_beside_a_pole_is_still_a_jump() {
     let at_two = |kind| of_kind(&found, kind).iter().any(|&x| near(x, 2.0));
     assert!(at_two(SingularityKind::Jump), "{found:?}");
     assert!(!at_two(SingularityKind::Hole), "{found:?}");
-    assert!(matches(&of_kind(&found, SingularityKind::Pole), &[2.004]), "{found:?}");
+    assert!(
+        matches(&of_kind(&found, SingularityKind::Pole), &[2.004]),
+        "{found:?}"
+    );
 }
 
 proptest! {
