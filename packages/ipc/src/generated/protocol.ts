@@ -1300,6 +1300,11 @@ earcon: string | null,
  */
 highlight: NavSpan | null, 
 /**
+ * Whether the move played the point's cue (A11Y-10, A11Y-20): a move onto a point with
+ * sonification on. The transport drops it during playback (keyboard §9.2 item 3).
+ */
+cue: boolean, 
+/**
  * Whether the outcome was announced (on the `announcements` channel, never here).
  */
 announced: boolean, };
