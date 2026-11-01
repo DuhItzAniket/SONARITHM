@@ -31,6 +31,8 @@ serde_json.workspace = true
 sonarithm-audaxis.workspace = true
 sonarithm-compiler.workspace = true
 sonarithm-core.workspace = true
+# Function sources, critical-point cues, the `audify` mark and `read_function` (C03-T07).
+sonarithm-curvasona.workspace = true
 sonarithm-data.workspace = true
 sonarithm-dsp.workspace = true
 sonarithm-export.workspace = true
@@ -44,6 +46,8 @@ sonarithm-spec.workspace = true
 thiserror.workspace = true
 
 [dev-dependencies]
+# Reads the `x` column of a function table in tests/functions.rs.
+arrow-array.workspace = true
 insta = { workspace = true, features = ["json"] }
 sha2.workspace = true
 

@@ -6,9 +6,9 @@ edition.workspace = true
 rust-version.workspace = true
 repository.workspace = true
 license.workspace = true
-# Not published until the facade depends on it (C03-T07); a new crate's first publish is the
-# owner's (release-process.md).
-publish = false
+# Published because the facade depends on it (C03-T07), as an experimental crate outside
+# semver until 1.0 like PLOTSONA; its first publish is the owner's (release-process.md).
+publish.workspace = true
 
 [dependencies]
 arrow-array.workspace = true

@@ -13,6 +13,7 @@
 
 #![forbid(unsafe_code)]
 
+use std::collections::BTreeMap;
 use std::path::PathBuf;
 
 use arrow_array::RecordBatch;
@@ -485,6 +486,77 @@ fn read_chart(py: Python<'_>, path: PathBuf) -> PyResult<Chart> {
         .map_err(|err| facade_error(py, &err))
 }
 
+/// A sampled function (C03-T07): its critical points as text, the spec that plays it as a
+/// glide with critical-point earcons, and its table.
+#[pyclass(frozen, module = "sonarithm._core")]
+struct Function {
+    inner: sonarithm::Function,
+}
+
+#[pymethods]
+impl Function {
+    /// The expression in its canonical form.
+    #[getter]
+    fn expr(&self) -> String {
+        self.inner.expr().to_owned()
+    }
+
+    /// One sentence: the expression, the domain and how many of each feature.
+    #[getter]
+    fn summary(&self) -> String {
+        self.inner.summary()
+    }
+
+    /// The critical points in increasing `x`, each a dict with `kind`, `x`, `end` (spans
+    /// only), `y` (where it has one) and `text`: the text equivalent of the cues.
+    fn critical_points<'py>(&self, py: Python<'py>) -> PyResult<Bound<'py, PyAny>> {
+        serialized(py, &self.inner.critical_points())
+    }
+
+    /// The spec that plays the function as one glide over `duration` seconds (default 8,
+    /// the example of 04 §6.3), with its critical points as earcons.
+    #[pyo3(signature = (duration = None))]
+    fn spec(&self, duration: Option<f64>) -> Spec {
+        Spec {
+            inner: self
+                .inner
+                .spec_lasting(duration.unwrap_or(sonarithm::FUNCTION_DURATION_S)),
+        }
+    }
+
+    /// The table `x`, `y`, `dy` (provenance `synthetic`) as a dataset.
+    fn dataset(&self) -> Dataset {
+        Dataset {
+            bundle: self.inner.bundle().clone(),
+        }
+    }
+
+    fn __repr__(&self) -> String {
+        format!("Function({:?})", self.inner.summary())
+    }
+}
+
+/// Samples a function of `x` (the expression language of ADR-0028) over `domain` and finds
+/// its critical points.
+#[pyfunction]
+#[pyo3(signature = (expr, domain, *, samples = None, step = None, variables = None))]
+fn read_function(
+    py: Python<'_>,
+    expr: String,
+    domain: (f64, f64),
+    samples: Option<u32>,
+    step: Option<f64>,
+    variables: Option<BTreeMap<String, f64>>,
+) -> PyResult<Function> {
+    let mut source = sonarithm::FunctionSpec::new(expr, [domain.0, domain.1]);
+    source.samples = samples;
+    source.step = step;
+    source.variables = variables.unwrap_or_default();
+    py.detach(|| sonarithm::read_function(&source))
+        .map(|inner| Function { inner })
+        .map_err(|err| facade_error(py, &err))
+}
+
 /// The JSON Schema of `kind` (`spec`).
 #[pyfunction]
 #[pyo3(signature = (kind = "spec"))]
@@ -507,6 +579,8 @@ fn _core(module: &Bound<'_, PyModule>) -> PyResult<()> {
     module.add_class::<Compiled>()?;
     module.add_class::<Chart>()?;
     module.add_function(wrap_pyfunction!(read_chart, module)?)?;
+    module.add_class::<Function>()?;
+    module.add_function(wrap_pyfunction!(read_function, module)?)?;
     module.add_function(wrap_pyfunction!(compile, module)?)?;
     module.add_function(wrap_pyfunction!(quick, module)?)?;
     module.add_function(wrap_pyfunction!(schema, module)?)?;

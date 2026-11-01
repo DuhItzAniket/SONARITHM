@@ -122,6 +122,10 @@ ui-cursor-none = No row is selected.
 ui-plot-label = { $field } against { $text } in { $name }
 ui-plot-description = { $total } rows. The Table tab lists every value, and the cursor readout gives the selected row.
 ui-plot-no-fields = This dataset has no two numeric fields to plot.
+# The plot's zoom and pan toolbar (B04-T07), and the x range it shows: $field is the x
+# column's header, $from and $to are numbers.
+ui-plot-view = Plot view
+ui-plot-range = Showing { $field } from { $from } to { $to }
 
 ## Application frame (B02-T06; design-language §4, keyboard-and-navigation §3).
 
@@ -175,6 +179,8 @@ command-help-keyboard = Keyboard shortcuts here
 command-view-zoom-in = Zoom in
 command-view-zoom-out = Zoom out
 command-view-zoom-reset = Reset zoom
+command-view-pan-left = Pan left
+command-view-pan-right = Pan right
 command-view-focus-explorer = Go to the chart explorer
 command-view-announcements = Show the announcement history
 command-transport-play-pause = Play or pause

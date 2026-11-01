@@ -10,7 +10,9 @@ From phase A07, release-plz maintains this file: it generates each release's ent
 
 ### Added
 
+- Functions in the command line and Python (C03-T07): `sonarithm quick --function "sin(x)/x" --domain -20,20` plays a function as a glide with earcons at its zeros, extrema and asymptotes, and first prints its critical points as text, such as "Local maximum at x = 1.5708, y = 1.". `sonarithm inspect` lists a function spec's critical points and prints an audification's speed-up, length and audible band. Python gains `read_function`. The `sonarithm-curvasona` crate is published as experimental.
 - Smoke-run diagnostics (#436): a desktop smoke run that hangs or whose page fails to load now ends with a failing report that names the stuck check, instead of waiting until CI's time limit.
+- Zoom and pan on the plot (B04-T07): drag across the plot to zoom to that range, or use the Plot view toolbar (Zoom in, Zoom out, Reset zoom, Pan left, Pan right) or Ctrl+Plus, Ctrl+Minus and Ctrl+0 (Cmd on macOS). Zooming keeps the cursor in place, and the shown range is displayed and announced.
 - The Plot tab (B04-T06): it draws the dataset as a line, with the shared cursor as a dashed crosshair. Clicking the plot moves the cursor to the nearest point, which is announced, and the table and the Status region follow.
 - Measured output latency (B04-T04): Preferences takes the latency you measured for the selected output device, in milliseconds, and the playhead uses it instead of the system's estimate. It is kept only in your local settings.
 - One cursor (B04-T06): the row you focus in the data table is the cursor that every view shows. It is selected in the table, and the Status region shows its data row and its place (dataset, series, segment, point) as a breadcrumb. Moving it from the table does not repeat what your screen reader already reads, and nothing moves your focus when the cursor moves elsewhere.

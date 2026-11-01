@@ -131,8 +131,9 @@ fn delivery(spec: &Value) -> Option<Delivery> {
 }
 
 /// The y-window of off-screen cues (RFC-0007 Q5): the explicit `scale.domain` of the first
-/// track's pitch channel, if the spec writes one.
-fn window(spec: &Value) -> Option<[f64; 2]> {
+/// track's pitch channel, if the spec (as JSON) writes one.
+#[must_use]
+pub fn window(spec: &Value) -> Option<[f64; 2]> {
     let domain = spec
         .get("tracks")?
         .get(0)?

@@ -91,7 +91,7 @@ fn a_spec_compiles_with_the_default_engines() {
         "applied defaults are reported with their rules"
     );
     let engines: Vec<String> = snr.engines().iter().map(|e| e.id.to_string()).collect();
-    assert_eq!(engines, ["platform", "numisona", "plotsona"]);
+    assert_eq!(engines, ["platform", "numisona", "plotsona", "curvasona"]);
 }
 
 #[test]

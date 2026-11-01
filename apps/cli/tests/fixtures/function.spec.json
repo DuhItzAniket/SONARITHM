@@ -1,0 +1,17 @@
+{
+  "specVersion": "0.4",
+  "name": "Cubic",
+  "description": "x^3 - 3x with its critical points as earcons, and a pitch window of -5 to 5.",
+  "data": {
+    "source": { "kind": "function", "expr": "x^3 - 3*x", "domain": [-3, 3], "samples": 601 }
+  },
+  "substrate": { "time": { "pace": { "duration": { "s": 6 } } } },
+  "tracks": [
+    {
+      "id": "f",
+      "mark": "glide",
+      "channels": { "pitch": { "field": "y", "scale": { "domain": [-5, 5] } } }
+    }
+  ],
+  "analysis": { "detect": ["critical-points"], "cue": "earcon" }
+}
