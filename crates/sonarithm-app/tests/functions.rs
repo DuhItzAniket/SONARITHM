@@ -3,7 +3,8 @@
 
 //! Functions in the app core (C03-T08; ADR-0017 "Functions"): `function_check` for live
 //! diagnostics, `function_open` as a dataset the cursor and the cues work on, the SDR-31
-//! calculator, and projects that refuse to save a function rather than drop it.
+//! calculator, and projects that refuse to save a function rather than drop it, while
+//! autosave leaves it out and says so once.
 
 #![allow(
     clippy::unwrap_used,
@@ -12,23 +13,37 @@
 )]
 
 use std::sync::Arc;
+use std::time::{Duration, Instant};
 
 use serde_json::{Value, json};
-use sonarithm_app::ipc::IpcError;
+use sonarithm_app::ipc::{Event, IpcError};
 use sonarithm_app::testing::TempDir;
 use sonarithm_app::{App, AppConfig, AudioOutput, CollectingSink};
 
 struct Harness {
     app: App,
+    sink: Arc<CollectingSink>,
     dir: TempDir,
 }
 
 impl Harness {
     fn new(name: &str) -> Self {
         let dir = TempDir::new(name);
-        let config = AppConfig::new(dir.path().join("config")).with_audio(AudioOutput::null());
-        let app = App::new(config, Arc::new(CollectingSink::new())).unwrap();
-        Self { app, dir }
+        let sink = Arc::new(CollectingSink::new());
+        let app = App::new(config(&dir), sink.clone()).unwrap();
+        Self { app, sink, dir }
+    }
+
+    /// The text of every announcement so far.
+    fn announcements(&self) -> Vec<String> {
+        self.sink
+            .events()
+            .into_iter()
+            .filter_map(|event| match event {
+                Event::Announcement(info) => Some(info.speech),
+                _ => None,
+            })
+            .collect()
     }
 
     fn send(&mut self, request: &Value) -> Result<Value, IpcError> {
@@ -39,6 +54,10 @@ impl Harness {
         self.send(request)
             .unwrap_or_else(|err| panic!("{request} failed: {err}"))
     }
+}
+
+fn config(dir: &TempDir) -> AppConfig {
+    AppConfig::new(dir.path().join("config")).with_audio(AudioOutput::null())
 }
 
 fn cubic() -> Value {
@@ -152,6 +171,32 @@ fn a_function_that_cannot_be_sampled_is_an_error_with_its_code() {
     assert_eq!(err.code, "SNR-ENG-404", "{err}");
 }
 
+/// A source the spec validator refuses is refused the same way here, with its code, and
+/// nothing opens: never a 2-point grid for `samples: 0`, never a silent choice of `step`.
+#[test]
+fn a_source_the_spec_validator_refuses_is_refused_with_its_code() {
+    let mut h = Harness::new("function-source");
+    for (args, says) in [
+        (json!({ "samples": 0 }), "at least 2"),
+        (json!({ "samples": 1 }), "at least 2"),
+        (json!({ "samples": 100, "step": 0.1 }), "not both"),
+        (json!({ "step": 0 }), "positive"),
+        (json!({ "domain": [1, 1] }), "min below max"),
+    ] {
+        let mut request = json!({ "expr": "x", "domain": [0, 1] });
+        for (key, value) in args.as_object().unwrap() {
+            request[key] = value.clone();
+        }
+        let err = h
+            .send(&json!({ "command": "function_open", "args": request }))
+            .unwrap_err();
+        assert_eq!(err.code, "SNR-SPEC-051", "{args}: {err}");
+        assert!(err.message.contains(says), "{args}: {err}");
+    }
+    let datasets = h.ok(&json!({ "command": "dataset_list" }));
+    assert_eq!(datasets["datasets"], json!([]), "nothing was opened");
+}
+
 /// SDR-31: the calculator gives the numbers a compile reports, on the same grid.
 #[test]
 fn sdr_31_the_calculator_agrees_with_the_compile() {
@@ -219,4 +264,53 @@ fn saving_a_project_with_a_function_fails_and_names_it() {
     h.ok(&json!({ "command": "dataset_close", "args": { "id": "d1" } }));
     h.ok(&json!({ "command": "project_save_as", "args": { "path": path, "embedData": true } }));
     assert!(path.exists());
+}
+
+/// Autosave never stops silently while a function is open (C03-T08): it saves the rest of
+/// the session without the function and says so once; a recovery brings back the rest.
+#[test]
+fn autosave_leaves_a_function_out_and_says_so_once() {
+    let mut h = Harness::new("function-autosave");
+    let csv = h.dir.path().join("temps.csv");
+    std::fs::write(&csv, "day,temp\n1,20.5\n2,21.0\n3,19.8\n").unwrap();
+    h.ok(&json!({ "command": "dataset_open", "args": { "path": csv } }));
+    h.ok(&cubic());
+    let spec = json!({
+        "specVersion": "0.4",
+        "data": { "source": { "kind": "dataset", "id": "d1" } },
+        "tracks": [{ "id": "t", "mark": "tone", "channels": { "pitch": { "field": "temp" } } }]
+    })
+    .to_string();
+    h.ok(&json!({ "command": "spec_set", "args": { "text": spec } }));
+    h.app.autosave_now();
+    h.app.autosave_now();
+    let start = Instant::now();
+    while h.announcements().is_empty() {
+        assert!(
+            start.elapsed() < Duration::from_secs(5),
+            "autosave said nothing"
+        );
+        std::thread::sleep(Duration::from_millis(10));
+    }
+    std::thread::sleep(Duration::from_millis(300));
+    let spoken = h.announcements();
+    assert_eq!(spoken.len(), 1, "said once: {spoken:?}");
+    assert!(spoken[0].contains("f(x) = x^3 - 3*x"), "{spoken:?}");
+    assert!(spoken[0].contains("cannot store functions"), "{spoken:?}");
+    // Dropped without shutdown: a crash. The next start recovers the CSV and the spec.
+    let Harness { app, dir, .. } = h;
+    drop(app);
+    let mut next = App::new(config(&dir), Arc::new(CollectingSink::new())).unwrap();
+    let recovery = next
+        .dispatch_json(&json!({ "command": "project_recovery" }).to_string())
+        .unwrap();
+    let id = recovery["autosaves"][0]["id"].clone();
+    let recovered = next
+        .dispatch_json(&json!({ "command": "project_recover", "args": { "id": id } }).to_string())
+        .unwrap();
+    let datasets = recovered["datasets"].as_array().unwrap();
+    assert_eq!(datasets.len(), 1, "{recovered}");
+    assert_eq!(datasets[0]["id"], "d1");
+    assert_eq!(datasets[0]["available"], true);
+    next.shutdown();
 }

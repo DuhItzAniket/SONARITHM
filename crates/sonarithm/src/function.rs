@@ -74,7 +74,9 @@ pub struct CriticalPoint {
 ///
 /// [`Error::Spec`] with CURVASONA's diagnostic when the expression or a variable cannot
 /// be used (`SNR-ENG-400` to `403`) or the grid exceeds its budget (`SNR-ENG-404`); its
-/// pointer names the key of a function source (`/data/source/expr`).
+/// pointer names the key of a function source (`/data/source/expr`). A source the spec
+/// validator would refuse (a bad domain, fewer than 2 samples, both `samples` and `step`)
+/// fails with its `SNR-SPEC-051` first.
 pub fn read_function(function: &FunctionSpec) -> Result<Function, Error> {
     read_function_with_ids(function, BundleId(0), FUNCTION_TABLE)
 }
@@ -90,6 +92,7 @@ pub fn read_function_with_ids(
     bundle: BundleId,
     table: TableId,
 ) -> Result<Function, Error> {
+    check_source(function)?;
     let sampled = sample_function(function, &Budgets::DEFAULT, (bundle, table)).map_err(|err| {
         let at = SpecPointer::root().key("data").key("source").key(err.key);
         let mut one = Diagnostics::new();
@@ -101,6 +104,25 @@ pub fn read_function_with_ids(
         sampled,
         window: None,
     })
+}
+
+/// The spec validator's checks of a function source (`SNR-SPEC-051`: the domain, and
+/// `samples` or `step` but not both, at least 2 samples, a positive step), so a source read
+/// without a spec is held to the same rules as one in a spec (C03-T08).
+fn check_source(function: &FunctionSpec) -> Result<(), Error> {
+    let mut errors = Diagnostics::new();
+    errors.extend(
+        function_spec(function, FUNCTION_DURATION_S)
+            .validate()
+            .iter()
+            .filter(|diagnostic| diagnostic.is_error())
+            .cloned(),
+    );
+    if errors.is_empty() {
+        Ok(())
+    } else {
+        Err(Error::Spec(errors))
+    }
 }
 
 impl Function {

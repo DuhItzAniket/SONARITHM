@@ -226,3 +226,8 @@ announce-audio-lost =
         [yes] Audio output stopped: { $detail }. Playback is paused.
        *[no] Audio output stopped: { $detail }.
     }
+
+## Autosave (C03-T08). $name lists the function datasets autosave leaves out, because the
+## project format cannot store a function yet. Said once per session, never silently.
+
+announce-autosave-without-functions = Autosave leaves out { $name }: projects cannot store functions yet, so after a crash open it again.

@@ -10,6 +10,9 @@ use std::time::{Duration, Instant};
 use sonarithm_data::bundle::SourceKind;
 use sonarithm_data::{BundleId, DataBundle, Format, SourceDescriptor, table_fingerprint};
 
+use sonarithm_audaxis::announce::Announcement;
+use sonarithm_i18n::Args;
+
 use super::{App, Open, file_name, summarize};
 use crate::codes;
 use crate::history::History;
@@ -46,6 +49,9 @@ pub(super) struct ProjectState {
     /// Warnings from the last open.
     pub(super) warnings: Vec<IpcError>,
     pub(super) last_autosave: Option<Instant>,
+    /// Whether the listener has been told that autosave leaves out function datasets
+    /// (C03-T08): said once, so autosave never stops silently.
+    pub(super) told_autosave_functions: bool,
 }
 
 impl ProjectState {
@@ -121,8 +127,14 @@ fn project_target(text: &str) -> Result<PathBuf, IpcError> {
 }
 
 impl App {
-    /// The session as a project.
+    /// The session as a project. A function dataset refuses with SNR-APP-089.
     fn to_project(&self) -> Result<Project, IpcError> {
+        self.to_project_with(false)
+    }
+
+    /// The session as a project; `skip_functions` leaves function datasets out instead of
+    /// refusing, which only autosave does.
+    fn to_project_with(&self, skip_functions: bool) -> Result<Project, IpcError> {
         let text = self.spec.clone().ok_or_else(|| {
             IpcError::new(&codes::NO_SPEC, "The project has no spec to save yet.")
         })?;
@@ -133,6 +145,9 @@ impl App {
             // The project format has no place for a function's definition yet, and saving
             // its samples would lose the function: refuse, never drop it (C03-T08).
             if open.function.is_some() {
+                if skip_functions {
+                    continue;
+                }
                 return Err(IpcError::new(
                     &codes::FUNCTION_NOT_SAVED,
                     format!(
@@ -403,17 +418,46 @@ impl App {
     }
 
     /// Writes an autosave now, with every dataset embedded. Best effort: a failure leaves
-    /// the previous autosaves.
+    /// the previous autosaves. Function datasets are left out, and the listener is told
+    /// once, because the project format cannot store them yet (C03-T08).
     pub fn autosave_now(&mut self) {
-        let Ok(project) = self.to_project() else {
+        let Ok(project) = self.to_project_with(true) else {
             return;
         };
+        self.tell_autosave_skips_functions();
         let anchor = self.autosaves_dir().join("autosave.sonarithm");
         if let Ok(bytes) = project::write(&project, &anchor, true)
             && self.autosaves.write(&bytes).is_ok()
         {
             self.project.last_autosave = Some(Instant::now());
         }
+    }
+
+    /// Says once per session that autosave leaves out the open function datasets.
+    fn tell_autosave_skips_functions(&mut self) {
+        if self.project.told_autosave_functions {
+            return;
+        }
+        let names: Vec<&str> = self
+            .datasets
+            .values()
+            .filter(|open| open.function.is_some())
+            .map(|open| open.summary.name.as_str())
+            .collect();
+        if names.is_empty() {
+            return;
+        }
+        let args = Args::new().text("name", names.join(", "));
+        let Some(text) = self.localizer.as_ref().and_then(|localizer| {
+            localizer
+                .format("announce-autosave-without-functions", &args)
+                .ok()
+        }) else {
+            return;
+        };
+        self.project.told_autosave_functions = true;
+        self.transport
+            .announce(Announcement::status(text.clone(), text));
     }
 
     fn autosaves_dir(&self) -> PathBuf {
