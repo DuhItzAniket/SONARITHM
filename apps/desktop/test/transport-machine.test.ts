@@ -23,6 +23,7 @@ const STOPPED: TransportState = {
   device: null,
   live: false,
   xruns: 0,
+  excludedTracks: [],
 };
 
 /** A small model of the Rust transport (06 §5): what each command does to the state. */

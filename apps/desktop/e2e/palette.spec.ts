@@ -28,6 +28,15 @@ async function openPalette(page: Page): Promise<void> {
 /** Closes every open dialog with Escape. */
 async function closeDialogs(page: Page): Promise<void> {
   for (let i = 0; i < 3 && (await page.getByRole("dialog").count()) > 0; i++) {
+    // Escape closes the dialog that has the focus; React Aria moves it in after an
+    // animation frame (F-176), so wait for that first.
+    await expect
+      .poll(() =>
+        page.evaluate(
+          () => document.activeElement?.closest('[role="dialog"]') != null,
+        ),
+      )
+      .toBe(true);
     await page.keyboard.press("Escape");
   }
   await expect(page.getByRole("dialog")).toHaveCount(0);
@@ -70,8 +79,16 @@ test("kb_01_every_registered_command_runs_from_the_palette", async ({
         page.evaluate(() => document.documentElement.dataset.lastCommand),
       )
       .toBe(id);
-    // These two open a dialog of their own, just after the palette closes.
-    if (id === "app.palette" || id === "help.keyboard") {
+    // These open a dialog of their own, just after the palette closes: the palette again,
+    // the key references (help.explorer is the explorer's, B03-T09) and Preferences.
+    if (
+      [
+        "app.palette",
+        "help.keyboard",
+        "help.explorer",
+        "app.preferences",
+      ].includes(id)
+    ) {
       await expect(page.getByRole("dialog")).toHaveCount(1);
     }
     await closeDialogs(page);

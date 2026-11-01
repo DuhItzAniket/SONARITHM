@@ -70,6 +70,8 @@ export const REPLY_KINDS = {
   corrections_import: "corrections_import",
   cursor_set: "cursor",
   cursor_get: "cursor",
+  nav_move: "nav",
+  nav_where: "announce",
 } as const;
 
 /** The channel that carries each event. */
@@ -395,7 +397,11 @@ row: number,
 /**
  * Where the move came from; it decides what is spoken.
  */
-origin: CursorOrigin, } } | { "command": "cursor_get" } | { "command": "view_get", "args": { 
+origin: CursorOrigin, } } | { "command": "cursor_get" } | { "command": "nav_move", "args": { 
+/**
+ * The verb.
+ */
+verb: NavVerb, } } | { "command": "nav_where" } | { "command": "view_get", "args": { 
 /**
  * The dataset's ID.
  */
@@ -460,7 +466,7 @@ diagnostics: Array<DiagnosticInfo>,
 /**
  * Errors, warnings and infos.
  */
-counts: Counts, } | { "reply": "compile" } & CompileReport | { "reply": "transport" } & TransportState | { "reply": "cursor" } & CursorState | { "reply": "job" } & JobInfo | { "reply": "jobs", 
+counts: Counts, } | { "reply": "compile" } & CompileReport | { "reply": "transport" } & TransportState | { "reply": "cursor" } & CursorState | { "reply": "nav" } & NavResult | { "reply": "job" } & JobInfo | { "reply": "jobs", 
 /**
  * The jobs, oldest first.
  */
@@ -878,7 +884,13 @@ live: boolean,
 /**
  * Underruns the output reported since the session started (PB-02, PB-11).
  */
-xruns: number, };
+xruns: number, 
+/**
+ * The compiled Score's tracks that playback leaves out, because the explorer's filters
+ * took their series out (B03-T09, ADR-0017 "Navigation"). Empty when the transport
+ * plays the compiled Score as it is; exports always render it whole.
+ */
+excludedTracks: Array<string>, };
 
 /**
  * A transport clock anchor (06 §9): the UI extrapolates the playhead from it.
@@ -931,13 +943,19 @@ row: number | null,
  */
 x: number | null, 
 /**
- * The point's navigation node, when the row is one.
+ * The cursor's navigation node: the row's point, or, after an explorer move, any
+ * node (a series, a segment, an axis, an insight, a filter, ADR-0017 "Navigation").
  */
 node: number | null, 
 /**
- * From the dataset down to the point; only the dataset without a compiled Score.
+ * From the dataset down to the node; only the dataset without a compiled Score.
  */
 path: Array<CursorPathItem>, 
+/**
+ * The series the explorer's filters took out of playback and view, in node order.
+ * Exports still render every series: the filter is session state (B03-T09).
+ */
+excluded: Array<SeriesRef>, 
 /**
  * Where the move came from; `None` when Rust moved it (data changed under it).
  */
@@ -967,7 +985,103 @@ label: string, };
 /**
  * A level of the cursor's path, which the UI names through its own catalogue.
  */
-export type PathLevel = "dataset" | "series" | "segment" | "point";
+export type PathLevel = "dataset" | "series" | "segment" | "point" | "axes" | "axis" | "insights" | "insightGroup" | "insight" | "filters" | "filter";
+
+/**
+ * A series named for the UI: its navigation node and its data name.
+ */
+export type SeriesRef = { 
+/**
+ * The series' navigation node.
+ */
+node: number, 
+/**
+ * Its track or field name, shown as it is.
+ */
+label: string, };
+
+/**
+ * A chart explorer verb (B03-T09, ADR-0017 "Navigation"): the AUDAXIS verbs one to one,
+ * with their keys in keyboard-and-navigation §4.2.
+ */
+export type NavVerb = { "verb": "next" } | { "verb": "previous" } | { "verb": "jumpForward" } | { "verb": "jumpBack" } | { "verb": "first" } | { "verb": "last" } | { "verb": "into" } | { "verb": "out" } | { "verb": "activate" } | { "verb": "nextSeries" } | { "verb": "previousSeries" } | { "verb": "maximum" } | { "verb": "minimum" } | { "verb": "nextInsight" } | { "verb": "previousInsight" } | { "verb": "landmark", 
+/**
+ * Which.
+ */
+landmark: NavLandmark, } | { "verb": "goTo", 
+/**
+ * The x value.
+ */
+x: NavX, } | { "verb": "findValue", 
+/**
+ * The value.
+ */
+value: number, };
+
+/**
+ * A landmark of [`NavVerb::Landmark`].
+ */
+export type NavLandmark = "xAxis" | "yAxis" | "insights" | "filters" | "dataset";
+
+/**
+ * Where [`NavVerb::GoTo`] goes.
+ */
+export type NavX = { "number": number } | { "category": string };
+
+/**
+ * What kind of thing a verb did.
+ */
+export type NavOutcome = "moved" | "boundary" | "invalid" | "describe" | "toggled";
+
+/**
+ * The result of `nav_move` (B03-T09; 09 §3).
+ */
+export type NavResult = { 
+/**
+ * The cursor after the verb, as the `cursor` event sent with it.
+ */
+cursor: CursorState, 
+/**
+ * What the verb did.
+ */
+outcome: NavOutcome, 
+/**
+ * For a boundary: `first`, `last`, `top` or `bottom` (keyboard §11).
+ */
+edge: string | null, 
+/**
+ * For an invalid verb, why, such as `noInsights` or `notHere`.
+ */
+reason: string | null, 
+/**
+ * For a toggle: whether the series is now included.
+ */
+included: boolean | null, 
+/**
+ * The earcon of the outcome, such as `E-BOUNDARY` (A11Y-08).
+ */
+earcon: string | null, 
+/**
+ * The x span to highlight: the node's, when it has one.
+ */
+highlight: NavSpan | null, 
+/**
+ * Whether the outcome was announced (on the `announcements` channel, never here).
+ */
+announced: boolean, };
+
+/**
+ * An x span, inclusive.
+ */
+export type NavSpan = { 
+/**
+ * The first x.
+ */
+start: number, 
+/**
+ * The last x.
+ */
+end: number, };
 
 /**
  * What to export.
