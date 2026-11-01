@@ -19,6 +19,7 @@
 #![deny(missing_docs)]
 
 pub mod announce;
+pub mod braille;
 pub mod codes;
 mod columns;
 pub mod context;

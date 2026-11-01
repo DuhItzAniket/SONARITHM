@@ -31,6 +31,7 @@ use crate::speech::{SequencerConfig, SpeakerSource};
 use crate::streams::{self, StreamAction};
 use crate::transport::{Action, AudioOutput, OutputConfig, Transport};
 
+mod braille;
 mod corrections;
 mod cursor;
 mod nav;
@@ -329,6 +330,7 @@ impl App {
             Request::CursorGet => Ok(self.cursor_get()),
             Request::NavMove { verb } => self.nav_move(&verb),
             Request::NavWhere => self.nav_where(),
+            Request::BrailleRoute { cell } => self.braille_route(cell),
             Request::ViewGet { .. } | Request::TablePage { .. } => Err(IpcError::new(
                 &codes::BAD_REQUEST,
                 "This command returns a binary view; send it with dispatch_binary.",
