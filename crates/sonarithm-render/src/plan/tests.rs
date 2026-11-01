@@ -10,7 +10,7 @@ use sonarithm_core::{
     TrackRole,
 };
 
-use super::build::polyphony;
+use super::build::{polyphony, sounding_end};
 use super::*;
 
 const RATE: SampleRate = SampleRate::HZ_48000;
@@ -208,6 +208,12 @@ fn times_round_half_to_even() {
     assert_eq!(starts, [2, 4]);
 }
 
+/// `MIN_RAMP` (5 ms) at the test rate.
+fn min_ramp() -> u32 {
+    sonarithm_dsp::env::ramp_frames(sonarithm_dsp::env::MIN_RAMP, RATE)
+}
+
+/// Overlaps counted frame by frame, each voice lasting until [`sounding_end`] (#443).
 fn brute_force_polyphony(events: &[PlannedEvent]) -> usize {
     let mut frames: Vec<u64> = events.iter().map(|e| e.start).collect();
     frames.sort_unstable();
@@ -216,7 +222,7 @@ fn brute_force_polyphony(events: &[PlannedEvent]) -> usize {
         .map(|&f| {
             events
                 .iter()
-                .filter(|e| e.start <= f && f < e.end())
+                .filter(|e| e.start <= f && f < sounding_end(e, min_ramp()))
                 .count()
         })
         .max()
@@ -302,7 +308,7 @@ proptest! {
             })
             .collect();
         events.sort_by_key(|e| e.start);
-        prop_assert_eq!(polyphony(&events), brute_force_polyphony(&events));
+        prop_assert_eq!(polyphony(&events, min_ramp()), brute_force_polyphony(&events));
     }
 }
 

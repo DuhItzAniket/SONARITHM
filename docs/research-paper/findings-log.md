@@ -1170,4 +1170,37 @@ A05 (render engine, audio backends, export) uses F-050 to F-069.
 - **Evidence level / confidence:** EV-C / Strong (reproduced and fixed). The WebKitGTK behaviour is inferred from the CI report; TODO(verify) on a desktop Linux with `LANG=C` (HP-02).
 - **Upstream:** uPlot's module-scope `Intl.NumberFormat(navigator.language)` (1.6.32, `uPlot.esm.js:442`) could be reported upstream: guard the tag, or create the formatter lazily. Whether to open a public issue is the owner's decision.
 - **Affects:** B04-T06, any library that reads `navigator.language` at import; 12 §5 (locales); B07-T07 (the locale setting must pass through `normalizeLocale`)
+
+### F-179 · uPlot's drag selection missed in WebKit because it positions from a cached box
+
+- **Date:** 2026-11-01 · **Phase:** B04 · **Type:** engineering · **Status:** new
+- **Statement:** B04-T07's first drag-to-zoom used uPlot 1.6.32's cursor drag selection. It zoomed in Chromium, but in Playwright's WebKit a drag across the plot selected nothing. uPlot computes the selection from a bounding box it caches and refreshes only on its own resize, scroll and enter events; after a layout shift the cached box no longer matched the plot. The drag is now SONARITHM's own: pointer events on uPlot's overlay, positioned from `getBoundingClientRect()` at each event, with pointer capture. That works in Chromium and WebKit. uPlot's cursor stays off, which also keeps the hover readout out (DL-X11).
+- **Evidence:** `apps/desktop/e2e/plot.spec.ts` (`a11y_26_a_drag_zooms_and_does_not_move_the_cursor`, Chromium and WebKit); `packages/viz/src/Plot.tsx`
+- **Evidence level / confidence:** EV-C / Moderate. The cached-box cause is inferred from uPlot's documented behaviour and the fix; WebKitGTK and WKWebView inside Tauri are untested (TODO(verify), B04-T08)
+- **Affects:** B04-T07, A11Y-26; any later uPlot interaction (B04-T08 traces in three webviews)
+- **Papers:** none yet
+
+### F-221 · Voice steals came from playback speed and double seeks, not from short notes at 1×, and a steal clicked by up to 0.29
+
+- **Date:** 2026-11-01 · **Phase:** B04 (render, A05 code) · **Type:** engineering (real-time audio) · **Status:** new
+- **Statement:** #443 (from F-211) inferred two ways a playback voice pool could overflow and a stolen voice click. Reproduced on main:
+  - **Short notes.** The first path does not happen at 1×: the planner already stretches every note to two ramps, and the pool is sized from those lengths. It happens at higher speed. At 4×, a note plays four times shorter while its 5 ms ramps do not, so 2 ms notes 3 ms apart stole 12 voices.
+  - **Double seek.** A second seek 1 ms into a seek crossfade stole one voice. Replacing the voice outright stepped the output by 0.293, over twice the sine's own largest step.
+- **The fix:**
+  - **Sizing:** pools count each voice's sounding length at the fastest supported speed, at least two ramps × 4, so no Score steals at any speed. Each track is capped at 256 voices of polyphony (pool ≤ 512 × 520 bytes ≈ 266 KB), the most events a seek restarts.
+  - **Steal choice:** a voice already fading out goes first.
+  - **De-click:** a steal adds the stolen voice's last output to the track's bus and fades it to zero over 5 ms. That needs no extra voice and no allocation.
+- **Result:** both reproductions pass. A forced steal (a pool of one voice) and a pathological track (0.5 ms notes every 0.05 ms, about 800 deep at 4×, past the cap) steal without stepping the output. The golden-audio cases and the replication gallery are unchanged at 1×.
+- **Evidence:** `crates/sonarithm-render/src/graph/tests.rs` (`issue_443_short_notes_are_not_stolen`, `issue_443_a_seek_inside_a_crossfade_does_not_click`, `issue_443_a_stolen_voice_fades_instead_of_clicking`, `issue_443_the_polyphony_cap_holds_and_steals_stay_smooth`); `crates/sonarithm-render/tests/no_alloc.rs` (`rt_voice_steals_never_allocate_on_the_audio_thread`); `cargo xtask golden` (every case identical) and `cargo xtask replication` (86 files match)
+- **Evidence level / confidence:** EV-C / Strong for the reproductions and the fix (tests); the de-click's audibility was not judged by ear, only by the size of the output step
+- **Affects:** F-211, #443, 05 §5 (pool sizing), 06 §3 (voices), PB-03 (bigger pools for dense short-note tracks: allocation and the render loop scan every voice of a pool for activity, so a capped 512-voice pool costs a scan of 512 flags per segment; not measured)
+- **Papers:** none yet
+
+### F-220 · A glide paced by `secondsPerUnit` held its last value for a whole time-field unit, not one point's spacing
+
+- **Date:** 2026-11-01 · **Phase:** C03 (found), A06 code · **Type:** engineering · **Status:** new
+- **Statement:** NUMISONA holds a glide's last value for one step between points, so the last value is heard (A06-T04, #151). Under `pointsPerSecond` and `duration` that step is the spacing, 1/rate or duration/n. Under `secondsPerUnit` the encoder used one unit of the time field instead, which equals the spacing only when points sit one unit apart. A CURVASONA function sampled 1003 times over x = −3…3 at 4/3 s per unit therefore ended at 9.333 s, a whole unit (1.333 s) after its last point at 8 s (#440). The hold is now the mean spacing of the points in time-field units times the seconds per unit (one unit for a single point), so that glide ends about 8 ms after its last point (computed, 6/1002 × 4/3 s). The spacing is taken in units before scaling, so data one unit apart keeps a hold of exactly one unit. Nothing in the replication gallery, the golden-audio cases or the Score snapshots changed. Notes were never affected: a note's length is its `duration` channel. No doc or ADR had defined a one-unit hold; doc 07 (NUMISONA) now states the rule for every pace.
+- **Evidence:** `crates/engines/sonarithm-numisona/tests/encode.rs` (`glides_hold_one_point_spacing_under_seconds_per_unit`); `cargo xtask replication` (all 86 generated files match) and `cargo xtask golden` (every case identical) after the fix; #440
+- **Evidence level / confidence:** EV-C / Strong (code and tests)
+- **Affects:** 07 NUMISONA (timing), RFC-0001 §5 pace (`secondsPerUnit`), #441 (CURVASONA's function specs on x-linear time, which this unblocks)
 - **Papers:** none yet
