@@ -69,7 +69,7 @@ None of these is registered for use yet. Before use, record the licence, the ver
 | WB-ChartExtract, EpiCurveBench *(preprints)* | Realistic 2026 chart-to-table benchmarks | D04 extraction evaluation | To verify |
 | TESS data-validation time series | Used in ICAD sonification work (`riber2022tess`) | Astronomy examples; transit tasks with real data | To verify |
 | NASA Chandra data used in "A Universe of Sound" (`arcand2024universe`) | Outreach sonification at scale | Presentation-mode examples | To verify |
-| A public seismic waveform archive: [OD-31](../planning/open-decisions.md) chose GEOFON GE (other candidates: GSN IU through EarthScope, STEAD) | Audification as in Dombois 2001 | Real-data audification example (C03-T06) | Chosen: GEOFON network GE, CC BY 4.0 (OD-31, decided 2026-11-01); the clip and its citation arrive with C03-T06 |
+| GEOFON Seismic Network (GE), GEOFON Data Centre, GFZ ([doi:10.14470/TR560404](https://doi.org/10.14470/TR560404)); [OD-31](../planning/open-decisions.md) | Audification as in Dombois 2001 | Two clips of station MORC's BHZ channel: the 2020 Petrinja (10 min) and 2021 Kermadec (60 min) earthquakes, 109 KB as Parquet, in `replication/dombois-2001/data/` (C03-T06) | CC BY 4.0 (the DOI's DataCite record); checked on the request's station metadata (network and station `open`, DOI named); credited in the README, specs (`x-attribution`), render records and REUSE.toml |
 | Erie gallery examples (`kim2024erie`) | Replication gallery items (Erie code is MIT-licensed) | Gallery and importer tests | Data licence to verify |
 | Data Sonification Archive (`lindborg2025trends`) | Corpus of 470 projects | Design-pattern reference, not a task benchmark | Not applicable (no data reuse) |
 
