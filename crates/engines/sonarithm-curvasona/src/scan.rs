@@ -460,25 +460,27 @@ fn classify(
     })
 }
 
-/// Whether the gap between the two sides closes as the probes come closer: at a hole on a
-/// steep slope (beside a pole, F-201) the sides differ by about the slope times the probe
-/// distance, so the gap shrinks tenfold per decade, while at a jump it stays the jump's
-/// size. Judged on the three closest probes, which lie nearest the point and so on its own
-/// slope: over two decades the gap must fall at least fivefold, or reach rounding.
+/// Whether the two sides meet at the point, judged from their signed difference at the
+/// two closest probes rather than from its size. The difference D(h) between the left and
+/// the right value at probe distance h is, to first order, D₀ + C·h, both at a hole (where
+/// D₀ = 0 and C = −2f′; the h² terms cancel) and at a jump (D₀ = the jump). The probes are
+/// a decade apart (h₅ = 10·h₆), so the line through them meets h = 0 at
+/// D₀ = (10·D₆ − D₅)/9. On a pole's steep slope C·h can dwarf a jump, so the gap alone can
+/// shrink fivefold over two decades and still converge to the jump (Lane U's review of
+/// #445); the extrapolated D₀ tells "converging to 0" from "converging to J" (F-201).
 fn closing(below: &[f64; 7], above: &[f64; 7]) -> bool {
-    let gap = |k: usize| match (below.get(k), above.get(k)) {
-        (Some(l), Some(r)) => (l - r).abs(),
-        _ => f64::NAN,
+    let (Some(&l5), Some(&r5), Some(&l6), Some(&r6)) =
+        (below.get(5), above.get(5), below.get(6), above.get(6))
+    else {
+        return false;
     };
-    let (far, near) = (gap(4), gap(6));
-    if !(far.is_finite() && near.is_finite()) {
+    let (d5, d6) = (l5 - r5, l6 - r6);
+    if !(d5.is_finite() && d6.is_finite()) {
         return false;
     }
-    let scale = below
-        .get(6)
-        .map_or(0.0, |v| v.abs())
-        .max(above.get(6).map_or(0.0, |v| v.abs()));
-    near <= 0.2 * far || near <= 1e-12 * (1.0 + scale)
+    let limit = (10.0 * d6 - d5) / 9.0;
+    let scale = l6.abs().max(r6.abs());
+    limit.abs() <= 1e-6 * (1.0 + scale)
 }
 
 /// The last point between `defined` and `undefined` where `f` is not `NaN`.
