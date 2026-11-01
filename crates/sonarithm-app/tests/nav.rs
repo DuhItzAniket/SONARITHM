@@ -454,6 +454,10 @@ fn b03_t09_the_toggles_clock_anchor_carries_the_exclusions() {
             })
             .collect()
     };
+    // The compile hands the Score to the transport thread without waiting, and that load
+    // sends its own anchor, with no exclusions. A request the transport answers comes after
+    // it in the same queue, so once it returns, every earlier anchor is out.
+    h.ok(&json!({ "command": "transport_state" }));
     let before = clocks(&h).len();
     h.nav(&json!({ "verb": "landmark", "landmark": "filters" }));
     h.step("into");
