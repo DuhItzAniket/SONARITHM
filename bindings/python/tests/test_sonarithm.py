@@ -251,6 +251,30 @@ def test_a_chart_file_reads_with_its_report_and_plays():
     assert compiled.summary()["tracks"][0]["notes"] == 36
 
 
+def test_a_function_lists_its_critical_points_and_plays():
+    """C03-T07: a function's critical points as text, and its spec with their earcons."""
+    function = snr.read_function("x^2 - 1", (-2, 2))
+    points = function.critical_points()
+    assert [p["text"] for p in points] == [
+        "zero at x = -1",
+        "local minimum at x = 0, y = -1",
+        "zero at x = 1",
+    ]
+    assert function.summary == "f(x) = x^2 - 1 from x = -2 to 2, 1000 samples: 2 zeros, 1 local minimum"
+    assert function.dataset().fields[:3] == ["x", "y", "dy"]
+    compiled = function.compile()
+    tracks = compiled.summary()["tracks"]
+    assert tracks[0]["glides"] >= 1
+    cues = next(t for t in tracks if t["id"] == "curvasona.cues")
+    assert cues["earcons"] == 3
+
+
+def test_a_function_that_cannot_be_read_raises_with_a_code():
+    with pytest.raises(snr.SonarithmError) as raised:
+        snr.read_function("2x", (0, 1))
+    assert raised.value.diagnostics[0]["code"] == "SNR-ENG-400"
+
+
 def test_a_file_that_is_no_chart_raises_with_a_code(tmp_path):
     path = tmp_path / "notes.svg"
     path.write_text("not a chart", encoding="utf-8")

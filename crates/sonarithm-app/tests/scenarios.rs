@@ -411,6 +411,75 @@ fn a_chart_opens_as_a_dataset_headless() {
     assert!(err.code.starts_with("SNR-ENG-3"), "{err}");
 }
 
+/// C03-T07: the app core opens a function through its spec, with no file and no IPC
+/// change. A spec whose source is a `function` compiles headless with CURVASONA: the glide,
+/// the `curvasona.cues` track (one earcon per zero and extremum of x^2 - 1) and CURVASONA
+/// in the Score's engines; an `audify` track reports the speed-up calculator
+/// (`SNR-ENG-460`, SDR-31); an expression that cannot be read is a diagnostic with its
+/// code, not an IPC error.
+#[test]
+fn a_function_compiles_headless() {
+    let mut h = Harness::new("function");
+    let spec = json!({
+        "specVersion": "0.4",
+        "data": { "source": { "kind": "function", "expr": "x^2 - 1", "domain": [-2, 2] } },
+        "substrate": { "time": { "pace": { "duration": { "s": 8 } } } },
+        "tracks": [{ "id": "f", "mark": "glide", "channels": { "pitch": { "field": "y" } } }],
+        "analysis": { "detect": ["critical-points"], "cue": "earcon" }
+    });
+    h.ok(&json!({ "command": "spec_set", "args": { "text": spec.to_string() } }));
+    let report = h.ok(&json!({ "command": "compile" }));
+    assert_eq!(report["ok"], true, "{report}");
+    let score = &report["score"];
+    assert!(score["engines"].get("curvasona").is_some(), "{report}");
+    let cues = score["tracks"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .find(|t| t["id"] == "curvasona.cues")
+        .unwrap_or_else(|| panic!("{report}"));
+    assert_eq!(cues["events"], 3, "two zeros and a minimum: {report}");
+
+    let audified = json!({
+        "specVersion": "0.4",
+        "data": { "source": { "kind": "function", "expr": "sin(x)", "domain": [0, 100], "samples": 2000 } },
+        "tracks": [{ "id": "a", "mark": "audify", "audify": { "k": 100 } }]
+    });
+    h.ok(&json!({ "command": "spec_set", "args": { "text": audified.to_string() } }));
+    let report = h.ok(&json!({ "command": "compile" }));
+    assert_eq!(report["ok"], true, "{report}");
+    let readout = report["diagnostics"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .find(|d| d["code"] == "SNR-ENG-460")
+        .unwrap_or_else(|| panic!("{report}"));
+    assert!(
+        readout["message"]
+            .as_str()
+            .unwrap()
+            .starts_with("Audification: k = 100,"),
+        "{readout}"
+    );
+
+    let broken = json!({
+        "specVersion": "0.4",
+        "data": { "source": { "kind": "function", "expr": "2x", "domain": [0, 1] } },
+        "tracks": [{ "id": "f", "mark": "glide", "channels": { "pitch": { "field": "y" } } }]
+    });
+    h.ok(&json!({ "command": "spec_set", "args": { "text": broken.to_string() } }));
+    let report = h.ok(&json!({ "command": "compile" }));
+    assert_eq!(report["ok"], false, "{report}");
+    assert!(
+        report["diagnostics"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .any(|d| d["code"] == "SNR-ENG-400"),
+        "{report}"
+    );
+}
+
 #[test]
 fn malformed_requests_and_versions_fail_fast() {
     let mut h = Harness::new("protocol");

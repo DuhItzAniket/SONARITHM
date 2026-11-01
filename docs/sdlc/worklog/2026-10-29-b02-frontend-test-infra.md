@@ -144,6 +144,13 @@
 - `normalizeLocale` in `@sonarithm/i18n` drops `.encoding` and `@modifier`, turns `_` into `-`, maps C and POSIX to the fallback, and canonicalizes with `Intl.getCanonicalLocales` (the fallback for anything it rejects). `createLocalizer` uses it. The desktop's first import, `src/locale.ts`, replaces an invalid `navigator.language` and `languages` before any other module runs. ES modules evaluate their imports in order.
 - Tests: the i18n cases asked for (C, C.UTF-8, POSIX, en_US.UTF-8, de_DE@euro) and more; `fixNavigatorLocale` with fakes. An E2E sets `navigator.language` to "C" before the page loads. Without the fix it reproduces CI's `RangeError`; with it the app starts and the plot draws, in Chromium and WebKit. The Rust side uses a fixed `en-US` and needed no change. A Node test loads the real uPlot module with `navigator.language` "C": a `RangeError` without the shim, a clean load with it. Recorded as F-210 (the coordinator gave Lane U F-210–219), which names uPlot's module-scope `Intl` as a possible upstream report for the owner.
 
+## B04-T07: zoom and pan without dragging (2026-11-01)
+
+- `zoom` and `pan` in `plot/zoom.ts` (Node tests), the Plot view toolbar, and command handlers for `view.zoomIn`, `view.zoomOut` and `view.zoomReset` (already in the keymap), plus new palette commands `view.panLeft` and `view.panRight`.
+- **Drag zoom.** The first version used uPlot's drag selection, which worked in Chromium. In WebKit no selection happened, because uPlot positions the selection from a bounding box it caches, and the layout had moved since. Pointer events on the overlay, reading its box at each event, work in both (F-179).
+- A local name `view` (the decoded tile) shadowed the range state named `view`, and lint caught the dead condition.
+- Locally: desktop 47 unit tests, all 44 Chromium E2E tests, `plot.spec.ts` and `cursor.spec.ts` in WebKit (14 in both), the Plot stories, i18n 25 and 9, viz 7. No cargo beyond the i18n tests.
+
 ## B04-T08: PB-08 in the three webviews, CI side (2026-11-01)
 
 - The Vitest perf project runs in Playwright's Chromium, not in a webview. The desktop smoke run already starts the real app on all three CI hosts, so the PB-08 trace now runs there (`pb-08-dense-layer`). That covers WebView2, WKWebView and WebKitGTK in debug (ci.yml) and release (desktop-nightly) builds.
