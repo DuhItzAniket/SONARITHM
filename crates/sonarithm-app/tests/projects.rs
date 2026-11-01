@@ -604,7 +604,10 @@ fn rfc_0002_12_an_unknown_storage_opens_unavailable_and_is_kept_on_re_save() {
         .find(|d| d["code"] == "SNR-APP-035")
         .unwrap_or_else(|| panic!("{opened}"));
     let message = warning["message"].as_str().unwrap();
-    assert!(message.contains("`later.dat`") && message.contains("future-kind"), "{message}");
+    assert!(
+        message.contains("`later.dat`") && message.contains("future-kind"),
+        "{message}"
+    );
     assert_eq!(opened["datasets"][0]["available"], false, "{opened}");
     let saved = dir.path().join("saved.sonarithm");
     ok(
@@ -647,7 +650,10 @@ fn rfc_0002_12_a_function_dataset_round_trips_as_its_definition() {
     assert_eq!(entry["storage"], "function");
     let function = &entry["function"];
     assert_eq!(function["expr"], "x^3 - 3*x", "canonical: {function}");
-    assert_eq!(function["samples"], 1000, "the default grid written out: {function}");
+    assert_eq!(
+        function["samples"], 1000,
+        "the default grid written out: {function}"
+    );
     let domain: Vec<f64> = function["domain"]
         .as_array()
         .unwrap()
@@ -673,7 +679,11 @@ fn rfc_0002_12_a_function_dataset_round_trips_as_its_definition() {
     assert_eq!(opened["datasets"][0]["available"], true, "{opened}");
     assert_eq!(opened["diagnostics"], json!([]), "{opened}");
     ok(&mut app, &json!({ "command": "project_save" }));
-    assert_eq!(std::fs::read(&path).unwrap(), first, "saves to the same bytes");
+    assert_eq!(
+        std::fs::read(&path).unwrap(),
+        first,
+        "saves to the same bytes"
+    );
     let report = ok(&mut app, &json!({ "command": "compile" }));
     assert_eq!(report["ok"], true, "{report}");
 
@@ -711,5 +721,9 @@ fn rfc_0002_12_a_changed_function_fingerprint_is_a_warning() {
     let dataset = &opened.project.datasets[0];
     assert!(dataset.table.is_some());
     assert!(dataset.function.is_some());
-    assert_ne!(dataset.fingerprint, "0".repeat(64), "the new fingerprint is recorded");
+    assert_ne!(
+        dataset.fingerprint,
+        "0".repeat(64),
+        "the new fingerprint is recorded"
+    );
 }

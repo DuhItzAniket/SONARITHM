@@ -139,7 +139,10 @@ impl FunctionDef {
         Self {
             expr: canonical,
             domain: function.domain,
-            samples: function.step.is_none().then(|| function.samples.unwrap_or(1000)),
+            samples: function
+                .step
+                .is_none()
+                .then(|| function.samples.unwrap_or(1000)),
             step: function.step,
             variables: function.variables.clone(),
         }
@@ -901,7 +904,9 @@ fn function_dataset(
     let Some(table) = sampled else {
         warnings.push(IpcError::new(
             &codes::LINKED_DATA,
-            format!("The function `{name}` cannot be sampled by this version, so it is unavailable."),
+            format!(
+                "The function `{name}` cannot be sampled by this version, so it is unavailable."
+            ),
         ));
         return Ok(ProjectDataset {
             id: entry.id.clone(),
