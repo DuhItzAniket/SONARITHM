@@ -23,6 +23,18 @@ use sonarithm_app::{App, AppConfig, AudioOutput, CollectingSink};
 
 const CSV: &str = "day,temp\n1,8.5\n2,9.25\n3,7.0\n4,10.5\n";
 
+/// A chart for the correction commands (C02-T06), and where its corrections go.
+fn chart(dir: &TempDir) -> (std::path::PathBuf, std::path::PathBuf) {
+    let chart = dir.path().join("rain.json");
+    std::fs::copy(
+        std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
+            .join("../engines/sonarithm-plotsona/tests/corpus/chartjson/vl-line.json"),
+        &chart,
+    )
+    .unwrap();
+    (chart, dir.path().join("rain.corrections.json"))
+}
+
 /// One request per command, in an order where each can succeed.
 fn requests(dir: &TempDir) -> Vec<Value> {
     let csv = dir.path().join("t.csv");
@@ -44,15 +56,7 @@ fn requests(dir: &TempDir) -> Vec<Value> {
     let wav = dir.path().join("t.wav");
     let project = dir.path().join("t.sonarithm");
     let exported = dir.path().join("contract.json");
-    // A chart for the correction commands (C02-T06).
-    let chart = dir.path().join("rain.json");
-    std::fs::copy(
-        std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
-            .join("../engines/sonarithm-plotsona/tests/corpus/chartjson/vl-line.json"),
-        &chart,
-    )
-    .unwrap();
-    let corrections = dir.path().join("rain.corrections.json");
+    let (chart, corrections) = chart(dir);
     vec![
         json!({ "command": "hello", "args": { "protocol": 1 } }),
         json!({ "command": "dataset_open", "args": { "path": csv } }),

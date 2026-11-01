@@ -448,8 +448,7 @@ k: number | null,
 /**
  * Where the top of the band should land, in Hz.
  */
-topHz: number | null, } } | { "command": "view_get", "args": { 
-origin: CursorOrigin, } } | { "command": "cursor_get" } | { "command": "nav_move", "args": { 
+topHz: number | null, } } | { "command": "nav_move", "args": { 
 /**
  * The verb.
  */
@@ -575,8 +574,7 @@ audibleHz: [number, number] | null,
 /**
  * `SNR-ENG-461` when part of the band is inaudible, `462` when all of it is.
  */
-codes: Array<string>, } | { "reply": "job" } & JobInfo | { "reply": "jobs", 
-counts: Counts, } | { "reply": "compile" } & CompileReport | { "reply": "transport" } & TransportState | { "reply": "cursor" } & CursorState | { "reply": "nav" } & NavResult | { "reply": "job" } & JobInfo | { "reply": "jobs", 
+codes: Array<string>, } | { "reply": "nav" } & NavResult | { "reply": "job" } & JobInfo | { "reply": "jobs", 
 /**
  * The jobs, oldest first.
  */
@@ -1098,6 +1096,53 @@ label: string, };
 export type PathLevel = "dataset" | "series" | "segment" | "point" | "axes" | "axis" | "insights" | "insightGroup" | "insight" | "filters" | "filter";
 
 /**
+ * A function opened as a dataset (C03-T08).
+ */
+export type FunctionInfo = { 
+/**
+ * The expression in its canonical form.
+ */
+canonical: string, 
+/**
+ * One sentence: the expression, the domain and how many of each feature.
+ */
+summary: string, 
+/**
+ * Its critical points and spans in increasing `x`: the text equivalent of its cues
+ * (A11Y-24, A11Y-28).
+ */
+criticalPoints: Array<CriticalPointInfo>, };
+
+/**
+ * One critical point or span of a function (C03-T08).
+ */
+export type CriticalPointInfo = { 
+/**
+ * CURVASONA's stable label: `zero`, `local maximum`, `vertical asymptote`, …
+ */
+kind: string, 
+/**
+ * Where it is, or where its span starts.
+ */
+x: number, 
+/**
+ * Where its span ends, for spans.
+ */
+end: number | null, 
+/**
+ * Its value, where it has one.
+ */
+y: number | null, 
+/**
+ * The dataset row its insight covers first: `cursor_set` goes there.
+ */
+row: number | null, 
+/**
+ * The entry as text, such as `local maximum at x = 1.5708, y = 1`.
+ */
+text: string, };
+
+/**
  * A series named for the UI: its navigation node and its data name.
  */
 export type SeriesRef = { 
@@ -1192,53 +1237,6 @@ start: number,
  * The last x.
  */
 end: number, };
-
-/**
- * A function opened as a dataset (C03-T08).
- */
-export type FunctionInfo = { 
-/**
- * The expression in its canonical form.
- */
-canonical: string, 
-/**
- * One sentence: the expression, the domain and how many of each feature.
- */
-summary: string, 
-/**
- * Its critical points and spans in increasing `x`: the text equivalent of its cues
- * (A11Y-24, A11Y-28).
- */
-criticalPoints: Array<CriticalPointInfo>, };
-
-/**
- * One critical point or span of a function (C03-T08).
- */
-export type CriticalPointInfo = { 
-/**
- * CURVASONA's stable label: `zero`, `local maximum`, `vertical asymptote`, …
- */
-kind: string, 
-/**
- * Where it is, or where its span starts.
- */
-x: number, 
-/**
- * Where its span ends, for spans.
- */
-end: number | null, 
-/**
- * Its value, where it has one.
- */
-y: number | null, 
-/**
- * The dataset row its insight covers first: `cursor_set` goes there.
- */
-row: number | null, 
-/**
- * The entry as text, such as `local maximum at x = 1.5708, y = 1`.
- */
-text: string, };
 
 /**
  * What to export.
