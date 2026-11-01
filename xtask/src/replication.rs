@@ -266,8 +266,8 @@ fn generated(root: &Path) -> Result<BTreeMap<String, String>> {
 /// The folder of the 40-curve suite.
 const SUITE: &str = "curvasona-suite";
 
-/// How long each suite curve plays: the length of 04 §6.3's example, as `quick --function`
-/// (TODO(verify), HP-21).
+/// How long each suite curve plays, on x-linear time: the length of 04 §6.3's example, as
+/// `quick --function` (TODO(verify), HP-21).
 const SUITE_SECONDS: f64 = 8.0;
 
 /// `01-parabola` and so on: the position in the suite, then the name in lower case with
@@ -297,7 +297,8 @@ fn suite_spec(curve: &sonarithm_curvasona::suite::Curve) -> Value {
             curve.expr, curve.domain[0], curve.domain[1]
         ),
         "data": { "source": { "kind": "function", "expr": curve.expr, "domain": curve.domain } },
-        "substrate": { "time": { "pace": { "duration": { "s": SUITE_SECONDS } } } },
+        // x along time, so each cue lands at its x (F-200, #441).
+        "substrate": { "time": { "field": "x", "pace": { "secondsPerUnit": SUITE_SECONDS / (curve.domain[1] - curve.domain[0]) } } },
         "tracks": [{ "id": "f", "mark": "glide", "channels": { "pitch": { "field": "y" } } }],
         "analysis": { "detect": ["critical-points"], "cue": "earcon" }
     })
@@ -322,7 +323,7 @@ fn suite_readme() -> Result<String> {
          > **Generated** by `cargo xtask replication` from `sonarithm_curvasona::suite`; do not edit by hand.\n\n\
          Not a published design: this group renders the 40 curves whose critical points are known analytically, \
          the suite CURVASONA is tested against (07 CURVASONA, C03-T02 and C03-T03). Each spec plays its curve as one \
-         8-second glide, y as pitch with the default range, and its critical points as earcons (`analysis.detect: \
+         glide over 8 seconds of x-linear time, so each cue sounds at its x, y as pitch with the default range, and its critical points as earcons (`analysis.detect: \
          [\"critical-points\"]`, RFC-0007 §2). The list below is what CURVASONA finds at the default 1000 samples, \
          the text equivalent of each render's cues. Horizontal asymptotes are listed but have no earcon.\n\n\
          | Spec | f(x) | Domain | Critical points |\n|---|---|---|---|\n",

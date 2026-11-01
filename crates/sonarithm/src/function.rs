@@ -30,8 +30,8 @@ use sonarithm_data::{BundleId, DataBundle};
 use crate::error::Error;
 use crate::spec::Spec;
 
-/// How long [`Function::spec`] plays the whole domain, in seconds: the length of the
-/// function example in 04 §6.3. It is not a research default: no rule covers how long a
+/// How long [`Function::spec`] plays the whole domain, in seconds (plus the glide's hold
+/// of one point spacing at the end): the length of the function example in 04 §6.3. It is not a research default: no rule covers how long a
 /// function's sweep should last (TODO(verify), HP-21).
 pub const FUNCTION_DURATION_S: f64 = 8.0;
 
@@ -226,7 +226,9 @@ impl Function {
     /// A spec that plays the function as one glide over [`FUNCTION_DURATION_S`] seconds,
     /// y as pitch with every other choice from the defaults, with its critical points as
     /// earcons (`analysis.detect: ["critical-points"]`, 07 CURVASONA): the shape of the
-    /// example in 04 §6.3.
+    /// example in 04 §6.3. Time follows x linearly (`secondsPerUnit` on `x`), so a point at
+    /// x sounds at (x − min)/(max − min) · T, whatever rows the source adds at critical
+    /// points (F-200, #441).
     #[must_use]
     pub fn spec(&self) -> Spec {
         self.spec_lasting(FUNCTION_DURATION_S)
@@ -262,11 +264,24 @@ pub fn function_spec(function: &FunctionSpec, seconds: f64) -> Spec {
         "specVersion": sonarithm_spec::SPEC_VERSION,
         "name": "function",
         "data": { "source": source },
-        "substrate": { "time": { "pace": { "duration": { "s": seconds } } } },
+        "substrate": { "time": time_on_x(function.domain, seconds) },
         "tracks": [{ "id": "f", "mark": "glide", "channels": { "pitch": { "field": "y" } } }],
         "analysis": { "detect": ["critical-points"], "cue": "earcon" }
     });
     Spec::from_value(&value).with_name("function.spec.json")
+}
+
+/// The time substrate of a function spec: x along time, `seconds` for the whole domain
+/// (F-200, #441). With rows added at critical points, a `duration` pace would space rows
+/// evenly and bend time against x; `secondsPerUnit` keeps it linear. An empty or
+/// non-finite domain falls back to `duration`, and its compile reports the domain.
+fn time_on_x(domain: [f64; 2], seconds: f64) -> Value {
+    let width = domain[1] - domain[0];
+    if width.is_finite() && width > 0.0 {
+        json!({ "field": "x", "pace": { "secondsPerUnit": seconds / width } })
+    } else {
+        json!({ "pace": { "duration": { "s": seconds } } })
+    }
 }
 
 /// A feature as a list entry.

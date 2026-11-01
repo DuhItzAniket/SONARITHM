@@ -258,24 +258,45 @@ fn cubic_earcons() -> (Vec<(f64, u64)>, sonarithm::Compiled) {
     (earcons, compiled)
 }
 
-/// F-200: the cubic's cue times are pinned, so a change in sampling, scanning or timing on
-/// any platform fails here, not only in a CLI snapshot. With `pace.duration`, NUMISONA
-/// spaces the 1003 rows (1000 samples and three critical-point rows) evenly over 8 s, so
-/// row r sounds at r × 8 / 1003 s; the zero and the inflection at 0 share one cue.
+/// F-200, #441: a function's time follows x, so each cue sounds exactly at
+/// (x − min)/(max − min) · T for the x of its row, whatever rows the source adds at
+/// critical points: exactly for every cue of the cubic. On the 40-curve suite a cue that
+/// merged with an earlier one (closer than 150 ms) keeps the earlier time and names the
+/// higher-priority point's row, so there it may sound up to 150 ms before that row's time.
 #[test]
-fn f_200_the_cubic_cue_times_are_pinned() {
-    let (earcons, _) = cubic_earcons();
-    let expected: [(f64, u64); 5] = [
-        (1.690_927_218_344_965, 212),
-        (2.664_007_976_071_784_5, 334),
-        (3.996_011_964_107_677, 501),
-        (5.328_015_952_143_569, 668),
-        (6.301_096_709_870_388_5, 790),
-    ];
-    assert_eq!(earcons.len(), expected.len(), "{earcons:?}");
-    for ((t, row), (want_t, want_row)) in earcons.iter().zip(expected) {
-        assert_eq!(*row, want_row, "{earcons:?}");
-        assert!((t - want_t).abs() < 1e-12, "{t} != {want_t}: {earcons:?}");
+fn f_200_cue_times_follow_x_exactly() {
+    let snr = Sonarithm::new();
+    let check = |expr: &str, domain: [f64; 2], exact: bool| {
+        let function = read_function(&FunctionSpec::new(expr, domain)).unwrap();
+        let compiled = snr.compile(&function.spec()).unwrap();
+        let table = function.bundle().primary().unwrap();
+        let column = table.column("x").unwrap();
+        let xs = column.as_any().downcast_ref::<Float64Array>().unwrap();
+        let earcons = cue_track(compiled.score())
+            .map(|track| track.events.clone())
+            .unwrap_or_default();
+        let mut count = 0;
+        for event in &earcons {
+            let ScoreEvent::Earcon(earcon) = event else {
+                continue;
+            };
+            let x = xs.value(usize::try_from(earcon.src.unwrap().row).unwrap());
+            let want = (x - domain[0]) / (domain[1] - domain[0]) * sonarithm::FUNCTION_DURATION_S;
+            let on_time = (earcon.t.0 - want).abs() < 1e-9;
+            let merged = earcon.t.0 <= want && want - earcon.t.0 < 0.15 + 1e-9;
+            assert!(
+                on_time || (!exact && merged),
+                "{expr}: a cue at x = {x} sounds at {} s, not {want} s",
+                earcon.t.0
+            );
+            count += 1;
+        }
+        count
+    };
+    // The cubic: zeros at ±√3 and 0 (with the inflection), extrema at ±1.
+    assert_eq!(check("x^3 - 3*x", [-3.0, 3.0], true), 5);
+    for curve in &CURVES {
+        check(curve.expr, curve.domain, false);
     }
 }
 
