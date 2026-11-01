@@ -78,8 +78,8 @@ test("keyboard_13_rule_6_the_recorder_refuses_reserved_combinations", () => {
   );
   const shadow = check("N");
   assert.ok(shadow.ok);
-  assert.deepEqual(shadow.ok ? shadow.shadows : [], ["nav.nextInsight"]);
+  assert.deepEqual(shadow.shadows, ["nav.nextInsight"]);
   const fresh = check("Shift+W");
   assert.ok(fresh.ok);
-  assert.deepEqual(fresh.ok ? fresh.shadows : [], []);
+  assert.deepEqual(fresh.shadows, []);
 });

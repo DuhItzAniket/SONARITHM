@@ -1669,9 +1669,15 @@ verbosity: Verbosity,
  */
 modalities: Modalities, 
 /**
- * Keymap overrides: command ID → key combination (keyboard-and-navigation §13).
+ * Keymap overrides: command ID → keys (keyboard-and-navigation §13): chords separated
+ * by spaces, or the empty string to unbind the command. Reserved chords are refused
+ * (`SNR-APP-091`, §13 rule 6).
  */
 keymap: { [key in string]: string }, 
+/**
+ * Keyboard choices beyond single bindings (B03-T09).
+ */
+keyboard: KeyboardSettings, 
 /**
  * Consent for features that use the network (ADR-0012). `None` means not asked yet.
  */
@@ -1759,6 +1765,18 @@ braille: boolean,
  * The visual plot.
  */
 visual: boolean, };
+
+/**
+ * Keyboard choices beyond single bindings (keyboard-and-navigation §13).
+ */
+export type KeyboardSettings = { 
+/**
+ * The group switch of KB-02 and §13 rule 3: "Single-key commands in the chart
+ * explorer". Off unbinds every single-character binding there (letters, Shift+letters,
+ * punctuation); arrows, Home, End, Page Up, Page Down, Space and Escape stay. On by
+ * default: focus scoping already satisfies WCAG 2.1.4.
+ */
+singleKeyCommands: boolean, };
 
 /**
  * Consent to network features (ADR-0012). Each is `None` until the user answers.

@@ -376,7 +376,11 @@ fn keyboard_13_a_projects_keys_are_ignored_with_a_notice() {
         .as_array()
         .unwrap()
         .iter()
-        .filter(|s| s["key"].as_str().is_some_and(|k| k.starts_with("interaction.keymap.")))
+        .filter(|s| {
+            s["key"]
+                .as_str()
+                .is_some_and(|k| k.starts_with("interaction.keymap."))
+        })
         .collect();
     assert!(keys.is_empty(), "{keys:?}");
     let verbosity = effective["settings"]
@@ -385,7 +389,10 @@ fn keyboard_13_a_projects_keys_are_ignored_with_a_notice() {
         .iter()
         .find(|s| s["key"] == "interaction.verbosity")
         .cloned();
-    assert_eq!(verbosity.map(|s| s["layer"].clone()), Some(json!("project")));
+    assert_eq!(
+        verbosity.map(|s| s["layer"].clone()),
+        Some(json!("project"))
+    );
 }
 
 /// ADR-0020's acceptance condition: a Score compiled with a profile re-renders from the

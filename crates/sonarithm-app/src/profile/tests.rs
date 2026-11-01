@@ -190,8 +190,14 @@ fn keyboard_13_a_project_profile_never_sets_keys() {
         project: Some(&project),
         session: &none,
     });
-    assert_eq!(merged.keymap.get("nav.whereAmI").map(String::as_str), Some("Ctrl+W"));
-    assert_eq!(merged.keymap.get("nav.repeat").map(String::as_str), Some("Ctrl+R"));
+    assert_eq!(
+        merged.keymap.get("nav.whereAmI").map(String::as_str),
+        Some("Ctrl+W")
+    );
+    assert_eq!(
+        merged.keymap.get("nav.repeat").map(String::as_str),
+        Some("Ctrl+R")
+    );
     assert_eq!(merged.keymap.get("nav.next"), None);
     assert!(
         merged
