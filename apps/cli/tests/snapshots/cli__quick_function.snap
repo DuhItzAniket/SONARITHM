@@ -8,7 +8,7 @@ function.spec.json: spec version 0.4, analysis mode, seed 0.
 Duration: 8.000 seconds.
 Engines: curvasona [version], numisona [version].
 Track f: data track, 1 events (1 glide), 0.000 to 8.000 seconds, pitch 400.00 to 1400.00 Hz, instrument mallet.
-Track curvasona.cues: earcon track, 5 events (5 earcons), 1.689 to 6.303 seconds, instrument sine.
+Track curvasona.cues: earcon track, 5 events (5 earcons), 1.691 to 6.301 seconds, instrument sine.
 Score hash: [score hash].
 Diagnostics: 0 errors, 0 warnings, 30 applied defaults and choices.
 Function: f(x) = x^3 - 3*x from x = -3 to 3, 1000 samples: 3 zeros, 1 local maximum, 1 inflection point, 1 local minimum.
