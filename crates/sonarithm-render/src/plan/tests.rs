@@ -208,7 +208,7 @@ fn times_round_half_to_even() {
     assert_eq!(starts, [2, 4]);
 }
 
-/// MIN_RAMP (5 ms) at the test rate.
+/// `MIN_RAMP` (5 ms) at the test rate.
 fn min_ramp() -> u32 {
     sonarithm_dsp::env::ramp_frames(sonarithm_dsp::env::MIN_RAMP, RATE)
 }

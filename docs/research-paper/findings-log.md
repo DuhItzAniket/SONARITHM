@@ -1144,3 +1144,19 @@ A05 (render engine, audio backends, export) uses F-050 to F-069.
 - **Upstream:** uPlot's module-scope `Intl.NumberFormat(navigator.language)` (1.6.32, `uPlot.esm.js:442`) could be reported upstream: guard the tag, or create the formatter lazily. Whether to open a public issue is the owner's decision.
 - **Affects:** B04-T06, any library that reads `navigator.language` at import; 12 §5 (locales); B07-T07 (the locale setting must pass through `normalizeLocale`)
 - **Papers:** none yet
+
+### F-221 · Voice steals came from playback speed and double seeks, not from short notes at 1×, and a steal clicked by up to 0.29
+
+- **Date:** 2026-11-01 · **Phase:** B04 (render, A05 code) · **Type:** engineering (real-time audio) · **Status:** new
+- **Statement:** #443 (from F-211) inferred two ways a playback voice pool could overflow and a stolen voice click. Reproduced on main:
+  - **Short notes.** The first path does not happen at 1×: the planner already stretches every note to two ramps, and the pool is sized from those lengths. It happens at higher speed. At 4×, a note plays four times shorter while its 5 ms ramps do not, so 2 ms notes 3 ms apart stole 12 voices.
+  - **Double seek.** A second seek 1 ms into a seek crossfade stole one voice. Replacing the voice outright stepped the output by 0.293, over twice the sine's own largest step.
+- **The fix:**
+  - **Sizing:** pools count each voice's sounding length at the fastest supported speed, at least two ramps × 4, so no Score steals at any speed. Each track is capped at 256 voices of polyphony (pool ≤ 512 × 520 bytes ≈ 266 KB), the most events a seek restarts.
+  - **Steal choice:** a voice already fading out goes first.
+  - **De-click:** a steal adds the stolen voice's last output to the track's bus and fades it to zero over 5 ms. That needs no extra voice and no allocation.
+- **Result:** both reproductions pass. A forced steal (a pool of one voice) and a pathological track (0.5 ms notes every 0.05 ms, about 800 deep at 4×, past the cap) steal without stepping the output. The golden-audio cases and the replication gallery are unchanged at 1×.
+- **Evidence:** `crates/sonarithm-render/src/graph/tests.rs` (`issue_443_short_notes_are_not_stolen`, `issue_443_a_seek_inside_a_crossfade_does_not_click`, `issue_443_a_stolen_voice_fades_instead_of_clicking`, `issue_443_the_polyphony_cap_holds_and_steals_stay_smooth`); `crates/sonarithm-render/tests/no_alloc.rs` (`rt_voice_steals_never_allocate_on_the_audio_thread`); `cargo xtask golden` (every case identical) and `cargo xtask replication` (86 files match)
+- **Evidence level / confidence:** EV-C / Strong for the reproductions and the fix (tests); the de-click's audibility was not judged by ear, only by the size of the output step
+- **Affects:** F-211, #443, 05 §5 (pool sizing), 06 §3 (voices), PB-03 (bigger pools for dense short-note tracks: allocation and the render loop scan every voice of a pool for activity, so a capped 512-voice pool costs a scan of 512 flags per segment; not measured)
+- **Papers:** none yet

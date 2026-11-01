@@ -739,13 +739,14 @@ fn issue_443_a_stolen_voice_fades_instead_of_clicking() {
     );
 }
 
-/// #443: a pathological track (0.5 ms notes every 0.25 ms) asks for more voices at 4×
-/// than the cap allows. Its polyphony is clamped to `MAX_TRACK_POLYPHONY`, it plays at 1×
+/// #443: a pathological track (0.5 ms notes every 0.05 ms) asks for more voices at 4×
+/// than the cap allows: each voice counts for 40 ms (two 5 ms ramps at 4×), about 800 deep,
+/// more than even the pool of twice the cap. Its polyphony is clamped to `MAX_TRACK_POLYPHONY`, it plays at 1×
 /// without a steal, and at 4× the steals it cannot avoid still do not step the output.
 #[test]
 fn issue_443_the_polyphony_cap_holds_and_steals_stay_smooth() {
     let notes: Vec<_> = (0..2_000)
-        .map(|k| note(0.1 + f64::from(k) * 0.000_25, 0.000_5, 0.0))
+        .map(|k| note(0.1 + f64::from(k) * 0.000_05, 0.000_5, 0.0))
         .collect();
     let score = score(1.0, vec![track("sine", TrackRole::Data, notes)]);
     let plan = RenderPlan::build(&score, &PlanConfig::new(RATE))
@@ -761,6 +762,8 @@ fn issue_443_the_polyphony_cap_holds_and_steals_stay_smooth() {
         graph.process(&mut out);
         if speed < 2.0 {
             assert_eq!(graph.stats().stolen, 0, "no steals at 1×");
+        } else {
+            assert!(graph.stats().stolen > 0, "the cap forces steals at 4×");
         }
         let samples = left(&out);
         let peak = samples.iter().fold(0.0_f32, |m, s| m.max(s.abs()));
