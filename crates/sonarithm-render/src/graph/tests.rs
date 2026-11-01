@@ -666,9 +666,9 @@ fn mode_earcons_rise_for_on_and_fall_for_off() {
     assert!(rate(&off, 0.065, 0.110) < rate(&off, 0.005, 0.050));
 }
 
-/// #443, path 1 (F-211): a voice lasts at least two ramps (2 × 5 ms), longer than a 2 ms
-/// note. Notes 3 ms apart therefore overlap about four deep while the plan counts one, so
-/// the pool of two steals voices.
+/// #443, path 1 (F-211): a voice lasts at least two ramps (2 × 5 ms). The plan stretches
+/// each 2 ms note to that length, but at 4× speed a note plays four times shorter while
+/// its ramps do not, so notes 3 ms apart overlap deeper than a pool counted at 1×.
 #[test]
 fn issue_443_short_notes_are_not_stolen() {
     let notes = (0..20)
@@ -678,6 +678,7 @@ fn issue_443_short_notes_are_not_stolen() {
         &score(0.5, vec![track("sine", TrackRole::Data, notes)]),
         256,
     );
+    graph.apply(Command::SetSpeed(4.0));
     graph.apply(Command::Play);
     let mut out = vec![0.0; 2 * 24_000];
     graph.process(&mut out);
@@ -705,4 +706,69 @@ fn issue_443_a_seek_inside_a_crossfade_does_not_click() {
         worst_step(&samples),
         graph.stats().stolen
     );
+}
+
+/// #443: a stolen voice fades from its last output instead of dropping to zero. Two long
+/// overlapping notes share a pool forced to one voice: the second steals the first, and
+/// the output still never steps.
+#[test]
+fn issue_443_a_stolen_voice_fades_instead_of_clicking() {
+    let score = score(
+        1.0,
+        vec![track(
+            "sine",
+            TrackRole::Data,
+            vec![note(0.0, 0.8, 0.0), note(0.3001, 0.5, 0.0)],
+        )],
+    );
+    let mut plan = RenderPlan::build(&score, &PlanConfig::new(RATE))
+        .unwrap()
+        .plan;
+    plan.tracks[0].voices = 1;
+    let mut graph = Graph::new(plan, GraphConfig::offline(256));
+    graph.apply(Command::Play);
+    let mut out = vec![0.0; 2 * 48_000];
+    graph.process(&mut out);
+    assert_eq!(graph.stats().stolen, 1);
+    let samples = left(&out);
+    let peak = samples.iter().fold(0.0_f32, |m, s| m.max(s.abs()));
+    assert!(
+        worst_step(&samples) <= 2.0 * natural_step(peak),
+        "step {}",
+        worst_step(&samples)
+    );
+}
+
+/// #443: a pathological track (0.5 ms notes every 0.25 ms) asks for more voices at 4×
+/// than the cap allows. Its polyphony is clamped to `MAX_TRACK_POLYPHONY`, it plays at 1×
+/// without a steal, and at 4× the steals it cannot avoid still do not step the output.
+#[test]
+fn issue_443_the_polyphony_cap_holds_and_steals_stay_smooth() {
+    let notes: Vec<_> = (0..2_000)
+        .map(|k| note(0.1 + f64::from(k) * 0.000_25, 0.000_5, 0.0))
+        .collect();
+    let score = score(1.0, vec![track("sine", TrackRole::Data, notes)]);
+    let plan = RenderPlan::build(&score, &PlanConfig::new(RATE))
+        .unwrap()
+        .plan;
+    assert_eq!(plan.tracks[0].polyphony, crate::plan::MAX_TRACK_POLYPHONY);
+    assert_eq!(plan.tracks[0].voices, 2 * crate::plan::MAX_TRACK_POLYPHONY);
+    for speed in [1.0, 4.0] {
+        let mut graph = graph(&score, 256);
+        graph.apply(Command::SetSpeed(speed));
+        graph.apply(Command::Play);
+        let mut out = vec![0.0; 2 * 48_000];
+        graph.process(&mut out);
+        if speed < 2.0 {
+            assert_eq!(graph.stats().stolen, 0, "no steals at 1×");
+        }
+        let samples = left(&out);
+        let peak = samples.iter().fold(0.0_f32, |m, s| m.max(s.abs()));
+        assert!(
+            worst_step(&samples) <= 2.0 * natural_step(peak),
+            "speed {speed}: step {} (stolen {})",
+            worst_step(&samples),
+            graph.stats().stolen
+        );
+    }
 }
