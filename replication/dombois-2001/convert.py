@@ -105,6 +105,11 @@ def records(blob: bytes):
         cha = head[15:18].decode().strip()
         start = btime(head[20:30])
         count, factor, multiplier = struct.unpack(">Hhh", head[30:36])
+        # A time correction (0.0001 s units) that the activity flags say is not applied yet
+        # would move every sample time; refuse it rather than guess (SEED 2.4, fixed header).
+        (correction,) = struct.unpack(">i", head[40:44])
+        if correction and not head[36] & 0x02:
+            raise ValueError(f"record at {start} has an unapplied time correction of {correction / 1e4} s")
         data_offset, blockette = struct.unpack(">HH", head[44:48])
         encoding = length = None
         while blockette:
@@ -132,9 +137,20 @@ def records(blob: bytes):
         offset += length
 
 
+def utc(text: str) -> dt.datetime:
+    """An ISO 8601 time as UTC: a trailing Z (which Python 3.10 cannot parse) or any
+    offset is honoured, and a time without one is taken as UTC."""
+    if text.endswith(("Z", "z")):
+        text = text[:-1] + "+00:00"
+    time = dt.datetime.fromisoformat(text)
+    if time.tzinfo is None:
+        return time.replace(tzinfo=dt.timezone.utc)
+    return time.astimezone(dt.timezone.utc)
+
+
 def main(path: str, start_text: str, end_text: str, out: str) -> None:
     blob = open(path, "rb").read()
-    window = [dt.datetime.fromisoformat(t).replace(tzinfo=dt.timezone.utc) for t in (start_text, end_text)]
+    window = [utc(t) for t in (start_text, end_text)]
     recs = sorted(records(blob), key=lambda r: r[1])
     ids = {r[0] for r in recs}
     rates = {r[2] for r in recs}

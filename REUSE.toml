@@ -144,7 +144,7 @@ SPDX-License-Identifier = "CC-BY-4.0"
 [[annotations]]
 path = ["replication/dombois-2001/data/*.parquet"]
 precedence = "override"
-SPDX-FileCopyrightText = "1993 GEOFON Data Centre, GFZ German Research Centre for Geosciences (GEOFON Seismic Network, doi:10.14470/TR560404)"
+SPDX-FileCopyrightText = "2020-2021 GEOFON Data Centre, GFZ German Research Centre for Geosciences (GEOFON Seismic Network, doi:10.14470/TR560404)"
 SPDX-License-Identifier = "CC-BY-4.0"
 
 # IBM Plex Sans and Mono (B02-T02): IBM's unmodified WOFF2 files and IBM's licence file, the

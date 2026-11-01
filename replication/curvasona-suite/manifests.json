@@ -2,7 +2,7 @@
   "01-parabola": {
     "cues": null,
     "data": {
-      "fingerprint": "sha256:cfb4d8d3a95f3d596fe7c786903887107fb9ed887b8f7b2e035e9db1eca4099c",
+      "fingerprint": "sha256:d5032a7632869f7248f6c65f2ee825582e620210228c3e69f97b8d9c27813088",
       "provenance": {},
       "source": {
         "kind": "inline",
@@ -17,10 +17,10 @@
       "format": "wav",
       "frames": 384000,
       "gainDb": 0.0,
-      "integratedLufs": -26.64,
+      "integratedLufs": -26.65,
       "limitedFrames": 0,
-      "sha256": "sha256:4df2198bda8273497a5de5f14d2ad34c294001d6d691a8ac37355ace6bcaf68f",
-      "truePeakDbtp": -9.55
+      "sha256": "sha256:066205bbf2fab8fc418f493d5796559e72938f5a925c12d1368cc86050b79949",
+      "truePeakDbtp": -8.97
     },
     "render": {
       "blockSize": 256,
@@ -32,7 +32,7 @@
     },
     "score": {
       "irVersion": 2,
-      "releaseIndependentHash": "sha256:3ace93e13175e1e55b2d937c273bdf26ba16f25c50edb5872ec55dc4ce6adb02"
+      "releaseIndependentHash": "sha256:33d4fd22e1725715d38a73e311923d7f7af3ef5a2b1a25553fef93854b20650f"
     },
     "spec": {
       "embedded": null,
@@ -65,7 +65,7 @@
   "02-cubic": {
     "cues": null,
     "data": {
-      "fingerprint": "sha256:ce544aa08831081d49b82d1ffe43745c6d59d2a134d93f172bfcf8d2163ab672",
+      "fingerprint": "sha256:d3c447e96ef76245ac3f5c403ab47ffd89c090bf261fb5194795c0f5b411f410",
       "provenance": {},
       "source": {
         "kind": "inline",
@@ -82,8 +82,8 @@
       "gainDb": 0.0,
       "integratedLufs": -25.59,
       "limitedFrames": 0,
-      "sha256": "sha256:06d3ad4f8ff8a9dfb3edd816e5ccc6cd4c5a1d5839e65d4c182fa5298c7567b2",
-      "truePeakDbtp": -8.36
+      "sha256": "sha256:59d53d80ee6dd7331a52a9e9af5f8c54a8615c94e0a8bcf8024a985bd61a35b9",
+      "truePeakDbtp": -8.88
     },
     "render": {
       "blockSize": 256,
@@ -95,7 +95,7 @@
     },
     "score": {
       "irVersion": 2,
-      "releaseIndependentHash": "sha256:011ca461b97712cc51eedd8b5ca17868fa068191db071c099debcc53e50faa25"
+      "releaseIndependentHash": "sha256:bc7337769f24ab6c64d7f6519ff04140d87957d032e110e809774e0b4d8cd12a"
     },
     "spec": {
       "embedded": null,
@@ -128,7 +128,7 @@
   "03-sine": {
     "cues": null,
     "data": {
-      "fingerprint": "sha256:71485904a6b287bc55a7c7f4e4750e892f6d3ee6b407e85eb682d39675103d82",
+      "fingerprint": "sha256:5468d3adc3ca9f1c1fb7b9ab2d1b79adfd2b52def07ff9f0bfb9075c6f65ccca",
       "provenance": {},
       "source": {
         "kind": "inline",
@@ -143,9 +143,9 @@
       "format": "wav",
       "frames": 384000,
       "gainDb": 0.0,
-      "integratedLufs": -22.57,
+      "integratedLufs": -22.55,
       "limitedFrames": 0,
-      "sha256": "sha256:4e5826a4996f45a21c6c84b19292f10b4ac9a7ab84fd779959c6b6702921bcd3",
+      "sha256": "sha256:bb3c23544ffc3b654c85f742998a195d200a72c7e4b3a7b4230dc0b082fb16f8",
       "truePeakDbtp": -8.02
     },
     "render": {
@@ -158,7 +158,7 @@
     },
     "score": {
       "irVersion": 2,
-      "releaseIndependentHash": "sha256:f123d6b3eb29f564f07bdf51277abad84644e45f48465532b7f5d0f6bb54bdbd"
+      "releaseIndependentHash": "sha256:1a323b60a31df926c2a309fa54922782f232b28c55c656c15b1af8a27d406c33"
     },
     "spec": {
       "embedded": null,
@@ -191,7 +191,7 @@
   "04-cosine": {
     "cues": null,
     "data": {
-      "fingerprint": "sha256:376ec4ff6d0bd73834838e10fbafebf493103dc24520f03da2774e9dbef2185f",
+      "fingerprint": "sha256:94f6f5cbb6ea0264b57cc3d3c1bc7e1fc3f1ccf43d73fa3323ecc9134bf0c4f4",
       "provenance": {},
       "source": {
         "kind": "inline",
@@ -206,10 +206,10 @@
       "format": "wav",
       "frames": 384000,
       "gainDb": 0.0,
-      "integratedLufs": -22.46,
+      "integratedLufs": -22.45,
       "limitedFrames": 0,
-      "sha256": "sha256:929517639ed22ed0009f092d501d1eac03c6d4835c2bc4989c463811fc31f751",
-      "truePeakDbtp": -7.98
+      "sha256": "sha256:ebc10eb34beca764cb9a0a27cd3f5692a078cac121f6e7a2e79e2f25776992ee",
+      "truePeakDbtp": -7.99
     },
     "render": {
       "blockSize": 256,
@@ -221,7 +221,7 @@
     },
     "score": {
       "irVersion": 2,
-      "releaseIndependentHash": "sha256:630009040a4d3cf29b8bd557180df11706dc16d653c43ab357bf82dc61972d8a"
+      "releaseIndependentHash": "sha256:379f99f58f8d1dc990088edd2edbaf4fb8a7c55e1260aa6798983debb095015c"
     },
     "spec": {
       "embedded": null,
@@ -254,7 +254,7 @@
   "05-tangent": {
     "cues": null,
     "data": {
-      "fingerprint": "sha256:75ff99d5487c76e397c3694fea6ebd93f46050b4d7a3127abad63ffe88ed2438",
+      "fingerprint": "sha256:fcfeb23819df083378ccd158b2516d858c55b15199c1b72a2837965c190cb00b",
       "provenance": {},
       "source": {
         "kind": "inline",
@@ -269,9 +269,9 @@
       "format": "wav",
       "frames": 384000,
       "gainDb": 0.0,
-      "integratedLufs": -21.69,
-      "limitedFrames": 53294,
-      "sha256": "sha256:ccd71ca71021fb99dbbb8bed6065d3ffedb034024776e796626fb6fa9f9e92cb",
+      "integratedLufs": -21.68,
+      "limitedFrames": 48687,
+      "sha256": "sha256:b569dc1c5f3b6b0c426684bb8ebdab139de796076e317468d1dad94ab8268620",
       "truePeakDbtp": -1.18
     },
     "render": {
@@ -284,7 +284,7 @@
     },
     "score": {
       "irVersion": 2,
-      "releaseIndependentHash": "sha256:49bab01ccf74556b64398b79f4bf5f3f68bd17a39aa29e39ddc1acdbc764675f"
+      "releaseIndependentHash": "sha256:f61aeb8d93cbd9f395c47dd91c6304758d1541925ecc9ab162059b3bdfd379d4"
     },
     "spec": {
       "embedded": null,
@@ -506,7 +506,7 @@
   "09-line-with-a-hole": {
     "cues": null,
     "data": {
-      "fingerprint": "sha256:ee7bfff21f32da87bbec9738b345c04c0c14b03ed74a907f21ed298ba5cf7883",
+      "fingerprint": "sha256:91c2fba7ec519731b3ca435b703586f8e2b5a19aca4e93874dcab5a50f3c6be9",
       "provenance": {},
       "source": {
         "kind": "inline",
@@ -536,7 +536,7 @@
     },
     "score": {
       "irVersion": 2,
-      "releaseIndependentHash": "sha256:420da0998b24782673fa0c201d755487f725a93099eba899d2fe5e24cebb2d00"
+      "releaseIndependentHash": "sha256:ecd4cbce4421d80bc48b4bb35293ece9a10a91aee0d1d7e347c7350d89fecbe8"
     },
     "spec": {
       "embedded": null,
@@ -1252,7 +1252,7 @@
   "21-absolute-value": {
     "cues": null,
     "data": {
-      "fingerprint": "sha256:d640a9c3276c700323afda28925a909ddfdcbe636f68b08cf13013bdd07d8260",
+      "fingerprint": "sha256:0ac5bb7317ce5c41b287a1cfd32aea1186cb12eb72b0a0611c7aa5d7a1203ce4",
       "provenance": {},
       "source": {
         "kind": "inline",
@@ -1269,8 +1269,8 @@
       "gainDb": 0.0,
       "integratedLufs": -26.89,
       "limitedFrames": 0,
-      "sha256": "sha256:1578743855c2e725f86c6f1c32814216a818877f0d70ca56c3a846fab33ccbac",
-      "truePeakDbtp": -9.55
+      "sha256": "sha256:a643d5233165798b316dd95f4eb97dfa92003dec6869ae989b24d73673e500ba",
+      "truePeakDbtp": -9.59
     },
     "render": {
       "blockSize": 256,
@@ -1282,7 +1282,7 @@
     },
     "score": {
       "irVersion": 2,
-      "releaseIndependentHash": "sha256:8e348eb94a4a27569460b732f9dd30af20f3375dbd8228d4c8c74d5a8b9bf607"
+      "releaseIndependentHash": "sha256:169c340c3d3309dac9ca5be402c0f4014db37b7dd3e8237e01762a80be599950"
     },
     "spec": {
       "embedded": null,
@@ -1378,7 +1378,7 @@
   "23-cotangent": {
     "cues": null,
     "data": {
-      "fingerprint": "sha256:a651a4c6bfce3cb78e63b5f0901aae14cb743cdf33cebce33b6866566bed4dac",
+      "fingerprint": "sha256:2cb8739e8490b48d61329e5438cfcc1c05be4a2acd008c783ab2f429ee1dcb3b",
       "provenance": {},
       "source": {
         "kind": "inline",
@@ -1393,9 +1393,9 @@
       "format": "wav",
       "frames": 384000,
       "gainDb": 0.0,
-      "integratedLufs": -25.08,
-      "limitedFrames": 15749,
-      "sha256": "sha256:63c8597e07641e399e0db7203299c3f3143c516d8063a5dc68c79b94b8f204c6",
+      "integratedLufs": -25.07,
+      "limitedFrames": 14038,
+      "sha256": "sha256:bec299634de7c390a10e1925fb41f51fde7b5b2c34580602be991e0f25aa8189",
       "truePeakDbtp": -1.21
     },
     "render": {
@@ -1408,7 +1408,7 @@
     },
     "score": {
       "irVersion": 2,
-      "releaseIndependentHash": "sha256:1c54fb548952b34d2cbeb5c7a396be972fe0302da7f04619de35e8f20779ba6f"
+      "releaseIndependentHash": "sha256:f362b57dd95e00ab0d8f58d6ae7d1c0bd7aa85435974cb383129a05a0f9d3b72"
     },
     "spec": {
       "embedded": null,
@@ -1504,7 +1504,7 @@
   "25-inverse-hyperbolic-tangent": {
     "cues": null,
     "data": {
-      "fingerprint": "sha256:844a69ed3126f356f7d5eee7764d6fe81210193e644ce50fad04af594692f398",
+      "fingerprint": "sha256:f780590b2f5a1e48b22a1bb1966c0f369407980e06c1fd15a4f41ee32ce59571",
       "provenance": {},
       "source": {
         "kind": "inline",
@@ -1517,16 +1517,16 @@
       "channels": 2,
       "file": "25-inverse-hyperbolic-tangent.wav",
       "format": "wav",
-      "frames": 293760,
+      "frames": 293664,
       "gainDb": 0.0,
-      "integratedLufs": -23.19,
-      "limitedFrames": 21796,
-      "sha256": "sha256:0dc0549527c1088508f02c6334fda56e0c545f91bd9ee4d891fd561ba30ad8ee",
+      "integratedLufs": -23.2,
+      "limitedFrames": 21783,
+      "sha256": "sha256:0ef755e5dcda56135d135555dacf8eee4690ec20a3f004f897d889ae4774ecc6",
       "truePeakDbtp": -1.2
     },
     "render": {
       "blockSize": 256,
-      "durationS": 6.12,
+      "durationS": 6.118,
       "loudnessCompensationPhon": 60.0,
       "mode": "analysis",
       "sampleRate": 48000,
@@ -1534,7 +1534,7 @@
     },
     "score": {
       "irVersion": 2,
-      "releaseIndependentHash": "sha256:c5efdf7283fa0512c2d2f0cbcf470aa2a937ea4d8621a07238659f3ae6cab00e"
+      "releaseIndependentHash": "sha256:bf2e2c3428a69c059fad4c6710b66622f500e2d1ec23223b5ea407c19f466235"
     },
     "spec": {
       "embedded": null,
@@ -1567,7 +1567,7 @@
   "26-arcsine": {
     "cues": null,
     "data": {
-      "fingerprint": "sha256:ca484ebda19e5684632ccf70d19e7f46d6b20fe7d267b930de0acc614998ca51",
+      "fingerprint": "sha256:2c11d67a7910321709d4884ea0a90252a7b7ef98f0ee1a6500fc9d35cd74a552",
       "provenance": {},
       "source": {
         "kind": "inline",
@@ -1580,16 +1580,16 @@
       "channels": 2,
       "file": "26-arcsine.wav",
       "format": "wav",
-      "frames": 292992,
+      "frames": 292896,
       "gainDb": 0.0,
-      "integratedLufs": -27.1,
+      "integratedLufs": -27.13,
       "limitedFrames": 0,
-      "sha256": "sha256:1abf0899a82e2e4490a6c808b2af1885a3096f648e230f24aad2fbc2e8b7a8a2",
-      "truePeakDbtp": -9.33
+      "sha256": "sha256:d8717279f0f6be669ca2103acdf9a0c01b9bbdcc002a24107de6ec7387ca3add",
+      "truePeakDbtp": -9.17
     },
     "render": {
       "blockSize": 256,
-      "durationS": 6.104,
+      "durationS": 6.102,
       "loudnessCompensationPhon": 60.0,
       "mode": "analysis",
       "sampleRate": 48000,
@@ -1597,7 +1597,7 @@
     },
     "score": {
       "irVersion": 2,
-      "releaseIndependentHash": "sha256:b1e4497436766cbf21666151cc70f611c94415170ee168bab1591334f24e50ff"
+      "releaseIndependentHash": "sha256:8c00f89b2be1a5b94e4e2218de2141607f349c651fd2a2fba4ab49d89c0b8041"
     },
     "spec": {
       "embedded": null,
@@ -1882,7 +1882,7 @@
   "31-cube-root": {
     "cues": null,
     "data": {
-      "fingerprint": "sha256:d21d38a85fa1ad1d40e7856703ada979f209684c6b78c0affe326e344d85dcbd",
+      "fingerprint": "sha256:c0cb8e14642a0adf9bab31f8e3fad9dba734efb4e7f871f0794a56a4ffec9e1c",
       "provenance": {},
       "source": {
         "kind": "inline",
@@ -1897,10 +1897,10 @@
       "format": "wav",
       "frames": 384000,
       "gainDb": 0.0,
-      "integratedLufs": -25.95,
+      "integratedLufs": -25.94,
       "limitedFrames": 0,
-      "sha256": "sha256:5e8f4f07c2ada4c9b2b4de32e5b17629985392cce7eb71736567a4dd8d213a96",
-      "truePeakDbtp": -10.07
+      "sha256": "sha256:630cf6cd63bfb34a12cd775daaa7a5af98ede3f9bccf07418ff16f77ed3b1a25",
+      "truePeakDbtp": -10.01
     },
     "render": {
       "blockSize": 256,
@@ -1912,7 +1912,7 @@
     },
     "score": {
       "irVersion": 2,
-      "releaseIndependentHash": "sha256:0dc88e80ca382d943e66abf7c2ee4310d91de28263de8014f459c5fc2db51874"
+      "releaseIndependentHash": "sha256:d418488b502e3aa30339e22e5e5d6b1280b55934fe6f7a864c48cead83ecf133"
     },
     "spec": {
       "embedded": null,
@@ -1945,7 +1945,7 @@
   "32-hole-and-pole": {
     "cues": null,
     "data": {
-      "fingerprint": "sha256:c907227edf3a84e4dd36d1a63d6380b02959641c39a40da44754c27af09e9a63",
+      "fingerprint": "sha256:bdea284a299f7e37acecec247f5ede12e35bcc93e2418703cdc5ce4c53216969",
       "provenance": {},
       "source": {
         "kind": "inline",
@@ -1975,7 +1975,7 @@
     },
     "score": {
       "irVersion": 2,
-      "releaseIndependentHash": "sha256:fa91cb4803798f305b5165ca53d5576ef3ddeae0e47c911e5104b6584dc93b02"
+      "releaseIndependentHash": "sha256:dfd5cd56eb8ac8ba1c3dfee9eabc50c4f548eee64b8853138b6fb4512f8775ba"
     },
     "spec": {
       "embedded": null,
@@ -2197,7 +2197,7 @@
   "36-half-angle-tangent": {
     "cues": null,
     "data": {
-      "fingerprint": "sha256:a13c80fc38a0ae6ad3e684ca3de5e63659f35de06e3fef15fdaf541249214d9f",
+      "fingerprint": "sha256:0f472aa93a4da729117257dc30604a509a774c4d275321d4ed06047a726449de",
       "provenance": {},
       "source": {
         "kind": "inline",
@@ -2212,9 +2212,9 @@
       "format": "wav",
       "frames": 384000,
       "gainDb": 0.0,
-      "integratedLufs": -21.69,
-      "limitedFrames": 53294,
-      "sha256": "sha256:ccd71ca71021fb99dbbb8bed6065d3ffedb034024776e796626fb6fa9f9e92cb",
+      "integratedLufs": -21.68,
+      "limitedFrames": 48687,
+      "sha256": "sha256:b569dc1c5f3b6b0c426684bb8ebdab139de796076e317468d1dad94ab8268620",
       "truePeakDbtp": -1.18
     },
     "render": {
@@ -2227,7 +2227,7 @@
     },
     "score": {
       "irVersion": 2,
-      "releaseIndependentHash": "sha256:c2bf4ba81d6a45663afc6939b6fae9d17984c6c7451bb58aefa1a9098f823882"
+      "releaseIndependentHash": "sha256:edd5d10351b0bb0634231e674081bce5664636c94c62a5cd066c1be2b007a7e3"
     },
     "spec": {
       "embedded": null,
@@ -2323,7 +2323,7 @@
   "38-log-of-a-parabola": {
     "cues": null,
     "data": {
-      "fingerprint": "sha256:820645b8cf77a157f8f3528bec5d118e5a66a9270c3d52bc4206e99e15b01ab5",
+      "fingerprint": "sha256:7773364c7cf4a7e984f58ee4a1cf9c014ca1b0193c87b3a63ffb764d376c2957",
       "provenance": {},
       "source": {
         "kind": "inline",
@@ -2353,7 +2353,7 @@
     },
     "score": {
       "irVersion": 2,
-      "releaseIndependentHash": "sha256:0e382b901c9858b26e5a2d0288f1ada7b1f56d428fcae4f9b0616d77ba345b50"
+      "releaseIndependentHash": "sha256:435577eae18d1b21c9ac30d2928735bf7f427d1359d049641ae4fb41083c1d76"
     },
     "spec": {
       "embedded": null,
