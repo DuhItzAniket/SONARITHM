@@ -17,6 +17,39 @@
   line-height: var(--type-13-line);
 }
 
+/* The keyboard section (B03-T09): presets side by side, then the command table. */
+.row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.keys {
+  border-collapse: collapse;
+  inline-size: 100%;
+  font-size: var(--type-13-size);
+  line-height: var(--type-13-line);
+}
+
+.keys th,
+.keys td {
+  padding: var(--space-1) var(--space-2);
+  border-block-end: var(--border-width) solid var(--border);
+  text-align: start;
+}
+
+.recorder {
+  padding: var(--space-1) var(--space-2);
+  border: var(--border-width) solid var(--border-strong);
+  border-radius: var(--radius-1);
+  font-variant-numeric: var(--numeric);
+}
+
+.recorder:focus-visible {
+  outline: var(--focus-ring-width) solid var(--focus);
+  outline-offset: var(--focus-ring-offset);
+}
+
 .note {
   margin: 0;
   color: var(--text-2);

@@ -173,6 +173,34 @@ fn interaction_layers_follow_the_precedence_of_12_3() {
     assert_eq!(from_session.keymap["nav.whereAmI"], "Q");
 }
 
+/// Keyboard §13 (B03-T09): a project's profile never sets keys, since a shared file must not
+/// rebind someone's keyboard; the user's own profile and settings do.
+#[test]
+fn keyboard_13_a_project_profile_never_sets_keys() {
+    let mut settings = Settings::default();
+    settings
+        .keymap
+        .insert("nav.whereAmI".to_owned(), "Ctrl+W".to_owned());
+    let profile = with(&json!({ "keymap": { "nav.repeat": "Ctrl+R" } }));
+    let project = with(&json!({ "keymap": { "nav.whereAmI": "K", "nav.next": "L" } }));
+    let none = InteractionPrefs::default();
+    let merged = effective(&Layers {
+        settings: &settings,
+        profile: Some(&profile),
+        project: Some(&project),
+        session: &none,
+    });
+    assert_eq!(merged.keymap.get("nav.whereAmI").map(String::as_str), Some("Ctrl+W"));
+    assert_eq!(merged.keymap.get("nav.repeat").map(String::as_str), Some("Ctrl+R"));
+    assert_eq!(merged.keymap.get("nav.next"), None);
+    assert!(
+        merged
+            .view
+            .iter()
+            .all(|s| !(s.key.starts_with("interaction.keymap.") && s.layer == Layer::Project))
+    );
+}
+
 const SPEC: &str = r#"{
     "specVersion": "0.1",
     "data": { "source": { "kind": "dataset", "id": "d1" } },

@@ -15,6 +15,7 @@ import {
 import { useEffect, useState } from "react";
 
 import { useLocalizer } from "../i18n.ts";
+import { KeyboardPreferences } from "./KeyboardPreferences.tsx";
 import styles from "./preferences.module.css";
 import { settingsOf } from "./settings.ts";
 
@@ -43,10 +44,13 @@ export function Preferences({
   client,
   isOpen,
   onOpenChange,
+  onKeysChange,
 }: {
   readonly client: Client | null;
   readonly isOpen: boolean;
   readonly onOpenChange: (isOpen: boolean) => void;
+  /** Called after the keyboard section saved, so the app applies the new keys. */
+  readonly onKeysChange?: () => void;
 }) {
   const t = useLocalizer();
   const [settings, setSettings] = useState<Settings | null>(null);
@@ -242,6 +246,20 @@ export function Preferences({
               {t.format("ui-gpu-high-performance")}
             </Switch>
           </section>
+          <KeyboardPreferences
+            settings={settings}
+            onChange={(next) => {
+              client
+                ?.call({ command: "settings_set", args: { settings: next } })
+                .then(
+                  (saved) => {
+                    setSettings(settingsOf(saved));
+                    onKeysChange?.();
+                  },
+                  () => undefined,
+                );
+            }}
+          />
           <DialogActions>
             <Button onPress={close}>{t.format("ui-close-window")}</Button>
           </DialogActions>

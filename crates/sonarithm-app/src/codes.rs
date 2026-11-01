@@ -438,6 +438,20 @@ pub const NAV_NO_TREE: CodeInfo = CodeInfo {
     status: CodeStatus::Active,
 };
 
+/// A key binding that cannot be used: a reserved combination, or keys a project tried to
+/// set (B03-T09; keyboard §13).
+pub const KEYMAP_REFUSED: CodeInfo = CodeInfo {
+    code: "SNR-APP-091",
+    severity: Severity::Error,
+    summary: "This key binding cannot be used",
+    help: "Tab, Shift+Tab, F6, Shift+F6, Escape, Insert and CapsLock combinations, Win or \
+           Super combinations, Ctrl+Option on macOS, Alt+F4, Alt+Space and Cmd+Q are reserved \
+           (keyboard §13 rule 6). Keys are yours to set: a project or a spec cannot change \
+           them. Choose another combination in Preferences › Keyboard.",
+    rules: &[],
+    status: CodeStatus::Active,
+};
+
 /// An embedded dataset whose member checksum verifies but whose fingerprint differs: another
 /// build fingerprinted it, so it opens and the next save records the new fingerprint
 /// (RFC-0002 §13). A function dataset that samples differently from the saving build opens
@@ -511,6 +525,7 @@ pub const CODES: CodeTable = CodeTable {
         FUNCTION_INPUT_TOO_LARGE,
         FUNCTION_NOT_SAVED,
         NAV_NO_TREE,
+        KEYMAP_REFUSED,
         DATASET_REFINGERPRINTED,
         MODALITY_LOCKOUT,
     ],
