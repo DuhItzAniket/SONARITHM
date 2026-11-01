@@ -38,6 +38,7 @@ let transport: TransportState = {
   device: null,
   live: false,
   xruns: 0,
+  excludedTracks: [],
 };
 
 function reply(next: TransportState) {

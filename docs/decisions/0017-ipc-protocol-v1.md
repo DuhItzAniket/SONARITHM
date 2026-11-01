@@ -91,7 +91,7 @@ The app core computes it on the control thread when it builds the anchor, never 
 |---|---|
 | 2026-10-30 | `outputLatencyS` added (B04-T04), citing ADR-0016 §"Per-device latency calibration"; approved by the coordinator, additive |
 | 2026-10-31 | `cursor_set`, `cursor_get` and the `cursor` event and channel added (B04-T06): Rust's one cursor, with an origin that decides what is spoken (INFER, OD-30); approved by the coordinator, additive |
-| 2026-11-01 | `nav_move`, `nav_where` and the `nav` reply added (B03-T09); `CursorState.node` may be any navigation node, `path` levels gain the axes, insights and filters levels, and `CursorState.excluded` lists the filtered series; approved by the coordinator, additive |
+| 2026-11-01 | `nav_move`, `nav_where` and the `nav` reply added (B03-T09); `CursorState.node` may be any navigation node, `path` levels gain the axes, insights and filters levels, `CursorState.excluded` lists the filtered series and `TransportState.excludedTracks` the tracks playback leaves out; approved by the coordinator, additive |
 
 #### Cursor
 
@@ -145,7 +145,12 @@ Each change sends a `cursor` event with `origin: null`. A `cursor` event never m
 
 **`CursorState`, widened.** `node` may be any node of the navigation tree, not only a point. `path` levels add `axes`, `axis`, `insights`, `insightGroup`, `insight`, `filters` and `filter`; a group's label is empty. A reader that meets a level it does not know shows the label alone. `excluded` lists `{ node, label }` for each series a filter took out.
 
-**Filters and playback (keyboard §3).** A filter takes its series out of playback and view. The transport plays a copy of the compiled Score without that series' track: no new sound path, and nothing changes on the audio thread. Loading it pauses playback, which never continues on its own (A11Y-15). Exports still render the whole compiled Score: the filter is session state, not part of the spec or the project. A spec-level filter can follow with `spec_apply` (B05-T01).
+**Filters and playback (keyboard §3).** A filter takes its series out of playback and view.
+
+* The transport plays a copy of the compiled Score with the excluded series' tracks removed and nothing else changed: the header, the markers and every other track are the compiled Score's own, bit for bit (tested). It is still the compiler's Score IR (ADR-0005); nothing new synthesizes sound, and nothing changes on the audio thread.
+* Loading it pauses playback, which never continues on its own (A11Y-15).
+* The exclusion is recorded where it applies, so what is playing is never taken for the canonical Score: `CursorState.excluded` in the session, and `TransportState.excludedTracks` (the removed track IDs, empty when the compiled Score plays as it is) in the transport. A live Score plays whole and clears it.
+* Exports render the whole compiled Score: the filter is session state, not part of the spec or the project. While a series is excluded, starting an export announces "Export includes all series; exclusions apply to playback only" (`announce-export-all-series`), until the export dialog (B05-T05) says it. A spec-level filter can follow with `spec_apply` (B05-T01).
 
 **Point cue (A11Y-10, A11Y-20).** A move is to play the point's cue, then speak. The transport has no one-shot cue path yet, so the cue arrives in its own change, with a `cue` field added to `NavResult` then.
 

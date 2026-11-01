@@ -127,7 +127,7 @@ pub(crate) enum Action {
 type Reply<T> = Sender<Result<T, IpcError>>;
 
 enum Message {
-    Load(Option<Arc<Score>>),
+    Load(Option<Arc<Score>>, Vec<String>),
     Act(Action, Reply<TransportState>),
     Configure(OutputConfig, Reply<TransportState>),
     Devices(Reply<Vec<DeviceInfo>>),
@@ -262,9 +262,11 @@ impl Transport {
     }
 
     /// Loads a new Score (or none). Playback pauses; it never continues into the new
-    /// Score on its own (A11Y-15).
-    pub(crate) fn load(&self, score: Option<Arc<Score>>) {
-        let _ = self.sender.send(Message::Load(score));
+    /// Score on its own (A11Y-15). `excluded` names the compiled Score's tracks this one
+    /// leaves out (the explorer's filters, B03-T09), so the transport state says the Score
+    /// playing is not the canonical one.
+    pub(crate) fn load(&self, score: Option<Arc<Score>>, excluded: Vec<String>) {
+        let _ = self.sender.send(Message::Load(score, excluded));
     }
 
     /// Makes the null device disappear, as an unplugged headset does (tests).
@@ -333,6 +335,8 @@ struct Model {
     /// Underruns reported by players already closed, and in all.
     xruns_closed: u64,
     xruns: u64,
+    /// The compiled Score's tracks the loaded Score leaves out (B03-T09).
+    excluded_tracks: Vec<String>,
 }
 
 struct Control<B: AudioBackend, F: Fn() -> B> {
@@ -437,12 +441,16 @@ impl<B: AudioBackend, F: Fn() -> B> Control<B, F> {
             device: self.model.device.clone(),
             live: self.model.live.is_some(),
             xruns: self.model.xruns,
+            excluded_tracks: self.model.excluded_tracks.clone(),
         }
     }
 
     fn handle(&mut self, message: Message) {
         match message {
-            Message::Load(score) => self.load(score),
+            Message::Load(score, excluded) => {
+                self.load(score);
+                self.model.excluded_tracks = excluded;
+            }
             Message::Act(action, reply) => {
                 let result = self.act(action);
                 if action != Action::State && result.is_ok() {
@@ -951,6 +959,8 @@ impl<B: AudioBackend, F: Fn() -> B> Control<B, F> {
             }
         }
         self.score = Some(score);
+        // A live Score is the live compiler's, whole.
+        self.model.excluded_tracks.clear();
         self.refresh();
         let target = if self.model.status == PlaybackStatus::Playing {
             self.live_target(self.model.position_s)

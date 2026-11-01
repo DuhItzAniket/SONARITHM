@@ -20,7 +20,7 @@ use std::sync::Arc;
 
 use sonarithm_audaxis::announce::Composer;
 use sonarithm_audaxis::nav::{Cursor, Edge, Invalid, Landmark, Outcome, Verb, XTarget};
-use sonarithm_core::Score;
+use sonarithm_core::{Score, TrackId};
 use sonarithm_core::nav::{NavKind, NavNodeId, NavTree};
 
 use super::App;
@@ -101,7 +101,7 @@ impl App {
             self.cursor.at = Some(at);
         }
         if step.excluded_changed {
-            self.transport.load(self.playback_score());
+            self.load_playback();
         }
         let announced = step.announcement.is_some();
         if let Some(announcement) = step.announcement {
@@ -165,23 +165,57 @@ impl App {
         Ok(Reply::Announce { queued })
     }
 
-    /// The Score the transport plays: the compiled Score without the tracks of the series
-    /// the filters took out.
+    /// While a filter excludes a series, an export still renders the whole compiled Score;
+    /// this says so when an export starts, until the export dialog (B05-T05) shows it.
+    pub(super) fn announce_export_scope(&self) {
+        if self.cursor.excluded.is_empty() {
+            return;
+        }
+        let Some(text) = self.localizer.as_ref().and_then(|localizer| {
+            localizer
+                .format("announce-export-all-series", &sonarithm_i18n::Args::new())
+                .ok()
+        }) else {
+            return;
+        };
+        self.transport.announce(
+            sonarithm_audaxis::announce::Announcement::status(text.clone(), text),
+        );
+    }
+
+    /// Loads the playback Score into the transport, with the tracks it leaves out.
+    pub(super) fn load_playback(&self) {
+        let excluded = self
+            .excluded_tracks()
+            .iter()
+            .map(ToString::to_string)
+            .collect();
+        self.transport.load(self.playback_score(), excluded);
+    }
+
+    /// The compiled Score's tracks of the series the filters took out, in track order.
+    fn excluded_tracks(&self) -> BTreeSet<TrackId> {
+        let Some(tree) = self.compiled.as_ref().and_then(sonarithm::Compiled::nav) else {
+            return BTreeSet::new();
+        };
+        self.cursor
+            .excluded
+            .iter()
+            .filter_map(|&id| match tree.node(id).map(|node| &node.kind) {
+                Some(NavKind::Series(series)) => Some(series.track.clone()),
+                _ => None,
+            })
+            .collect()
+    }
+
+    /// The Score the transport plays: the compiled Score with the excluded series' tracks
+    /// removed, and nothing else changed (the header, the markers and every other track are
+    /// the compiled Score's own), so it is still the compiler's Score IR (ADR-0005).
     pub(super) fn playback_score(&self) -> Option<Arc<Score>> {
         let compiled = self.compiled.as_ref()?;
         let mut score = compiled.score().clone();
-        if let Some(tree) = compiled.nav()
-            && !self.cursor.excluded.is_empty()
-        {
-            let dropped: BTreeSet<_> = self
-                .cursor
-                .excluded
-                .iter()
-                .filter_map(|&id| match tree.node(id).map(|node| &node.kind) {
-                    Some(NavKind::Series(series)) => Some(series.track.clone()),
-                    _ => None,
-                })
-                .collect();
+        let dropped = self.excluded_tracks();
+        if !dropped.is_empty() {
             score.tracks.retain(|track| !dropped.contains(&track.id));
         }
         Some(Arc::new(score))
@@ -362,11 +396,48 @@ mod tests {
         ] {
             app.dispatch_json(&request.to_string()).unwrap();
         }
-        let all = app.compiled.as_ref().unwrap().score().tracks.len();
-        assert_eq!(app.playback_score().unwrap().tracks.len(), all);
-        app.dispatch_json(&json!({ "command": "nav_move", "args": { "verb": { "verb": "activate" } } }).to_string())
+        let canonical = app.compiled.as_ref().unwrap().score().clone();
+        assert_eq!(
+            app.playback_score().unwrap().canonical_json().unwrap(),
+            canonical.canonical_json().unwrap(),
+            "nothing excluded: playback is the compiled Score, byte for byte"
+        );
+        let toggled = app
+            .dispatch_json(&json!({ "command": "nav_move", "args": { "verb": { "verb": "activate" } } }).to_string())
             .unwrap();
-        assert_eq!(app.playback_score().unwrap().tracks.len(), all - 1);
-        assert_eq!(app.compiled.as_ref().unwrap().score().tracks.len(), all);
+        assert_eq!(toggled["included"], false);
+        let playing = app.playback_score().unwrap();
+        // Only one track is gone: the excluded series' own.
+        let gone: Vec<&str> = canonical
+            .tracks
+            .iter()
+            .filter(|track| !playing.tracks.iter().any(|p| p.id == track.id))
+            .map(|track| track.id.as_str())
+            .collect();
+        assert_eq!(gone.len(), 1, "{gone:?}");
+        assert_eq!(playing.tracks.len(), canonical.tracks.len() - 1);
+        // Everything else is the compiled Score's own, bit for bit and in order.
+        let kept = canonical.tracks.iter().filter(|track| track.id.as_str() != gone[0]);
+        for (playing, compiled) in playing.tracks.iter().zip(kept) {
+            assert_eq!(bytes(playing), bytes(compiled), "track {}", compiled.id);
+        }
+        assert_eq!(bytes(&playing.header), bytes(&canonical.header));
+        assert_eq!(bytes(&playing.markers), bytes(&canonical.markers));
+        // The compiled Score, which exports render, keeps every track.
+        assert_eq!(
+            app.compiled.as_ref().unwrap().score().canonical_json().unwrap(),
+            canonical.canonical_json().unwrap()
+        );
+        // The transport says what it leaves out, so what plays is not taken for the Score.
+        let transport = app
+            .dispatch_json(&json!({ "command": "transport_state" }).to_string())
+            .unwrap();
+        assert_eq!(transport["excludedTracks"], json!([gone[0]]));
+    }
+
+    /// Serialized bytes, for a bit-for-bit comparison (serde_json writes every f64 so that
+    /// it reads back exactly).
+    fn bytes<T: serde::Serialize>(value: &T) -> Vec<u8> {
+        serde_json::to_vec(value).unwrap()
     }
 }

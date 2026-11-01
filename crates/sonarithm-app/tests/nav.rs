@@ -243,6 +243,40 @@ fn b03_t09_a_filter_excludes_its_series_until_the_data_is_replaced() {
     assert_eq!(h.ok(&json!({ "command": "cursor_get" }))["excluded"], json!([]));
 }
 
+/// ADR-0017 "Navigation": an export renders every series, so while a filter excludes one,
+/// starting an export says so; with nothing excluded it says nothing about it.
+#[test]
+fn b03_t09_an_export_while_a_series_is_excluded_says_it_includes_all_series() {
+    let mut h = Harness::new("nav-export");
+    h.compile(&["temp", "rain"]);
+    let note = "Export includes all series";
+    let spoken = |h: &Harness| -> Vec<String> {
+        h.sink
+            .events()
+            .into_iter()
+            .filter_map(|event| match event {
+                Event::Announcement(info) => Some(info.speech),
+                _ => None,
+            })
+            .collect()
+    };
+    let wav = h.dir.path().join("all.wav");
+    h.ok(&json!({ "command": "export_render", "args": { "options": { "path": wav } } }));
+    std::thread::sleep(Duration::from_millis(300));
+    assert!(!spoken(&h).iter().any(|s| s.contains(note)), "{:?}", spoken(&h));
+
+    h.nav(json!({ "verb": "landmark", "landmark": "filters" }));
+    h.step("into");
+    assert_eq!(h.step("activate")["included"], false);
+    let wav = h.dir.path().join("filtered.wav");
+    h.ok(&json!({ "command": "export_render", "args": { "options": { "path": wav } } }));
+    let start = Instant::now();
+    while !spoken(&h).iter().any(|s| s.contains(note)) {
+        assert!(start.elapsed() < Duration::from_secs(5), "{:?}", spoken(&h));
+        std::thread::sleep(Duration::from_millis(10));
+    }
+}
+
 /// ADR-0017 "Cursor": closing the dataset clears the row, and the explorer leaves its node.
 #[test]
 fn b03_t09_closing_the_dataset_clears_the_explorer_node() {

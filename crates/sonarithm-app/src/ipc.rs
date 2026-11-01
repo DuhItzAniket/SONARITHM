@@ -1435,6 +1435,10 @@ pub struct TransportState {
     pub live: bool,
     /// Underruns the output reported since the session started (PB-02, PB-11).
     pub xruns: u64,
+    /// The compiled Score's tracks that playback leaves out, because the explorer's filters
+    /// took their series out (B03-T09, ADR-0017 "Navigation"). Empty when the transport
+    /// plays the compiled Score as it is; exports always render it whole.
+    pub excluded_tracks: Vec<String>,
 }
 
 /// A transport clock anchor (06 §9): the UI extrapolates the playhead from it.
@@ -1678,6 +1682,7 @@ mod tests {
             device: None,
             live: false,
             xruns: 0,
+            excluded_tracks: Vec::new(),
         };
         let job = JobInfo {
             id: 1,

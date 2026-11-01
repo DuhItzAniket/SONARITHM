@@ -694,7 +694,7 @@ impl App {
                 let excluded = self.excluded_labels();
                 self.compiled = Some(compiled);
                 self.renumber_nav(&excluded);
-                self.transport.load(self.playback_score());
+                self.load_playback();
                 Ok(Reply::Compile(report))
             }
             Err(err) => {
@@ -763,7 +763,10 @@ impl App {
                 true_peak_dbtp: output.true_peak_dbtp,
             }))
         });
-        self.jobs.submit(JobKind::Export, work).map(Reply::Job)
+        let reply = self.jobs.submit(JobKind::Export, work).map(Reply::Job)?;
+        // The filters are playback state: say the export holds every series (B03-T09).
+        self.announce_export_scope();
+        Ok(reply)
     }
 
     fn step(&mut self, back: bool) -> Reply {
