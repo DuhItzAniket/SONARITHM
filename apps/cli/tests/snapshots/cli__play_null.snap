@@ -7,7 +7,7 @@ exit code: 0
 Playing temps.spec.json, 3.25 seconds, on null.
 Finished at 3.25 seconds.
 --- stderr
-Context cues (ticks, reference tone, legend, earcons) are not available in this build; AUDAXIS arrives in B03.
+Context cues (ticks, reference tone, legend, earcons) are not available: no engine that provides them (AUDAXIS) is registered in this build.
     Diagnostic severity: warning
 diagnostic help: Location: /context.
 diagnostic code: SNR-COMP-023

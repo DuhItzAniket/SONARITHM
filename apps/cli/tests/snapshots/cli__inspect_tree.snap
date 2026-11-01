@@ -16,7 +16,7 @@ Score
     note at 0.333 s for 0.250 s, 1400.00 Hz, row 1, confidence 0.75
     note at 0.667 s for 0.250 s, 607.32 Hz, row 2
 --- stderr
-Context cues (ticks, reference tone, legend, earcons) are not available in this build; AUDAXIS arrives in B03.
+Context cues (ticks, reference tone, legend, earcons) are not available: no engine that provides them (AUDAXIS) is registered in this build.
     Diagnostic severity: warning
 diagnostic help: Location: /context.
 diagnostic code: SNR-COMP-023

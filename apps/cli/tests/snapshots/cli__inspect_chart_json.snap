@@ -368,7 +368,7 @@ exit code: 0
       "severity": "warning",
       "code": "SNR-COMP-023",
       "rules": [],
-      "message": "Context cues (ticks, reference tone, legend, earcons) are not available in this build; AUDAXIS arrives in B03.",
+      "message": "Context cues (ticks, reference tone, legend, earcons) are not available: no engine that provides them (AUDAXIS) is registered in this build.",
       "location": "/context",
       "data": null
     },
