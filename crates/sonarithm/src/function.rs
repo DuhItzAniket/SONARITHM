@@ -271,7 +271,12 @@ impl Function {
             )?,
             (None, samples) => l.format(
                 "function-grid-samples",
-                &Args::new().number_with("count", count_number(samples.map_or(1000, |s| usize::try_from(s).unwrap_or(usize::MAX)))),
+                &Args::new().number_with(
+                    "count",
+                    count_number(
+                        samples.map_or(1000, |s| usize::try_from(s).unwrap_or(usize::MAX)),
+                    ),
+                ),
             )?,
         };
         let mut counts: Vec<(&'static str, usize)> = Vec::new();
@@ -300,7 +305,10 @@ impl Function {
             })
             .collect::<Result<Vec<_>, _>>()?;
         let separator = l.format("function-list-separator", &Args::new())?;
-        l.format("function-summary", &args.text("counts", parts.join(&separator)))
+        l.format(
+            "function-summary",
+            &args.text("counts", parts.join(&separator)),
+        )
     }
 
     /// The summary without the catalogue, if it cannot be read.
