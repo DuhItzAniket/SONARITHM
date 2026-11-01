@@ -97,6 +97,10 @@ fn sample_args(style: UnitStyle) -> Args {
         .text("condition", "15")
         .text("device", "16")
         .text("paused", "yes")
+        // The chart explorer toggles (B03-T09).
+        .text("modality", "speech")
+        .text("on", "yes")
+        .text("verbosity", "verbose")
 }
 
 #[test]

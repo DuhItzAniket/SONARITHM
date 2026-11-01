@@ -16,6 +16,7 @@ import { useEffect, useState } from "react";
 
 import { useLocalizer } from "../i18n.ts";
 import styles from "./preferences.module.css";
+import { settingsOf } from "./settings.ts";
 
 /** The key of the "System default" device option. */
 const SYSTEM_DEFAULT = "system-default";
@@ -31,13 +32,6 @@ const LATENCY_MS = { min: 0, max: 1000 } as const;
  * switch at start-up. WebView2's user agent names Windows.
  */
 const GPU_CHOOSABLE = navigator.userAgent.includes("Windows");
-
-/** Settings as the app core takes them back: the reply's own `reply` tag removed. */
-function settingsOf(reply: Settings & { readonly reply?: string }): Settings {
-  return Object.fromEntries(
-    Object.entries(reply).filter(([key]) => key !== "reply"),
-  ) as Settings;
-}
 
 /**
  * Preferences (B01-T08), opened by `app.preferences` (Ctrl+Comma, Cmd+Comma). The Audio

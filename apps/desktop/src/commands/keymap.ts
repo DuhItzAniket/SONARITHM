@@ -20,8 +20,15 @@ export interface CommandSpec {
 /**
  * The global and region commands of the v0 keymap (keyboard-and-navigation §5.1, §5.2).
  * Commands appear in the palette once their feature registers a handler; the bindings
- * here are checked by the keymap lint either way. The explorer, table, tree, inspector
- * and editor keymaps join with their widgets (B03, B04, B05).
+ * here are checked by the keymap lint either way. The table, tree, inspector and editor
+ * keymaps join with their widgets (B04, B05).
+ *
+ * The chart explorer's keymap v0 (B03-T09; keyboard-and-navigation §4.2, §5.4, §5.5) is
+ * scoped to the explorer: its single keys work only there (KB-02, WCAG 2.1.4), Jump is Ctrl
+ * on Windows and Linux and Option on macOS, and no binding takes a screen reader's keys
+ * (§12: never Insert, CapsLock, the numpad or Ctrl+Option). Compare (C), selection
+ * (Shift+arrows), polarity (P), the query menu (Q) and the braille mode (Shift+B) join with
+ * their features; A, J, K, M, O and U stay free and E reserved.
  */
 export const DEFAULT_KEYMAP: readonly CommandSpec[] = [
   {
@@ -201,6 +208,191 @@ export const DEFAULT_KEYMAP: readonly CommandSpec[] = [
     scope: "region",
     keys: ["Ctrl+Shift+Backslash"],
     macKeys: ["Shift+Meta+Backslash"],
+  },
+  {
+    id: "nav.next",
+    name: "command-nav-next",
+    scope: "explorer",
+    keys: ["ArrowRight"],
+  },
+  {
+    id: "nav.previous",
+    name: "command-nav-previous",
+    scope: "explorer",
+    keys: ["ArrowLeft"],
+  },
+  {
+    id: "nav.jumpForward",
+    name: "command-nav-jump-forward",
+    scope: "explorer",
+    keys: ["Ctrl+ArrowRight"],
+    macKeys: ["Alt+ArrowRight"],
+  },
+  {
+    id: "nav.jumpBack",
+    name: "command-nav-jump-back",
+    scope: "explorer",
+    keys: ["Ctrl+ArrowLeft"],
+    macKeys: ["Alt+ArrowLeft"],
+  },
+  {
+    id: "nav.first",
+    name: "command-nav-first",
+    scope: "explorer",
+    keys: ["Home"],
+  },
+  {
+    id: "nav.last",
+    name: "command-nav-last",
+    scope: "explorer",
+    keys: ["End"],
+  },
+  {
+    id: "nav.into",
+    name: "command-nav-into",
+    scope: "explorer",
+    keys: ["ArrowDown"],
+  },
+  {
+    id: "nav.activate",
+    name: "command-nav-activate",
+    scope: "explorer",
+    keys: ["Enter"],
+  },
+  {
+    id: "nav.out",
+    name: "command-nav-out",
+    scope: "explorer",
+    keys: ["ArrowUp", "Backspace"],
+  },
+  {
+    id: "nav.nextSeries",
+    name: "command-nav-next-series",
+    scope: "explorer",
+    keys: ["PageDown"],
+  },
+  {
+    id: "nav.previousSeries",
+    name: "command-nav-previous-series",
+    scope: "explorer",
+    keys: ["PageUp"],
+  },
+  {
+    id: "nav.maximum",
+    name: "command-nav-maximum",
+    scope: "explorer",
+    keys: ["Ctrl+ArrowUp"],
+    macKeys: ["Alt+ArrowUp"],
+  },
+  {
+    id: "nav.minimum",
+    name: "command-nav-minimum",
+    scope: "explorer",
+    keys: ["Ctrl+ArrowDown"],
+    macKeys: ["Alt+ArrowDown"],
+  },
+  {
+    id: "nav.nextInsight",
+    name: "command-nav-next-insight",
+    scope: "explorer",
+    keys: ["N"],
+  },
+  {
+    id: "nav.previousInsight",
+    name: "command-nav-previous-insight",
+    scope: "explorer",
+    keys: ["Shift+N"],
+  },
+  {
+    id: "nav.xAxis",
+    name: "command-nav-x-axis",
+    scope: "explorer",
+    keys: ["X"],
+  },
+  {
+    id: "nav.yAxis",
+    name: "command-nav-y-axis",
+    scope: "explorer",
+    keys: ["Y"],
+  },
+  {
+    id: "nav.insights",
+    name: "command-nav-insights",
+    scope: "explorer",
+    keys: ["I"],
+  },
+  {
+    id: "nav.filters",
+    name: "command-nav-filters",
+    scope: "explorer",
+    keys: ["F"],
+  },
+  {
+    id: "nav.dataset",
+    name: "command-nav-dataset",
+    scope: "explorer",
+    keys: ["D"],
+  },
+  {
+    id: "nav.goTo",
+    name: "command-nav-go-to",
+    scope: "explorer",
+    keys: ["G"],
+  },
+  {
+    id: "nav.findValue",
+    name: "command-nav-find-value",
+    scope: "explorer",
+    keys: ["Ctrl+F"],
+    macKeys: ["Meta+F"],
+  },
+  {
+    id: "nav.whereAmI",
+    name: "command-nav-where-am-i",
+    scope: "explorer",
+    keys: ["W"],
+  },
+  {
+    id: "nav.repeat",
+    name: "command-nav-repeat",
+    scope: "explorer",
+    keys: ["R"],
+  },
+  {
+    id: "nav.help",
+    name: "command-nav-help",
+    scope: "explorer",
+    keys: ["H"],
+  },
+  {
+    id: "modality.speech",
+    name: "command-modality-speech",
+    scope: "explorer",
+    keys: ["T"],
+  },
+  {
+    id: "verbosity.toggle",
+    name: "command-verbosity-toggle",
+    scope: "explorer",
+    keys: ["Shift+T"],
+  },
+  {
+    id: "modality.sonification",
+    name: "command-modality-sonification",
+    scope: "explorer",
+    keys: ["S"],
+  },
+  {
+    id: "modality.braille",
+    name: "command-modality-braille",
+    scope: "explorer",
+    keys: ["B"],
+  },
+  {
+    id: "modality.visual",
+    name: "command-modality-visual",
+    scope: "explorer",
+    keys: ["V"],
   },
   {
     // Keyboard §5.6 (B04-T05): from the palette while a data table is open.

@@ -49,6 +49,14 @@ None.
 
 - F-211 (logged).
 
+## PR (2): the explorer and keymap v0 (2026-11-01)
+
+- `Explorer` (`apps/desktop/src/explorer/`): one Tab stop in the Plot tab. Only the chart surface has `role="application"`; it is named "Chart explorer, <dataset>", described by a visible hint, and has no `aria-activedescendant`, so a move is spoken once, by the app core (OD-30). It holds no position: Rust's cursor does.
+- Keymap v0: 30 commands in the `explorer` scope (keyboard §4.2, §5.4, §5.5), registered through a new `useCommandTable`. G and Primary+F open a value dialog; W, R and H; T, S, B, V and Shift+T change the settings through `settings_set`, so they persist, and say what they did.
+- **KB-04 against KB-07.** The lint refused Alt+arrows on every platform as webview history, but KB-07 makes Jump Option+arrows on macOS. History is Alt+arrows in WebView2 and WebKitGTK only (WKWebView uses Cmd), so the lint and KB-04's text now limit that rule to Windows and Linux.
+- Not yet: the query menu with `nav_query`, remapping and the group switch (PR 3), compare, selection and polarity (their features).
+- The E2E checks which verb each key sends against the mock host; the app core's tests cover what each verb does.
+
 ## Next steps
 
 - PR (2): the Explorer component, keymap v0, the query menu, modality and verbosity toggles, E2E for every verb.

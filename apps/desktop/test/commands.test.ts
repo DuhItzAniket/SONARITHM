@@ -81,6 +81,10 @@ test("kb_03_kb_04_the_lint_rejects_screen_reader_and_layout_conflicts", () => {
   assert.deepEqual(rules("Ctrl+Alt+P"), ["KB-04"]);
   assert.deepEqual(rules("Ctrl+Alt+ArrowLeft"), ["KB-04"]);
   assert.deepEqual(rules("Alt+ArrowLeft"), ["KB-04"]);
+  assert.deepEqual(rules("Alt+ArrowLeft", "linux"), ["KB-04"]);
+  // KB-07: on macOS, Option+arrows are Jump, not history.
+  assert.deepEqual(rules("Alt+ArrowLeft", "mac"), []);
+  assert.ok(rules("Ctrl+Alt+ArrowLeft", "mac").includes("KB-03"));
   assert.deepEqual(rules("Ctrl+Space"), ["KB-04"]);
   assert.deepEqual(rules("P"), ["KB-02"]);
   assert.deepEqual(rules("Shift+P"), ["KB-02"]);

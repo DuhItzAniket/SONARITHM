@@ -208,7 +208,55 @@ function viewTile(pxWidth: number): ArrayBuffer {
   });
 }
 
+/**
+ * The explorer's verbs (B03-T09), simplified: the steps along a level move the row and stop
+ * at the ends with a boundary; every other verb keeps the row. The app core's own tests
+ * cover what each verb does; the E2E checks which verb each key sends.
+ */
+function navMove(verb: string): {
+  row: number;
+  outcome: "moved" | "boundary";
+  edge: string | null;
+} {
+  const total = dataset?.rows ?? 0;
+  const at = cursor.row ?? 0;
+  const jump = Math.max(1, Math.round(total / 10));
+  const target =
+    {
+      next: at + 1,
+      previous: at - 1,
+      jumpForward: at + jump,
+      jumpBack: at - jump,
+      first: 0,
+      last: total - 1,
+    }[verb] ?? at;
+  if (target < 0 || target >= total) {
+    return {
+      row: at,
+      outcome: "boundary",
+      edge: target < 0 ? "first" : "last",
+    };
+  }
+  return { row: target, outcome: "moved", edge: null };
+}
+
 const handlers: MockHandlers = {
+  nav_move: (request) => {
+    const step = navMove(request.args.verb.verb);
+    return {
+      reply: "nav" as const,
+      cursor: moveCursor(step.row, "nav"),
+      outcome: step.outcome,
+      edge: step.edge,
+      reason: null,
+      included: null,
+      earcon: step.outcome === "boundary" ? "E-BOUNDARY" : null,
+      highlight: null,
+      announced: true,
+    };
+  },
+  nav_where: () => ({ reply: "announce" as const, queued: true }),
+  announce_repeat: () => ({ reply: "announce" as const, queued: true }),
   cursor_set: (request) => ({
     reply: "cursor" as const,
     ...moveCursor(request.args.row, request.args.origin),
@@ -342,6 +390,12 @@ Reflect.set(window, "__SONARITHM_MOCK__", {
   /** The commands the UI sent through `ipc_dispatch`, oldest first. */
   commands(): string[] {
     return host.requests.map((request) => request.command);
+  },
+  /** The verbs of the explorer's `nav_move` requests, oldest first, as JSON. */
+  navVerbs(): string[] {
+    return host.requests.flatMap((request) =>
+      request.command === "nav_move" ? [JSON.stringify(request.args.verb)] : [],
+    );
   },
   /** The settings as the UI last saved them. */
   settings(): Settings {

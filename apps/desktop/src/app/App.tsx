@@ -18,6 +18,7 @@ import { useLocalizer } from "../i18n.ts";
 import { Preferences } from "../preferences/Preferences.tsx";
 import { TransportBar } from "../transport/TransportBar.tsx";
 import { CursorReadout } from "../cursor/CursorReadout.tsx";
+import { Explorer } from "../explorer/Explorer.tsx";
 import { DatasetPlot } from "../plot/DatasetPlot.tsx";
 import { useCursor } from "../cursor/useCursor.ts";
 import { DatasetTable } from "../table/DatasetTable.tsx";
@@ -83,6 +84,10 @@ export function App({
   });
   useCommand("help.keyboard", () => {
     setReferenceScopes(activeScopes(document.activeElement).scopes);
+  });
+  // H in the chart explorer: its own keys first (keyboard §5.4).
+  useCommand("nav.help", () => {
+    setReferenceScopes(["explorer", "global"]);
   });
   // Stop all audio from any scope, even in a dialog (A11Y-15, T-13): sonification,
   // earcons and self-voicing, through the app core's `stop_all` (B01-T08).
@@ -162,11 +167,19 @@ export function App({
             </TabList>
             <TabPanel id="plot">
               {client !== null && dataset !== null ? (
-                <DatasetPlot
-                  client={client}
-                  dataset={dataset}
-                  cursor={cursor}
-                />
+                <>
+                  <Explorer
+                    client={client}
+                    dataset={dataset}
+                    cursor={cursor}
+                    announcer={announcer}
+                  />
+                  <DatasetPlot
+                    client={client}
+                    dataset={dataset}
+                    cursor={cursor}
+                  />
+                </>
               ) : (
                 startText
               )}

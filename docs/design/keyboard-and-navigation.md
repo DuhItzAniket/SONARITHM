@@ -12,7 +12,7 @@
 | KB-01 | Every action is a named command reachable from a menu and the command palette. Shortcuts are accelerators, never the only path. | A11Y-05; WCAG 2.1.1 |
 | KB-02 | Single-character shortcuts (letters, including Shift+letter, and punctuation) exist only inside the chart explorer, and can be disabled as a group or remapped one by one. | A11Y-06; WCAG 2.1.4 |
 | KB-03 | No default binding uses a screen-reader modifier: Insert or CapsLock (NVDA, JAWS, Narrator, Orca) or Ctrl+Option (VoiceOver). | A11Y-06; [notes 03 §4](../research/notes/03-accessibility-hci.md) |
-| KB-04 | No Ctrl+Alt+letter (AltGr types characters on many layouts), no Ctrl+Alt+arrows (screen-reader table navigation, Windows Magnifier panning, some graphics drivers), no Alt+arrows (webview history), no Ctrl+Space (input-method switching). | Section 12 |
+| KB-04 | No Ctrl+Alt+letter (AltGr types characters on many layouts), no Ctrl+Alt+arrows (screen-reader table navigation, Windows Magnifier panning, some graphics drivers), no Alt+arrows on Windows and Linux (webview history; on macOS, Option+arrows are Jump, KB-07), no Ctrl+Space (input-method switching). | Section 12 |
 | KB-05 | F6 and Shift+F6 cycle the fixed regions in a constant order. Tab never traps focus. | A11Y-05; [design language §4](design-language.md) |
 | KB-06 | One modifier at most for frequent chart commands. No command depends on timing (no double-press, no long-press). | Motor access; WCAG 2.2.1 |
 | KB-07 | Platform conventions apply: **Primary** = Ctrl on Windows and Linux, Cmd on macOS; **Jump** = Ctrl on Windows and Linux, Option on macOS (the platforms' word-jump modifiers). On macOS, Ctrl+arrows belong to Mission Control and Spaces, so Jump uses Option there. | Section 12 |
