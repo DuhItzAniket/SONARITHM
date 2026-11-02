@@ -23,10 +23,10 @@ catalog:
   react-dom: 19.3.1
   # UI state machines (09 §3): the transport machine mirrors the Rust transport (B01-T05).
   # Pinned: 5.33.3 was under two weeks old when this was added.
-  xstate: 5.33.2
+  xstate: 5.33.3
   # Line and time-series plots (09 §3, B04-T01; notes/05 §6): Canvas2D, MIT, no dependencies.
   uplot: 1.6.32
-  vite: 8.3.4
+  vite: 8.3.5
   # Frontend test infrastructure (B02-T03; testing-strategy §12, §13.1). Storybook 10 with
   # its accessibility (axe-core) and Vitest addons; Vitest 4 browser mode on Playwright's
   # Chromium; Playwright for cross-engine E2E with axe. The CI container image tag
@@ -56,7 +56,7 @@ catalog:
   stylelint: ^17.16.0
   # TypeScript stays on 6.0.x while typescript-eslint supports only TypeScript < 6.1.
   typescript: ~6.0.3
-  typescript-eslint: ^8.71.2
+  typescript-eslint: ^8.72.0
 
 # Dependency install scripts, reviewed one by one (pnpm 12 fails the install on an unreviewed
 # one, F-133). esbuild (Storybook) gets its binary from an optional per-platform package;
