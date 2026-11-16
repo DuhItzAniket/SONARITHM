@@ -48,7 +48,7 @@ jobs:
       # cpal (sonarithm-audio) links ALSA on Linux. ubuntu-22.04 keeps the glibc floor low.
       - if: runner.os == 'Linux'
         run: sudo apt-get update && sudo apt-get install --yes --no-install-recommends libasound2-dev
-      - uses: taiki-e/install-action@8cca0918f8471c33515202b73f56ab27f2bed283 # v2.87.29
+      - uses: taiki-e/install-action@cfdb7ed4ccc7c7dce37759eae89dc5674b469b39 # v2.90.3
         with:
           tool: cargo-auditable,cargo-cyclonedx,cargo-about
       - name: Build, SBOM and notices
