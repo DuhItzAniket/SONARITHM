@@ -8,7 +8,7 @@ Rendering temps.wav ...
 Wrote temps.wav: 3.25 seconds at 48000 Hz, -16.0 LUFS integrated, true peak -8.0 dBTP.
 Also wrote temps.render.json and temps.cues.vtt.
 --- stderr
-Context cues (ticks, reference tone, legend, earcons) are not available in this build; AUDAXIS arrives in B03.
+Context cues (ticks, reference tone, legend, earcons) are not available: no engine that provides them (AUDAXIS) is registered in this build.
     Diagnostic severity: warning
 diagnostic help: Location: /context.
 diagnostic code: SNR-COMP-023

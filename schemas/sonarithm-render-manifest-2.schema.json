@@ -308,7 +308,7 @@
       "type": "object",
       "properties": {
         "engines": {
-          "description": "The engines that contributed, with their versions, from the Score header.",
+          "description": "The engines that contributed, with their versions, from the Score header (context\nproviders only when they added a track; shapers whenever they ran; 05 §4, #434).",
           "type": "object",
           "additionalProperties": {
             "type": "string"
