@@ -686,15 +686,17 @@ mod tests {
         assert_eq!(again.bundle.primary().unwrap().schema(), table.schema());
         // An Arrow file without record batches whose provenance column is a dictionary of a
         // union without members: arrow-data panicked building its empty column after
-        // decoding (nightly run on 2026-10-20).
+        // decoding (nightly run on 2026-10-20). Since arrow 60.1 the empty column builds,
+        // so the file is refused one step later, by the provenance check; it still never
+        // panics.
         let bytes = include_bytes!("../../tests/corpus/fuzz/ipc-empty-union.arrow");
         let err = read_bytes(bytes, Format::Arrow, "x", &ReadOptions::default()).unwrap_err();
-        assert_eq!(err.to_diagnostic().code.as_str(), "SNR-DATA-001", "{err}");
-        assert!(err.to_string().contains("cannot hold"), "{err}");
+        assert_eq!(err.to_diagnostic().code.as_str(), "SNR-DATA-041", "{err}");
+        assert!(err.to_string().contains("invalid provenance"), "{err}");
     }
 
     #[test]
-    fn types_without_an_empty_column_are_rejected() {
+    fn types_arrow_can_hold_empty_pass_the_guard() {
         use arrow_schema::UnionMode;
 
         let fine = Schema::new(vec![
@@ -706,13 +708,11 @@ mod tests {
             ),
         ]);
         assert_eq!(check_empty_columns(&fine), Ok(()));
+        // A union without members made arrow-data panic (F-071); arrow 60.1 builds its empty
+        // column, so it passes now. The guard stays for any other type that still panics.
         let empty_union = DataType::Union(UnionFields::empty(), UnionMode::Sparse);
-        let broken = Schema::new(vec![Field::new("u", empty_union, true)]);
-        let err = check_empty_columns(&broken).unwrap_err();
-        assert!(
-            err.starts_with("field `u` has a type Arrow cannot hold"),
-            "{err}"
-        );
+        let union = Schema::new(vec![Field::new("u", empty_union, true)]);
+        assert_eq!(check_empty_columns(&union), Ok(()));
     }
 
     #[test]
