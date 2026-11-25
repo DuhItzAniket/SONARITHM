@@ -275,9 +275,7 @@ impl App {
             Request::SettingsSet { settings } => self.settings_set(settings),
             Request::DevicesList => self.devices(),
             Request::DeviceSelect { id } => self.device_select(id),
-            Request::AnnounceRepeat => Ok(Reply::Announce {
-                queued: self.transport.repeat()?,
-            }),
+            Request::AnnounceRepeat => self.announce_repeat(),
             Request::StreamOffer {
                 transport,
                 url,
@@ -465,6 +463,14 @@ impl App {
             self.transport.announce(announcement);
         }
         Ok(reply)
+    }
+
+    /// Queues the last announcement again (`nav.repeat`, keyboard §5.4); `queued` is `false`
+    /// when there is none.
+    fn announce_repeat(&self) -> Result<Reply, IpcError> {
+        Ok(Reply::Announce {
+            queued: self.transport.repeat()?,
+        })
     }
 
     /// "Paused, …" with the value of the point at the playhead, in the listener's verbosity.
