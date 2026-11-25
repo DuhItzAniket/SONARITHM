@@ -1252,3 +1252,16 @@ A05 (render engine, audio backends, export) uses F-050 to F-069.
 - **Evidence level / confidence:** EV-D / Moderate. Inferred from the code, not measured.
 - **Affects:** B03-T09 (point cue), A05 render voice pools, 06 §3 and §5
 - **Papers:** none yet
+
+### F-222 · A patch release of arrow moved every data fingerprint, because the fingerprint hashes arrow-ipc's bytes
+
+- **Date:** 2026-11-26 · **Phase:** maintenance (A04 code) · **Type:** engineering (determinism) · **Status:** new
+- **Statement:** Fixing main's `cargo deny` failure (RUSTSEC-2026-0442 in arrow-data) bumped arrow from 60.0.0 to 60.2.0, a patch range. Every data fingerprint changed although no data did.
+  - **Why:** `sonarithm_data::fingerprint` hashes the Arrow IPC stream that `arrow_ipc::writer::StreamWriter` writes from a canonical copy of the table (`crates/sonarithm-data/src/fingerprint.rs`), so the digest depends on arrow-ipc's encoder as well as on the values.
+  - **What moved:** the two pinned corpus digests, 7 insta snapshots, 3 golden Scores and the parity Score (`data_fingerprint` only), and 98 lines of the replication gallery (each record's `data.fingerprint` and the `releaseIndependentHash` that covers it).
+  - **What did not:** golden audio (all 10 cases identical) and the parity WAV hash.
+  - **Why it matters:** the module doc expected this for an Arrow upgrade, but in a patch release it turns a security fix into a re-record of every provenance record, and render manifests from older builds no longer match the same data (ADR-0013). Which arrow-ipc change altered the bytes was not traced.
+- **Evidence:** `crates/sonarithm-data/tests/fingerprints.rs` (`corpus_fingerprints_are_pinned`, `loaded_tables_with_inference_are_pinned`); the re-recorded files in the deny-fix PR; #469 (a value-based fingerprint proposal)
+- **Evidence level / confidence:** EV-C / Strong (every changed record checked: only fingerprints and the hashes that cover them moved)
+- **Affects:** 03 §2 (`Fingerprint`), ADR-0013, F-071; every render manifest and golden or replication record; #469
+- **Papers:** none yet
