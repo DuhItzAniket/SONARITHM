@@ -1257,3 +1257,18 @@ A05 (render engine, audio backends, export) uses F-050 to F-069.
 - **Evidence level / confidence:** EV-C / Strong (every changed record checked: only fingerprints and the hashes that cover them moved)
 - **Affects:** 03 §2 (`Fingerprint`), ADR-0013, F-071; every render manifest and golden or replication record; #469
 - **Papers:** none yet
+
+### F-224 · The data layer read Arrow's large and view string layouts differently from plain strings in four places
+
+- **Date:** 2026-11-26 · **Phase:** maintenance (A04 code) · **Type:** engineering (consistency) · **Status:** fixed (RFC-0008 §10 step 1)
+- **Statement:** RFC-0008 found two places where Utf8View text was not treated as text. While fixing them, four places in `sonarithm-data` turned out to read only some of the three string layouts (Utf8, LargeUtf8, Utf8View) that hold the same values:
+  - **inference** (`infer/semantic.rs`): Utf8View was not classed as text; and both LargeUtf8 and Utf8View skipped the distinct-value count and the ordered-label re-encoding, so "low, medium, high" became ordinal only as Utf8;
+  - **the data view** (`view.rs`): a dictionary of Utf8View values showed no text;
+  - **provenance** (`provenance.rs`): a provenance column of Utf8View text, or a dictionary of it, was refused as invalid;
+  - **transform expressions** (`transform/expr.rs`): only Utf8 text, or a dictionary of it, could be read.
+  - **Why it matters:** in-memory data is normalised to plain strings (`read_batches`, F-100), but Arrow IPC and Parquet files keep the layout their writer chose (pyarrow's `large_string`, polars' string views), so the same data could compile differently depending on the library that wrote the file.
+- **Fix:** one helper (`table::is_text`, `table::text_values`) that every reader uses. Tests in each module, and `crates/sonarithm/tests/string_layouts.rs`, which compiles the same table in each layout to the same Score.
+- **Evidence:** the tests above; RFC-0008 §3 and §10
+- **Evidence level / confidence:** EV-C / Strong
+- **Affects:** 03 §2 and §3, RFC-0008, F-100
+- **Papers:** none yet

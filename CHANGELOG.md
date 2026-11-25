@@ -26,6 +26,7 @@ From phase A07, release-plz maintains this file: it generates each release's ent
 
 ### Fixed
 
+- Text read from Arrow and Parquet files as large strings or string views is treated like plain text (RFC-0008 §10, step 1): ordered labels such as low, medium and high are recognised, distinct values are counted for the inferred type, provenance columns are read, and transform expressions can use the text. Before, those layouts were inferred differently and some were refused, so the same data could sound different depending on the library that wrote the file.
 - The desktop app starts and draws plots under a POSIX "C" locale (for example `LANG=C` on Linux), which made the plot library throw while loading (#436).
 
 ## [0.1.0-alpha] - 2026-10-30
