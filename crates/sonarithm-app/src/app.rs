@@ -302,10 +302,7 @@ impl App {
                 streams: self.transport.stream_list()?,
             }),
             Request::LiveStart { stream } => self.live_start(stream),
-            Request::LiveStop => {
-                self.live = None;
-                Ok(Reply::Transport(self.transport.live(None)?))
-            }
+            Request::LiveStop => self.live_stop(),
             Request::ProfileList => Ok(self.profile_list(&[])),
             Request::ProfileGet { id } => self.profile_get(&id),
             Request::ProfileActivate { id } => self.profile_activate(id),
@@ -439,6 +436,13 @@ impl App {
             }
         }
         self.act(Action::State)
+    }
+
+    /// Stops live playback (B06-T07): drops the worker and takes the transport off the
+    /// live session.
+    fn live_stop(&mut self) -> Result<Reply, IpcError> {
+        self.live = None;
+        Ok(Reply::Transport(self.transport.live(None)?))
     }
 
     fn stream_act(&mut self, id: String, action: StreamAction) -> Result<Reply, IpcError> {
