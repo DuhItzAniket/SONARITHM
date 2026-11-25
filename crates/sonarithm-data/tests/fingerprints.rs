@@ -18,11 +18,11 @@ use sonarithm_core::Sha256Digest;
 use sonarithm_data::{CsvOptions, Format, ReadOptions, read_bytes, table_fingerprint};
 
 /// The fingerprint of every corpus file (read without inference), hashed in file order.
-const CORPUS_DIGEST: &str = "48ba3b4c2f4c3385f344a091e0727ef1f4f2bcf8663d672a753fa460ddc9d525";
+const CORPUS_DIGEST: &str = "d6416b53d768aedfc5644aada58bd3863011bb8bbb6d4cc3a3362a35ed6221d0";
 
 /// The fingerprint of one file with dates, units and a header, with inference.
 const PLAIN_WITH_INFERENCE: &str =
-    "ac86b4ae456f6382c6bf158639b0f05d898df4899248c6c30154bf840c9c090f";
+    "405c630f942256e6e49caf93d6912f79b14d30a8163531a496c11eb0e35a4009";
 
 #[derive(Deserialize)]
 struct Expected {

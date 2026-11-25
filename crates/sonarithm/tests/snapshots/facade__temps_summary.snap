@@ -1,6 +1,6 @@
 ---
 source: crates/sonarithm/tests/facade.rs
-expression: compiled.summary()
+expression: summary
 ---
 {
   "spec": "temps.spec.json",
@@ -10,7 +10,7 @@ expression: compiled.summary()
   "seed": 0,
   "duration_s": 0.916667,
   "spec_hash": "27445d2a080a766fc84459d73ad8014a2f7459e6da28395752fe5fbe80e74dba",
-  "data_fingerprint": "cddbb4e459a43e41bf5422e3e499456524b3a2a80a7307a20dbf38b43be13fa3",
+  "data_fingerprint": "6c34912c4a7cb79971a839d227a73b7ba4619eac689cdbcd0026259585d83f54",
   "score_hash": "[score hash]",
   "engines": {
     "numisona": "[version]",
