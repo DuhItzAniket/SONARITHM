@@ -546,7 +546,7 @@ fn hash_in_place(file: &File, start: u64, len: u64) -> Result<String, IpcError> 
 ///
 /// `SNR-APP-031` for a newer major version, `SNR-APP-032` for an unsafe, oversized,
 /// altered or malformed bundle. An embedded dataset whose fingerprint differs although its
-/// member verifies is not an error: it opens with the warning `SNR-APP-091`.
+/// member verifies is not an error: it opens with the warning `SNR-APP-093`.
 pub fn open(path: &Path, table_ids: &mut dyn FnMut() -> u32) -> Result<Opened, IpcError> {
     let file = File::open(path).map_err(|_| damaged("the file cannot be read"))?;
     let reader = file
@@ -717,7 +717,7 @@ fn verify(
 /// The member's SHA-256 was verified before this runs ([`verify`]), so the bytes are the
 /// ones the project saved. A fingerprint that differs then means that another build
 /// fingerprinted the same data differently (an Arrow upgrade moved every fingerprint,
-/// F-222), not that the data changed: the dataset opens with `SNR-APP-091` and keeps the
+/// F-222), not that the data changed: the dataset opens with `SNR-APP-093` and keeps the
 /// fingerprint this build computes, which the next save records (RFC-0002 §13).
 fn embedded(
     file: &File,

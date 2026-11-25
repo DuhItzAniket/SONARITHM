@@ -606,7 +606,7 @@ fn a_project_fingerprinted_by_an_older_build_opens_and_saves_the_new_fingerprint
     assert!(
         warnings
             .iter()
-            .any(|(code, message)| *code == "SNR-APP-091" && message.contains("`temps.csv`")),
+            .any(|(code, message)| *code == "SNR-APP-093" && message.contains("`temps.csv`")),
         "{warnings:?}"
     );
     // The linked one stays unavailable: the format records no hash of a linked file.
@@ -625,7 +625,7 @@ fn a_project_fingerprinted_by_an_older_build_opens_and_saves_the_new_fingerprint
     assert_eq!(after[1], before[1]);
     let reopened = project::open(&std::fs::canonicalize(&path).unwrap(), &mut || 1).unwrap();
     assert!(
-        reopened.warnings.iter().all(|w| w.code != "SNR-APP-091"),
+        reopened.warnings.iter().all(|w| w.code != "SNR-APP-093"),
         "{:?}",
         reopened.warnings
     );
