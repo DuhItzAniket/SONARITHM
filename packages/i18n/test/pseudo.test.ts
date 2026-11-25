@@ -72,6 +72,10 @@ function sampleArgs(style: string): MessageArgs {
     condition: "15",
     device: "16",
     paused: "yes",
+    // The chart explorer's toggles (B03-T09).
+    modality: "speech",
+    on: "yes",
+    verbosity: "verbose",
   };
 }
 
