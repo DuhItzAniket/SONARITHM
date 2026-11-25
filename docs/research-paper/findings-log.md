@@ -1016,6 +1016,14 @@ A05 (render engine, audio backends, export) uses F-050 to F-069.
 - **Affects:** C02-T09, A11Y-02, A11Y-12, A11Y-24, FR-008, OD-07, H-06
 - **Papers:** none yet
 
+### F-204 · CURVASONA sampled functions with each platform's own maths library, so one function gave three Scores
+
+- **Date:** 2026-11-01 · **Phase:** C03 · **Type:** engineering (determinism) · **Status:** new
+- **Statement:** The replication gallery's curvasona-suite records, rendered on HW-01 (Windows 11), matched CI's Windows job but failed `the_replication_gallery_renders_reproducibly` on CI Ubuntu and macOS (#449, job 124767740975, ebf14dd1 merged into 41b7a992). A local re-record after merging `main` changed none of the 129 files, so the failure was not a stale record. The cause: CURVASONA evaluates expressions through exmex, and exmex's default operators call the `std` float functions (`sin`, `exp`, `ln`, `powf`…), which each platform's maths library computes to slightly different last bits. Two step sizes in the derivatives also used `std` (`EPSILON.cbrt()`, `EPSILON.powf(0.25)`). The sampled `y` and `dy` columns therefore differed by platform, and so did the data fingerprint, the Score's hash and the render, against ADR-0013 §1 (a byte-identical Score from platform-independent maths). Which values differed on Linux and macOS was not inspected: CI reports only that the file differs. The fix gives exmex its own operator set (`expr/ops.rs`) in which every admitted function and `^` is `libm`'s, folds constant powers with `libm::pow`, and writes the two step sizes with `libm` or as the exact constant 2^-13.
+- **Evidence:** `crates/engines/sonarithm-curvasona/src/expr/ops.rs`; the test `adr_0013_every_function_evaluates_with_libm_bit_for_bit` (every name in `FUNCTIONS`, and `^`, bit for bit against `libm` at six points); CI's three platforms on #449 once it is re-recorded on top of the fix
+- **Evidence level / confidence:** EV-D / Strong for the cause (the failing OS set, the zero-change local re-record, and exmex's operator source); cross-platform agreement after the fix is shown by #449's CI, not yet
+- **Affects:** ADR-0013 §1; every function spec's Score and manifest (C03-T02, C03-T06, C03-T07); the curvasona-suite records; any snapshot that holds a function's full-precision values
+
 ### F-201 · A hole on a pole's steep slope was taken for a jump, because the sides were compared with a fixed tolerance
 
 - **Date:** 2026-11-01 · **Phase:** C03 · **Type:** engineering (robustness) · **Status:** new
@@ -1245,14 +1253,14 @@ A05 (render engine, audio backends, export) uses F-050 to F-069.
 - **Affects:** B03-T09 (point cue), A05 render voice pools, 06 §3 and §5
 - **Papers:** none yet
 
-### F-222 · A patch release of arrow moved every data fingerprint, because the fingerprint hashes arrow-ipc's bytes
+### F-222 · A minor release of arrow moved every data fingerprint, because the fingerprint hashes arrow-ipc's bytes
 
 - **Date:** 2026-11-26 · **Phase:** maintenance (A04 code) · **Type:** engineering (determinism) · **Status:** new
-- **Statement:** Fixing main's `cargo deny` failure (RUSTSEC-2026-0442 in arrow-data) bumped arrow from 60.0.0 to 60.2.0, a patch range. Every data fingerprint changed although no data did.
+- **Statement:** Fixing main's `cargo deny` failure (RUSTSEC-2026-0442 in arrow-data) bumped arrow from 60.0.0 to 60.2.0, a minor release. Every data fingerprint changed although no data did.
   - **Why:** `sonarithm_data::fingerprint` hashes the Arrow IPC stream that `arrow_ipc::writer::StreamWriter` writes from a canonical copy of the table (`crates/sonarithm-data/src/fingerprint.rs`), so the digest depends on arrow-ipc's encoder as well as on the values.
-  - **What moved:** the two pinned corpus digests, 7 insta snapshots, 3 golden Scores and the parity Score (`data_fingerprint` only), and 98 lines of the replication gallery (each record's `data.fingerprint` and the `releaseIndependentHash` that covers it).
+  - **What moved:** the two pinned corpus digests, 16 insta snapshots (CLI 1, CURVASONA 1, NUMISONA 7, PLOTSONA 6, facade 1), 3 golden Scores and the parity Score (`data_fingerprint` only), and 98 lines of the replication gallery (each record's `data.fingerprint` and the `releaseIndependentHash` that covers it).
   - **What did not:** golden audio (all 10 cases identical) and the parity WAV hash.
-  - **Why it matters:** the module doc expected this for an Arrow upgrade, but in a patch release it turns a security fix into a re-record of every provenance record, and render manifests from older builds no longer match the same data (ADR-0013). Which arrow-ipc change altered the bytes was not traced.
+  - **Why it matters:** the module doc expected this for an Arrow upgrade, but in a minor release it turns a security fix into a re-record of every provenance record, and render manifests from older builds no longer match the same data (ADR-0013). Which arrow-ipc change altered the bytes was not traced.
 - **Evidence:** `crates/sonarithm-data/tests/fingerprints.rs` (`corpus_fingerprints_are_pinned`, `loaded_tables_with_inference_are_pinned`); the re-recorded files in the deny-fix PR; #469 (a value-based fingerprint proposal)
 - **Evidence level / confidence:** EV-C / Strong (every changed record checked: only fingerprints and the hashes that cover them moved)
 - **Affects:** 03 §2 (`Fingerprint`), ADR-0013, F-071; every render manifest and golden or replication record; #469

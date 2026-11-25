@@ -151,7 +151,8 @@ impl Calculus {
             return numeric_derivative(d1, x);
         }
         // A second difference with the step that balances truncation and rounding error.
-        let h = f64::EPSILON.powf(0.25) * x.abs().max(1.0);
+        // EPSILON^(1/4) = 2^-13, written out: no platform `powf` (ADR-0013 §1).
+        let h = (1.0 / 8192.0) * x.abs().max(1.0);
         let (l, m, r) = (self.f.eval(x - h), self.f.eval(x), self.f.eval(x + h));
         (r - 2.0 * m + l) / (h * h)
     }
@@ -417,8 +418,11 @@ fn limit_at_infinity(f: &Expr, edge: f64, right: bool) -> Option<f64> {
     let start = edge.abs().max(1.0);
     let sign = if right { 1.0 } else { -1.0 };
     let mut values = Vec::with_capacity(31);
-    for k in 0..=30 {
-        let v = f.eval(sign * start * 4_f64.powi(k));
+    // 4^k by repeated exact multiplication: no platform `powi` (ADR-0013 §1, F-204).
+    let mut scale = 1.0;
+    for _ in 0..=30 {
+        let v = f.eval(sign * start * scale);
+        scale *= 4.0;
         if !v.is_finite() {
             return None;
         }

@@ -120,6 +120,8 @@ pub fn typescript() -> String {
     declare::<crate::ipc::CursorOrigin>(&mut out, &cfg);
     declare::<crate::ipc::CursorPathItem>(&mut out, &cfg);
     declare::<crate::ipc::PathLevel>(&mut out, &cfg);
+    declare::<crate::ipc::FunctionInfo>(&mut out, &cfg);
+    declare::<crate::ipc::CriticalPointInfo>(&mut out, &cfg);
     declare::<crate::ipc::SeriesRef>(&mut out, &cfg);
     declare::<crate::ipc::NavVerb>(&mut out, &cfg);
     declare::<crate::ipc::NavLandmark>(&mut out, &cfg);

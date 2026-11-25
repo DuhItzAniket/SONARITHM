@@ -686,7 +686,7 @@ mod tests {
         assert_eq!(again.bundle.primary().unwrap().schema(), table.schema());
         // An Arrow file without record batches whose provenance column is a dictionary of a
         // union without members: arrow-data panicked building its empty column after
-        // decoding (nightly run on 2026-10-20). Since arrow 60.1 the empty column builds,
+        // decoding (nightly run on 2026-10-20). Since arrow 60.2 the empty column builds,
         // so the file is refused one step later, by the provenance check; it still never
         // panics.
         let bytes = include_bytes!("../../tests/corpus/fuzz/ipc-empty-union.arrow");
@@ -708,11 +708,92 @@ mod tests {
             ),
         ]);
         assert_eq!(check_empty_columns(&fine), Ok(()));
-        // A union without members made arrow-data panic (F-071); arrow 60.1 builds its empty
+        // A union without members made arrow-data panic (F-071); arrow 60.2 builds its empty
         // column, so it passes now. The guard stays for any other type that still panics.
         let empty_union = DataType::Union(UnionFields::empty(), UnionMode::Sparse);
         let union = Schema::new(vec![Field::new("u", empty_union, true)]);
         assert_eq!(check_empty_columns(&union), Ok(()));
+    }
+
+    /// A schema with one data column of a union without members.
+    fn empty_union_schema() -> SchemaRef {
+        use arrow_schema::UnionMode;
+        let empty_union = DataType::Union(UnionFields::empty(), UnionMode::Sparse);
+        Arc::new(Schema::new(vec![Field::new("u", empty_union, true)]))
+    }
+
+    /// An Arrow IPC stream of `schema` and `batches`.
+    fn ipc_stream(schema: &SchemaRef, batches: &[RecordBatch]) -> Vec<u8> {
+        let mut writer = arrow_ipc::writer::StreamWriter::try_new(Vec::new(), schema).unwrap();
+        for batch in batches {
+            writer.write(batch).unwrap();
+        }
+        writer.finish().unwrap();
+        writer.into_inner().unwrap()
+    }
+
+    #[test]
+    fn an_empty_union_data_column_without_rows_loads_and_round_trips() {
+        // Before arrow 60.2 a union without members was refused (SNR-DATA-001, F-071); its
+        // empty column builds now, so a file without record batches loads.
+        let schema = empty_union_schema();
+        let mut writer = FileWriter::try_new(Vec::new(), &schema).unwrap();
+        writer.finish().unwrap();
+        let bytes = writer.into_inner().unwrap();
+        let loaded = read_bytes(&bytes, Format::Arrow, "x", &ReadOptions::default()).unwrap();
+        let table = loaded.bundle.primary().unwrap().clone();
+        assert_eq!(table.num_rows(), 0);
+        assert_eq!(
+            table.schema().field(0).data_type(),
+            schema.field(0).data_type()
+        );
+        let again = reread(&write_ipc(&table).unwrap(), Format::Arrow);
+        assert_same(&again, &table);
+        assert_eq!(
+            crate::table_fingerprint(&again).unwrap(),
+            crate::table_fingerprint(&table).unwrap()
+        );
+    }
+
+    #[test]
+    fn an_empty_union_data_column_with_a_row_is_refused_with_a_code() {
+        use arrow_array::{Int8Array, UnionArray};
+        use arrow_schema::UnionMode;
+
+        // arrow-ipc writes no batch for a union without members that has a row, so the
+        // stream joins the schema message of such a union to a one-row batch of a union with
+        // one member: its type id 0 names no field of the declared union.
+        let member = UnionFields::try_new([0], [Field::new("a", DataType::Int8, true)]).unwrap();
+        let column = UnionArray::try_new(
+            member.clone(),
+            vec![0_i8].into(),
+            None,
+            vec![Arc::new(Int8Array::from(vec![7_i8]))],
+        )
+        .unwrap();
+        let one_member = Arc::new(Schema::new(vec![Field::new(
+            "u",
+            DataType::Union(member, UnionMode::Sparse),
+            true,
+        )]));
+        let batch = RecordBatch::try_new(Arc::clone(&one_member), vec![Arc::new(column)]).unwrap();
+        let schema_end = |bytes: &[u8]| {
+            let (start, len) = message_at(bytes, 0).unwrap();
+            start + len
+        };
+        let declared = ipc_stream(&empty_union_schema(), &[]);
+        let written = ipc_stream(&one_member, &[batch]);
+        let mut bytes = declared[..schema_end(&declared)].to_vec();
+        bytes.extend_from_slice(&written[schema_end(&written)..]);
+
+        let err = read_bytes(&bytes, Format::Arrow, "x", &ReadOptions::default()).unwrap_err();
+        assert_eq!(err.to_diagnostic().code.as_str(), "SNR-DATA-001", "{err}");
+        // Refused by arrow's own validation of the batch, not by a contained panic.
+        assert!(
+            !err.to_string()
+                .contains("the decoder rejected malformed data"),
+            "{err}"
+        );
     }
 
     #[test]
