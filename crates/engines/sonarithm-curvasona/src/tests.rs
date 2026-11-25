@@ -96,8 +96,8 @@ fn the_function_source_gives_x_y_and_dy_with_synthetic_provenance() {
         let (Some(x), Some(y), Some(dy)) = (*x, *y, *dy) else {
             continue;
         };
-        assert!((y - x.sin() / x).abs() < 1e-12);
-        let exact = (x * x.cos() - x.sin()) / (x * x);
+        assert!((y - libm::sin(x) / x).abs() < 1e-12);
+        let exact = (x * libm::cos(x) - libm::sin(x)) / (x * x);
         assert!((dy - exact).abs() < 1e-9, "dy at {x}: {dy} vs {exact}");
     }
 }
@@ -109,7 +109,7 @@ fn snr_eng_406_undefined_samples_have_no_y_and_are_reported() {
     let bundle = bundle.unwrap();
     assert_eq!(
         column(&bundle, "y"),
-        [None, None, None, Some(0.5_f64.ln()), Some(0.0)]
+        [None, None, None, Some(libm::log(0.5)), Some(0.0)]
     );
     assert_eq!(column(&bundle, "dy")[..3], [None, None, None]);
     let codes: Vec<(&str, Option<&str>)> = cx

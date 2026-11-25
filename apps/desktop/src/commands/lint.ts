@@ -62,7 +62,9 @@ export function bindingProblems(
       reason: "Ctrl+Alt+letter types AltGr characters",
     });
   }
-  if (alt && ARROWS.has(key)) {
+  // Alt+arrows are history in WebView2 and WebKitGTK; on macOS, Option+arrows are Jump
+  // (KB-07) and Ctrl+Option is caught above as VoiceOver keys.
+  if (alt && ARROWS.has(key) && (platform !== "mac" || ctrl)) {
     problems.push({
       rule: "KB-04",
       reason: ctrl
