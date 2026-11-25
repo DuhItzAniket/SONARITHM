@@ -173,7 +173,8 @@ pub struct Project {
 pub struct Opened {
     /// The project.
     pub project: Project,
-    /// Warnings: newer minor version, ignored members, linked data missing or changed.
+    /// Warnings: newer minor version, ignored members, linked data missing or changed,
+    /// embedded data fingerprinted again.
     pub warnings: Vec<IpcError>,
 }
 
@@ -544,7 +545,8 @@ fn hash_in_place(file: &File, start: u64, len: u64) -> Result<String, IpcError> 
 /// # Errors
 ///
 /// `SNR-APP-031` for a newer major version, `SNR-APP-032` for an unsafe, oversized,
-/// altered or malformed bundle.
+/// altered or malformed bundle. An embedded dataset whose fingerprint differs although its
+/// member verifies is not an error: it opens with the warning `SNR-APP-091`.
 pub fn open(path: &Path, table_ids: &mut dyn FnMut() -> u32) -> Result<Opened, IpcError> {
     let file = File::open(path).map_err(|_| damaged("the file cannot be read"))?;
     let reader = file
@@ -594,7 +596,9 @@ pub fn open(path: &Path, table_ids: &mut dyn FnMut() -> u32) -> Result<Opened, I
             .with_limits(Limits::DEFAULT)
             .with_ids(BundleId(u64::from(ids)), TableId(ids));
         let dataset = match entry.storage {
-            Storage::Embedded => embedded(&file, entry, &listed, &entries, &options)?,
+            Storage::Embedded => {
+                embedded(&file, entry, &listed, &entries, &options, &mut warnings)?
+            }
             Storage::Linked => linked_dataset(folder, entry, &options, &mut warnings),
         };
         project.datasets.push(dataset);
@@ -709,12 +713,19 @@ fn verify(
 
 /// An embedded dataset, read in place from its stored member and checked against its
 /// fingerprint.
+///
+/// The member's SHA-256 was verified before this runs ([`verify`]), so the bytes are the
+/// ones the project saved. A fingerprint that differs then means that another build
+/// fingerprinted the same data differently (an Arrow upgrade moved every fingerprint,
+/// F-222), not that the data changed: the dataset opens with `SNR-APP-091` and keeps the
+/// fingerprint this build computes, which the next save records (RFC-0002 §13).
 fn embedded(
     file: &File,
     entry: &DatasetEntry,
     listed: &BTreeSet<&str>,
     entries: &BTreeMap<String, Entry>,
     options: &ReadOptions,
+    warnings: &mut Vec<IpcError>,
 ) -> Result<ProjectDataset, IpcError> {
     let member = entry
         .path
@@ -738,8 +749,12 @@ fn embedded(
         .map_err(|err| IpcError::from_diagnostic(&err.to_diagnostic()))?
         .to_string();
     if fingerprint != entry.fingerprint {
-        return Err(damaged(
-            "an embedded dataset does not match its fingerprint",
+        warnings.push(IpcError::new(
+            &codes::DATASET_REFINGERPRINTED,
+            format!(
+                "The embedded data `{}` was fingerprinted by another SONARITHM build. It                  matches the project's checksum, so it opens unchanged; saving the project                  records the new fingerprint.",
+                file_name(&entry.name)
+            ),
         ));
     }
     Ok(ProjectDataset {

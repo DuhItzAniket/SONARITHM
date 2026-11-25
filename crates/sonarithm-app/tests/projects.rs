@@ -563,3 +563,105 @@ fn project_paths_are_checked_and_never_echoed() {
     );
     assert_eq!(reopened["fileName"], "p.sonarithm");
 }
+
+/// The dataset fingerprints a bundle's manifest records, in manifest order.
+fn recorded_fingerprints(path: &Path) -> Vec<String> {
+    let mut archive = zip::ZipArchive::new(std::fs::File::open(path).unwrap()).unwrap();
+    let manifest: Value =
+        serde_json::from_reader(archive.by_name("manifest.json").unwrap()).unwrap();
+    manifest["datasets"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .map(|d| d["fingerprint"].as_str().unwrap().to_owned())
+        .collect()
+}
+
+/// RFC-0002 §13: `tests/fixtures/pre-470` was saved by the build before #470 (arrow 60.0),
+/// whose fingerprints differ from this build's for the same data (F-222, F-223). It embeds
+/// `d1` and links `d2` (`more.csv`).
+#[test]
+fn a_project_fingerprinted_by_an_older_build_opens_and_saves_the_new_fingerprint() {
+    let fixtures = Path::new(env!("CARGO_MANIFEST_DIR")).join("tests/fixtures/pre-470");
+    let dir = TempDir::new("pre-470");
+    for name in ["pre-470.sonarithm", "more.csv"] {
+        std::fs::copy(fixtures.join(name), dir.path().join(name)).unwrap();
+    }
+    let path = dir.path().join("pre-470.sonarithm");
+    let before = recorded_fingerprints(&path);
+
+    let mut app = self::app(dir.path());
+    let opened = ok(
+        &mut app,
+        &json!({ "command": "project_open", "args": { "path": path } }),
+    );
+    let warnings: Vec<(&str, &str)> = opened["diagnostics"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .map(|d| (d["code"].as_str().unwrap(), d["message"].as_str().unwrap()))
+        .collect();
+    // The embedded dataset opens, with a warning that names it by file name only.
+    assert_eq!(opened["datasets"][0]["available"], true, "{opened}");
+    assert!(
+        warnings
+            .iter()
+            .any(|(code, message)| *code == "SNR-APP-091" && message.contains("`temps.csv`")),
+        "{warnings:?}"
+    );
+    // The linked one stays unavailable: the format records no hash of a linked file.
+    assert_eq!(opened["datasets"][1]["available"], false, "{opened}");
+    assert!(
+        warnings.iter().any(|(code, _)| *code == "SNR-APP-034"),
+        "{warnings:?}"
+    );
+    let compiled = ok(&mut app, &json!({ "command": "compile" }));
+    assert_eq!(compiled["ok"], true, "{compiled}");
+
+    // Saving records the new fingerprint for the embedded data and keeps the linked entry.
+    ok(&mut app, &json!({ "command": "project_save" }));
+    let after = recorded_fingerprints(&path);
+    assert_ne!(after[0], before[0]);
+    assert_eq!(after[1], before[1]);
+    let reopened = project::open(&std::fs::canonicalize(&path).unwrap(), &mut || 1).unwrap();
+    assert!(
+        reopened.warnings.iter().all(|w| w.code != "SNR-APP-091"),
+        "{:?}",
+        reopened.warnings
+    );
+
+    // Real damage still refuses: one byte of the Parquet member changed.
+    let mut archive =
+        zip::ZipArchive::new(std::fs::File::open(fixtures.join("pre-470.sonarithm")).unwrap())
+            .unwrap();
+    let manifest: Value =
+        serde_json::from_reader(archive.by_name("manifest.json").unwrap()).unwrap();
+    let mut members: Vec<(String, Vec<u8>, CompressionMethod)> = Vec::new();
+    for index in 0..archive.len() {
+        let mut member = archive.by_index(index).unwrap();
+        let name = member
+            .name()
+            .map(std::borrow::Cow::into_owned)
+            .unwrap_or_default();
+        if name == "manifest.json" {
+            continue;
+        }
+        let mut bytes = Vec::new();
+        std::io::Read::read_to_end(&mut member, &mut bytes).unwrap();
+        let method = if name.ends_with(".parquet") {
+            let middle = bytes.len() / 2;
+            bytes[middle] ^= 1;
+            CompressionMethod::Stored
+        } else {
+            CompressionMethod::Deflated
+        };
+        members.push((name, bytes, method));
+    }
+    let members: Vec<(&str, Vec<u8>, CompressionMethod)> = members
+        .iter()
+        .map(|(name, bytes, method)| (name.as_str(), bytes.clone(), *method))
+        .collect();
+    let tampered = dir.path().join("tampered.sonarithm");
+    craft(&tampered, &members, &manifest);
+    assert_eq!(open_code(&tampered), "SNR-APP-032");
+}

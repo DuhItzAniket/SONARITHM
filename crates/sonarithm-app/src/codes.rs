@@ -417,6 +417,20 @@ pub const NAV_NO_TREE: CodeInfo = CodeInfo {
     status: CodeStatus::Active,
 };
 
+/// An embedded dataset whose member checksum verifies but whose fingerprint differs: another
+/// build fingerprinted it, so it opens and the next save records the new fingerprint
+/// (RFC-0002 §13).
+pub const DATASET_REFINGERPRINTED: CodeInfo = CodeInfo {
+    code: "SNR-APP-091",
+    severity: Severity::Warning,
+    summary: "A dataset was fingerprinted again",
+    help: "The data matches the project's own checksum, so it opens unchanged; another \
+           SONARITHM build computed its fingerprint differently. Save the project to record \
+           the new fingerprint.",
+    rules: &[],
+    status: CodeStatus::Active,
+};
+
 /// Every `SNR-APP` code, in ascending order.
 pub const CODES: CodeTable = CodeTable {
     area: Area::App,
@@ -461,6 +475,7 @@ pub const CODES: CodeTable = CodeTable {
         CORRECTIONS_NOT_HERE,
         CURSOR_ROW,
         NAV_NO_TREE,
+        DATASET_REFINGERPRINTED,
     ],
 };
 
