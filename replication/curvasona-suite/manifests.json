@@ -2,7 +2,7 @@
   "01-parabola": {
     "cues": null,
     "data": {
-      "fingerprint": "sha256:d5032a7632869f7248f6c65f2ee825582e620210228c3e69f97b8d9c27813088",
+      "fingerprint": "sha256:93a0329f82c8985f3c232a333ad65bb625f0d51a9549a87171eff0cfd480da44",
       "provenance": {},
       "source": {
         "kind": "inline",
@@ -32,7 +32,7 @@
     },
     "score": {
       "irVersion": 2,
-      "releaseIndependentHash": "sha256:33d4fd22e1725715d38a73e311923d7f7af3ef5a2b1a25553fef93854b20650f"
+      "releaseIndependentHash": "sha256:0183fa16c57a9a315b224a88891b654d15b81f4f96bf4ca0b43e6df83bd942dd"
     },
     "spec": {
       "embedded": null,
@@ -65,7 +65,7 @@
   "02-cubic": {
     "cues": null,
     "data": {
-      "fingerprint": "sha256:d3c447e96ef76245ac3f5c403ab47ffd89c090bf261fb5194795c0f5b411f410",
+      "fingerprint": "sha256:baa59edb355f8e902d29faf564ec9c7163ccc8c8c7189fa4398ef54fcde1db86",
       "provenance": {},
       "source": {
         "kind": "inline",
@@ -95,7 +95,7 @@
     },
     "score": {
       "irVersion": 2,
-      "releaseIndependentHash": "sha256:bc7337769f24ab6c64d7f6519ff04140d87957d032e110e809774e0b4d8cd12a"
+      "releaseIndependentHash": "sha256:4e46b36d3063421f9e594948ccc375deb060a6d568120a6da85f0320c21d0d98"
     },
     "spec": {
       "embedded": null,
@@ -128,7 +128,7 @@
   "03-sine": {
     "cues": null,
     "data": {
-      "fingerprint": "sha256:5468d3adc3ca9f1c1fb7b9ab2d1b79adfd2b52def07ff9f0bfb9075c6f65ccca",
+      "fingerprint": "sha256:24c9d8e406eab8902ce64366ad3a3ab413e28b9ccbc3c0aac0643edde4bd1d58",
       "provenance": {},
       "source": {
         "kind": "inline",
@@ -158,7 +158,7 @@
     },
     "score": {
       "irVersion": 2,
-      "releaseIndependentHash": "sha256:1a323b60a31df926c2a309fa54922782f232b28c55c656c15b1af8a27d406c33"
+      "releaseIndependentHash": "sha256:183c3537239e5411a133b98398e9f335b4abcf34a899b6efa298c479cc3aecf0"
     },
     "spec": {
       "embedded": null,
@@ -191,7 +191,7 @@
   "04-cosine": {
     "cues": null,
     "data": {
-      "fingerprint": "sha256:94f6f5cbb6ea0264b57cc3d3c1bc7e1fc3f1ccf43d73fa3323ecc9134bf0c4f4",
+      "fingerprint": "sha256:2587a8724c330edbbab4fb950871c1599802e8e36f979c1b764097fbce230a5d",
       "provenance": {},
       "source": {
         "kind": "inline",
@@ -221,7 +221,7 @@
     },
     "score": {
       "irVersion": 2,
-      "releaseIndependentHash": "sha256:379f99f58f8d1dc990088edd2edbaf4fb8a7c55e1260aa6798983debb095015c"
+      "releaseIndependentHash": "sha256:4a8ffdd17ba4214b10094d91d70d202ec8518566f84f6790410ed8de87b5fe7f"
     },
     "spec": {
       "embedded": null,
@@ -254,7 +254,7 @@
   "05-tangent": {
     "cues": null,
     "data": {
-      "fingerprint": "sha256:fcfeb23819df083378ccd158b2516d858c55b15199c1b72a2837965c190cb00b",
+      "fingerprint": "sha256:15db284ca904d2a9d293ffe4d0ae8748b423d2ea7957a353fffa4f4f10cab10e",
       "provenance": {},
       "source": {
         "kind": "inline",
@@ -284,7 +284,7 @@
     },
     "score": {
       "irVersion": 2,
-      "releaseIndependentHash": "sha256:f61aeb8d93cbd9f395c47dd91c6304758d1541925ecc9ab162059b3bdfd379d4"
+      "releaseIndependentHash": "sha256:a55a2abe9e26d96e1afe31222de25bb9eaf711f3ec1efcb18f05edfbb7af9cba"
     },
     "spec": {
       "embedded": null,
@@ -317,7 +317,7 @@
   "06-reciprocal": {
     "cues": null,
     "data": {
-      "fingerprint": "sha256:646c565d14b86349d1cb9aa3b0a2d1f1fa73f84729a4b14fce8acf2e47fc3c43",
+      "fingerprint": "sha256:0f5cbbf5e1bada3f55036ca5d897ee10c3644196ea79630a6249ec0a980a3468",
       "provenance": {},
       "source": {
         "kind": "inline",
@@ -347,7 +347,7 @@
     },
     "score": {
       "irVersion": 2,
-      "releaseIndependentHash": "sha256:d4e39e1987def96617503a405301c7862e7376f7a6e5d7a3703fe4a51c109960"
+      "releaseIndependentHash": "sha256:02fc295c1e3a417fa201ea55e1ce20a523cddc3a046128516f05824f216a779f"
     },
     "spec": {
       "embedded": null,
@@ -380,7 +380,7 @@
   "07-shifted-reciprocal": {
     "cues": null,
     "data": {
-      "fingerprint": "sha256:3151115b13110e77d3bd55beaf97953364e1742bf43d9deedf1ffcb44e19b432",
+      "fingerprint": "sha256:40029af592d2bfed7850602819ad2361cdd8ec1a29d674a391ee0d5725edf821",
       "provenance": {},
       "source": {
         "kind": "inline",
@@ -410,7 +410,7 @@
     },
     "score": {
       "irVersion": 2,
-      "releaseIndependentHash": "sha256:d696da2fecf5cfcf49a204fdd6018edc03add26c49baa88dd25a295266107a67"
+      "releaseIndependentHash": "sha256:d2a5f55b99739809cd25128ea158619bb92cd6e42cb376af430e3a94b4b9e47f"
     },
     "spec": {
       "embedded": null,
@@ -443,7 +443,7 @@
   "08-inverse-square": {
     "cues": null,
     "data": {
-      "fingerprint": "sha256:8e2fbb2d344009e1a035479678808537cdfc2232d173890149983ce7a99e9ef3",
+      "fingerprint": "sha256:b75bb521429a2dad7048b2a0fbd22f3046b29307dce6a2275238ddb2086cd065",
       "provenance": {},
       "source": {
         "kind": "inline",
@@ -473,7 +473,7 @@
     },
     "score": {
       "irVersion": 2,
-      "releaseIndependentHash": "sha256:b1162e5ba172397cd58b8447a33dc08b19189289c5a186db2d7b5a5a21ab4a19"
+      "releaseIndependentHash": "sha256:8b95a18d77556b61a8a9efc7008e9b87a978bcd67d75a5b2a685e0e403a95f39"
     },
     "spec": {
       "embedded": null,
@@ -506,7 +506,7 @@
   "09-line-with-a-hole": {
     "cues": null,
     "data": {
-      "fingerprint": "sha256:91c2fba7ec519731b3ca435b703586f8e2b5a19aca4e93874dcab5a50f3c6be9",
+      "fingerprint": "sha256:512ec3debb6f0da626a88c8659a22ecd8949c4bc3000a6fedae031a560b158c1",
       "provenance": {},
       "source": {
         "kind": "inline",
@@ -536,7 +536,7 @@
     },
     "score": {
       "irVersion": 2,
-      "releaseIndependentHash": "sha256:ecd4cbce4421d80bc48b4bb35293ece9a10a91aee0d1d7e347c7350d89fecbe8"
+      "releaseIndependentHash": "sha256:7c3ef405401d4e49af021462edf019c0bb831c0dd3dbac6a917a078602ee6ec9"
     },
     "spec": {
       "embedded": null,
@@ -569,7 +569,7 @@
   "10-sinc": {
     "cues": null,
     "data": {
-      "fingerprint": "sha256:053c788b9f2f6bb19a2cf8770bfb9d9238521c668cc53b0309bd94c8b53086f4",
+      "fingerprint": "sha256:9d43254947090f1a7faef70ab8b22496a5e2773e211a78f186e268104f82fcda",
       "provenance": {},
       "source": {
         "kind": "inline",
@@ -599,7 +599,7 @@
     },
     "score": {
       "irVersion": 2,
-      "releaseIndependentHash": "sha256:b9aa8540ce059cd4de52225929391b7825aa97901f0a6e7b54a2c53f6e0210e9"
+      "releaseIndependentHash": "sha256:3a953c77e3ef0ccb26c790dab298ea9d47e4057db1e1196f024cf1ef0f3b837f"
     },
     "spec": {
       "embedded": null,
@@ -632,7 +632,7 @@
   "11-natural-logarithm": {
     "cues": null,
     "data": {
-      "fingerprint": "sha256:c344dd63d3c9fac8a0c8157d651af515a1cf910a19300dbaaed3a972a4aa3452",
+      "fingerprint": "sha256:ade7df20e1b34f050290155e2d3f70d0010b858217248c7008915c0287843f63",
       "provenance": {},
       "source": {
         "kind": "inline",
@@ -662,7 +662,7 @@
     },
     "score": {
       "irVersion": 2,
-      "releaseIndependentHash": "sha256:cd7d22527174f137706ab77cf58d59d6cb9dd9ab0a2768e7eeae714e217ff3fd"
+      "releaseIndependentHash": "sha256:70c436ea58a679d3ed32ae89cbd2daede82c947646b7c2a23d54c8be7d9f7695"
     },
     "spec": {
       "embedded": null,
@@ -695,7 +695,7 @@
   "12-square-root": {
     "cues": null,
     "data": {
-      "fingerprint": "sha256:fc4e109b99b6b0874eca96d200961623de72f9ebdff1a96e52b67b65dfb609fe",
+      "fingerprint": "sha256:2ae0e80103bae0a2c8fe3a70921e8d780bc34b2de9f56518dbc7f5fc45921406",
       "provenance": {},
       "source": {
         "kind": "inline",
@@ -725,7 +725,7 @@
     },
     "score": {
       "irVersion": 2,
-      "releaseIndependentHash": "sha256:0b979db2a5abc7c5c1edeb51549cd4daa76587677a0e4758a89c74c0cdb11cd4"
+      "releaseIndependentHash": "sha256:2909f840257b2afaf64d1a8cf4338fa878d9ce212d0c2923975d61ac78778929"
     },
     "spec": {
       "embedded": null,
@@ -758,7 +758,7 @@
   "13-semicircle": {
     "cues": null,
     "data": {
-      "fingerprint": "sha256:e7922da0d9fe4cf6c21547e347610e5411084bb684c80dbda9a8e72778273028",
+      "fingerprint": "sha256:fc761040b3a59155c9253998cf06e8bc24ec6689e97fa69de9197876950d2888",
       "provenance": {},
       "source": {
         "kind": "inline",
@@ -788,7 +788,7 @@
     },
     "score": {
       "irVersion": 2,
-      "releaseIndependentHash": "sha256:665ef6c4b9f5324fea0844fba3d78df554a4520f3c202ed3949acfe5c4af3edf"
+      "releaseIndependentHash": "sha256:52db0d3ac193250685d9e151d5affe25eceace2527094db1ae176d912ec2daab"
     },
     "spec": {
       "embedded": null,
@@ -821,7 +821,7 @@
   "14-narrow-gap": {
     "cues": null,
     "data": {
-      "fingerprint": "sha256:0627ff7cfd858256b844ab0d31c7b9103ad839a4d3963016d869e62fb6e1369e",
+      "fingerprint": "sha256:664b86901a664c610d198994ee03438e65fa4229a545682caa6e54d8f8d4806f",
       "provenance": {},
       "source": {
         "kind": "inline",
@@ -851,7 +851,7 @@
     },
     "score": {
       "irVersion": 2,
-      "releaseIndependentHash": "sha256:604c6cb4cc0ff2d73272e4fa1dae67ca0831aaaa10e35b35c44409cf654ccd24"
+      "releaseIndependentHash": "sha256:5f33e58cceb3f2d53014e46624818fb80cb81aafe6c93a4ac3dc568b5c01ca62"
     },
     "spec": {
       "embedded": null,
@@ -884,7 +884,7 @@
   "15-two-poles": {
     "cues": null,
     "data": {
-      "fingerprint": "sha256:76bc5938d0457e22e5208aebece7c958cdfd8b033bb18d9ab0aef907f93bc126",
+      "fingerprint": "sha256:7de162c50cdd03804b73acb66825849a2cd30a4b0074c57eafb9e0582915975b",
       "provenance": {},
       "source": {
         "kind": "inline",
@@ -914,7 +914,7 @@
     },
     "score": {
       "irVersion": 2,
-      "releaseIndependentHash": "sha256:c8dad2bd600dead8c27b0f066d9f7c0c90089acae07db4c33db70c2c2c9fa950"
+      "releaseIndependentHash": "sha256:88c59d733dd1d42bdf8e36b08660b49342064eaae8754779cfaf7760a31ba79b"
     },
     "spec": {
       "embedded": null,
@@ -947,7 +947,7 @@
   "16-bounded-rational": {
     "cues": null,
     "data": {
-      "fingerprint": "sha256:aeae73de02e1052c65c4fe290bb42dca9eebc56b8354808b94ee5c4eb1117508",
+      "fingerprint": "sha256:9de07b3eae9ae21e54650e020597af0ae7fe4e2129ffb7ec2e7c80610df4cfef",
       "provenance": {},
       "source": {
         "kind": "inline",
@@ -977,7 +977,7 @@
     },
     "score": {
       "irVersion": 2,
-      "releaseIndependentHash": "sha256:add2824a39c42639368d7d633d861a639a3b7d12d0b19e128539b8e76695c5df"
+      "releaseIndependentHash": "sha256:b4be9d773e8ab18994c664ae6e002f8598ed671e9fed919d59f20748f6ce6c3d"
     },
     "spec": {
       "embedded": null,
@@ -1010,7 +1010,7 @@
   "17-exponential": {
     "cues": null,
     "data": {
-      "fingerprint": "sha256:d4b7f984cf3deec6e06669a61c8ffe980d3436bb25b358ac07fe9a3fd9f83ac1",
+      "fingerprint": "sha256:43ee7055569dddba69c3fafafbb8626ea881b2aaf9bd233fd35a1fab9ecab3cb",
       "provenance": {},
       "source": {
         "kind": "inline",
@@ -1040,7 +1040,7 @@
     },
     "score": {
       "irVersion": 1,
-      "releaseIndependentHash": "sha256:99e17b18a981eb567c43a849acc1259b571d8cfbe213d9242644bc7cb8991e11"
+      "releaseIndependentHash": "sha256:e1ccc9a71751d1d3b255ff348899ff7aaa18631655df25103aa343d60fe3384c"
     },
     "spec": {
       "embedded": null,
@@ -1063,7 +1063,7 @@
   "18-bell": {
     "cues": null,
     "data": {
-      "fingerprint": "sha256:b419b0c4147c16952678d98771369ab1f21764a246e244bdc33e0d822fca1726",
+      "fingerprint": "sha256:78c391618a84d055561eaa94bbe8a0647869b0433bfaff9ee38ac03fd1aa4dcc",
       "provenance": {},
       "source": {
         "kind": "inline",
@@ -1093,7 +1093,7 @@
     },
     "score": {
       "irVersion": 1,
-      "releaseIndependentHash": "sha256:2c57007dd21eda3a03c761469140bd0e5c0a1cf8370c14aa96d462f9b459d8be"
+      "releaseIndependentHash": "sha256:152038978000035d5010134321f1dd67a92cd86f00b2565e5ce35fe254698d8d"
     },
     "spec": {
       "embedded": null,
@@ -1126,7 +1126,7 @@
   "19-floor": {
     "cues": null,
     "data": {
-      "fingerprint": "sha256:089b85031f5fdb2a8c71e2965cfa08620dc46b69afac450e95fd580727042064",
+      "fingerprint": "sha256:80d969ae5eee987c8cd1f8b9d3cd9b22d90bd65ed67e30d317aa2043b481fcc5",
       "provenance": {},
       "source": {
         "kind": "inline",
@@ -1156,7 +1156,7 @@
     },
     "score": {
       "irVersion": 1,
-      "releaseIndependentHash": "sha256:cbcfdde06785a8a8ff2ae3ef494337179faf11a12e8169d960625083f08b33fa"
+      "releaseIndependentHash": "sha256:7370de046de3ffdb6996b96f3af03f92e2e242299e81b1658413f7df72e08717"
     },
     "spec": {
       "embedded": null,
@@ -1189,7 +1189,7 @@
   "20-sign-by-division": {
     "cues": null,
     "data": {
-      "fingerprint": "sha256:a2107216499a77119f3d3aaaf008c65c305b69baf4068399f5ddf6a250104c35",
+      "fingerprint": "sha256:e006787186f0c0127a689d903effc165c7511805487d026b9ebac3dd9b0529a6",
       "provenance": {},
       "source": {
         "kind": "inline",
@@ -1219,7 +1219,7 @@
     },
     "score": {
       "irVersion": 1,
-      "releaseIndependentHash": "sha256:e0c4f96b6641075ba293c5d142b1e9c42aad05abc699d27197bf1f59de88724d"
+      "releaseIndependentHash": "sha256:5578dc8f623365dceb741bce4256fa0f1d3d82651b3b284cf044f3b3ff9b8c75"
     },
     "spec": {
       "embedded": null,
@@ -1252,7 +1252,7 @@
   "21-absolute-value": {
     "cues": null,
     "data": {
-      "fingerprint": "sha256:0ac5bb7317ce5c41b287a1cfd32aea1186cb12eb72b0a0611c7aa5d7a1203ce4",
+      "fingerprint": "sha256:090629d7b1e21c945e3ce942f8da98836fc57aafecced88d2546955b84faf390",
       "provenance": {},
       "source": {
         "kind": "inline",
@@ -1282,7 +1282,7 @@
     },
     "score": {
       "irVersion": 2,
-      "releaseIndependentHash": "sha256:169c340c3d3309dac9ca5be402c0f4014db37b7dd3e8237e01762a80be599950"
+      "releaseIndependentHash": "sha256:66599a4d3a8fb48c3add327cb843f4488003ac304441371ca6ba5032f028c801"
     },
     "spec": {
       "embedded": null,
@@ -1315,7 +1315,7 @@
   "22-secant": {
     "cues": null,
     "data": {
-      "fingerprint": "sha256:a965d13e9eb8b36b9113ccb74d8a9876c96ce641246f4ee759308f43be1f0861",
+      "fingerprint": "sha256:7d1f788d42f5bfd67dc3ab7ac80dd1fc2d36f9ec1903c9360c88f524f6fceb21",
       "provenance": {},
       "source": {
         "kind": "inline",
@@ -1345,7 +1345,7 @@
     },
     "score": {
       "irVersion": 2,
-      "releaseIndependentHash": "sha256:ce978e3bd5338f66a8557be2f4382a20ee26b8f17efb90d8e305d914c4264727"
+      "releaseIndependentHash": "sha256:f61deb9ed85133be20557e76ff98626902b390499e7ce6fdf30ad81b7dde7b69"
     },
     "spec": {
       "embedded": null,
@@ -1378,7 +1378,7 @@
   "23-cotangent": {
     "cues": null,
     "data": {
-      "fingerprint": "sha256:2cb8739e8490b48d61329e5438cfcc1c05be4a2acd008c783ab2f429ee1dcb3b",
+      "fingerprint": "sha256:bce0d2984664db3b0dcfcaf1d5d7a4caef00d26b606a86772839a4329c9e1e89",
       "provenance": {},
       "source": {
         "kind": "inline",
@@ -1408,7 +1408,7 @@
     },
     "score": {
       "irVersion": 2,
-      "releaseIndependentHash": "sha256:f362b57dd95e00ab0d8f58d6ae7d1c0bd7aa85435974cb383129a05a0f9d3b72"
+      "releaseIndependentHash": "sha256:0a0b9fd532f4ae0a3018972b0bfbae35158e37619ac03e582ffd2d6f49c6f841"
     },
     "spec": {
       "embedded": null,
@@ -1441,7 +1441,7 @@
   "24-cosecant": {
     "cues": null,
     "data": {
-      "fingerprint": "sha256:4bddbc704c175c97f5c4d2472cd90b7d301e7b46590043fb2901c1ef8a250956",
+      "fingerprint": "sha256:dbd07936b3b65dcb602d0e64c48afc8b2fe10bb9a7f297aa896b1f0369c76a4a",
       "provenance": {},
       "source": {
         "kind": "inline",
@@ -1471,7 +1471,7 @@
     },
     "score": {
       "irVersion": 2,
-      "releaseIndependentHash": "sha256:2b2797d5ff23e717208ea8c42ac3fe8c6864ee39b6c461e562e2f1063ac43b1d"
+      "releaseIndependentHash": "sha256:62c492dfee41630a843be27a8a1dd9c098080f553d53af984f0a0d0f0c375db2"
     },
     "spec": {
       "embedded": null,
@@ -1504,7 +1504,7 @@
   "25-inverse-hyperbolic-tangent": {
     "cues": null,
     "data": {
-      "fingerprint": "sha256:f780590b2f5a1e48b22a1bb1966c0f369407980e06c1fd15a4f41ee32ce59571",
+      "fingerprint": "sha256:cd92a9778304449aafdcb70b55d99b7c39db02126c4d4355be5f0cb531bb5f13",
       "provenance": {},
       "source": {
         "kind": "inline",
@@ -1521,7 +1521,7 @@
       "gainDb": 0.0,
       "integratedLufs": -23.2,
       "limitedFrames": 21783,
-      "sha256": "sha256:0ef755e5dcda56135d135555dacf8eee4690ec20a3f004f897d889ae4774ecc6",
+      "sha256": "sha256:33084ec13191cb6317283185167535a394779c5be896160335bc70dab0950b24",
       "truePeakDbtp": -1.2
     },
     "render": {
@@ -1534,7 +1534,7 @@
     },
     "score": {
       "irVersion": 2,
-      "releaseIndependentHash": "sha256:bf2e2c3428a69c059fad4c6710b66622f500e2d1ec23223b5ea407c19f466235"
+      "releaseIndependentHash": "sha256:28bd0a33e77278cb91671e2aedc905d81a9b8c96ab44e6f7fd8281261229bf7c"
     },
     "spec": {
       "embedded": null,
@@ -1567,7 +1567,7 @@
   "26-arcsine": {
     "cues": null,
     "data": {
-      "fingerprint": "sha256:2c11d67a7910321709d4884ea0a90252a7b7ef98f0ee1a6500fc9d35cd74a552",
+      "fingerprint": "sha256:90667c58db49327e3cd6787ef856617758d278580cd30694c88ed4254b6bb111",
       "provenance": {},
       "source": {
         "kind": "inline",
@@ -1597,7 +1597,7 @@
     },
     "score": {
       "irVersion": 2,
-      "releaseIndependentHash": "sha256:8c00f89b2be1a5b94e4e2218de2141607f349c651fd2a2fba4ab49d89c0b8041"
+      "releaseIndependentHash": "sha256:134db674439753cfe590015962f79632b2dc1ba0ad520b51cb671c8d7ef71fb9"
     },
     "spec": {
       "embedded": null,
@@ -1630,7 +1630,7 @@
   "27-log-of-the-absolute-value": {
     "cues": null,
     "data": {
-      "fingerprint": "sha256:52ef7a475c54476facb1edd525ca7277ccb6479f9efd51eed83e470d2bac38c5",
+      "fingerprint": "sha256:3622a363ad42d20ec8d5437d2177da06e771b9b24b1d6d782b66dbc704f672d4",
       "provenance": {},
       "source": {
         "kind": "inline",
@@ -1660,7 +1660,7 @@
     },
     "score": {
       "irVersion": 2,
-      "releaseIndependentHash": "sha256:c3cef3016f83ecf82824b2dbb5e9c2ed2247886c4d893a92ebb179b1274b2e03"
+      "releaseIndependentHash": "sha256:57c07ca786a92bde8a3eed0961f8e3b6d5c75271c78d7cd00fac318651871187"
     },
     "spec": {
       "embedded": null,
@@ -1693,7 +1693,7 @@
   "28-cubic-over-a-line": {
     "cues": null,
     "data": {
-      "fingerprint": "sha256:65ae4684ca53c724dce2deee8cdcd9d7f1ae9bc17f6ae61497a9c23a29e36837",
+      "fingerprint": "sha256:0d281156d1528db3aa02100f3e7724a76f00d0c995b9dd77ed4f06d455d27133",
       "provenance": {},
       "source": {
         "kind": "inline",
@@ -1723,7 +1723,7 @@
     },
     "score": {
       "irVersion": 1,
-      "releaseIndependentHash": "sha256:8471e845055b12f9d348f27bdd21f3bbee3f77a0625c3fda727d5576d3095afb"
+      "releaseIndependentHash": "sha256:e54bd356ee38d27c21d651a10dcdc5fcd4b41c6bfe2ba2812a92a3f2c2659eaf"
     },
     "spec": {
       "embedded": null,
@@ -1756,7 +1756,7 @@
   "29-logistic": {
     "cues": null,
     "data": {
-      "fingerprint": "sha256:48aa617820c5a498626b59baab4af529116064c1281ec4328506dfd4229e8d94",
+      "fingerprint": "sha256:a1f28d74311e4a9c82d0780f185f2382995d9a8f59ce977a6b272a971fe98e1a",
       "provenance": {},
       "source": {
         "kind": "inline",
@@ -1786,7 +1786,7 @@
     },
     "score": {
       "irVersion": 1,
-      "releaseIndependentHash": "sha256:790e1f1ddd7dc71b0a5191f4a51a0df6d8e79f41548fa976094e511d7e1c43f0"
+      "releaseIndependentHash": "sha256:427ea01f0c72735826494776a73d3522b4514f3b8af8538bad9c0513f37d84d3"
     },
     "spec": {
       "embedded": null,
@@ -1819,7 +1819,7 @@
   "30-fractional-power": {
     "cues": null,
     "data": {
-      "fingerprint": "sha256:79ca6d3a1b17a965de2513bd7d7e7635719df94bb33d2154157513a90d9a4d84",
+      "fingerprint": "sha256:8ac971be8124a0f88455397bd83b86d0ba5d3338ea13c7fbf5686879c70dde38",
       "provenance": {},
       "source": {
         "kind": "inline",
@@ -1849,7 +1849,7 @@
     },
     "score": {
       "irVersion": 2,
-      "releaseIndependentHash": "sha256:ae7aa393468d8d51d7e20b430fe27b058957a5f8ffac0a6bf230628661cf8e03"
+      "releaseIndependentHash": "sha256:c25ca3f8d63c5276ce3a53e6780a8c6639785ab2d78a0b820f51d777b081bd0a"
     },
     "spec": {
       "embedded": null,
@@ -1882,7 +1882,7 @@
   "31-cube-root": {
     "cues": null,
     "data": {
-      "fingerprint": "sha256:c0cb8e14642a0adf9bab31f8e3fad9dba734efb4e7f871f0794a56a4ffec9e1c",
+      "fingerprint": "sha256:fa77c550517457b4f38f8f271b739789512b9f807a47465a5b5d2f101ffc1dd8",
       "provenance": {},
       "source": {
         "kind": "inline",
@@ -1912,7 +1912,7 @@
     },
     "score": {
       "irVersion": 2,
-      "releaseIndependentHash": "sha256:d418488b502e3aa30339e22e5e5d6b1280b55934fe6f7a864c48cead83ecf133"
+      "releaseIndependentHash": "sha256:9f639cbb02da97e2752d6a610c3cf84542c8c75f36b544ac7078ceb02bb02aca"
     },
     "spec": {
       "embedded": null,
@@ -1945,7 +1945,7 @@
   "32-hole-and-pole": {
     "cues": null,
     "data": {
-      "fingerprint": "sha256:bdea284a299f7e37acecec247f5ede12e35bcc93e2418703cdc5ce4c53216969",
+      "fingerprint": "sha256:ab0dfa973c3247a681234cebe39f974f8f60e000d8b304f2a5d554a516b82410",
       "provenance": {},
       "source": {
         "kind": "inline",
@@ -1975,7 +1975,7 @@
     },
     "score": {
       "irVersion": 2,
-      "releaseIndependentHash": "sha256:dfd5cd56eb8ac8ba1c3dfee9eabc50c4f548eee64b8853138b6fb4512f8775ba"
+      "releaseIndependentHash": "sha256:5b3577e854eb9cd98b798ea9f70f6470d2f0149ea338870319645e5b636d59a8"
     },
     "spec": {
       "embedded": null,
@@ -2008,7 +2008,7 @@
   "33-round": {
     "cues": null,
     "data": {
-      "fingerprint": "sha256:a9ff1075651001b556d91fea571ad5a8fd3eca3ac5402ff6fef2dabe7cd7ebe0",
+      "fingerprint": "sha256:92ee730e3d69cdb7d503da53b0f9176d15c8e5c01a8ff98cdf58deede77b1d15",
       "provenance": {},
       "source": {
         "kind": "inline",
@@ -2038,7 +2038,7 @@
     },
     "score": {
       "irVersion": 1,
-      "releaseIndependentHash": "sha256:cca69ea232ec83e8a983166b0b63dd74793a9637496f7e9a820418f61cfba1ad"
+      "releaseIndependentHash": "sha256:30380f991cb916aead7dffcb4457166332124da3051f19878c7ab8e09ccf1849"
     },
     "spec": {
       "embedded": null,
@@ -2071,7 +2071,7 @@
   "34-two-linear-poles": {
     "cues": null,
     "data": {
-      "fingerprint": "sha256:09122e7696c95860dc2981e32d7419c60c3ac5fb9082b615fe1d847a4fc83a26",
+      "fingerprint": "sha256:73ea6224b7a2de977f01c224a461e0d858eb070d56748e96fd7c685c7c06698f",
       "provenance": {},
       "source": {
         "kind": "inline",
@@ -2101,7 +2101,7 @@
     },
     "score": {
       "irVersion": 2,
-      "releaseIndependentHash": "sha256:bea7140a2f08343a80e194a7c646eb6ee1a067486df446f5023fb1a003719ae5"
+      "releaseIndependentHash": "sha256:4a7ba8f3bdf94ec0e10ecacfb163b0b109007850a89cba4d5a96e783c35fd48a"
     },
     "spec": {
       "embedded": null,
@@ -2134,7 +2134,7 @@
   "35-one-sided-pole": {
     "cues": null,
     "data": {
-      "fingerprint": "sha256:4248deccbe5f9bc1c155e73042afeb96163b04ca2a8e629661baa8c2ea42003f",
+      "fingerprint": "sha256:0494f63825d8a403f818c6a8650f0cda13feba8573df5342a50c617b45bf7c43",
       "provenance": {},
       "source": {
         "kind": "inline",
@@ -2164,7 +2164,7 @@
     },
     "score": {
       "irVersion": 2,
-      "releaseIndependentHash": "sha256:d2360b570faf2affeff4bade93dca9ef128737b96083c35394b387c24dde956c"
+      "releaseIndependentHash": "sha256:0196be231f9f36b94e310886bb519d4548c76968ffec379c7176cae98df0e1f7"
     },
     "spec": {
       "embedded": null,
@@ -2197,7 +2197,7 @@
   "36-half-angle-tangent": {
     "cues": null,
     "data": {
-      "fingerprint": "sha256:0f472aa93a4da729117257dc30604a509a774c4d275321d4ed06047a726449de",
+      "fingerprint": "sha256:f7b7c6c0c8fc8889e23bbdd793e00d095b11248bf1a9482e5f0cc2abc21dde32",
       "provenance": {},
       "source": {
         "kind": "inline",
@@ -2227,7 +2227,7 @@
     },
     "score": {
       "irVersion": 2,
-      "releaseIndependentHash": "sha256:edd5d10351b0bb0634231e674081bce5664636c94c62a5cd066c1be2b007a7e3"
+      "releaseIndependentHash": "sha256:04fd2364f76b885fbbd18a7209abd6d284f2007d35e09c3f831f2c11801a1184"
     },
     "spec": {
       "embedded": null,
@@ -2260,7 +2260,7 @@
   "37-oblique-asymptote": {
     "cues": null,
     "data": {
-      "fingerprint": "sha256:97812da929485452d8f8a74bb8124aba8ea862c16e942683a1d0b5ef11e389d8",
+      "fingerprint": "sha256:61b796047b4c604f663637b2387b674a9dd582e684b98905da4bb5efffb3a0bf",
       "provenance": {},
       "source": {
         "kind": "inline",
@@ -2290,7 +2290,7 @@
     },
     "score": {
       "irVersion": 2,
-      "releaseIndependentHash": "sha256:7a24d0dcdc57e1a8893b87fce338b666063216044f824d50edeb777d7bebf32a"
+      "releaseIndependentHash": "sha256:cdedfc4140e76d38436377af625d9305f10342b732cb7195b64eadc564d5a947"
     },
     "spec": {
       "embedded": null,
@@ -2323,7 +2323,7 @@
   "38-log-of-a-parabola": {
     "cues": null,
     "data": {
-      "fingerprint": "sha256:7773364c7cf4a7e984f58ee4a1cf9c014ca1b0193c87b3a63ffb764d376c2957",
+      "fingerprint": "sha256:618897cd405e6a3b9dc848333661942e9817d0ae4c45bb00e27fedab87d02338",
       "provenance": {},
       "source": {
         "kind": "inline",
@@ -2353,7 +2353,7 @@
     },
     "score": {
       "irVersion": 2,
-      "releaseIndependentHash": "sha256:435577eae18d1b21c9ac30d2928735bf7f427d1359d049641ae4fb41083c1d76"
+      "releaseIndependentHash": "sha256:d43d458af388ceb5c3acf5a36176df6eaf5170d3bfc61e69ce043fe4bfb00e66"
     },
     "spec": {
       "embedded": null,
@@ -2386,7 +2386,7 @@
   "39-shifted-sinc": {
     "cues": null,
     "data": {
-      "fingerprint": "sha256:6c3cd072f742340396b6b85362cc9a0adb51987bb45133c7bbb6684092339ef6",
+      "fingerprint": "sha256:d4874ddfef8f0fd165a9e882d5f515adb4dc71aff6fbab69bfafbb08373b3e34",
       "provenance": {},
       "source": {
         "kind": "inline",
@@ -2416,7 +2416,7 @@
     },
     "score": {
       "irVersion": 2,
-      "releaseIndependentHash": "sha256:3250e9c001d1b707843bb9e6dc05aa1c76ecf689725377fec230f76d84ca14a1"
+      "releaseIndependentHash": "sha256:6adc672449914e0dae4ac2e850d254334a7c396bd0df5cae06c6459163dbe444"
     },
     "spec": {
       "embedded": null,
@@ -2449,7 +2449,7 @@
   "40-arccosine": {
     "cues": null,
     "data": {
-      "fingerprint": "sha256:b6e03390faa8c6475193d00bccb1065d9515870114eaedd11063b81f06244616",
+      "fingerprint": "sha256:501b10e599986be59483d4326d25d846045f78ccb6bb70775f257cf7ddcda417",
       "provenance": {},
       "source": {
         "kind": "inline",
@@ -2479,7 +2479,7 @@
     },
     "score": {
       "irVersion": 2,
-      "releaseIndependentHash": "sha256:859619448863e613371b670f0be6d9f9d18247105831c755e0e5b3fdc9899e13"
+      "releaseIndependentHash": "sha256:25b1815b3af7383bd1f703f188b4331f87596b0511be544a039d7ba0e3b54b07"
     },
     "spec": {
       "embedded": null,
