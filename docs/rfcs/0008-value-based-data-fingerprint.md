@@ -1,6 +1,6 @@
 # RFC 0008: A value-based data fingerprint (scheme v2)
 
-> **Status:** Draft (2026-11-26). **Author(s):** project lead (drafted by an AI coding agent, Claude Code, for review by the coordinator under the owner's delegation of contract approvals).
+> **Status:** **Accepted** on 2026-11-26 by the coordinator under the owner's delegation of contract approvals; the 7-day final comment period was waived under the same delegation. The three questions were answered as recorded in [Resolved questions](#resolved-questions): linked data saved under scheme 1 stays unavailable until the user checks and relinks it (§6), the scheme is a separate header field, and Utf8View collapses into `string` after its own fix lands (§10). **Author(s):** project lead (drafted by an AI coding agent, Claude Code, for review by the coordinator under the owner's delegation). **Decision:** an amendment to ADR-0013, with the implementation.
 > **Related:** [RFC process](README.md) · [03 §2](../architecture/03-data-model.md#2-core-structures) · [05 §4](../architecture/05-compiler-and-score-ir.md#4-score-ir) · [ADR-0013](../decisions/0013-determinism-and-provenance.md) · [RFC-0002](0002-project-format-v1.md) · [RFC-0007 §4](0007-function-cues-and-audification.md) · F-222, F-223 · [#469](https://github.com/DuhItzAniket/SONARITHM/issues/469), [#476](https://github.com/DuhItzAniket/SONARITHM/issues/476)
 
 | Field | Value |
@@ -9,8 +9,8 @@
 | Start date | 2026-11-26 |
 | RFC PR | (this PR) |
 | Affects | Score IR (a header field and the IR version); persisted formats (render manifest v3, project format 1.2); the data layer's fingerprint |
-| Phase | unscheduled (maintenance; should land before the next arrow minor upgrade) |
-| Related ADR(s) | An amendment to [ADR-0013](../decisions/0013-determinism-and-provenance.md), after acceptance |
+| Phase | maintenance, after the current queue (#477, CURVASONA's re-record, Lane U's toggles); before the next arrow minor upgrade |
+| Related ADR(s) | An amendment to [ADR-0013](../decisions/0013-determinism-and-provenance.md), written with the implementation |
 | Supersedes | none |
 
 ## Summary
@@ -28,7 +28,7 @@ The data fingerprint becomes SHA-256 over an encoding SONARITHM defines (the dat
 
 Nothing changes for spec authors, CLI or Python users, except that fingerprints change once, when this ships. After that, the fingerprint of a dataset depends only on what SONARITHM reads from it: column names and order, logical types, `snr.*` metadata and values. It does not depend on the Arrow version, on whether the data came from CSV, Parquet, pyarrow or polars, on how it was split into batches, or on whether text was stored as `string`, `large_string` or `string_view`.
 
-A render manifest says `"fingerprintScheme": 2` next to the fingerprint. A project opened from an older build re-checks its data and warns once, then records the new fingerprint when saved.
+A render manifest says `"fingerprintScheme": 2` next to the fingerprint. A project opened from an older build re-checks its embedded data and warns once, then records the new fingerprint when saved. A linked file from an older build cannot be checked against the project, so it opens as unavailable, and the user can choose **Check and relink this file** to read it again and confirm it (§6).
 
 ## Reference-level explanation
 
@@ -89,7 +89,7 @@ The input is the concatenation of the following, fed to SHA-256 as a stream:
 - `infer/semantic.rs:293` classifies Utf8, LargeUtf8 and dictionaries as text, but not Utf8View;
 - `view.rs:306` reads dictionary values only when they are Utf8 or LargeUtf8.
 
-The implementation PR makes both accept Utf8View, and adds a test that the same table in each layout compiles to the same Score. If that cannot be done, `string_view` stays a separate logical type. The same applies to the binary layouts.
+Both are fixed first, in a small PR of their own with tests (§10): each place accepts Utf8View as it accepts Utf8, and a test checks that the same table in each string layout infers the same field semantics and compiles to the same Score. Only after that PR has landed does the scheme-2 encoder collapse the three layouts into `string`. BinaryView is checked the same way and collapses into `binary` only if every compile path already treats it like Binary.
 
 ### 4. Floats are hashed bit-exact
 
@@ -118,12 +118,31 @@ The scheme is a number: `1` for the Arrow IPC scheme (the A04-T09 design, as cha
 
 **Reading a project under this RFC:**
 
-- **Embedded, scheme 1:** recompute under scheme 2. A difference is expected and is reported as `SNR-APP-091` (RFC-0002 §13).
-- **Linked, scheme 1:** the entry records no hash of the file, so this build cannot tell a changed file from the scheme change. The dataset opens only if its row count matches `rows`. It opens with a warning that the data could not be checked against the project, and the next save records the file's size, SHA-256 and scheme-2 fingerprint. Otherwise it stays `SNR-APP-034`.
-  - Opening data on a row count alone is weaker than §4 of RFC-0002 asks, so this is unresolved question 1.
+- **Embedded, scheme 1:** recompute under scheme 2. A difference is expected and is reported as `SNR-APP-093` (RFC-0002 §13).
+- **Linked, scheme 1:** the entry records no hash of the file, so this build cannot tell a changed file from the scheme change. A matching row count is not enough to open it: a file of the same length with different values would compile silently, and a listener who does not see the data would hear wrong values with no visual cue that anything differs. The dataset therefore **stays unavailable** with `SNR-APP-034`, and the user can check and relink it (below).
 - **Linked, scheme 2:**
-  - the file's size and SHA-256 match: open; a fingerprint difference then means only a scheme change, so it is treated as embedded data is (`SNR-APP-091`);
-  - they differ: `SNR-APP-034`, as today.
+  - the file's size and SHA-256 match: open; a fingerprint difference then means only a scheme change, so it is treated as embedded data is (`SNR-APP-093`);
+  - they differ: `SNR-APP-034`, as today, and the same check-and-relink action is offered.
+
+**Check and relink this file.** An unavailable linked dataset that this build could read gets an explicit action. The English strings below are the catalogue's source text (every string is externalised); a translation keeps their content.
+
+- **Where:** the dataset's actions in the Project region and the command palette, keyboard-operable like every other dataset action. The action's accessible name is the visible label.
+- **Label:** "Check and relink this file".
+- **The warning on open** (`SNR-APP-034`), for a scheme-1 link: "The linked data `{file}` was linked by an older SONARITHM build and cannot be verified against the project, so it is unavailable. Choose Check and relink this file to read it again." For a changed file the existing wording stays ("has changed since the project was saved"), followed by the same pointer to the action.
+- **Choosing the action:** the reader opens the file under RFC-0002 §4's safety rules and limits, but nothing else sees the data yet: it is not shown, analysed or compiled. A dialog then opens. Its title and description are announced when it opens, and focus starts on **Cancel**:
+  - title: "Relink `{file}`?";
+  - description: "This data could not be verified against the project: the project has no record of the file's contents to compare it with. It has {rows} rows now; the project recorded {recordedRows}. If you relink it, SONARITHM uses the file as it is now." When the row counts differ, the description adds: "The number of rows has changed.";
+  - buttons: **Relink** and **Cancel**.
+- **Accepting:**
+  - the dataset becomes available;
+  - its entry takes the file's size, SHA-256 and scheme-2 fingerprint, which the next save records;
+  - the project is marked as having unsaved changes;
+  - the announcement is "`{file}` is relinked. Save the project to keep it.";
+  - the action is one undoable edit, like other dataset changes.
+- **Cancelling** leaves the dataset unavailable and announces nothing more. The dialog closes and focus returns to the action.
+- **Protocol:** two additive commands (ADR-0017 §5).
+  - `dataset_relink_check { id }` reads the file and returns `{ name, rows, recordedRows, reason }`, where `reason` is `older-build` or `changed`. It refuses when the file cannot be read under §4, with that warning's wording.
+  - `dataset_relink { id }` applies the relink. The file is read again, so a file changed between the check and the relink is what gets linked, and the reply carries its row count.
 
 Scheme-1 fingerprints are never recomputed. They depend on the arrow-ipc version that wrote them, so no later build can reproduce them.
 
@@ -136,6 +155,13 @@ Scheme-1 fingerprints are never recomputed. They depend on the arrow-ipc version
 - **The invariant:** for the example datasets, two tables with equal fingerprints compile to identical Scores. One case is a dictionary column against a plain column with the same strings, which must differ in fingerprint, because their category order differs.
 - **Pinned digests:** the corpus digests (as `tests/fingerprints.rs` today), checked on all three CI operating systems, now with a stated expectation that an Arrow upgrade moves none of them.
 - **Records:** a Score, a render manifest and a project written before this RFC read as scheme 1. A project fixture from before it opens as §6 says.
+- **Check and relink:**
+  - with the pre-#470 fixture (`crates/sonarithm-app/tests/fixtures/pre-470`), the linked dataset stays unavailable on open with the scheme-1 wording;
+  - `dataset_relink_check` reports its rows and `older-build`;
+  - `dataset_relink` makes it available and marks the project unsaved;
+  - the next save writes `bytes`, `sha256` and a scheme-2 fingerprint, and reopening opens the link without a warning;
+  - a same-length file with different values is never opened without the action;
+  - the dialog gets an axe check, a keyboard test (focus starts on Cancel, Escape cancels) and a Storybook story, and the PR carries a manual screen-reader note.
 - **Fuzzing:** the `sonarithm-data` fuzz targets keep their round-trip check (a loaded table survives Arrow IPC with the same fingerprint). The check now also holds across layouts.
 
 ### 8. Performance
@@ -188,7 +214,16 @@ Scheme-1 fingerprints are never recomputed. They depend on the arrow-ipc version
 
 ## Accessibility impact
 
-None for interaction: no announcement, keyboard behaviour or non-audio equivalent changes. The `SNR-APP-091` warning on opening an older project is a diagnostic, so it reaches the screen reader like the other project warnings (it names the dataset by file name and needs no colour or position). Manual check in the implementation PR: open an older project with NVDA and hear the warning once.
+- **Warnings:** the `SNR-APP-093` and `SNR-APP-034` warnings on opening an older project are diagnostics. They reach the screen reader like the other project warnings, name the dataset by file name and need no colour or position.
+- **The check-and-relink action** (§6) is new interaction:
+  - it is a keyboard-operable action with its visible label as its accessible name;
+  - its dialog announces its title and description on opening, starts focus on the safe choice (Cancel), closes on Escape, and returns focus to the action;
+  - its outcome is announced.
+- **Why the stricter reading:** it protects listeners who rely on sound alone. Opening a link on a row count could play different values with no way to notice; the action makes the uncertainty explicit and puts the decision with the user.
+- **Manual checks in the implementation PR:**
+  - open the pre-#470 fixture with NVDA and hear each warning once;
+  - relink with the keyboard alone and hear the dialog's description and the result;
+  - check that the high-contrast theme shows the dialog's focus.
 
 ## Research impact
 
@@ -199,11 +234,26 @@ None for interaction: no announcement, keyboard behaviour or non-audio equivalen
   - `datasets.md` records new fingerprints;
   - F-222 and F-223 are resolved by this RFC.
 
+### 10. Implementation order
+
+1. **Utf8View as text:** `infer/semantic.rs:293` and `view.rs:306` accept Utf8View as they accept Utf8. This is a small PR of its own, with the tests of §3 (the same table in each string layout infers the same semantics and compiles to the same Score). It changes no fingerprint.
+2. **Scheme 2**, after step 1 has landed, in one PR:
+   - the encoder and the header, manifest and project fields;
+   - the check-and-relink action and its protocol commands;
+   - the ADR-0013 amendment;
+   - one re-record of every record that holds a fingerprint (the set #470 moved, plus the header field and `datasets.md`), with golden audio unchanged.
+
+## Resolved questions
+
+Decided by the coordinator on 2026-11-26, under the owner's delegation:
+
+1. **Linked data saved under scheme 1:** the stricter reading. A matching row count alone does not open it, because a same-length file with different values would compile silently and a listener without the visual would hear wrong data. It stays unavailable (`SNR-APP-034`), with the explicit **Check and relink this file** action, whose wording and announcements §6 fixes. Accepting it records the file's size, SHA-256 and scheme-2 fingerprint.
+2. **The scheme in the Score header:** a separate `data_fingerprint_scheme` field. Explicit is better, and the records quote the header.
+3. **Utf8View:** collapse it into `string`, but only after the two fixes (inference and the data view treating Utf8View as text) have landed as their own small PR with tests (§3, §10).
+
 ## Unresolved questions
 
-1. **Linked data saved under scheme 1:** open it when its row count matches, with a warning (§6), or keep it unavailable until the user opens the file again? Proposed: open with the warning, since the data is shown with its name and the user can compare. Keeping it unavailable is the stricter reading of RFC-0002 §4.
-2. **The scheme in the Score header:** a separate `data_fingerprint_scheme` field (proposed), or a scheme implied by the IR version? The field is explicit, and replication records quote the header.
-3. **Utf8View:** collapse it into `string` (proposed, with the two fixes in §3), or keep `string_view` separate?
+None.
 
 ## Future possibilities
 
