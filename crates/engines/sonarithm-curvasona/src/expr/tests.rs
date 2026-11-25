@@ -481,40 +481,60 @@ fn f_199_a_divisor_at_the_depth_limit_reads_back() {
     assert!(parse(&format!("4-x/{}4-1", "-".repeat(33))).is_err());
 }
 
+/// What each admitted function should give at `x`, written out by hand against `libm`, and
+/// not read from `ops`' tables, so a wrong entry there (`("log2", libm::log10)`) fails.
+/// Two-argument functions take 0.7 as their second argument.
+fn libm_expected(name: &str, x: f64) -> Option<f64> {
+    Some(match name {
+        "abs" => libm::fabs(x),
+        "acos" | "arccos" => libm::acos(x),
+        "acosh" => libm::acosh(x),
+        "asin" | "arcsin" => libm::asin(x),
+        "asinh" => libm::asinh(x),
+        "atan" | "arctan" => libm::atan(x),
+        "atan2" => libm::atan2(x, 0.7),
+        "atanh" => libm::atanh(x),
+        "cbrt" => libm::cbrt(x),
+        "ceil" => libm::ceil(x),
+        "cos" => libm::cos(x),
+        "cosh" => libm::cosh(x),
+        "cot" => 1.0 / libm::tan(x),
+        "csc" => 1.0 / libm::sin(x),
+        "exp" => libm::exp(x),
+        "floor" => libm::floor(x),
+        "ln" => libm::log(x),
+        "log10" => libm::log10(x),
+        "log2" => libm::log2(x),
+        "max" => libm::fmax(x, 0.7),
+        "min" => libm::fmin(x, 0.7),
+        "round" => libm::round(x),
+        "sec" => 1.0 / libm::cos(x),
+        "sin" => libm::sin(x),
+        "sinh" => libm::sinh(x),
+        "sqrt" => libm::sqrt(x),
+        "tan" => libm::tan(x),
+        "tanh" => libm::tanh(x),
+        "trunc" => libm::trunc(x),
+        _ => return None,
+    })
+}
+
 /// ADR-0013 §1, F-204: every function the language admits, and `^`, evaluates with `libm`,
 /// bit for bit, so a function samples the same on every platform. A function that fell
-/// back to exmex's `std` maths, or that exmex could not read, fails here.
+/// back to exmex's `std` maths, that maps to the wrong `libm` function, or that exmex could
+/// not read, fails here.
 #[test]
 fn adr_0013_every_function_evaluates_with_libm_bit_for_bit() {
-    let libm_of = |name: &str| -> Option<fn(f64) -> f64> {
-        let name = match name {
-            "arccos" => "acos",
-            "arcsin" => "asin",
-            "arctan" => "atan",
-            other => other,
-        };
-        ops::UNARY.iter().find(|(n, _)| *n == name).map(|&(_, f)| f)
-    };
     let same =
         |got: f64, want: f64| got.to_bits() == want.to_bits() || (got.is_nan() && want.is_nan());
     for (name, arity) in FUNCTIONS {
         for x in [0.3, 0.7, 1.7, -2.4, 12.5, 1e-3] {
-            let (text, want) = match (name, arity) {
-                ("sec", 1) => ("sec(x)".to_owned(), 1.0 / libm::cos(x)),
-                ("csc", 1) => ("csc(x)".to_owned(), 1.0 / libm::sin(x)),
-                ("cot", 1) => ("cot(x)".to_owned(), 1.0 / libm::tan(x)),
-                (_, 1) => {
-                    let f = libm_of(name).expect("every admitted function has a libm operator");
-                    (format!("{name}(x)"), f(x))
-                }
-                (_, _) => {
-                    let (_, f) = ops::BINARY
-                        .iter()
-                        .find(|(n, _)| *n == name)
-                        .expect("every admitted function has a libm operator");
-                    (format!("{name}(x, 0.7)"), f(x, 0.7))
-                }
+            let text = if arity == 1 {
+                format!("{name}(x)")
+            } else {
+                format!("{name}(x, 0.7)")
             };
+            let want = libm_expected(name, x).expect("every admitted function is listed above");
             let got = value(&text, x);
             assert!(
                 same(got, want),
