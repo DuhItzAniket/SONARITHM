@@ -13,7 +13,7 @@ catalog:
   "@tauri-apps/cli": 2.12.4
   "@types/react": 19.3.0
   "@types/react-dom": 19.3.0
-  "@vitejs/plugin-react": 6.1.2
+  "@vitejs/plugin-react": 6.3.0
   react: 19.3.1
   react-aria-components: 1.22.1
   # React Aria's hooks, at the versions react-aria-components 1.22.1 uses, for widgets it
@@ -23,40 +23,40 @@ catalog:
   react-dom: 19.3.1
   # UI state machines (09 §3): the transport machine mirrors the Rust transport (B01-T05).
   # Pinned: 5.33.3 was under two weeks old when this was added.
-  xstate: 5.33.2
+  xstate: 5.33.4
   # Line and time-series plots (09 §3, B04-T01; notes/05 §6): Canvas2D, MIT, no dependencies.
   uplot: 1.6.32
-  vite: 8.3.4
+  vite: 8.3.8
   # Frontend test infrastructure (B02-T03; testing-strategy §12, §13.1). Storybook 10 with
-  # its accessibility (axe-core) and Vitest addons; Vitest 4 browser mode on Playwright's
+  # its accessibility (axe-core) and Vitest addons; Vitest 5 browser mode on Playwright's
   # Chromium; Playwright for cross-engine E2E with axe. The CI container image tag
   # (mcr.microsoft.com/playwright) must match the playwright version.
   "@axe-core/playwright": 4.14.0
-  "@playwright/test": 1.64.1
-  "@storybook/addon-a11y": 10.6.5
-  "@storybook/addon-vitest": 10.6.5
-  "@storybook/react-vite": 10.6.5
-  "@vitest/browser": 4.1.12
-  "@vitest/browser-playwright": 4.1.12
+  "@playwright/test": 1.65.1
+  "@storybook/addon-a11y": 10.6.7
+  "@storybook/addon-vitest": 10.6.7
+  "@storybook/react-vite": 10.6.7
+  "@vitest/browser": 5.0.5
+  "@vitest/browser-playwright": 5.0.5
   axe-core: 4.14.0
-  playwright: 1.64.1
-  storybook: 10.6.5
-  vitest: 4.1.12
+  playwright: 1.65.1
+  storybook: 10.6.7
+  vitest: 5.0.5
   vitest-browser-react: 2.3.0
   # Node types for package tests run with `node --test` (Node 24, the CI line).
-  "@types/node": ^26.6.5
+  "@types/node": ^26.6.6
   # ESLint stays on 9.x until eslint-plugin-jsx-a11y supports ESLint 10 (its peer range ends at ^9).
   "@eslint/js": ^9.39.5
   eslint: ^9.39.5
   eslint-plugin-jsx-a11y: ^6.10.2
   eslint-plugin-react-hooks: ^7.1.1
-  prettier: ^3.9.10
+  prettier: ^3.10.1
   # CSS lint: no hard-coded colours, spacing or durations, and the design-language
   # anti-patterns (coding-standards §12.6; B02-T01).
   stylelint: ^17.16.0
   # TypeScript stays on 6.0.x while typescript-eslint supports only TypeScript < 6.1.
   typescript: ~6.0.3
-  typescript-eslint: ^8.71.2
+  typescript-eslint: ^8.72.2
 
 # Dependency install scripts, reviewed one by one (pnpm 12 fails the install on an unreviewed
 # one, F-133). esbuild (Storybook) gets its binary from an optional per-platform package;

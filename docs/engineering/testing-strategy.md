@@ -54,7 +54,7 @@ From the base (many, fast, every PR) to the top (few, slow, scheduled or manual)
 | Concurrency and unsafe | Lock-free protocols and unsafe code are sound | Miri, shuttle (loom optional), `allocation-counter` | Allocation check every PR; Miri and shuttle on PRs touching the crates and nightly |
 | Integration | App behaviour end to end without a webview | headless app core (B01), facade before that | Every PR |
 | CLI and Python | Public interfaces behave and stay stable | assert_cmd + insta; pytest on wheels | Every PR |
-| Frontend | Components, flows and visuals in every webview engine | Vitest 4, Storybook 10, Playwright, WebdriverIO | Every PR (real-app E2E nightly) |
+| Frontend | Components, flows and visuals in every webview engine | Vitest 5, Storybook 10, Playwright, WebdriverIO | Every PR (real-app E2E nightly) |
 | Performance and soak | Budgets met, no regressions, no xruns | criterion, soak harness, loopback harness | Nightly on hosted runners (relative); reference hardware (absolute), started by a maintainer |
 | Manual accessibility | Real assistive technology works | screen-reader matrix, Chartability | Every release |
 | Research validation | Replicated designs still render as published | replication gallery | Every PR (gallery), per study |
@@ -258,8 +258,8 @@ The headless app core (`sonarithm-app`, B01) holds all non-UI desktop behaviour,
 
 | Layer | Tooling | Scope |
 |---|---|---|
-| Unit | Vitest 4 | Zustand stores, XState machines (model-based tests of transport and export machines), formatters, keymap resolution, token contrast calculations |
-| Component | Vitest 4 browser mode with `toMatchScreenshot` | Component behaviour and visuals. Baselines are taken on one pinned Linux Chromium image to avoid font-rendering differences, plus a small per-OS smoke set |
+| Unit | Vitest 5 | Zustand stores, XState machines (model-based tests of transport and export machines), formatters, keymap resolution, token contrast calculations |
+| Component | Vitest 5 browser mode with `toMatchScreenshot` | Component behaviour and visuals. Baselines are taken on one pinned Linux Chromium image to avoid font-rendering differences, plus a small per-OS smoke set |
 | Workbench and a11y | Storybook 10 with the Vitest addon and the accessibility addon (axe-core) | Every component story, in every state (focus, disabled, error) and theme (dark, light, high contrast, forced colours). CI fails on serious and critical violations |
 | Cross-engine E2E | Playwright with Tauri `mockIPC` in Chromium, WebKit and Firefox; `@axe-core/playwright` on key flows | User flows and visual regression without the Rust backend |
 | Real-app E2E | WebdriverIO `@wdio/tauri-service` on Windows, Linux and macOS, in `nightly.yml` | The packaged app with the real core (Trial from B05 per [tech-stack](tech-stack.md)). The official `tauri-driver` does not support macOS. The embedded provider on macOS 26 with Tauri 2.12 is unverified and is checked when the tool is adopted |
