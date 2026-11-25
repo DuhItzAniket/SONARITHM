@@ -1,0 +1,211 @@
+# RFC 0008: A value-based data fingerprint (scheme v2)
+
+> **Status:** Draft (2026-11-26). **Author(s):** project lead (drafted by an AI coding agent, Claude Code, for review by the coordinator under the owner's delegation of contract approvals).
+> **Related:** [RFC process](README.md) · [03 §2](../architecture/03-data-model.md#2-core-structures) · [05 §4](../architecture/05-compiler-and-score-ir.md#4-score-ir) · [ADR-0013](../decisions/0013-determinism-and-provenance.md) · [RFC-0002](0002-project-format-v1.md) · [RFC-0007 §4](0007-function-cues-and-audification.md) · F-222, F-223 · [#469](https://github.com/DuhItzAniket/SONARITHM/issues/469), [#476](https://github.com/DuhItzAniket/SONARITHM/issues/476)
+
+| Field | Value |
+|---|---|
+| RFC | 0008 |
+| Start date | 2026-11-26 |
+| RFC PR | (this PR) |
+| Affects | Score IR (a header field and the IR version); persisted formats (render manifest v3, project format 1.2); the data layer's fingerprint |
+| Phase | unscheduled (maintenance; should land before the next arrow minor upgrade) |
+| Related ADR(s) | An amendment to [ADR-0013](../decisions/0013-determinism-and-provenance.md), after acceptance |
+| Supersedes | none |
+
+## Summary
+
+The data fingerprint becomes SHA-256 over an encoding SONARITHM defines (the data's logical values, field names, logical types and `snr.*` metadata), instead of over the bytes `arrow_ipc::writer::StreamWriter` writes. Every record that stores a fingerprint also says which scheme computed it: the Score header, render manifests and project manifests. Upgrading Arrow then moves no fingerprint, and a record made under the old scheme is recognised as such instead of looking like changed data.
+
+## Motivation
+
+- **F-222.** Bumping arrow from 60.0 to 60.2, a minor release taken for a security fix (#470), moved every data fingerprint without changing any data. It forced a re-record of 2 pinned digests, 16 insta snapshots, 4 golden Scores and 49 replication records. The current scheme hashes arrow-ipc's encoder output, so every Arrow upgrade can do this again.
+- **F-223.** The same move made every earlier project with embedded data unopenable, because the reader treated a fingerprint mismatch as damage. RFC-0002 §13 fixes embedded data, but linked data cannot be fixed under the current format: a linked entry records no hash of the file, so "the file changed" and "the fingerprint scheme changed" look the same.
+- **ADR-0013's claim.** A render manifest or replication record should identify its input data across builds. Under v1, a newer build computes a different fingerprint for the same data, so old records cannot be checked against it.
+- **If we do nothing**, each Arrow upgrade costs a re-record PR and leaves users with linked data that reopens as unavailable.
+
+## Guide-level explanation
+
+Nothing changes for spec authors, CLI or Python users, except that fingerprints change once, when this ships. After that, the fingerprint of a dataset depends only on what SONARITHM reads from it: column names and order, logical types, `snr.*` metadata and values. It does not depend on the Arrow version, on whether the data came from CSV, Parquet, pyarrow or polars, on how it was split into batches, or on whether text was stored as `string`, `large_string` or `string_view`.
+
+A render manifest says `"fingerprintScheme": 2` next to the fingerprint. A project opened from an older build re-checks its data and warns once, then records the new fingerprint when saved.
+
+## Reference-level explanation
+
+### 1. The invariant
+
+**Equal fingerprints imply equal compile output** for the same spec, seed and engine versions. The encoding therefore covers everything a compile path can read from the data, and leaves out everything it cannot. Each inclusion or exclusion below cites the code it rests on; the implementation PR adds a test for each (§7).
+
+### 2. Table fingerprint input
+
+The input is the concatenation of the following, fed to SHA-256 as a stream:
+
+1. **Tag:** the bytes `sonarithm-data table fingerprint v2` and a NUL byte.
+2. **Schema:** a u64 byte length, then RFC 8785 canonical JSON (the form spec hashes use):
+   - `fields`, an array in schema order, each element `{ "name", "type", "meta" }`;
+   - `type` is the logical type (§3);
+   - `meta` holds the field's metadata keys that start with `snr.`, sorted (RFC 8785 sorts them);
+   - `meta` at the top level holds the schema's metadata keys that start with `snr.`. CURVASONA reads `snr.function.expr` and `snr.function.variables` there (`sonarithm-curvasona/src/lib.rs:81`).
+3. **Row count:** u64, little-endian.
+4. **Columns,** in schema order, each preceded by its own byte length as u64. Within a column, rows are encoded in order across all batches: a tag byte (`0` null, `1` valid), then the value bytes of §3 for a valid row only.
+
+**Left out, with the reason:**
+
+- **Non-`snr.*` metadata** (`pandas`, `ARROW:*`, library keys): no compile path reads it, and it varies with the library that produced the data (F-100).
+- **Nullability:** `Field::is_nullable` is read in one place, `sonarithm-data/src/infer/semantic.rs:169`, where it is only carried over to rebuild the field (line 185). No decision depends on it. Leaving it out lets a non-nullable pyarrow field and a nullable CSV field with the same values agree.
+- **Batch boundaries, offsets, slicing, alignment, padding and bytes under nulls:** layout only.
+- **The table's name, ID and generation:** as in v1, they identify a table, not its content.
+
+### 3. Logical types and value bytes
+
+| Logical type (`type`) | Arrow types | Value bytes |
+|---|---|---|
+| `bool` | Boolean | 1 byte: 0 or 1 |
+| `int8` … `int64`, `uint8` … `uint64` | the integer types | fixed width, two's complement, little-endian |
+| `float16`, `float32`, `float64` | Float16, Float32, Float64 | the IEEE 754 bit pattern, little-endian (§4) |
+| `decimal(p,s)` | Decimal128, Decimal256 | 16 or 32 bytes, little-endian |
+| `date32`, `date64` | Date32, Date64 | i32 or i64, little-endian |
+| `time(unit)`, `duration(unit)`, `timestamp(unit,tz)` | Time32/64, Duration, Timestamp | i32 or i64, little-endian; `tz` is the time zone string, or absent |
+| `string` | Utf8, LargeUtf8, Utf8View | u64 byte length, then the UTF-8 bytes |
+| `binary` | Binary, LargeBinary, BinaryView | u64 byte length, then the bytes |
+| `fixed_binary(n)` | FixedSizeBinary | n bytes |
+| `dictionary<T>` | Dictionary with any key type and values of logical type T | see below |
+| `list<T>` | List, LargeList, ListView, LargeListView | u64 element count, then each element as a row (tag byte and value) |
+| `fixed_list<T,n>` | FixedSizeList | n elements, each as a row |
+| `struct{…}` | Struct | each child, in order, as a row; the child names and types are in `type` |
+| `map<K,V>` | Map | as `list<struct{key,value}>` in stored order; `type` records whether it is sorted |
+| `union{…}` | Union, sparse or dense | the type id (u8), then the selected child's value as a row; the type ids and children are in `type` |
+| the values' type | RunEndEncoded | each row encodes its run's value; run ends are layout |
+
+**Dictionaries are not resolved into plain values.** NUMISONA takes a category column's order from its dictionary: `encode/columns.rs` builds `order` from the dictionary's values, including values no row uses. The semantic inference writes ordinal columns as dictionaries in their inferred order (`infer/semantic.rs`, the `level` test: "low", "Medium", "High"). A dictionary column and a plain column with the same strings can therefore compile differently. The resolution, with the reasons:
+
+- **The logical type stays distinct:** `dictionary<string>`, not `string`.
+- **The value encoding** is the dictionary's values as a column of logical type T (all of them, in order, with a u64 count first), then, for each row, the tag byte and the key as a u64 index into those values.
+- **Key width is layout:** UInt8 and Int32 keys with the same indices hash equally.
+- **Unused values and their order count,** because NUMISONA's order uses them.
+
+**String layouts collapse into one logical type** (`string` for Utf8, LargeUtf8 and Utf8View) only if every compile path treats the three alike. Two places do not today:
+
+- `infer/semantic.rs:293` classifies Utf8, LargeUtf8 and dictionaries as text, but not Utf8View;
+- `view.rs:306` reads dictionary values only when they are Utf8 or LargeUtf8.
+
+The implementation PR makes both accept Utf8View, and adds a test that the same table in each layout compiles to the same Score. If that cannot be done, `string_view` stays a separate logical type. The same applies to the binary layouts.
+
+### 4. Floats are hashed bit-exact
+
+-0.0 and 0.0 hash differently, and so do NaNs that differ in sign or payload. There is no canonicalisation, because compile paths order floats with `f64::total_cmp`. It separates -0.0 from 0.0, and NaNs by sign and payload where a path does not drop them first. Examples: the navigation tree's row order (`sonarithm-audaxis/src/nav/tree.rs:231`, which drops NaN x values before sorting) and the reference tone's value ordering (`sonarithm-audaxis/src/context.rs:418`). Folding them together could give two datasets one fingerprint and different Scores, against §1.
+
+This changes nothing in practice for text input:
+
+- the text readers turn `NaN`, `nan`, `NAN`, `-NaN` and `-nan` into missing values (`infer/text.rs:33`, `Cell::NaN`, reported as `SNR-DATA-033`);
+- the transform expressions map NaN results to null (`transform/expr.rs:242`).
+
+NaN values reach a table only from binary input: Parquet, Arrow IPC and data handed over in memory (`read_batches`, Python). v1 hashes the same bits, since IPC writes them raw.
+
+### 5. Bundle fingerprint
+
+SHA-256 over the bytes `sonarithm-data bundle fingerprint v2` and a NUL byte, then each table's 32-byte fingerprint in table order (v1's shape, with a new tag).
+
+### 6. Naming the scheme in every record
+
+The scheme is a number: `1` for the Arrow IPC scheme (the A04-T09 design, as changed by F-222), `2` for this one. A record without it was written under scheme 1.
+
+| Record | Field | Change |
+|---|---|---|
+| Score header (`sonarithm_core::score::ScoreHeader`) | `data_fingerprint_scheme: u32` beside `data_fingerprint` | A new header field is a snapshot-format change. Scores written with it carry the next IR version (RFC-0007 §4: the lowest version that can read them), and a reader defaults the field to 1 when it is absent |
+| Render manifest (`sonarithm-export`, `schemas/`) | `data.fingerprintScheme` | `MANIFEST_VERSION` 3 with a new generated schema; versions 1 and 2 still read, as scheme 1 |
+| Project manifest (RFC-0002 §3) | `datasets[].fingerprintScheme`; for linked datasets also `datasets[].bytes` and `datasets[].sha256` of the linked file | Format 1.2, written by every writer from then on. An older 1.x reader ignores the fields with `SNR-APP-035` (RFC-0002 §5) |
+
+**Reading a project under this RFC:**
+
+- **Embedded, scheme 1:** recompute under scheme 2. A difference is expected and is reported as `SNR-APP-091` (RFC-0002 §13).
+- **Linked, scheme 1:** the entry records no hash of the file, so this build cannot tell a changed file from the scheme change. The dataset opens only if its row count matches `rows`. It opens with a warning that the data could not be checked against the project, and the next save records the file's size, SHA-256 and scheme-2 fingerprint. Otherwise it stays `SNR-APP-034`.
+  - Opening data on a row count alone is weaker than §4 of RFC-0002 asks, so this is unresolved question 1.
+- **Linked, scheme 2:**
+  - the file's size and SHA-256 match: open; a fingerprint difference then means only a scheme change, so it is treated as embedded data is (`SNR-APP-091`);
+  - they differ: `SNR-APP-034`, as today.
+
+Scheme-1 fingerprints are never recomputed. They depend on the arrow-ipc version that wrote them, so no later build can reproduce them.
+
+### 7. Testing
+
+- **Layout independence (property tests):** the same logical table built as one batch and as many, sliced, with garbage under nulls, with Utf8, LargeUtf8 and Utf8View, and with UInt8 and Int32 dictionary keys, gives one fingerprint.
+- **Sensitivity (property tests):**
+  - a change to any value, name, logical type, `snr.*` key, dictionary order or float bit pattern changes the fingerprint;
+  - a change to non-`snr.*` metadata, nullability or batching does not.
+- **The invariant:** for the example datasets, two tables with equal fingerprints compile to identical Scores. One case is a dictionary column against a plain column with the same strings, which must differ in fingerprint, because their category order differs.
+- **Pinned digests:** the corpus digests (as `tests/fingerprints.rs` today), checked on all three CI operating systems, now with a stated expectation that an Arrow upgrade moves none of them.
+- **Records:** a Score, a render manifest and a project written before this RFC read as scheme 1. A project fixture from before it opens as §6 says.
+- **Fuzzing:** the `sonarithm-data` fuzz targets keep their round-trip check (a loaded table survives Arrow IPC with the same fingerprint). The check now also holds across layouts.
+
+### 8. Performance
+
+`bundle_fingerprint` runs inside every compile (`sonarithm-compiler/src/data.rs:43`), so it counts against PB-04 (≤ 1 s compile for 1M rows) and against project save and open.
+
+**Expected shape (not a measurement).**
+
+- **v1:** concatenates the batches (a copy when there are several), rebuilds every flat column (a second copy), encodes IPC into a `Vec` (a third copy), then hashes about 8 to 9 bytes per numeric cell.
+- **v2:** reads values in place and feeds the hasher through a small buffer. It makes no table-sized copy, but adds one tag byte per cell and per-value work for strings and nested types.
+- **Overall:** SHA-256 throughput should dominate both.
+
+**The bench** is `crates/sonarithm-data/benches/fingerprint.rs`, written with criterion beside `csv_ingest.rs`:
+
+| Group | Input | Reports |
+|---|---|---|
+| `v1_ipc`, `v2_values` | 1M rows × 5 columns (f64, i64, a Utf8 nominal, a Dictionary<UInt8, Utf8> ordinal, a microsecond timestamp) plus `__snr_prov` and `__snr_conf`, built from NUMISONA's seeded generators | median time; throughput in MB/s of logical data; peak allocated bytes (a counting global allocator in the bench) |
+| variants | one batch and 16 batches; 0 % and 10 % nulls | as above |
+
+- **Where:** on CI-LINUX, the PB reference, and on the reference laptop under the shared-machine rules.
+- **Recording:** results go in the benchmarks log against PB-04, with the compile bench run before and after.
+- **No numbers are claimed here.**
+- **Acceptance condition:** v2 is not slower than v1 at the median and uses less peak memory; if it is slower, the RFC's outcome records the trade-off.
+
+### 9. Security, privacy and licences
+
+- No new input is parsed and no new dependency is added: `sha2` is already used through `sonarithm-core::Sha256Digest`, and canonical JSON through `sonarithm-spec`.
+- Fingerprints reveal no more about the data than today; the linked-file SHA-256 reveals no more than the file's fingerprint does.
+
+## Drawbacks
+
+- **One more move of every fingerprint, on purpose:** the same re-record as #470, plus the header field, in one PR.
+- **We own an encoding:** the type table needs care when Arrow adds a type, and an unsupported type is an error (`DataError`, so the compiler records the zero digest, as today).
+- **Three formats change at once:** the Score IR, the manifest and the project format.
+
+## Rationale and alternatives
+
+- **Keep v1 and pin arrow-ipc.** This blocks security fixes such as RUSTSEC-2026-0442, and the bytes still depend on the arrow-ipc version in use.
+- **Keep v1 and record the arrow-ipc version in each record.** This makes the move visible, but not avoidable, and a record still cannot be checked by a later build.
+- **Hash a sorted or row-order-independent form.** Row order is meaning in SONARITHM (time order, navigation), so it must count.
+- **Canonicalise floats** (fold -0.0 into 0.0, and NaN payloads into one). This would break §1, because compile paths order with `total_cmp` (§4).
+- **Resolve dictionaries into plain values.** This would break §1, because NUMISONA's category order comes from the dictionary (§3).
+- **A faster hash (BLAKE3, xxHash).** It would add a dependency, and records and papers already say SHA-256. A different hash would need its own case.
+
+## Prior art
+
+- **Content-addressed storage** (Git, IPFS) hashes a format the system defines, never a library's serialization.
+- **Lance and Delta Lake** checksum their own file formats.
+- **Frictionless Data packages** record a file's byte hash, as §6 proposes for linked files.
+
+## Accessibility impact
+
+None for interaction: no announcement, keyboard behaviour or non-audio equivalent changes. The `SNR-APP-091` warning on opening an older project is a diagnostic, so it reaches the screen reader like the other project warnings (it names the dataset by file name and needs no colour or position). Manual check in the implementation PR: open an older project with NVDA and hear the warning once.
+
+## Research impact
+
+- **Rules:** none. No design rule or default changes.
+- **Reproducibility:**
+  - replication records and the paper's provenance claim get stronger, since fingerprints survive library upgrades;
+  - the paper's method sentence ("SHA-256 over a canonical Arrow IPC encoding") changes;
+  - `datasets.md` records new fingerprints;
+  - F-222 and F-223 are resolved by this RFC.
+
+## Unresolved questions
+
+1. **Linked data saved under scheme 1:** open it when its row count matches, with a warning (§6), or keep it unavailable until the user opens the file again? Proposed: open with the warning, since the data is shown with its name and the user can compare. Keeping it unavailable is the stricter reading of RFC-0002 §4.
+2. **The scheme in the Score header:** a separate `data_fingerprint_scheme` field (proposed), or a scheme implied by the IR version? The field is explicit, and replication records quote the header.
+3. **Utf8View:** collapse it into `string` (proposed, with the two fixes in §3), or keep `string_view` separate?
+
+## Future possibilities
+
+- A per-column fingerprint, to say which column of a linked file changed.
+- Recording the linked file's hash also lets a future build detect a file edited in place, without re-reading it.
