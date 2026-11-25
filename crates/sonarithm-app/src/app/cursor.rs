@@ -3,19 +3,25 @@
 
 //! The one cursor (B04-T06; 08 §1, A11Y-10, A11Y-11; ADR-0017 "Cursor").
 //!
-//! Rust owns the only cursor: a dataset row. The table, the plot and later the chart
-//! explorer (B03-T09's `nav_move` and `nav_where`) all read and move this one. Every change,
+//! Rust owns the only cursor: a dataset row, and the chart explorer's node beside it. The
+//! table, the plot and the explorer (B03-T09's `nav_move` and `nav_where`, in `nav.rs`)
+//! all read and move this one. Every change,
 //! whatever its source, goes out as a `cursor` event, so each view follows it. When the data
 //! under it changes, the cursor follows: a closed or replaced dataset clears it, and a
 //! dataset that lost rows (corrections, undo) clamps it to its last row.
 
-use sonarithm_audaxis::announce::Composer;
+use std::collections::BTreeSet;
+
+use sonarithm_audaxis::announce::{Composer, Memory};
+use sonarithm_audaxis::nav::Cursor;
 use sonarithm_core::TableId;
 use sonarithm_core::nav::{NavKind, NavNodeId, NavTree, XValue};
 
 use super::{App, unknown_dataset};
 use crate::codes;
-use crate::ipc::{CursorOrigin, CursorPathItem, CursorState, Event, IpcError, PathLevel, Reply};
+use crate::ipc::{
+    CursorOrigin, CursorPathItem, CursorState, Event, IpcError, PathLevel, Reply, SeriesRef,
+};
 
 /// Where the cursor is: a row of an open dataset.
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -30,6 +36,14 @@ pub(super) struct CursorAt {
 #[derive(Debug)]
 pub(super) struct CursorModel {
     pub(super) at: Option<CursorAt>,
+    /// The explorer's node, x and series (B03-T09): on the row's point after a table or
+    /// plot move, anywhere after a verb. `None` without a navigation tree, or when the row
+    /// is not a point.
+    pub(super) nav: Option<Cursor>,
+    /// The series the filters took out of playback and view; kept when `nav` is `None`.
+    pub(super) excluded: BTreeSet<NavNodeId>,
+    /// What the explorer's announcements remember between commands (keyboard §8.1).
+    pub(super) memory: Memory,
     seq: u64,
     /// The last state sent, without its `seq` and `origin`: a change is a difference here.
     sent: Option<CursorState>,
@@ -40,6 +54,9 @@ impl Default for CursorModel {
     fn default() -> Self {
         Self {
             at: None,
+            nav: None,
+            excluded: BTreeSet::new(),
+            memory: Memory::default(),
             seq: 0,
             sent: Some(CursorState::default()),
         }
@@ -74,11 +91,15 @@ impl App {
             dataset: dataset.to_owned(),
             row,
         });
+        self.place_nav();
         let state = self.send_cursor(Some(origin), true);
         if origin != CursorOrigin::Table
             && let Some(node) = state.node.map(NavNodeId)
-            && let Some(announcement) = self.cursor_announcement(node)
+            && let Some((announcement, memory)) = self.cursor_announcement(node)
         {
+            // The explorer's composer memory carries over, so a series named here is not
+            // named again by the next explorer move (keyboard §8.1).
+            self.cursor.memory = memory;
             self.transport.announce(announcement);
         }
         Ok(Reply::Cursor(state))
@@ -95,6 +116,7 @@ impl App {
     /// gone, clamps it when the dataset shrank) and sends a `cursor` event if anything a
     /// view shows changed, such as the point node after a compile.
     pub(super) fn sync_cursor(&mut self) {
+        let before = self.cursor.at.clone();
         if let Some(at) = self.cursor.at.clone() {
             let rows = self
                 .datasets
@@ -109,6 +131,9 @@ impl App {
                 }),
             };
         }
+        if self.cursor.at != before {
+            self.place_nav();
+        }
         self.send_cursor(None, false);
     }
 
@@ -116,10 +141,34 @@ impl App {
     /// one started), so a row of the old data means nothing.
     pub(super) fn clear_cursor(&mut self) {
         self.cursor.at = None;
+        self.cursor.nav = None;
+        self.cursor.excluded.clear();
+        self.cursor.memory.clear();
+    }
+
+    /// The point of the cursor's row in the compiled Score, if the row is one.
+    pub(super) fn row_point(&self) -> Option<NavNodeId> {
+        self.row_point_in(self.cursor.nav.as_ref().and_then(Cursor::series))
+    }
+
+    /// The point of the cursor's row, in `prefer` when the row is a point there.
+    pub(super) fn row_point_in(&self, prefer: Option<NavNodeId>) -> Option<NavNodeId> {
+        let at = self.cursor.at.as_ref()?;
+        let open = self
+            .datasets
+            .values()
+            .find(|o| o.summary.id == at.dataset)?;
+        let table = open.bundle.primary().map(sonarithm_data::Table::id)?;
+        let tree = self.compiled.as_ref()?.nav()?;
+        point_of(tree, table, at.row, prefer, &self.cursor.excluded)
     }
 
     /// Sends the cursor as an event when `always`, or when what it shows changed.
-    fn send_cursor(&mut self, origin: Option<CursorOrigin>, always: bool) -> CursorState {
+    pub(super) fn send_cursor(
+        &mut self,
+        origin: Option<CursorOrigin>,
+        always: bool,
+    ) -> CursorState {
         let mut state = self.cursor_state();
         let unchanged = self.cursor.sent.as_ref() == Some(&state);
         if always || !unchanged {
@@ -135,63 +184,141 @@ impl App {
     }
 
     /// The cursor as views show it, with `seq` 0 and no origin: the dataset and row, the
-    /// point node of the compiled Score when the row is one, its x value and the path from
-    /// the dataset to it.
+    /// explorer's node (the row's point after a table or plot move), its x value, the path
+    /// from the dataset to it and the excluded series.
     fn cursor_state(&self) -> CursorState {
         let mut state = CursorState::default();
-        let Some(at) = &self.cursor.at else {
+        let tree = self.compiled.as_ref().and_then(|compiled| compiled.nav());
+        // An explorer cursor can be on the root or a group before any row, and a filter
+        // can exclude a series before any row.
+        let explored = self.cursor.nav.is_some() || !self.cursor.excluded.is_empty();
+        let dataset = match (&self.cursor.at, tree) {
+            (Some(at), _) => Some(at.dataset.clone()),
+            (None, Some(tree)) if explored => self.dataset_of_tree(tree),
+            _ => None,
+        };
+        let Some(dataset) = dataset else {
             return state;
         };
-        state.dataset = Some(at.dataset.clone());
-        state.row = Some(at.row);
-        let Some(open) = self.datasets.values().find(|o| o.summary.id == at.dataset) else {
+        state.row = self.cursor.at.as_ref().map(|at| at.row);
+        let open = self.datasets.values().find(|o| o.summary.id == dataset);
+        state.dataset = Some(dataset);
+        let Some(open) = open else {
             return state;
         };
         state.path.push(CursorPathItem {
             level: PathLevel::Dataset,
             label: open.summary.name.clone(),
         });
-        let table = open.bundle.primary().map(sonarithm_data::Table::id);
-        let tree = self.compiled.as_ref().and_then(|compiled| compiled.nav());
-        if let (Some(table), Some(tree)) = (table, tree)
-            && let Some(node) = point_of(tree, table, at.row)
-        {
+        let Some(tree) = tree else {
+            return state;
+        };
+        let node = match &self.cursor.nav {
+            Some(cursor) => Some(cursor.node()),
+            None => self.row_point(),
+        };
+        if let Some(node) = node {
             state.node = Some(node.0);
-            if let Some(NavKind::Point(point)) = tree.node(node).map(|n| &n.kind)
-                && let Some(XValue::Number(x)) = &point.x
-            {
-                state.x = Some(*x);
-            }
+            state.x = match tree.node(node).map(|n| &n.kind) {
+                Some(NavKind::Point(point)) => match &point.x {
+                    Some(XValue::Number(x)) => Some(*x),
+                    _ => None,
+                },
+                _ => self.cursor.nav.as_ref().and_then(Cursor::x),
+            };
             state.path.extend(path_of(tree, node));
         }
+        state.excluded = self
+            .cursor
+            .excluded
+            .iter()
+            .map(|&id| SeriesRef {
+                node: id.0,
+                label: tree
+                    .node(id)
+                    .and_then(|node| node.label.clone())
+                    .unwrap_or_default(),
+            })
+            .collect();
         state
+    }
+
+    /// The open dataset whose first table the tree's points read.
+    fn dataset_of_tree(&self, tree: &NavTree) -> Option<String> {
+        let table = tree.iter().find_map(|(_, node)| match &node.kind {
+            NavKind::Point(point) => Some(point.row.table),
+            _ => None,
+        })?;
+        self.datasets
+            .values()
+            .find(|open| open.bundle.primary().map(sonarithm_data::Table::id) == Some(table))
+            .map(|open| open.summary.id.clone())
     }
 
     /// The announcement for arriving at `node`, in the listener's verbosity.
     fn cursor_announcement(
         &self,
         node: NavNodeId,
-    ) -> Option<sonarithm_audaxis::announce::Announcement> {
+    ) -> Option<(sonarithm_audaxis::announce::Announcement, Memory)> {
         let tree = self.compiled.as_ref()?.nav()?;
         let localizer = self.localizer.as_ref()?;
-        Composer::new(localizer, self.composer_settings())
-            .node(tree, node)
-            .ok()
+        let mut composer = Composer::with_memory(
+            localizer,
+            self.composer_settings(),
+            self.cursor.memory.clone(),
+        );
+        let announcement = composer.node(tree, node).ok()?;
+        Some((announcement, composer.memory()))
     }
 }
 
-/// The first series' point for `row` of `table`: a row read by several tracks is a point
-/// in each, and the cursor takes the first, as the playhead's current value does.
-fn point_of(tree: &NavTree, table: TableId, row: u64) -> Option<NavNodeId> {
-    tree.iter().find_map(|(id, node)| match &node.kind {
-        NavKind::Point(point) if point.row.table == table && point.row.row == row => Some(id),
-        _ => None,
-    })
+/// The point for `row` of `table`. A row read by several tracks is a point in each: the
+/// cursor takes the one in `prefer` (the explorer's series), else the first in a series the
+/// filters keep, else the first, as the playhead's current value does.
+fn point_of(
+    tree: &NavTree,
+    table: TableId,
+    row: u64,
+    prefer: Option<NavNodeId>,
+    excluded: &BTreeSet<NavNodeId>,
+) -> Option<NavNodeId> {
+    let is_row = |id: NavNodeId| {
+        matches!(tree.node(id).map(|node| &node.kind),
+            Some(NavKind::Point(point)) if point.row.table == table && point.row.row == row)
+    };
+    if let Some(series) = prefer
+        && let Some(point) = tree.points(series).into_iter().find(|&p| is_row(p))
+    {
+        return Some(point);
+    }
+    let mut first = None;
+    for (id, _) in tree.iter() {
+        if is_row(id) {
+            if series_of(tree, id).is_none_or(|series| !excluded.contains(&series)) {
+                return Some(id);
+            }
+            first.get_or_insert(id);
+        }
+    }
+    first
 }
 
-/// The series, segment and point levels above and at `node`, outermost first. Labels are
-/// data names (a track or field, a segment's span, the point's x), never UI words: the UI
-/// names each level through its own catalogue.
+/// The series above `node`, if any.
+fn series_of(tree: &NavTree, node: NavNodeId) -> Option<NavNodeId> {
+    let mut at = Some(node);
+    while let Some(id) = at {
+        if matches!(tree.node(id).map(|n| &n.kind), Some(NavKind::Series(_))) {
+            return Some(id);
+        }
+        at = tree.parent(id);
+    }
+    None
+}
+
+/// The levels above and at `node` below the dataset, outermost first. Labels are data
+/// names (a track or field, a segment's span, the point's x, an axis' field), never UI
+/// words: the UI names each level through its own catalogue, and a group (axes, insights,
+/// filters) has an empty label.
 fn path_of(tree: &NavTree, node: NavNodeId) -> Vec<CursorPathItem> {
     let mut items = Vec::new();
     let mut at = Some(node);
@@ -210,6 +337,15 @@ fn path_of(tree: &NavTree, node: NavNodeId) -> Vec<CursorPathItem> {
                     })
                 }),
             }),
+            NavKind::Axes => Some(group(PathLevel::Axes)),
+            NavKind::Insights => Some(group(PathLevel::Insights)),
+            NavKind::Filters => Some(group(PathLevel::Filters)),
+            NavKind::Axis(_) => Some(labelled(PathLevel::Axis, current.label.as_ref())),
+            NavKind::InsightGroup(_) => {
+                Some(labelled(PathLevel::InsightGroup, current.label.as_ref()))
+            }
+            NavKind::Insight(_) => Some(labelled(PathLevel::Insight, current.label.as_ref())),
+            NavKind::Filter(_) => Some(labelled(PathLevel::Filter, current.label.as_ref())),
             NavKind::Point(point) => Some(CursorPathItem {
                 level: PathLevel::Point,
                 label: match &point.x {
@@ -225,6 +361,20 @@ fn path_of(tree: &NavTree, node: NavNodeId) -> Vec<CursorPathItem> {
     }
     items.reverse();
     items
+}
+
+fn group(level: PathLevel) -> CursorPathItem {
+    CursorPathItem {
+        level,
+        label: String::new(),
+    }
+}
+
+fn labelled(level: PathLevel, label: Option<&String>) -> CursorPathItem {
+    CursorPathItem {
+        level,
+        label: label.cloned().unwrap_or_default(),
+    }
 }
 
 /// A number as data text: no trailing zeros, no grouping (the UI formats for its locale).

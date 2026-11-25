@@ -131,6 +131,29 @@ fn a_scripted_session_never_allocates_on_the_audio_thread() {
 
 /// C03-T05, AGENTS.md rule 2: playing, seeking into and speeding up an audification reads
 /// its preallocated buffer and never allocates on the audio thread.
+/// #443: a steal, and the de-click that fades the stolen voice, allocate nothing. Every
+/// pool is forced to one voice so the benchmark Score steals constantly.
+#[test]
+fn rt_voice_steals_never_allocate_on_the_audio_thread() {
+    let mut plan = RenderPlan::build(
+        &benchmark_score(6.0, BENCHMARK_SEED),
+        &PlanConfig::new(SampleRate::HZ_48000),
+    )
+    .unwrap()
+    .plan;
+    for track in &mut plan.tracks {
+        track.voices = 1;
+    }
+    let (mut control, mut audio) = realtime(Graph::new(plan, GraphConfig::new(256)));
+    let mut out = vec![0.0; 512];
+    control.send(Command::Play);
+    blocks(&mut audio, &mut out, 300, "steals");
+    control.send(Command::Seek(Frames(96_000)));
+    blocks(&mut audio, &mut out, 1, "seek");
+    control.send(Command::Seek(Frames(120_000)));
+    blocks(&mut audio, &mut out, 100, "seek inside a crossfade");
+}
+
 #[test]
 fn rt_audification_never_allocates_on_the_audio_thread() {
     use sonarithm_core::score::{Audify, Score, ScoreEvent, ScoreHeader, ScoreTrack};

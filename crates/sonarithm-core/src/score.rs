@@ -240,7 +240,10 @@ pub struct ScoreHeader {
     pub mode: Mode,
     /// Total length; every note ends by then.
     pub duration: Seconds,
-    /// The engines that contributed, with their versions.
+    /// The engines that contributed, with their versions: those whose template, source,
+    /// detector or encoder the spec used, every context provider that added a track, and
+    /// every shaper that ran (shapers are recorded when they run, even if they change
+    /// nothing; 05 §4, #434).
     pub engines: BTreeMap<EngineId, EngineVersion>,
     /// The shapers that ran, in order (05 §2).
     pub shapers: Vec<ShaperStage>,

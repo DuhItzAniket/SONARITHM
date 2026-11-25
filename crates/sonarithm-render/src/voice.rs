@@ -4,8 +4,11 @@
 //! Voices and voice pools (06 §3). Real-time only after construction.
 //!
 //! A voice plays one planned event: a tone, a glide or an earcon. Pools are preallocated
-//! from the plan's polyphony (05 §5); when a pool is full, the oldest voice is stolen, a
-//! deterministic rule (coding-standards §11.2), and the steal is counted.
+//! from the plan's polyphony (05 §5), counted from how long voices sound, so a Score does
+//! not steal at any supported speed (#443). When a pool is still full, a voice already
+//! fading out is stolen first, then the oldest, a deterministic rule (coding-standards
+//! §11.2); the steal is counted, and the graph fades the stolen voice's last output so it
+//! does not click.
 //!
 //! Glides update pitch, gain, pan and brightness every [`CONTROL_PERIOD`] frames of the
 //! voice's own clock, so the output does not depend on how the host splits blocks.
@@ -321,6 +324,9 @@ pub(crate) struct Voice {
     step_left: f32,
     step_right: f32,
     countdown: u32,
+    /// The last frame this voice added to its bus, per channel: what a steal must fade
+    /// from (#443).
+    last: [f32; 2],
 }
 
 impl Default for Voice {
@@ -343,6 +349,7 @@ impl Default for Voice {
             step_left: 0.0,
             step_right: 0.0,
             countdown: 0,
+            last: [0.0; 2],
         }
     }
 }
@@ -367,6 +374,16 @@ impl Voice {
 
     pub(crate) fn age(&self) -> u64 {
         self.age
+    }
+
+    /// Whether the voice is fading out (a seek, loop wrap or pause).
+    pub(crate) fn is_fading(&self) -> bool {
+        self.fade.is_some()
+    }
+
+    /// The last frame the voice added to its bus, per channel (#443).
+    pub(crate) fn last_output(&self) -> [f32; 2] {
+        self.last
     }
 
     /// Starts `event` of `track`. RT-safe: arithmetic and `libm` only.
@@ -433,6 +450,7 @@ impl Voice {
             step_left: 0.0,
             step_right: 0.0,
             countdown: 0,
+            last: [0.0; 2],
         };
         self.source.set_brightness(brightness);
         self.source.set_frequency(Hz(frequency), rate);
@@ -565,6 +583,10 @@ impl Voice {
                     *l += sample * gain_left;
                     *r += sample * gain_right;
                 }
+            }
+            // Once per run, not per sample: the gains are those of the run's last frame.
+            if let Some(&sample) = buffer.last() {
+                self.last = [sample * self.left, sample * self.right];
             }
             self.pos += run as u64;
             done += run;
@@ -783,8 +805,10 @@ impl VoicePool {
         }
     }
 
-    /// A free voice, or the oldest one if none is free. Returns the voice and whether it
-    /// was stolen. RT-safe: bounded by the pool size.
+    /// A free voice; if none is free, the oldest voice already fading out (a seek or
+    /// pause fade, #443), else the oldest. Returns the voice and whether it was stolen; the
+    /// caller fades a stolen voice's last output (`Graph`'s de-click). RT-safe: bounded by
+    /// the pool size.
     pub(crate) fn allocate(&mut self) -> (&mut Voice, bool) {
         let free = self.voices.iter().position(|voice| !voice.is_active());
         let (index, stolen) = if let Some(index) = free {
@@ -794,7 +818,7 @@ impl VoicePool {
                 .voices
                 .iter()
                 .enumerate()
-                .min_by_key(|(_, voice)| voice.age())
+                .min_by_key(|(_, voice)| (!voice.is_fading(), voice.age()))
                 .map_or(0, |(index, _)| index);
             (oldest, true)
         };

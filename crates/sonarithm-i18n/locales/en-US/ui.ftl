@@ -103,8 +103,9 @@ ui-go-to-row = Go to row
 ui-go-to-row-number = Row number
 ui-go-to-row-action = Go
 
-## The cursor (B04-T06; 08 §1). Level words name the breadcrumb's levels; $name is a data
-## name, shown as it is.
+## The cursor (B04-T06, B03-T09; 08 §1). Level words name the breadcrumb's levels; $name is
+## a data name, shown as it is, and empty for a group (axes, insights, filters). A level
+## this build does not know shows its name alone.
 
 ui-cursor-trail = Cursor position
 ui-cursor-step =
@@ -112,8 +113,19 @@ ui-cursor-step =
         [dataset] Dataset { $name }
         [series] Series { $name }
         [segment] Segment { $name }
-       *[point] Point { $name }
+        [point] Point { $name }
+        [axes] Axes
+        [axis] Axis { $name }
+        [insights] Insights
+        [insightGroup] Insights { $name }
+        [insight] Insight { $name }
+        [filters] Filters
+        [filter] Filter { $name }
+       *[other] { $name }
     }
+# A series the explorer's filters took out (B03-T09; keyboard-and-navigation §3); $name is
+# its data name.
+ui-cursor-excluded = { $name } excluded from playback and view
 # The cursor's row in the dataset's own order, from 1; $index is a number.
 ui-cursor-row = Data row { $index }
 ui-cursor-none = No row is selected.
@@ -122,6 +134,10 @@ ui-cursor-none = No row is selected.
 ui-plot-label = { $field } against { $text } in { $name }
 ui-plot-description = { $total } rows. The Table tab lists every value, and the cursor readout gives the selected row.
 ui-plot-no-fields = This dataset has no two numeric fields to plot.
+# The plot's zoom and pan toolbar (B04-T07), and the x range it shows: $field is the x
+# column's header, $from and $to are numbers.
+ui-plot-view = Plot view
+ui-plot-range = Showing { $field } from { $from } to { $to }
 
 ## Application frame (B02-T06; design-language §4, keyboard-and-navigation §3).
 
@@ -175,6 +191,8 @@ command-help-keyboard = Keyboard shortcuts here
 command-view-zoom-in = Zoom in
 command-view-zoom-out = Zoom out
 command-view-zoom-reset = Reset zoom
+command-view-pan-left = Pan left
+command-view-pan-right = Pan right
 command-view-focus-explorer = Go to the chart explorer
 command-view-announcements = Show the announcement history
 command-transport-play-pause = Play or pause

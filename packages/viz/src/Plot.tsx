@@ -47,7 +47,21 @@ export interface PlotProps {
    * nearest row. Pointers only; the table and the chart explorer are the keyboard ways.
    */
   readonly onPick?: (x: number) => void;
+  /**
+   * Called with the x range a drag across the plot selected (B04-T07). Dragging is never the
+   * only way: the caller offers zoom buttons and commands (A11Y-26, WCAG 2.5.7).
+   */
+  readonly onZoom?: (range: PlotRange) => void;
 }
+
+/** An x range in data units. */
+export interface PlotRange {
+  readonly min: number;
+  readonly max: number;
+}
+
+/** A pointer that moved further than this between press and release dragged; it did not click. */
+const DRAG_PX = 4;
 
 /** Where the cursor is on the plot, in data units. */
 export interface PlotCursor {
@@ -103,6 +117,7 @@ export function Plot({
   height,
   cursor,
   onPick,
+  onZoom,
 }: PlotProps) {
   const descriptionId = useId();
   const area = useRef<HTMLDivElement>(null);
@@ -114,9 +129,9 @@ export function Plot({
   } | null>(null);
   // Read by uPlot's hooks and the click listener, so a new cursor or callback does not
   // rebuild the plot.
-  const latest = useRef({ cursor, onPick });
+  const latest = useRef({ cursor, onPick, onZoom });
   useEffect(() => {
-    latest.current = { cursor, onPick };
+    latest.current = { cursor, onPick, onZoom };
   });
 
   /** Puts the crosshair and the marker at the cursor, or hides them. */
@@ -161,6 +176,7 @@ export function Plot({
       width: Math.max(element.clientWidth, 1),
       height,
       legend: { show: false },
+      // No uPlot cursor: no hover readout (DL-X11). Clicks and drags are handled below.
       cursor: { show: false },
       scales: { x: { time: false } },
       axes: [axis, axis],
@@ -190,11 +206,59 @@ export function Plot({
     plot.over.append(line, marker);
     overlay.current = { line, marker };
     place(plot);
-    const pick = (event: MouseEvent) => {
-      const value = plot.posToVal(event.offsetX, "x");
+    // A press and release in place is a click, which moves the cursor; a drag across the
+    // plot selects an x range to zoom to. Positions come from the overlay's box at each
+    // event, never a cached one, so a layout shift cannot misplace them.
+    const selection = document.createElement("div");
+    selection.className = styles.selection ?? "";
+    selection.hidden = true;
+    plot.over.append(selection);
+    let start: number | null = null;
+    let dragged = false;
+    const at = (event: PointerEvent) => {
+      const box = plot.over.getBoundingClientRect();
+      return Math.min(Math.max(event.clientX - box.left, 0), box.width);
+    };
+    const down = (event: PointerEvent) => {
+      if (event.button !== 0) return;
+      start = at(event);
+      dragged = false;
+      plot.over.setPointerCapture(event.pointerId);
+    };
+    const move = (event: PointerEvent) => {
+      if (start === null) return;
+      const now = at(event);
+      if (!dragged && Math.abs(now - start) < DRAG_PX) return;
+      dragged = true;
+      selection.hidden = false;
+      selection.style.left = `${String(Math.min(start, now))}px`;
+      selection.style.width = `${String(Math.abs(now - start))}px`;
+    };
+    const up = (event: PointerEvent) => {
+      if (start === null) return;
+      const from = start;
+      const to = at(event);
+      start = null;
+      selection.hidden = true;
+      if (dragged) {
+        const min = plot.posToVal(Math.min(from, to), "x");
+        const max = plot.posToVal(Math.max(from, to), "x");
+        if (Number.isFinite(min) && Number.isFinite(max) && max > min) {
+          latest.current.onZoom?.({ min, max });
+        }
+        return;
+      }
+      const value = plot.posToVal(to, "x");
       if (Number.isFinite(value)) latest.current.onPick?.(value);
     };
-    plot.over.addEventListener("click", pick);
+    const cancel = () => {
+      start = null;
+      selection.hidden = true;
+    };
+    plot.over.addEventListener("pointerdown", down);
+    plot.over.addEventListener("pointermove", move);
+    plot.over.addEventListener("pointerup", up);
+    plot.over.addEventListener("pointercancel", cancel);
     const resize = new ResizeObserver(() => {
       plot.setSize({ width: Math.max(element.clientWidth, 1), height });
       place(plot);
@@ -202,7 +266,10 @@ export function Plot({
     resize.observe(element);
     return () => {
       resize.disconnect();
-      plot.over.removeEventListener("click", pick);
+      plot.over.removeEventListener("pointerdown", down);
+      plot.over.removeEventListener("pointermove", move);
+      plot.over.removeEventListener("pointerup", up);
+      plot.over.removeEventListener("pointercancel", cancel);
       overlay.current = null;
       plotRef.current = null;
       plot.destroy();

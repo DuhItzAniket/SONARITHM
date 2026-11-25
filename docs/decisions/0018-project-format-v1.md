@@ -44,6 +44,14 @@ The 7-day final comment period was waived by the coordinator under the owner's d
 
 B05-T04: the round-trip, crash-injection, refusal, linked-data and memory tests listed in RFC-0002 §11, and the `project_open` fuzz target in `nightly.yml`.
 
+## Amendments
+
+| Date | Change | Approved |
+|---|---|---|
+| 2026-11-01 | Format 1.1 ([RFC-0002 §12](../rfcs/0002-project-format-v1.md#12-amendment-1-2026-11-01-format-11-function-datasets-and-unknown-storages)): `storage: "function"` stores a function dataset's canonical definition (expression, domain, samples or step, variables), not its samples; it is re-sampled on read, with a fingerprint mismatch a warning (`SNR-APP-034`); a dataset with an unknown storage opens as unavailable (`SNR-APP-035`) and is kept on re-save; 1.1 is written only when needed; `SNR-APP-089` is retired | Coordinator, under the owner's delegation (C03-T08) |
+
+Reasons: saving a function's samples would lose the function and its critical points (C03-T08, ADR-0017 "Functions"); a strict reader that refuses an unknown storage as damaged makes every new storage a breaking change, while reading it as unavailable keeps it to a minor version; writing 1.0 when no new feature is used keeps existing projects byte-identical (ADR-0013).
+
 ## More information
 
 * [RFC-0002](../rfcs/0002-project-format-v1.md) holds the full design; this ADR records the outcome.

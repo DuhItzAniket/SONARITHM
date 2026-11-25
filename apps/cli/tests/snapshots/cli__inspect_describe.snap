@@ -16,7 +16,7 @@ Ten years of a synthetic temperature anomaly, in kelvin.
 Track anomaly: 10 tones from 0.00 to 3.25 seconds. Pitch follows anomaly, 400 to 1400 Hz; time follows year.
 In anomaly, the highest pitch, 1400 Hz, is at 3.00 seconds (row 9); the lowest, 400 Hz, at 1.00 seconds (row 3).
 --- stderr
-Context cues (ticks, reference tone, legend, earcons) are not available in this build; AUDAXIS arrives in B03.
+Context cues (ticks, reference tone, legend, earcons) are not available: no engine that provides them (AUDAXIS) is registered in this build.
     Diagnostic severity: warning
 diagnostic help: Location: /context.
 diagnostic code: SNR-COMP-023

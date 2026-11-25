@@ -162,6 +162,37 @@ fn the_series_name_is_left_out_when_unchanged() {
     assert!(!second.speech.contains("Temperature"), "{}", second.speech);
 }
 
+/// Keyboard §8.1 across commands: a host that builds a composer per command (the app's
+/// `nav_move`, B03-T09) keeps the series left out by carrying the composer's memory.
+#[test]
+fn the_series_name_stays_left_out_across_composers_with_memory() {
+    let tree = weather();
+    let points = tree.points(tree.series().next().unwrap());
+    let localizer = english();
+    let verbose = Settings {
+        verbosity: Verbosity::Verbose,
+        ..Settings::default()
+    };
+    let mut first = Composer::new(&localizer, verbose.clone());
+    assert!(
+        first
+            .node(&tree, points[0])
+            .unwrap()
+            .speech
+            .starts_with("Temperature.")
+    );
+    let mut memory = first.memory();
+    let second = Composer::with_memory(&localizer, verbose.clone(), memory.clone())
+        .node(&tree, points[1])
+        .unwrap();
+    assert!(!second.speech.contains("Temperature"), "{}", second.speech);
+    memory.clear();
+    let fresh = Composer::with_memory(&localizer, verbose, memory)
+        .node(&tree, points[1])
+        .unwrap();
+    assert!(fresh.speech.starts_with("Temperature."), "{}", fresh.speech);
+}
+
 fn with_provenance(tree: &NavTree, point: NavNodeId, provenance: Provenance) -> NavTree {
     let mut tree = tree.clone();
     if let Some(NavKind::Point(p)) = tree.node_mut(point).map(|n| &mut n.kind) {

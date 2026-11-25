@@ -1,6 +1,6 @@
 # RFC 0002: Project format v1 (`.sonarithm` bundles)
 
-> **Status:** **Accepted** on 2026-10-21 by the coordinator under the owner's delegation of contract approvals, with the three proposed answers to the unresolved questions and two conditions added (linked-data safety, §4; memory, §6). The 7-day final comment period was waived by the coordinator under the same delegation (fast-track, sole maintainer, no other participants). Outcome recorded in [ADR-0018](../decisions/0018-project-format-v1.md). **Author(s):** project lead (drafted by an AI coding agent, Claude Code, for review by the coordinator under the owner's delegation).
+> **Status:** **Accepted** on 2026-10-21 by the coordinator under the owner's delegation of contract approvals, with the three proposed answers to the unresolved questions and two conditions added (linked-data safety, §4; memory, §6). The 7-day final comment period was waived by the coordinator under the same delegation (fast-track, sole maintainer, no other participants). Outcome recorded in [ADR-0018](../decisions/0018-project-format-v1.md). **Amended** on 2026-11-01 (format 1.1: function datasets and unknown storages, §12), approved by the coordinator. **Author(s):** project lead (drafted by an AI coding agent, Claude Code, for review by the coordinator under the owner's delegation).
 > **Related:** [RFC process](README.md) · [12 §4 project file format](../architecture/12-cross-cutting-concerns.md#4-project-file-format) · [09 §5 persistence](../architecture/09-desktop-app.md#5-persistence) · [ADR-0013](../decisions/0013-determinism-and-provenance.md) · [ADR-0012](../decisions/0012-privacy-and-telemetry.md) · [ADR-0017](../decisions/0017-ipc-protocol-v1.md)
 
 | Field | Value |
@@ -173,7 +173,7 @@ A fuzz target (`project_open`) runs the reader on arbitrary bytes in `nightly.ym
 
 ### 10. Codes
 
-`SNR-APP-030` no project path; `031` newer major version; `032` unsafe or damaged bundle; `033` absolute path refused; `034` linked data missing or changed (warning); `035` newer minor version or unknown members (warning).
+`SNR-APP-030` no project path; `031` newer major version; `032` unsafe or damaged bundle; `033` absolute path refused; `034` linked data missing or changed (warning); `035` newer minor version or unknown members (warning). Amendment 1 (§12) adds function datasets to `034` (fingerprint changed on re-sampling) and unknown storages to `035`, and retires `089`.
 
 ### 11. Testing
 
@@ -185,6 +185,48 @@ A fuzz target (`project_open`) runs the reader on arbitrary bytes in `nightly.ym
 - Memory: opening a project with a large stored Parquet member does not allocate the member's size before decoding (checked with a counting allocator around the reader, as A05-T10 does for the audio thread).
 - No absolute path is ever written: a property test scans every byte of saved bundles for the temporary folder's absolute path and for drive or root prefixes in manifest paths.
 - `cargo fuzz` target `project_open` in `nightly.yml`.
+
+### 12. Amendment 1 (2026-11-01): format 1.1, function datasets and unknown storages
+
+| Date | Change | Approved |
+|---|---|---|
+| 2026-11-01 | `formatVersion` 1.1: `storage: "function"`; unknown storages read as unavailable datasets and kept on re-save; 1.1 written only when needed | Coordinator, under the owner's delegation of contract approvals (C03-T08) |
+
+**Why.** C03-T08 opens a function as a dataset (ADR-0017 "Functions"): its table is sampled from an expression, so no file backs it. Format 1.0 can only link a file or embed a Parquet snapshot. Embedding the samples would save numbers that look like data and lose the function: the expression, the domain and the critical points CURVASONA finds from it (07 CURVASONA). A project reopened that way would no longer be a function, and its cues would come from whatever the analyzer could still read. So until this amendment is implemented, saving a project with a function dataset is refused with `SNR-APP-089` (C03-T08a), and the format gains a storage that holds the definition instead.
+
+**A function storage.** A dataset entry may have `storage: "function"` with a `function` object and no `path` or `link`:
+
+```json
+{ "id": "d3", "name": "f(x) = x^3 - 3*x", "storage": "function",
+  "function": { "expr": "x^3 - 3*x", "domain": [-3, 3], "samples": 1000 },
+  "fingerprint": "sha256:…", "rows": 1003 }
+```
+
+| Field | Rule |
+|---|---|
+| `function.expr` | The canonical form (ADR-0028), so the saved text is stable whatever the user typed |
+| `function.domain` | `[min, max]` |
+| `function.samples` or `function.step` | As the function source has them; exactly one, the default (1000 samples) written out |
+| `function.variables` | Named constants, keys sorted; omitted when empty |
+| `fingerprint`, `rows` | Of the sampled table, as for other datasets |
+
+No data member is written: the definition is the dataset. The manifest stays canonical JSON (§3), so the entry is byte-stable.
+
+**Reading.** A 1.1 reader samples the function again with CURVASONA's limits (the expression language's budgets, ADR-0028) and compares the fingerprint. Sampling is deterministic (ADR-0013), so a mismatch means CURVASONA samples differently from the build that saved the project (a fix such as F-194 can add or merge rows). That is a warning (`SNR-APP-034`, naming the dataset by its name), not a refusal: the definition is what the project stores, so the function opens with the new samples, and the next save records the new fingerprint. An expression this build cannot read (`SNR-ENG-400` to `404`) leaves the dataset unavailable with that diagnostic, and its entry is kept on re-save (below).
+
+**Unknown storages.** RFC-0002 §5 lets a 1.x reader open a newer minor version and ignore unknown manifest fields, but a storage value it does not know is not a field: read strictly, the entry fails to parse, and the whole bundle is refused as damaged (`SNR-APP-032`). From 1.1, a reader treats a dataset entry whose `storage` it does not know as an **unavailable dataset**: it warns with `SNR-APP-035`, naming the dataset and the storage; specs that use it report `SNR-COMP-026` when compiled, as for missing linked data (§4); and on re-save the entry is written back byte for byte (its known and unknown fields alike), so a newer build's data survives a round trip through an older one. A future storage then needs only a minor version.
+
+**Writing.** A writer writes `formatVersion` 1.1 only when the project has a function dataset or keeps an unknown-storage entry, and 1.0 otherwise, so projects without functions stay byte-identical to what 1.0 writers produce. A 1.0 reader (only development builds; no released build reads projects) refuses a 1.1 bundle with a function dataset as damaged; that is the behaviour this amendment fixes for later versions.
+
+**Codes.** `SNR-APP-089` (a project with a function dataset cannot be saved) is retired when this lands in code: it stays registered as retired and is never reused. `SNR-APP-034` and `035` gain the cases above.
+
+**Testing** (in the implementation PR):
+
+- A function dataset round-trips: definition, rows and fingerprint equal, and saving again without changes gives identical bytes.
+- A fingerprint mismatch (a fixture whose fingerprint is altered) opens with `SNR-APP-034`, and the new fingerprint is saved.
+- A fixture bundle with `storage: "future-kind"` opens with `SNR-APP-035`, the dataset unavailable; saving keeps its entry byte for byte.
+- A project without functions is written as 1.0, byte-identical to before.
+- The `project_open` fuzz target gains function and unknown-storage entries.
 
 ## Drawbacks
 

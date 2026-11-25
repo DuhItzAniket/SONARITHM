@@ -451,11 +451,16 @@ impl<D: CompilerData> Run<'_, D> {
         }
         let at = SpecPointer::root().key("context");
         let providers: Vec<_> = registry.context_providers().collect();
-        if providers.is_empty() {
+        // #434: the warning is about the `context` cues, so only a provider that serves them
+        // counts; function cues or a monitoring soundscape do not.
+        if !providers
+            .iter()
+            .any(|(_, provider)| provider.serves_context_cues())
+        {
             self.diagnostics.push(
                 Diagnostic::new(
                     &codes::CONTEXT_UNAVAILABLE,
-                    "Context cues (ticks, reference tone, legend, earcons) are not available in this build; AUDAXIS arrives in B03.",
+                    "Context cues (ticks, reference tone, legend, earcons) are not available: no engine that provides them (AUDAXIS) is registered in this build.",
                 )
                 .at(at),
             );
@@ -464,10 +469,14 @@ impl<D: CompilerData> Run<'_, D> {
         // substrate and the field semantics as well as `context` (05 §3).
         let params = fragment(SpecPointer::root(), spec)?;
         for (engine, provider) in providers {
-            self.use_engine(&engine.clone());
             let tracks = provider
                 .context_tracks(&params, score, data, annotations, &mut self.cx)
                 .map_err(stop)?;
+            // #434: the header lists engines that contributed content, so a provider is
+            // recorded only when it adds a track.
+            if !tracks.is_empty() {
+                self.use_engine(&engine.clone());
+            }
             for track in tracks {
                 self.charge(track.events.len())?;
                 score.tracks.push(track);

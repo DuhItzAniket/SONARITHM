@@ -89,6 +89,28 @@ fn an_expression_that_cannot_be_read_is_a_coded_error_at_its_key() {
     );
 }
 
+/// A source read without a spec meets the spec validator's rules (`SNR-SPEC-051`), so
+/// the app and Python never sample `samples: 0` as two points or pick `step` silently.
+#[test]
+fn a_source_the_spec_validator_refuses_is_refused_without_a_spec_too() {
+    let mut few = FunctionSpec::new("x", [0.0, 1.0]);
+    few.samples = Some(1);
+    let mut both = FunctionSpec::new("x", [0.0, 1.0]);
+    both.samples = Some(100);
+    both.step = Some(0.01);
+    for source in [few, both, FunctionSpec::new("x", [1.0, 0.0])] {
+        let err = read_function(&source).unwrap_err();
+        let first = err.diagnostics().iter().next().cloned().unwrap();
+        assert_eq!(first.code.as_str(), "SNR-SPEC-051", "{source:?}: {err}");
+    }
+    let mut fine = FunctionSpec::new("x", [0.0, 1.0]);
+    fine.samples = Some(2);
+    assert!(
+        read_function(&fine).is_ok(),
+        "2 samples is the minimum, not an error"
+    );
+}
+
 /// A11Y-24, A11Y-28: the critical-point list is a text equivalent of the cues. On every
 /// curve of the 40-curve suite, each earcon of `curvasona.cues` comes from a row within one
 /// grid step of an entry of the list (inside it, for a span), and the list has at least as many entries

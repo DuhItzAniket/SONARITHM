@@ -383,6 +383,14 @@ pub trait ContextProvider<D>: Send + Sync {
         cx: &mut CompileContext,
     ) -> Result<Vec<ScoreTrack>, CompileError>;
 
+    /// Whether this provider serves the cues the spec's `context` object asks for (ticks,
+    /// reference tone, legend, earcons; 04 §5.4). The compiler warns (`SNR-COMP-023`) when
+    /// no registered provider does; a provider of other context tracks (function cues, a
+    /// monitoring soundscape) keeps the default, `false` (#434).
+    fn serves_context_cues(&self) -> bool {
+        false
+    }
+
     /// The navigation tree of the finished `score` (08 §2), or `None` if this provider
     /// builds none. `spec` is the whole resolved spec (pointer `""`), because the tree needs
     /// the tracks, the substrate, the field semantics and the title. The compiler calls it
