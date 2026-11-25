@@ -96,17 +96,19 @@ clap = { version = "4.6.7", default-features = false, features = ["std", "derive
 # Raw keyboard input for `sonarithm play` (apps/cli only).
 crossterm = { version = "0.29.0", default-features = false, features = ["events", "windows"] }
 # Apache Arrow, the data contract (ADR-0006). The split crates keep the default feature
-# set small (no prettyprint, CSV or JSON readers) and wasm32-clean.
-arrow-array = "60.1.0"
-arrow-data = "60.1.0"
-arrow-ipc = { version = "60.1.0", features = ["lz4"] }
-arrow-ord = "60.1.0"
-arrow-row = "60.1.0"
-arrow-schema = "60.1.0"
-arrow-select = "60.1.0"
+# set small (no prettyprint, CSV or JSON readers) and wasm32-clean. The floor is 60.2.0
+# because the pinned data fingerprints were recorded against its IPC bytes (F-222); keep
+# parquet and arrow-pyarrow on the same release.
+arrow-array = "60.2.0"
+arrow-data = "60.2.0"
+arrow-ipc = { version = "60.2.0", features = ["lz4"] }
+arrow-ord = "60.2.0"
+arrow-row = "60.2.0"
+arrow-schema = "60.2.0"
+arrow-select = "60.2.0"
 # Arrow from Python through the PyCapsule interface (`__arrow_c_stream__`), maintained with
 # arrow-rs; it fixes the PyO3 version below (11 §3).
-arrow-pyarrow = "60.1.0"
+arrow-pyarrow = "60.2.0"
 bytes = "1.12.1"            # Parquet input buffers
 cargo_metadata = "0.23.1"   # xtask check-deps
 calamine = "0.38.0"         # XLSX, XLSM, XLSB, XLS and ODS (sonarithm-data `xlsx` feature)
@@ -158,7 +160,7 @@ miette = { version = "7.6.0", default-features = false }
 rhai = { version = "1.26.1", default-features = false, features = ["std", "no_time", "no_function", "no_module", "no_closure", "no_custom_syntax"] }
 # Parquet through Arrow, without the async (tokio) default. Pure-Rust codecs only; zstd is
 # a sonarithm-data feature because it builds C code.
-parquet = { version = "60.1.0", default-features = false, features = ["arrow", "snap", "brotli", "flate2-zlib-rs", "lz4", "simdutf8"] }
+parquet = { version = "60.2.0", default-features = false, features = ["arrow", "snap", "brotli", "flate2-zlib-rs", "lz4", "simdutf8"] }
 # Real-time communication (06 §4): wait-free SPSC rings, latest-value telemetry and
 # deferred frees off the audio thread. triple_buffer is MPL-2.0 (allowed, unmodified).
 basedrop = "0.1.3"
