@@ -16,14 +16,15 @@
 //! # Ok::<(), sonarithm::Error>(())
 //! ```
 
+use std::collections::BTreeMap;
 use std::fmt::Write as _;
 
 use serde::Serialize;
 use serde_json::{Value, json};
-use sonarithm_core::{Diagnostics, SpecPointer, TableId};
+use sonarithm_core::{Diagnostic, Diagnostics, SpecPointer, TableId};
 use sonarithm_curvasona::{
-    Budgets, FUNCTION_TABLE, Feature, FeatureKind, FunctionSpec, Sampled, offscreen_features,
-    sample_function,
+    Budgets, Expr, FUNCTION_TABLE, Feature, FeatureKind, FunctionSpec, Limits, Sampled,
+    offscreen_features, sample_function,
 };
 use sonarithm_data::{BundleId, DataBundle};
 
@@ -59,6 +60,10 @@ pub struct CriticalPoint {
     /// Its value: `f(x)`, or the limit at a hole or a horizontal asymptote.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub y: Option<f64>,
+    /// The table row its insight covers first: where its cue sounds and where the cursor
+    /// goes to reach it.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub row: Option<u64>,
     /// The entry as text, such as `local maximum at x = 1.5708, y = 1`.
     pub text: String,
 }
@@ -69,20 +74,55 @@ pub struct CriticalPoint {
 ///
 /// [`Error::Spec`] with CURVASONA's diagnostic when the expression or a variable cannot
 /// be used (`SNR-ENG-400` to `403`) or the grid exceeds its budget (`SNR-ENG-404`); its
-/// pointer names the key of a function source (`/data/source/expr`).
+/// pointer names the key of a function source (`/data/source/expr`). A source the spec
+/// validator would refuse (a bad domain, fewer than 2 samples, both `samples` and `step`)
+/// fails with its `SNR-SPEC-051` first.
 pub fn read_function(function: &FunctionSpec) -> Result<Function, Error> {
-    let sampled = sample_function(function, &Budgets::DEFAULT, (BundleId(0), FUNCTION_TABLE))
-        .map_err(|err| {
-            let at = SpecPointer::root().key("data").key("source").key(err.key);
-            let mut one = Diagnostics::new();
-            one.push(err.diagnostic.at(at));
-            Error::Spec(one)
-        })?;
+    read_function_with_ids(function, BundleId(0), FUNCTION_TABLE)
+}
+
+/// [`read_function`] into a bundle and table with these IDs, for hosts that hold several
+/// datasets (the app core's `function_open`, C03-T08).
+///
+/// # Errors
+///
+/// As [`read_function`].
+pub fn read_function_with_ids(
+    function: &FunctionSpec,
+    bundle: BundleId,
+    table: TableId,
+) -> Result<Function, Error> {
+    check_source(function)?;
+    let sampled = sample_function(function, &Budgets::DEFAULT, (bundle, table)).map_err(|err| {
+        let at = SpecPointer::root().key("data").key("source").key(err.key);
+        let mut one = Diagnostics::new();
+        one.push(err.diagnostic.at(at));
+        Error::Spec(one)
+    })?;
     Ok(Function {
         source: function.clone(),
         sampled,
         window: None,
     })
+}
+
+/// The spec validator's checks of a function source (`SNR-SPEC-051`: the domain, and
+/// `samples` or `step` but not both, at least 2 samples, a positive step), so a source read
+/// without a spec is held to the same rules as one in a spec (C03-T08).
+fn check_source(function: &FunctionSpec) -> Result<(), Error> {
+    let mut errors = Diagnostics::new();
+    errors.extend(
+        function_spec(function, FUNCTION_DURATION_S)
+            .validate()
+            .iter()
+            .filter(|diagnostic| diagnostic.is_error())
+            .cloned(),
+    );
+    if errors.is_empty() {
+        Ok(())
+    } else {
+        Err(Error::Spec(errors))
+    }
 }
 
 impl Function {
@@ -150,14 +190,6 @@ impl Function {
         self.sampled.bundle
     }
 
-    /// The bundle with other IDs, for hosts that hold several datasets.
-    #[must_use]
-    pub fn bundle_with_ids(&self, bundle: BundleId, table: TableId) -> Option<DataBundle> {
-        sample_function(&self.source, &Budgets::DEFAULT, (bundle, table))
-            .ok()
-            .map(|sampled| sampled.bundle)
-    }
-
     /// Sampling's non-error diagnostics: a numerical derivative (`SNR-ENG-405`), undefined
     /// samples (`406`), a scan that stopped early (`407`).
     #[must_use]
@@ -184,7 +216,16 @@ impl Function {
             ));
         }
         features.sort_by(|a, b| a.x.total_cmp(&b.x).then(a.kind.cmp(&b.kind)));
-        features.iter().map(critical_point).collect()
+        let rows =
+            sonarithm_curvasona::feature_rows(&self.sampled.bundle, &features, &Budgets::DEFAULT);
+        features
+            .iter()
+            .zip(rows)
+            .map(|(feature, row)| CriticalPoint {
+                row,
+                ..critical_point(feature)
+            })
+            .collect()
     }
 
     /// One sentence: the expression, the domain and how many of each feature, such as
@@ -269,6 +310,37 @@ pub fn function_spec(function: &FunctionSpec, seconds: f64) -> Spec {
     Spec::from_value(&value).with_name("function.spec.json")
 }
 
+/// An expression read without sampling it: its canonical form, or why it cannot be read
+/// (C03-T08's `function_check`, for an editor's live diagnostics).
+#[derive(Clone, Debug, PartialEq)]
+#[non_exhaustive]
+pub struct ExpressionCheck {
+    /// The canonical form, when it reads.
+    pub canonical: Option<String>,
+    /// Why it does not (`SNR-ENG-400` to `403`).
+    pub diagnostic: Option<Diagnostic>,
+    /// Where reading stopped, as `(at, len)` in characters, when the error has a place.
+    pub span: Option<(usize, usize)>,
+}
+
+/// Reads `expr` with the named constants `variables` under the function source's limits
+/// (ADR-0028), without sampling it.
+#[must_use]
+pub fn check_expression(expr: &str, variables: &BTreeMap<String, f64>) -> ExpressionCheck {
+    match Expr::parse(expr, variables, &Limits::DEFAULT) {
+        Ok(parsed) => ExpressionCheck {
+            canonical: Some(parsed.canonical().to_owned()),
+            diagnostic: None,
+            span: None,
+        },
+        Err(err) => ExpressionCheck {
+            canonical: None,
+            span: err.span(),
+            diagnostic: Some(err.to_diagnostic()),
+        },
+    }
+}
+
 /// A feature as a list entry.
 fn critical_point(feature: &Feature) -> CriticalPoint {
     let kind = feature.kind.label();
@@ -294,6 +366,7 @@ fn critical_point(feature: &Feature) -> CriticalPoint {
         x: feature.x,
         end: span.then_some(feature.end),
         y: feature.y,
+        row: None,
         text,
     }
 }
