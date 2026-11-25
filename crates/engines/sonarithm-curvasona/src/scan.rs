@@ -373,9 +373,11 @@ fn golden_minimum(g: &Expr, mut a: f64, mut b: f64, sign: f64, counter: &mut Cou
 
 /// `f` at `x + sign·h` for `h` = 10^-2 to 10^-8 grid steps: the probes of one side.
 fn probe(f: &Expr, x: f64, step: f64, sign: f64, counter: &mut Counter) -> [f64; 7] {
+    // 10^-2 to 10^-8 as literals, each correctly rounded: no platform `powi` (ADR-0013 §1).
+    const DECADES: [f64; 7] = [1e-2, 1e-3, 1e-4, 1e-5, 1e-6, 1e-7, 1e-8];
     let mut values = [0.0; 7];
-    for (k, value) in values.iter_mut().enumerate() {
-        let h = step * 10_f64.powi(-2 - i32::try_from(k).unwrap_or(0));
+    for (value, decade) in values.iter_mut().zip(DECADES) {
+        let h = step * decade;
         *value = counter.eval(f, x + sign * h);
     }
     values

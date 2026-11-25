@@ -15,8 +15,9 @@ use std::sync::Arc;
 use sonarithm_compiler::{Compiled, Compiler, CompilerData, Failure};
 use sonarithm_core::digest::Sha256Digest;
 use sonarithm_core::engine::{
-    Annotation, Budget, CancelToken, CompileContext, CompileError, Encoder, Engine, EngineManifest,
-    MarkKind, Registrar, RegistryError, Shaper, Source, SourceKind, SpecFragment, TrackRequest,
+    Annotation, Budget, CancelToken, CompileContext, CompileError, ContextProvider, Encoder,
+    Engine, EngineManifest, MarkKind, Registrar, RegistryError, Shaper, Source, SourceKind,
+    SpecFragment, TrackRequest,
 };
 use sonarithm_core::ids::EngineId;
 use sonarithm_core::score::{
@@ -278,4 +279,128 @@ fn invalid_specs_fail_with_spec_diagnostics() {
     );
     let failure = compile(&[&PLATFORM, &numisona(true)], &reversed).unwrap_err();
     assert!(codes(failure).contains(&"SNR-SPEC-031".to_owned()));
+}
+
+/// A context provider for #434: it serves the spec's `context` cues or not, and adds one
+/// context track or none.
+struct TestContext {
+    cues: bool,
+    adds: bool,
+}
+
+impl ContextProvider<InlineTable> for TestContext {
+    fn context_tracks(
+        &self,
+        _: &SpecFragment,
+        _: &Score,
+        _: &InlineTable,
+        _: &[Annotation],
+        _: &mut CompileContext,
+    ) -> Result<Vec<ScoreTrack>, CompileError> {
+        Ok(if self.adds {
+            vec![ScoreTrack::new(
+                sonarithm_core::ids::TrackId::new("context.cue"),
+                TrackRole::Context,
+                EngineId::from_static("contextual"),
+                InstrumentRef("click".to_owned()),
+            )]
+        } else {
+            Vec::new()
+        })
+    }
+
+    fn serves_context_cues(&self) -> bool {
+        self.cues
+    }
+}
+
+/// An engine that registers only a [`TestContext`].
+struct ContextEngine {
+    cues: bool,
+    adds: bool,
+}
+
+impl Engine<InlineTable> for ContextEngine {
+    fn manifest(&self) -> EngineManifest {
+        EngineManifest::new(
+            EngineId::from_static("contextual"),
+            "contextual",
+            EngineVersion("0.0.0".to_owned()),
+        )
+    }
+
+    fn register(&self, registrar: &mut Registrar<'_, InlineTable>) -> Result<(), RegistryError> {
+        registrar.context(Arc::new(TestContext {
+            cues: self.cues,
+            adds: self.adds,
+        }));
+        Ok(())
+    }
+}
+
+/// The engines recorded in a compile's header, by ID.
+fn header_engines(compiled: &Compiled) -> Vec<String> {
+    compiled
+        .score
+        .header
+        .engines
+        .keys()
+        .map(ToString::to_string)
+        .collect()
+}
+
+/// Whether a compile warned `SNR-COMP-023`.
+fn warns_023(compiled: &Compiled) -> bool {
+    compiled
+        .diagnostics
+        .iter()
+        .any(|d| d.code.as_str() == "SNR-COMP-023")
+}
+
+/// #434: the header lists the engines that contributed content, so a context provider is
+/// recorded only when it adds a track (ADR-0013 note, 05 §4).
+#[test]
+fn a_context_provider_is_recorded_only_when_it_adds_a_track() {
+    let silent = ContextEngine {
+        cues: true,
+        adds: false,
+    };
+    let compiled = compile(&[&PLATFORM, &numisona(false), &silent], SPEC).unwrap();
+    assert_eq!(header_engines(&compiled), ["numisona", "platform"]);
+    let adding = ContextEngine {
+        cues: true,
+        adds: true,
+    };
+    let compiled = compile(&[&PLATFORM, &numisona(false), &adding], SPEC).unwrap();
+    assert_eq!(
+        header_engines(&compiled),
+        ["contextual", "numisona", "platform"]
+    );
+}
+
+/// #434: `SNR-COMP-023` reports that no registered provider serves the spec's `context`
+/// cues. A provider of other context tracks does not silence it, and a provider that
+/// serves the cues silences it even when the spec leads it to add nothing.
+#[test]
+fn snr_comp_023_fires_only_when_no_provider_serves_context_cues() {
+    let none = compile(&[&PLATFORM, &numisona(false)], SPEC).unwrap();
+    assert!(warns_023(&none), "no provider at all");
+    let other = ContextEngine {
+        cues: false,
+        adds: true,
+    };
+    let masked = compile(&[&PLATFORM, &numisona(false), &other], SPEC).unwrap();
+    assert!(
+        warns_023(&masked),
+        "a provider of other tracks does not count"
+    );
+    let serving = ContextEngine {
+        cues: true,
+        adds: false,
+    };
+    let served = compile(&[&PLATFORM, &numisona(false), &serving], SPEC).unwrap();
+    assert!(
+        !warns_023(&served),
+        "a provider that serves the cues counts"
+    );
 }

@@ -10,7 +10,7 @@ Engines: curvasona [version], numisona [version].
 Track f: data track, 1 events (1 glide), 0.000 to 8.000 seconds, pitch 400.00 to 1400.00 Hz, instrument mallet.
 Track curvasona.cues: earcon track, 5 events (5 earcons), 1.691 to 6.301 seconds, instrument sine.
 Score hash: [score hash].
-Diagnostics: 0 errors, 0 warnings, 30 applied defaults and choices.
+Diagnostics: 0 errors, 1 warning, 30 applied defaults and choices.
 Function: f(x) = x^3 - 3*x from x = -3 to 3, 1000 samples: 3 zeros, 1 local maximum, 1 inflection point, 1 local minimum.
 Critical points:
 Zero at x = -1.7321.
@@ -26,4 +26,9 @@ In f, the highest pitch, 1400 Hz, is at 7.99 seconds; the lowest, 400 Hz, at 0.0
 Playing function.spec.json, 8.00 seconds, on null.
 Finished at 8.00 seconds.
 --- stderr
+Context cues (ticks, reference tone, legend, earcons) are not available: no engine that provides them (AUDAXIS) is registered in this build.
+    Diagnostic severity: warning
+diagnostic help: Location: /context.
+diagnostic code: SNR-COMP-023
+
 note: --verbose lists the applied defaults and automatic choices.
