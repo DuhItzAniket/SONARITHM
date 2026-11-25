@@ -71,5 +71,7 @@ updates:
       prefix: ci
       include: scope
     groups:
-      github-actions:
+      # A short name: it is in the PR title ("bump the actions group across 1 directory
+      # with N updates"), which pr-title.yml limits to 72 characters.
+      actions:
         patterns: ["*"]
