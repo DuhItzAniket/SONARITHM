@@ -903,6 +903,8 @@ mod tests {
     fn every_string_layout_infers_alike() {
         use arrow_array::{LargeStringArray, StringViewArray};
 
+        type Layout = fn(Vec<Option<&'static str>>) -> ArrayRef;
+
         let level = vec![
             Some("High"),
             Some("low"),
@@ -919,7 +921,7 @@ mod tests {
             Some("south"),
             Some("north"),
         ];
-        let layouts: [fn(Vec<Option<&'static str>>) -> ArrayRef; 3] = [
+        let layouts: [Layout; 3] = [
             |v| Arc::new(StringArray::from(v)),
             |v| Arc::new(LargeStringArray::from(v)),
             |v| Arc::new(StringViewArray::from(v)),
