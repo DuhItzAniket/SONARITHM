@@ -82,6 +82,10 @@ function sampleArgs(style: string): MessageArgs {
     grid: "25",
     counts: "26",
     step: "27",
+    // The chart explorer's toggles (B03-T09).
+    modality: "speech",
+    on: "yes",
+    verbosity: "verbose",
   };
 }
 

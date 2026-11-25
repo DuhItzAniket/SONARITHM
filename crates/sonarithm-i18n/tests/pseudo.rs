@@ -84,6 +84,10 @@ fn sample_args(style: UnitStyle) -> Args {
         .text("grid", "25")
         .text("counts", "26")
         .text("step", "27")
+        // The chart explorer toggles (B03-T09).
+        .text("modality", "speech")
+        .text("on", "yes")
+        .text("verbosity", "verbose")
 }
 
 #[test]
