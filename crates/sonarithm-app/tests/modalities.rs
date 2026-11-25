@@ -101,7 +101,7 @@ impl Harness {
 
     /// Down from the root to the first point, where Left and Right move between points
     /// (a boundary is said once, then only its earcon plays).
-    fn to_point(&mut self) {
+    fn go_to_point(&mut self) {
         for _ in 0..3 {
             self.step("into");
         }
@@ -155,7 +155,7 @@ fn effective_in(reply: &Value, key: &str) -> (Value, String) {
 fn b03_t09_speech_off_is_said_before_announcements_go_quiet() {
     let mut h = Harness::new("speech-off");
     h.compile();
-    h.to_point();
+    h.go_to_point();
     let reply = h.toggle("speech").unwrap();
     assert_eq!(
         effective_in(&reply, "interaction.modalities.speech"),
@@ -195,7 +195,7 @@ fn b03_t09_the_log_is_the_same_with_speech_on_and_off() {
         }
         // A boundary at the root is history only: neither run may log it.
         h.ok(&json!({ "command": "nav_move", "args": { "verb": { "verb": "next" } } }));
-        h.to_point();
+        h.go_to_point();
         h.step("next");
         h.step("previous");
         let count = h.announcements(0).len();
@@ -220,17 +220,23 @@ fn b03_t09_sonification_off_silences_the_transport() {
     let state = h.ok(&json!({ "command": "transport_state" }));
     assert_eq!(state["muted"], false);
     h.toggle("sonification").unwrap();
-    assert_eq!(h.ok(&json!({ "command": "transport_state" }))["muted"], true);
+    assert_eq!(
+        h.ok(&json!({ "command": "transport_state" }))["muted"],
+        true
+    );
     assert_eq!(h.announcements(1)[0].speech, "Sonification off");
     h.toggle("sonification").unwrap();
-    assert_eq!(h.ok(&json!({ "command": "transport_state" }))["muted"], false);
+    assert_eq!(
+        h.ok(&json!({ "command": "transport_state" }))["muted"],
+        false
+    );
 }
 
 #[test]
 fn a11y_12_shift_t_switches_the_verbosity_of_announcements() {
     let mut h = Harness::new("verbosity");
     h.compile();
-    h.to_point();
+    h.go_to_point();
     let terse = h.step("next").speech;
     h.toggle("verbosity").unwrap();
     assert_eq!(
@@ -283,7 +289,10 @@ fn a11y_10_toggles_persist_over_the_profile_without_touching_the_base_settings()
     let after = h.ok(&json!({ "command": "settings_get" }));
     assert_eq!(after["modalities"], before["modalities"]);
     assert_eq!(after["verbosity"], before["verbosity"]);
-    assert_eq!(after["choices"], json!({ "visual": false, "verbosity": "verbose" }));
+    assert_eq!(
+        after["choices"],
+        json!({ "visual": false, "verbosity": "verbose" })
+    );
 }
 
 #[test]
@@ -299,14 +308,23 @@ fn b03_t09_choices_reset_returns_to_the_profile_defaults() {
         effective_in(&reply, "interaction.modalities.visual"),
         (visual, layer)
     );
-    assert_eq!(h.ok(&json!({ "command": "transport_state" }))["muted"], false);
-    assert_eq!(h.ok(&json!({ "command": "settings_get" }))["choices"], json!({}));
+    assert_eq!(
+        h.ok(&json!({ "command": "transport_state" }))["muted"],
+        false
+    );
+    assert_eq!(
+        h.ok(&json!({ "command": "settings_get" }))["choices"],
+        json!({})
+    );
     assert_eq!(
         h.announcements(3)[2].speech,
         "Toggles reset to your profile's defaults."
     );
     h.restart();
-    assert_eq!(h.ok(&json!({ "command": "settings_get" }))["choices"], json!({}));
+    assert_eq!(
+        h.ok(&json!({ "command": "settings_get" }))["choices"],
+        json!({})
+    );
 }
 
 /// INFER (OD-30): a blind listener must not silence the app by accident.
@@ -322,8 +340,14 @@ fn b03_t09_the_last_non_visual_output_cannot_be_turned_off() {
     let err = h.toggle("sonification").unwrap_err();
     assert_eq!(err.code, "SNR-APP-094");
     // Nothing changed, and the refusal is spoken although speech is off.
-    assert_eq!(h.effective("interaction.modalities.sonification").0, json!(true));
-    assert_eq!(h.ok(&json!({ "command": "transport_state" }))["muted"], false);
+    assert_eq!(
+        h.effective("interaction.modalities.sonification").0,
+        json!(true)
+    );
+    assert_eq!(
+        h.ok(&json!({ "command": "transport_state" }))["muted"],
+        false
+    );
     let said = h.announcements(3);
     assert_eq!(
         said[2].speech,
@@ -333,5 +357,8 @@ fn b03_t09_the_last_non_visual_output_cannot_be_turned_off() {
     // With braille on, sonification can go.
     h.toggle("braille").unwrap();
     h.toggle("sonification").unwrap();
-    assert_eq!(h.ok(&json!({ "command": "transport_state" }))["muted"], true);
+    assert_eq!(
+        h.ok(&json!({ "command": "transport_state" }))["muted"],
+        true
+    );
 }

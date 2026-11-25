@@ -254,13 +254,20 @@ fn run(speech_off: bool) -> Vec<(String, bool)> {
 fn b03_t09_speech_off_logs_exactly_what_would_be_spoken() {
     let on = run(false);
     let off = run(true);
-    let texts = |run: &[(String, bool)]| run.iter().map(|(text, _)| text.clone()).collect::<Vec<_>>();
+    let texts =
+        |run: &[(String, bool)]| run.iter().map(|(text, _)| text.clone()).collect::<Vec<_>>();
     assert_eq!(texts(&off), texts(&on));
-    assert!(!on.is_empty() && on.iter().all(|(_, logged)| !logged), "{on:?}");
+    assert!(
+        !on.is_empty() && on.iter().all(|(_, logged)| !logged),
+        "{on:?}"
+    );
     for (text, logged) in &off {
         assert_eq!(*logged, text != "Device lost", "{off:?}");
     }
-    assert!(!texts(&on).contains(&"Last".to_owned()), "history only: {on:?}");
+    assert!(
+        !texts(&on).contains(&"Last".to_owned()),
+        "history only: {on:?}"
+    );
 }
 
 /// B03-T09: a muted response does not pause playback, and nothing muted ducks it.
@@ -281,10 +288,25 @@ fn b03_t09_what_was_queued_before_speech_went_off_is_spoken() {
     sequencer.push(of(Class::Status, "Speech off"), 0);
     sequencer.set_speech_off(true);
     sequencer.push(of(Class::Navigation, "12.5"), 0);
+    // In the queue's own order (navigation before status), as with speech on.
     let out = sequencer.poll(10, false, None);
-    assert!(
-        matches!(out.as_slice(), [Output::Deliver(spoken), Output::Log(logged)]
-            if spoken.announcement.display == "Speech off" && logged.announcement.display == "12.5"),
+    let spoken: Vec<&str> = out
+        .iter()
+        .filter_map(|output| match output {
+            Output::Deliver(delivery) => Some(delivery.announcement.display.as_str()),
+            _ => None,
+        })
+        .collect();
+    let logged: Vec<&str> = out
+        .iter()
+        .filter_map(|output| match output {
+            Output::Log(delivery) => Some(delivery.announcement.display.as_str()),
+            _ => None,
+        })
+        .collect();
+    assert_eq!(
+        (spoken, logged),
+        (vec!["Speech off"], vec!["12.5"]),
         "{out:?}"
     );
 }

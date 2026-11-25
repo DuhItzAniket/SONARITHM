@@ -71,7 +71,8 @@ impl App {
         if !audible {
             // Spoken as an error, so it is heard whatever is muted.
             if let Some(text) = self.toggle_text("announce-modality-lockout", &Args::new()) {
-                self.transport.announce(Announcement::error(text.clone(), text));
+                self.transport
+                    .announce(Announcement::error(text.clone(), text));
             }
             return Err(IpcError::new(
                 &codes::MODALITY_LOCKOUT,
