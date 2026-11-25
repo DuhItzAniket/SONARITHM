@@ -12,7 +12,7 @@
 )]
 
 use std::sync::Arc;
-use std::time::{Duration, Instant};
+use std::time::Duration;
 
 use serde_json::{Value, json};
 use sonarithm_app::ipc::{Event, IpcError};
@@ -238,4 +238,47 @@ fn sdr_31_the_calculator_agrees_with_the_compile() {
         .send(&json!({ "command": "audify_calculate", "args": { "dataset": "d1", "k": 0 } }))
         .unwrap_err();
     assert_eq!(err.code, "SNR-ENG-463", "{err}");
+}
+
+/// Format 1.1 (RFC-0002 §12) retires the autosave notice of C03-T08a: autosave keeps a
+/// function dataset as its definition, says nothing about it, and a recovery after a crash
+/// brings the function back with the rest.
+#[test]
+fn rfc_0002_12_autosave_keeps_a_function_and_recovers_it() {
+    let mut h = Harness::new("function-autosave");
+    let csv = h.dir.path().join("temps.csv");
+    std::fs::write(&csv, "day,temp
+1,20.5
+2,21.0
+3,19.8
+").unwrap();
+    h.ok(&json!({ "command": "dataset_open", "args": { "path": csv } }));
+    h.ok(&cubic());
+    let spec = json!({
+        "specVersion": "0.4",
+        "data": { "source": { "kind": "dataset", "id": "d1" } },
+        "tracks": [{ "id": "t", "mark": "tone", "channels": { "pitch": { "field": "temp" } } }]
+    })
+    .to_string();
+    h.ok(&json!({ "command": "spec_set", "args": { "text": spec } }));
+    h.app.autosave_now();
+    std::thread::sleep(Duration::from_millis(300));
+    assert_eq!(h.announcements(), Vec::<String>::new(), "nothing to say");
+    // Dropped without shutdown: a crash. The next start recovers both datasets.
+    let Harness { app, dir, .. } = h;
+    drop(app);
+    let mut next = App::new(config(&dir), Arc::new(CollectingSink::new())).unwrap();
+    let recovery = next
+        .dispatch_json(&json!({ "command": "project_recovery" }).to_string())
+        .unwrap();
+    let id = recovery["autosaves"][0]["id"].clone();
+    let recovered = next
+        .dispatch_json(&json!({ "command": "project_recover", "args": { "id": id } }).to_string())
+        .unwrap();
+    let datasets = recovered["datasets"].as_array().unwrap();
+    assert_eq!(datasets.len(), 2, "{recovered}");
+    assert_eq!(datasets[1]["id"], "d2");
+    assert_eq!(datasets[1]["name"], "f(x) = x^3 - 3*x", "{recovered}");
+    assert_eq!(datasets[1]["available"], true);
+    next.shutdown();
 }
