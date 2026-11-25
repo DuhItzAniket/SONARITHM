@@ -34,6 +34,7 @@ use crate::transport::{Action, AudioOutput, OutputConfig, Transport};
 mod braille;
 mod corrections;
 mod cursor;
+mod functions;
 mod nav;
 mod profiles;
 mod projects;
@@ -94,6 +95,9 @@ struct Open {
     origin: Option<PathBuf>,
     /// For a dataset read from a chart: its corrections (C02-T06).
     chart: Option<corrections::ChartState>,
+    /// For a dataset sampled from a function: its definition (C03-T08). Projects cannot
+    /// save it yet (`SNR-APP-089`).
+    function: Option<sonarithm::FunctionSpec>,
 }
 
 /// What an undoable edit changed: the spec, or one chart dataset's corrections (C02-T06).
@@ -328,6 +332,9 @@ impl App {
                 origin,
             } => self.cursor_set(&dataset, row, origin),
             Request::CursorGet => Ok(self.cursor_get()),
+            request @ (Request::FunctionCheck { .. }
+            | Request::FunctionOpen { .. }
+            | Request::AudifyCalculate { .. }) => self.functions(request),
             Request::NavMove { verb } => self.nav_move(&verb),
             Request::NavWhere => self.nav_where(),
             Request::BrailleRoute { cell } => self.braille_route(cell),
@@ -577,6 +584,7 @@ impl App {
                 bundle,
                 origin: Some(path.clone()),
                 chart: chart_state,
+                function: None,
             },
         );
         Ok(Reply::Dataset(summary))

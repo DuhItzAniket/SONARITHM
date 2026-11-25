@@ -689,6 +689,45 @@ pub fn offscreen_features(data: &DataBundle, window: [f64; 2], budgets: &Budgets
         .collect()
 }
 
+/// The rows `[start, end)` a feature's insight covers: the row nearest a point, the rows
+/// inside a span (else the row nearest its start). `rows` is `(x, row)` sorted by `x`.
+fn covered_rows(rows: &[(f64, u64)], feature: &Feature) -> Option<(u64, u64)> {
+    let nearest = |x: f64| {
+        rows.iter()
+            .min_by(|a, b| (a.0 - x).abs().total_cmp(&(b.0 - x).abs()))
+            .map(|&(_, row)| row)
+    };
+    if feature.is_point() {
+        return nearest(feature.x).map(|row| (row, row + 1));
+    }
+    let inside = rows
+        .iter()
+        .filter(|(x, _)| *x >= feature.x && *x <= feature.end)
+        .map(|&(_, row)| row);
+    match (inside.clone().min(), inside.max()) {
+        (Some(first), Some(last)) => Some((first, last + 1)),
+        _ => nearest(feature.x).map(|row| (row, row + 1)),
+    }
+}
+
+/// The first row of each feature's insight in the function table of `data`: where its cue
+/// sounds and where the cursor goes to reach it (C03-T08). `None` for a feature with no
+/// row, or when `data` is not a function table.
+#[must_use]
+pub fn feature_rows(
+    data: &DataBundle,
+    features: &[Feature],
+    budgets: &Budgets,
+) -> Vec<Option<u64>> {
+    let rows = FunctionTable::read(data, budgets)
+        .map(|f| f.rows)
+        .unwrap_or_default();
+    features
+        .iter()
+        .map(|feature| covered_rows(&rows, feature).map(|(start, _)| start))
+        .collect()
+}
+
 /// The annotations of the function table in `data`, recomputed from the expression its
 /// metadata records, at the table's own `x` values.
 ///
@@ -711,27 +750,12 @@ pub fn function_features(data: &DataBundle, budgets: &Budgets) -> Result<Vec<Ann
         start,
         end,
     };
-    let nearest = |x: f64| {
-        rows.iter()
-            .min_by(|a, b| (a.0 - x).abs().total_cmp(&(b.0 - x).abs()))
-            .map(|&(_, row)| row)
-    };
     let mut annotations = Vec::with_capacity(features.len());
     for feature in &features {
-        let covered = if feature.is_point() {
-            nearest(feature.x).map(|row| range(row, row + 1))
-        } else {
-            let inside: Vec<u64> = rows
-                .iter()
-                .filter(|(x, _)| *x >= feature.x && *x <= feature.end)
-                .map(|&(_, row)| row)
-                .collect();
-            match (inside.iter().min(), inside.iter().max()) {
-                (Some(&first), Some(&last)) => Some(range(first, last + 1)),
-                _ => nearest(feature.x).map(|row| range(row, row + 1)),
-            }
+        let Some((start, end)) = covered_rows(&rows, feature) else {
+            continue;
         };
-        let Some(covered) = covered else { continue };
+        let covered = range(start, end);
         let mut annotation = Annotation::new(CRITICAL_POINTS, feature.kind.label(), covered);
         annotation.value = feature.y;
         annotation.rules = vec![RuleId::from_static("A11Y-28")];
