@@ -2,7 +2,7 @@
   "clicks": {
     "cues": null,
     "data": {
-      "fingerprint": "sha256:2790e9b6787853b7dc0107af5eabc6e7fa1dd8aa41465dbee9d64af99480630d",
+      "fingerprint": "sha256:8192002a3cde62c2965fcd3a21a368d3adb0c74e449bec6dc40051c120b178e2",
       "provenance": {},
       "source": {
         "kind": "file",
@@ -32,7 +32,7 @@
     },
     "score": {
       "irVersion": 1,
-      "releaseIndependentHash": "sha256:060638506786a03324c942fbe4dbabfee8b527156390f9eb81eae35393809bae"
+      "releaseIndependentHash": "sha256:9db9d3f4f24770d50f1ea601ba3b7001aafd29a512dfaacddaf316eb440b6194"
     },
     "spec": {
       "embedded": null,
@@ -75,7 +75,7 @@
   "clicks-dynamic": {
     "cues": null,
     "data": {
-      "fingerprint": "sha256:2790e9b6787853b7dc0107af5eabc6e7fa1dd8aa41465dbee9d64af99480630d",
+      "fingerprint": "sha256:8192002a3cde62c2965fcd3a21a368d3adb0c74e449bec6dc40051c120b178e2",
       "provenance": {},
       "source": {
         "kind": "file",
@@ -105,7 +105,7 @@
     },
     "score": {
       "irVersion": 1,
-      "releaseIndependentHash": "sha256:78eb16ee2bd6e85a45ef451f80d1922e3a956bd4b6ea99d99ee71f46df2b9e76"
+      "releaseIndependentHash": "sha256:1cb048042981854acdbdc66cb98eb9bdb96a80429dade5abc95f4da2abe3e32a"
     },
     "spec": {
       "embedded": null,
@@ -163,7 +163,7 @@
   "clicks-static": {
     "cues": null,
     "data": {
-      "fingerprint": "sha256:2790e9b6787853b7dc0107af5eabc6e7fa1dd8aa41465dbee9d64af99480630d",
+      "fingerprint": "sha256:8192002a3cde62c2965fcd3a21a368d3adb0c74e449bec6dc40051c120b178e2",
       "provenance": {},
       "source": {
         "kind": "file",
@@ -193,7 +193,7 @@
     },
     "score": {
       "irVersion": 1,
-      "releaseIndependentHash": "sha256:2cd25af8af6c031d7c705c78edb9c0991af2e65389b0aee41241ea62a4ab3f6f"
+      "releaseIndependentHash": "sha256:f68d94e50cf3e322f78b58b9e164b3f7c9ca79a7f2c69de1b2b02c747bc7cbd9"
     },
     "spec": {
       "embedded": null,
@@ -251,7 +251,7 @@
   "dynamic": {
     "cues": null,
     "data": {
-      "fingerprint": "sha256:2790e9b6787853b7dc0107af5eabc6e7fa1dd8aa41465dbee9d64af99480630d",
+      "fingerprint": "sha256:8192002a3cde62c2965fcd3a21a368d3adb0c74e449bec6dc40051c120b178e2",
       "provenance": {},
       "source": {
         "kind": "file",
@@ -281,7 +281,7 @@
     },
     "score": {
       "irVersion": 1,
-      "releaseIndependentHash": "sha256:47ae386de535d2c28c46390516a310959bc51c6c0f5f8627601ca326c729ed4e"
+      "releaseIndependentHash": "sha256:247c45f113f8c24d149e6b6a206f8201080d59330ee0aa92a9c273a67bd324dc"
     },
     "spec": {
       "embedded": null,
@@ -324,7 +324,7 @@
   "none": {
     "cues": null,
     "data": {
-      "fingerprint": "sha256:2790e9b6787853b7dc0107af5eabc6e7fa1dd8aa41465dbee9d64af99480630d",
+      "fingerprint": "sha256:8192002a3cde62c2965fcd3a21a368d3adb0c74e449bec6dc40051c120b178e2",
       "provenance": {},
       "source": {
         "kind": "file",
@@ -354,7 +354,7 @@
     },
     "score": {
       "irVersion": 1,
-      "releaseIndependentHash": "sha256:66f75d32fe38af96d6f77ef37eaa2429a2b3e08f4b4c4b1a070de52199001c2f"
+      "releaseIndependentHash": "sha256:81894a3800c7503081fdf00aa225231a2ffae7125b5b981975e348ea57a1ff70"
     },
     "spec": {
       "embedded": null,
@@ -382,7 +382,7 @@
   "static": {
     "cues": null,
     "data": {
-      "fingerprint": "sha256:2790e9b6787853b7dc0107af5eabc6e7fa1dd8aa41465dbee9d64af99480630d",
+      "fingerprint": "sha256:8192002a3cde62c2965fcd3a21a368d3adb0c74e449bec6dc40051c120b178e2",
       "provenance": {},
       "source": {
         "kind": "file",
@@ -412,7 +412,7 @@
     },
     "score": {
       "irVersion": 1,
-      "releaseIndependentHash": "sha256:433e00291c12bb7af2f9808813f1fb8f90df71dfc178b6053393d272cb39b7e3"
+      "releaseIndependentHash": "sha256:d8d4b3ed70fa5301148345cf4a12c7339ca278ac2151f40938b0ef38992aa5cb"
     },
     "spec": {
       "embedded": null,

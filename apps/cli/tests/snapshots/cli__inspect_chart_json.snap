@@ -48,7 +48,7 @@ exit code: 0
     "seed": 0,
     "duration_s": 2.131579,
     "spec_hash": "c32292324f67509b038a86e1e7d84b8d482a488760d5021a14c42cc3112eca3e",
-    "data_fingerprint": "af6726397edb0039e4da698bcce215c382ced246604960881b6762dd9f04750f",
+    "data_fingerprint": "ab5b56ca06775d463dd3f42c37d3decfbe02473546f2faaef4a60163f83fa6cd",
     "score_hash": "[score hash]",
     "engines": {
       "numisona": "[version]",
@@ -368,7 +368,7 @@ exit code: 0
       "severity": "warning",
       "code": "SNR-COMP-023",
       "rules": [],
-      "message": "Context cues (ticks, reference tone, legend, earcons) are not available in this build; AUDAXIS arrives in B03.",
+      "message": "Context cues (ticks, reference tone, legend, earcons) are not available: no engine that provides them (AUDAXIS) is registered in this build.",
       "location": "/context",
       "data": null
     },

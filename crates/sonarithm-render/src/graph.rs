@@ -18,7 +18,7 @@
 //! size.
 
 use sonarithm_core::{Db, Frames, Hz, Pan, SampleRate, Seconds};
-use sonarithm_dsp::env::{note_ramp, ramp_frames};
+use sonarithm_dsp::env::{MIN_RAMP, note_ramp, ramp_frames};
 use sonarithm_dsp::smooth::SMOOTHING_TIME;
 use sonarithm_dsp::{LinearSmoother, PanGains, TruePeakLimiter};
 
@@ -36,8 +36,9 @@ pub const SEEK_FADE: Seconds = Seconds(0.010);
 pub const PAUSE_FADE: Seconds = Seconds(0.020);
 /// The slowest and fastest playback speeds.
 pub const SPEED_RANGE: (f64, f64) = (0.25, 4.0);
-/// Events examined per track when looking for notes still sounding at a seek target.
-const MAX_RESUME_SCAN: usize = 256;
+/// Events examined per track when looking for notes still sounding at a seek target; the
+/// same bound caps a track's polyphony (#443).
+const MAX_RESUME_SCAN: usize = crate::plan::MAX_TRACK_POLYPHONY;
 /// Voices for live cues (06 §3: "Live cue voices", routed to the data bus).
 const CUE_VOICES: usize = 4;
 /// Voices for live earcons, on the earcon bus (keyboard §11; B03-T06).
@@ -229,6 +230,55 @@ struct TrackState {
     /// Index of the next event to dispatch.
     next: usize,
     pool: VoicePool,
+    /// The fading output of voices stolen from `pool` (#443).
+    residual: Residual,
+}
+
+/// What is left of stolen voices' output, fading linearly to zero over [`MIN_RAMP`]
+/// (#443). Replacing a sounding voice would drop its output to zero in one frame, a click;
+/// adding its last output back and fading it keeps the track's output continuous. Two
+/// levels and two counters: no allocation, and rendering is bounded by the fade length.
+#[derive(Clone, Copy, Debug, Default)]
+struct Residual {
+    level: [f32; 2],
+    remaining: u32,
+    total: u32,
+}
+
+impl Residual {
+    /// Adds a stolen voice's last output and restarts the fade over `frames`.
+    fn add(&mut self, last: [f32; 2], frames: u32) {
+        let now = self.current();
+        self.level = [now[0] + last[0], now[1] + last[1]];
+        self.total = frames.max(1);
+        self.remaining = self.total;
+    }
+
+    /// The level the next frame adds.
+    fn current(&self) -> [f32; 2] {
+        if self.remaining == 0 {
+            return [0.0; 2];
+        }
+        #[expect(
+            clippy::cast_precision_loss,
+            reason = "fade lengths are a few hundred frames"
+        )]
+        let k = self.remaining as f32 / self.total as f32;
+        [self.level[0] * k, self.level[1] * k]
+    }
+
+    /// Adds the fading residual to `left` and `right`. RT-safe: at most `remaining` frames.
+    fn render(&mut self, left: &mut [f32], right: &mut [f32]) {
+        for (l, r) in left.iter_mut().zip(right.iter_mut()) {
+            if self.remaining == 0 {
+                break;
+            }
+            let [dl, dr] = self.current();
+            *l += dl;
+            *r += dr;
+            self.remaining -= 1;
+        }
+    }
 }
 
 type Stereo = [Vec<f32>; 2];
@@ -247,6 +297,8 @@ pub struct Graph {
     master: Stereo,
     /// Per-voice work buffer, `max_block` long.
     scratch: Vec<f32>,
+    /// The fade length of a stolen voice's residual, [`MIN_RAMP`] in frames (#443).
+    declick: u32,
     bus_gains: [LinearSmoother; 4],
     master_gain: LinearSmoother,
     duck_gain: LinearSmoother,
@@ -278,6 +330,7 @@ impl Graph {
             .map(|track| TrackState {
                 next: 0,
                 pool: VoicePool::new(track.voices),
+                residual: Residual::default(),
             })
             .collect();
         let level = |bus: Bus| {
@@ -319,6 +372,7 @@ impl Graph {
             buses: [stereo(), stereo(), stereo(), stereo()],
             master: stereo(),
             scratch: vec![0.0; max_block],
+            declick: ramp_frames(MIN_RAMP, rate),
             bus_gains: Bus::ALL.map(level),
             master_gain: LinearSmoother::new(1.0, SMOOTHING_TIME, rate),
             duck_gain: LinearSmoother::new(1.0, SMOOTHING_TIME, rate),
@@ -507,6 +561,9 @@ impl Graph {
                     )]
                     let offset = ((position - event.start as f64) / speed).max(1.0) as u64;
                     let (voice, stolen) = state.pool.allocate();
+                    if stolen {
+                        state.residual.add(voice.last_output(), self.declick);
+                    }
                     voice.start(
                         event,
                         track,
@@ -679,6 +736,9 @@ impl Graph {
                     break;
                 }
                 let (voice, stolen) = state.pool.allocate();
+                if stolen {
+                    state.residual.add(voice.last_output(), self.declick);
+                }
                 voice.start(
                     event,
                     track,
@@ -741,6 +801,7 @@ impl Graph {
             for voice in state.pool.iter_mut().filter(|voice| voice.is_active()) {
                 voice.render(left, right, track, self.rate, &mut self.scratch);
             }
+            state.residual.render(left, right);
         }
         // Live cues play on the data bus (06 §3), live earcons on the earcon bus.
         let [[left, right], _, [earcon_left, earcon_right], _] = &mut self.buses;

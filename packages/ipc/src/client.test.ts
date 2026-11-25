@@ -22,6 +22,7 @@ const stopped: TransportState = {
   device: null,
   live: false,
   xruns: 0,
+  excludedTracks: [],
 };
 
 void test("a version mismatch fails fast with a clear error", async () => {

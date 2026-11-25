@@ -332,6 +332,54 @@ fn missing_values_are_silent_interpolated_or_split_glides() {
     assert_eq!(contours[1].curve.len(), 3);
 }
 
+/// #440: a glide holds its last value for one point's spacing under every pace. Under
+/// `secondsPerUnit` that is the mean spacing of the points, not one unit of the time field:
+/// 13 points over x = 0..6 at 4/3 s per unit sound from 0 to 8 s and the glide ends half a
+/// unit (2/3 s) later, not one unit later. Points one unit apart keep a hold of one unit.
+#[test]
+fn glides_hold_one_point_spacing_under_seconds_per_unit() {
+    let glide_end = |xs: &[f64], pace: serde_json::Value| {
+        let values: Vec<_> = xs.iter().map(|&x| json!({ "x": x, "y": x * x })).collect();
+        let spec = json!({
+            "specVersion": "0.1",
+            "data": { "source": { "kind": "inline", "values": values } },
+            "substrate": { "time": { "field": "x", "pace": pace } },
+            "tracks": [{ "id": "y", "mark": "glide", "channels": { "pitch": { "field": "y" } } }],
+        })
+        .to_string();
+        let compiled = compile(&spec, None);
+        let glides: Vec<_> = compiled.score.tracks[0]
+            .events
+            .iter()
+            .filter_map(|event| match event {
+                ScoreEvent::Glide(glide) => Some(glide.clone()),
+                _ => None,
+            })
+            .collect();
+        assert_eq!(glides.len(), 1);
+        let glide = &glides[0];
+        let last_point = glide.curve[glide.curve.len() - 2].t.0;
+        (last_point, glide.t1.0)
+    };
+    let half_units: Vec<f64> = (0..13).map(|k| f64::from(k) * 0.5).collect();
+    let (last, end) = glide_end(&half_units, json!({ "secondsPerUnit": 4.0 / 3.0 }));
+    assert!((last - 8.0).abs() < 1e-9, "last point at {last}");
+    assert!(
+        (end - (8.0 + 2.0 / 3.0)).abs() < 1e-9,
+        "glide ends at {end}"
+    );
+    // The same points paced by duration end exactly at the duration (unchanged).
+    let (_, end) = glide_end(&half_units, json!({ "duration": { "s": 8 } }));
+    assert!((end - 8.0).abs() < 1e-9, "duration glide ends at {end}");
+    // Points one unit apart: the hold is still exactly one unit.
+    let units: Vec<f64> = (0..7).map(f64::from).collect();
+    let (last, end) = glide_end(&units, json!({ "secondsPerUnit": 0.5 }));
+    assert_eq!((last, end), (3.0, 3.5));
+    // A single point has no spacing and holds one unit.
+    let (_, end) = glide_end(&[2.0], json!({ "secondsPerUnit": 0.5 }));
+    assert_eq!(end, 0.5);
+}
+
 /// SDR-25 (DEFAULT): a nominal field on timbre gives each category its own preset, the
 /// track instrument first.
 #[test]

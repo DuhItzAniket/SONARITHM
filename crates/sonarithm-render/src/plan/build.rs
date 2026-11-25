@@ -12,7 +12,7 @@ use sonarithm_core::{
     Cents, Db, Diagnostic, Diagnostics, EarconKind, Frames, InstrumentRef, Note, Pan, SampleRate,
     Score, ScoreEvent, ScoreTrack, Seconds, ShaperStage, TrackId,
 };
-use sonarithm_dsp::env::{note_ramp, ramp_frames};
+use sonarithm_dsp::env::{MIN_RAMP, note_ramp, ramp_frames};
 use sonarithm_dsp::{Compensation, PanGains};
 
 use super::{
@@ -251,7 +251,7 @@ fn plan_track(
     }
     // Taps can interleave with later notes; a stable sort keeps Score order for ties.
     events.sort_by_key(|event| event.start);
-    let polyphony = polyphony(&events);
+    let polyphony = polyphony(&events, ramp_frames(MIN_RAMP, rate)).min(MAX_TRACK_POLYPHONY);
     Ok(TrackPlan {
         id: track.id.clone(),
         bus,
@@ -333,16 +333,44 @@ fn plan_note(
     Ok(())
 }
 
-/// The most events sounding at once: a sweep over start-sorted events with a heap of end
-/// frames. An event ending at frame `f` frees its voice for an event starting at `f`.
-pub(super) fn polyphony(events: &[PlannedEvent]) -> usize {
+/// The most voices a track's polyphony may ask for, so its pool holds at most twice this
+/// (#443). A seek restarts at most this many events per track (the graph's resume scan),
+/// so the 2× crossfade guarantee is defined only up to it; past it, steals fade instead of
+/// clicking. Not a perceptual or research figure: a bound on memory and on the voice loop.
+pub const MAX_TRACK_POLYPHONY: usize = 256;
+
+/// The frame after the last one a voice for `event` sounds, at any supported speed (#443).
+/// A voice lasts at least two ramps (`Voice::start`), and at the fastest speed an event
+/// plays `SPEED_RANGE.1` times shorter while its ramps do not; in Score frames that floor
+/// is two ramps times the fastest speed. `min_ramp` is the ramp of earcons and
+/// audifications, which carry none of their own.
+pub(super) fn sounding_end(event: &PlannedEvent, min_ramp: u32) -> u64 {
+    let ramp = match event.kind {
+        EventKind::Tone(tone) => tone.ramp,
+        EventKind::Glide(glide) => glide.ramp,
+        EventKind::Earcon { .. } | EventKind::Audify { .. } => min_ramp,
+    };
+    #[expect(
+        clippy::cast_possible_truncation,
+        clippy::cast_sign_loss,
+        reason = "the fastest speed is a small positive constant"
+    )]
+    let fastest = crate::graph::SPEED_RANGE.1.ceil() as u64;
+    let floor = 2 * u64::from(ramp) * fastest;
+    event.start.saturating_add(event.length.max(floor))
+}
+
+/// The most voices sounding at once: a sweep over start-sorted events with a heap of the
+/// frames their voices end ([`sounding_end`]). A voice ending at frame `f` is free for an
+/// event starting at `f`.
+pub(super) fn polyphony(events: &[PlannedEvent], min_ramp: u32) -> usize {
     let mut ends = BinaryHeap::new();
     let mut most = 0;
     for event in events {
         while ends.peek().is_some_and(|Reverse(end)| *end <= event.start) {
             ends.pop();
         }
-        ends.push(Reverse(event.end()));
+        ends.push(Reverse(sounding_end(event, min_ramp)));
         most = most.max(ends.len());
     }
     most

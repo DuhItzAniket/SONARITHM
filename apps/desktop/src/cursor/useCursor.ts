@@ -15,6 +15,7 @@ function stateOf(
     x: value.x,
     node: value.node,
     path: value.path,
+    excluded: value.excluded,
     origin: value.origin,
   };
 }

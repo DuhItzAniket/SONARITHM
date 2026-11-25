@@ -262,10 +262,32 @@ impl Cursor {
         Some(cursor)
     }
 
+    /// Moves the cursor to `node` from outside the verbs (a table row or a plot click,
+    /// ADR-0017 "Cursor"), keeping the excluded series. Returns `false`, and leaves the
+    /// cursor as it was, if `tree` has no such node.
+    pub fn place(&mut self, tree: &NavTree, node: NavNodeId) -> bool {
+        if tree.node(node).is_none() {
+            return false;
+        }
+        self.land(tree, node);
+        true
+    }
+
+    /// Sets the excluded series, such as after a recompile renumbered the nodes.
+    pub fn set_excluded(&mut self, series: impl IntoIterator<Item = NavNodeId>) {
+        self.excluded = series.into_iter().collect();
+    }
+
     /// The node under the cursor.
     #[must_use]
     pub fn node(&self) -> NavNodeId {
         self.node
+    }
+
+    /// The series the cursor is in, or was last in (for lateral moves and targeted verbs).
+    #[must_use]
+    pub fn series(&self) -> Option<NavNodeId> {
+        self.series
     }
 
     /// The remembered x position.

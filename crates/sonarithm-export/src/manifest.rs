@@ -74,7 +74,8 @@ pub struct Software {
     pub version: String,
     /// The git commit of the build, when the caller knows it.
     pub git: Option<String>,
-    /// The engines that contributed, with their versions, from the Score header.
+    /// The engines that contributed, with their versions, from the Score header (context
+    /// providers only when they added a track; shapers whenever they ran; 05 §4, #434).
     pub engines: BTreeMap<String, String>,
 }
 

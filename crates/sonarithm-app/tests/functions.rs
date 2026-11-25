@@ -12,24 +12,37 @@
 )]
 
 use std::sync::Arc;
+use std::time::{Duration, Instant};
 
 use serde_json::{Value, json};
-use sonarithm_app::ipc::IpcError;
+use sonarithm_app::ipc::{Event, IpcError};
 use sonarithm_app::testing::TempDir;
 use sonarithm_app::{App, AppConfig, AudioOutput, CollectingSink};
 
 struct Harness {
     app: App,
-    /// Kept so the config folder lives as long as the app.
-    _dir: TempDir,
+    sink: Arc<CollectingSink>,
+    dir: TempDir,
 }
 
 impl Harness {
     fn new(name: &str) -> Self {
         let dir = TempDir::new(name);
-        let config = AppConfig::new(dir.path().join("config")).with_audio(AudioOutput::null());
-        let app = App::new(config, Arc::new(CollectingSink::new())).unwrap();
-        Self { app, _dir: dir }
+        let sink = Arc::new(CollectingSink::new());
+        let app = App::new(config(&dir), sink.clone()).unwrap();
+        Self { app, sink, dir }
+    }
+
+    /// The text of every announcement so far.
+    fn announcements(&self) -> Vec<String> {
+        self.sink
+            .events()
+            .into_iter()
+            .filter_map(|event| match event {
+                Event::Announcement(info) => Some(info.speech),
+                _ => None,
+            })
+            .collect()
     }
 
     fn send(&mut self, request: &Value) -> Result<Value, IpcError> {
@@ -40,6 +53,10 @@ impl Harness {
         self.send(request)
             .unwrap_or_else(|err| panic!("{request} failed: {err}"))
     }
+}
+
+fn config(dir: &TempDir) -> AppConfig {
+    AppConfig::new(dir.path().join("config")).with_audio(AudioOutput::null())
 }
 
 fn cubic() -> Value {
@@ -151,6 +168,32 @@ fn a_function_that_cannot_be_sampled_is_an_error_with_its_code() {
             "args": { "expr": "x", "domain": [0, 1], "samples": 2_000_000 } }))
         .unwrap_err();
     assert_eq!(err.code, "SNR-ENG-404", "{err}");
+}
+
+/// A source the spec validator refuses is refused the same way here, with its code, and
+/// nothing opens: never a 2-point grid for `samples: 0`, never a silent choice of `step`.
+#[test]
+fn a_source_the_spec_validator_refuses_is_refused_with_its_code() {
+    let mut h = Harness::new("function-source");
+    for (args, says) in [
+        (json!({ "samples": 0 }), "at least 2"),
+        (json!({ "samples": 1 }), "at least 2"),
+        (json!({ "samples": 100, "step": 0.1 }), "not both"),
+        (json!({ "step": 0 }), "positive"),
+        (json!({ "domain": [1, 1] }), "min below max"),
+    ] {
+        let mut request = json!({ "expr": "x", "domain": [0, 1] });
+        for (key, value) in args.as_object().unwrap() {
+            request[key] = value.clone();
+        }
+        let err = h
+            .send(&json!({ "command": "function_open", "args": request }))
+            .unwrap_err();
+        assert_eq!(err.code, "SNR-SPEC-051", "{args}: {err}");
+        assert!(err.message.contains(says), "{args}: {err}");
+    }
+    let datasets = h.ok(&json!({ "command": "dataset_list" }));
+    assert_eq!(datasets["datasets"], json!([]), "nothing was opened");
 }
 
 /// SDR-31: the calculator gives the numbers a compile reports, on the same grid.

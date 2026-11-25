@@ -3,7 +3,18 @@
 
 /* The Plot tab (B04-T06): the plot fills the panel's width. */
 .plot {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
   inline-size: 100%;
+}
+
+/* The zoom toolbar and the shown range (B04-T07). */
+.controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2) var(--space-4);
+  align-items: center;
 }
 
 .status {
