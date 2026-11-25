@@ -1284,7 +1284,7 @@ A05 (render engine, audio backends, export) uses F-050 to F-069.
   - **How the tests hit it:** a named `getByRole` lookup does the first read and axe-core's scan does the second. Both tests make named lookups among the dialog's labelled controls before the scan.
   - **Fix status:** fixed by Firefox build 1575 and later on Playwright's main branch. 1.65.1 (2026-11-13) is the latest release and still ships build 1572.
 - **Not a cause:** SONARITHM's code. Page content cannot legitimately crash the browser, and the same page passes on 1.64.1.
-- **Workaround:** in these two tests, Firefox skips only the axe scan. The test records a `fixme` annotation naming the upstream issue, so the report shows it. All the other steps still run in Firefox, and Chromium and WebKit still run the scan. Remove the skip when a Playwright release ships Firefox build 1575 or later.
+- **Workaround:** in these two tests, Firefox skips only the axe scan (removal tracked by #487). The test records a `fixme` annotation naming the upstream issue, so the report shows it. All the other steps still run in Firefox, and Chromium and WebKit still run the scan. Remove the skip when a Playwright release ships Firefox build 1575 or later.
 - **Not reproduced locally:** Firefox does not launch on the Windows development machine. The evidence is CI job 139572491722 (1.65.1) against jobs 139562988096 and 139517563060 (1.64.1), and the upstream reproductions.
 - **Evidence level / confidence:** EV-C / Strong for the upstream match (same browser build, same axe-then-lookup trigger, same error). The crash's exact read inside axe was not traced in our tests.
 - **Affects:** `apps/desktop/e2e/audio.spec.ts`; any later E2E test that runs axe after a named lookup in Firefox until the upgrade

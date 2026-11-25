@@ -26,14 +26,14 @@ interface Mock {
  * lookup has read it in Playwright's own world (microsoft/playwright#43967, Mozilla bug
  * 2090055; F-226). Firefox skips only this scan, with a fixme note in the report; every other
  * step still runs in Firefox, and Chromium and WebKit run the scan. Remove the skip when
- * Playwright ships Firefox build 1575 or later.
+ * Playwright ships Firefox build 1575 or later (#487).
  */
 async function expectNoSeriousViolations(page: Page, browserName: string) {
   if (browserName === "firefox") {
     test.info().annotations.push({
       type: "fixme",
       description:
-        "axe scan skipped in Firefox: microsoft/playwright#43967 (Mozilla bug 2090055)",
+        "axe scan skipped in Firefox: microsoft/playwright#43967 (Mozilla bug 2090055); remove with #487",
     });
     return;
   }
