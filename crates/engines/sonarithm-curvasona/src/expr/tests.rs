@@ -233,9 +233,9 @@ fn variables_are_named_constants() {
     let variables = BTreeMap::from([("a".to_owned(), 2.0), ("omega".to_owned(), 3.0)]);
     let expr = Expr::parse("a * sin(omega * x)", &variables, &Limits::DEFAULT).unwrap();
     assert_eq!(expr.canonical(), "a*sin(omega*x)");
-    assert!(close(expr.eval(1.0), 2.0 * 3.0_f64.sin()));
+    assert!(close(expr.eval(1.0), 2.0 * libm::sin(3.0)));
     let dy = expr.derivative().unwrap();
-    assert!(close(dy.eval(1.0), 6.0 * 3.0_f64.cos()));
+    assert!(close(dy.eval(1.0), 6.0 * libm::cos(3.0)));
 }
 
 #[test]
@@ -267,12 +267,14 @@ fn symbolic_derivatives_match_the_calculus() {
     let cases: [Case; 9] = [
         ("x^2", |x| 2.0 * x),
         ("x^3 - 3*x", |x| 3.0 * x * x - 3.0),
-        ("sin(x) / x", |x| (x * x.cos() - x.sin()) / (x * x)),
-        ("exp(-x^2)", |x| -2.0 * x * (-x * x).exp()),
+        ("sin(x) / x", |x| {
+            (x * libm::cos(x) - libm::sin(x)) / (x * x)
+        }),
+        ("exp(-x^2)", |x| -2.0 * x * libm::exp(-x * x)),
         ("ln(x)", |x| 1.0 / x),
         ("sqrt(x)", |x| 0.5 / x.sqrt()),
-        ("tan(x)", |x| 1.0 / (x.cos() * x.cos())),
-        ("sec(x)", |x| x.sin() / (x.cos() * x.cos())),
+        ("tan(x)", |x| 1.0 / (libm::cos(x) * libm::cos(x))),
+        ("sec(x)", |x| libm::sin(x) / (libm::cos(x) * libm::cos(x))),
         ("1 / (x - 1)", |x| -1.0 / ((x - 1.0) * (x - 1.0))),
     ];
     for (text, exact) in cases {
@@ -423,12 +425,12 @@ fn reference(node: &Node, x: f64, a: f64) -> f64 {
         Node::Bin(Op::Sub, l, rr) => r(l) - r(rr),
         Node::Bin(Op::Mul, l, rr) => r(l) * r(rr),
         Node::Bin(Op::Div, l, rr) => r(l) / r(rr),
-        Node::Bin(Op::Pow, l, rr) => r(l).powf(r(rr)),
-        Node::Call1(Func1::Sin, n) => r(n).sin(),
-        Node::Call1(Func1::Exp, n) => r(n).exp(),
+        Node::Bin(Op::Pow, l, rr) => libm::pow(r(l), r(rr)),
+        Node::Call1(Func1::Sin, n) => libm::sin(r(n)),
+        Node::Call1(Func1::Exp, n) => libm::exp(r(n)),
         Node::Call1(Func1::Sqrt, n) => r(n).sqrt(),
         Node::Call1(Func1::Abs, n) => r(n).abs(),
-        Node::Call1(Func1::Cot, n) => 1.0 / r(n).tan(),
+        Node::Call1(Func1::Cot, n) => 1.0 / libm::tan(r(n)),
         Node::Call2(Func2::Max, l, rr) => r(l).max(r(rr)),
         other => unreachable!("not generated: {other:?}"),
     }
@@ -477,4 +479,51 @@ fn f_199_a_divisor_at_the_depth_limit_reads_back() {
     let again = parse(expr.canonical()).unwrap();
     assert_eq!(again.canonical(), expr.canonical());
     assert!(parse(&format!("4-x/{}4-1", "-".repeat(33))).is_err());
+}
+
+/// ADR-0013 §1, F-204: every function the language admits, and `^`, evaluates with `libm`,
+/// bit for bit, so a function samples the same on every platform. A function that fell
+/// back to exmex's `std` maths, or that exmex could not read, fails here.
+#[test]
+fn adr_0013_every_function_evaluates_with_libm_bit_for_bit() {
+    let libm_of = |name: &str| -> Option<fn(f64) -> f64> {
+        let name = match name {
+            "arccos" => "acos",
+            "arcsin" => "asin",
+            "arctan" => "atan",
+            other => other,
+        };
+        ops::UNARY.iter().find(|(n, _)| *n == name).map(|&(_, f)| f)
+    };
+    let same =
+        |got: f64, want: f64| got.to_bits() == want.to_bits() || (got.is_nan() && want.is_nan());
+    for (name, arity) in FUNCTIONS {
+        for x in [0.3, 0.7, 1.7, -2.4, 12.5, 1e-3] {
+            let (text, want) = match (name, arity) {
+                ("sec", 1) => ("sec(x)".to_owned(), 1.0 / libm::cos(x)),
+                ("csc", 1) => ("csc(x)".to_owned(), 1.0 / libm::sin(x)),
+                ("cot", 1) => ("cot(x)".to_owned(), 1.0 / libm::tan(x)),
+                (_, 1) => {
+                    let f = libm_of(name).expect("every admitted function has a libm operator");
+                    (format!("{name}(x)"), f(x))
+                }
+                (_, _) => {
+                    let (_, f) = ops::BINARY
+                        .iter()
+                        .find(|(n, _)| *n == name)
+                        .expect("every admitted function has a libm operator");
+                    (format!("{name}(x, 0.7)"), f(x, 0.7))
+                }
+            };
+            let got = value(&text, x);
+            assert!(
+                same(got, want),
+                "{text} at {x}: {got:e} is not libm's {want:e}"
+            );
+        }
+    }
+    for (x, y) in [(1.7, 2.5), (0.3, -1.25), (12.5, 0.5), (2.0, 10.0)] {
+        let text = format!("x^({y})");
+        assert!(same(value(&text, x), libm::pow(x, y)), "{text} at {x}");
+    }
 }
