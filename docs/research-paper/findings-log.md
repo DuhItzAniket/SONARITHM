@@ -1257,3 +1257,16 @@ A05 (render engine, audio backends, export) uses F-050 to F-069.
 - **Evidence level / confidence:** EV-C / Strong (every changed record checked: only fingerprints and the hashes that cover them moved)
 - **Affects:** 03 §2 (`Fingerprint`), ADR-0013, F-071; every render manifest and golden or replication record; #469
 - **Papers:** none yet
+
+### F-225 · Vitest 4's headless screenshots were scaled to 0.9375, so its baselines blended the 1px borders
+
+- **Date:** 2026-11-26 · **Phase:** maintenance (B02-T03 code) · **Type:** engineering (test tooling) · **Status:** new
+- **Statement:** With Vitest 5, all four `foundations` screenshot tests failed: each new screenshot was 1024 × 280 against a 960 × 263 baseline, which pixelmatch cannot compare.
+  - **Why:** Vitest 4.1.12 fitted the tester iframe into Playwright's default page, scaling it by `min(1, page width / 1024, page height / 768)`. The page is 720 px high, so the scale was 720 / 768 = 0.9375 = 960 / 1024. Vitest 5.0.5 scales the iframe only when `browser.ui` is on, so headless runs capture at 1 : 1.
+  - **What changed:** only the scale. The surface colours match exactly in all four themes. Every colour found only in the new screenshots is a token value drawn at full strength. In high-contrast light, `--border` oklch(0.4 0 0) is #484848, where the old baseline had a lighter blend, #585858. The old baselines understated the borders' contrast.
+  - **Not the cause:** `toMatchScreenshot`'s defaults are the same in both versions (pixelmatch, threshold 0.1, timeout 5000 ms, `scale: "device"`). "Matcher did not succeed in time" is `expect.element`'s retry giving up on a size mismatch that could never pass.
+- **Fix:** the new baselines are the screenshots the CI image (`playwright:v1.65.1-noble`, Vitest 5.0.5) captured in the failing run, from its `visual-baselines` artifact. They were not rendered on Windows.
+- **Evidence:** CI job 139554179659 and its `visual-baselines` artifact. `@vitest/browser` 4.1.12 `orchestrator` `setIframeViewport` against 5.0.5's orchestrator, which applies the scale under `config.browser.ui`. Both versions' `defaultOptions` in `dist/index.js`.
+- **Evidence level / confidence:** EV-C / Strong (sizes, colours and the source of both versions checked)
+- **Affects:** testing-strategy §12 (visual baselines); `packages/ui/test/visual`
+- **Papers:** none yet
