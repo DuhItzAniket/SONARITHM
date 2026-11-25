@@ -321,7 +321,7 @@ jobs:
           name: visual-baselines
           path: |
             packages/ui/test/visual/__screenshots__
-            packages/ui/.vitest-attachments
+            packages/ui/.vitest/attachments
           if-no-files-found: ignore
       # PB-08 trace of the dense layer (B04-T02): script time per frame redrawing a 1M-point
       # line. Reported, not gated: WebGL here is SwiftShader on a shared runner. HW-01 and

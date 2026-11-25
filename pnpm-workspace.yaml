@@ -3,6 +3,10 @@ packages:
   - "apps/desktop"
   - "packages/*"
 
+# Dependabot waits 7 days after a release (.github/dependabot.yml); a lockfile made by hand
+# keeps the same cooldown: pnpm resolves nothing published in the last 7 days (in minutes).
+minimumReleaseAge: 10080
+
 # One version of each tool for the whole workspace; packages refer to it as "catalog:".
 catalog:
   # Fluent messages in the UI (@sonarithm/i18n); the Rust side is fluent-bundle (12 §5).
