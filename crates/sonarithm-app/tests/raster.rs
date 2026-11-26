@@ -45,8 +45,14 @@ impl Harness {
 
     /// The DS-007 line chart at 1x, copied into the test folder as `name`.
     fn chart(&self, name: &str) -> PathBuf {
+        self.corpus("d3-line@1x.png", name)
+    }
+
+    /// The DS-007 raster `image`, copied into the test folder as `name`.
+    fn corpus(&self, image: &str, name: &str) -> PathBuf {
         let corpus = Path::new(env!("CARGO_MANIFEST_DIR"))
-            .join("../engines/sonarithm-plotsona/tests/corpus/raster/d3-line@1x.png");
+            .join("../engines/sonarithm-plotsona/tests/corpus/raster")
+            .join(image);
         let path = self.dir.path().join(name);
         std::fs::copy(corpus, &path).unwrap();
         path
@@ -60,7 +66,8 @@ impl Harness {
 /// The calibration a person clicks on the chart's ticks (fixtures/raster).
 fn calibration() -> Value {
     let text = std::fs::read_to_string(
-        Path::new(env!("CARGO_MANIFEST_DIR")).join("tests/fixtures/raster/d3-line@1x.calibration.json"),
+        Path::new(env!("CARGO_MANIFEST_DIR"))
+            .join("tests/fixtures/raster/d3-line@1x.calibration.json"),
     )
     .unwrap();
     serde_json::from_str(&text).unwrap()
@@ -80,7 +87,11 @@ fn c02_t10_a_chart_image_opens_for_calibration_as_its_bytes_say() {
     assert_eq!(opened["name"], "rain.png");
     assert!(opened["widthPx"].as_u64().unwrap() > 0);
     assert!(opened["heightPx"].as_u64().unwrap() > 0);
-    assert!(opened["plotArea"].is_object(), "{}", opened["plotArea"]);
+    // This chart's axis lines are not found, so it has no plot area; a bar chart's are.
+    assert_eq!(opened["plotArea"], Value::Null);
+    let bars = h.corpus("d3-bar@1x.png", "bars.png");
+    let area = &h.open(&bars)["plotArea"];
+    assert!(area["min"].is_array() && area["max"].is_array(), "{area}");
     assert!(
         opened["image"]
             .as_str()
@@ -107,7 +118,8 @@ fn c02_t10_files_that_are_not_chart_images_are_refused_by_name_alone() {
     let err = h
         .send(&json!({ "command": "chart_raster_open", "args": { "path": not_image } }))
         .unwrap_err();
-    assert_eq!(err.code, "SNR-ENG-327", "{err}");
+    // Bytes no chart format starts with; an SVG is a chart format, but not an image.
+    assert_eq!(err.code, "SNR-ENG-300", "{err}");
     let big = h.dir.path().join("huge.png");
     std::fs::write(&big, vec![0_u8; 21 * 1024 * 1024]).unwrap();
     let err = h
@@ -120,9 +132,9 @@ fn c02_t10_files_that_are_not_chart_images_are_refused_by_name_alone() {
     let err = h
         .send(&json!({ "command": "chart_raster_open", "args": { "path": svg } }))
         .unwrap_err();
-    for message in [&err.message] {
-        assert!(!message.contains(&folder), "no path in {message}");
-    }
+    // Refused by its name before it is read.
+    assert_eq!(err.code, "SNR-APP-060", "{err}");
+    assert!(!err.message.contains(&folder), "no path in {}", err.message);
 }
 
 #[test]
@@ -143,15 +155,19 @@ fn c02_t10_anchors_are_checked_as_they_are_entered() {
     assert_eq!(checked["valueAt"]["x"], Value::Null);
     let read = checked["valueAt"]["y"].as_f64().unwrap();
     let expected = first["value"].as_f64().unwrap();
-    assert!((read - expected).abs() < 1e-6 * expected.abs().max(1.0), "{read} {expected}");
+    assert!(
+        (read - expected).abs() < 1e-6 * expected.abs().max(1.0),
+        "{read} {expected}"
+    );
 
     // Ticks out of order: the axis is refused with its code, and nothing else changes.
     let mut unordered = entered(&full);
     let anchors = unordered["y"]["anchors"].as_array_mut().unwrap();
     let (a, b) = (anchors[0]["value"].clone(), anchors[1]["value"].clone());
+    let half = a.as_f64().unwrap() * 0.5;
     anchors[0]["value"] = b;
     anchors[1]["value"] = a;
-    anchors.push(json!({ "at": [0, 0], "value": a.as_f64().unwrap() * 0.5 }));
+    anchors.push(json!({ "at": [0, 0], "value": half }));
     let checked = h.ok(&json!({ "command": "chart_calibration_check", "args": {
         "id": id, "calibration": unordered } }));
     assert_eq!(checked["y"], Value::Null);
@@ -187,7 +203,10 @@ fn c02_t10_applying_the_calibration_opens_the_chart_as_a_dataset() {
     // The correction document keeps the calibration, and an export carries it.
     let state = h.ok(&json!({ "command": "corrections_get", "args": { "dataset": "d1" } }));
     let file: Value = serde_json::from_str(state["text"].as_str().unwrap()).unwrap();
-    assert!(file["calibration"]["axes"]["x"]["anchors"].is_array(), "{file}");
+    assert!(
+        file["calibration"]["axes"]["x"]["anchors"].is_array(),
+        "{file}"
+    );
     // The session ended with the apply.
     let err = h
         .send(&json!({ "command": "chart_raster_close", "args": { "id": id } }))

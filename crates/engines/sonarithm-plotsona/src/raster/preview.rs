@@ -39,7 +39,8 @@ pub struct RasterInfo {
 ///
 /// # Errors
 ///
-/// `SNR-ENG-327` for bytes that are not a PNG or JPEG image or cannot be decoded,
+/// `SNR-ENG-300` for bytes no chart format starts with, `SNR-ENG-327` for another chart
+/// format (an SVG) or an image that cannot be decoded,
 /// `SNR-ENG-306` over the pixel budget, `SNR-ENG-305` over the work budget, and the input
 /// size limit's code over `budgets.max_bytes`.
 pub fn inspect(bytes: &[u8], budgets: &Budgets) -> Result<RasterInfo, Box<Diagnostic>> {
@@ -193,10 +194,11 @@ mod tests {
         let y = checked.y.unwrap();
         assert_eq!(y.anchors, 2);
         assert_eq!(checked.value_at[0], None);
-        let Some(ReadValue::Number(value)) = &checked.value_at[1] else {
-            panic!("{:?}", checked.value_at);
-        };
-        assert!((value - 50.0).abs() < 1e-9, "{value}");
+        assert!(
+            matches!(&checked.value_at[1], Some(ReadValue::Number(value)) if (value - 50.0).abs() < 1e-9),
+            "{:?}",
+            checked.value_at
+        );
     }
 
     #[test]
@@ -233,7 +235,10 @@ mod tests {
                     {"at": [0, 0], "value": "soon"}, {"at": [100, 0], "value": "2024-01-11"}]},
                 "y": {"kind": "linear", "anchors": []}}}"#,
         );
-        assert_eq!(check(&bad, None).diagnostics[0].code.as_str(), "SNR-ENG-320");
+        assert_eq!(
+            check(&bad, None).diagnostics[0].code.as_str(),
+            "SNR-ENG-320"
+        );
         let labels = calibration(
             r#"{"axes": {
                 "x": {"kind": "category", "anchors": [
@@ -248,13 +253,26 @@ mod tests {
 
     #[test]
     fn c02_t10_an_image_is_inspected_and_anything_else_refused() {
-        let corpus = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
-            .join("tests/corpus/raster/d3-line@1x.png");
-        let info = inspect(&std::fs::read(corpus).unwrap(), &Budgets::DEFAULT).unwrap();
+        let corpus = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("tests/corpus/raster");
+        let read = |name: &str| std::fs::read(corpus.join(name)).unwrap();
+        let info = inspect(&read("d3-bar@1x.png"), &Budgets::DEFAULT).unwrap();
         assert_eq!(info.mime, "image/png");
         assert!(info.width > 0 && info.height > 0);
-        assert!(info.plot.is_some(), "the d3 axes bound a plot area");
+        assert!(
+            info.plot.is_some(),
+            "the d3 bar chart's axis lines bound a plot area"
+        );
+        // The line chart's axis lines are not found (C02-T02), so the dialog shows no plot
+        // area and the read falls back to the box the anchors span.
+        assert_eq!(
+            inspect(&read("d3-line@1x.png"), &Budgets::DEFAULT)
+                .unwrap()
+                .plot,
+            None
+        );
         let refused = inspect(b"<svg/>", &Budgets::DEFAULT).unwrap_err();
         assert_eq!(refused.code.as_str(), "SNR-ENG-327");
+        let refused = inspect(b"not an image", &Budgets::DEFAULT).unwrap_err();
+        assert_eq!(refused.code.as_str(), "SNR-ENG-300");
     }
 }

@@ -241,7 +241,7 @@ The UI shows `text` in a read-only text field, with the caret at `caret` (keyboa
 
 * `chart_raster_open { path }` replies `raster_chart { id, name, widthPx, heightPx, image, plotArea }`.
   * **The file:** a regular file named `.png`, `.jpg` or `.jpeg`, at most 20 MiB.
-  * **Decoding:** PLOTSONA decodes it under its raster pixel and work budgets, so a decompression bomb or an undecodable file is refused (`SNR-ENG-306`, `327`) before anything is encoded or kept.
+  * **Decoding:** PLOTSONA decodes it under its raster pixel and work budgets, so bytes no chart format starts with (`SNR-ENG-300`), a decompression bomb (`306`), or another chart format or an undecodable image (`327`) is refused before anything is encoded or kept.
   * **`image`:** a `data:` URL of the bytes as they are. The CSP's `img-src data:` allows it. Its media type comes from the bytes' signature, never from the extension. Base64 makes a 20 MiB image a reply of about 27 MB.
   * **`plotArea`:** the area the axis lines bound (C02-T02), or `null`.
   * Nothing is extracted yet.

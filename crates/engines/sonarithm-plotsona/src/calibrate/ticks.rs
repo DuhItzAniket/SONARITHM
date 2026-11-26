@@ -417,9 +417,19 @@ mod tests {
         assert_eq!(iso_from_ms(0), "1970-01-01");
         assert_eq!(iso_from_ms(civil_ms(2000, 3, 1)), "2000-03-01");
         assert_eq!(iso_from_ms(civil_ms(1969, 12, 31)), "1969-12-31");
-        assert_eq!(iso_from_ms(civil_ms(2024, 2, 29) + 90 * 60_000), "2024-02-29T01:30Z");
-        assert_eq!(iso_from_ms(civil_ms(2024, 1, 1) + 1_500), "2024-01-01T00:00:01.500Z");
-        for ms in [civil_ms(1600, 1, 1), civil_ms(2400, 12, 31), civil_ms(1900, 2, 28)] {
+        assert_eq!(
+            iso_from_ms(civil_ms(2024, 2, 29) + 90 * 60_000),
+            "2024-02-29T01:30Z"
+        );
+        assert_eq!(
+            iso_from_ms(civil_ms(2024, 1, 1) + 1_500),
+            "2024-01-01T00:00:01.500Z"
+        );
+        for ms in [
+            civil_ms(1600, 1, 1),
+            civil_ms(2400, 12, 31),
+            civil_ms(1900, 2, 28),
+        ] {
             assert_eq!(parse_date(&iso_from_ms(ms)), Some(ms));
         }
     }

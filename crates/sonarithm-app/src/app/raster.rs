@@ -92,7 +92,9 @@ fn raster_file(path: &Path) -> Result<PathBuf, IpcError> {
         .filter(std::fs::Metadata::is_file)
         .ok_or_else(|| refuse("is not a regular file."))?;
     if meta.len() > MAX_IMAGE_BYTES {
-        return Err(refuse("is larger than 20 MB, the most a chart image may be."));
+        return Err(refuse(
+            "is larger than 20 MB, the most a chart image may be.",
+        ));
     }
     Ok(canonical)
 }
@@ -131,7 +133,11 @@ fn check_reply(checked: &CalibrationCheck, at: bool) -> Reply {
         })
     };
     Reply::CalibrationCheck {
-        diagnostics: checked.diagnostics.iter().map(DiagnosticInfo::from).collect(),
+        diagnostics: checked
+            .diagnostics
+            .iter()
+            .map(DiagnosticInfo::from)
+            .collect(),
         x: fit(&checked.x),
         y: fit(&checked.y),
         value_at: at.then(|| ValueAt {
@@ -143,8 +149,7 @@ fn check_reply(checked: &CalibrationCheck, at: bool) -> Reply {
 
 /// Base64 (RFC 4648 §4, with padding), for the image's `data:` URL.
 fn base64(bytes: &[u8]) -> String {
-    const ALPHABET: &[u8; 64] =
-        b"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+    const ALPHABET: &[u8; 64] = b"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
     let mut out = String::with_capacity(bytes.len().div_ceil(3) * 4);
     for chunk in bytes.chunks(3) {
         let b = [
@@ -248,8 +253,8 @@ impl App {
         let options = sonarithm::ExtractOptions::new()
             .with_ids(BundleId(number), TableId(ids))
             .with_calibration(calibration.clone());
-        let chart = sonarithm::read_chart_bytes(&pending.bytes, &pending.name, &options)
-            .map_err(|err| {
+        let chart = sonarithm::read_chart_bytes(&pending.bytes, &pending.name, &options).map_err(
+            |err| {
                 err.diagnostics().iter().next().map_or_else(
                     || {
                         IpcError::new(
@@ -259,7 +264,8 @@ impl App {
                     },
                     IpcError::from_diagnostic,
                 )
-            })?;
+            },
+        )?;
         let mut diagnostics = sonarithm_core::Diagnostics::new();
         diagnostics.push(sonarithm::summary_diagnostic(&chart));
         for diagnostic in &chart.report().diagnostics {
@@ -286,6 +292,7 @@ impl App {
                 origin: None,
                 chart: Some(state),
                 function: None,
+                file: None,
             },
         );
         Ok(Reply::Dataset(summary))
