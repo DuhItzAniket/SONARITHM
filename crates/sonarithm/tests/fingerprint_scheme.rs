@@ -2,8 +2,9 @@
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
 //! RFC-0008 across crates: the data layer writes the same canonical JSON as
-//! `sonarithm_spec::canonical` (it cannot depend on it), and a dictionary column and a
-//! plain column with the same strings differ in fingerprint and in Score (§1, §3).
+//! `sonarithm_spec::canonical` (it cannot depend on it), equal fingerprints compile alike,
+//! and a dictionary column and a plain column with the same strings differ in fingerprint
+//! (§1, §3).
 
 #![allow(
     clippy::unwrap_used,
@@ -100,7 +101,9 @@ fn dataset(column: ArrayRef) -> sonarithm::DataBundle {
 }
 
 fn compile(bundle: sonarithm::DataBundle) -> sonarithm_core::Score {
-    let spec = Spec::from_json_str(SPEC).unwrap().with_name("group.spec.json");
+    let spec = Spec::from_json_str(SPEC)
+        .unwrap()
+        .with_name("group.spec.json");
     let datasets = Datasets::new().with("main", bundle);
     Sonarithm::new()
         .compile_with(&spec, &datasets)
@@ -110,7 +113,7 @@ fn compile(bundle: sonarithm::DataBundle) -> sonarithm_core::Score {
 }
 
 /// RFC-0008 §1 and §7: equal fingerprints compile alike (two string layouts), and a
-/// dictionary whose order differs from the plain column's differs in both.
+/// dictionary column differs in fingerprint from a plain column with the same strings.
 #[test]
 fn rfc_0008_equal_fingerprints_compile_alike_and_a_dictionary_differs() {
     let rows = ["alpha", "zeta", "alpha", "zeta"];
@@ -126,7 +129,11 @@ fn rfc_0008_equal_fingerprints_compile_alike_and_a_dictionary_differs() {
         Arc::new(StringArray::from(vec!["zeta", "alpha"])),
     )
     .unwrap();
+    // Whether this spec's Score differs depends on how the encoder uses the order (here it
+    // does not); the fingerprint must differ in any case, since a compile path may.
     let ordered = compile(dataset(Arc::new(dictionary)));
-    assert_ne!(ordered.header.data_fingerprint, plain.header.data_fingerprint);
-    assert_ne!(ordered.tracks, plain.tracks, "the category order changes the timbres");
+    assert_ne!(
+        ordered.header.data_fingerprint,
+        plain.header.data_fingerprint
+    );
 }

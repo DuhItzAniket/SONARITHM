@@ -241,7 +241,10 @@ fn manifest_version_2_records_experiments_and_version_1_still_reads() {
     assert!(old["spec"].get("experimental").is_none());
     assert_eq!(off.manifest.spec.experimental, Vec::<String>::new());
     old["manifestVersion"] = serde_json::json!(1);
-    old["data"].as_object_mut().unwrap().remove("fingerprintScheme");
+    old["data"]
+        .as_object_mut()
+        .unwrap()
+        .remove("fingerprintScheme");
     let v1 = std::fs::read_to_string(
         std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
             .join("../../schemas/sonarithm-render-manifest-1.schema.json"),
@@ -273,15 +276,17 @@ fn rfc_0008_manifest_version_3_names_the_fingerprint_scheme() {
     validates(&json_schema(), &written).unwrap();
 
     written["manifestVersion"] = serde_json::json!(2);
-    written["data"].as_object_mut().unwrap().remove("fingerprintScheme");
+    written["data"]
+        .as_object_mut()
+        .unwrap()
+        .remove("fingerprintScheme");
     let v2 = std::fs::read_to_string(
         std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
             .join("../../schemas/sonarithm-render-manifest-2.schema.json"),
     )
     .unwrap();
     validates(&v2, &written).unwrap();
-    let read: sonarithm_export::manifest::RenderManifest =
-        serde_json::from_value(written).unwrap();
+    let read: sonarithm_export::manifest::RenderManifest = serde_json::from_value(written).unwrap();
     assert_eq!(read.data.fingerprint_scheme, 1);
     let _ = std::fs::remove_dir_all(dir);
 }

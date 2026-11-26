@@ -6,8 +6,8 @@
 use std::collections::HashMap;
 
 use arrow_array::{
-    Float64Array, Int32Array, Int64Array, IntervalYearMonthArray,
-    LargeListArray, ListArray, RunArray, StringViewArray,
+    Float64Array, Int32Array, Int64Array, IntervalYearMonthArray, LargeListArray, ListArray,
+    RunArray, StringViewArray,
 };
 use proptest::prelude::*;
 use sonarithm_core::TableId;
@@ -114,7 +114,11 @@ fn a_field_name_and_a_schema_snr_key_change_the_fingerprint() {
     let base = named("v", HashMap::new());
     assert_ne!(named("w", HashMap::new()), base);
     let snr = HashMap::from([("snr.function.expr".to_owned(), "x^2".to_owned())]);
-    assert_ne!(named("v", snr), base, "schema-level snr.* keys count (CURVASONA)");
+    assert_ne!(
+        named("v", snr),
+        base,
+        "schema-level snr.* keys count (CURVASONA)"
+    );
 }
 
 #[test]
@@ -129,8 +133,10 @@ fn nullability_and_other_metadata_do_not_change_the_fingerprint() {
     let not_nullable = build(Field::new("v", DataType::Int64, false), HashMap::new());
     let pandas = HashMap::from([("pandas".to_owned(), "{\"index_columns\":[]}".to_owned())]);
     let library = build(
-        Field::new("v", DataType::Int64, true)
-            .with_metadata(HashMap::from([("ARROW:extension:name".to_owned(), "x".to_owned())])),
+        Field::new("v", DataType::Int64, true).with_metadata(HashMap::from([(
+            "ARROW:extension:name".to_owned(),
+            "x".to_owned(),
+        )])),
         pandas,
     );
     assert_eq!(not_nullable, base);
@@ -139,7 +145,12 @@ fn nullability_and_other_metadata_do_not_change_the_fingerprint() {
 
 #[test]
 fn every_string_layout_fingerprints_alike() {
-    let values = vec![Some("north"), None, Some(""), Some("a longer string than twelve bytes")];
+    let values = vec![
+        Some("north"),
+        None,
+        Some(""),
+        Some("a longer string than twelve bytes"),
+    ];
     let plain = fingerprint(Arc::new(StringArray::from(values.clone())));
     let large = fingerprint(Arc::new(LargeStringArray::from(values.clone())));
     let view = fingerprint(Arc::new(StringViewArray::from(values)));
@@ -219,18 +230,18 @@ fn list_layouts_fingerprint_alike() {
 
 /// `values` run-end encoded, one run per value, with run ends of type `R`.
 fn run_encoded<R: arrow_array::types::RunEndIndexType>(
-    ends: PrimitiveArray<R>,
+    ends: &PrimitiveArray<R>,
     values: Vec<Option<f64>>,
 ) -> ArrayRef {
-    Arc::new(RunArray::<R>::try_new(&ends, &Float64Array::from(values)).unwrap())
+    Arc::new(RunArray::<R>::try_new(ends, &Float64Array::from(values)).unwrap())
 }
 
 #[test]
 fn run_end_encoding_is_layout() {
     let values = vec![Some(1.5), None, Some(2.5)];
     let plain = fingerprint(Arc::new(Float64Array::from(values.clone())));
-    let narrow = run_encoded(Int32Array::from(vec![1, 2, 3]), values.clone());
-    let wide = run_encoded(Int64Array::from(vec![1, 2, 3]), values);
+    let narrow = run_encoded(&Int32Array::from(vec![1, 2, 3]), values.clone());
+    let wide = run_encoded(&Int64Array::from(vec![1, 2, 3]), values);
     assert_eq!(fingerprint(narrow), plain);
     assert_eq!(fingerprint(wide), plain);
 }

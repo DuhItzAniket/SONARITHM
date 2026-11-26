@@ -94,6 +94,7 @@ Owner: `sonarithm-data`.
 | `SNR-DATA-004` | error | A table is malformed | Build each table from equal-length columns that match its schema, and give each table in a bundle its own ID. | — |
 | `SNR-DATA-005` | error | A table cannot be written | Report the problem with the table's schema; every table the data layer builds can be written. | — |
 | `SNR-DATA-006` | error | A source option is invalid | Fix the option in `data.source.options`; the message says what a valid value looks like. | — |
+| `SNR-DATA-007` | error | A table holds a type the data fingerprint does not encode | Convert the field to a supported type (numbers, text, dates, times, booleans, binary, or lists, structs, maps and unions of them) before loading it. | — |
 | `SNR-DATA-010` | info | The delimiter and header row were detected | Set `delimiter` and `header` in the source options if the guess is wrong. | — |
 | `SNR-DATA-011` | info | The text encoding was detected and converted | Set `encoding` (a WHATWG label such as windows-1252) if the letters look wrong. | — |
 | `SNR-DATA-012` | warning | Some rows have the wrong number of fields | Check the delimiter and the quoting of values that contain it. | — |

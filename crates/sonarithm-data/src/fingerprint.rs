@@ -17,7 +17,7 @@
 //!
 //! Integers are little-endian u64 throughout. What is left out is layout, and nothing a
 //! compile path reads: batch boundaries, offsets, slicing, padding, the bytes under nulls,
-//! string and list layouts (Utf8, LargeUtf8 and Utf8View are all `string`), dictionary key
+//! string and list layouts (`Utf8`, `LargeUtf8` and `Utf8View` are all `string`), dictionary key
 //! widths, run ends, nullability, non-`snr.*` metadata, and the table's name, ID and
 //! generation. Floats are hashed bit-exact (§4), because compile paths order them with
 //! `f64::total_cmp`. A dictionary stays distinct from a plain column, because NUMISONA takes

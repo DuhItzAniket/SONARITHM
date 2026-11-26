@@ -24,6 +24,8 @@
     clippy::unwrap_used,
     clippy::cast_possible_truncation,
     clippy::cast_precision_loss,
+    clippy::cast_possible_wrap,
+    clippy::print_stdout,
     missing_docs,
     reason = "benchmark harness: fixed synthetic input, failures abort the run"
 )]
@@ -62,7 +64,7 @@ impl Xorshift {
 fn input(batches: usize, nulls: bool) -> (Table, u64) {
     let mut random = Xorshift(0x9E37_79B9_7F4A_7C15);
     let mut logical = 0_u64;
-    let valid = |random: &mut Xorshift| !nulls || random.next() % 10 != 0;
+    let valid = |random: &mut Xorshift| !nulls || !random.next().is_multiple_of(10);
     let mut values = Vec::with_capacity(ROWS);
     let mut counts = Vec::with_capacity(ROWS);
     let mut stations = Vec::with_capacity(ROWS);
@@ -72,30 +74,43 @@ fn input(batches: usize, nulls: bool) -> (Table, u64) {
     for row in 0..ROWS {
         let state = random.next();
         values.push(valid(&mut random).then(|| (state % 40_000) as f64 / 1000.0 - 10.0));
-        counts.push(valid(&mut random).then(|| (state % 1000) as i64));
+        counts.push(valid(&mut random).then_some((state % 1000) as i64));
         stations.push(valid(&mut random).then(|| names[(state % 4) as usize]));
-        levels.push(valid(&mut random).then(|| (state % 3) as u8));
+        levels.push(valid(&mut random).then_some((state % 3) as u8));
         times.push(valid(&mut random).then(|| 1_704_067_200_000_000 + row as i64 * 60_000_000));
     }
     logical += 8 * values.iter().flatten().count() as u64;
     logical += 8 * counts.iter().flatten().count() as u64;
-    logical += stations.iter().flatten().map(|s| s.len() as u64).sum::<u64>();
+    logical += stations
+        .iter()
+        .flatten()
+        .map(|s| s.len() as u64)
+        .sum::<u64>();
     logical += levels.iter().flatten().count() as u64;
     logical += 8 * times.iter().flatten().count() as u64;
     logical += (1 + 4) * ROWS as u64;
     let level_values: ArrayRef = Arc::new(StringArray::from(vec!["low", "medium", "high"]));
     let class_values: ArrayRef = Arc::new(StringArray::from(vec!["exact", "estimate"]));
     let classes: Vec<u8> = (0..ROWS).map(|row| u8::from(row % 7 == 0)).collect();
-    let confidence: Vec<f32> = (0..ROWS).map(|row| if row % 7 == 0 { 0.8 } else { 1.0 }).collect();
+    let confidence: Vec<f32> = (0..ROWS)
+        .map(|row| if row % 7 == 0 { 0.8 } else { 1.0 })
+        .collect();
     let dictionary = |values: &ArrayRef| {
-        DataType::Dictionary(Box::new(DataType::UInt8), Box::new(values.data_type().clone()))
+        DataType::Dictionary(
+            Box::new(DataType::UInt8),
+            Box::new(values.data_type().clone()),
+        )
     };
     let schema = Arc::new(Schema::new(vec![
         Field::new("value", DataType::Float64, true),
         Field::new("count", DataType::Int64, true),
         Field::new("station", DataType::Utf8, true),
         Field::new("level", dictionary(&level_values), true),
-        Field::new("time", DataType::Timestamp(TimeUnit::Microsecond, None), true),
+        Field::new(
+            "time",
+            DataType::Timestamp(TimeUnit::Microsecond, None),
+            true,
+        ),
         Field::new("__snr_prov", dictionary(&class_values), true),
         Field::new("__snr_conf", DataType::Float32, true),
     ]));
