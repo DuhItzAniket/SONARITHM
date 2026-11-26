@@ -35,9 +35,12 @@ pub enum Statistic {
 pub enum Unavailable {
     /// No usable values: all are missing, or the scope is empty.
     NoValues,
-    /// The statistic does not apply: the mode of continuous values, the mode of values that
-    /// never repeat, the standard deviation of a single value.
+    /// The statistic does not apply: the mode of continuous values ("Not meaningful for
+    /// continuous values", keyboard §7), the standard deviation of a single value.
     NotMeaningful,
+    /// Discrete values none of which occurs more than once: the mode is well defined, there
+    /// just is none ("No value occurs more than once").
+    NoRepeat,
 }
 
 /// A statistic over a field's values, with what it cites (A11Y-24) and how much of it is

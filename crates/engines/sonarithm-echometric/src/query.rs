@@ -154,8 +154,8 @@ fn middle_rows(used: &[&Value]) -> Vec<u64> {
 }
 
 /// The mode of discrete values: the most frequent value (the smallest, when several are as
-/// frequent, the rest in `ties`), citing its rows. Continuous values, and values that never
-/// repeat, have no meaningful mode.
+/// frequent, the rest in `ties`), citing its rows. Continuous values have no meaningful mode
+/// (keyboard §7); discrete values that never repeat have none.
 fn mode(scope: &Scope<'_>, used: &[&Value]) -> StatAnswer {
     if scope.scale == Scale::Continuous {
         return StatAnswer::unavailable(Statistic::Mode, Unavailable::NotMeaningful);
@@ -171,7 +171,7 @@ fn mode(scope: &Scope<'_>, used: &[&Value]) -> StatAnswer {
     }
     let most = counts.values().map(|(_, rows)| rows.len()).max().unwrap_or(0);
     if most < 2 {
-        return StatAnswer::unavailable(Statistic::Mode, Unavailable::NotMeaningful);
+        return StatAnswer::unavailable(Statistic::Mode, Unavailable::NoRepeat);
     }
     let mut modes: Vec<(f64, &Vec<u64>)> = counts
         .values()
@@ -235,6 +235,16 @@ mod tests {
         let d = answer(&scope(&v, Scale::Discrete), Statistic::Mode);
         assert_eq!(d.value, Some(1.5));
         assert_eq!(d.rows.len(), 1);
+    }
+
+    #[test]
+    fn discrete_values_that_never_repeat_have_no_mode() {
+        let v = values(&[Some(1.0), Some(2.0), Some(3.0)]);
+        let a = answer(&scope(&v, Scale::Discrete), Statistic::Mode);
+        assert_eq!((a.value, a.unavailable), (None, Some(Unavailable::NoRepeat)));
+        // The continuous case keeps keyboard §7's own reason.
+        let c = answer(&scope(&v, Scale::Continuous), Statistic::Mode);
+        assert_eq!(c.unavailable, Some(Unavailable::NotMeaningful));
     }
 
     #[test]
