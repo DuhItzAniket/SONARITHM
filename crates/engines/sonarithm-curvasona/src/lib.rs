@@ -45,8 +45,8 @@ use std::sync::Arc;
 use arrow_array::{ArrayRef, Float64Array, RecordBatch};
 use arrow_schema::{DataType, Field, Schema};
 use sonarithm_core::engine::{
-    AnalysisRequest, Analyzer, Annotation, CompileContext, CompileError, Engine,
-    EngineManifest, Registrar, RegistryError, Source, SourceKind, SpecFragment,
+    AnalysisRequest, Analyzer, Annotation, CompileContext, CompileError, Engine, EngineManifest,
+    Registrar, RegistryError, Source, SourceKind, SpecFragment,
 };
 use sonarithm_core::{
     AnalyzerId, Diagnostic, EngineId, EngineVersion, Provenance, ProvenanceClass, RowRange, RuleId,

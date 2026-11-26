@@ -85,15 +85,13 @@ fn a11y_23_an_outlier_in_the_second_series_links_to_that_series() {
     assert_eq!((outlier.range.start, outlier.range.end), (12, 13));
     assert_eq!(
         outlier.params.get("method"),
-        Some(&AnnotationParam::Text("robust-z".to_owned()))
+        Some(&AnnotationParam::Text("moving-median-robust-z".to_owned()))
     );
     let tree = compiled.nav.as_ref().expect("AUDAXIS builds the tree");
     let target = tree
         .iter()
         .find_map(|(_, node)| match &node.kind {
-            NavKind::Insight(insight) if node.label.as_deref() == Some("outlier") => {
-                insight.target
-            }
+            NavKind::Insight(insight) if node.label.as_deref() == Some("outlier") => insight.target,
             _ => None,
         })
         .expect("the outlier insight has a target");
@@ -126,12 +124,11 @@ fn rfc_0009_a_spec_without_detectors_is_unchanged() {
     let mut spec = two_series(&[]);
     spec.as_object_mut().unwrap().remove("analysis");
     let with = compile(&spec);
-    assert!(with.annotations.is_empty());
+    assert_eq!(with.annotations, []);
     let platform = Platform::new();
     let numisona = Numisona::new();
     let audaxis = Audaxis::new();
-    let without: Compiler<DataBundle> =
-        Compiler::new(&[&platform, &numisona, &audaxis]).unwrap();
+    let without: Compiler<DataBundle> = Compiler::new(&[&platform, &numisona, &audaxis]).unwrap();
     let without = without
         .compile(&spec.to_string(), &CancelToken::new())
         .unwrap();

@@ -1,12 +1,18 @@
 // SPDX-FileCopyrightText: 2026 SONARITHM contributors
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
-//! The `outliers` detector (C05-T02; FR-080, A11Y-23): values far from the series' centre by
-//! the robust z-score of Iglewicz and Hoaglin (1993), from the median and the median absolute
-//! deviation (MAD). It does not depend on the series' mean or standard deviation, which the
-//! outliers themselves would pull (ADR-0031).
+//! The `outliers` detector (C05-T02; FR-080, A11Y-23): values far from their neighbours. Each
+//! value's residual is its distance from the median of a window around it (a moving median,
+//! which a single spike does not move); the robust z-score of Iglewicz and Hoaglin (1993) is
+//! taken over all residuals, from their median and median absolute deviation (MAD). Neither
+//! step uses the mean or standard deviation, which outliers would pull (ADR-0031).
+//!
+//! Both halves matter (F-205, GEN-011's sine base over 100 seeds): a robust z over the raw
+//! values let the base inflate the MAD and missed spikes that ran against it (recall 0.66);
+//! a robust z inside each small window estimated the MAD from too few values and called
+//! noise an outlier (precision 0.87). Residuals keep the base out and use every value.
 
-use super::{median, Finding, Param, Params, Series};
+use super::{Finding, Param, Params, Series, median};
 
 /// The robust z-score above which a value is an outlier (Iglewicz & Hoaglin 1993's
 /// recommendation). INFER (ADR-0031): no design rule sets it for sonification.
@@ -24,20 +30,43 @@ const MEAN_AD_SCALE: f64 = 1.253_314;
 /// and MAD say little. INFER (ADR-0031).
 pub const MIN_VALUES: usize = 5;
 
+/// The values on each side of a value whose median it is measured from (21 in all, fewer at
+/// the ends). INFER (ADR-0031, F-205).
+pub const HALF_WINDOW: usize = 10;
+
 /// The parameters recorded with every `outliers` finding (RFC-0009 §1).
 #[must_use]
 pub fn params() -> Params {
     Params::from([
-        ("method", Param::Text("robust-z")),
+        ("method", Param::Text("moving-median-robust-z")),
         ("threshold", Param::Number(THRESHOLD)),
         ("minValues", Param::Number(MIN_VALUES as f64)),
+        ("window", Param::Number((2 * HALF_WINDOW + 1) as f64)),
     ])
 }
 
-/// Each value's robust z-score, or `None` when the series is too short or has no spread.
+/// Each value's distance from the median of its window: [`HALF_WINDOW`] values on each side,
+/// fewer near the ends, always the same number on both sides. A window cut short on one side
+/// would not be centred, and on a slope its median would leave every value near the end
+/// looking like an outlier; so the first and last values, whose windows are only themselves,
+/// are never judged.
 #[must_use]
-pub fn scores(series: &Series) -> Option<Vec<f64>> {
-    let values = series.values();
+pub fn residuals(values: &[f64]) -> Vec<f64> {
+    (0..values.len())
+        .map(|at| {
+            let half = HALF_WINDOW.min(at).min(values.len() - 1 - at);
+            let start = at - half;
+            let end = at + half + 1;
+            let centre = values.get(start..end).map_or(f64::NAN, median);
+            values.get(at).map_or(f64::NAN, |v| v - centre)
+        })
+        .collect()
+}
+
+/// The robust z-scores of `values` (Iglewicz & Hoaglin 1993), or `None` when there are
+/// fewer than [`MIN_VALUES`] or they have no spread.
+#[must_use]
+pub fn robust_z(values: &[f64]) -> Option<Vec<f64>> {
     if values.len() < MIN_VALUES {
         return None;
     }
@@ -50,24 +79,26 @@ pub fn scores(series: &Series) -> Option<Vec<f64>> {
         let mean_ad = deviations.iter().sum::<f64>() / deviations.len() as f64;
         mean_ad * MEAN_AD_SCALE
     };
-    if scale.is_nan() || scale <= 0.0 {
-        return None;
-    }
-    Some(values.iter().map(|v| (v - centre) / scale).collect())
+    (scale.is_finite() && scale > 0.0)
+        .then(|| values.iter().map(|v| (v - centre) / scale).collect())
+}
+
+/// Each value's robust z-score among the residuals from the moving median, or `None` when
+/// the series is too short or has no spread.
+#[must_use]
+pub fn scores(series: &Series) -> Option<Vec<f64>> {
+    robust_z(&residuals(series.values()))
 }
 
 /// The outliers of `series`, in row order: each value whose robust z-score exceeds
 /// [`THRESHOLD`] in size, with the score.
 #[must_use]
 pub fn detect(series: &Series) -> Vec<Finding> {
-    let Some(scores) = scores(series) else {
-        return Vec::new();
-    };
     series
         .rows()
         .iter()
         .zip(series.values())
-        .zip(scores)
+        .zip(scores(series).unwrap_or_default())
         .filter(|(_, z)| z.abs() > THRESHOLD)
         .map(|((&row, &value), z)| Finding {
             label: "outlier",
@@ -97,14 +128,24 @@ mod tests {
 
     #[test]
     fn a_short_or_constant_series_has_no_outliers() {
-        assert!(detect(&series(&[1.0, 100.0, 1.0])).is_empty(), "too short");
-        assert!(detect(&series(&[2.0; 8])).is_empty(), "no spread");
+        assert_eq!(detect(&series(&[1.0, 100.0, 1.0])), [], "too short");
+        assert_eq!(detect(&series(&[2.0; 8])), [], "no spread");
     }
 
     #[test]
     fn a_zero_mad_falls_back_to_the_mean_absolute_deviation() {
         // Most values equal: the MAD is 0, but the one far value is still found.
-        let found = detect(&series(&[5.0, 5.0, 5.0, 5.0, 5.0, 5.0, 50.0]));
-        assert_eq!(found.iter().map(|f| f.first).collect::<Vec<_>>(), [6]);
+        let found = detect(&series(&[5.0, 5.0, 5.0, 50.0, 5.0, 5.0, 5.0]));
+        assert_eq!(found.iter().map(|f| f.first).collect::<Vec<_>>(), [3]);
+    }
+
+    #[test]
+    fn a_spike_against_a_slope_is_found() {
+        // A steady rise with one value dropped well below it: over the raw values the slope
+        // would inflate the MAD (F-205).
+        let mut values: Vec<f64> = (0..60).map(|i| f64::from(i) * 2.0).collect();
+        values[30] = 20.0;
+        let found = detect(&series(&values));
+        assert_eq!(found.iter().map(|f| f.first).collect::<Vec<_>>(), [30]);
     }
 }

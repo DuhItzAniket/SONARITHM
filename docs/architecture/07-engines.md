@@ -187,7 +187,7 @@ The `function` source adds a row at each zero, extremum and inflection (as at po
 | Detector | Method | Parameters |
 |---|---|---|
 | `extrema` | the global minimum and maximum (first row on ties); local extrema at reversals beyond a hysteresis band | `hysteresis` 0.1 of the value range |
-| `outliers` | robust z-score from the median and the MAD (Iglewicz & Hoaglin 1993), the scaled mean absolute deviation when the MAD is 0 | `threshold` 3.5; `minValues` 5; each annotation adds its `robustZ` |
+| `outliers` | each value's residual from a 21-value moving median (symmetric, so the first and last values are not judged), then the robust z-score of the residuals from their median and MAD (Iglewicz & Hoaglin 1993), with the scaled mean absolute deviation when the MAD is 0 ([F-205](../research-paper/findings-log.md)) | `threshold` 3.5; `window` 21; `minValues` 5; each annotation adds its `robustZ` |
 
 GEN-011 (labelled outliers, DS-010) joins the harness for the precision and recall tests; `crates/engines/sonarithm-echometric/reference` checks the robust z-scores against statrs.
 

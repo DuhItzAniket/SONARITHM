@@ -15,8 +15,8 @@ use serde::Serialize;
 use sonarithm_core::diagnostic::{Diagnostic, Diagnostics, SpecPointer};
 use sonarithm_core::digest::Sha256Digest;
 use sonarithm_core::engine::{
-    AnalysisRequest, AnalyzedField, Annotation, Budget, CancelToken, CompileContext, CompileError, Engine, MarkKind, Registry,
-    SourceKind, SpecFragment, TrackRequest,
+    AnalysisRequest, AnalyzedField, Annotation, Budget, CancelToken, CompileContext, CompileError,
+    Engine, MarkKind, Registry, SourceKind, SpecFragment, TrackRequest,
 };
 use sonarithm_core::ids::{AnalyzerId, EngineId, RuleId, TrackId};
 use sonarithm_core::nav::NavTree;

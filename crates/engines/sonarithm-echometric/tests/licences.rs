@@ -5,11 +5,7 @@
 //! (GPL-3.0-or-later), so a change that adds it to any crate fails CI; the detectors' test
 //! references, statrs and augurs, are not banned.
 
-#![allow(
-    clippy::unwrap_used,
-    clippy::expect_used,
-    reason = "integration test"
-)]
+#![allow(clippy::unwrap_used, clippy::expect_used, reason = "integration test")]
 
 use std::path::Path;
 

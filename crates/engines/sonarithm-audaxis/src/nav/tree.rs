@@ -763,7 +763,9 @@ fn target(
     let first_point = |only: Option<&str>| {
         all.iter()
             .zip(placed)
-            .filter(|(series, _)| only.is_none_or(|field| series.value_field.name.as_deref() == Some(field)))
+            .filter(|(series, _)| {
+                only.is_none_or(|field| series.value_field.name.as_deref() == Some(field))
+            })
             .find_map(|(series, (_, ids))| {
                 series
                     .points

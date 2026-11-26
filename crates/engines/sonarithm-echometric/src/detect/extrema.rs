@@ -181,9 +181,13 @@ mod tests {
 
     #[test]
     fn a_flat_or_empty_series_has_no_turns() {
-        assert!(turns(&series(&[3.0, 3.0, 3.0]), HYSTERESIS).is_empty());
-        assert!(turns(&series(&[]), HYSTERESIS).is_empty());
+        assert_eq!(turns(&series(&[3.0, 3.0, 3.0]), HYSTERESIS), []);
+        assert_eq!(turns(&series(&[]), HYSTERESIS), []);
         let found = detect(&series(&[3.0, 3.0]));
-        assert_eq!(found.len(), 2, "one value is both the minimum and the maximum");
+        assert_eq!(
+            found.len(),
+            2,
+            "one value is both the minimum and the maximum"
+        );
     }
 }

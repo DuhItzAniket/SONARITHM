@@ -9,8 +9,8 @@ use sonarithm_audaxis::Audaxis;
 use sonarithm_compiler::{Compiler, Failure, Platform};
 use sonarithm_core::engine::{CancelToken, Engine, EngineManifest};
 use sonarithm_curvasona::Curvasona;
-use sonarithm_echometric::Echometric;
 use sonarithm_data::{DataBundle, Snapshot};
+use sonarithm_echometric::Echometric;
 use sonarithm_numisona::Numisona;
 use sonarithm_numisona::polarity::PolarityProfile;
 use sonarithm_plotsona::Plotsona;
@@ -170,7 +170,10 @@ impl Sonarithm {
             if parsed.as_ref().is_some_and(sonarithm_curvasona::is_used_by) {
                 engines.push(&curvasona);
             }
-            if parsed.as_ref().is_some_and(sonarithm_echometric::engine::is_used_by) {
+            if parsed
+                .as_ref()
+                .is_some_and(sonarithm_echometric::engine::is_used_by)
+            {
                 engines.push(&echometric);
             }
         }

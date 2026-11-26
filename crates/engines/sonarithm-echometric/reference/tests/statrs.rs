@@ -1,12 +1,14 @@
 // SPDX-FileCopyrightText: 2026 SONARITHM contributors
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
-//! ECHOMETRIC's robust z-scores against statrs's median (ADR-0031): the same median and
-//! median absolute deviation, so the same outliers, within rounding.
+//! ECHOMETRIC's robust z-scores against statrs's median (ADR-0031): the same moving medians,
+//! the same median and median absolute deviation of the residuals, so the same outliers,
+//! within rounding.
 
 #![allow(
     clippy::unwrap_used,
     clippy::cast_precision_loss,
+    clippy::indexing_slicing,
     reason = "integration test; indices become rows"
 )]
 
@@ -18,21 +20,30 @@ fn series(values: &[f64]) -> Series {
     Series::new(values.iter().enumerate().map(|(i, &v)| (i as u64, Some(v))))
 }
 
-/// The robust z-scores from statrs's median and MAD (Iglewicz & Hoaglin 1993), with the
-/// same zero-MAD rule as ECHOMETRIC's (the scaled mean absolute deviation).
+/// The robust z-scores from statrs's medians (Iglewicz & Hoaglin 1993): residuals from the
+/// moving median of the same window, then their median and MAD, with the same zero-MAD rule
+/// as ECHOMETRIC's (the scaled mean absolute deviation).
 fn reference_scores(values: &[f64]) -> Option<Vec<f64>> {
     if values.len() < outliers::MIN_VALUES {
         return None;
     }
-    let centre = Data::new(values.to_vec()).median();
-    let deviations: Vec<f64> = values.iter().map(|v| (v - centre).abs()).collect();
+    let half = outliers::HALF_WINDOW;
+    let residuals: Vec<f64> = (0..values.len())
+        .map(|at| {
+            let half = half.min(at).min(values.len() - 1 - at);
+            let window = &values[(at - half)..=(at + half)];
+            values[at] - Data::new(window.to_vec()).median()
+        })
+        .collect();
+    let centre = Data::new(residuals.clone()).median();
+    let deviations: Vec<f64> = residuals.iter().map(|v| (v - centre).abs()).collect();
     let mad = Data::new(deviations.clone()).median();
     let scale = if mad > 0.0 {
         mad / 0.6745
     } else {
         deviations.iter().sum::<f64>() / deviations.len() as f64 * 1.253_314
     };
-    (scale > 0.0).then(|| values.iter().map(|v| (v - centre) / scale).collect())
+    (scale > 0.0).then(|| residuals.iter().map(|v| (v - centre) / scale).collect())
 }
 
 proptest! {

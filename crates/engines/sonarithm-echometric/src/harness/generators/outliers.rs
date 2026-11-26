@@ -93,7 +93,11 @@ fn check(params: &OutlierParams) -> Result<usize, GeneratorError> {
         return Err(invalid(ID, "outliers", "fewer than a tenth of the points"));
     }
     if !params.magnitude.is_finite() || params.magnitude <= 3.0 {
-        return Err(invalid(ID, "magnitude", "above 3 noise standard deviations"));
+        return Err(invalid(
+            ID,
+            "magnitude",
+            "above 3 noise standard deviations",
+        ));
     }
     if !params.noise.is_finite() || params.noise <= 0.0 {
         return Err(invalid(ID, "noise", "a positive standard deviation"));

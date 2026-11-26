@@ -102,9 +102,13 @@ pub(crate) fn median(values: &[f64]) -> f64 {
     let mut sorted = values.to_vec();
     sorted.sort_by(f64::total_cmp);
     let mid = sorted.len() / 2;
-    match (sorted.len() % 2, sorted.get(mid), mid.checked_sub(1).and_then(|m| sorted.get(m))) {
+    match (
+        sorted.len() % 2,
+        sorted.get(mid),
+        mid.checked_sub(1).and_then(|m| sorted.get(m)),
+    ) {
         (1, Some(&middle), _) => middle,
-        (_, Some(&upper), Some(&lower)) => (lower + upper) / 2.0,
+        (_, Some(&upper), Some(&lower)) => f64::midpoint(lower, upper),
         _ => f64::NAN,
     }
 }

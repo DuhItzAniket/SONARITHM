@@ -31,22 +31,6 @@ fn of(values: &[f64]) -> Series {
     Series::new(values.iter().enumerate().map(|(i, &v)| (i as u64, Some(v))))
 }
 
-/// Precision and recall of `found` against `truth`.
-fn rates(found: &BTreeSet<u64>, truth: &BTreeSet<u64>) -> (f64, f64) {
-    let hits = found.intersection(truth).count() as f64;
-    let precision = if found.is_empty() {
-        1.0
-    } else {
-        hits / found.len() as f64
-    };
-    let recall = if truth.is_empty() {
-        1.0
-    } else {
-        hits / truth.len() as f64
-    };
-    (precision, recall)
-}
-
 /// The labelled outliers of GEN-011 over 100 seeds: the measured precision and recall, which
 /// C05-T02 records, and floors that a regression would break.
 #[test]
@@ -77,8 +61,9 @@ fn c05_t02_outliers_precision_and_recall_on_gen_011() {
     assert!(recall >= 0.95, "recall {recall}");
 }
 
-/// GEN-001's schematic trends (no noise): the local extrema are exactly its turning rows, for
-/// every studied rate and reversal count, so SDR-21's count is the generator's.
+/// GEN-001's schematic trends (no noise): the local extrema are its turning rows, for every
+/// studied rate and reversal count (a tie between two rows aside), so SDR-21's count is the
+/// generator's.
 #[test]
 fn sdr_21_local_extrema_are_the_turning_rows_of_gen_001() {
     for rate in STUDIED_RATES {
@@ -89,18 +74,27 @@ fn sdr_21_local_extrema_are_the_turning_rows_of_gen_001() {
                 let Truth::Reversals(truth) = &stimulus.truth else {
                     panic!("GEN-001 has reversal truth");
                 };
-                let truth: BTreeSet<u64> =
-                    truth.turning_rows.iter().map(|&r| r as u64).collect();
+                let truth: Vec<usize> = truth.turning_rows.clone();
                 let s = series(&stimulus, "price");
-                let found: BTreeSet<u64> = extrema::turns(&s, extrema::HYSTERESIS)
+                let values = s.values();
+                let found: Vec<usize> = extrema::turns(&s, extrema::HYSTERESIS)
                     .iter()
-                    .map(|t| t.index as u64)
+                    .map(|t| t.index)
                     .collect();
+                // SDR-21's count is the generator's, exactly. A turn may sit one row from
+                // the generator's when the two rows tie (a peak between two hourly points:
+                // the generator rounds half up, the detector keeps the first).
                 assert_eq!(
-                    found, truth,
-                    "rate {rate}, {reversals} reversals, seed {seed}"
+                    found.len(),
+                    truth.len(),
+                    "rate {rate}, {reversals} reversals, seed {seed}: {found:?} vs {truth:?}"
                 );
-                assert_eq!(rates(&found, &truth), (1.0, 1.0));
+                for (&got, &want) in found.iter().zip(&truth) {
+                    assert!(
+                        got == want || (got.abs_diff(want) == 1 && values[got] == values[want]),
+                        "rate {rate}, {reversals} reversals, seed {seed}: turn at {got}, truth {want}"
+                    );
+                }
             }
         }
     }
@@ -145,8 +139,8 @@ proptest! {
         let max = values.iter().copied().fold(f64::NEG_INFINITY, f64::max);
         prop_assert_eq!(found[0].value, min);
         prop_assert_eq!(found[1].value, max);
-        prop_assert_eq!(found[0].first as usize, values.iter().position(|&v| v == min).unwrap());
-        prop_assert_eq!(found[1].first as usize, values.iter().position(|&v| v == max).unwrap());
+        prop_assert_eq!(found[0].first, values.iter().position(|&v| v == min).unwrap() as u64);
+        prop_assert_eq!(found[1].first, values.iter().position(|&v| v == max).unwrap() as u64);
     }
 
     /// Turns alternate between maxima and minima, in increasing order.

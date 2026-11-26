@@ -1042,6 +1042,19 @@ A05 (render engine, audio backends, export) uses F-050 to F-069.
 - **Evidence level / confidence:** EV-D / Strong for the cause (the failing OS set, the zero-change local re-record, and exmex's operator source); cross-platform agreement after the fix is shown by #449's CI, not yet
 - **Affects:** ADR-0013 §1; every function spec's Score and manifest (C03-T02, C03-T06, C03-T07); the curvasona-suite records; any snapshot that holds a function's full-precision values
 
+### F-205 · A robust z-score over a whole series misses spikes on a periodic base, and one inside small windows calls noise an outlier
+
+- **Date:** 2026-11-26 · **Phase:** C05 · **Type:** engineering (detector design) · **Status:** new
+- **Statement:** ECHOMETRIC's `outliers` detector (C05-T02) was planned as the robust z-score of Iglewicz and Hoaglin (1993), from the median and MAD of the whole series (ADR-0031). On GEN-011's labelled spikes (a sine of amplitude 2 over two periods, Gaussian noise σ = 1, five spikes of 8σ in 200 points; 100 seeds, 500 spikes), measured on HW-01:
+  - **Over the whole series:** precision 1.0000 and recall 0.6580. The sine inflates the MAD, so a spike that runs against the base stays under the 3.5 threshold.
+  - **Inside each 21-value window (the Hampel identifier):** precision 0.8657 and recall 0.9800, with 76 false positives. Twenty-one values estimate the MAD too loosely, and noise crosses 3.5.
+  - **Adopted: the residual from a 21-value moving median, then one robust z over all residuals:** precision 0.9579 and recall 1.0000, with 22 false positives. The moving median removes the base, and the MAD comes from every value.
+- **A second effect:** a window cut short at an end is not centred, so on a slope its median leaves every value near the end looking like an outlier. A unit test on a straight rise found it. Windows are therefore symmetric and shrink toward the ends, so the first and last values are never judged.
+- **Not a result:** the threshold (3.5) and the window (21) are INFER (ADR-0031). No sonification study sets them, and the rates above are for GEN-011's defaults only.
+- **Evidence:** `crates/engines/sonarithm-echometric/src/detect/outliers.rs`; `c05_t02_outliers_precision_and_recall_on_gen_011` (it asserts both rates ≥ 0.95 and prints the measured ones); `a_spike_against_a_slope_is_found`; the reference test `robust_z_scores_match_statrs` (statrs's medians, `crates/engines/sonarithm-echometric/reference`).
+- **Evidence level / confidence:** EV-D / Moderate: measured on one synthetic generator. Real series with level shifts or seasonality need C05-T03's change points before outliers are trusted on them.
+- **Affects:** ADR-0031's outlier method, which keeps the robust z but takes it over moving-median residuals; 07 ECHOMETRIC; the design-rules change log (2026-11-26).
+
 ### F-201 · A hole on a pole's steep slope was taken for a jump, because the sides were compared with a fixed tolerance
 
 - **Date:** 2026-11-01 · **Phase:** C03 · **Type:** engineering (robustness) · **Status:** new
