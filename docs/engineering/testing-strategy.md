@@ -54,10 +54,12 @@ From the base (many, fast, every PR) to the top (few, slow, scheduled or manual)
 | Concurrency and unsafe | Lock-free protocols and unsafe code are sound | Miri, shuttle (loom optional), `allocation-counter` | Allocation check every PR; Miri and shuttle on PRs touching the crates and nightly |
 | Integration | App behaviour end to end without a webview | headless app core (B01), facade before that | Every PR |
 | CLI and Python | Public interfaces behave and stay stable | assert_cmd + insta; pytest on wheels | Every PR |
-| Frontend | Components, flows and visuals in every webview engine | Vitest 4, Storybook 10, Playwright, WebdriverIO | Every PR (real-app E2E nightly) |
+| Frontend | Components, flows and visuals in every webview engine | Vitest 5, Storybook 10, Playwright, WebdriverIO | Every PR (real-app E2E nightly) |
 | Performance and soak | Budgets met, no regressions, no xruns | criterion, soak harness, loopback harness | Nightly on hosted runners (relative); reference hardware (absolute), started by a maintainer |
 | Manual accessibility | Real assistive technology works | screen-reader matrix, Chartability | Every release |
 | Research validation | Replicated designs still render as published | replication gallery | Every PR (gallery), per study |
+
+"Every PR" means every PR whose files the test can depend on. Docs-only PRs skip the Rust, frontend and desktop jobs, and frontend-only PRs run only the frontend, browser and desktop jobs; pushes to `main` run everything ([ci-cd: change-scoped jobs](ci-cd.md#change-scoped-jobs)). A test that starts reading a file under `docs/` or the frontend trees at run time must be added to `.github/scripts/ci_scope.py`; files compiled in with `include_str!` are found automatically.
 
 ## 3. Unit and property tests
 
@@ -175,7 +177,7 @@ cargo-fuzz (libFuzzer, nightly toolchain) on Linux CI runners. Harnesses live in
 
 Requirements for every target: no panic, no hang (per-input timeout), bounded memory (`-rss_limit_mb`), and a round-trip assertion where one exists (parse → serialize → parse).
 
-Schedule: 30 minutes per target in `nightly.yml` ([ci-cd](ci-cd.md)), a two-minute smoke run on pull requests that touch `sonarithm-core` or `sonarithm-spec`, and at least 1 hour per parser target before each release (manual dispatch of `nightly.yml` with `seconds: 3600`). Run locally from the owning crate with `cargo +nightly fuzz run <target>`. On Windows, cargo-fuzz needs AddressSanitizer: put the MSVC directory that holds `clang_rt.asan_dynamic-x86_64.dll` (`VC/Tools/MSVC/<version>/bin/Hostx64/x64`) on `PATH`, otherwise the target exits with `STATUS_DLL_NOT_FOUND`; `-s none` does not link with MSVC. Contributors changing a parser or importer run its target locally before opening the PR. Every crash is minimized and committed as a regular regression test in the owning crate.
+Schedule: 30 minutes per target in `nightly.yml` ([ci-cd](ci-cd.md)), a two-minute smoke run of each target in a crate that a pull request changes (every target when the PR changes `sonarithm-core`, any `Cargo.toml` or `Cargo.lock`, `nightly.yml` or `.github/scripts/ci_scope.py`, because a dependency bump or a core type can change a parser that the PR does not touch; [ci-cd: change-scoped jobs](ci-cd.md#change-scoped-jobs)), and at least 1 hour per parser target before each release (manual dispatch of `nightly.yml` with `seconds: 3600`). Run locally from the owning crate with `cargo +nightly fuzz run <target>`. On Windows, cargo-fuzz needs AddressSanitizer: put the MSVC directory that holds `clang_rt.asan_dynamic-x86_64.dll` (`VC/Tools/MSVC/<version>/bin/Hostx64/x64`) on `PATH`, otherwise the target exits with `STATUS_DLL_NOT_FOUND`; `-s none` does not link with MSVC. Contributors changing a parser or importer run its target locally before opening the PR. Every crash is minimized and committed as a regular regression test in the owning crate.
 
 The `sonarithm-data` targets (`csv_read`, `json_read`, `xlsx_read`, `columnar_read`) also check that every table they load survives an Arrow IPC round trip with the same fingerprint. The data layer turns panics of third-party decoders (arrow-ipc, parquet, calamine) into errors, so `xlsx_read` and `columnar_read` replace libFuzzer's abort-on-panic hook and only panics that escape `read_bytes` count as crashes. On Windows, libFuzzer treats any Rust panic as a crash even when it is caught, so run those two targets on Linux; on Windows the ASan runtime DLL (`clang_rt.asan_dynamic-x86_64.dll`, in the MSVC `bin\Hostx64\x64` folder) must be on `PATH`.
 
@@ -258,8 +260,8 @@ The headless app core (`sonarithm-app`, B01) holds all non-UI desktop behaviour,
 
 | Layer | Tooling | Scope |
 |---|---|---|
-| Unit | Vitest 4 | Zustand stores, XState machines (model-based tests of transport and export machines), formatters, keymap resolution, token contrast calculations |
-| Component | Vitest 4 browser mode with `toMatchScreenshot` | Component behaviour and visuals. Baselines are taken on one pinned Linux Chromium image to avoid font-rendering differences, plus a small per-OS smoke set |
+| Unit | Vitest 5 | Zustand stores, XState machines (model-based tests of transport and export machines), formatters, keymap resolution, token contrast calculations |
+| Component | Vitest 5 browser mode with `toMatchScreenshot` | Component behaviour and visuals. Baselines are taken on one pinned Linux Chromium image to avoid font-rendering differences, plus a small per-OS smoke set |
 | Workbench and a11y | Storybook 10 with the Vitest addon and the accessibility addon (axe-core) | Every component story, in every state (focus, disabled, error) and theme (dark, light, high contrast, forced colours). CI fails on serious and critical violations |
 | Cross-engine E2E | Playwright with Tauri `mockIPC` in Chromium, WebKit and Firefox; `@axe-core/playwright` on key flows | User flows and visual regression without the Rust backend |
 | Real-app E2E | WebdriverIO `@wdio/tauri-service` on Windows, Linux and macOS, in `nightly.yml` | The packaged app with the real core (Trial from B05 per [tech-stack](tech-stack.md)). The official `tauri-driver` does not support macOS. The embedded provider on macOS 26 with Tauri 2.12 is unverified and is checked when the tool is adopted |
