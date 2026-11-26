@@ -849,3 +849,126 @@ fn a_project_fingerprinted_by_an_older_build_opens_and_saves_the_new_fingerprint
     craft(&tampered, &members, &manifest);
     assert_eq!(open_code(&tampered), "SNR-APP-032");
 }
+
+/// The `project_open` fuzz corpus (`fuzz/corpus/project_open`).
+fn fuzz_corpus() -> PathBuf {
+    Path::new(env!("CARGO_MANIFEST_DIR")).join("fuzz/corpus/project_open")
+}
+
+/// The format 1.1 seeds of the fuzz corpus (RFC-0002 §12, testing): a function dataset with
+/// a variable, and a `future-kind` storage with a field of its own. Each is written by
+/// `project::write`, so it is a bundle this build produces. Returns `(file name, bytes)`.
+fn format_1_1_seeds(dir: &Path) -> Vec<(&'static str, Vec<u8>)> {
+    let mut app = self::app(dir);
+    ok(
+        &mut app,
+        &json!({ "command": "function_open", "args": {
+            "expr": "a * x ^ 2 - 1", "domain": [-2, 2], "samples": 41, "variables": { "a": 0.5 }
+        } }),
+    );
+    let glide = json!({
+        "specVersion": "0.4",
+        "data": { "source": { "kind": "dataset", "id": "d1" } },
+        "tracks": [{ "id": "f", "mark": "glide", "channels": { "pitch": { "field": "y" } } }]
+    });
+    ok(
+        &mut app,
+        &json!({ "command": "spec_set", "args": { "text": glide.to_string() } }),
+    );
+    let function = dir.join("seed-function.sonarithm");
+    ok(
+        &mut app,
+        &json!({ "command": "project_save_as", "args": { "path": function, "embedData": true } }),
+    );
+
+    let spec = spec("d1").into_bytes();
+    let mut crafted = manifest("1.1", &[member("specs/main.json", &spec)]);
+    crafted["datasets"] = json!([{
+        "id": "d1", "name": "later.dat", "storage": "future-kind",
+        "futureDetail": { "level": 3 }, "fingerprint": "0".repeat(64), "rows": 3
+    }]);
+    let crafted_path = dir.join("crafted.sonarithm");
+    craft(
+        &crafted_path,
+        &[("specs/main.json", spec, CompressionMethod::Deflated)],
+        &crafted,
+    );
+    let future = dir.join("seed-future-kind.sonarithm");
+    let opened = project::open(&crafted_path, &mut || 1).unwrap();
+    let bytes = project::write(&opened.project, &future, true).unwrap();
+    vec![
+        ("seed-function", std::fs::read(&function).unwrap()),
+        ("seed-future-kind", bytes),
+    ]
+}
+
+/// Writes the format 1.1 seeds into the fuzz corpus. Run it after a change to the format:
+/// `cargo nextest run -p sonarithm-app --run-ignored only fuzz_seeds_regenerate`.
+#[test]
+#[ignore = "writes into the source tree; run by hand to regenerate the seeds"]
+fn fuzz_seeds_regenerate() {
+    let dir = TempDir::new("fuzz-seeds");
+    for (name, bytes) in format_1_1_seeds(dir.path()) {
+        std::fs::write(fuzz_corpus().join(name), bytes).unwrap();
+    }
+}
+
+/// Every seed of the `project_open` fuzz corpus holds the fuzz target's property on stable
+/// builds too (the target needs nightly): it opens, saves, reopens with the same specs and
+/// saves to the same bytes. The format 1.1 seeds open as RFC-0002 §12 says: the function
+/// sampled again (at most `SNR-APP-093`, once another build fingerprints it), the
+/// `future-kind` entry unavailable with `SNR-APP-035`.
+#[test]
+fn rfc_0002_12_the_fuzz_seeds_open_and_save_stably() {
+    let dir = TempDir::new("fuzz-corpus");
+    let mut names: Vec<String> = std::fs::read_dir(fuzz_corpus())
+        .unwrap()
+        .map(|entry| entry.unwrap().file_name().to_string_lossy().into_owned())
+        .filter(|name| name.starts_with("seed-"))
+        .collect();
+    names.sort();
+    for name in ["seed-function", "seed-future-kind"] {
+        assert!(names.iter().any(|n| n == name), "{name} is in the corpus");
+    }
+    for name in &names {
+        let input = dir.path().join(format!("{name}.sonarithm"));
+        std::fs::copy(fuzz_corpus().join(name), &input).unwrap();
+        let opened = project::open(&input, &mut || 1).unwrap_or_else(|e| panic!("{name}: {e}"));
+        let again = dir.path().join(format!("{name}-again.sonarithm"));
+        let first = project::write(&opened.project, &again, true).unwrap();
+        std::fs::write(&again, &first).unwrap();
+        let reopened = project::open(&again, &mut || 1).unwrap();
+        assert_eq!(reopened.project.specs, opened.project.specs, "{name}");
+        let second = project::write(&reopened.project, &again, true).unwrap();
+        assert_eq!(first, second, "{name} saves stably");
+
+        let codes: Vec<&str> = opened.warnings.iter().map(|w| w.code.as_str()).collect();
+        let dataset = opened.project.datasets.first();
+        match name.as_str() {
+            "seed-function" => {
+                // 093 only once another build fingerprints the samples differently (an
+                // Arrow upgrade, F-222); `fuzz_seeds_regenerate` then refreshes the seed.
+                assert!(
+                    codes.iter().all(|c| *c == "SNR-APP-093"),
+                    "{name}: {codes:?}"
+                );
+                let dataset = dataset.unwrap();
+                assert!(
+                    dataset.function.is_some() && dataset.table.is_some(),
+                    "{name}"
+                );
+                assert_eq!(manifest_of(&again)["formatVersion"], "1.1", "{name}");
+            }
+            "seed-future-kind" => {
+                assert_eq!(codes, ["SNR-APP-035"], "{name}");
+                assert!(dataset.unwrap().table.is_none(), "{name}");
+                assert_eq!(
+                    manifest_of(&again)["datasets"][0]["storage"],
+                    "future-kind",
+                    "{name}"
+                );
+            }
+            _ => {}
+        }
+    }
+}
