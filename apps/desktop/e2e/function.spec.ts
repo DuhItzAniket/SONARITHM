@@ -95,6 +95,52 @@ test("c03_t08b_the_expression_is_checked_after_a_pause_and_marks_where_it_stops"
   );
 });
 
+test("c03_t08b_an_error_with_no_place_names_no_character", async ({ page }) => {
+  await newFunction(page);
+  // The mock host answers `@` with a refusal that has no span (a variable count).
+  await page.keyboard.type("x @ 2");
+  await expect(expression(page)).toHaveAttribute("aria-invalid", "true");
+  await expect(expression(page)).toHaveAccessibleDescription(
+    /The expression cannot be used: Too many variables\./,
+  );
+  await expect(expression(page)).not.toHaveAccessibleDescription(
+    /at character/,
+  );
+  // And `#` with no diagnostic at all: a plain sentence, no stray position.
+  await page.keyboard.press("ControlOrMeta+a");
+  await page.keyboard.type("x #");
+  await expect(expression(page)).toHaveAccessibleDescription(
+    /The expression does not read\./,
+  );
+  await expect(expression(page)).not.toHaveAccessibleDescription(
+    /at character/,
+  );
+});
+
+test("c03_t08b_an_empty_number_field_is_refused_in_words", async ({ page }) => {
+  await newFunction(page);
+  await page.keyboard.type("x^2");
+  await expect(expression(page)).toHaveAccessibleDescription("Reads as: x^2");
+  const from = dialog(page).getByRole("textbox", { name: "From x" });
+  await from.focus();
+  await page.keyboard.press("ControlOrMeta+a");
+  await page.keyboard.press("Backspace");
+  await page.keyboard.press("Enter");
+  await expect(dialog(page)).toBeVisible();
+  await expect(from).toHaveAttribute("aria-invalid", "true");
+  await expect(from).toHaveAccessibleDescription(/Enter a number for From x\./);
+  expect(
+    (await (await host(page)).evaluate((mock) => mock.commands())).filter(
+      (command) => command === "function_open",
+    ),
+  ).toEqual([]);
+  // A number clears the error once the field commits it (on leaving it, as React Aria's
+  // NumberField does).
+  await page.keyboard.type("-3");
+  await page.keyboard.press("Tab");
+  await expect(from).not.toHaveAttribute("aria-invalid", "true");
+});
+
 test("c03_t08b_every_control_has_a_name_and_the_dialog_returns_the_focus", async ({
   page,
 }) => {
@@ -200,5 +246,7 @@ test("sdr_31_the_calculator_reads_out_and_an_inaudible_band_will_not_compile", a
     inspector.getByText(/^Will not compile: the whole band is outside/),
   ).toBeVisible();
   await expect(readout.nth(2)).toHaveText("None");
+  // Small band edges keep their digits (0.0001 Hz to 0.05 Hz, not 0 to 0.1).
+  await expect(readout.nth(1)).toHaveText("0.0001 to 0.05 Hz");
   expect(await seriousViolations(page)).toEqual([]);
 });

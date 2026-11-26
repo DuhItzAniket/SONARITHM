@@ -198,6 +198,12 @@ ui-function-reads-as = Reads as: { $text }
 # Why the expression does not read, and where reading stopped: $detail is the app core's
 # message and $index the character position, from 1.
 ui-function-expression-error = { $detail } (at character { $index })
+# The same, for an error with no place in the text, such as a budget or a variable count.
+ui-function-expression-refused = The expression cannot be used: { $detail }
+# When the app core gives no reason.
+ui-function-expression-unreadable = The expression does not read.
+# A number field left empty when Open is pressed; $name is the field's label.
+ui-function-number-needed = Enter a number for { $name }.
 ui-function-from = From x
 ui-function-to = To x
 ui-function-domain-hint = The x range the function is sampled over.

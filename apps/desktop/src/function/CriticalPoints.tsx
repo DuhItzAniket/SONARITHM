@@ -3,6 +3,7 @@
 
 import type { Client, CriticalPointInfo, CursorState } from "@sonarithm/ipc";
 import { ActionList } from "@sonarithm/ui";
+import { useState } from "react";
 
 import type { Announcer } from "../announcer/announcer.ts";
 import { useLocalizer } from "../i18n.ts";
@@ -31,6 +32,8 @@ export function CriticalPoints({
   readonly announcer: Announcer;
 }) {
   const t = useLocalizer();
+  // The point the listener last went to: when two points share a row, that one is current.
+  const [entered, setEntered] = useState<number | null>(null);
   if (points.length === 0) {
     return <p className={styles.note}>{t.format("ui-function-points-none")}</p>;
   }
@@ -38,7 +41,7 @@ export function CriticalPoints({
     <ActionList
       label={t.format("ui-function-points")}
       items={points.map((point, index) => ({ id: index, text: point.text }))}
-      current={currentPoint(points, dataset, cursor)}
+      current={currentPoint(points, dataset, cursor, entered)}
       onAction={(id) => {
         const point = points[Number(id)];
         if (point === undefined) return;
@@ -49,6 +52,7 @@ export function CriticalPoints({
           });
           return;
         }
+        setEntered(Number(id));
         void client
           .call({
             command: "cursor_set",

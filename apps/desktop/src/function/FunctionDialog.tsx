@@ -14,6 +14,8 @@ import { useEffect, useRef, useState } from "react";
 import type { Announcer } from "../announcer/announcer.ts";
 import { useLocalizer } from "../i18n.ts";
 import styles from "./function.module.css";
+import type { Message } from "./readout.ts";
+import { expressionReason } from "./readout.ts";
 
 /** A function the app core opened as a dataset (`function_open`). */
 export interface OpenedFunction {
@@ -24,7 +26,10 @@ export interface OpenedFunction {
 /** How the expression reads, from `function_check`. */
 type Check =
   | { readonly ok: true; readonly canonical: string }
-  | { readonly ok: false; readonly message: string; readonly index: number };
+  | { readonly ok: false; readonly reason: Message };
+
+/** The number fields, which must hold a finite number before Open samples anything. */
+type NumberKey = "from" | "to" | "samples";
 
 /** The pause after typing before the expression is checked, so a reader is not interrupted. */
 export const CHECK_DELAY_MS = 250;
@@ -83,7 +88,6 @@ export function FunctionDialog({
         .then(
           (reply) => {
             if (!live) return;
-            const first = reply.diagnostics[0];
             setChecked({
               expr,
               result:
@@ -91,8 +95,10 @@ export function FunctionDialog({
                   ? { ok: true, canonical: reply.canonical }
                   : {
                       ok: false,
-                      message: first?.message ?? "",
-                      index: (reply.span?.[0] ?? 0) + 1,
+                      reason: expressionReason(
+                        reply.diagnostics[0]?.message,
+                        reply.span,
+                      ),
                     },
             });
           },
@@ -108,11 +114,31 @@ export function FunctionDialog({
   const invalid = check !== null && !check.ok;
   const reason =
     check !== null && !check.ok
-      ? t.format("ui-function-expression-error", {
-          detail: check.message,
-          index: { number: check.index },
-        })
+      ? t.format(check.reason.id, check.reason.args)
       : undefined;
+  // The number fields Open found empty: each says so in words until it is edited.
+  const [missing, setMissing] = useState<ReadonlySet<NumberKey>>(new Set());
+  const names: Record<NumberKey, string> = {
+    from: t.format("ui-function-from"),
+    to: t.format("ui-function-to"),
+    samples: t.format("ui-function-samples"),
+  };
+  const needed = (key: NumberKey) =>
+    missing.has(key)
+      ? {
+          isInvalid: true,
+          errorMessage: t.format("ui-function-number-needed", {
+            name: names[key],
+          }),
+        }
+      : {};
+  const edited = (key: NumberKey) => {
+    if (missing.has(key)) {
+      const rest = new Set(missing);
+      rest.delete(key);
+      setMissing(rest);
+    }
+  };
 
   const open = async (close: () => void) => {
     if (client === null) return;
@@ -121,6 +147,20 @@ export function FunctionDialog({
       return;
     }
     const { from: min, to: max, samples: count } = latest.current;
+    // A cleared number field holds NaN, which would reach the app core as `null`.
+    const empty = (["from", "to", "samples"] as const).filter(
+      (key) => !Number.isFinite({ from: min, to: max, samples: count }[key]),
+    );
+    if (empty.length > 0) {
+      setMissing(new Set(empty));
+      announcer.announce({
+        text: t.format("ui-function-number-needed", {
+          name: names[empty[0] ?? "from"],
+        }),
+        assertive: false,
+      });
+      return;
+    }
     try {
       const reply = await client.call({
         command: "function_open",
@@ -187,17 +227,23 @@ export function FunctionDialog({
               label={t.format("ui-function-from")}
               description={t.format("ui-function-domain-hint")}
               value={from}
+              validationBehavior="aria"
+              {...needed("from")}
               onChange={(next) => {
                 latest.current = { ...latest.current, from: next };
                 setFrom(next);
+                edited("from");
               }}
             />
             <NumberField
               label={t.format("ui-function-to")}
               value={to}
+              validationBehavior="aria"
+              {...needed("to")}
               onChange={(next) => {
                 latest.current = { ...latest.current, to: next };
                 setTo(next);
+                edited("to");
               }}
             />
           </div>
@@ -207,9 +253,12 @@ export function FunctionDialog({
             minValue={SAMPLES.min}
             maxValue={SAMPLES.max}
             step={1}
+            validationBehavior="aria"
+            {...needed("samples")}
             onChange={(next) => {
               latest.current = { ...latest.current, samples: next };
               setSamples(next);
+              edited("samples");
             }}
           />
           {failure !== null && (

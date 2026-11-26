@@ -8,7 +8,7 @@ import { useEffect, useRef, useState } from "react";
 import type { Announcer } from "../announcer/announcer.ts";
 import { useLocalizer } from "../i18n.ts";
 import styles from "./function.module.css";
-import { bandState } from "./readout.ts";
+import { bandState, significant } from "./readout.ts";
 
 type Readout = ReplyFor<"audify_calculate">;
 
@@ -86,8 +86,8 @@ export function AudifyCalculator({
 
   const hertz = ([low, high]: readonly [number, number]) =>
     t.format("ui-audify-hertz-range", {
-      low: { number: low, maximumFractionDigits: 1 },
-      high: { number: high, maximumFractionDigits: 1 },
+      low: significant(low),
+      high: significant(high),
     });
 
   return (

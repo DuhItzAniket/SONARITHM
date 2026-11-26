@@ -46,6 +46,9 @@ export function ActionList({
     <GridList
       aria-label={label}
       items={items}
+      // GridList caches each row by its item; `current` is not part of an item, so the
+      // rows must render again when it changes, or the mark stays on the old row.
+      dependencies={[current]}
       selectionMode="none"
       onAction={onAction}
       className={cx(list.list)}

@@ -2,10 +2,12 @@
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
 import type { Meta, StoryObj } from "@storybook/react-vite";
+import { useState } from "react";
 import { expect, fn, userEvent, within } from "storybook/test";
 
 import { storyLocalizer } from "../../.storybook/localizer.ts";
 import { ActionList } from "./ActionList.tsx";
+import { Button } from "./Button.tsx";
 
 const t = storyLocalizer();
 
@@ -65,5 +67,48 @@ export const NoneCurrent: Story = {
     for (const row of canvas.getAllByRole("row")) {
       await expect(row).not.toHaveAttribute("aria-current");
     }
+  },
+};
+
+/** The list over stable items, with a button that moves the current row, as the cursor does. */
+function MovingCurrent() {
+  const [current, setCurrent] = useState(0);
+  return (
+    <>
+      <ActionList
+        label={t.format("ui-function-points")}
+        items={ITEMS}
+        current={current}
+        onAction={() => undefined}
+      />
+      <Button
+        onPress={() => {
+          setCurrent((at) => (at + 1) % ITEMS.length);
+        }}
+      >
+        {t.format("command-nav-next")}
+      </Button>
+    </>
+  );
+}
+
+/**
+ * The items stay the same objects while the current row moves (the cursor moved elsewhere):
+ * the mark follows, and only one row has it.
+ */
+export const CurrentMoves: StoryObj<typeof MovingCurrent> = {
+  render: () => <MovingCurrent />,
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    const rows = canvas.getAllByRole("row");
+    await expect(rows[0]).toHaveAttribute("aria-current", "true");
+    await userEvent.click(
+      canvas.getByRole("button", { name: t.format("command-nav-next") }),
+    );
+    await expect(rows[1]).toHaveAttribute("aria-current", "true");
+    await expect(rows[0]).not.toHaveAttribute("aria-current");
+    await expect(
+      canvasElement.querySelectorAll('[aria-current="true"]'),
+    ).toHaveLength(1);
   },
 };

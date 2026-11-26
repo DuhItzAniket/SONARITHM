@@ -276,6 +276,27 @@ function checkExpression(expr: string): {
   span: [number, number] | null;
 } {
   const text = expr.trim().replace(/\s+/g, " ");
+  // `@` stands for an error with no place (a budget or a variable count), `#` for a reply
+  // with no diagnostic at all.
+  if (text.includes("@")) {
+    return {
+      ok: false,
+      canonical: null,
+      diagnostics: [
+        {
+          severity: "error",
+          code: "SNR-ENG-404",
+          rules: [],
+          message: "Too many variables.",
+          pointer: null,
+        },
+      ],
+      span: null,
+    };
+  }
+  if (text.includes("#")) {
+    return { ok: false, canonical: null, diagnostics: [], span: [0, 1] };
+  }
   let depth = 0;
   let stop: number | null = null;
   for (let at = 0; at < expr.length; at++) {
