@@ -3,8 +3,7 @@
 
 //! Functions in the app core (C03-T08; ADR-0017 "Functions"): `function_check` for live
 //! diagnostics, `function_open` as a dataset the cursor and the cues work on, the SDR-31
-//! calculator, and projects that refuse to save a function rather than drop it, while
-//! autosave leaves it out and says so once.
+//! calculator. Projects save a function as its definition (tests/projects.rs, RFC-0002 §12).
 
 #![allow(
     clippy::unwrap_used,
@@ -13,7 +12,7 @@
 )]
 
 use std::sync::Arc;
-use std::time::{Duration, Instant};
+use std::time::Duration;
 
 use serde_json::{Value, json};
 use sonarithm_app::ipc::{Event, IpcError};
@@ -241,38 +240,22 @@ fn sdr_31_the_calculator_agrees_with_the_compile() {
     assert_eq!(err.code, "SNR-ENG-463", "{err}");
 }
 
-/// Projects cannot store a function yet (a project-format amendment will add it): saving one
-/// fails with a coded error naming the dataset, and nothing is written or dropped.
+/// Format 1.1 (RFC-0002 §12) retires the autosave notice of C03-T08a: autosave keeps a
+/// function dataset as its definition, says nothing about it, and a recovery after a crash
+/// brings the function back with the rest.
 #[test]
-fn saving_a_project_with_a_function_fails_and_names_it() {
-    let mut h = Harness::new("function-save");
-    h.ok(&cubic());
-    let spec = json!({
-        "specVersion": "0.4",
-        "data": { "source": { "kind": "dataset", "id": "d1" } },
-        "tracks": [{ "id": "f", "mark": "glide", "channels": { "pitch": { "field": "y" } } }]
-    });
-    h.ok(&json!({ "command": "spec_set", "args": { "text": spec.to_string() } }));
-    let path = h.dir.path().join("cubic.sonarithm");
-    let err = h
-        .send(&json!({ "command": "project_save_as", "args": { "path": path, "embedData": true } }))
-        .unwrap_err();
-    assert_eq!(err.code, "SNR-APP-089", "{err}");
-    assert!(err.message.contains("d1"), "{err}");
-    assert!(err.message.contains("f(x) = x^3 - 3*x"), "{err}");
-    assert!(!path.exists(), "nothing was written");
-    h.ok(&json!({ "command": "dataset_close", "args": { "id": "d1" } }));
-    h.ok(&json!({ "command": "project_save_as", "args": { "path": path, "embedData": true } }));
-    assert!(path.exists());
-}
-
-/// Autosave never stops silently while a function is open (C03-T08): it saves the rest of
-/// the session without the function and says so once; a recovery brings back the rest.
-#[test]
-fn autosave_leaves_a_function_out_and_says_so_once() {
+fn rfc_0002_12_autosave_keeps_a_function_and_recovers_it() {
     let mut h = Harness::new("function-autosave");
     let csv = h.dir.path().join("temps.csv");
-    std::fs::write(&csv, "day,temp\n1,20.5\n2,21.0\n3,19.8\n").unwrap();
+    std::fs::write(
+        &csv,
+        "day,temp
+1,20.5
+2,21.0
+3,19.8
+",
+    )
+    .unwrap();
     h.ok(&json!({ "command": "dataset_open", "args": { "path": csv } }));
     h.ok(&cubic());
     let spec = json!({
@@ -283,21 +266,9 @@ fn autosave_leaves_a_function_out_and_says_so_once() {
     .to_string();
     h.ok(&json!({ "command": "spec_set", "args": { "text": spec } }));
     h.app.autosave_now();
-    h.app.autosave_now();
-    let start = Instant::now();
-    while h.announcements().is_empty() {
-        assert!(
-            start.elapsed() < Duration::from_secs(5),
-            "autosave said nothing"
-        );
-        std::thread::sleep(Duration::from_millis(10));
-    }
     std::thread::sleep(Duration::from_millis(300));
-    let spoken = h.announcements();
-    assert_eq!(spoken.len(), 1, "said once: {spoken:?}");
-    assert!(spoken[0].contains("f(x) = x^3 - 3*x"), "{spoken:?}");
-    assert!(spoken[0].contains("cannot store functions"), "{spoken:?}");
-    // Dropped without shutdown: a crash. The next start recovers the CSV and the spec.
+    assert_eq!(h.announcements(), Vec::<String>::new(), "nothing to say");
+    // Dropped without shutdown: a crash. The next start recovers both datasets.
     let Harness { app, dir, .. } = h;
     drop(app);
     let mut next = App::new(config(&dir), Arc::new(CollectingSink::new())).unwrap();
@@ -309,8 +280,9 @@ fn autosave_leaves_a_function_out_and_says_so_once() {
         .dispatch_json(&json!({ "command": "project_recover", "args": { "id": id } }).to_string())
         .unwrap();
     let datasets = recovered["datasets"].as_array().unwrap();
-    assert_eq!(datasets.len(), 1, "{recovered}");
-    assert_eq!(datasets[0]["id"], "d1");
-    assert_eq!(datasets[0]["available"], true);
+    assert_eq!(datasets.len(), 2, "{recovered}");
+    assert_eq!(datasets[1]["id"], "d2");
+    assert_eq!(datasets[1]["name"], "f(x) = x^3 - 3*x", "{recovered}");
+    assert_eq!(datasets[1]["available"], true);
     next.shutdown();
 }
