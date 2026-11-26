@@ -416,14 +416,15 @@ pub const FUNCTION_INPUT_TOO_LARGE: CodeInfo = CodeInfo {
     status: CodeStatus::Active,
 };
 
-/// A project with a function dataset cannot be saved yet (C03-T08).
+/// A project with a function dataset could not be saved (C03-T08a). Retired with format
+/// 1.1, which saves a function as its definition (RFC-0002 §12); never reused.
 pub const FUNCTION_NOT_SAVED: CodeInfo = CodeInfo {
     code: "SNR-APP-089",
     severity: Severity::Error,
-    summary: "A function dataset cannot be saved in a project yet",
-    help: "Project files do not store functions yet: saving the samples would lose the function, so nothing was saved. Close the function dataset to save the project, or keep the function's spec. The project format gains functions in a later release.",
+    summary: "A function dataset could not be saved in a project",
+    help: "Retired: project format 1.1 saves a function dataset as its definition (RFC-0002 §12).",
     rules: &[],
-    status: CodeStatus::Active,
+    status: CodeStatus::Retired,
 };
 
 /// A chart explorer verb with nothing to explore (B03-T09).
@@ -439,14 +440,15 @@ pub const NAV_NO_TREE: CodeInfo = CodeInfo {
 
 /// An embedded dataset whose member checksum verifies but whose fingerprint differs: another
 /// build fingerprinted it, so it opens and the next save records the new fingerprint
-/// (RFC-0002 §13).
+/// (RFC-0002 §13). A function dataset that samples differently from the saving build opens
+/// the same way (§12).
 pub const DATASET_REFINGERPRINTED: CodeInfo = CodeInfo {
     code: "SNR-APP-093",
     severity: Severity::Warning,
     summary: "A dataset was fingerprinted again",
-    help: "The data matches the project's own checksum, so it opens unchanged; another \
-           SONARITHM build computed its fingerprint differently. Save the project to record \
-           the new fingerprint.",
+    help: "Another SONARITHM build computed the dataset's fingerprint differently. Embedded \
+           data matches the project's own checksum, so it opens unchanged; a function opens \
+           sampled again from its definition. Save the project to record the new fingerprint.",
     rules: &[],
     status: CodeStatus::Active,
 };
