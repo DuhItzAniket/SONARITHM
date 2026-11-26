@@ -115,9 +115,19 @@ pub fn bundle_fingerprint(bundle: &DataBundle) -> Result<Sha256Digest, DataError
     Ok(Sha256Digest::of(&input))
 }
 
-/// Where encoded bytes go: a counter (for a column's length) or the hasher.
+/// Where encoded bytes go: a counter (for a column's length) or the hasher. The encoder
+/// is generic over it, so each pass compiles to direct calls.
 trait Sink {
+    /// Whether only the byte count matters, so fixed-width runs can be counted without
+    /// visiting their rows.
+    const COUNTING: bool = false;
+
     fn put(&mut self, bytes: &[u8]);
+
+    /// Adds `n` bytes to a count without their content (counting sinks only).
+    fn skip(&mut self, n: u64) {
+        let _ = n;
+    }
 
     fn tag(&mut self, valid: bool) {
         self.put(&[u8::from(valid)]);
@@ -132,8 +142,14 @@ trait Sink {
 struct Counting(u64);
 
 impl Sink for Counting {
+    const COUNTING: bool = true;
+
     fn put(&mut self, bytes: &[u8]) {
         self.0 += bytes.len() as u64;
+    }
+
+    fn skip(&mut self, n: u64) {
+        self.0 += n;
     }
 }
 
@@ -343,7 +359,7 @@ fn column_parts(table: &Table, index: usize, field: &Field) -> Result<Vec<ArrayR
 }
 
 /// Every row of a column, in order across its parts.
-fn encode_column(parts: &[ArrayRef], out: &mut dyn Sink) {
+fn encode_column<S: Sink>(parts: &[ArrayRef], out: &mut S) {
     let dictionary = parts.first().and_then(|part| part.as_any_dictionary_opt());
     if let Some(first) = dictionary {
         // The dictionary's values as a column (all of them, in order), then each row's key
@@ -353,9 +369,15 @@ fn encode_column(parts: &[ArrayRef], out: &mut dyn Sink) {
         encode_rows(values.as_ref(), out);
         for part in parts {
             if let Some(dictionary) = part.as_any_dictionary_opt() {
-                let keys = dictionary.normalized_keys();
-                for (row, key) in keys.into_iter().enumerate() {
-                    let valid = dictionary.keys().is_valid(row);
+                let keys = dictionary.keys();
+                if S::COUNTING {
+                    let valid = keys.len() - keys.null_count();
+                    out.skip((keys.len() + 8 * valid) as u64);
+                    continue;
+                }
+                let nulls = keys.nulls();
+                for (row, key) in dictionary.normalized_keys().into_iter().enumerate() {
+                    let valid = nulls.is_none_or(|nulls| nulls.is_valid(row));
                     out.tag(valid);
                     if valid {
                         out.put(&(key as u64).to_le_bytes());
@@ -371,15 +393,37 @@ fn encode_column(parts: &[ArrayRef], out: &mut dyn Sink) {
 }
 
 /// Every row of `array`: a tag byte, then a valid row's value bytes.
-fn encode_rows(array: &dyn Array, out: &mut dyn Sink) {
+fn encode_rows<S: Sink>(array: &dyn Array, out: &mut S) {
     macro_rules! fixed {
         ($t:ty) => {{
             let typed = array.as_primitive::<$t>();
-            for row in 0..typed.len() {
-                let valid = typed.is_valid(row);
+            if S::COUNTING {
+                let width = std::mem::size_of::<<$t as ArrowPrimitiveType>::Native>();
+                let valid = typed.len() - typed.null_count();
+                out.skip((typed.len() + width * valid) as u64);
+                return;
+            }
+            let nulls = typed.nulls();
+            for (row, value) in typed.values().iter().enumerate() {
+                let valid = nulls.is_none_or(|nulls| nulls.is_valid(row));
                 out.tag(valid);
                 if valid {
-                    out.put(&typed.value(row).to_le_bytes());
+                    out.put(&value.to_le_bytes());
+                }
+            }
+        }};
+    }
+    macro_rules! text {
+        ($typed:expr) => {{
+            let typed = $typed;
+            let nulls = typed.nulls();
+            for row in 0..typed.len() {
+                let valid = nulls.is_none_or(|nulls| nulls.is_valid(row));
+                out.tag(valid);
+                if valid {
+                    let value: &[u8] = typed.value(row).as_ref();
+                    out.len(value.len());
+                    out.put(value);
                 }
             }
         }};
@@ -401,6 +445,9 @@ fn encode_rows(array: &dyn Array, out: &mut dyn Sink) {
         DataType::Timestamp(TimeUnit::Millisecond, _) => fixed!(TimestampMillisecondType),
         DataType::Timestamp(TimeUnit::Microsecond, _) => fixed!(TimestampMicrosecondType),
         DataType::Timestamp(TimeUnit::Nanosecond, _) => fixed!(TimestampNanosecondType),
+        DataType::Utf8 => text!(array.as_string::<i32>()),
+        DataType::LargeUtf8 => text!(array.as_string::<i64>()),
+        DataType::Utf8View => text!(array.as_string_view()),
         _ => {
             for row in 0..array.len() {
                 encode_row(array, row, out);
@@ -410,7 +457,7 @@ fn encode_rows(array: &dyn Array, out: &mut dyn Sink) {
 }
 
 /// One row of `array`: its tag byte and, when valid, its value bytes (RFC-0008 §3).
-fn encode_row(array: &dyn Array, row: usize, out: &mut dyn Sink) {
+fn encode_row<S: Sink>(array: &dyn Array, row: usize, out: &mut S) {
     match array.data_type() {
         DataType::Null => out.tag(false),
         // A run's value, whatever the run ends.
@@ -468,24 +515,24 @@ fn run_value<R: arrow_array::types::RunEndIndexType>(
 }
 
 /// The value bytes of a valid row (RFC-0008 §3's table).
-fn encode_value(array: &dyn Array, row: usize, out: &mut dyn Sink) {
+fn encode_value<S: Sink>(array: &dyn Array, row: usize, out: &mut S) {
     macro_rules! fixed {
         ($t:ty) => {
             out.put(&array.as_primitive::<$t>().value(row).to_le_bytes())
         };
     }
-    let bytes = |out: &mut dyn Sink, value: &[u8]| {
+    fn bytes<S: Sink>(out: &mut S, value: &[u8]) {
         out.len(value.len());
         out.put(value);
-    };
-    let elements = |out: &mut dyn Sink, values: &ArrayRef, counted: bool| {
+    }
+    fn elements<S: Sink>(out: &mut S, values: &ArrayRef, counted: bool) {
         if counted {
             out.len(values.len());
         }
         for index in 0..values.len() {
             encode_row(values.as_ref(), index, out);
         }
-    };
+    }
     match array.data_type() {
         DataType::Boolean => out.put(&[u8::from(array.as_boolean().value(row))]),
         DataType::Int8 => fixed!(Int8Type),
