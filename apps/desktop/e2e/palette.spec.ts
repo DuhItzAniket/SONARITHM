@@ -80,7 +80,7 @@ test("kb_01_every_registered_command_runs_from_the_palette", async ({
       .toBe(id);
     // These open a dialog of their own, just after the palette closes: the palette again,
     // the key references (help.explorer is the explorer's, B03-T09), Preferences, and
-    // the explorer's value dialogs (G, Primary+F).
+    // the explorer's value dialogs (G, Primary+F) and Open chart image (C02-T10).
     if (
       [
         "app.palette",
@@ -89,6 +89,7 @@ test("kb_01_every_registered_command_runs_from_the_palette", async ({
         "app.preferences",
         "nav.goTo",
         "nav.findValue",
+        "chart.openImage",
       ].includes(id)
     ) {
       await expect(page.getByRole("dialog")).toHaveCount(1);

@@ -278,6 +278,32 @@ The Spec tab uses CodeMirror 6 with its standard editing keys.
 | Enter on a diagnostic | Go to its source (spec range in the editor, or the data node) |
 | Primary+C | Copy the entry text |
 
+### 5.11 Chart image calibration (C02-T10)
+
+"Open chart image…" (`chart.openImage`, palette only, no default key) opens a dialog in two steps (ADR-0017 "Raster calibration"). It adds no global key: every key is a React Aria control's own.
+
+1. **The file:** a text field for the image's full path (the app has no file chooser yet), then Open. The focus starts in the field.
+2. **Calibration.** The focus moves to the first crosshair slider. The Tab order is:
+   1. **Crosshair x (pixels) and Crosshair y (pixels):** sliders (APG Slider).
+      * **Keys:** arrows move one pixel; Page Up and Page Down take larger steps; Home and End go to the edges.
+      * **What each says:** "Pixel 212", or "Pixel 212, value 3.5" once its axis is calibrated.
+      * **The image:** not focusable. Its text alternative names it and gives its size, and a click on it moves the crosshair there (A11Y-26).
+   2. **Pixel x and Pixel y:** number fields bound to the same position, for typed coordinates.
+   3. **The scale of each axis:** selects. Linear, Logarithmic, Date, and Category for the x axis only.
+   4. **The new anchor:**
+      * its axis (a select);
+      * its value: a number, or the text of a date or label, which the app core reads;
+      * Add anchor at the crosshair, which says "x1 added."
+   5. **Each axis's anchors:** a list, each row named "x1: pixel 20, 100, value 0", with Delete, which says "x1 deleted."
+   6. **The checks:**
+      * each axis's state ("x axis: 2 anchors fit within 0.1%") and any refusal;
+      * said politely only when they change.
+   7. **Cancel, then Read the chart.**
+      * **Read the chart** says the extraction summary once the chart opens.
+      * **With too few anchors** it says why instead.
+   * **Escape** cancels at either step and returns the focus to where the dialog was opened from.
+   * **Marks** on the image tell axes apart by shape and label (squares and "x1", circles and "y1") as well as colour.
+
 ## 6. Where am I
 
 W speaks a full orientation report regardless of the verbosity setting (A11Y-07). It reports position, level and neighbours:

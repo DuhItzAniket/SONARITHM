@@ -35,6 +35,12 @@ export {
   type DataTableProps,
 } from "./components/DataTable.tsx";
 export {
+  type ImageCrosshairProps,
+  ImageCrosshair,
+  type ImageMark,
+  type PixelArea,
+} from "./components/ImageCrosshair.tsx";
+export {
   DialogActions,
   DialogTrigger,
   ModalDialog,

@@ -202,6 +202,50 @@ The UI shows `text` in a read-only text field, with the caret at `caret` (keyboa
 
 **Settings.** `settings.braille = { mode: "review" | "sparkline", cells?: number }` holds Shift+B's mode and the display's cell count, which a web page cannot read. They are app settings, not profile fields: they belong to the user's device. `cells: 0` is refused (`SNR-APP-013`). Files without `braille` read the defaults (review, no cell count).
 
+#### Raster calibration
+
+> Amended 2026-11-26, C02-T10: `chart_raster_open`, `chart_calibration_check`, `chart_calibration_apply` and `chart_raster_close`, the `raster_chart`, `calibration_check` and `raster_closed` replies and `SNR-APP-096` added, approved by the coordinator under the owner's delegation, additive. `PROTOCOL_VERSION` stays 1 (§5).
+
+**Why.** A PNG or JPEG chart is read only through a calibration: anchors a person enters on each axis, a pixel and the value it stands for (RFC-0004 §5, 10 §3.1; `SNR-ENG-328` without one). So a chart image is not opened like other data. It is held in a session while the user calibrates it, and read when they apply the calibration.
+
+**Commands.**
+
+* `chart_raster_open { path }` replies `raster_chart { id, name, widthPx, heightPx, image, plotArea }`.
+  * **The file:** a regular file named `.png`, `.jpg` or `.jpeg`, at most 20 MiB.
+  * **Decoding:** PLOTSONA decodes it under its raster pixel and work budgets, so a decompression bomb or an undecodable file is refused (`SNR-ENG-306`, `327`) before anything is encoded or kept.
+  * **`image`:** a `data:` URL of the bytes as they are. The CSP's `img-src data:` allows it. Its media type comes from the bytes' signature, never from the extension. Base64 makes a 20 MiB image a reply of about 27 MB.
+  * **`plotArea`:** the area the axis lines bound (C02-T02), or `null`.
+  * Nothing is extracted yet.
+* `chart_calibration_check { id, calibration, at? }` replies `calibration_check { diagnostics, x, y, valueAt }`.
+  * **The fit:** each axis with two anchors or more is fitted with C01-T04's core and checked (10 §3.1).
+  * **`x` and `y`:** `{ anchors, residual, confidence }`, or `null` while an axis has fewer than two anchors or is refused.
+  * **`diagnostics`:** say why an axis is refused (`SNR-ENG-320` to `322`) and give a fitting axis's warnings (`SNR-ENG-323`, `325`).
+  * **`valueAt`:** the values at pixel position `at`, each once its axis fits: a number, or the ISO date or category label as text.
+  * **Dates and labels are read in Rust.** The UI sends an anchor's text as typed and never parses a date.
+  * Nothing is extracted, so this is cheap enough to ask as the crosshair moves.
+* `chart_calibration_apply { id, calibration }` replies `dataset`, as `dataset_open` does.
+  * **The read:** the chart is read through the calibration (both axes need two anchors). The extraction summary (`SNR-ENG-385`) and its checks come back in the diagnostics, as for any chart.
+  * **The correction document** keeps the calibration, so `corrections_apply` reads the chart again through it (C02-T11), and `corrections_export` carries it.
+  * **Projects:** the dataset is embedded, not linked.
+  * **A refused read** is an `IpcError` with PLOTSONA's code.
+  * The session ends.
+* `chart_raster_close { id }` replies `raster_closed { id }` and ends a session the user cancelled.
+* `calibration` is `{ plotArea?, x: { kind, anchors }, y: { kind, anchors } }`.
+  * `kind` is `linear`, `log`, `date` or `category` (x only).
+  * An anchor is `{ at: [x, y], value }`, in pixels with y down and a pixel's centre at `i + 0.5`.
+  * It is the spec's `data.source.calibration` without `axes`, and an axis may have fewer than two anchors while it is being entered.
+
+**Sessions.** At most four are open. A fifth `chart_raster_open` ends the oldest instead of refusing, so a dialog that failed to close its session never blocks the next image. Any later call naming an ended session is `SNR-APP-096`, and so is a call after `apply` or `close`. Sessions are numbered; nothing reads a clock.
+
+**Errors.** Errors, diagnostics and logs name the file alone, never its folder (rule 9).
+
+**Crosshair traffic.** The UI sends `chart_calibration_check` for the newest crosshair position only: at most once per animation frame, with no queue, and never while one is in flight. It says the checks only when their text changes, never on every crosshair step.
+
+**The dialog (UI; keyboard-and-navigation §5.11).**
+
+* **Opening:** "Open chart image…" (`chart.openImage`, palette, no default key) asks for the file, then calibrates it.
+* **The file:** the app has no file chooser yet (the window's capability grants no dialog or file-system plugin), so the file is typed as a full path. The app core checks it and never echoes the folder.
+
 #### Meter frames
 
 > Amended 2026-10-30, B01-T04, approved by the coordinator under delegation.

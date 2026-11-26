@@ -347,7 +347,137 @@ function navMove(verb: string): {
   return { row: target, outcome: "moved", edge: null };
 }
 
+/**
+ * The chart image of the calibration flow (C02-T10): a 200 by 120 line chart, axes at
+ * x = 20 and y = 100. The mock fits numeric anchors with a straight line and refuses ticks
+ * that do not change in one direction, as the app core does; it reads no dates or labels
+ * (the app core's tests cover those).
+ */
+const CHART_IMAGE = `data:image/svg+xml;utf8,${encodeURIComponent(
+  '<svg xmlns="http://www.w3.org/2000/svg" width="200" height="120">' +
+    '<rect width="200" height="120" fill="white"/>' +
+    '<path d="M20 10V100H190" fill="none" stroke="black"/>' +
+    '<polyline points="20,90 60,70 100,40 140,55 180,20" fill="none" stroke="steelblue" stroke-width="2"/>' +
+    "</svg>",
+)}`;
+
+type MockAnchor = { readonly at: readonly number[]; readonly value: unknown };
+
+/** A least-squares line through numeric anchors along `coordinate`, or a refusal. */
+function mockFit(
+  anchors: readonly MockAnchor[],
+  coordinate: 0 | 1,
+):
+  | { readonly fit: (p: number) => number }
+  | { readonly refused: string }
+  | null {
+  const points = anchors.flatMap((a) =>
+    typeof a.value === "number"
+      ? [[a.at[coordinate] ?? 0, a.value] as const]
+      : [],
+  );
+  if (points.length < 2) return null;
+  const sorted = [...points].sort((p, q) => p[0] - q[0]);
+  const rising = sorted.every(
+    (p, i) => i === 0 || p[1] >= (sorted[i - 1]?.[1] ?? 0),
+  );
+  const falling = sorted.every(
+    (p, i) => i === 0 || p[1] <= (sorted[i - 1]?.[1] ?? 0),
+  );
+  if (!rising && !falling) {
+    return {
+      refused: "The tick values do not change in one direction along the axis.",
+    };
+  }
+  const n = points.length;
+  const mp = points.reduce((s, p) => s + p[0], 0) / n;
+  const mv = points.reduce((s, p) => s + p[1], 0) / n;
+  const spp = points.reduce((s, p) => s + (p[0] - mp) ** 2, 0);
+  const spv = points.reduce((s, p) => s + (p[0] - mp) * (p[1] - mv), 0);
+  const slope = spp === 0 ? 0 : spv / spp;
+  return { fit: (p) => mv + slope * (p - mp) };
+}
+
 const handlers: MockHandlers = {
+  chart_raster_open: (request) => {
+    const name = request.args.path.split(/[\\/]/).pop() ?? "chart.png";
+    return {
+      reply: "raster_chart" as const,
+      id: 1,
+      name,
+      widthPx: 200,
+      heightPx: 120,
+      image: CHART_IMAGE,
+      plotArea: { min: [20, 10], max: [190, 100] },
+    };
+  },
+  chart_calibration_check: (request) => {
+    const { calibration, at } = request.args;
+    const diagnostics = [];
+    const axes = [calibration.x, calibration.y].map((axis, index) => {
+      const fitted = mockFit(axis.anchors, index === 0 ? 0 : 1);
+      if (fitted !== null && "refused" in fitted) {
+        diagnostics.push({
+          severity: "error",
+          code: "SNR-ENG-322",
+          rules: [],
+          message: `The ${index === 0 ? "x" : "y"} axis cannot be calibrated: ${fitted.refused}`,
+          pointer: null,
+        });
+        return null;
+      }
+      return fitted;
+    });
+    const info = (index: 0 | 1) =>
+      axes[index] === null || axes[index] === undefined
+        ? null
+        : {
+            anchors: [calibration.x, calibration.y][index]?.anchors.length ?? 0,
+            residual: 0,
+            confidence: 1,
+          };
+    const read = (index: 0 | 1) => {
+      const fitted = axes[index];
+      return at === null ||
+        fitted === null ||
+        fitted === undefined ||
+        !("fit" in fitted)
+        ? null
+        : Math.round(fitted.fit(at[index] ?? 0) * 1000) / 1000;
+    };
+    return {
+      reply: "calibration_check" as const,
+      diagnostics,
+      x: info(0),
+      y: info(1),
+      valueAt: at === null ? null : { x: read(0), y: read(1) },
+    };
+  },
+  chart_calibration_apply: () => ({
+    reply: "dataset" as const,
+    ...(dataset ?? {
+      id: "d1",
+      name: "rain.png",
+      rows: 0,
+      fields: [],
+      diagnostics: [],
+    }),
+    name: "rain.png",
+    diagnostics: [
+      {
+        severity: "info",
+        code: "SNR-ENG-385",
+        rules: [],
+        message:
+          "36 points: 0 exact, 0 calibrated, 36 estimated, median confidence 0.82",
+        pointer: null,
+      },
+    ],
+  }),
+  chart_raster_close: (request) => ({
+    reply: "raster_closed" as const,
+    id: request.args.id,
+  }),
   nav_move: (request) => {
     const step = navMove(request.args.verb.verb);
     return {

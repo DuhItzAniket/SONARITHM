@@ -18,6 +18,7 @@ import type { Scope } from "../commands/scopes.ts";
 import { activeScopes } from "../commands/scopes.ts";
 import { useLocalizer } from "../i18n.ts";
 import { Preferences } from "../preferences/Preferences.tsx";
+import { ChartImageDialog } from "../calibrate/ChartImageDialog.tsx";
 import { TransportBar } from "../transport/TransportBar.tsx";
 import { CursorReadout } from "../cursor/CursorReadout.tsx";
 import { Explorer } from "../explorer/Explorer.tsx";
@@ -150,6 +151,12 @@ export function App({
   useCommand("app.preferences", () => {
     setPreferencesOpen(true);
   });
+  // "Open chart image…" (C02-T10): a PNG or JPEG chart, calibrated, then read; the chart
+  // becomes the dataset the workspace shows.
+  const [chartImageOpen, setChartImageOpen] = useState(false);
+  useCommand("chart.openImage", () => {
+    setChartImageOpen(true);
+  });
 
   useEffect(() => {
     let live = true;
@@ -267,6 +274,17 @@ export function App({
         isOpen={preferencesOpen}
         onOpenChange={setPreferencesOpen}
       />
+      {client !== null && (
+        <ChartImageDialog
+          client={client}
+          announcer={announcer}
+          isOpen={chartImageOpen}
+          onClose={() => {
+            setChartImageOpen(false);
+          }}
+          onOpened={setDataset}
+        />
+      )}
       <CommandPalette
         isOpen={paletteOpen}
         onOpenChange={setPaletteOpen}

@@ -259,3 +259,55 @@ command-results =
 command-no-results = No commands match.
 keyboard-reference-title = Keyboard shortcuts
 keyboard-no-binding = No shortcut
+
+## Chart image calibration (C02-T10; 10 §3.1, §5; keyboard-and-navigation §5.11). A PNG or
+## JPEG chart is read through anchors the user enters on each axis: a pixel and the value it
+## stands for. $name is the image's file name, shown as it is.
+
+command-chart-open-image = Open chart image…
+ui-chart-image-open-title = Open chart image
+ui-chart-image-path = Chart image file
+ui-chart-image-path-hint = The full path of a PNG or JPEG chart image.
+ui-chart-image-open = Open
+ui-calibrate-title = Calibrate { $name }
+# The image's text alternative. $x and $y are its width and height in pixels.
+ui-calibrate-image = { $name }, a chart image of { $x } by { $y } pixels
+ui-calibrate-crosshair-x = Crosshair x (pixels)
+ui-calibrate-crosshair-y = Crosshair y (pixels)
+# A crosshair position. $index is a pixel number; $value is the value there once the axis is
+# calibrated: a number, a date or a category label.
+ui-calibrate-pixel = Pixel { $index }
+ui-calibrate-pixel-value = Pixel { $index }, value { $value }
+ui-calibrate-pixel-x = Pixel x
+ui-calibrate-pixel-y = Pixel y
+ui-calibrate-axis-x = x axis
+ui-calibrate-axis-y = y axis
+# An axis's scale picker. $axis is ui-calibrate-axis-x or ui-calibrate-axis-y.
+ui-calibrate-scale-of = { $axis } scale
+ui-calibrate-axis = Axis of the new anchor
+ui-calibrate-scale-linear = Linear
+ui-calibrate-scale-log = Logarithmic
+ui-calibrate-scale-date = Date
+ui-calibrate-scale-category = Category
+ui-calibrate-value = Value at the crosshair
+ui-calibrate-value-number-hint = The axis value at the crosshair, as its tick label reads.
+ui-calibrate-value-date-hint = A date at the crosshair, such as 2024-01-31.
+ui-calibrate-value-category-hint = The category's label at the crosshair, as the chart shows it.
+ui-calibrate-add = Add anchor at the crosshair
+# One anchor. $label is its short name (x1, y2); $x and $y its pixel; $value as entered.
+ui-calibrate-anchor = { $label }: pixel { $x }, { $y }, value { $value }
+ui-calibrate-anchor-delete = Delete { $label }
+ui-calibrate-anchors-none = No anchors yet. Add at least two.
+ui-calibrate-anchor-added = { $label } added.
+ui-calibrate-anchor-deleted = { $label } deleted.
+ui-calibrate-checks = Checks
+# How each axis stands. $axis is ui-calibrate-axis-x or ui-calibrate-axis-y; $count is a
+# number of anchors; $value is the fit's residual as a percentage of the axis.
+ui-calibrate-axis-pending =
+    { $count ->
+        [one] { $axis }: { $count } anchor, at least 2 needed
+       *[other] { $axis }: { $count } anchors, at least 2 needed
+    }
+ui-calibrate-axis-fits = { $axis }: { $count } anchors fit within { $value }
+ui-calibrate-apply = Read the chart
+ui-calibrate-not-ready = Add at least two anchors on each axis, then read the chart.

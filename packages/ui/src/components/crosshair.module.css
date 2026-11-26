@@ -1,0 +1,88 @@
+/* SPDX-FileCopyrightText: 2026 SONARITHM contributors */
+/* SPDX-License-Identifier: MIT OR Apache-2.0 */
+
+/* The calibration crosshair (C02-T10): the image, its marks and two sliders. */
+.crosshair {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.image {
+  display: block;
+  inline-size: 100%;
+  max-block-size: 60vh;
+  border: var(--border-width) solid var(--border);
+  background: var(--surface-0);
+  cursor: crosshair;
+}
+
+.sliders {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr));
+  gap: var(--space-3);
+}
+
+/* Strokes scale with the viewBox, so they keep one screen width. */
+.hair,
+.plot,
+.mark rect,
+.mark circle {
+  vector-effect: non-scaling-stroke;
+}
+
+.hair {
+  stroke: var(--focus);
+  stroke-width: 2;
+}
+
+.plot {
+  fill: none;
+  stroke: var(--border-strong);
+  stroke-width: 1;
+  stroke-dasharray: 4 3;
+}
+
+.mark rect,
+.mark circle {
+  fill: var(--surface-0);
+  stroke-width: 2;
+}
+
+.mark[data-axis="x"] rect {
+  stroke: var(--series-1);
+}
+
+.mark[data-axis="y"] circle {
+  stroke: var(--series-2);
+}
+
+.mark text {
+  fill: var(--text-1);
+  paint-order: stroke;
+  stroke: var(--surface-0);
+  stroke-width: 3;
+  font-family: var(--font-sans);
+}
+
+@media (forced-colors: active) {
+  .hair {
+    stroke: Highlight;
+  }
+
+  .plot,
+  .mark[data-axis="x"] rect,
+  .mark[data-axis="y"] circle {
+    stroke: CanvasText;
+  }
+
+  .mark rect,
+  .mark circle {
+    fill: Canvas;
+  }
+
+  .mark text {
+    fill: CanvasText;
+    stroke: Canvas;
+  }
+}
