@@ -1,6 +1,6 @@
 # RFC 0009: ECHOMETRIC insights in the Score, and detector parameters in annotations
 
-> **Status:** Proposed (2026-11-26). **Author(s):** project lead (drafted by an AI coding agent, Claude Code, for review by the coordinator under the owner's delegation). **Decision:** an ADR, or acceptance recorded here, with C05-T01 and C05-T04.
+> **Status:** **Accepted** (2026-11-26, by the coordinator under the owner's delegation; FCP waived; Q1 as proposed; with the §1 amendment on the analyzed field, below). **Author(s):** project lead (drafted by an AI coding agent, Claude Code). **Decision:** recorded here; the analyzer change amends [ADR-0014](../decisions/0014-capability-trait-signatures.md).
 > **Related:** [RFC process](README.md) · [RFC-0001 §8](0001-spec-v0.1.md) · [RFC-0007 §2](0007-function-cues-and-audification.md) · [05 §4](../architecture/05-compiler-and-score-ir.md#4-score-ir) · [07 ECHOMETRIC](../architecture/07-engines.md) · [ADR-0013](../decisions/0013-determinism-and-provenance.md) · [ADR-0031](../decisions/0031-echometric-numerics.md) · [ADR-0032](../decisions/0032-the-lint-pass.md)
 
 | Field | Value |
@@ -8,14 +8,14 @@
 | RFC | 0009 |
 | Start date | 2026-11-26 |
 | RFC PR | (this PR) |
-| Affects | Core `Annotation` (a field; not persisted); the Score's `markers`, filled for the first time (IR v1 type, no IR change); a context track from ECHOMETRIC; spec v0.1's `analysis.cue` semantics for ECHOMETRIC's detectors (no new key) |
+| Affects | Core `Annotation` (two fields; not persisted); the `Analyzer` call (an `AnalysisRequest` with the analyzed fields, ADR-0014 amended); the Score's `markers`, filled for the first time (IR v1 type, no IR change); a context track from ECHOMETRIC; spec v0.1's `analysis.cue` semantics for ECHOMETRIC's detectors (no new key) |
 | Phase | C05 (tasks C05-T01 and C05-T04) |
 | Related ADR(s) | ADR-0031 (the detectors), ADR-0032 (the lint pass) |
 | Supersedes | none |
 
 ## Summary
 
-1. ECHOMETRIC's detectors record the parameters they used in every annotation they produce. This is a new field on the core `Annotation`; annotations are not part of the Score.
+1. ECHOMETRIC's detectors record the parameters they used, and the data field they analyzed, in every annotation they produce. The compiler tells each analyzer which fields the spec's tracks play. This is a new field on the core `Annotation`; annotations are not part of the Score.
 2. When a spec's `analysis.detect` names an ECHOMETRIC detector, the Score gains one `Insight` marker per annotation. ECHOMETRIC then adds an `echometric.insights` cue track: `E-LANDMARK` earcons, or speech, as `analysis.cue` says, each with its text equivalent.
 3. No new Score IR type, earcon kind or IR version. Specs without ECHOMETRIC detectors compile to exactly the Scores they do today.
 
@@ -64,6 +64,31 @@ pub enum AnnotationParam { Number(f64), Text(String) }
 - **No spec key.** A spec cannot set detector parameters in v1. A later `analysis.params` would be its own RFC.
 - The data layer's `Annotation` (`sonarithm-data`, `bundle.rs`) is not on the compile path and is unchanged.
 
+**Amendment (2026-11-26, with acceptance): the analyzed field.** An analyzer used to get only the data and the `analysis` object, so nothing told it which field a track plays, and an annotation did not say which field it was about. AUDAXIS linked each insight to the first series whose points cover its rows, so on a table with two series an outlier in the second would be linked to the first, and announced as the wrong series. Three changes:
+
+1. Core `Annotation` gains `field: Option<String>`: the data field it is about, or `None` for an analyzer of whole rows. CURVASONA's `critical-points` sets its table's `y`.
+2. The `Analyzer` call takes a request instead of the bare `params` (an [ADR-0014](../decisions/0014-capability-trait-signatures.md) amendment):
+
+   ```rust
+   fn analyze(&self, data: &D, request: &AnalysisRequest<'_>, cx: &mut CompileContext)
+       -> Result<Vec<Annotation>, CompileError>;
+
+   #[non_exhaustive]
+   pub struct AnalysisRequest<'a> {
+       pub params: &'a SpecFragment,        // the `analysis` object, as before
+       pub fields: &'a [AnalyzedField],     // what to analyze, in track order
+   }
+
+   #[non_exhaustive]
+   pub struct AnalyzedField { pub field: String, pub tracks: Vec<TrackId> }
+   ```
+
+   - The compiler fills `fields` with each data track's main value field: its pitch channel's field, else its first channel mapped to a quantitative field.
+   - A field played by several tracks appears once, with every track that plays it.
+   - Context tracks add nothing.
+   - ECHOMETRIC's detectors analyze exactly these fields, so every insight belongs to a series that sounds.
+3. AUDAXIS links an annotation to the series whose field is the annotation's `field`. When `field` is `None`, or no series plays it, the old rule applies: the first series whose points cover the rows.
+
 ### 2. Insight markers
 
 When `analysis.detect` names at least one of ECHOMETRIC's detectors (`extrema`, `outliers`, `changepoints`, `periodicity`, `trend-segments`), the compiler appends one `Marker` per annotation from those detectors, after the shapers:
@@ -93,7 +118,7 @@ ECHOMETRIC registers a context provider that joins a compile only when the spec 
 
 ### 4. Navigation
 
-- AUDAXIS already makes an insight group per analyzer and an insight node per annotation (`InsightGroupNode`, `InsightNode`, ADR-0017 "Navigation"). No change.
+- AUDAXIS already makes an insight group per analyzer and an insight node per annotation (`InsightGroupNode`, `InsightNode`, ADR-0017 "Navigation"). The only change is how a node finds its series: by the annotation's `field` (§1 amendment).
 - An insight node's rows are the annotation's range, and its time is the marker's `t`, so a move to it seeks there.
 
 ### 5. What does not change
@@ -145,6 +170,7 @@ ECHOMETRIC registers a context provider that joins a compile only when the spec 
 - **C05-T04:**
   - `a11y_23_*`: each insight has a marker, is reachable in the NavTree and is linked to its rows;
   - `a11y_24_*`: every cue has a text equivalent;
+  - `a11y_23_*` on a two-series table: an outlier in the second series links to that series' node, not the first one's (§1 amendment);
   - Score snapshots for one spec per detector;
   - a test that a spec without ECHOMETRIC detectors compiles to the same Score hash as before;
   - the golden case, with its HP-21 note.
