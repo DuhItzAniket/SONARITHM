@@ -1,6 +1,6 @@
 # A02 Narrator walkthrough: script, tasks and pass criteria
 
-> **Status:** Prepared, **not run** (2026-11-26). Written by an AI agent for the coordinator session. It runs on the owner's laptop (HW-01) only after the owner's explicit go-ahead ([OD-33](../../planning/open-decisions.md), decision 1). An agent-driven run uses desktop control and takes over the owner's screen for the whole session.
+> **Status:** Prepared, **not run** (2026-11-26). Written by an AI agent for the coordinator session. The owner chose an agent-driven run ([OD-33](../../planning/open-decisions.md#closed-decisions)). It starts on the owner's laptop (HW-01) only when the owner says go in the walkthrough session: desktop control takes over the owner's screen for the whole run, and the owner grants app access when asked.
 > **Related:** [A02 close-out](A02-closeout.md) · [gate report, Spike 5](A02-prototype-gate.md#spike-5-screen-readers-a02-t07) · [WALKTHROUGH.md §1–2](../../../spikes/tauri-webview/WALKTHROUGH.md) · [NVDA run worklog](../worklog/2026-10-29-a02-nvda-walkthrough.md) · [F-046](../../research-paper/findings-log.md#implementation-findings) · [OD-05](../../planning/open-decisions.md) · [08 §4–5](../../architecture/08-interaction-and-accessibility.md) · [severity scale](../../design/accessibility-conformance-plan.md#9-accessibility-issue-severity)
 
 This is the Narrator half of HP-01. It reuses the NVDA run's materials: the same prototype page, the same 19 steps of WALKTHROUGH.md §1, and the same results format (`spikes/tauri-webview/results/a11y-windows-nvda.json`). It adds what Narrator needs and what the NVDA run left open.
@@ -37,11 +37,24 @@ So in an agent-run, the owner starts Narrator (`Win+Ctrl+Enter`) and toggles sca
 1. **Machine.** HW-01, on mains power, headphones on. Close other apps that speak or play sound.
 2. **Versions.** Write these down:
    - the Windows version and build (`winver`);
-   - the WebView2 Runtime version: `(Get-ItemProperty 'HKLM:\SOFTWARE\WOW6432Node\Microsoft\EdgeUpdate\Clients\{F3017226-FE2A-4295-8BDF-00C3A9A7E4C5}').pv` in PowerShell (TODO(verify) the key on HW-01);
+   - the WebView2 Runtime version: `(Get-ItemProperty 'HKLM:\SOFTWARE\WOW6432Node\Microsoft\EdgeUpdate\Clients\{F3017226-FE2A-4295-8BDF-00C3A9A7E4C5}').pv` in PowerShell (the key is present on HW-01);
    - Narrator's settings, if anything differs from the defaults (Settings → Accessibility → Narrator). Use the defaults: don't change verbosity or the voice.
 3. **The prototype (Part A).** Use the binary the NVDA run used: `.claude/a02-walkthrough/src-tauri/target/release/spike-tauri-webview.exe` in the main checkout (local, not in git; the NVDA results note that its build should be checked against the spike, TODO(verify)). Or build it: `pnpm install && pnpm tauri build --no-bundle` in `spikes/tauri-webview`. That is a Rust build, so it needs the coordinator's builder slot. Start it with `--page a11y.html`. Leave the page's announcement log visible: it shows what the page sent, with times.
-4. **The desktop app (Part B).** The latest `desktop-nightly` Windows bundle, `sonarithm-desktop-nightly-<commit>-Windows`, installed as [release-process](../../engineering/release-process.md#desktop-release) says. The owner downloads it: it is a file download from the project's CI.
+4. **The desktop app (Part B).** A local debug build of the desktop shell from `main`, so nothing is downloaded: `pnpm install`, then `pnpm -C apps/desktop tauri build --debug --no-bundle`, which builds the frontend and embeds it. The binary is `target/debug/sonarithm-desktop.exe`. The Rust part is a full workspace debug build, so it needs the coordinator's builder slot shortly before the run. The fallback is the latest `desktop-nightly` Windows bundle, installed as [release-process](../../engineering/release-process.md#desktop-release) says; that is a file download, so the owner fetches it. Sample data: `examples/data/ds-001-temperature.csv`.
 5. **Narrator.** Start it with `Win+Ctrl+Enter`. The Narrator key is Caps Lock or Insert. `Narrator+Space` turns scan mode on and off. In scan mode, `H` and `Shift+H` move by heading and `D` and `Shift+D` by landmark. `Ctrl` stops speech.
+
+### Readiness on HW-01 (checked 2026-11-26, read-only)
+
+| Item | State |
+|---|---|
+| Windows | 26H2, build 26300.9974 |
+| WebView2 Runtime | 158.0.4370.33. The NVDA run had 156.0.4314.50, so the two runs differ by webview version; record both |
+| Narrator | Never configured: the `HKCU\Software\Microsoft\Narrator` key holds only `NoRoam\RunningState`, so every setting is the default. Not running |
+| Audio | One output endpoint, "Speakers (Realtek(R) Audio)". Narrator and Live captions both use the default output. If headphones show up as a second endpoint when plugged in, make them the default before starting |
+| Live captions | `LiveCaptions.exe` is installed. Whether it captions Narrator is P0 |
+| Prototype (Part A) | Present: the NVDA run's binary, built 2026-10-27 |
+| Desktop app (Part B) | Not built yet. `pnpm install` and the frontend build (`pnpm -C apps/desktop build`) pass in the walkthrough worktree; the Rust debug build waits for the builder slot |
+| Settings folder | `%APPDATA%\org.sonarithm.desktop` doesn't exist yet: the app creates it on its first start. Check it after B1, before B2 |
 
 ### Pre-checks (agent-run only)
 
@@ -82,7 +95,7 @@ Run WALKTHROUGH.md §1 steps 1–20 with Narrator in place of NVDA, with these N
 
 ## Part B: the desktop app (B03-T04, #388)
 
-In the installed nightly, with a sample dataset open:
+In the desktop app (the debug build, or the nightly), with `examples/data/ds-001-temperature.csv` open:
 
 | # | Action | Must happen |
 |---|---|---|

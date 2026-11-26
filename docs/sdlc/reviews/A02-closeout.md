@@ -1,6 +1,6 @@
 # A02 close-out: evidence inventory and owner decisions
 
-> **Status:** Proposal (2026-11-26), written by an AI agent for the coordinator session. The decisions it asks for are the owner's ([OD-33](../../planning/open-decisions.md)). Nothing here changes the gate's decision, an ADR or a budget.
+> **Status:** Decided (2026-11-26), written by an AI agent for the coordinator session. The owner chose the recommendations in §4: [OD-33](../../planning/open-decisions.md#closed-decisions), option (b), with the Narrator walkthrough agent-run. The gate report, ADR-0002 and ADR-0003 record the amendments. No budget changes.
 > **Related:** [A02 gate report](A02-prototype-gate.md) · [Narrator walkthrough script](A02-narrator-walkthrough.md) · [roadmap A02](../../planning/roadmap.md#a02--technical-spikes-and-prototype-gate) · [implementation plan §2](../../planning/implementation-plan.md) · [ADR-0002](../../decisions/0002-desktop-shell-tauri.md#confirmation) · [ADR-0003](../../decisions/0003-frontend-react-and-react-aria.md#confirmation) · [accessibility conformance plan §3](../../design/accessibility-conformance-plan.md#3-manual-screen-reader-matrix) · [worklog](../worklog/2026-11-26-a02-closeout.md)
 
 A02 is at about 90%. Every spike is merged and measured on Windows and CI. What is left needs a person, a screen reader or hardware the project doesn't have (R-22): a Mac, and Linux on real GPUs. This page lists, for each open item:
@@ -73,7 +73,9 @@ Each item gets one of three outcomes: **close with CI evidence**, **defer to B07
 
 ## 4. Decisions for the owner
 
-These are recorded as [OD-33](../../planning/open-decisions.md). The recommendation comes first in each.
+These are recorded as [OD-33](../../planning/open-decisions.md#closed-decisions). The recommendation comes first in each.
+
+**Outcome (2026-11-26, owner decision, relayed by the coordinator).** Decisions 2 to 5 as recommended (OD-33 option (b)). Decision 1: (a), agent-run through desktop control, started only when the owner says go in the walkthrough session.
 
 1. **Narrator (items 5 and 8).** Run the [Narrator walkthrough](A02-narrator-walkthrough.md) on HW-01 now. Choose: (a) agent-driven through desktop control, which takes over your screen for the whole run, and you still listen for the timing checks; or (b) you run it yourself and paste the results. It needs your explicit go-ahead either way.
 2. **IPC on macOS and Linux (item 2).** Accept the CI evidence (spike F-040 and product F-227) as closing A02-T05, with the virtual-machine limit recorded? Recommended: yes.
