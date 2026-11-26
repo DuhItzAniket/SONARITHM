@@ -184,21 +184,36 @@ fn c02_t10_applying_the_calibration_opens_the_chart_as_a_dataset() {
             .any(|d| d["code"] == "SNR-ENG-385"),
         "the extraction summary: {applied}"
     );
-    // The correction document keeps the calibration, so a correction reads the chart again
-    // through it: an edit that matches no point is reported, not refused (SNR-ENG-328).
+    // The correction document keeps the calibration, and an export carries it.
     let state = h.ok(&json!({ "command": "corrections_get", "args": { "dataset": "d1" } }));
     let file: Value = serde_json::from_str(state["text"].as_str().unwrap()).unwrap();
     assert!(file["calibration"]["axes"]["x"]["anchors"].is_array(), "{file}");
-    let corrected = h.ok(&json!({ "command": "corrections_apply", "args": {
-        "dataset": "d1", "label": "Delete", "patch": [{ "op": "add", "path": "/edits/-", "value": {
-            "op": "delete", "id": "e1", "series": "Series 1", "point": 0,
-            "was": { "y": -1e9 }, "before": { "class": "cv_estimate" } } }] } }));
-    assert_eq!(corrected["notApplied"], json!(["e1"]), "{corrected}");
     // The session ended with the apply.
     let err = h
         .send(&json!({ "command": "chart_raster_close", "args": { "id": id } }))
         .unwrap_err();
     assert_eq!(err.code, "SNR-APP-096");
+}
+
+/// The behaviour change in `corrections.rs` (`reextract`): a correction reads a raster chart
+/// again through the calibration its document keeps. Before C02-T10 the re-read passed no
+/// calibration, so any correction to a raster chart failed with `SNR-ENG-328`; now an edit
+/// that matches no point is reported as not applied and the chart keeps its rows.
+#[test]
+fn c02_t10_a_correction_reads_a_raster_chart_through_its_stored_calibration() {
+    let mut h = Harness::new("raster-reextract");
+    let png = h.chart("rain.png");
+    let id = h.open(&png)["id"].clone();
+    let applied = h.ok(&json!({ "command": "chart_calibration_apply", "args": {
+        "id": id, "calibration": entered(&calibration()) } }));
+    let corrected = h
+        .send(&json!({ "command": "corrections_apply", "args": {
+            "dataset": "d1", "label": "Delete", "patch": [{ "op": "add", "path": "/edits/-", "value": {
+                "op": "delete", "id": "e1", "series": "Series 1", "point": 0,
+                "was": { "y": -1e9 }, "before": { "class": "cv_estimate" } } }] } }))
+        .unwrap_or_else(|err| panic!("the chart is read again through its calibration: {err}"));
+    assert_eq!(corrected["notApplied"], json!(["e1"]), "{corrected}");
+    assert_eq!(corrected["summary"]["rows"], applied["rows"]);
 }
 
 #[test]
