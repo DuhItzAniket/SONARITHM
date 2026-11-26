@@ -59,6 +59,13 @@ pub trait CompilerData {
     fn provenance_mix(&self) -> BTreeMap<String, f64> {
         BTreeMap::new()
     }
+
+    /// The rows a track plays, in play order (RFC-0009 §1): those `filter` keeps, ordered by
+    /// the `time` field (or the data's own role-`x` field). `None` when this data type cannot
+    /// tell; analyzers then read every row in table order.
+    fn play_rows(&self, _filter: Option<&str>, _time: Option<&str>) -> Option<Vec<u64>> {
+        None
+    }
 }
 
 /// A successful compile.
@@ -390,7 +397,7 @@ impl<D: CompilerData> Run<'_, D> {
         };
         let at = SpecPointer::root().key("analysis");
         let params = fragment(at.clone(), analysis)?;
-        let fields = analyzed_fields(spec);
+        let fields = analyzed_fields(spec, data);
         let request = AnalysisRequest::new(&params, &fields);
         for (index, detector) in analysis.detect.iter().enumerate() {
             let id = AnalyzerId::from_static(detector_id(*detector));
@@ -716,10 +723,23 @@ fn detector_id(detector: Detector) -> &'static str {
     }
 }
 
-/// The fields the spec's tracks play (RFC-0009 §1): each track's pitch field, else its first
-/// channel mapped to a field other than timbre (nominal, SDR-25). A field several tracks play
-/// appears once, at its first track, with all of them.
-fn analyzed_fields(spec: &Spec) -> Vec<AnalyzedField> {
+/// The series the spec's tracks play (RFC-0009 §1), one per track that maps a field: its
+/// pitch field, else its first channel mapped to a field other than timbre (nominal,
+/// SDR-25), over the rows it plays in play order. The time field is chosen as the encoders
+/// choose it: the substrate's, else the spec's field with role `x`, else the data's own.
+fn analyzed_fields<D: CompilerData>(spec: &Spec, data: &D) -> Vec<AnalyzedField> {
+    let time = spec
+        .substrate
+        .as_ref()
+        .and_then(|s| s.time.as_ref())
+        .and_then(|t| t.field.clone())
+        .or_else(|| {
+            spec.data
+                .fields
+                .iter()
+                .find(|(_, field)| field.role == Some(sonarithm_spec::data::Role::X))
+                .map(|(name, _)| name.clone())
+        });
     let mut fields: Vec<AnalyzedField> = Vec::new();
     for track in &spec.tracks {
         let present = track.channels.present();
@@ -736,11 +756,13 @@ fn analyzed_fields(spec: &Spec) -> Vec<AnalyzedField> {
         let Some(field) = main else {
             continue;
         };
-        let id = TrackId::new(track.id.clone());
-        match fields.iter_mut().find(|known| &known.field == field) {
-            Some(known) => known.tracks.push(id),
-            None => fields.push(AnalyzedField::new(field.clone(), vec![id])),
-        }
+        let filter = track.filter.as_ref().map(|f| f.expr.as_str());
+        let rows = data.play_rows(filter, time.as_deref());
+        fields.push(AnalyzedField::new(
+            field.clone(),
+            TrackId::new(track.id.clone()),
+            rows,
+        ));
     }
     fields
 }
@@ -760,8 +782,27 @@ mod tests {
 
     use super::{analyzed_fields, duration};
 
-    /// RFC-0009 §1: each track's pitch field, else its first non-timbre field; a field two
-    /// tracks play appears once, with both; a track with no field adds nothing.
+    /// Data with no rows of its own, for the analyzed-field rule.
+    struct NoRows;
+
+    impl super::CompilerData for NoRows {
+        fn fingerprint(&self) -> sonarithm_core::digest::Sha256Digest {
+            sonarithm_core::digest::Sha256Digest::ZERO
+        }
+
+        fn transform(
+            &mut self,
+            _transforms: &[sonarithm_spec::Transform],
+            _at: &sonarithm_core::diagnostic::SpecPointer,
+        ) -> Option<Result<sonarithm_core::diagnostic::Diagnostics, Box<sonarithm_core::diagnostic::Diagnostic>>>
+        {
+            None
+        }
+    }
+
+    /// RFC-0009 §1: one series per track that maps a field, its pitch field, else its first
+    /// non-timbre field, in spec order; a track with no field adds nothing. Two tracks of one
+    /// field are two series (each plays its own rows).
     #[test]
     fn rfc_0009_analyzed_fields_follow_the_tracks() {
         let spec = sonarithm_spec::parse(
@@ -777,18 +818,16 @@ mod tests {
             }"#,
         )
         .expect("the spec parses");
-        let fields: Vec<(String, Vec<String>)> = analyzed_fields(&spec)
+        let fields: Vec<(String, String, Option<Vec<u64>>)> = analyzed_fields(&spec, &NoRows)
             .into_iter()
-            .map(|f| {
-                let tracks = f.tracks.iter().map(|t| t.as_str().to_owned()).collect();
-                (f.field, tracks)
-            })
+            .map(|f| (f.field, f.track.as_str().to_owned(), f.rows))
             .collect();
         assert_eq!(
             fields,
             [
-                ("a".to_owned(), vec!["one".to_owned(), "three".to_owned()]),
-                ("b".to_owned(), vec!["two".to_owned()]),
+                ("a".to_owned(), "one".to_owned(), None),
+                ("b".to_owned(), "two".to_owned(), None),
+                ("a".to_owned(), "three".to_owned(), None),
             ]
         );
     }

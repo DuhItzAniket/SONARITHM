@@ -22,6 +22,7 @@ pub mod provenance;
 pub mod slots;
 pub mod source;
 pub mod stream;
+pub mod play;
 pub mod table;
 pub mod transform;
 pub mod view;
@@ -40,6 +41,7 @@ pub use source::{SheetOptions, SheetRef};
 #[cfg(feature = "fs")]
 pub use source::{read_file, read_parquet_at};
 pub use stream::{Appended, Capacity, Snapshot, StreamTable};
+pub use play::play_rows;
 pub use table::Table;
 pub use transform::{
     AggregateFn, AggregateOp, BinMethod, NormalizeMethod, ResampleMethod, SmoothMethod, SortOrder,

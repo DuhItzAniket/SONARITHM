@@ -137,3 +137,122 @@ fn rfc_0009_a_spec_without_detectors_is_unchanged() {
         serde_json::to_string(&without.score).unwrap()
     );
 }
+
+/// DS-003's month-major table: three regions' rainfall, one row per region and month.
+const DS_003: &str = include_str!("../../../../examples/data/ds-003-regions.csv");
+
+/// The DS-003 spec (three tracks, each filtering one region) with `analysis.detect`.
+fn ds_003(detect: &[&str]) -> (Value, std::path::PathBuf) {
+    let dir = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../../../examples/specs");
+    let text = std::fs::read_to_string(dir.join("ds-003-regions.spec.json")).unwrap();
+    let mut spec: Value = serde_json::from_str(&text).unwrap();
+    spec["analysis"] = json!({ "detect": detect });
+    (spec, dir)
+}
+
+fn compile_in(spec: &Value, dir: &std::path::Path) -> Compiled {
+    let platform = Platform::with_base_dir(dir);
+    let numisona = Numisona::new();
+    let echometric = Echometric;
+    let audaxis = Audaxis::new();
+    let compiler: Compiler<DataBundle> =
+        Compiler::new(&[&platform, &numisona, &echometric, &audaxis]).unwrap();
+    compiler
+        .compile(&spec.to_string(), &CancelToken::new())
+        .unwrap_or_else(|failure| panic!("{failure:?}"))
+}
+
+/// (region, rain) by row, from the CSV.
+fn ds_003_rows() -> Vec<(String, f64)> {
+    DS_003
+        .lines()
+        .skip(1)
+        .filter(|line| !line.trim().is_empty())
+        .map(|line| {
+            let parts: Vec<&str> = line.split(',').collect();
+            (parts[1].to_owned(), parts[2].trim().parse().unwrap())
+        })
+        .collect()
+}
+
+/// #506's review: each track's detectors read that track's own rows in the order it plays
+/// them, so each region's maximum is its own, linked to its own series (RFC-0009 §1).
+#[test]
+fn a11y_23_each_region_has_its_own_maximum_on_its_own_track() {
+    let (spec, dir) = ds_003(&["extrema", "outliers"]);
+    let compiled = compile_in(&spec, &dir);
+    let rows = ds_003_rows();
+    for region in ["north", "south", "east"] {
+        let own_max = rows
+            .iter()
+            .filter(|(r, _)| r == region)
+            .map(|(_, rain)| *rain)
+            .fold(f64::NEG_INFINITY, f64::max);
+        let maxima: Vec<_> = compiled
+            .annotations
+            .iter()
+            .filter(|a| a.label == "maximum" && a.track.as_ref().is_some_and(|t| t.as_str() == region))
+            .collect();
+        assert_eq!(maxima.len(), 1, "{region}: {:?}", compiled.annotations);
+        let maximum = maxima[0];
+        assert_eq!(maximum.value, Some(own_max), "{region}");
+        let row = usize::try_from(maximum.range.start).unwrap();
+        assert_eq!(rows[row].0, region, "the maximum's row is the region's own");
+        // Every annotation of the track is about its own rows.
+        for annotation in compiled
+            .annotations
+            .iter()
+            .filter(|a| a.track.as_ref().is_some_and(|t| t.as_str() == region) && a.range.len() == 1)
+        {
+            let row = usize::try_from(annotation.range.start).unwrap();
+            assert_eq!(rows[row].0, region, "{annotation:?}");
+        }
+    }
+    // The tree links each region's maximum to that region's series.
+    let tree = compiled.nav.as_ref().unwrap();
+    let linked: Vec<String> = tree
+        .iter()
+        .filter_map(|(_, node)| match &node.kind {
+            NavKind::Insight(insight) if node.label.as_deref() == Some("maximum") => {
+                insight.target.and_then(|t| series_of(tree, t))
+            }
+            _ => None,
+        })
+        .collect();
+    assert_eq!(linked.len(), 3, "{linked:?}");
+}
+
+/// The rows the detectors read for a track are the rows NUMISONA plays, in the same order:
+/// `sonarithm_data::play_rows` against every note's source row in the encoded Score.
+#[test]
+fn rfc_0009_analyzed_rows_are_the_rows_each_track_plays() {
+    let (spec, dir) = ds_003(&["extrema"]);
+    let compiled = compile_in(&spec, &dir);
+    let loaded = sonarithm_data::read_bytes(
+        DS_003.as_bytes(),
+        sonarithm_data::Format::Csv,
+        "ds-003-regions.csv",
+        &sonarithm_data::ReadOptions::default(),
+    )
+    .unwrap();
+    let table = loaded.bundle.primary().unwrap();
+    for track in spec["tracks"].as_array().unwrap() {
+        let id = track["id"].as_str().unwrap();
+        let filter = track["filter"]["expr"].as_str();
+        let expected = sonarithm_data::play_rows(table, filter, Some("month")).unwrap();
+        let played: Vec<u64> = compiled
+            .score
+            .tracks
+            .iter()
+            .find(|t| t.id.as_str() == id)
+            .unwrap()
+            .events
+            .iter()
+            .filter_map(|event| match event {
+                sonarithm_core::score::ScoreEvent::Note(note) => note.src.map(|src| src.row),
+                _ => None,
+            })
+            .collect();
+        assert_eq!(played, expected, "track {id}");
+    }
+}

@@ -166,10 +166,13 @@ pub struct Annotation {
     pub label: String,
     /// The rows it covers.
     pub range: RowRange,
-    /// The data field it is about, or `None` for an analyzer of whole rows (RFC-0009 §1):
-    /// AUDAXIS links it to the series that plays this field.
+    /// The data field it is about, or `None` for an analyzer of whole rows (RFC-0009 §1).
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub field: Option<String>,
+    /// The track whose series it is about, when an analyzer read one track's series
+    /// (RFC-0009 §1): AUDAXIS links it to that track's series first.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub track: Option<TrackId>,
     /// The value it reports, if any.
     pub value: Option<f64>,
     /// How confident the analyzer is.
@@ -192,6 +195,7 @@ impl Annotation {
             label: label.into(),
             range,
             field: None,
+            track: None,
             value: None,
             confidence: Confidence::CERTAIN,
             rules: Vec::new(),
@@ -376,8 +380,9 @@ pub trait Analyzer<D>: Send + Sync {
 pub struct AnalysisRequest<'a> {
     /// The spec's `analysis` object.
     pub params: &'a SpecFragment,
-    /// The fields the spec's tracks play, in track order: what a detector of series
-    /// analyzes, so every insight belongs to a series that sounds.
+    /// The series the spec's data tracks play, one per track in spec order: what a detector
+    /// of series analyzes, so every insight belongs to a series that sounds, read in the
+    /// order it sounds.
     pub fields: &'a [AnalyzedField],
 }
 
@@ -389,24 +394,30 @@ impl<'a> AnalysisRequest<'a> {
     }
 }
 
-/// A field a spec's tracks play (RFC-0009 §1): each data track's pitch field, else its first
-/// channel mapped to a field (timbre aside, which is nominal by SDR-25).
+/// The series one data track plays (RFC-0009 §1): its main field (the pitch channel's, else
+/// its first channel mapped to a field, timbre aside, which is nominal by SDR-25), and the
+/// rows it plays in the order it plays them (its filter's rows, ordered by the time field,
+/// as the encoders order them).
 #[derive(Clone, Debug, PartialEq, Eq)]
 #[non_exhaustive]
 pub struct AnalyzedField {
     /// The data field.
     pub field: String,
-    /// The tracks that play it, in spec order.
-    pub tracks: Vec<TrackId>,
+    /// The track that plays it.
+    pub track: TrackId,
+    /// The rows the track plays, in play order; `None` for every row in table order, when
+    /// the data type cannot tell.
+    pub rows: Option<Vec<u64>>,
 }
 
 impl AnalyzedField {
-    /// The field `field`, played by `tracks`.
+    /// Track `track`'s series of `field`, over `rows` in play order.
     #[must_use]
-    pub fn new(field: impl Into<String>, tracks: Vec<TrackId>) -> Self {
+    pub fn new(field: impl Into<String>, track: TrackId, rows: Option<Vec<u64>>) -> Self {
         Self {
             field: field.into(),
-            tracks,
+            track,
+            rows,
         }
     }
 }
