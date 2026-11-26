@@ -368,8 +368,8 @@ test("the_diagnostics_tab_lists_only_the_text_in_the_editor", async ({
   await page.keyboard.press(`${await textPrimary(page)}+a`);
   await page.keyboard.press("Delete");
   await expect(summary(page)).toHaveText("No problems.");
-  await expect(grid.getByRole("row")).toHaveCount(0);
-  await expect(page.getByText("No diagnostics.")).toBeVisible();
+  // React Aria's grid list shows its empty state in a row of its own.
+  await expect(grid.getByRole("row")).toHaveText(["No diagnostics."]);
 });
 
 test("a_part_that_fails_to_load_says_so_in_its_tab", async ({ page }) => {
