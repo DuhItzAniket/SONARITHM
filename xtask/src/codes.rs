@@ -121,7 +121,31 @@ fn check(tables: &[CodeTable]) -> Result<()> {
             }
         }
     }
+    let broken: Vec<String> = tables
+        .iter()
+        .flat_map(|table| table.codes)
+        .flat_map(|info| {
+            [("summary", info.summary), ("help", info.help)]
+                .into_iter()
+                .filter(|(_, text)| !is_plain_text(text))
+                .map(|(part, _)| format!("{} {part}", info.code))
+        })
+        .collect();
+    if !broken.is_empty() {
+        bail!(
+            "these code texts hold a tab, a line break or a run of spaces, which a lost `\\` \
+             line continuation leaves in a Rust string (write multi-line strings with an \
+             editor, not a shell heredoc): {}",
+            broken.join(", ")
+        );
+    }
     Ok(())
+}
+
+/// Whether `text` reads as one line of prose: no tab or line break, no space at either
+/// end, and no run of two or more spaces.
+fn is_plain_text(text: &str) -> bool {
+    !text.contains(['\t', '\n', '\r']) && !text.contains("  ") && text.trim() == text
 }
 
 /// Renders the registry page. The output depends only on the tables, so `codegen` can
@@ -211,6 +235,28 @@ mod tests {
     #[test]
     fn workspace_tables_are_consistent() {
         check(&tables()).unwrap();
+    }
+
+    /// A lost line continuation (`\` at the end of a line, dropped by a shell heredoc)
+    /// leaves a run of spaces inside a code's text; the registry refuses it.
+    #[test]
+    fn a_code_text_with_a_run_of_spaces_or_a_tab_fails() {
+        const SPACES: &[CodeInfo] = &[CodeInfo {
+            help: "Check the spec, then compile again. If it happens again, report            it.",
+            ..info("SNR-SPEC-001")
+        }];
+        const TAB: &[CodeInfo] = &[CodeInfo {
+            summary: "A\tsummary",
+            ..info("SNR-SPEC-001")
+        }];
+        let err = check(&[table(Area::Spec, "sonarithm-spec", SPACES)]).unwrap_err();
+        assert!(err.to_string().contains("SNR-SPEC-001 help"), "{err}");
+        let err = check(&[table(Area::Spec, "sonarithm-spec", TAB)]).unwrap_err();
+        assert!(err.to_string().contains("SNR-SPEC-001 summary"), "{err}");
+        assert!(is_plain_text(
+            "One sentence. Another, with `code` and 0.5 %."
+        ));
+        assert!(!is_plain_text("A trailing space "));
     }
 
     #[test]
