@@ -1,0 +1,10 @@
+---
+source: crates/engines/sonarithm-audaxis/src/braille/tests.rs
+expression: out
+---
+unset | 28.7 °C Mar 14 73/365 est. | 26
+    4 | 28.7 °C est. | 12
+    8 | 28.7 °C est. | 12
+   14 | 28.7 °C est.… | 13
+   20 | 28.7 °C Mar 14 est.… | 20
+   40 | 28.7 °C Mar 14 73/365 est. | 26

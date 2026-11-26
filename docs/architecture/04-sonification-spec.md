@@ -311,11 +311,13 @@ The compiler fills in the substrate from `role=x` (or row order), pace 3 points/
 {
   "specVersion": "0.1",
   "data": { "source": { "kind": "function", "expr": "sin(x) / x", "domain": [-20, 20], "samples": 2000 } },
-  "substrate": { "time": { "pace": { "duration": { "s": 8 } } } },
+  "substrate": { "time": { "field": "x", "pace": { "secondsPerUnit": 0.2 } } },
   "tracks": [{ "id": "f", "mark": "glide", "channels": { "pitch": { "field": "y" }, "brightness": { "field": "dy" } } }],
   "analysis": { "detect": ["critical-points"], "cue": "earcon" }
 }
 ```
+
+Time follows x: 0.2 s per unit plays the domain of 40 units in 8 s, so each critical point sounds at (x + 20) × 0.2 s. With a `duration` pace the rows would be spaced evenly instead, and the rows CURVASONA adds at critical points would bend time against x (F-200, #441).
 
 ### 6.4 Live monitoring (SONOTRACE)
 

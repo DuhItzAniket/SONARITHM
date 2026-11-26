@@ -90,7 +90,7 @@
 | Supply-chain review | cargo-vet | 0.10.2 | Assess | post-1.0 |
 | SBOM | cargo-cyclonedx; cargo-auditable | — | Adopt | C06 |
 | Release automation | release-plz (+ git-cliff) | — | Adopt | A07 |
-| Frontend unit / visual | Vitest 4 (browser mode) | 4.x | Adopt | B02 |
+| Frontend unit / visual | Vitest 5 (browser mode) | 5.x | Adopt | B02 |
 | Component workbench + a11y | Storybook 10 + a11y addon (axe) | 10.x | Adopt | B02 |
 | Cross-engine UI tests | Playwright (with Tauri IPC mocks) | — | Adopt | B02 |
 | Real-app E2E | WebdriverIO `@wdio/tauri-service` | — | Trial | B05 |

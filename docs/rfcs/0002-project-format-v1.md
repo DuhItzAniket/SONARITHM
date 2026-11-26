@@ -1,6 +1,6 @@
 # RFC 0002: Project format v1 (`.sonarithm` bundles)
 
-> **Status:** **Accepted** on 2026-10-21 by the coordinator under the owner's delegation of contract approvals, with the three proposed answers to the unresolved questions and two conditions added (linked-data safety, §4; memory, §6). The 7-day final comment period was waived by the coordinator under the same delegation (fast-track, sole maintainer, no other participants). Outcome recorded in [ADR-0018](../decisions/0018-project-format-v1.md). **Amended** on 2026-11-01 (format 1.1: function datasets and unknown storages, §12), approved by the coordinator. **Author(s):** project lead (drafted by an AI coding agent, Claude Code, for review by the coordinator under the owner's delegation).
+> **Status:** **Accepted** on 2026-10-21 by the coordinator under the owner's delegation of contract approvals, with the three proposed answers to the unresolved questions and two conditions added (linked-data safety, §4; memory, §6). The 7-day final comment period was waived by the coordinator under the same delegation (fast-track, sole maintainer, no other participants). Outcome recorded in [ADR-0018](../decisions/0018-project-format-v1.md). **Amended** on 2026-11-01 (format 1.1: function datasets and unknown storages, §12) and on 2026-11-26 (fingerprints computed by another build, §13), both approved by the coordinator. **Author(s):** project lead (drafted by an AI coding agent, Claude Code, for review by the coordinator under the owner's delegation).
 > **Related:** [RFC process](README.md) · [12 §4 project file format](../architecture/12-cross-cutting-concerns.md#4-project-file-format) · [09 §5 persistence](../architecture/09-desktop-app.md#5-persistence) · [ADR-0013](../decisions/0013-determinism-and-provenance.md) · [ADR-0012](../decisions/0012-privacy-and-telemetry.md) · [ADR-0017](../decisions/0017-ipc-protocol-v1.md)
 
 | Field | Value |
@@ -173,7 +173,7 @@ A fuzz target (`project_open`) runs the reader on arbitrary bytes in `nightly.ym
 
 ### 10. Codes
 
-`SNR-APP-030` no project path; `031` newer major version; `032` unsafe or damaged bundle; `033` absolute path refused; `034` linked data missing or changed (warning); `035` newer minor version or unknown members (warning). Amendment 1 (§12) adds function datasets to `034` (fingerprint changed on re-sampling) and unknown storages to `035`, and retires `089`.
+`SNR-APP-030` no project path; `031` newer major version; `032` unsafe or damaged bundle; `033` absolute path refused; `034` linked data missing or changed (warning); `035` newer minor version or unknown members (warning). Amendment 1 (§12) adds function datasets to `034` (fingerprint changed on re-sampling) and unknown storages to `035`, and retires `089`. Amendment 2 (§13) adds `093`: an embedded dataset fingerprinted again (warning).
 
 ### 11. Testing
 
@@ -228,6 +228,31 @@ No data member is written: the definition is the dataset. The manifest stays can
 - A fixture bundle with `storage: "future-kind"` opens with `SNR-APP-035`, the dataset unavailable; saving keeps its entry byte for byte.
 - A project without functions is written as 1.0, byte-identical to before.
 - The `project_open` fuzz target gains function and unknown-storage entries.
+
+### 13. Amendment 2 (2026-11-26): fingerprints computed by another build
+
+| Date | Change | Approved |
+|---|---|---|
+| 2026-11-26 | An embedded dataset whose member SHA-256 verifies but whose fingerprint differs opens with the warning `SNR-APP-093` and the fingerprint this build computes, which the next save records; a member SHA-256 mismatch still refuses (`SNR-APP-032`); linked data is unchanged (`SNR-APP-034`), since the format stores no hash of a linked file. No format version change | Coordinator, under the owner's delegation of contract approvals ([#476](https://github.com/DuhItzAniket/SONARITHM/issues/476)) |
+
+**Why.** The data fingerprint is SHA-256 over Arrow IPC bytes (03 §2), so it depends on the Arrow version as well as on the data. Bumping arrow from 60.0 to 60.2 (#470) moved every fingerprint without changing any data (F-222). The B05-T04 reader compared an embedded dataset's fingerprint with the manifest's and refused the whole project as damaged on a mismatch, so every project with embedded data saved by an earlier build could no longer be opened (F-223). That check guards nothing the member hash does not already guard: §6 (3) verifies every listed member against its SHA-256 before anything is parsed, so the Parquet bytes are the ones the project saved.
+
+**Embedded data.** After the member's SHA-256 verifies (§6), a reader decodes the dataset and computes its fingerprint.
+
+- If it equals the manifest's, nothing changes.
+- If it differs, the dataset **opens**, with the warning `SNR-APP-093` naming it by its file name only (§4). The dataset carries the fingerprint this build computes, so the next save records it, as for a re-sampled function dataset (§12). Opening and saving without other changes therefore changes the bundle's bytes once.
+- A member whose SHA-256 does not match is real damage and still refuses the project (`SNR-APP-032`, §6).
+
+**Linked data.** A linked entry records only `link`, `fingerprint` and `rows` (§3); the format stores no size or hash of the file's bytes. A reader therefore cannot tell a file that changed from a fingerprint that another build computed, so a mismatch stays `SNR-APP-034` and the dataset stays unavailable until the user opens the file again (§4). Recording a linked file's size and SHA-256, so that a later fingerprint change can be told apart, needs a manifest field and a minor version; it belongs with the fingerprint scheme change proposed in #469.
+
+**Version.** The manifest does not change, so writers keep writing 1.0 (or 1.1, §12). A 1.0 reader that predates this amendment (development builds only; no released build reads or writes projects) still refuses such a project; this amendment fixes that for later builds.
+
+**Codes.** `SNR-APP-093` (warning): an embedded dataset was fingerprinted again. `SNR-APP-034` keeps its meaning.
+
+**Testing** (in the same PR):
+
+- A fixture saved by a build from before #470, with an embedded and a linked dataset, opens: the embedded dataset with `SNR-APP-093`, available and compilable; the linked one with `SNR-APP-034`, unavailable. Saving records the new fingerprint for the embedded dataset and keeps the linked entry; reopening gives no `SNR-APP-093`.
+- The same fixture with one byte of its Parquet member changed is refused with `SNR-APP-032`.
 
 ## Drawbacks
 

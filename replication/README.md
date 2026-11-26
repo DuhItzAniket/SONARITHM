@@ -13,7 +13,8 @@ The gallery re-creates published sonification designs from committed specs. Each
 | [nees-walker-2008](nees-walker-2008/README.md) | Nees & Walker (2008): data density × trend reversals | 16 | v0 |
 | [tucker-brown-2022](tucker-brown-2022/README.md) | Tucker Brown et al. (2022): transit-like dips at six signal-to-noise ratios | 18 | v0 |
 | [erie](erie/README.md) | The Erie gallery subset (Kim, Kim & Hullman 2024), imported by NUMISONA | 9 | v0 |
-| Dombois (2001) audification | Seismograms resampled 2,200× | — | Needs the `audify` mark (C03) |
+| [dombois-2001](dombois-2001/README.md) | Dombois (2001): seismograms resampled 2,200×, a near and a far earthquake at one GEOFON station (CC BY 4.0, doi:10.14470/TR560404) | 2 | v0 |
+| [curvasona-suite](curvasona-suite/README.md) | Not a published design: CURVASONA's 40 curves with analytically known critical points, each as a glide with its critical-point earcons | 40 | v0 |
 
 ## How it is checked
 
