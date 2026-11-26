@@ -36,6 +36,15 @@ fn chart(dir: &TempDir) -> (std::path::PathBuf, std::path::PathBuf) {
 }
 
 /// One request per command, in an order where each can succeed.
+/// A project saved before RFC-0008, whose linked `d2` waits to be checked and relinked.
+fn older_project(dir: &TempDir) -> std::path::PathBuf {
+    let fixtures = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("tests/fixtures/pre-470");
+    for name in ["pre-470.sonarithm", "more.csv"] {
+        std::fs::copy(fixtures.join(name), dir.path().join(name)).unwrap();
+    }
+    dir.path().join("pre-470.sonarithm")
+}
+
 fn requests(dir: &TempDir) -> Vec<Value> {
     let csv = dir.path().join("t.csv");
     std::fs::write(&csv, CSV).unwrap();
@@ -57,6 +66,7 @@ fn requests(dir: &TempDir) -> Vec<Value> {
     let project = dir.path().join("t.sonarithm");
     let exported = dir.path().join("contract.json");
     let (chart, corrections) = chart(dir);
+    let older = older_project(dir);
     vec![
         json!({ "command": "hello", "args": { "protocol": 1 } }),
         json!({ "command": "dataset_open", "args": { "path": csv } }),
@@ -132,6 +142,9 @@ fn requests(dir: &TempDir) -> Vec<Value> {
         json!({ "command": "function_open", "args": { "expr": "sin(x)", "domain": [0, 10] } }),
         json!({ "command": "audify_calculate", "args": { "dataset": "d3", "k": 1000 } }),
         json!({ "command": "dataset_close", "args": { "id": "d1" } }),
+        json!({ "command": "project_open", "args": { "path": older } }),
+        json!({ "command": "dataset_relink_check", "args": { "id": "d2" } }),
+        json!({ "command": "dataset_relink", "args": { "id": "d2" } }),
         json!({ "command": "project_new" }),
     ]
 }

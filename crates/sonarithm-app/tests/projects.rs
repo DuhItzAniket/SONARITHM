@@ -615,7 +615,8 @@ fn rfc_0002_12_an_unknown_storage_opens_unavailable_and_is_kept_on_re_save() {
         &json!({ "command": "project_save_as", "args": { "path": saved, "embedData": true } }),
     );
     let written = manifest_of(&saved);
-    assert_eq!(written["formatVersion"], "1.1");
+    // Every save writes 1.2 since RFC-0008, which records each dataset's fingerprint scheme.
+    assert_eq!(written["formatVersion"], "1.2");
     assert_eq!(written["datasets"], json!([entry]), "kept byte for byte");
 }
 
@@ -645,7 +646,7 @@ fn rfc_0002_12_a_function_dataset_round_trips_as_its_definition() {
         &json!({ "command": "project_save_as", "args": { "path": path, "embedData": true } }),
     );
     let manifest = manifest_of(&path);
-    assert_eq!(manifest["formatVersion"], "1.1");
+    assert_eq!(manifest["formatVersion"], "1.2", "RFC-0008 §6");
     let entry = &manifest["datasets"][0];
     assert_eq!(entry["storage"], "function");
     let function = &entry["function"];
@@ -693,7 +694,9 @@ fn rfc_0002_12_a_function_dataset_round_trips_as_its_definition() {
         &mut plain,
         &json!({ "command": "project_save_as", "args": { "path": csv_project, "embedData": true } }),
     );
-    assert_eq!(manifest_of(&csv_project)["formatVersion"], "1.0");
+    // RFC-0008 §6: a project without functions is 1.2 too, since every dataset records
+    // its fingerprint scheme (RFC-0002 §12's "1.0 when nothing of 1.1 is used" ends here).
+    assert_eq!(manifest_of(&csv_project)["formatVersion"], "1.2");
 }
 
 /// RFC-0002 §12, following §13: a function whose samples differ from the saved fingerprint
@@ -793,10 +796,13 @@ fn a_project_fingerprinted_by_an_older_build_opens_and_saves_the_new_fingerprint
             .any(|(code, message)| *code == "SNR-APP-093" && message.contains("`temps.csv`")),
         "{warnings:?}"
     );
-    // The linked one stays unavailable: the format records no hash of a linked file.
+    // The linked one stays unavailable: a 1.0 entry records no hash of a linked file, so
+    // the user is pointed to Check and relink (RFC-0008 §6).
     assert_eq!(opened["datasets"][1]["available"], false, "{opened}");
     assert!(
-        warnings.iter().any(|(code, _)| *code == "SNR-APP-034"),
+        warnings.iter().any(|(code, message)| *code == "SNR-APP-034"
+            && message.contains("`more.csv` was linked by an older SONARITHM build")
+            && message.ends_with("Choose Check and relink this file to read it again.")),
         "{warnings:?}"
     );
     let compiled = ok(&mut app, &json!({ "command": "compile" }));
@@ -848,4 +854,149 @@ fn a_project_fingerprinted_by_an_older_build_opens_and_saves_the_new_fingerprint
     let tampered = dir.path().join("tampered.sonarithm");
     craft(&tampered, &members, &manifest);
     assert_eq!(open_code(&tampered), "SNR-APP-032");
+}
+
+/// The manifest entry of dataset `id`.
+fn entry(path: &Path, id: &str) -> Value {
+    manifest_of(path)["datasets"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .find(|d| d["id"] == id)
+        .cloned()
+        .unwrap()
+}
+
+/// Dataset `id` in a `project` summary.
+fn listed(project: &Value, id: &str) -> Value {
+    project["datasets"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .find(|d| d["id"] == id)
+        .cloned()
+        .unwrap()
+}
+
+/// A copy of the pre-#470 fixture in a new folder, opened: `d1` embedded, `d2` a link
+/// saved before RFC-0008.
+fn older_project(name: &str) -> (TempDir, PathBuf, App) {
+    let fixtures = Path::new(env!("CARGO_MANIFEST_DIR")).join("tests/fixtures/pre-470");
+    let dir = TempDir::new(name);
+    for file in ["pre-470.sonarithm", "more.csv"] {
+        std::fs::copy(fixtures.join(file), dir.path().join(file)).unwrap();
+    }
+    let path = dir.path().join("pre-470.sonarithm");
+    let mut app = self::app(dir.path());
+    ok(
+        &mut app,
+        &json!({ "command": "project_open", "args": { "path": path } }),
+    );
+    (dir, path, app)
+}
+
+fn hex(bytes: &[u8]) -> String {
+    bytes.iter().fold(String::new(), |mut out, byte| {
+        let _ = write!(out, "{byte:02x}");
+        out
+    })
+}
+
+/// RFC-0008 §6, §11: a link saved before RFC-0008 is checked and relinked by the user;
+/// the save records the file's size, SHA-256 and scheme-2 fingerprint as format 1.2, and
+/// it then reopens without a warning.
+#[test]
+fn rfc_0008_a_link_from_an_older_build_is_checked_relinked_and_saved() {
+    let (dir, path, mut app) = older_project("relink");
+    let refused = |app: &mut App, command: &str, id: &str| {
+        send(app, &json!({ "command": command, "args": { "id": id } }))
+            .unwrap_err()
+            .code
+    };
+    assert_eq!(
+        refused(&mut app, "dataset_relink_check", "d1"),
+        "SNR-APP-095"
+    );
+    assert_eq!(refused(&mut app, "dataset_relink", "zz"), "SNR-APP-002");
+
+    // The check reads the file and changes nothing.
+    let check = ok(
+        &mut app,
+        &json!({ "command": "dataset_relink_check", "args": { "id": "d2" } }),
+    );
+    assert_eq!(
+        check,
+        json!({ "reply": "relink_check", "name": "more.csv", "rows": 2, "recordedRows": 2,
+                "reason": "olderBuild" })
+    );
+    let relinked = ok(
+        &mut app,
+        &json!({ "command": "dataset_relink", "args": { "id": "d2" } }),
+    );
+    assert_eq!(relinked["reply"], "relinked");
+    assert_eq!(relinked["dataset"]["id"], "d2");
+    assert_eq!(relinked["dataset"]["rows"], 2);
+    assert_eq!(relinked["project"]["unsaved"], true);
+    let d2 = listed(&relinked["project"], "d2");
+    assert_eq!(
+        (&d2["available"], &d2["linked"]),
+        (&json!(true), &json!(true))
+    );
+    assert_eq!(refused(&mut app, "dataset_relink", "d2"), "SNR-APP-095");
+
+    ok(&mut app, &json!({ "command": "project_save" }));
+    assert_eq!(manifest_of(&path)["formatVersion"], "1.2");
+    let linked = entry(&path, "d2");
+    let bytes = std::fs::read(dir.path().join("more.csv")).unwrap();
+    assert_eq!(linked["fingerprintScheme"], 2);
+    assert_eq!(linked["bytes"], bytes.len());
+    assert_eq!(linked["sha256"], hex(&Sha256::digest(&bytes)));
+    assert_eq!(entry(&path, "d1")["fingerprintScheme"], 2);
+    assert!(
+        entry(&path, "d1").get("sha256").is_none(),
+        "embedded data has members"
+    );
+
+    let mut app = self::app(dir.path());
+    let opened = ok(
+        &mut app,
+        &json!({ "command": "project_open", "args": { "path": path } }),
+    );
+    assert_eq!(opened["diagnostics"], json!([]), "{opened}");
+    assert_eq!(listed(&opened, "d2")["available"], true, "{opened}");
+}
+
+/// RFC-0008 §6: after relinking, a file of the same length and row count with other values
+/// is refused, and offered for relinking with the reason `changed`.
+#[test]
+fn rfc_0008_a_same_length_file_with_other_values_is_never_opened_silently() {
+    let (dir, path, mut app) = older_project("relink-changed");
+    ok(
+        &mut app,
+        &json!({ "command": "dataset_relink", "args": { "id": "d2" } }),
+    );
+    ok(&mut app, &json!({ "command": "project_save" }));
+    let file = dir.path().join("more.csv");
+    let before = std::fs::metadata(&file).unwrap().len();
+    std::fs::write(&file, "day,temp\n1,1.0\n2,9.0\n").unwrap();
+    assert_eq!(std::fs::metadata(&file).unwrap().len(), before);
+
+    let mut app = self::app(dir.path());
+    let opened = ok(
+        &mut app,
+        &json!({ "command": "project_open", "args": { "path": path } }),
+    );
+    assert_eq!(listed(&opened, "d2")["available"], false, "{opened}");
+    let warning = &opened["diagnostics"][0];
+    assert_eq!(warning["code"], "SNR-APP-034");
+    assert_eq!(
+        warning["message"],
+        "The linked data `more.csv` has changed since the project was saved, so it is unavailable. Choose Check and relink this file to read it again."
+    );
+    let check = ok(
+        &mut app,
+        &json!({ "command": "dataset_relink_check", "args": { "id": "d2" } }),
+    );
+    assert_eq!(check["reason"], "changed");
+    assert_eq!(check["rows"], 2);
 }

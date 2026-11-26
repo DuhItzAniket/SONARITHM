@@ -162,6 +162,7 @@ impl App {
                 origin: None,
                 chart: None,
                 function: Some(source),
+                file: None,
             },
         );
         Ok(Reply::Function {
