@@ -334,10 +334,12 @@ New risks raised at this gate:
 
 Everything below is scripted in `spikes/tauri-webview/WALKTHROUGH.md`, which has the commands, expected results and a results table.
 
+**Close-out (2026-11-26).** [A02-closeout.md](A02-closeout.md) lists, for each step below, the evidence the gate needs and the evidence that exists now, including CI evidence from after this report (F-212, F-227). It recommends, per step, closing with CI evidence, deferring to B07, or the owner's hardware. The owner's decisions are [OD-33](../../planning/open-decisions.md). P2's full script, with pass criteria and an agent-run option, is [A02-narrator-walkthrough.md](A02-narrator-walkthrough.md): prepared, not run.
+
 | # | Step | Who | Where | Covers |
 |---|---|---|---|---|
 | P1 | NVDA walkthrough, steps 1–20. **Done 2026-10-29 (steps 1–19, agent-driven, [Spike 5](#nvda-agent-driven-speech-viewer-transcript)).** Left for the owner: step 20, and listening checks on steps 4, 13 and 17 | Coordinator (desktop control); owner for step 20 and the listening checks | HW-01 | ADR-0003, OD-05, R-02 |
-| P2 | Narrator walkthrough, steps 1–19 | Owner | HW-01 | OD-05 (the native route), R-02 |
+| P2 | Narrator walkthrough, steps 1–19. Script ready: [A02-narrator-walkthrough.md](A02-narrator-walkthrough.md) | Owner, or the coordinator through desktop control with the owner's go-ahead (OD-33) | HW-01 | OD-05 (the native route), R-02 |
 | P3 | Ubuntu live USB: IPC (L1), WebGL2 on Intel (L2), the discrete GPU via `DRI_PRIME` (L3), without DMABUF (L4), X11 (L5) | Owner | HW-01 | ADR-0002 Linux trigger, PB-08, PB-09, R-01 |
 | P4 | Orca walkthrough | Owner | HW-01 live USB | ADR-0002 Linux trigger, R-01, R-02 |
 | P5 | macOS: IPC (M1), App Nap check (M2), WebGL2 (M3), VoiceOver (M4) | Volunteer or lab Mac | Mac | ADR-0002, ADR-0003, R-22 |

@@ -22,6 +22,8 @@ A02 retires the highest technical risks before the stack is committed ([roadmap 
 - whether the Electron fallback is triggered (required if Linux fails spike 4 or 5);
 - the `F-###` finding recorded for every measurement.
 
+Two companion files support its close-out: `A02-closeout.md`, the evidence inventory and the owner's decisions for the steps still pending (OD-33), and `A02-narrator-walkthrough.md`, the Narrator script.
+
 ## Process
 
 1. **Draft.** The phase owner opens a PR with the review once the last exit criterion is met, or when the phase is time-boxed out. Status: `Draft`.
