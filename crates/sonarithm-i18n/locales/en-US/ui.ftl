@@ -187,6 +187,46 @@ ui-gpu-unavailable = Only Windows lets SONARITHM choose the GPU; this system mak
 # Said and shown at start-up when the GPU setting could not be applied (B04-T02).
 ui-gpu-fallback = The high-performance GPU setting will apply after SONARITHM is fully closed and started again.
 
+## Functions (C03-T08b; ADR-0017 "Functions"). Expressions and numbers are data, shown as
+## they are; the critical points' own text comes from the app core.
+
+ui-function-new = New function
+ui-function-expression = Expression in x
+ui-function-expression-hint = For example x^2 - 1 or sin(x) / x.
+# $text is the expression as the app core reads it (its canonical form).
+ui-function-reads-as = Reads as: { $text }
+# Why the expression does not read, and where reading stopped: $detail is the app core's
+# message and $index the character position, from 1.
+ui-function-expression-error = { $detail } (at character { $index })
+ui-function-from = From x
+ui-function-to = To x
+ui-function-domain-hint = The x range the function is sampled over.
+ui-function-samples = Samples
+ui-function-open = Open the function
+ui-function-section = Function
+ui-function-points = Critical points
+ui-function-points-none = No critical points in this range.
+# Said when a listed feature covers no single row, such as a horizontal asymptote; $name is
+# its text.
+ui-function-no-row = { $name } has no row to go to.
+ui-audify-section = Audification calculator
+ui-audify-k = Speed-up k
+ui-audify-k-hint = How many times faster than the data's own rate the series plays.
+ui-audify-seismic = Use the seismic speed-up (k = 2200)
+ui-audify-readout = Audification readout
+ui-audify-duration = Duration
+ui-audify-band = Band
+ui-audify-audible = Audible part
+# $value is a duration in seconds.
+ui-audify-seconds = { $value } s
+# $low and $high are frequencies in hertz.
+ui-audify-hertz-range = { $low } to { $high } Hz
+ui-audify-audible-none = None
+ui-audify-partly = Part of the band is outside 20 Hz to 20 kHz, so not all of it will be heard.
+ui-audify-will-not-compile = Will not compile: the whole band is outside 20 Hz to 20 kHz. Choose another speed-up.
+# $detail is the app core's message.
+ui-audify-unavailable = The calculator cannot read this dataset. { $detail }
+
 ## Commands (B02-T07; keyboard-and-navigation §5). Names say what the command does.
 
 command-app-palette = Show the command palette
@@ -195,6 +235,7 @@ command-file-open = Open a project or data file
 command-file-save = Save the project
 command-file-save-as = Save the project as
 command-file-export = Export audio
+command-data-new-function = New function…
 command-edit-undo = Undo
 command-edit-redo = Redo
 command-edit-find = Find in this region

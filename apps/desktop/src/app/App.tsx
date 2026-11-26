@@ -22,6 +22,9 @@ import { TransportBar } from "../transport/TransportBar.tsx";
 import { CursorReadout } from "../cursor/CursorReadout.tsx";
 import { Explorer } from "../explorer/Explorer.tsx";
 import { ExplorerCommands } from "../explorer/ExplorerCommands.tsx";
+import { FunctionCommands } from "../function/FunctionCommands.tsx";
+import type { OpenedFunction } from "../function/FunctionDialog.tsx";
+import { FunctionInspector } from "../function/FunctionInspector.tsx";
 import { DatasetPlot } from "../plot/DatasetPlot.tsx";
 import { useCursor } from "../cursor/useCursor.ts";
 import { DatasetTable } from "../table/DatasetTable.tsx";
@@ -117,6 +120,9 @@ export function App({
   }, [client]);
   // The one cursor, Rust's (B04-T06): the table and the readout show it.
   const cursor = useCursor(client);
+  // A function opened with "New function…" (C03-T08b) becomes the shown dataset, and the
+  // Inspector lists its critical points.
+  const [opened, setOpened] = useState<OpenedFunction | null>(null);
   // The chart explorer (B03-T09): its commands are the app's, so the palette reaches them
   // from any tab; "Go to the chart explorer" selects the Plot tab, then focuses it.
   const explorer = useRef<HTMLDivElement>(null);
@@ -214,7 +220,17 @@ export function App({
           </Tabs>
         }
         inspector={
-          <p className={styles.status}>{t.format("ui-inspector-empty")}</p>
+          client !== null && dataset !== null ? (
+            <FunctionInspector
+              client={client}
+              dataset={dataset}
+              opened={opened}
+              cursor={cursor}
+              announcer={announcer}
+            />
+          ) : (
+            <p className={styles.status}>{t.format("ui-inspector-empty")}</p>
+          )
         }
         status={
           <>
@@ -238,6 +254,14 @@ export function App({
         }
       />
       <ExplorerCommands client={client} />
+      <FunctionCommands
+        client={client}
+        announcer={announcer}
+        onOpened={(next) => {
+          setOpened(next);
+          setDataset(next.dataset);
+        }}
+      />
       <Preferences
         client={client}
         isOpen={preferencesOpen}
