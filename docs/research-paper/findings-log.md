@@ -1016,6 +1016,24 @@ A05 (render engine, audio backends, export) uses F-050 to F-069.
 - **Affects:** C02-T09, A11Y-02, A11Y-12, A11Y-24, FR-008, OD-07, H-06
 - **Papers:** none yet
 
+### F-203 · A glide's last breakpoint is a hold, not a row: F-193 misread it as an inclusive range end
+
+- **Date:** 2026-11-01 · **Phase:** C03 · **Type:** engineering (correctness) · **Status:** new · **Supersedes:** F-193
+- **Statement:** NUMISONA's glide `src` ranges are one past the end, as `RowRange` documents. A glide over n rows has n + 1 breakpoints because the last one holds the final value for one point spacing (#446): the cubic's 1007-row table ends with a glide over rows 978 to 1006, `src` 978..1007, with 30 breakpoints. F-193 took that extra breakpoint for an inclusive last row, and CURVASONA's cue timing gave it to the row after the glide: at a pole, the empty row between two glides. Under `duration` pacing the hold's time equals that row's slot, so nothing showed. On x-linear time (#441) it put `tan(x)`'s pole cue at −3π/2 2.1 ms late (0.232177 s, not 0.230089 s). The cue timing now maps one breakpoint per row of the one-past-the-end range and leaves out the hold. A row outside the timed rows, such as `ln(x)`'s pole at 0 just after its undefined span, now has its time extended along the line through the two nearest timed rows, instead of taking the first one's time; it lands on its x-linear time (2.2857 s, not 2.2903 s). The "undefined" cue at the start of a span that opens the domain (`ln`, `sqrt`, the semicircle, `atanh`, `x^(1/3)`) then sounds at 0 s, at its own x, instead of merging with the next cue. Other readers of glide `src` that F-193 worried about need no change.
+- **Evidence:** `crates/engines/sonarithm-curvasona/src/cues.rs` (`row_times`, `time_at`, `extend`); a probe of `tan(x)` over [−5, 5]: glides `src` 0..29, 30..345, 346..661, 662..977, 978..1007 with 30, 316, 316, 316 and 30 breakpoints on a 1007-row table; the test `f_200_cue_times_follow_x_exactly` over the 40-curve suite; the curvasona-suite records (5 curves gain their opening "undefined" cue)
+- **Evidence level / confidence:** EV-D / Strong (measured, with a test over 40 curves)
+- **Affects:** C03-T04 (cue timing), C03-T07, C03-T06; corrects F-193
+- **Papers:** none yet
+
+### F-202 · On x-linear time every function cue lands on its x exactly
+
+- **Date:** 2026-11-01 · **Phase:** C03 · **Type:** engineering (timing) · **Status:** new
+- **Statement:** With function specs on `substrate.time { field: "x", pace: { secondsPerUnit: T/(max − min) } }` (#441, after NUMISONA's #446 glide hold), each cue of the cubic `x^3 − 3x` over [−3, 3] at T = 8 s sounds within 1e-9 s of (x + 3)/6 · 8: the zeros at ∓√3 at 1.6906 and 6.3094 s, against 1.6909 and 6.3011 s with `duration` pacing (F-200). Across the 40-curve suite, every cue does too, except cues merged within RFC-0007's 150 ms window, which keep the earlier time. The rows inserted at critical points no longer move anything. A function spec now lasts T plus the glide's hold of one point spacing: 8.008 s for 1003 points, against 8.000 s before. Curves undefined at the right end of their domain end at their last defined point (6.1 to 6.8 s for the semicircle, `atanh`, `asin` and `acos`).
+- **Evidence:** the test `f_200_cue_times_follow_x_exactly`; the `quick_function` CLI snapshot (cue span 1.691 to 6.309 s, duration 8.008 s); `cargo xtask replication`, where only the 40 curvasona-suite specs and records moved
+- **Evidence level / confidence:** EV-D / Strong (measured, tested over 40 curves)
+- **Affects:** C03-T07 (`Function::spec`, `quick --function`), C03-T06 (the 40-curve gallery), the 04 §6.3 example; addresses F-200
+- **Papers:** none yet
+
 ### F-204 · CURVASONA sampled functions with each platform's own maths library, so one function gave three Scores
 
 - **Date:** 2026-11-01 · **Phase:** C03 · **Type:** engineering (determinism) · **Status:** new
@@ -1034,7 +1052,7 @@ A05 (render engine, audio backends, export) uses F-050 to F-069.
 
 ### F-200 · A function's glide is paced by row, so the rows CURVASONA inserts bend its timeline against x
 
-- **Date:** 2026-11-01 · **Phase:** C03 · **Type:** engineering (timing, determinism) · **Status:** new
+- **Date:** 2026-11-01 · **Phase:** C03 · **Type:** engineering (timing, determinism) · **Status:** addressed (#441: function specs on x-linear time; F-202)
 - **Statement:** After `main` (with #429) was merged into C03-T07, the CLI snapshot `quick_function` changed from cues at "1.689 to 6.303 seconds" to "1.691 to 6.301 seconds". It changed identically on HW-01 (Windows 11), on CI Windows and on CI macOS arm64, so it is not a platform difference. Applying #429 alone to the pre-merge branch reproduces it on one machine. The cause: the function spec's `pace: { duration: 8 s }` makes NUMISONA space the glide's rows evenly in time (8/1003 s, about 8 ms each, for the cubic's 1000 samples plus three critical-point rows), by row position, not by x. Every row the function source inserts at a critical point shifts the rest of the timeline by one step, so #429, which changed how many rows are inserted (F-194), moved the cues by about 2 ms. Each cue still sounds exactly when the glide reaches its point (tested bit for bit), but against x the cubic's cues sit 0.3 to 8 ms from (x − min)/(max − min) · T (the zero at √3: 6.301 s rather than 6.309 s). With `secondsPerUnit` pacing on `x`, every cue lands on its x-linear time exactly, but NUMISONA then ends the glide one unit late (9.333 s for 8 s), so that switch waits for a look at NUMISONA.
 - **Evidence:** CI jobs 124721139173 (macOS) and 124721139250 (Windows); the tests `f_200_the_cubic_cue_times_are_pinned` and `f_200_each_earcon_sounds_at_its_rows_glide_breakpoint` in `crates/sonarithm/tests/functions.rs`; a local probe of the glide's breakpoints against x
 - **Evidence level / confidence:** EV-D / Strong (measured on three platforms and reproduced by bisection)
@@ -1097,7 +1115,7 @@ A05 (render engine, audio backends, export) uses F-050 to F-069.
 
 ### F-193 · NUMISONA's glide `src` ranges include their last row, against `RowRange`'s one-past-the-end contract
 
-- **Date:** 2026-10-31 · **Phase:** C03 · **Type:** engineering (correctness) · **Status:** new
+- **Date:** 2026-10-31 · **Phase:** C03 · **Type:** engineering (correctness) · **Status:** superseded by F-203
 - **Statement:** C03-T04's cue track found no cue times at all: it expected one glide breakpoint per row of the glide's `src` range, but a glide over rows 0 to 120 has 121 breakpoints with `src` 0..120. `sonarithm_core::RowRange` documents `end` as "one past the last row", so NUMISONA's glide ranges stop one row short (the next glide, after an empty row at a pole, starts at 121). CURVASONA's cue track now accepts both forms. Other readers of glide `src` (AUDAXIS's point placement, linked selection in the app, the scrub preview) may assume the documented contract and miss the last row of each glide. Fixing NUMISONA changes every Score snapshot with glides, so it needs its own PR with the snapshot updates; it is outside C03.
 - **Evidence:** `crates/engines/sonarithm-curvasona/src/cues.rs` (`row_times`); a compile of `1/(x^2 - 4)` with 401 samples gives glides with `src` 0..120, 121..280, 281..401 and 121, 160, 121 breakpoints; `crates/sonarithm-core/src/ids.rs` (`RowRange::end`)
 - **Evidence level / confidence:** EV-C / Strong (reproduced)
@@ -1266,6 +1284,18 @@ A05 (render engine, audio backends, export) uses F-050 to F-069.
 - **Affects:** 03 §2 (`Fingerprint`), ADR-0013, F-071; every render manifest and golden or replication record; #469
 - **Papers:** none yet
 
+### F-223 · The arrow upgrade made every earlier project with embedded data unopenable, because the reader refused a fingerprint mismatch as damage
+
+- **Date:** 2026-11-26 · **Phase:** maintenance (B05 code) · **Type:** engineering (compatibility) · **Status:** fixed (RFC-0002 §13, #476)
+- **Statement:** After #470 moved every data fingerprint (F-222), opening a project saved by an earlier build failed with `SNR-APP-032` ("an embedded dataset does not match its fingerprint") whenever it embedded data. Its linked datasets reported `SNR-APP-034` and stayed unavailable.
+  - **Why:** the B05-T04 reader compared each embedded dataset's recomputed fingerprint with the manifest's and treated a difference as damage. The member's SHA-256, checked first (RFC-0002 §6), already proves the bytes are the saved ones, so the comparison could only fail because the fingerprint computation changed.
+  - **Who was affected:** only projects saved by the desktop app built from `main` between #283 (2026-10-25) and #470 (2026-11-26), including the nightly tester bundles. None of 0.1.0-alpha's published artifacts writes projects (the CLI and the Python package have no project API, and `sonarithm-app` was not published).
+  - **Fix:** a mismatch after a verified member hash is now the warning `SNR-APP-093`, and the next save records the new fingerprint. Linked data is unchanged, because the format records no hash of a linked file; that waits for #469.
+- **Evidence:** `crates/sonarithm-app/src/project.rs` (`embedded`); `crates/sonarithm-app/tests/projects.rs` (`a_project_fingerprinted_by_an_older_build_opens_and_saves_the_new_fingerprint`, with a fixture written by the pre-#470 build); #476
+- **Evidence level / confidence:** EV-C / Strong (reproduced with a fixture saved by the pre-#470 build)
+- **Affects:** RFC-0002 §6 and §13, ADR-0018, F-222, #469 (the scheme change would otherwise do this again for linked data)
+- **Papers:** none yet
+
 ### F-224 · The data layer read Arrow's large and view string layouts differently from plain strings in four places
 
 - **Date:** 2026-11-26 · **Phase:** maintenance (A04 code) · **Type:** engineering (consistency) · **Status:** fixed (RFC-0008 §10 step 1)
@@ -1279,4 +1309,38 @@ A05 (render engine, audio backends, export) uses F-050 to F-069.
 - **Evidence:** the tests above; RFC-0008 §3 and §10
 - **Evidence level / confidence:** EV-C / Strong
 - **Affects:** 03 §2 and §3, RFC-0008, F-100
+- **Papers:** none yet
+
+### F-225 · Vitest 4's headless screenshots were scaled to 0.9375, so its baselines blended the 1px borders
+
+- **Date:** 2026-11-26 · **Phase:** maintenance (B02-T03 code) · **Type:** engineering (test tooling) · **Status:** new
+- **Statement:** With Vitest 5, all four `foundations` screenshot tests failed: each new screenshot was 1024 × 280 against a 960 × 263 baseline, which pixelmatch cannot compare.
+  - **Why:** Vitest 4.1.12 fitted the tester iframe into Playwright's default page, scaling it by `min(1, page width / 1024, page height / 768)`. The page is 720 px high, so the scale was 720 / 768 = 0.9375 = 960 / 1024. Vitest 5.0.5 scales the iframe only when `browser.ui` is on, so headless runs capture at 1 : 1.
+  - **What changed:** only the scale. The surface colours match exactly in all four themes. Every colour found only in the new screenshots is a token value drawn at full strength. In high-contrast light, `--border` oklch(0.4 0 0) is #484848, where the old baseline had a lighter blend, #585858. The old baselines understated the borders' contrast.
+  - **Not the cause:** `toMatchScreenshot`'s defaults are the same in both versions (pixelmatch, threshold 0.1, timeout 5000 ms, `scale: "device"`). "Matcher did not succeed in time" is `expect.element`'s retry giving up on a size mismatch that could never pass.
+- **Fix:** the new baselines are the screenshots the CI image (`playwright:v1.65.1-noble`, Vitest 5.0.5) captured in the failing run, from its `visual-baselines` artifact. They were not rendered on Windows.
+- **Evidence:** CI job 139554179659 and its `visual-baselines` artifact. `@vitest/browser` 4.1.12 `orchestrator` `setIframeViewport` against 5.0.5's orchestrator, which applies the scale under `config.browser.ui`. Both versions' `defaultOptions` in `dist/index.js`.
+- **Evidence level / confidence:** EV-C / Strong (sizes, colours and the source of both versions checked)
+- **Affects:** testing-strategy §12 (visual baselines); `packages/ui/test/visual`
+- **Papers:** none yet
+
+- **Papers:** none yet
+
+### F-226 · Playwright 1.65's Firefox crashes when axe runs after a named lookup, so two Preferences tests skip their axe scan in Firefox
+
+- **Date:** 2026-11-26 · **Phase:** maintenance (B01-T08, B04-T04 tests) · **Type:** engineering (test tooling) · **Status:** new
+- **Statement:** With `@playwright/test` 1.65.1 and its CI image, two E2E tests failed in Firefox only, with "frame.evaluate: Page crashed" in the final axe scan: `fr_118_preferences_choose_the_device_and_set_the_volume_by_keyboard` and `b04_t04_preferences_store_the_measured_latency_of_the_selected_device`.
+  - **Steps before the scan:** every step before the scan passed, in Firefox too.
+  - **Other browsers:** Chromium and WebKit passed.
+  - **On 1.64.1:** main's last two runs, on the 1.64.1 image, passed both tests in Firefox.
+  - **@axe-core/playwright:** 4.14.0 on both.
+- **Cause (upstream):** microsoft/playwright#43967, a duplicate of #44135 and Mozilla bug 2090055.
+  - **What crashes:** Playwright 1.65's Firefox (build 1572) crashes the content process when an element's `ariaLabelledByElements` is read both in Playwright's isolated world and in the page.
+  - **How the tests hit it:** a named `getByRole` lookup does the first read and axe-core's scan does the second. Both tests make named lookups among the dialog's labelled controls before the scan.
+  - **Fix status:** fixed by Firefox build 1575 and later on Playwright's main branch. 1.65.1 (2026-11-13) is the latest release and still ships build 1572.
+- **Not a cause:** SONARITHM's code. Page content cannot legitimately crash the browser, and the same page passes on 1.64.1.
+- **Workaround:** in these two tests, Firefox skips only the axe scan (removal tracked by #487). The test records a `fixme` annotation naming the upstream issue, so the report shows it. All the other steps still run in Firefox, and Chromium and WebKit still run the scan. Remove the skip when a Playwright release ships Firefox build 1575 or later.
+- **Not reproduced locally:** Firefox does not launch on the Windows development machine. The evidence is CI job 139572491722 (1.65.1) against jobs 139562988096 and 139517563060 (1.64.1), and the upstream reproductions.
+- **Evidence level / confidence:** EV-C / Strong for the upstream match (same browser build, same axe-then-lookup trigger, same error). The crash's exact read inside axe was not traced in our tests.
+- **Affects:** `apps/desktop/e2e/audio.spec.ts`; any later E2E test that runs axe after a named lookup in Firefox until the upgrade
 - **Papers:** none yet

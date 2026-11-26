@@ -38,7 +38,8 @@ dist/
 storybook-static/
 playwright-report/
 test-results/
-.vitest-attachments/
+# Vitest 5 writes visual-failure attachments under .vitest/attachments.
+.vitest/
 # PB-08 traces from `pnpm -C packages/ui test:perf` (B04-T02); CI uploads them.
 .perf/
 blob-report/
