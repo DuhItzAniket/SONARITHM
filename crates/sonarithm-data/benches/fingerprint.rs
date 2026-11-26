@@ -62,7 +62,7 @@ impl Xorshift {
 fn input(batches: usize, nulls: bool) -> (Table, u64) {
     let mut random = Xorshift(0x9E37_79B9_7F4A_7C15);
     let mut logical = 0_u64;
-    let mut valid = |random: &mut Xorshift| !nulls || random.next() % 10 != 0;
+    let valid = |random: &mut Xorshift| !nulls || random.next() % 10 != 0;
     let mut values = Vec::with_capacity(ROWS);
     let mut counts = Vec::with_capacity(ROWS);
     let mut stations = Vec::with_capacity(ROWS);

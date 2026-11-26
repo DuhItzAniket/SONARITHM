@@ -5,9 +5,8 @@
 
 use std::collections::HashMap;
 
-use arrow_array::types::RunEndIndexType;
 use arrow_array::{
-    ArrowNativeType as _, Float64Array, Int32Array, Int64Array, IntervalYearMonthArray,
+    Float64Array, Int32Array, Int64Array, IntervalYearMonthArray,
     LargeListArray, ListArray, RunArray, StringViewArray,
 };
 use proptest::prelude::*;
@@ -218,23 +217,22 @@ fn list_layouts_fingerprint_alike() {
     assert_eq!(fingerprint(Arc::new(list)), fingerprint(Arc::new(large)));
 }
 
-fn run_encoded<R: RunEndIndexType>(values: Vec<Option<f64>>) -> ArrayRef {
-    let array: RunArray<R> = RunArray::try_new(
-        &PrimitiveArray::<R>::from_iter_values(
-            (1..=values.len()).map(|end| R::Native::from_usize(end).unwrap()),
-        ),
-        &Float64Array::from(values),
-    )
-    .unwrap();
-    Arc::new(array)
+/// `values` run-end encoded, one run per value, with run ends of type `R`.
+fn run_encoded<R: arrow_array::types::RunEndIndexType>(
+    ends: PrimitiveArray<R>,
+    values: Vec<Option<f64>>,
+) -> ArrayRef {
+    Arc::new(RunArray::<R>::try_new(&ends, &Float64Array::from(values)).unwrap())
 }
 
 #[test]
 fn run_end_encoding_is_layout() {
     let values = vec![Some(1.5), None, Some(2.5)];
     let plain = fingerprint(Arc::new(Float64Array::from(values.clone())));
-    assert_eq!(fingerprint(run_encoded::<Int32Type>(values.clone())), plain);
-    assert_eq!(fingerprint(run_encoded::<Int64Type>(values)), plain);
+    let narrow = run_encoded(Int32Array::from(vec![1, 2, 3]), values.clone());
+    let wide = run_encoded(Int64Array::from(vec![1, 2, 3]), values);
+    assert_eq!(fingerprint(narrow), plain);
+    assert_eq!(fingerprint(wide), plain);
 }
 
 #[test]
@@ -242,7 +240,7 @@ fn an_unsupported_type_is_refused_with_its_code() {
     let intervals = IntervalYearMonthArray::from(vec![14]);
     let err = table_fingerprint(&table(Arc::new(intervals), &FieldMeta::new())).unwrap_err();
     assert!(matches!(err, DataError::Unfingerprintable { .. }));
-    assert_eq!(err.to_diagnostic().code, "SNR-DATA-007");
+    assert_eq!(err.to_diagnostic().code.as_str(), "SNR-DATA-007");
 }
 
 /// The encoding of RFC-0008 §2 and §3, written out by hand for a two-column table: the
@@ -301,7 +299,7 @@ fn snr_keys_sort_by_utf16_code_units() {
         ("snr.\u{FF5E}".to_owned(), "b".to_owned()),
     ]);
     let mut out = String::new();
-    snr_meta(&mut out, &meta);
+    snr_meta(&mut out, meta.iter());
     assert_eq!(out, "{\"snr.\u{1F600}\":\"a\",\"snr.\u{FF5E}\":\"b\"}");
 }
 

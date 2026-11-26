@@ -131,17 +131,17 @@ The scheme is a number: `1` for the Arrow IPC scheme (the A04-T09 design, as cha
 - **The warning on open** (`SNR-APP-034`), for a scheme-1 link: "The linked data `{file}` was linked by an older SONARITHM build and cannot be verified against the project, so it is unavailable. Choose Check and relink this file to read it again." For a changed file the existing wording stays ("has changed since the project was saved"), followed by the same pointer to the action.
 - **Choosing the action:** the reader opens the file under RFC-0002 §4's safety rules and limits, but nothing else sees the data yet: it is not shown, analysed or compiled. A dialog then opens. Its title and description are announced when it opens, and focus starts on **Cancel**:
   - title: "Relink `{file}`?";
-  - description: "This data could not be verified against the project: the project has no record of the file's contents to compare it with. It has {rows} rows now; the project recorded {recordedRows}. If you relink it, SONARITHM uses the file as it is now." When the row counts differ, the description adds: "The number of rows has changed.";
+  - description: "This data could not be verified against the project: the project has no record of the file's contents to compare it with. It has {rows} rows now; the project recorded {recordedRows}. If you relink it, SONARITHM uses the file as it is now. Relinking changes the project: save it to keep the link, or close it without saving to undo." When the row counts differ, the description adds: "The number of rows has changed." (wording amended, §11);
   - buttons: **Relink** and **Cancel**.
 - **Accepting:**
   - the dataset becomes available;
   - its entry takes the file's size, SHA-256 and scheme-2 fingerprint, which the next save records;
   - the project is marked as having unsaved changes;
-  - the announcement is "`{file}` is relinked. Save the project to keep it.";
-  - the action is one undoable edit, like other dataset changes.
+  - the announcement is "`{file}` is relinked. Save the project to keep it, or close without saving to undo.";
+  - the action is not on the undo history, as no dataset change is; closing the project without saving reverts it (§11).
 - **Cancelling** leaves the dataset unavailable and announces nothing more. The dialog closes and focus returns to the action.
 - **Protocol:** two additive commands (ADR-0017 §5).
-  - `dataset_relink_check { id }` reads the file and returns `{ name, rows, recordedRows, reason }`, where `reason` is `older-build` or `changed`. It refuses when the file cannot be read under §4, with that warning's wording.
+  - `dataset_relink_check { id }` reads the file and returns `{ name, rows, recordedRows, reason }`, where `reason` is `olderBuild` or `changed` (spelling amended, §11). It refuses when the file cannot be read under §4, with that warning's wording.
   - `dataset_relink { id }` applies the relink. The file is read again, so a file changed between the check and the relink is what gets linked, and the reply carries its row count.
 
 Scheme-1 fingerprints are never recomputed. They depend on the arrow-ipc version that wrote them, so no later build can reproduce them.
@@ -157,7 +157,7 @@ Scheme-1 fingerprints are never recomputed. They depend on the arrow-ipc version
 - **Records:** a Score, a render manifest and a project written before this RFC read as scheme 1. A project fixture from before it opens as §6 says.
 - **Check and relink:**
   - with the pre-#470 fixture (`crates/sonarithm-app/tests/fixtures/pre-470`), the linked dataset stays unavailable on open with the scheme-1 wording;
-  - `dataset_relink_check` reports its rows and `older-build`;
+  - `dataset_relink_check` reports its rows and `olderBuild`;
   - `dataset_relink` makes it available and marks the project unsaved;
   - the next save writes `bytes`, `sha256` and a scheme-2 fingerprint, and reopening opens the link without a warning;
   - a same-length file with different values is never opened without the action;
@@ -243,6 +243,16 @@ Scheme-1 fingerprints are never recomputed. They depend on the arrow-ipc version
    - the ADR-0013 amendment;
    - one re-record of every record that holds a fingerprint (the set #470 moved, plus the header field and `datasets.md`), with golden audio unchanged.
 
+### 11. Amendment 1 (2026-11-26): relinking and the undo history; reason spelling
+
+| Date | Change | Approved |
+|---|---|---|
+| 2026-11-26 | Relinking is not an undoable edit; the dialog and the announcement say how to undo it instead. `reason` values are camelCase | Coordinator, under the owner's delegation of contract approvals (OD-32, closed) |
+
+- **Undo.** §6 said the relink is "one undoable edit, like other dataset changes". No dataset change is on the undo history: undo and redo restore the spec and corrections only, and `dataset_open` and `dataset_close` are not undoable either. Relinking follows them. The safety net is that relinking marks the project as having unsaved changes, so closing it without saving reverts the relink. The dialog's description and the announcement after relinking say so plainly (§6, wording above).
+- **Spelling.** `reason` is `olderBuild` or `changed`, not `older-build`, to match the protocol's camelCase values (ADR-0017, for example `jumpForward` and `oneSeries`).
+- **Contract.** ADR-0017 "Relinking linked data" holds the commands, replies, codes (`SNR-APP-095` for a dataset with nothing to relink) and the dialog's wording.
+
 ## Resolved questions
 
 Decided by the coordinator on 2026-11-26, under the owner's delegation:
@@ -256,6 +266,8 @@ Decided by the coordinator on 2026-11-26, under the owner's delegation:
 None.
 
 ## Future possibilities
+
+- If dataset changes (opening, closing) join the undo history, relinking joins it too (§11).
 
 - A per-column fingerprint, to say which column of a linked file changed.
 - Recording the linked file's hash also lets a future build detect a file edited in place, without re-reading it.

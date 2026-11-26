@@ -265,7 +265,7 @@ fn schema_json(schema: &Schema, types: &[String]) -> String {
             out.push(',');
         }
         out.push_str("{\"meta\":");
-        snr_meta(&mut out, field.metadata());
+        snr_meta(&mut out, field.metadata().iter());
         out.push_str(",\"name\":");
         json_string(&mut out, field.name());
         out.push_str(",\"type\":");
@@ -273,15 +273,14 @@ fn schema_json(schema: &Schema, types: &[String]) -> String {
         out.push('}');
     }
     out.push_str("],\"meta\":");
-    snr_meta(&mut out, schema.metadata());
+    snr_meta(&mut out, schema.metadata().iter());
     out.push('}');
     out
 }
 
-/// The `snr.*` keys of `metadata` as a canonical JSON object.
-fn snr_meta(out: &mut String, metadata: &std::collections::HashMap<String, String>) {
+/// The `snr.*` entries of `metadata` as a canonical JSON object.
+fn snr_meta<'a>(out: &mut String, metadata: impl Iterator<Item = (&'a String, &'a String)>) {
     let mut entries: Vec<(&String, &String)> = metadata
-        .iter()
         .filter(|(key, _)| key.starts_with("snr."))
         .collect();
     entries.sort_by(|a, b| a.0.encode_utf16().cmp(b.0.encode_utf16()));
