@@ -10,7 +10,7 @@
 | Linux | The `spike-tauri-ubuntu-24.04` artifact: a `.deb` |
 | macOS | The `spike-tauri-macos-latest` artifact: an unsigned `.app` |
 
-The artifacts are under **Actions → spike-a02-tauri → a run for the `spike/a02-a11y` branch (pull request #107), or for `main` once it is merged → Artifacts** (sign in to GitHub). Older runs (#101, #102) do not contain the accessibility page. Artifacts are kept for 30 days; re-run the workflow for a fresh build.
+The artifacts are under **Actions → spike-a02-tauri → a run for the `spike/a02-a11y` branch (pull request #107), or for `main` once it is merged → Artifacts** (sign in to GitHub). Older runs (#101, #102) do not contain the accessibility page. Artifacts were kept for 30 days. The workflow was retired on 2026-11-26 (its last version is in commit `04d0fe16`), so build locally with the Windows command above, or `pnpm tauri build` on Linux and macOS.
 
 Every run writes JSON with `--out`. Keep the files: they are the evidence.
 

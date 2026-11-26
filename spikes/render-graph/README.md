@@ -130,7 +130,7 @@ Everything else in the render path is basic arithmetic. Plan-time values (pan ga
 
 ### Results (2026-10-19)
 
-Reference: the Linux x86-64 render set from CI. Compared with it: the Windows and macOS CI sets, and a set rendered on the owner's laptop (i7-14650HX). CI run: `spike-a02-determinism` on the A02-T04 pull request.
+Reference: the Linux x86-64 render set from CI. Compared with it: the Windows and macOS CI sets, and a set rendered on the owner's laptop (i7-14650HX). CI run: `spike-a02-determinism` on the A02-T04 pull request. That workflow was retired on 2026-11-26; its last version is in commit `04d0fe16`.
 
 | Variant | Laptop (Windows, x86-64) | CI Windows (x86-64) | CI macOS (AArch64) | PB-06 |
 |---|---|---|---|---|
