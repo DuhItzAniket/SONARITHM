@@ -1,6 +1,6 @@
 # Documentation checks (docs/engineering/ci-cd.md#workflow-inventory). Runs on every PR with
 # no path filter: a path-filtered workflow used as a required check would leave PRs that
-# skip it waiting forever. Required checks: `docs / markdown`, `docs / internal-links`, `docs / reuse` and
+# skip it waiting forever. Only `schema-diff` depends on the change (see the job). Required checks: `docs / markdown`, `docs / internal-links`, `docs / reuse` and
 # from A03 `docs / schema-diff`. External links are checked but not required: advisory
 # (warning only) on pull requests and pushes, failing only in the weekly scheduled run.
 name: docs
@@ -101,6 +101,9 @@ jobs:
 
   # `cargo xtask codegen` regenerates docs/reference/error-codes.md (A03-T02), schemas/
   # (A03-T06) and from B01 packages/ipc/src/generated/; any diff fails the job.
+  # On a pull request that changes no Rust and no generated file (ci_scope.py `codegen`),
+  # the steps after the scope step are skipped and the job passes without building: it is a
+  # required check, so it reports a result instead of being skipped as a job.
   schema-diff:
     runs-on: ubuntu-latest
     permissions:
@@ -110,14 +113,34 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
-      - run: rustup toolchain install
-      - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
+          fetch-depth: 2
+      # The same change scope as `ci / changes` (ci-cd.md#change-scoped-jobs).
+      - id: scope
+        shell: bash
+        env:
+          EVENT: ${{ github.event_name }}
+        run: |
+          if [ "$EVENT" = pull_request ]; then
+            git diff --name-only --no-renames HEAD^1 HEAD > "$RUNNER_TEMP/changed.txt"
+          else
+            : > "$RUNNER_TEMP/changed.txt"
+          fi
+          python3 .github/scripts/ci_scope.py changes --event "$EVENT" < "$RUNNER_TEMP/changed.txt" | tee -a "$GITHUB_OUTPUT"
+      - if: steps.scope.outputs.codegen != 'true'
+        run: echo "No Rust or generated file changed, so the generated files cannot be stale."
+      - if: steps.scope.outputs.codegen == 'true'
+        run: rustup toolchain install
+      - if: steps.scope.outputs.codegen == 'true'
+        uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
         with:
           save-if: ${{ github.ref == 'refs/heads/main' }}
       # xtask links the app core, and cpal (sonarithm-audio) links ALSA.
-      - run: sudo apt-get update && sudo apt-get install --yes --no-install-recommends libasound2-dev
-      - run: cargo xtask codegen
+      - if: steps.scope.outputs.codegen == 'true'
+        run: sudo apt-get update && sudo apt-get install --yes --no-install-recommends libasound2-dev
+      - if: steps.scope.outputs.codegen == 'true'
+        run: cargo xtask codegen
       - name: Generated files are up to date
+        if: steps.scope.outputs.codegen == 'true'
         run: |
           if [ -n "$(git status --porcelain)" ]; then
             git status --short

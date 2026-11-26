@@ -7,7 +7,7 @@ This document plans the GitHub Actions workflows, the rules that harden them, th
 
 ## Principles
 
-1. **Every PR is checked on Linux, Windows and macOS.** Platform differences in audio, file paths and webviews are the main risk.
+1. **Every PR that changes code is checked on Linux, Windows and macOS.** Platform differences in audio, file paths and webviews are the main risk. Docs-only and frontend-only PRs skip the jobs their files cannot affect ([change-scoped jobs](#change-scoped-jobs)); pushes to `main` and the merge queue run everything.
 2. **One gate.** A single aggregate job is the required check for `ci.yml`, so jobs can be added without editing the branch ruleset.
 3. **Least privilege.** Workflows start with no token permissions and each job requests only what it needs.
 4. **Releases are reproducible and attested.** Pinned toolchain, committed lockfiles, `--locked` builds, build-provenance attestations and SBOMs.
@@ -20,12 +20,12 @@ This document plans the GitHub Actions workflows, the rules that harden them, th
 | `ci.yml` | `pull_request`, push to `main`, `merge_group` | Rust checks on three OSes; grows by phase (see below) | A01 |
 | `pr-title.yml` | `pull_request` (opened, edited, synchronize) | PR title is a valid Conventional Commit header with an allowed type and scope | A01 |
 | `dco.yml` | `pull_request` | Every commit has a `Signed-off-by:` trailer. A DCO GitHub App is the alternative; if it is chosen, this file is not created | A01 |
-| `docs.yml` | Every `pull_request` and push to `main` (no path filter: a path-filtered workflow used as a required check would leave PRs that skip it waiting forever) | Markdown lint; internal link check; external link check (not required; advisory on PRs and pushes, where it only warns, and failing in the weekly scheduled run; policy in `lychee.toml`); `schema-diff` from A03: regenerate `schemas/` (and from B01 `packages/ipc/src/generated/`), then `git diff --exit-code` | A01 (`schema-diff` A03) |
+| `docs.yml` | Every `pull_request` and push to `main` (no path filter: a path-filtered workflow used as a required check would leave PRs that skip it waiting forever) | Markdown lint; internal link check; external link check (not required; advisory on PRs and pushes, where it only warns, and failing in the weekly scheduled run; policy in `lychee.toml`); `schema-diff` from A03: regenerate `schemas/` (and from B01 `packages/ipc/src/generated/`), then `git diff --exit-code`; on a PR that changes no Rust and no generated file it passes without building ([change-scoped jobs](#change-scoped-jobs)) | A01 (`schema-diff` A03) |
 | `scorecard.yml` | Push to `main`, weekly schedule, `branch_protection_rule` | OpenSSF Scorecard; results to code scanning and the public badge | A01 |
 | `codeql.yml` | `pull_request`, push to `main`, weekly schedule | CodeQL static analysis for Rust, JavaScript/TypeScript and Python as each language appears; confirm CodeQL's Rust support level when enabling | A01 |
 | `label-sync.yml` | Push to `main` touching `.github/labels.yml` | Apply the [label taxonomy](../../.github/labels.yml) | A01 |
 | `.github/dependabot.yml` (configuration, not a workflow) | Weekly schedule | Version updates for cargo, npm, pip and github-actions, including SHA-pinned actions | A01 |
-| `nightly.yml` | Daily schedule, manual dispatch; pull requests touching `sonarithm-core`, `sonarithm-spec` or `sonarithm-data` (two-minute fuzz smoke run) | Fuzzing (spec from A03, data importers from A04), benchmarks and soak tests (allocation soak from A05; the PB-11 stream soak from B06), external link check, cargo-deny advisories on `main` | A03, growing |
+| `nightly.yml` | Daily schedule, manual dispatch; pull requests touching a fuzzed crate, `sonarithm-core`, the workflow or `.github/scripts/ci_scope.py` (a two-minute fuzz smoke run of the targets of each changed crate, or of every target when the workflow or the script changes) | Fuzzing (spec from A03, data importers from A04), benchmarks and soak tests (allocation soak from A05; the PB-11 stream soak from B06), external link check, cargo-deny advisories on `main` | A03, growing |
 | `desktop-nightly.yml` | Daily schedule, manual dispatch; pull requests touching the workflow, `tauri.nightly.conf.json` or the network-deny harness (dry run) | Unsigned desktop bundles for testers (NSIS, DMG ad-hoc signed, AppImage) from `main`. On each OS it installs the bundle, launches it with `--smoke`, and runs `cargo xtask network-deny --app` on the installed app. The bundles are artifacts named `sonarithm-desktop-nightly-<commit>-<OS>`, with SLSA provenance off pull requests. Uses no signing secret or updater key. Kept apart from `nightly.yml`, so app-core pull requests do not build three release bundles | B01-T09 |
 | `cache-prune.yml` | Completed `ci`, `docs` or `nightly` run on `main`; manual dispatch | Keeps only the newest Actions cache of each job on `main` and deletes superseded copies, so the cache stays well under the 10 GB repository limit (on 2026-10-19 it reached 10.7 GB with 3–4 copies per job) | A05 |
 | `ci.yml` `gallery` job | Pull requests, push to `main` | Checks that `examples/data` regenerates from its seeded generators (`cargo xtask gallery --check`) and renders every gallery spec to FLAC with the CLI (artifact `gallery-renders`) | A07 |
@@ -40,6 +40,7 @@ This table lists CI jobs. The authoritative list of test types per phase is [tes
 
 | Job | Runs on | Command or check | From |
 |---|---|---|---|
+| `changes` | ubuntu | Classifies the PR's changed paths (`git diff --name-only --no-renames` of the merge commit against its base) with `.github/scripts/ci_scope.py` and runs that script's tests; every other job reads its outputs ([change-scoped jobs](#change-scoped-jobs)) | 2026-11 |
 | `fmt` | ubuntu | `cargo fmt --all --check` | A01 |
 | `clippy` | ubuntu, windows, macos | `cargo clippy --workspace --all-targets --locked -- -D warnings` | A01 |
 | `test` | ubuntu, windows, macos | `cargo nextest run --workspace --locked`, then `cargo test --workspace --doc --locked` (nextest does not run doctests) | A01 |
@@ -57,9 +58,50 @@ This table lists CI jobs. The authoritative list of test types per phase is [tes
 | `frontend` | ubuntu, windows, macos | `pnpm install --frozen-lockfile`, lint, typecheck, Vitest browser-mode tests, Storybook axe checks and Playwright with Tauri IPC mocking (both from B02) | B01 |
 | `licenses-npm` | ubuntu | npm licence allowlist check ([supply chain](supply-chain-and-licensing.md#npm-licence-checking)) | B01 |
 | `reuse` | ubuntu | `reuse lint` ([supply chain](supply-chain-and-licensing.md#reuse-and-spdx-headers)); runs in `docs.yml` | A01 |
-| `all-checks-pass` | ubuntu | Fails if any job above failed or was cancelled | A01 |
+| `all-checks-pass` | ubuntu | Fails if any job above failed or was cancelled, or was skipped when its change scope said it should run (`ci_scope.py gate`) | A01 |
 
 Golden-audio and soak tests on GitHub-hosted runners have no audio device; they exercise the offline renderer and the timer-driven null device. Real-device soak tests (the A05 "0 xruns in a 10-min soak" criterion) run on reference hardware, started manually by a maintainer on a trusted ref. Self-hosted runners are never used for untrusted PR code.
+
+## Change-scoped jobs
+
+GitHub runs only a few jobs at once for this repository, so a PR's checks mostly wait in the queue. Each PR therefore runs only the jobs its files can affect. The `changes` job of `ci.yml` lists the PR's paths with a plain `git diff --name-only --no-renames HEAD^1 HEAD` (the merge commit against the base branch; `--no-renames` lists both sides of a move) and classifies them with [`.github/scripts/ci_scope.py`](../../.github/scripts/ci_scope.py). No third-party action is involved. `docs / schema-diff` and `nightly / plan` run the same script.
+
+**Never scoped:** pushes to `main`, the merge queue, scheduled and manual runs, and a PR with no changed paths run every job.
+
+| A changed path is… | When it is | Effect |
+|---|---|---|
+| Everything | Any `Cargo.toml` or `Cargo.lock`, `.github/**`, `schemas/**`, `xtask/**`, `packages/ipc/src/generated/**` | Every job runs |
+| Rust | Anything not listed below, `apps/desktop/src-tauri/**`, and any file Rust compiles in with a literal `include_str!` or `include_bytes!` path (today `docs/research/design-rules.md` and `docs/architecture/04-sonification-spec.md`, found by scanning the `.rs` files on each run) | Every job runs |
+| Frontend | `apps/desktop/**` except `src-tauri/`, `packages/**` (Markdown included: each package's `prettier --check .` reads it), the root `package.json`, `pnpm-lock.yaml`, `pnpm-workspace.yaml`, `eslint.config.js`, `prettier.config.js`, `stylelint.config.js` and `tsconfig.base.json` | `frontend`, `frontend-browser` and `desktop` (which builds the shell) run; the other `ci.yml` jobs are skipped |
+| Docs | `docs/**`, `*.md`, `LICENSES/**`, and the files only `docs.yml` reads (`REUSE.toml`, `lychee.toml`, `.markdownlint-cli2.jsonc`) | Every `ci.yml` job but `changes` and the gate is skipped |
+
+The PR takes the widest class among its paths. `docs.yml` always runs all its jobs: `markdown`, `internal-links`, `external-links` and `reuse` do their full check, and `schema-diff` builds and regenerates only when Rust or a generated file changed (`docs/reference/error-codes.md` counts, so a hand edit of it is still caught). `dco`, `pr-title` and CodeQL do not depend on the paths.
+
+A file that code reads at run time, not through `include_str!` or `include_bytes!`, is not found by the scan. Code that starts reading one under `docs/` or the frontend trees must add it to `ci_scope.py`.
+
+**Fuzzing on PRs.** `nightly / plan` lists the targets from every `crates/**/fuzz/Cargo.toml` and keeps those under a crate the PR changes, so a parser or importer change still gets its two-minute smoke run. A PR that changes `nightly.yml` or `ci_scope.py` fuzzes every target. A change only to a dependency (another crate, `Cargo.lock`) is not fuzzed on the PR; the nightly run fuzzes every target for 30 minutes. The workflow's `paths` filter is unchanged, so the two soak jobs still run on the same PRs as before.
+
+**The gate.** `all-checks-pass` needs every job, runs even when they fail (`if: always()`) and runs `ci_scope.py gate` on `toJSON(needs)`. Each scoped job has `needs: changes` and an `if:` on one output, and the script's `SCOPED_JOBS` table records which. The tests in `.github/scripts/test_ci_scope.py` check that the workflow and the table agree, and run in `changes`, so a mismatch fails the gate.
+
+| Job result | Change scope | Gate |
+|---|---|---|
+| `success` | any | Passes |
+| `skipped` | the job's output is `false` (skipped by design) | Passes |
+| `skipped` | the job's output is `true`, or the job is not in `SCOPED_JOBS` (for example `golden-compare` after `golden` failed) | Fails |
+| `failure` | any | Fails |
+| `cancelled` | any | Fails |
+| `changes` itself not `success` | — | Fails |
+
+**Jobs per PR**, counted from the workflows. A matrix job counts once per entry, and a job skipped by `if:` takes no runner. Rows marked "with `wheels`" include the 10 jobs of `wheels.yml`, which runs on every PR under `crates/**`.
+
+| PR changes | `ci` | `docs` | `codeql` + `dco` + `pr-title` | `nightly` | Total before | Total after |
+|---|---|---|---|---|---|---|
+| Docs only | 2 | 5 | 5 | 0 | 37 | 12 |
+| Frontend only | 7 | 5 | 5 | 0 | 37 | 17 |
+| Rust, no fuzzed crate (with `wheels`) | 28 | 5 | 5 | 0 | 47 | 48 |
+| Rust in `sonarithm-data` (with `wheels`) | 28 | 5 | 5 | 1 + 4 fuzz + 6 soak | 74 | 59 |
+| Rust in PLOTSONA (with `wheels`) | 28 | 5 | 5 | 1 + 9 fuzz + 6 soak | 74 | 64 |
+| `.github/**` only, not `nightly.yml` | 28 | 5 | 5 | 0 | 37 | 38 |
 
 ## Required status checks
 
@@ -248,4 +290,4 @@ jobs:
 
 - A workflow change is a normal PR with the `ci` scope. Changes under `.github/` need code-owner review.
 - A new required check must be green on `main` before it is added to the ruleset.
-- When a phase adds a job, update the tables in this document in the same PR.
+- When a phase adds a job, update the tables in this document in the same PR. A new `ci.yml` job also needs `needs: changes`, an `if:` on a `changes` output and an entry in `SCOPED_JOBS` of `.github/scripts/ci_scope.py` ([change-scoped jobs](#change-scoped-jobs)).
