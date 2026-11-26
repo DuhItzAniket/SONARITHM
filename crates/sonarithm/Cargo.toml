@@ -48,6 +48,8 @@ thiserror.workspace = true
 [dev-dependencies]
 # Reads the `x` column of a function table in tests/functions.rs.
 arrow-array.workspace = true
+# Field metadata in tests/fingerprint_scheme.rs.
+arrow-schema.workspace = true
 insta = { workspace = true, features = ["json"] }
 sha2.workspace = true
 

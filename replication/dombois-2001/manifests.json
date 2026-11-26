@@ -10,14 +10,15 @@
     },
     "cues": null,
     "data": {
-      "fingerprint": "sha256:ab223bb5bcaf64291ea581725def041920943d4758e0ddc9e94445d6eadbaadb",
+      "fingerprint": "sha256:36388c4c1ebfec96dccc03f9d48b27a8e6ff2a51318f9221c7fd6664ae56b065",
+      "fingerprintScheme": 2,
       "provenance": {},
       "source": {
         "kind": "file",
         "name": "kermadec-2021-morc-bhz.parquet"
       }
     },
-    "manifestVersion": 2,
+    "manifestVersion": 3,
     "output": {
       "bitsPerSample": 24,
       "channels": 2,
@@ -39,8 +40,8 @@
       "seed": 0
     },
     "score": {
-      "irVersion": 2,
-      "releaseIndependentHash": "sha256:f885851d6ba158d21c4e47eca75f0cacf27b2b4be5da5fedb2a791d7c59a94b0"
+      "irVersion": 3,
+      "releaseIndependentHash": "sha256:1a77ef95b66c87569bb90c28218bddd6d89db887019391b1aafc8c24c5bf9e7c"
     },
     "spec": {
       "embedded": null,
@@ -78,14 +79,15 @@
     },
     "cues": null,
     "data": {
-      "fingerprint": "sha256:09623178a06e6c6a200600aedda716432697179c5ea5467a4d675cef384fea44",
+      "fingerprint": "sha256:869910f87a334424350022763e6784cdbf37d2b4f55e04fae3cca21413a2b205",
+      "fingerprintScheme": 2,
       "provenance": {},
       "source": {
         "kind": "file",
         "name": "petrinja-2020-morc-bhz.parquet"
       }
     },
-    "manifestVersion": 2,
+    "manifestVersion": 3,
     "output": {
       "bitsPerSample": 24,
       "channels": 2,
@@ -107,8 +109,8 @@
       "seed": 0
     },
     "score": {
-      "irVersion": 2,
-      "releaseIndependentHash": "sha256:993b8a137060acd12317389d038ec111932ed4ae9d0f5d5edd636e896ebe5ec7"
+      "irVersion": 3,
+      "releaseIndependentHash": "sha256:d88fbcc51ab0f93bdf7d2f0653ffdf51f6f6c8ab42508881ef630f42087f4d00"
     },
     "spec": {
       "embedded": null,

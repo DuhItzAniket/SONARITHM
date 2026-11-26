@@ -266,3 +266,8 @@ announce-audio-lost =
         [yes] Audio output stopped: { $detail }. Playback is paused.
        *[no] Audio output stopped: { $detail }.
     }
+
+## Projects (RFC-0008 §6): a linked dataset was checked and relinked. $name is its file name
+## alone. Relinking is not on the undo history, so the announcement says how to undo it.
+
+announce-dataset-relinked = { $name } is relinked. Save the project to keep it, or close without saving to undo.

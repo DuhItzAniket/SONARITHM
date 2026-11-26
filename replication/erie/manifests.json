@@ -2,14 +2,15 @@
   "frequency": {
     "cues": null,
     "data": {
-      "fingerprint": "sha256:6656074beb1c7262eae0024e464159e9d114fefc1432343a38694dd6d286177f",
+      "fingerprint": "sha256:3a7ad58765cf2e4dc7e664c41d63256b8f331185faa57105bfe76cba53eaea87",
+      "fingerprintScheme": 2,
       "provenance": {},
       "source": {
         "kind": "inline",
         "name": "inline"
       }
     },
-    "manifestVersion": 2,
+    "manifestVersion": 3,
     "output": {
       "bitsPerSample": 24,
       "channels": 2,
@@ -31,8 +32,8 @@
       "seed": 0
     },
     "score": {
-      "irVersion": 1,
-      "releaseIndependentHash": "sha256:d9c5f4feaf3aa091068a3cf962dd6efce5931484eddd6e7462c76c3dc3641284"
+      "irVersion": 3,
+      "releaseIndependentHash": "sha256:ec90d45ffc8c7c85fb40f73cb097c0043acf91dd533963a189d32de9e0b87e4b"
     },
     "spec": {
       "embedded": null,
@@ -60,14 +61,15 @@
   "histogram": {
     "cues": null,
     "data": {
-      "fingerprint": "sha256:875e4681fc52780352d9ed433c7c45eb2baa11ebcaf36cfe7d3d44e15ea7a212",
+      "fingerprint": "sha256:37ddadfd397a120d5102d19deac2337427ef0bf311f5d2722a773f94c3b13a84",
+      "fingerprintScheme": 2,
       "provenance": {},
       "source": {
         "kind": "file",
         "name": "penguins.json"
       }
     },
-    "manifestVersion": 2,
+    "manifestVersion": 3,
     "output": {
       "bitsPerSample": 24,
       "channels": 2,
@@ -89,8 +91,8 @@
       "seed": 0
     },
     "score": {
-      "irVersion": 1,
-      "releaseIndependentHash": "sha256:b0e5d49d0bff3dfae74633027278a12549801bc78a7e5374298407e621dab30f"
+      "irVersion": 3,
+      "releaseIndependentHash": "sha256:ef562213e0ca03f4cc6c1eac33f2bf6eb16ca4387739d7325a5ad394bfd90b37"
     },
     "spec": {
       "embedded": null,
@@ -118,14 +120,15 @@
   "interval": {
     "cues": null,
     "data": {
-      "fingerprint": "sha256:310d75d36bd6227585a6d814128b0892e89c051c39725dc557c14436f125ea4a",
+      "fingerprint": "sha256:8e9f528524ec0066137c262c6662ea209727aeabba71f0f5e7a7f9023b53936d",
+      "fingerprintScheme": 2,
       "provenance": {},
       "source": {
         "kind": "inline",
         "name": "inline"
       }
     },
-    "manifestVersion": 2,
+    "manifestVersion": 3,
     "output": {
       "bitsPerSample": 24,
       "channels": 2,
@@ -147,8 +150,8 @@
       "seed": 0
     },
     "score": {
-      "irVersion": 1,
-      "releaseIndependentHash": "sha256:ddd5580fe87d0d712657800d481dd6eb5b5c941896a8dcbc5a3dc4d234c2994b"
+      "irVersion": 3,
+      "releaseIndependentHash": "sha256:55d4f121f610447375741298a3ae9a8e7a2c667949d7928f88ba1ebd9250c65f"
     },
     "spec": {
       "embedded": null,
@@ -176,14 +179,15 @@
   "model-fit-overlay": {
     "cues": null,
     "data": {
-      "fingerprint": "sha256:d344e7d8f6c31ca0324357e975d18b16a8f7c94c3391d4507963b907f95bfe78",
+      "fingerprint": "sha256:9ddda21e9c34e897ffd144e13459ab8854eb590b61cc6ea319622040f0c75401",
+      "fingerprintScheme": 2,
       "provenance": {},
       "source": {
         "kind": "inline",
         "name": "inline"
       }
     },
-    "manifestVersion": 2,
+    "manifestVersion": 3,
     "output": {
       "bitsPerSample": 24,
       "channels": 2,
@@ -205,8 +209,8 @@
       "seed": 0
     },
     "score": {
-      "irVersion": 1,
-      "releaseIndependentHash": "sha256:9a5eee7ea6849e7e29f091a24a785f6abfab68908c055df40f1ccf73057e1237"
+      "irVersion": 3,
+      "releaseIndependentHash": "sha256:b991fbc39a6adea4c9e009676c9a1024c797f1046cac98ed0cbc5d806da7caaa"
     },
     "spec": {
       "embedded": null,
@@ -244,14 +248,15 @@
   "residuals-sequence-1": {
     "cues": null,
     "data": {
-      "fingerprint": "sha256:64b25e369a14491b142cd131ec021e8a604afda83ac776439759872762adeb26",
+      "fingerprint": "sha256:be9e0795430f4ff175a2eefdff63c99a8d0e1c3f790027c022efb10b1853eee2",
+      "fingerprintScheme": 2,
       "provenance": {},
       "source": {
         "kind": "inline",
         "name": "inline"
       }
     },
-    "manifestVersion": 2,
+    "manifestVersion": 3,
     "output": {
       "bitsPerSample": 24,
       "channels": 2,
@@ -273,8 +278,8 @@
       "seed": 0
     },
     "score": {
-      "irVersion": 1,
-      "releaseIndependentHash": "sha256:c15dc6b67391ee472060e26831427430e9a35cb3dc65d44febf0f4f3e4888a8c"
+      "irVersion": 3,
+      "releaseIndependentHash": "sha256:b0a16ea4466e6be5bdb8911748e691b965b2bdbfc260fbfa17906273a9210413"
     },
     "spec": {
       "embedded": null,
@@ -302,14 +307,15 @@
   "residuals-sequence-2": {
     "cues": null,
     "data": {
-      "fingerprint": "sha256:b5db0bdbaac916c696869075eec4e2eb9b448df24dee943039e3d118b6d9ef68",
+      "fingerprint": "sha256:20a38eacad5243e181e99cdf3173a4dad9823c31063d7d389b271e71bd41e850",
+      "fingerprintScheme": 2,
       "provenance": {},
       "source": {
         "kind": "inline",
         "name": "inline"
       }
     },
-    "manifestVersion": 2,
+    "manifestVersion": 3,
     "output": {
       "bitsPerSample": 24,
       "channels": 2,
@@ -331,8 +337,8 @@
       "seed": 0
     },
     "score": {
-      "irVersion": 1,
-      "releaseIndependentHash": "sha256:74e5bc6486db7d97b0b3bbb74c79d6fdb344c9ecc889432119cbd2cb7464e5e9"
+      "irVersion": 3,
+      "releaseIndependentHash": "sha256:347464550d7c4284a1533dbb3a9a3897c2cbbec38f0c908c8ab5f5ea47613859"
     },
     "spec": {
       "embedded": null,
@@ -360,14 +366,15 @@
   "sparsity-and-length": {
     "cues": null,
     "data": {
-      "fingerprint": "sha256:40bb0f1dfed010c433cd543d9d77df94b82d3b06d2643a2186c82b4dfb3d5730",
+      "fingerprint": "sha256:99d8bc0cf0ba82c29fbff5782a8493351f61305ba1f782b09928b32bff6a3af8",
+      "fingerprintScheme": 2,
       "provenance": {},
       "source": {
         "kind": "inline",
         "name": "inline"
       }
     },
-    "manifestVersion": 2,
+    "manifestVersion": 3,
     "output": {
       "bitsPerSample": 24,
       "channels": 2,
@@ -389,8 +396,8 @@
       "seed": 0
     },
     "score": {
-      "irVersion": 1,
-      "releaseIndependentHash": "sha256:4bef0df801231ce06b3a60e62154bb2cf5ce2bc72f0b15d5bd568604e86a2427"
+      "irVersion": 3,
+      "releaseIndependentHash": "sha256:9b855fc907fa0b50f5fed38859e4e619ae9223419d981fadda0e12f2bb3469a2"
     },
     "spec": {
       "embedded": null,
@@ -420,14 +427,15 @@
   "sparsity-simple": {
     "cues": null,
     "data": {
-      "fingerprint": "sha256:76928df7c8f249cc0059e098bd413ad6fcd0b8be19205f10da81587fcdb3946e",
+      "fingerprint": "sha256:3e4fcab9bba2dcc8173eaa2bd03006a447c09014dc44ba017b02d0f9944d74d8",
+      "fingerprintScheme": 2,
       "provenance": {},
       "source": {
         "kind": "inline",
         "name": "inline"
       }
     },
-    "manifestVersion": 2,
+    "manifestVersion": 3,
     "output": {
       "bitsPerSample": 24,
       "channels": 2,
@@ -449,8 +457,8 @@
       "seed": 0
     },
     "score": {
-      "irVersion": 1,
-      "releaseIndependentHash": "sha256:ad8308206fb8377eeef0333c1babdb586735aa39248760f1f14ae6a6c5faf39c"
+      "irVersion": 3,
+      "releaseIndependentHash": "sha256:2f544e67eb72a6b0dafd0f002940b37b7235e5994a2d9dfb2e30126e95b7880c"
     },
     "spec": {
       "embedded": null,
@@ -478,14 +486,15 @@
   "time-series": {
     "cues": null,
     "data": {
-      "fingerprint": "sha256:62ea4be3eaf90674a962ba3f4233984f6694c8599a1f5f5d769a2f95872ea496",
+      "fingerprint": "sha256:ae15cd564853eb86d4ef7e4adf9e70aca2d4095ff7d31245e0d29c64f85841e5",
+      "fingerprintScheme": 2,
       "provenance": {},
       "source": {
         "kind": "inline",
         "name": "inline"
       }
     },
-    "manifestVersion": 2,
+    "manifestVersion": 3,
     "output": {
       "bitsPerSample": 24,
       "channels": 2,
@@ -507,8 +516,8 @@
       "seed": 0
     },
     "score": {
-      "irVersion": 1,
-      "releaseIndependentHash": "sha256:9098e7299aba8bf111c97c434b4edbf77ebd598b7f19f376aeac06e6ef8aea02"
+      "irVersion": 3,
+      "releaseIndependentHash": "sha256:df0990cfd00f2068ebfd2e768b598f0d8ad7fbe85fe350b039a4378edc47ed39"
     },
     "spec": {
       "embedded": null,

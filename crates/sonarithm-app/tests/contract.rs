@@ -36,6 +36,21 @@ fn chart(dir: &TempDir) -> (std::path::PathBuf, std::path::PathBuf) {
 }
 
 /// One request per command, in an order where each can succeed.
+/// The relink commands (RFC-0008 §6), run last: a project saved before RFC-0008, whose
+/// linked `d2` waits to be checked and relinked.
+fn relink_requests(dir: &TempDir) -> Vec<Value> {
+    let fixtures = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("tests/fixtures/pre-470");
+    for name in ["pre-470.sonarithm", "more.csv"] {
+        std::fs::copy(fixtures.join(name), dir.path().join(name)).unwrap();
+    }
+    let older = dir.path().join("pre-470.sonarithm");
+    vec![
+        json!({ "command": "project_open", "args": { "path": older } }),
+        json!({ "command": "dataset_relink_check", "args": { "id": "d2" } }),
+        json!({ "command": "dataset_relink", "args": { "id": "d2" } }),
+    ]
+}
+
 fn requests(dir: &TempDir) -> Vec<Value> {
     let csv = dir.path().join("t.csv");
     std::fs::write(&csv, CSV).unwrap();
@@ -148,6 +163,7 @@ fn every_command_answers_with_its_declared_reply_kind() {
     let table: std::collections::BTreeMap<&str, &str> = COMMANDS.iter().copied().collect();
     let mut seen = BTreeSet::new();
     let mut requests = requests(&dir);
+    requests.extend(relink_requests(&dir));
     // settings_set needs the settings as they are.
     let settings = app
         .dispatch_json(&json!({ "command": "settings_get" }).to_string())

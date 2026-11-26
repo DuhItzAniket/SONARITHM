@@ -13,6 +13,8 @@ export const REPLY_KINDS = {
   dataset_open: "dataset",
   dataset_close: "datasets",
   dataset_list: "datasets",
+  dataset_relink_check: "relink_check",
+  dataset_relink: "relinked",
   spec_get: "spec",
   spec_set: "spec",
   spec_apply: "spec_patch",
@@ -192,7 +194,15 @@ path: string, } } | { "command": "dataset_close", "args": {
 /**
  * The dataset's ID, such as `d1`.
  */
-id: string, } } | { "command": "dataset_list" } | { "command": "spec_get" } | { "command": "spec_set", "args": { 
+id: string, } } | { "command": "dataset_list" } | { "command": "dataset_relink_check", "args": { 
+/**
+ * The dataset's ID, such as `d2`.
+ */
+id: string, } } | { "command": "dataset_relink", "args": { 
+/**
+ * The dataset's ID.
+ */
+id: string, } } | { "command": "spec_get" } | { "command": "spec_set", "args": { 
 /**
  * The spec as JSON text.
  */
@@ -598,7 +608,31 @@ jobs: Array<JobInfo>, } | { "reply": "history" } & HistoryState | { "reply": "se
 /**
  * The devices, the system default marked.
  */
-devices: Array<DeviceSummary>, } | { "reply": "project" } & ProjectSummary | { "reply": "recent", 
+devices: Array<DeviceSummary>, } | { "reply": "project" } & ProjectSummary | { "reply": "relink_check", 
+/**
+ * The file name alone.
+ */
+name: string, 
+/**
+ * The file's rows now.
+ */
+rows: number, 
+/**
+ * The rows the project recorded.
+ */
+recordedRows: number, 
+/**
+ * Why the data could not be verified.
+ */
+reason: RelinkReason, } | { "reply": "relinked", 
+/**
+ * The dataset, as `dataset_open` gives it; `rows` is its row count now.
+ */
+dataset: DatasetSummary, 
+/**
+ * The project, unsaved, with the dataset available.
+ */
+project: ProjectSummary, } | { "reply": "recent", 
 /**
  * Most recent first.
  */
@@ -1599,6 +1633,11 @@ linked: boolean,
  * Whether its data is loaded (linked data can be missing or changed).
  */
 available: boolean, };
+
+/**
+ * Why a linked dataset could not be verified against its project (RFC-0008 §6).
+ */
+export type RelinkReason = "olderBuild" | "changed";
 
 /**
  * A recent project.

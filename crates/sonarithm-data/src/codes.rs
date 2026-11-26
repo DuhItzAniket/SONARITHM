@@ -73,6 +73,14 @@ code!(
 );
 
 code!(
+    /// A table holds a type that the data fingerprint does not encode (RFC-0008 §3).
+    UNFINGERPRINTABLE, "SNR-DATA-007", Error,
+    "A table holds a type the data fingerprint does not encode",
+    "Convert the field to a supported type (numbers, text, dates, times, booleans, binary, or lists, structs, maps and unions of them) before loading it.",
+    []
+);
+
+code!(
     /// The CSV dialect that was detected.
     CSV_DIALECT, "SNR-DATA-010", Info,
     "The delimiter and header row were detected",
@@ -332,6 +340,7 @@ pub const CODES: CodeTable = CodeTable {
         MALFORMED_TABLE,
         WRITE_FAILED,
         INVALID_OPTION,
+        UNFINGERPRINTABLE,
         CSV_DIALECT,
         ENCODING_CONVERTED,
         RAGGED_ROWS,

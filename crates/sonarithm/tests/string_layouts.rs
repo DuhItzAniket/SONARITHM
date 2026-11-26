@@ -1,9 +1,9 @@
 // SPDX-FileCopyrightText: 2026 SONARITHM contributors
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
-//! RFC-0008 §3 and §10 (step 1): the same data in each of Arrow's string layouts (plain,
-//! large and view) infers the same semantics and compiles to the same Score. Only the data
-//! fingerprint may differ, since scheme 1 hashes Arrow's bytes; scheme 2 removes that.
+//! RFC-0008 §3 and §10: the same data in each of Arrow's string layouts (plain, large and
+//! view) infers the same semantics and compiles to the same Score, data fingerprint
+//! included, since fingerprint scheme 2 hashes values, not Arrow's bytes.
 
 #![allow(
     clippy::unwrap_used,
@@ -16,7 +16,7 @@ use arrow_array::{
     ArrayRef, Float64Array, Int64Array, LargeStringArray, RecordBatch, StringArray, StringViewArray,
 };
 use sonarithm::{Datasets, Format, ReadOptions, Sonarithm, Spec, Table, read_bytes};
-use sonarithm_core::{Sha256Digest, TableId};
+use sonarithm_core::TableId;
 
 const SPEC: &str = r#"{
     "specVersion": "0.1",
@@ -81,13 +81,13 @@ fn every_string_layout_compiles_to_the_same_score() {
                 .clone();
             let datasets = Datasets::new().with("main", bundle);
             let compiled = Sonarithm::new().compile_with(&spec, &datasets).unwrap();
-            let mut score = compiled.score().clone();
+            let score = compiled.score();
             assert!(
                 score.tracks.iter().all(|t| !t.events.is_empty()),
                 "every track plays ({region})"
             );
-            score.header.data_fingerprint = Sha256Digest::ZERO;
-            serde_json::to_string(&score).unwrap()
+            assert_eq!(score.header.data_fingerprint_scheme, 2);
+            serde_json::to_string(score).unwrap()
         })
         .collect();
     for (other, name) in scores[1..].iter().zip(["LargeUtf8", "Utf8View"]) {

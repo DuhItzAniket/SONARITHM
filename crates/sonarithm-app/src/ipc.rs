@@ -43,6 +43,8 @@ pub const COMMANDS: &[(&str, &str)] = &[
     ("dataset_open", "dataset"),
     ("dataset_close", "datasets"),
     ("dataset_list", "datasets"),
+    ("dataset_relink_check", "relink_check"),
+    ("dataset_relink", "relinked"),
     ("spec_get", "spec"),
     ("spec_set", "spec"),
     ("spec_apply", "spec_patch"),
@@ -156,6 +158,19 @@ pub enum Request {
     },
     /// Lists the open datasets. Replies [`Reply::Datasets`].
     DatasetList,
+    /// Reads an unavailable linked dataset's file again so the user can check it, without
+    /// using the data (RFC-0008 §6, ADR-0017 "Relinking linked data"). Replies
+    /// [`Reply::RelinkCheck`].
+    DatasetRelinkCheck {
+        /// The dataset's ID, such as `d2`.
+        id: String,
+    },
+    /// Reads an unavailable linked dataset's file again and makes it available, marking the
+    /// project unsaved (RFC-0008 §6). Replies [`Reply::Relinked`].
+    DatasetRelink {
+        /// The dataset's ID.
+        id: String,
+    },
     /// The session's spec. Replies [`Reply::Spec`].
     SpecGet,
     /// Replaces the session's spec text; undoable. Replies [`Reply::Spec`].
@@ -600,6 +615,8 @@ impl Request {
             Self::DatasetOpen { .. } => "dataset_open",
             Self::DatasetClose { .. } => "dataset_close",
             Self::DatasetList => "dataset_list",
+            Self::DatasetRelinkCheck { .. } => "dataset_relink_check",
+            Self::DatasetRelink { .. } => "dataset_relink",
             Self::SpecGet => "spec_get",
             Self::SpecSet { .. } => "spec_set",
             Self::SpecApply { .. } => "spec_apply",
@@ -770,6 +787,24 @@ pub enum Reply {
     },
     /// The project after opening or saving.
     Project(ProjectSummary),
+    /// What relinking a linked dataset would use (RFC-0008 §6): the dialog's facts.
+    RelinkCheck {
+        /// The file name alone.
+        name: String,
+        /// The file's rows now.
+        rows: u64,
+        /// The rows the project recorded.
+        recorded_rows: u64,
+        /// Why the data could not be verified.
+        reason: RelinkReason,
+    },
+    /// A linked dataset relinked (RFC-0008 §6).
+    Relinked {
+        /// The dataset, as `dataset_open` gives it; `rows` is its row count now.
+        dataset: DatasetSummary,
+        /// The project, unsaved, with the dataset available.
+        project: ProjectSummary,
+    },
     /// The recent projects.
     Recent {
         /// Most recent first.
@@ -1024,6 +1059,17 @@ pub struct AnnouncementInfo {
     /// Speech is off (B03-T09): show and log it, but do not speak it. Errors and alarms are
     /// never muted (INFER, OD-30).
     pub muted: bool,
+}
+
+/// Why a linked dataset could not be verified against its project (RFC-0008 §6).
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize, TS)]
+#[serde(rename_all = "camelCase")]
+#[non_exhaustive]
+pub enum RelinkReason {
+    /// The project was saved before RFC-0008 and records nothing to verify the file with.
+    OlderBuild,
+    /// The file's size or SHA-256 no longer matches the recorded ones.
+    Changed,
 }
 
 /// Where a cursor move came from (B04-T06, ADR-0017 "Cursor"). It decides what is spoken:

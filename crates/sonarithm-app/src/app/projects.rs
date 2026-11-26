@@ -157,6 +157,8 @@ impl App {
                 linked: open.origin.is_some(),
                 link: None,
                 fingerprint,
+                fingerprint_scheme: sonarithm_data::FINGERPRINT_SCHEME,
+                file: open.file.clone(),
                 function: None,
                 kept: None,
             });
@@ -234,6 +236,7 @@ impl App {
                     origin: dataset.origin,
                     chart,
                     function: dataset.function,
+                    file: dataset.file,
                 },
             );
         }
@@ -376,6 +379,11 @@ impl App {
     }
 
     pub(super) fn project_summary(&self) -> Reply {
+        Reply::Project(self.project_info())
+    }
+
+    /// The project as the `project` reply gives it.
+    pub(super) fn project_info(&self) -> ProjectSummary {
         let mut specs = vec![self.project.active_spec.clone()];
         specs.extend(self.project.other_specs.iter().map(|(id, _)| id.clone()));
         let mut datasets: Vec<ProjectDatasetInfo> = self
@@ -394,7 +402,7 @@ impl App {
             linked: true,
             available: false,
         }));
-        Reply::Project(ProjectSummary {
+        ProjectSummary {
             name: self.project.name.clone(),
             file_name: self.project.path.as_deref().map(file_name),
             unsaved: self.project.unsaved,
@@ -405,7 +413,7 @@ impl App {
             specs,
             datasets,
             diagnostics: self.project.warnings.iter().map(warning_info).collect(),
-        })
+        }
     }
 
     /// Marks the session changed and autosaves when due (RFC-0002 §8).
