@@ -244,6 +244,12 @@ command-nav-find-value = Find a value…
 command-nav-where-am-i = Where am I
 command-nav-repeat = Repeat the last announcement
 command-help-explorer = Explorer keys
+command-mod-speech = Speech on or off
+command-mod-verbosity = Terse or verbose announcements
+command-mod-sonification = Sonification on or off
+command-mod-braille = Braille on or off
+command-mod-visual = Visual highlight on or off
+command-mod-reset = Reset the toggles to the profile's defaults
 # The palette's result count, announced as it filters; $count is a number.
 command-results =
     { $count ->

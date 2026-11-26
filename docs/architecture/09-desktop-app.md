@@ -69,6 +69,7 @@ Tauri offers three primitives with very different performance ([notes/05 §1](..
 | `compile(spec_id)` | `CompileReport` (diagnostics, duration, track summary) | B01 |
 | `transport_play / pause / stop / seek / set_speed / set_loop` | `TransportState` (authoritative) | B01 |
 | `nav_move(verb) / nav_where / nav_query(kind)` | `nav_move`: `NavResult` (the cursor, the outcome, its earcon, the highlight span, whether it was announced; the cue ID follows with the point cue). `nav_where` and `nav_query`: `announce`. They read and move the one cursor of `cursor_set`, never a second one ([ADR-0017 "Navigation"](../decisions/0017-ipc-protocol-v1.md#navigation)). `nav_query` follows in B03-T09's next change | B03 |
+| `modality_toggle(modality) / choices_reset` | `effective`. The explorer's toggles write the saved explicit-choice layer over the profile; never all of speech, sonification and braille off (`SNR-APP-094`) ([ADR-0017 "Modality toggles"](../decisions/0017-ipc-protocol-v1.md#modality-toggles)) | B03 |
 | `cursor_set(dataset, row, origin) / cursor_get` | `CursorState`, and a `cursor` event to every view (B04-T06) | B04 |
 | `inspector_set(track, channel, value)` | `SpecPatchResult` (undo token) | B05 |
 | `history_undo / history_redo` | `SpecPatchResult` | B05 |
