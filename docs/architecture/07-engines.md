@@ -167,7 +167,7 @@ The `function` source adds a row at each zero, extremum and inflection (as at po
 
 | Module | Responsibility |
 |---|---|
-| `detect` | Detectors (statrs, augurs); parameters recorded in annotations |
+| `detect` | Detectors on `libm`, with statrs and augurs only as test references ([ADR-0031](../decisions/0031-echometric-numerics.md)); parameters recorded in annotations ([RFC-0009](../rfcs/0009-echometric-insights-in-the-score.md)) |
 | `describe` | Deterministic L1 (encoding facts) and L2 (statistics) text; the L3 fact list for optional LLM phrasing with numeric verification (D04); never automatic L4 (A11Y-02) |
 | `query` | min, max, mean, median, mode, sd, sum, range, value-at-x (A11Y-22) |
 | `lint` | Rules: SDR-14 (flagged concept), SDR-17 (static reference), SDR-19 (rate), SDR-23 (loudness carrying data), SDR-26 (stream count), SDR-27 (redundant spatial), SDR-28 (critical-band clash), SDR-39 (comfort), A11Y-14 (pan-only information) |
