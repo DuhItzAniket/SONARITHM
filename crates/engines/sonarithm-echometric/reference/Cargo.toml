@@ -14,6 +14,7 @@ publish = false
 
 [dev-dependencies]
 proptest.workspace = true
+sonarithm-core.workspace = true
 sonarithm-echometric.workspace = true
 statrs = { version = "0.19.1", default-features = false }
 
