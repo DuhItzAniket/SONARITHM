@@ -1364,7 +1364,7 @@ A05 (render engine, audio backends, export) uses F-050 to F-069.
 - **Date:** 2026-11-26 · **Phase:** B05-T03 · **Type:** engineering (security) · **Status:** new
 - **Statement:** CodeMirror 6 mounts its base theme through `style-mod` 4.1.5. On a document (not a shadow root) it adds a `<style>` element to `<head>`; it uses constructable stylesheets only for shadow roots. The desktop CSP is `style-src 'self'` with no `'unsafe-inline'` (09 §4), so that element needs a nonce.
 - **Route:** Tauri 2 replaces every `__TAURI_STYLE_NONCE__` in a served HTML page with a fresh random nonce and adds it to `style-src` (`tauri` 2.12.5 `manager::replace_csp_nonce`, tauri-utils `STYLE_NONCE_TOKEN`). `index.html` carries it on `<meta property="csp-nonce">`, and the editor passes it to `EditorView.cspNonce`. The CSP is not weakened.
-- **Evidence:** `style-mod` `StyleSet` constructor; `tauri` 2.12.5 `src/manager/mod.rs`. TODO(verify): the Spec tab rendering styled under the real CSP in the desktop app, before the PR merges.
-- **Evidence level / confidence:** EV-C / Moderate until the desktop check
+- **Evidence:** `style-mod` `StyleSet` constructor; `tauri` 2.12.5 `src/manager/mod.rs`. Checked in the desktop app (debug build, WebView2, Windows, 2026-11-26) through the remote-debugging port: the meta's token was replaced by a nonce, CodeMirror's `<style>` carried it, the editor rendered styled (`.cm-editor` `display: flex`, gutters, line numbers, the error mark), and the console had no CSP report. A `<style>` added without the nonce was refused with "Applying inline style violates … style-src 'self' 'nonce-…'", so the policy was in force.
+- **Evidence level / confidence:** EV-B / Strong on WebView2; WKWebView and WebKitGTK follow the same nonce route, unchecked locally
 - **Affects:** 09 §4; `apps/desktop/index.html`, `apps/desktop/src/spec/nonce.ts`
 - **Papers:** none yet
