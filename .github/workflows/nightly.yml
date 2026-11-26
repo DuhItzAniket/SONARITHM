@@ -2,11 +2,14 @@
 # §7), 30 minutes per target each night: the spec parser and migrations (from A03) and the
 # data-layer importers (from A04: CSV/TSV, JSON/NDJSON, XLSX/ODS, Parquet/Arrow IPC), the
 # `.sonarithm` project reader (from B05) and the stream payload decoders (from B06: JSON,
-# OSC, lines), the chart parsers (from C01) and the function expressions (from C03).
-# Manual dispatch takes the seconds per target; use 3600 for an exit run. Pull requests that
-# touch a fuzzed crate run a two-minute smoke fuzz of every target. From A05: the 10-minute
-# allocation soak on the null device; from B06: the 10-minute stream soak (PB-11)
-# (testing-strategy §9.3). Not a required check.
+# OSC, lines), the chart parsers (from C01) and the function expressions (from C03). The
+# targets are the `[[bin]]` entries of every `crates/**/fuzz/Cargo.toml`, so a new one is
+# fuzzed without editing this file.
+# Manual dispatch takes the seconds per target; use 3600 for an exit run. A pull request
+# runs a two-minute smoke fuzz of each target in a crate it changes (the `plan` job,
+# .github/scripts/ci_scope.py), and of every target when it changes this workflow, that
+# script, `sonarithm-core`, or any `Cargo.toml` or `Cargo.lock`. From A05: the 10-minute allocation soak on the null device; from B06: the
+# 10-minute stream soak (PB-11) (testing-strategy §9.3). Not a required check.
 name: nightly
 
 on:
@@ -28,6 +31,10 @@ on:
       - "crates/engines/sonarithm-plotsona/**"
       - "crates/engines/sonarithm-curvasona/**"
       - ".github/workflows/nightly.yml"
+      - ".github/scripts/ci_scope.py"
+      # A dependency change smoke-fuzzes every target (ci_scope.py FUZZ_EVERYTHING_NAMES).
+      - "**/Cargo.toml"
+      - "**/Cargo.lock"
 
 permissions: {}
 
@@ -36,8 +43,38 @@ concurrency:
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
+  # The fuzz targets to run: all of them off pull requests, and on a pull request those of
+  # the crates it changes (`git diff --name-only` of the merge commit against the base).
+  plan:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    timeout-minutes: 5
+    outputs:
+      fuzz: ${{ steps.scope.outputs.fuzz }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          fetch-depth: 2
+      - run: python3 -m unittest discover --start-directory .github/scripts --verbose
+      # `shell: bash` adds pipefail, so a failing script fails the step despite `tee`.
+      - id: scope
+        shell: bash
+        env:
+          EVENT: ${{ github.event_name }}
+        run: |
+          if [ "$EVENT" = pull_request ]; then
+            git diff --name-only --no-renames HEAD^1 HEAD > "$RUNNER_TEMP/changed.txt"
+          else
+            : > "$RUNNER_TEMP/changed.txt"
+          fi
+          python3 .github/scripts/ci_scope.py changes --event "$EVENT" < "$RUNNER_TEMP/changed.txt" | tee -a "$GITHUB_OUTPUT"
+
   fuzz:
     name: fuzz (${{ matrix.target }})
+    needs: plan
+    if: needs.plan.outputs.fuzz != '[]'
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -45,28 +82,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        include:
-          - { crate: sonarithm-spec, target: spec_parse }
-          - { crate: sonarithm-spec, target: spec_migrate }
-          - { crate: sonarithm-spec, target: corrections_read }
-          - { crate: sonarithm-data, target: csv_read }
-          - { crate: sonarithm-data, target: json_read }
-          - { crate: sonarithm-data, target: xlsx_read }
-          - { crate: sonarithm-data, target: columnar_read }
-          - { crate: sonarithm-stream, target: stream_json }
-          - { crate: sonarithm-stream, target: stream_osc }
-          - { crate: sonarithm-stream, target: stream_line }
-          - { crate: sonarithm-app, target: project_open }
-          - { crate: engines/sonarithm-plotsona, target: chart_extract }
-          - { crate: engines/sonarithm-plotsona, target: office_chart }
-          - { crate: engines/sonarithm-plotsona, target: chart_json }
-          - { crate: engines/sonarithm-plotsona, target: html_page }
-          - { crate: engines/sonarithm-plotsona, target: svg_chart }
-          - { crate: engines/sonarithm-plotsona, target: pdf_chart }
-          - { crate: engines/sonarithm-plotsona, target: vegalite_import }
-          - { crate: engines/sonarithm-plotsona, target: maidr_import }
-          - { crate: engines/sonarithm-plotsona, target: raster_image }
-          - { crate: engines/sonarithm-curvasona, target: expr_parse }
+        include: ${{ fromJSON(needs.plan.outputs.fuzz) }}
     env:
       FUZZ_SECONDS: ${{ github.event_name == 'pull_request' && '120' || inputs.seconds || '1800' }}
     steps:
