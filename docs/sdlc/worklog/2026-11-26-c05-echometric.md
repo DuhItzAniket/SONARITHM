@@ -30,6 +30,13 @@
   - `outliers`: a robust z over moving-median residuals (F-205).
   - GEN-011, labelled outliers (DS-010), with precision and recall tests.
 
+- **C05-T03:**
+  - `changepoints`: PELT with an L2 cost, its penalty scaled by a robust noise estimate from the first differences.
+  - `periodicity`: the first strong peak of the normalised autocorrelation, so a period beats its multiples.
+  - `trend-segments`: the runs between `extrema`'s turns.
+  - GEN-012, labelled level shifts and periods (DS-010).
+  - Each finding's score is recorded under its own name (`robustZ`, `shift`, `correlation`).
+
 ## Decisions
 
 | Decision | Why | Record |
@@ -38,6 +45,9 @@
 | Annotations name their field, and analyzers get the played fields | Without it, an outlier in a second series was linked to the first and announced as the wrong series | RFC-0009 §1 amendment |
 | GEN-011, not GEN-005 | GEN-005 to GEN-010 are planned for other studies (datasets.md) | `harness/generators/outliers.rs` |
 | Outliers from moving-median residuals | A robust z over the whole series missed spikes on a periodic base; one inside small windows called noise an outlier | F-205 |
+| The first and last values are never judged as outliers, and the limitation is stated, not silent | The coordinator's condition for the ADR-0031 amendment; a fair judgement of an end needs the local trend | F-205, #507 |
+| PELT's penalty scales with σ² from the MAD of first differences | A level shift moves one difference and does not inflate the estimate, so the same shift is found in any unit | `detect/changepoints.rs` |
+| A period is the first strong autocorrelation peak within 0.1 of the highest | A period's multiples correlate almost as well; the highest peak alone can pick 2P | `detect/periodicity.rs` |
 | A GEN-001 turn may sit one row from the generator's on a tie | At one point per hour, a sine peak falls between two equal rows; the count is exact | `tests/detectors.rs` |
 
 ## Findings to log
@@ -46,5 +56,5 @@
 
 ## Next
 
-- C05-T03: change points (PELT), periodicity (autocorrelation) and trend segments, with a new labelled generator (change points and period) and the augurs references.
+- C05-T03's augurs references (change points and seasonality), with the builder slot.
 - C05-T06 starts after Lane U's batched explorer PR, extending `nav_query` (c05-t06 proposal, approved).

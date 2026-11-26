@@ -36,6 +36,15 @@ pub const EXTREMA: AnalyzerId = AnalyzerId::from_static("extrema");
 /// The `outliers` analyzer.
 pub const OUTLIERS: AnalyzerId = AnalyzerId::from_static("outliers");
 
+/// The `changepoints` analyzer.
+pub const CHANGEPOINTS: AnalyzerId = AnalyzerId::from_static("changepoints");
+
+/// The `periodicity` analyzer.
+pub const PERIODICITY: AnalyzerId = AnalyzerId::from_static("periodicity");
+
+/// The `trend-segments` analyzer.
+pub const TREND_SEGMENTS: AnalyzerId = AnalyzerId::from_static("trend-segments");
+
 /// ECHOMETRIC's detectors, as `analysis.detect` names them.
 pub const DETECTORS: [&str; 5] = [
     "extrema",
@@ -59,8 +68,7 @@ pub fn is_used_by(spec: &serde_json::Value) -> bool {
         })
 }
 
-/// ECHOMETRIC's analytics: the detectors so far (C05-T02); change points, periodicity and
-/// trend segments join in C05-T03.
+/// ECHOMETRIC's analytics: its five detectors (C05-T02, T03).
 #[derive(Clone, Copy, Debug, Default)]
 pub struct Echometric;
 
@@ -86,6 +94,9 @@ impl Engine<DataBundle> for Echometric {
     fn register(&self, registrar: &mut Registrar<'_, DataBundle>) -> Result<(), RegistryError> {
         registrar.analyzer(EXTREMA, Arc::new(Detector::Extrema))?;
         registrar.analyzer(OUTLIERS, Arc::new(Detector::Outliers))?;
+        registrar.analyzer(CHANGEPOINTS, Arc::new(Detector::Changepoints))?;
+        registrar.analyzer(PERIODICITY, Arc::new(Detector::Periodicity))?;
+        registrar.analyzer(TREND_SEGMENTS, Arc::new(Detector::TrendSegments))?;
         Ok(())
     }
 }
@@ -95,6 +106,9 @@ impl Engine<DataBundle> for Echometric {
 enum Detector {
     Extrema,
     Outliers,
+    Changepoints,
+    Periodicity,
+    TrendSegments,
 }
 
 impl Detector {
@@ -102,6 +116,9 @@ impl Detector {
         match self {
             Self::Extrema => EXTREMA,
             Self::Outliers => OUTLIERS,
+            Self::Changepoints => CHANGEPOINTS,
+            Self::Periodicity => PERIODICITY,
+            Self::TrendSegments => TREND_SEGMENTS,
         }
     }
 
@@ -109,6 +126,19 @@ impl Detector {
         match self {
             Self::Extrema => detect::extrema::params(),
             Self::Outliers => detect::outliers::params(),
+            Self::Changepoints => detect::changepoints::params(),
+            Self::Periodicity => detect::periodicity::params(),
+            Self::TrendSegments => detect::trends::params(),
+        }
+    }
+
+    /// The name a finding's score is recorded under in its annotation's parameters.
+    const fn score_name(self) -> &'static str {
+        match self {
+            Self::Outliers => "robustZ",
+            Self::Changepoints => "shift",
+            Self::Periodicity => "correlation",
+            Self::Extrema | Self::TrendSegments => "score",
         }
     }
 
@@ -116,6 +146,9 @@ impl Detector {
         match self {
             Self::Extrema => detect::extrema::detect(series),
             Self::Outliers => detect::outliers::detect(series),
+            Self::Changepoints => detect::changepoints::detect(series),
+            Self::Periodicity => detect::periodicity::detect(series),
+            Self::TrendSegments => detect::trends::detect(series),
         }
     }
 }
@@ -176,7 +209,10 @@ fn annotation(detector: Detector, table: &Table, field: &str, finding: &Finding)
         })
         .collect();
     if let Some(score) = finding.score {
-        params.insert("robustZ".to_owned(), AnnotationParam::Number(score));
+        params.insert(
+            detector.score_name().to_owned(),
+            AnnotationParam::Number(score),
+        );
     }
     annotation.params = params;
     annotation
