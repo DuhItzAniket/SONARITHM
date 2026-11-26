@@ -18,8 +18,8 @@ Owner: `sonarithm-app`.
 | `SNR-APP-005` | error | Transport value out of range | Positions are seconds from 0 to the Score's duration, speeds are 0.25 to 4 times, and a loop needs a start before its end. | A11Y-09 |
 | `SNR-APP-006` | error | Audio output is not available | Check that an output device is connected and not in exclusive use by another application, or choose another device with device_select. | — |
 | `SNR-APP-007` | error | The playback control thread is not responding | Restart SONARITHM. If it happens again, report it with the log file. | — |
-| `SNR-APP-008` | error | The compile failed | Check the spec and its data source, then compile again. If it happens again, report            it with the spec. | — |
-| `SNR-APP-009` | error | Invalid IPC request | Send a request generated from the protocol types: {"command": "<name>", "args":            {...}}. | — |
+| `SNR-APP-008` | error | The compile failed | Check the spec and its data source, then compile again. If it happens again, report it with the spec. | — |
+| `SNR-APP-009` | error | Invalid IPC request | Send a request generated from the protocol types: {"command": "<name>", "args": {...}}. | — |
 | `SNR-APP-010` | error | Settings could not be saved | Check that the settings folder is writable and the disk is not full. The previous settings stay in place. | — |
 | `SNR-APP-011` | warning | Settings were recovered | The settings file could not be read, so the last good copy or the defaults are in use. Saving settings writes a new file. | — |
 | `SNR-APP-012` | warning | Settings come from a newer version | This version uses its defaults and does not overwrite the newer file. Update SONARITHM to use those settings. | — |
@@ -37,22 +37,23 @@ Owner: `sonarithm-app`.
 | `SNR-APP-050` | error | Not a binary view this version reads | Build the user interface and the host from the same commit; a view's header version, kind and data types must all be known to the reader. | — |
 | `SNR-APP-060` | error | The file cannot be opened | Choose an existing CSV, TSV, JSON, NDJSON, Parquet, Arrow, XLSX or ODS file. | — |
 | `SNR-APP-070` | error | No such stream | List the open streams with stream_list; a stopped stream is gone. | — |
-| `SNR-APP-071` | error | The stream source is not valid | Give a transport (websocket, osc, serial, mqtt or tail) and its address; a file to            follow is an absolute path in an existing folder. | — |
-| `SNR-APP-072` | error | The stream cannot connect | Offer the stream again with stream_offer, show the user what it connects to, and            connect with the token only after the user approves. | A11Y-16 |
-| `SNR-APP-073` | error | The spec cannot play live | Give the spec a stream source and a pace of secondsPerUnit or pointsPerSecond,            then start live playback again. | — |
-| `SNR-APP-074` | warning | A live window did not compile | Playback goes on with the last window that compiled. Check the stream's fields            against the spec. | — |
+| `SNR-APP-071` | error | The stream source is not valid | Give a transport (websocket, osc, serial, mqtt or tail) and its address; a file to follow is an absolute path in an existing folder. | — |
+| `SNR-APP-072` | error | The stream cannot connect | Offer the stream again with stream_offer, show the user what it connects to, and connect with the token only after the user approves. | A11Y-16 |
+| `SNR-APP-073` | error | The spec cannot play live | Give the spec a stream source and a pace of secondsPerUnit or pointsPerSecond, then start live playback again. | — |
+| `SNR-APP-074` | warning | A live window did not compile | Playback goes on with the last window that compiled. Check the stream's fields against the spec. | — |
 | `SNR-APP-080` | error | The profile is not valid | Use a profile exported from SONARITHM, or fix the value the message names. | SDR-38 |
 | `SNR-APP-081` | error | The profile needs a newer SONARITHM | Update SONARITHM to use this profile; this version does not guess at newer formats. | — |
 | `SNR-APP-082` | warning | Parts of the profile are unknown to this version | The profile works; saving it with this version drops what it does not know. | — |
 | `SNR-APP-083` | error | No such profile | List the profiles with profile_list. Presets cannot be changed: save a copy. | — |
-| `SNR-APP-084` | error | The corrections are not valid | A correction set follows RFC-0005: edits with IDs e1, e2, …, `before` on every edit            of an existing point, and `+e<n>` only for an earlier `add`. Nothing was changed. | — |
-| `SNR-APP-085` | error | These corrections cannot change now | A project keeps a chart's corrections and their history, but not the chart file.            Open the chart file again to correct it; export works as it is. | — |
-| `SNR-APP-086` | error | These corrections do not belong to this dataset | Corrections apply to a dataset opened from a chart, and a correction file only to            the chart it was made on (same SHA-256 and extractor, RFC-0005 §3). | — |
+| `SNR-APP-084` | error | The corrections are not valid | A correction set follows RFC-0005: edits with IDs e1, e2, …, `before` on every edit of an existing point, and `+e<n>` only for an earlier `add`. Nothing was changed. | — |
+| `SNR-APP-085` | error | These corrections cannot change now | A project keeps a chart's corrections and their history, but not the chart file. Open the chart file again to correct it; export works as it is. | — |
+| `SNR-APP-086` | error | These corrections do not belong to this dataset | Corrections apply to a dataset opened from a chart, and a correction file only to the chart it was made on (same SHA-256 and extractor, RFC-0005 §3). | — |
 | `SNR-APP-087` | error | The row is outside the dataset | A cursor row counts from 0 and is below the dataset's row count (`rows` in its summary). Nothing was changed. | — |
 | `SNR-APP-088` | error | The function is too large to read | An expression is at most 4096 bytes and names at most 64 variables before it is read; the expression language then allows 1024 characters and 16 variables (ADR-0028). Shorten it, or split it with variables. | — |
 | `SNR-APP-089` | error | RETIRED: A function dataset could not be saved in a project | Retired: project format 1.1 saves a function dataset as its definition (RFC-0002 §12). | — |
 | `SNR-APP-090` | error | There is nothing to explore yet | The chart explorer moves through the navigation tree of the compiled Score. Compile the spec, then explore. Nothing was changed. | — |
 | `SNR-APP-093` | warning | A dataset was fingerprinted again | Another SONARITHM build computed the dataset's fingerprint differently. Embedded data matches the project's own checksum, so it opens unchanged; a function opens sampled again from its definition. Save the project to record the new fingerprint. | — |
+| `SNR-APP-094` | error | That would silence every output | Speech, sonification and braille cannot all be off: nothing would tell you what the app is doing. Turn another one on first, or reset the toggles to your profile's defaults. Nothing was changed. | — |
 
 ## SNR-COMP
 
@@ -188,8 +189,8 @@ Owner: `sonarithm-sonotrace`. Numbers SNR-ENG-200 to SNR-ENG-299.
 |---|---|---|---|---|
 | `SNR-ENG-200` | error | No stream is connected | Connect the stream first (a connection opens only on your command); the spec then compiles against the rows the stream holds. | A11Y-16 |
 | `SNR-ENG-201` | warning | Live mode skipped events without a data row | Live mode plays the events of new rows only. Context events such as ticks and earcons come from AUDAXIS in live mode instead. | — |
-| `SNR-ENG-240` | warning | The soundscape is not available | Only the default soundscape exists until B06's evaluation chooses others; it plays            instead. | SDR-35 |
-| `SNR-ENG-241` | info | Experimental comfort budget | SDR-39 is an inference: the share of the session the soundscape is bright is            reported, not enforced, until an experiment validates a budget (H-12). | SDR-39 |
+| `SNR-ENG-240` | warning | The soundscape is not available | Only the default soundscape exists until B06's evaluation chooses others; it plays instead. | SDR-35 |
+| `SNR-ENG-241` | info | Experimental comfort budget | SDR-39 is an inference: the share of the session the soundscape is bright is reported, not enforced, until an experiment validates a budget (H-12). | SDR-39 |
 
 Owner: `sonarithm-plotsona`. Numbers SNR-ENG-300 to SNR-ENG-399.
 
@@ -208,22 +209,22 @@ Owner: `sonarithm-plotsona`. Numbers SNR-ENG-300 to SNR-ENG-399.
 | `SNR-ENG-310` | error | The chosen extractor does not fit the file | Set `extractor` to `auto`, or to the extractor of the file's format. | — |
 | `SNR-ENG-311` | error | The chart file is encrypted | PLOTSONA does not decrypt files. Save an unprotected copy. | — |
 | `SNR-ENG-312` | error | The chart file cannot be read | Check that the path is relative to the spec's directory and the file exists. | — |
-| `SNR-ENG-320` | error | The axis has too few anchors to calibrate | Calibration needs at least two ticks or anchors with different positions and            values. Enter two anchors by hand in `calibration` if the labels cannot be read. | — |
+| `SNR-ENG-320` | error | The axis has too few anchors to calibrate | Calibration needs at least two ticks or anchors with different positions and values. Enter two anchors by hand in `calibration` if the labels cannot be read. | — |
 | `SNR-ENG-321` | error | A logarithmic axis has a value that is not above zero | Log axes place only positive values. Check the axis type and the tick labels. | — |
-| `SNR-ENG-322` | error | The axis ticks are not monotonic | Tick values must rise (or fall) steadily along the axis (10 §3.1). Labels may            have been read from the wrong ticks; enter the anchors by hand. | — |
-| `SNR-ENG-323` | warning | The axis scale does not match its tick spacing | A log axis read as linear, or the reverse, distorts every value (10 §3.1). Set            the axis kind in `calibration`. | — |
-| `SNR-ENG-324` | warning | Some points lie outside the plot area | Their values are extrapolated beyond the ticks and may belong to a legend or an            annotation rather than the data (10 §3.1). | — |
-| `SNR-ENG-325` | warning | The axis calibration is imprecise | The ticks sit more than 0.5 % of the axis away from the fitted scale, so values            read through it carry that error. Their confidence is lowered to match. | — |
+| `SNR-ENG-322` | error | The axis ticks are not monotonic | Tick values must rise (or fall) steadily along the axis (10 §3.1). Labels may have been read from the wrong ticks; enter the anchors by hand. | — |
+| `SNR-ENG-323` | warning | The axis scale does not match its tick spacing | A log axis read as linear, or the reverse, distorts every value (10 §3.1). Set the axis kind in `calibration`. | — |
+| `SNR-ENG-324` | warning | Some points lie outside the plot area | Their values are extrapolated beyond the ticks and may belong to a legend or an annotation rather than the data (10 §3.1). | — |
+| `SNR-ENG-325` | warning | The axis calibration is imprecise | The ticks sit more than 0.5 % of the axis away from the fitted scale, so values read through it carry that error. Their confidence is lowered to match. | — |
 | `SNR-ENG-326` | warning | Some tick labels could not be read | Unread labels are skipped, never guessed; the axis is calibrated from the rest. | — |
 | `SNR-ENG-327` | error | The image cannot be decoded | The PNG or JPEG file is damaged or uses a feature the decoder does not support. Export the chart again, or use its source file if you have one. | — |
 | `SNR-ENG-328` | error | A raster chart needs an axis calibration | Add `data.source.calibration` with two anchors on each axis: the pixel position of a tick and its value. SONARITHM does not read tick labels from images yet. | — |
 | `SNR-ENG-329` | warning | The series found differ from the legend | Series are told apart by colour. Two series in similar colours may have merged, or a marked line split; check the extracted series against the chart (10 §3.1). | — |
 | `SNR-ENG-340` | warning | Only the first of several charts was read | A chart source reads one chart. Save the chart you want in a file of its own. | — |
-| `SNR-ENG-341` | error | A chart series has no stored values | Office charts keep a cache of the values they show. Open the file in the            program that made it and save it again to rebuild the cache. | — |
-| `SNR-ENG-342` | warning | An external data link was not followed | PLOTSONA never opens files or addresses a document points to (12 §6). The values            cached in the chart are used. | — |
+| `SNR-ENG-341` | error | A chart series has no stored values | Office charts keep a cache of the values they show. Open the file in the program that made it and save it again to rebuild the cache. | — |
+| `SNR-ENG-342` | warning | An external data link was not followed | PLOTSONA never opens files or addresses a document points to (12 §6). The values cached in the chart are used. | — |
 | `SNR-ENG-343` | warning | The chart's workbook could not be read | The values cached in the chart are used instead; they are what the chart shows. | — |
-| `SNR-ENG-344` | info | Values were read from the chart's workbook | The workbook is the data the chart was built from, so it is preferred to the            chart's cache. | — |
-| `SNR-ENG-345` | warning | The chart's cache differs from its workbook | The workbook's values were used. What the chart shows may be older until the            file is opened and saved in its program. | — |
+| `SNR-ENG-344` | info | Values were read from the chart's workbook | The workbook is the data the chart was built from, so it is preferred to the chart's cache. | — |
+| `SNR-ENG-345` | warning | The chart's cache differs from its workbook | The workbook's values were used. What the chart shows may be older until the file is opened and saved in its program. | — |
 | `SNR-ENG-346` | error | Remote data was not fetched | PLOTSONA reads only the data inside a chart file and never connects anywhere (ADR-0012, OD-25). Download the data and load it as a file source, or put it in the chart's JSON. | — |
 | `SNR-ENG-347` | error | Data built by a script was not run | Chart data made by a function, a signal or a generator needs its script, and PLOTSONA runs no scripts from files (OD-25). Export the chart's data or JSON. | — |
 | `SNR-ENG-348` | warning | A data transform was not applied | Transforms that need an expression language (filters, formulas, time units, bins) are not run, so the values are the stored data before them. Check them against the chart. | — |
@@ -232,15 +233,15 @@ Owner: `sonarithm-plotsona`. Numbers SNR-ENG-300 to SNR-ENG-399.
 | `SNR-ENG-361` | warning | Scripts in the SVG were ignored | PLOTSONA never runs scripts from files (OD-25). A chart that a script draws after loading has nothing to read; export it after it is drawn. | — |
 | `SNR-ENG-362` | error | No axes with tick labels were found | Vector charts are read through their axes' tick labels (10 §3.1). If the labels are drawn as outlines rather than text, enter the axes' anchors in `calibration`. | — |
 | `SNR-ENG-363` | info | Pie values are shares in percent | A pie's geometry holds each slice's share of the whole, not the numbers behind it. The shares are exact to the drawing's precision. | — |
-| `SNR-ENG-364` | error | The PDF has no vector chart | The pages hold only images, so the chart must be read by the raster tier (C02),            as an estimate. Use the chart's source file or a vector export if you have one. | — |
-| `SNR-ENG-380` | warning | Experimental chart template | No design rule covers this chart type's sound design yet (pie and stacked bar), so            it may change when a study supports one. Write `tracks` to choose the design            yourself. | SDR-03 |
-| `SNR-ENG-381` | warning | A chart construct was not imported | SONARITHM has no equivalent for it; the note says what to write by hand. The            pointer is in the imported document. | SDR-05 |
+| `SNR-ENG-364` | error | The PDF has no vector chart | The pages hold only images, so the chart must be read by the raster tier (C02), as an estimate. Use the chart's source file or a vector export if you have one. | — |
+| `SNR-ENG-380` | warning | Experimental chart template | No design rule covers this chart type's sound design yet (pie and stacked bar), so it may change when a study supports one. Write `tracks` to choose the design yourself. | SDR-03 |
+| `SNR-ENG-381` | warning | A chart construct was not imported | SONARITHM has no equivalent for it; the note says what to write by hand. The pointer is in the imported document. | SDR-05 |
 | `SNR-ENG-382` | info | A chart construct was imported approximately | The note says how the sound differs from the picture. | SDR-05 |
-| `SNR-ENG-383` | error | The document cannot be imported | Check that it is a Vega-Lite or MAIDR document of a supported chart type, or            write the spec's tracks by hand. | — |
-| `SNR-ENG-384` | error | The imported chart has no readable data | Give the chart inline values or a local data file; SONARITHM never fetches data            from the network (ADR-0012). | — |
-| `SNR-ENG-385` | info | Chart extracted | The message counts the points by how they were obtained: exact, calibrated from            the drawing, or estimated. Estimated values are announced as estimates. | — |
-| `SNR-ENG-386` | warning | A chart correction was not applied | An edit applies only to the point it was made on, checked by its `was` value; the            point is gone or now has another value. Re-make the edit on the current extraction. | — |
-| `SNR-ENG-387` | warning | The corrections were made on another chart | A correction file is bound to its chart by the chart's SHA-256 and the extractor;            this chart differs, so no edit was applied. Open the chart the file was made for. | — |
+| `SNR-ENG-383` | error | The document cannot be imported | Check that it is a Vega-Lite or MAIDR document of a supported chart type, or write the spec's tracks by hand. | — |
+| `SNR-ENG-384` | error | The imported chart has no readable data | Give the chart inline values or a local data file; SONARITHM never fetches data from the network (ADR-0012). | — |
+| `SNR-ENG-385` | info | Chart extracted | The message counts the points by how they were obtained: exact, calibrated from the drawing, or estimated. Estimated values are announced as estimates. | — |
+| `SNR-ENG-386` | warning | A chart correction was not applied | An edit applies only to the point it was made on, checked by its `was` value; the point is gone or now has another value. Re-make the edit on the current extraction. | — |
+| `SNR-ENG-387` | warning | The corrections were made on another chart | A correction file is bound to its chart by the chart's SHA-256 and the extractor; this chart differs, so no edit was applied. Open the chart the file was made for. | — |
 
 Owner: `sonarithm-curvasona`. Numbers SNR-ENG-400 to SNR-ENG-499.
 

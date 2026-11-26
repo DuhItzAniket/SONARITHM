@@ -15,6 +15,8 @@ This report follows the [gate review template](_gate-review-template.md) and add
 | WebGL2 frame times | A02-T06 | [#102](https://github.com/DuhItzAniket/SONARITHM/pull/102), stacked on #101 | `spikes/tauri-webview/src/webgl.ts` |
 | Accessibility prototype and walkthrough scripts | A02-T07 | [#107](https://github.com/DuhItzAniket/SONARITHM/pull/107), stacked on #102 | `spikes/tauri-webview/src/a11y/`, `spikes/tauri-webview/WALKTHROUGH.md` |
 
+The two spike workflows (`spike-a02-determinism.yml`, `spike-a02-tauri.yml`) were retired on 2026-11-26 to save CI time: Dependabot's weekly action updates edited them, so each update ran 7 spike jobs. Their last version is in commit `04d0fe16`, and their runs and results are recorded below and in the findings log.
+
 All measurements were taken on the owner's laptop (HW-01) or on GitHub-hosted runners (CI-LNX, CI-WIN, CI-MAC); the hardware records are in the [benchmarks log](../../research-paper/benchmarks-log.md#reference-hardware). HW-01 is much faster than the Windows reference machine. Where a result exceeded 50% of its budget, it was measured again with the CPU limited to 4 E-cores (HW-01e), as the headroom rule of [12 §8](../../architecture/12-cross-cutting-concerns.md#8-performance-budgets) requires. No number in this report is estimated; everything not measured is marked **pending**.
 
 ## Decision
@@ -57,6 +59,14 @@ Conditions (conditional go):
 - The owner's Narrator walkthrough comes before B02-T10 and before any component is signed off.
 - ADR-0002 and ADR-0003 stay provisional until those results are recorded here. A failure opens rework issues (R-33).
 - Conditions: the thin host; the announcer behind one interface for both OD-05 routes; axe, keyboard tests and this report's UI Automation tree dump in CI for every component.
+
+**Amended 2026-11-26 ([OD-33](../../planning/open-decisions.md#closed-decisions), owner decision; [close-out](A02-closeout.md)).**
+
+- A02 closes once the Narrator walkthrough is recorded here and ADR-0002 and ADR-0003 are confirmed for Windows.
+- PB-09 on macOS and Linux is closed on CI evidence (F-040, F-227), with the limit recorded: CI runners are virtual machines, not reference hardware.
+- The macOS session (WKWebView frame rates, App Nap, VoiceOver) and output latency on macOS and Linux move to B07's M-04 session (B07-T02). ADR-0002 and ADR-0003 stay provisional for macOS until then.
+- The Ubuntu live-USB session (WebKitGTK on real GPUs, Orca) stays due by B03's exit: it decides the Electron trigger.
+- The Narrator walkthrough is agent-run through desktop control, when the owner says go.
 
 ## Go/no-go criteria
 
@@ -334,10 +344,12 @@ New risks raised at this gate:
 
 Everything below is scripted in `spikes/tauri-webview/WALKTHROUGH.md`, which has the commands, expected results and a results table.
 
+**Close-out (2026-11-26).** [A02-closeout.md](A02-closeout.md) lists, for each step below, the evidence the gate needs and the evidence that exists now, including CI evidence from after this report (F-212, F-227). It recommends, per step, closing with CI evidence, deferring to B07, or the owner's hardware. The owner decided them on 2026-11-26 ([OD-33](../../planning/open-decisions.md#closed-decisions), option (b)). P2's full script, with pass criteria and an agent-run option, is [A02-narrator-walkthrough.md](A02-narrator-walkthrough.md): prepared, not run.
+
 | # | Step | Who | Where | Covers |
 |---|---|---|---|---|
 | P1 | NVDA walkthrough, steps 1–20. **Done 2026-10-29 (steps 1–19, agent-driven, [Spike 5](#nvda-agent-driven-speech-viewer-transcript)).** Left for the owner: step 20, and listening checks on steps 4, 13 and 17 | Coordinator (desktop control); owner for step 20 and the listening checks | HW-01 | ADR-0003, OD-05, R-02 |
-| P2 | Narrator walkthrough, steps 1–19 | Owner | HW-01 | OD-05 (the native route), R-02 |
+| P2 | Narrator walkthrough, steps 1–19. Script ready: [A02-narrator-walkthrough.md](A02-narrator-walkthrough.md) | Agent-run through desktop control when the owner says go; the owner listens for the timing checks (OD-33) | HW-01 | OD-05 (the native route), R-02 |
 | P3 | Ubuntu live USB: IPC (L1), WebGL2 on Intel (L2), the discrete GPU via `DRI_PRIME` (L3), without DMABUF (L4), X11 (L5) | Owner | HW-01 | ADR-0002 Linux trigger, PB-08, PB-09, R-01 |
 | P4 | Orca walkthrough | Owner | HW-01 live USB | ADR-0002 Linux trigger, R-01, R-02 |
 | P5 | macOS: IPC (M1), App Nap check (M2), WebGL2 (M3), VoiceOver (M4) | Volunteer or lab Mac | Mac | ADR-0002, ADR-0003, R-22 |

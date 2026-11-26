@@ -21,6 +21,7 @@ import { Preferences } from "../preferences/Preferences.tsx";
 import { TransportBar } from "../transport/TransportBar.tsx";
 import { CursorReadout } from "../cursor/CursorReadout.tsx";
 import { Explorer } from "../explorer/Explorer.tsx";
+import { visualOn } from "../explorer/effective.ts";
 import { ExplorerCommands } from "../explorer/ExplorerCommands.tsx";
 import { FunctionCommands } from "../function/FunctionCommands.tsx";
 import type { OpenedFunction } from "../function/FunctionDialog.tsx";
@@ -123,6 +124,23 @@ export function App({
   // A function opened with "New function…" (C03-T08b) becomes the shown dataset, and the
   // Inspector lists its critical points.
   const [opened, setOpened] = useState<OpenedFunction | null>(null);
+  // The visual highlight (V, B03-T09): the plot shows the cursor only while it is on.
+  const [visual, setVisual] = useState(true);
+  useEffect(() => {
+    if (client === null) {
+      return;
+    }
+    let live = true;
+    client.call({ command: "settings_effective" }).then(
+      (reply) => {
+        if (live) setVisual(visualOn(reply.settings));
+      },
+      () => undefined,
+    );
+    return () => {
+      live = false;
+    };
+  }, [client]);
   // The chart explorer (B03-T09): its commands are the app's, so the palette reaches them
   // from any tab; "Go to the chart explorer" selects the Plot tab, then focuses it.
   const explorer = useRef<HTMLDivElement>(null);
@@ -197,6 +215,7 @@ export function App({
                     client={client}
                     dataset={dataset}
                     cursor={cursor}
+                    highlight={visual}
                     announcer={announcer}
                   />
                 </>
@@ -253,7 +272,12 @@ export function App({
           </>
         }
       />
-      <ExplorerCommands client={client} />
+      <ExplorerCommands
+        client={client}
+        onEffective={(settings) => {
+          setVisual(visualOn(settings));
+        }}
+      />
       <FunctionCommands
         client={client}
         announcer={announcer}

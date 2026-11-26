@@ -33,6 +33,8 @@ allow = [
     "BSL-1.0",                         # Boost Software License (not BUSL-1.1, which is denied)
     "CC0-1.0",
     "MPL-2.0",                         # file-level copyleft; modified MPL files stay MPL-2.0
+    "0BSD",                            # owner decision, 2026-11-26 (supply-chain-and-licensing.md)
+    "MIT-0",                           # owner decision, 2026-11-26
 ]
 confidence-threshold = 0.9
 # The list is policy, not an inventory: a licence may be allowed before any dependency uses it.

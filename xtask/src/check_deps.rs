@@ -566,7 +566,7 @@ fn thin_host(krate: &CrateDeps, findings: &mut Findings) {
                 &krate.name,
                 Some(&dep.name),
                 Rule::Six,
-                "a host depends only on sonarithm-app and sonarithm-core types; move the                  logic into sonarithm-app (OD-15)"
+                "a host depends only on sonarithm-app and sonarithm-core types; move the logic into sonarithm-app (OD-15)"
                     .to_owned(),
             );
         }

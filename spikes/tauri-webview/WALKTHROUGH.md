@@ -10,7 +10,7 @@
 | Linux | The `spike-tauri-ubuntu-24.04` artifact: a `.deb` |
 | macOS | The `spike-tauri-macos-latest` artifact: an unsigned `.app` |
 
-The artifacts are under **Actions → spike-a02-tauri → a run for the `spike/a02-a11y` branch (pull request #107), or for `main` once it is merged → Artifacts** (sign in to GitHub). Older runs (#101, #102) do not contain the accessibility page. Artifacts are kept for 30 days; re-run the workflow for a fresh build.
+The artifacts are under **Actions → spike-a02-tauri → a run for the `spike/a02-a11y` branch (pull request #107), or for `main` once it is merged → Artifacts** (sign in to GitHub). Older runs (#101, #102) do not contain the accessibility page. Artifacts were kept for 30 days. The workflow was retired on 2026-11-26 (its last version is in commit `04d0fe16`), so build locally with the Windows command above, or `pnpm tauri build` on Linux and macOS.
 
 Every run writes JSON with `--out`. Keep the files: they are the evidence.
 
@@ -51,6 +51,8 @@ Every run writes JSON with `--out`. Keep the files: they are the evidence.
 ## 2. Windows with Narrator (owner)
 
 Start Narrator with `Win+Ctrl+Enter`; scan mode toggles with `Caps Lock+Space`. Repeat steps 1–19. Narrator is the reference consumer of UI Automation notifications, so steps 14 and 15 matter most here.
+
+The full Narrator script, with Narrator notes per step, pass criteria, the OD-05 reading and an agent-run option, is [A02-narrator-walkthrough.md](../../docs/sdlc/reviews/A02-narrator-walkthrough.md).
 
 **Also with the desktop app (B03-T04, for the OD-05 decision and #388).** In a nightly build of `apps/desktop` (the `sonarithm-desktop-nightly-<commit>-Windows` artifact of the latest `desktop-nightly` run; install steps in [release-process](../../docs/engineering/release-process.md#desktop-release)):
 

@@ -109,6 +109,24 @@ pub(crate) struct OutputConfig {
     /// Measured output latencies by device ID, in seconds (ADR-0016).
     pub(crate) calibrated_latency_s: BTreeMap<String, f64>,
     pub(crate) speech: SequencerConfig,
+    /// Speech is off: announcements are logged, not spoken (B03-T09).
+    pub(crate) speech_muted: bool,
+    /// Sonification is off: the master is silent (B03-T09).
+    pub(crate) sonification_muted: bool,
+}
+
+/// The master level while sonification is off: silence, as far as any output can tell.
+const MUTED_DB: f64 = -120.0;
+
+impl OutputConfig {
+    /// The master level to apply: the volume, or silence while sonification is off.
+    fn master_db(&self) -> f64 {
+        if self.sonification_muted {
+            MUTED_DB
+        } else {
+            self.volume_db
+        }
+    }
 }
 
 /// A transport command.
@@ -441,6 +459,7 @@ impl<B: AudioBackend, F: Fn() -> B> Control<B, F> {
             device: self.model.device.clone(),
             live: self.model.live.is_some(),
             xruns: self.model.xruns,
+            muted: self.config.sonification_muted,
             excluded_tracks: self.model.excluded_tracks.clone(),
         }
     }
@@ -474,6 +493,8 @@ impl<B: AudioBackend, F: Fn() -> B> Control<B, F> {
             }
             Message::Announce(announcement) => {
                 let now = self.now_ms();
+                // Muted when it is queued, not when it would be spoken, so "Speech off",
+                // queued just before speech goes off, is still heard (B03-T09).
                 self.sequencer.push(*announcement, now);
             }
             Message::Repeat(reply) => {
@@ -554,9 +575,10 @@ impl<B: AudioBackend, F: Fn() -> B> Control<B, F> {
         let reopen = config.device != self.config.device
             || config.buffer_frames != self.config.buffer_frames;
         let latencies_changed = config.calibrated_latency_s != self.config.calibrated_latency_s;
-        let volume = config.volume_db;
-        let volume_changed = (volume - self.config.volume_db).abs() > f64::EPSILON;
+        let volume = config.master_db();
+        let volume_changed = (volume - self.config.master_db()).abs() > f64::EPSILON;
         self.sequencer.set_config(config.speech);
+        self.sequencer.set_speech_off(config.speech_muted);
         if config.speech.route != SpeechRoute::SelfVoicing
             && let Some(Ok(speaker)) = &mut self.speaker
         {
@@ -700,10 +722,10 @@ impl<B: AudioBackend, F: Fn() -> B> Control<B, F> {
             let range = self.loop_frames(range);
             self.send(Command::SetLoop(range));
         }
-        if self.config.volume_db < 0.0 {
+        if self.config.master_db() < 0.0 {
             self.send(Command::SetGain(
                 GainTarget::Master,
-                Db(self.config.volume_db),
+                Db(self.config.master_db()),
             ));
         }
         Ok(())
@@ -1043,6 +1065,11 @@ impl<B: AudioBackend, F: Fn() -> B> Control<B, F> {
                 self.send(Command::SetGain(GainTarget::Duck, level));
             }
             Output::Deliver(delivery) => self.deliver(&delivery),
+            Output::Log(delivery) => {
+                let mut info = crate::speech::info(&delivery, false);
+                info.muted = true;
+                self.sink.emit(Event::Announcement(info));
+            }
         }
     }
 
