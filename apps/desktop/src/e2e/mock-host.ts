@@ -102,6 +102,12 @@ function effective(): EffectiveSetting[] {
       value: choices[modality] ?? settings.modalities[modality],
       layer: layer(choices[modality]),
     })),
+    // The user's key bindings; the mock host has no profiles to add more.
+    ...Object.entries(settings.keymap).map(([command, keys]) => ({
+      key: `interaction.keymap.${command}`,
+      value: keys,
+      layer: "settings" as const,
+    })),
   ];
 }
 
@@ -421,15 +427,6 @@ const handlers: MockHandlers = {
         : transport,
     ),
   settings_get: () => ({ reply: "settings" as const, ...settings }),
-  // The user layer only: the mock host has no profiles.
-  settings_effective: () => ({
-    reply: "effective" as const,
-    settings: Object.entries(settings.keymap).map(([command, keys]) => ({
-      key: `interaction.keymap.${command}`,
-      value: keys,
-      layer: "settings" as const,
-    })),
-  }),
   settings_set: (request) => {
     settings = request.args.settings;
     // The cursor's braille line follows the modality and mode, as the app core's does.

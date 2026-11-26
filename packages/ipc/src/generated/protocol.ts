@@ -78,6 +78,7 @@ export const REPLY_KINDS = {
   modality_toggle: "effective",
   choices_reset: "effective",
   braille_route: "cursor",
+  nav_query: "announce",
 } as const;
 
 /** The channel that carries each event. */
@@ -463,7 +464,11 @@ modality: ToggleTarget, } } | { "command": "choices_reset" } | { "command": "bra
 /**
  * The cell, from 0.
  */
-cell: number, } } | { "command": "view_get", "args": { 
+cell: number, } } | { "command": "nav_query", "args": { 
+/**
+ * The question.
+ */
+query: NavQuery, } } | { "command": "view_get", "args": { 
 /**
  * The dataset's ID.
  */
@@ -1256,6 +1261,15 @@ braille?: boolean | null,
  * The visual highlight (V).
  */
 visual?: boolean | null, };
+
+/**
+ * A question of the query menu (keyboard-and-navigation §7; the B03 subset).
+ */
+export type NavQuery = { "query": "summary" } | { "query": "minimum" } | { "query": "maximum" } | { "query": "range" } | { "query": "valueAt", 
+/**
+ * The x value.
+ */
+x: NavX, };
 
 /**
  * Where [`NavVerb::GoTo`] goes.

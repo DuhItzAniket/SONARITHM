@@ -137,6 +137,8 @@ impl App {
                     .to_owned(),
             ),
             highlight: None,
+            // A refused move stays where it was, so no cue plays.
+            cue: false,
             announced,
         })
     }

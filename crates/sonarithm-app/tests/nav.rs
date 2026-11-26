@@ -275,33 +275,50 @@ fn keyboard_7_a_query_is_announced_and_moves_nothing() {
     h.ok(&json!({ "command": "cursor_set", "args": { "dataset": "d1", "row": 1, "origin": "table" } }));
     let events = h.cursors().len();
     let before = h.ok(&json!({ "command": "cursor_get" }));
-    for query in [
-        json!({ "query": "summary" }),
-        json!({ "query": "minimum" }),
-        json!({ "query": "maximum" }),
-        json!({ "query": "range" }),
-        json!({ "query": "valueAt", "x": { "number": 3.0 } }),
+    let answers = |h: &Harness| -> Vec<String> {
+        h.sink
+            .events()
+            .into_iter()
+            .filter_map(|event| match event {
+                Event::Announcement(info) => Some(info.speech),
+                _ => None,
+            })
+            .collect()
+    };
+    // An answer is a response, superseded by the next command while it waits behind the
+    // point cue (keyboard §9.1), so each question waits for its own answer.
+    for (query, starts) in [
+        (json!({ "query": "summary" }), ""),
+        (json!({ "query": "minimum" }), "Minimum of "),
+        (json!({ "query": "maximum" }), "Maximum of "),
+        (json!({ "query": "range" }), "Range of "),
+        (
+            json!({ "query": "valueAt", "x": { "number": 3.0 } }),
+            "At 3",
+        ),
     ] {
+        let said = answers(&h).len();
         let reply = h.ok(&json!({ "command": "nav_query", "args": { "query": query } }));
         assert_eq!(
             reply,
             json!({ "reply": "announce", "queued": true }),
             "{query}"
         );
+        let start = Instant::now();
+        let answer = loop {
+            if let Some(answer) = answers(&h).get(said).cloned() {
+                break answer;
+            }
+            assert!(
+                start.elapsed() < Duration::from_secs(5),
+                "no answer to {query}"
+            );
+            std::thread::sleep(Duration::from_millis(10));
+        };
+        assert!(answer.starts_with(starts), "{query}: {answer}");
     }
     assert_eq!(h.cursors().len(), events);
     assert_eq!(h.ok(&json!({ "command": "cursor_get" })), before);
-    let start = Instant::now();
-    let said = |h: &Harness| {
-        h.sink.events().into_iter().any(|event| match event {
-            Event::Announcement(info) => info.speech.starts_with("Range of "),
-            _ => false,
-        })
-    };
-    while !said(&h) {
-        assert!(start.elapsed() < Duration::from_secs(5), "no range answer");
-        std::thread::sleep(Duration::from_millis(10));
-    }
 }
 
 /// ADR-0017 "Navigation": an export renders every series, so while a filter excludes one,
@@ -511,6 +528,7 @@ fn b03_t09_the_toggles_clock_anchor_carries_the_exclusions() {
         std::thread::sleep(Duration::from_millis(10));
     };
     assert_eq!(first, ["temp"]);
+}
 
 fn device(h: &mut Harness) -> Value {
     h.ok(&json!({ "command": "transport_state" }))["device"].clone()
