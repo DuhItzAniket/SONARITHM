@@ -94,6 +94,7 @@ The app core computes it on the control thread when it builds the anchor, never 
 | 2026-11-01 | `function_check`, `function_open` and `audify_calculate` added (C03-T08): a function opens as a dataset the cursor and the cues work on, and the SDR-31 calculator; approved by the coordinator, additive |
 | 2026-11-01 | `nav_move`, `nav_where` and the `nav` reply added (B03-T09); `CursorState.node` may be any navigation node, `path` levels gain the axes, insights and filters levels, `CursorState.excluded` lists the filtered series and `TransportState.excludedTracks` the tracks playback leaves out; approved by the coordinator, additive |
 | 2026-11-01 | `modality_toggle` and `choices_reset` added (B03-T09), with `Settings.choices`, `AnnouncementInfo.muted` and `TransportState.muted`; speech, sonification and braille are never all off (`SNR-APP-094`), and errors and alarms are never muted (both INFER, OD-30); approved by the coordinator, additive |
+| 2026-11-01 | `braille_route`, `CursorOrigin::braille` and `CursorState.braille` (a `BrailleState`) added, and the settings gain `braille` (`mode`, `cells`) (B03-T10); approved by the coordinator, additive |
 
 #### Cursor
 
@@ -184,6 +185,21 @@ No event is added. A `cursor` event follows only under the rules above (Cursor).
 **What each one does.** Speech off: announcements still go out on the `announcements` channel, for the log, with `muted: true`, and the UI does not speak them. They take the same path through the speech queue as spoken ones (supersession, holding during cues and playback, history-only items), so the log holds exactly what would have been spoken; a muted one neither pauses nor ducks playback, and R repeats it. Errors and alarms are never muted (INFER, OD-30): a design choice for safety, with no cited rule; the queue policy only says errors are never dropped (keyboard §9.1). Sonification off: the master is silent and `TransportState.muted` is `true`. Braille off: the braille line is empty. Visual off: the UI hides the plot's cursor highlight. The verbosity is the composer's.
 
 **No lockout (INFER, OD-30).** A toggle that would leave speech, sonification and braille all off is refused with `SNR-APP-094`, and the refusal is announced as an error, so it is heard whatever is off. Nothing changes. A blind listener cannot silence the app by accident; the screen-reader walkthrough checks it.
+
+#### Braille
+
+> Amended 2026-11-01, B03-T10: `braille_route`, the `braille` origin, `CursorState.braille` and the `braille` settings added, approved by the coordinator, additive.
+
+**The same cursor (A11Y-10).** With braille output on (the effective `modalities.braille`), every `cursor` event carries `braille: BrailleState | null` for the cursor's node:
+
+* `mode`: `"review"` or `"sparkline"`. It says what `text` is: in sparkline mode, a node that is not a point shows its review line, with `mode: "review"`.
+* `text`: the review line (the composer's parts in symbol form, in the listener's terse order with the position added; whole parts only, the value and its provenance qualifier always kept, a "…" for parts left out) or the sparkline (one 8-dot cell per point of the cursor's segment, U+2800 to U+28FF; MAIDR's four heights; a blank cell for a missing value) (keyboard §10; A11Y-21).
+* `caret`: the cell of the cursor's point in a sparkline, 0 in review mode.
+* `cells`: the display's cell count from the settings, or `null` when nothing is fitted and the screen reader pans.
+
+The UI shows `text` in a read-only text field, with the caret at `caret` (keyboard §14). A routing-key press sends `braille_route { cell }`, the caret's cell. A screen reader moves the caret for a routing key through the accessibility API, with no key event, so the field listens for `selectionchange` and sends the caret's new cell (B03-T10, Lane U). On a sparkline it moves the one cursor to the point under the cell with origin `"braille"` and replies `cursor`. Elsewhere (review mode, past the last cell, no compiled Score) the cursor stays and the reply is where it is. A `braille` move is not announced, as for the table: the display and the screen reader already show the field (INFER, OD-30).
+
+**Settings.** `settings.braille = { mode: "review" | "sparkline", cells?: number }` holds Shift+B's mode and the display's cell count, which a web page cannot read. They are app settings, not profile fields: they belong to the user's device. `cells: 0` is refused (`SNR-APP-013`). Files without `braille` read the defaults (review, no cell count).
 
 #### Meter frames
 

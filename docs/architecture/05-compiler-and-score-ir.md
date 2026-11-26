@@ -160,6 +160,8 @@ pub enum ScoreEvent {
 
 **`header.engines` (amended 2026-11-01, #434, [ADR-0013](../decisions/0013-determinism-and-provenance.md) note).** The header lists the engines that contributed content to the Score, with their versions: the engines whose template, source, detector or encoder the spec used, every context provider that added at least one track, and every shaper that ran. Shapers are recorded when they run, not only when they change the Score, because a shaper transforms the whole Score and telling a no-op apart would need a before-and-after comparison. A registered context provider that adds no track is not recorded (before #434 every registered provider was), so registering an engine does not change the hash of Scores it adds nothing to. `SNR-COMP-023` warns when no registered provider serves the spec's `context` cues (`ContextProvider::serves_context_cues`, AUDAXIS); providers of other context tracks (CURVASONA's function cues, SONOTRACE's monitoring soundscape) do not silence it.
 
+**Context-only providers (2026-11-01, CURVASONA's review of #434).** An engine that registers only a context provider, and whose version decides whether it adds a track, leaves no trace of its version in the Score or the render manifest when it adds none, because the header records a context provider only when it adds a track (#434). Such an engine's version is then not part of what reproduces the Score; if it ever must be, the engine needs a capability the header records whenever it runs.
+
 ### 4.1 Representation choices
 
 | Choice | Reason |

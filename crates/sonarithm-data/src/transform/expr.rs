@@ -102,13 +102,25 @@ impl Column {
             ),
             DataType::Boolean => Self::Bool(array.as_boolean().clone()),
             DataType::Utf8 => Self::Text(array.as_string::<i32>().clone()),
-            DataType::Dictionary(_, value) if **value == DataType::Utf8 => {
+            // The other string layouts hold the same values (RFC-0008 §3).
+            text if crate::table::is_text(text) => Self::Text(
+                crate::table::text_values(array.as_ref())
+                    .unwrap_or_default()
+                    .into_iter()
+                    .collect(),
+            ),
+            DataType::Dictionary(_, value) if crate::table::is_text(value) => {
                 let Ok(keys) = crate::table::dictionary_indices(array.as_ref()) else {
                     return Self::Unsupported;
                 };
                 let values = array.as_any_dictionary().values();
                 match arrow_select::take::take(values.as_ref(), &keys, None) {
-                    Ok(values) => Self::Text(values.as_string::<i32>().clone()),
+                    Ok(values) => Self::Text(
+                        crate::table::text_values(values.as_ref())
+                            .unwrap_or_default()
+                            .into_iter()
+                            .collect(),
+                    ),
                     Err(_) => Self::Unsupported,
                 }
             }
@@ -513,6 +525,46 @@ mod tests {
         match expr.eval(row, &mut Scope::new()).unwrap() {
             Outcome::Value(v) => v,
             Outcome::Failed(reason) => Value::Text(format!("failed: {reason}")),
+        }
+    }
+
+    /// RFC-0008 §3: an expression reads text the same in every string layout.
+    #[test]
+    fn every_string_layout_reads_as_text() {
+        use arrow_array::types::Int8Type;
+        use arrow_array::{DictionaryArray, Int8Array, LargeStringArray, StringViewArray};
+
+        let values = vec![Some("x"), None, Some("z")];
+        let dictionary = DictionaryArray::<Int8Type>::try_new(
+            Int8Array::from(vec![Some(0), None, Some(1)]),
+            Arc::new(StringViewArray::from(vec!["x", "z"])),
+        )
+        .unwrap();
+        let layouts: Vec<ArrayRef> = vec![
+            Arc::new(StringArray::from(values.clone())),
+            Arc::new(LargeStringArray::from(values.clone())),
+            Arc::new(StringViewArray::from(values)),
+            Arc::new(dictionary),
+        ];
+        for column in layouts {
+            let schema = Schema::new(vec![Field::new("s", column.data_type().clone(), true)]);
+            let expr = Expr::compile("s", &schema, &[column]).unwrap();
+            let got: Vec<Value> = (0..3)
+                .map(|row| match expr.eval(row, &mut Scope::new()).unwrap() {
+                    Outcome::Value(v) => v,
+                    Outcome::Failed(reason) => Value::Text(format!("failed: {reason}")),
+                })
+                .collect();
+            assert_eq!(
+                got,
+                [
+                    Value::Text("x".into()),
+                    Value::Null,
+                    Value::Text("z".into())
+                ],
+                "{}",
+                schema.field(0).data_type()
+            );
         }
     }
 

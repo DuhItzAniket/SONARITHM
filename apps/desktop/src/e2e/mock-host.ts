@@ -77,6 +77,7 @@ let settings: Settings = {
   },
   gpu: "default",
   choices: {},
+  braille: { mode: "review" },
 };
 
 const MODALITIES = ["sonification", "speech", "braille", "visual"] as const;
@@ -263,6 +264,7 @@ let cursor: CursorState = {
   path: [],
   excluded: [],
   origin: null,
+  braille: null,
 };
 
 function moveCursor(row: number, origin: CursorOrigin): CursorState {
@@ -275,6 +277,7 @@ function moveCursor(row: number, origin: CursorOrigin): CursorState {
     path: dataset === null ? [] : [{ level: "dataset", label: dataset.name }],
     excluded: [],
     origin,
+    braille: null,
   };
   emit({ event: "cursor", ...cursor });
   return cursor;

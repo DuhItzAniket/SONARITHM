@@ -37,8 +37,14 @@ updates:
       prefix: build
       include: scope
     groups:
+      # vitest and @vitest/* are released together and must stay on one version, and
+      # vitest-browser-* follows Vitest's majors. Every update to them, majors included,
+      # comes as one PR. `npm` excludes them, so the split does not depend on group order.
+      vitest:
+        patterns: ["vitest", "@vitest/*", "vitest-browser-*"]
       npm:
         patterns: ["*"]
+        exclude-patterns: ["vitest", "@vitest/*", "vitest-browser-*"]
         update-types: [minor, patch]
 
   # The Python package's build requirement (maturin) and optional dependencies.
