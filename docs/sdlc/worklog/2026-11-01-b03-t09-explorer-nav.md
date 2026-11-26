@@ -92,8 +92,25 @@ None.
 - **UI.** `CommandRegistry.configure` applies the effective keymap (`settings_effective`: the settings and the active profile) and the group switch. Off unbinds letters, Shift+letters and punctuation, while arrows, Home, End, the Page keys and chords stay. Preferences › Keyboard holds the switch, the "Default" and "No single-key commands" presets, and a table of every command with Change… and Reset. The recorder (`commands/recorder.ts`) refuses what the lint refuses, with the reason, and names a command in the same scope that already uses the keys.
 - Tests: Rust for reserved chords, persistence across a reload, the hand-edited file, and the project layer; Node for overrides, the group switch and the recorder; E2E for the switch and the recorder.
 
+## The batched PR (2026-11-26)
+
+- **One PR, not four.** The point cue, the query menu, remapping and the braille field, per the owner's rule to batch related work and check it all locally first.
+- **Replayed, not merged.** Parts of these branches had already reached `main` in squashed PRs (#447, #451, #453, #479). Merging the old branches would have re-conflicted with that work, so only the unmerged commits were replayed onto `main`. PLOTSONA's two braille commits and the ADR change were already in.
+- **Fitted to `main`'s structure:**
+  - The query's Q is an app-wide command (`query.menu`) in `ExplorerCommands`. The app selects the Plot tab and opens the explorer's menu, so the palette runs it from any tab.
+  - Shift+B moved there too. It saves `settings.braille.mode`, a device setting, and says the change. B goes through `modality_toggle` like the other toggles.
+  - The old UI-side modality code is gone.
+- **Seams the local checks found:**
+  - `NavResult.cue` was missing on the live-filter refusal.
+  - `is_fading` was defined twice.
+  - The mock host had two `settings_effective` handlers, and its braille line read the base modality instead of the effective one.
+  - The query test asked five questions at once. With the point cue, speech waits for the cue, and each answer, a response, is superseded by the next command (keyboard §9.1), so only the last was spoken. That is the intended policy; the test now waits for each answer.
+- **Checked locally:**
+  - Rust: codegen, fmt, and clippy on app, AUDAXIS, i18n and render; 355 tests; render's and the audio device's `no_alloc`.
+  - Frontend: lint, typecheck, unit tests, stories with axe, and desktop E2E, 65/65 in Chromium and in WebKit.
+  - Not run locally: Firefox (it does not launch on Windows here), the visual baselines (Linux screenshots) and the 60 s allocation soak (shared machine). CI runs them.
+
 ## Next steps
 
-- PR (2): the Explorer component, keymap v0, the query menu, modality and verbosity toggles, E2E for every verb.
-- PR (3): remapping.
-- The point cue, after PR (1).
+- The query menu's statistics: the "Values" and "Statistics" sections and six items, after ECHOMETRIC's C05-T06 (approved 2026-11-26).
+- The 50 ms key-to-onset check of the point cue on HW-01 (#129), and the NVDA walkthrough of the explorer, the toggles, the query menu and the braille line (B07).

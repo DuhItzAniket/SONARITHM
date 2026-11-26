@@ -279,7 +279,9 @@ let cursor: CursorState = {
  * ten cells around the row while braille is on, the caret on the row's cell.
  */
 function brailleOf(row: number): CursorState["braille"] {
-  if (!settings.modalities.braille || dataset === null) return null;
+  // The effective modality: the toggles' choice (B) over the base setting.
+  const on = settings.choices.braille ?? settings.modalities.braille;
+  if (!on || dataset === null) return null;
   const sparkline = settings.braille.mode === "sparkline";
   return {
     mode: sparkline ? "sparkline" : "review",
