@@ -28,6 +28,7 @@ From phase A07, release-plz maintains this file: it generates each release's ent
 
 ### Fixed
 
+- Projects saved before the arrow 60.2 upgrade open again (#476). An embedded dataset whose stored data matches the project's checksum but whose fingerprint was computed by another build now opens with a warning (`SNR-APP-093`), and saving the project records the new fingerprint; before, the whole project was refused as damaged. A linked file still has to be opened again, since a project does not record a checksum for it (RFC-0002 §13).
 - Text read from Arrow and Parquet files as large strings or string views is treated like plain text (RFC-0008 §10, step 1): ordered labels such as low, medium and high are recognised, distinct values are counted for the inferred type, provenance columns are read, and transform expressions can use the text. Before, those layouts were inferred differently and some were refused, so the same data could sound different depending on the library that wrote the file.
 - A function now sounds and exports the same on Windows, macOS and Linux. Its values were computed with each system's own maths library, whose results differ in the last digits, so the same function gave slightly different samples, Scores and renders on each system (F-204).
 - The desktop app starts and draws plots under a POSIX "C" locale (for example `LANG=C` on Linux), which made the plot library throw while loading (#436).

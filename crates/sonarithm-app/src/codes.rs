@@ -437,6 +437,20 @@ pub const NAV_NO_TREE: CodeInfo = CodeInfo {
     status: CodeStatus::Active,
 };
 
+/// An embedded dataset whose member checksum verifies but whose fingerprint differs: another
+/// build fingerprinted it, so it opens and the next save records the new fingerprint
+/// (RFC-0002 §13).
+pub const DATASET_REFINGERPRINTED: CodeInfo = CodeInfo {
+    code: "SNR-APP-093",
+    severity: Severity::Warning,
+    summary: "A dataset was fingerprinted again",
+    help: "The data matches the project's own checksum, so it opens unchanged; another \
+           SONARITHM build computed its fingerprint differently. Save the project to record \
+           the new fingerprint.",
+    rules: &[],
+    status: CodeStatus::Active,
+};
+
 /// A toggle that would leave no non-visual output (B03-T09; INFER, OD-30).
 pub const MODALITY_LOCKOUT: CodeInfo = CodeInfo {
     code: "SNR-APP-094",
@@ -495,6 +509,7 @@ pub const CODES: CodeTable = CodeTable {
         FUNCTION_INPUT_TOO_LARGE,
         FUNCTION_NOT_SAVED,
         NAV_NO_TREE,
+        DATASET_REFINGERPRINTED,
         MODALITY_LOCKOUT,
     ],
 };
