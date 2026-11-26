@@ -999,6 +999,7 @@ fn rfc_0008_a_same_length_file_with_other_values_is_never_opened_silently() {
     );
     assert_eq!(check["reason"], "changed");
     assert_eq!(check["rows"], 2);
+}
 
 /// The `project_open` fuzz corpus (`fuzz/corpus/project_open`).
 fn fuzz_corpus() -> PathBuf {
@@ -1107,7 +1108,11 @@ fn rfc_0002_12_the_fuzz_seeds_open_and_save_stably() {
                     dataset.function.is_some() && dataset.table.is_some(),
                     "{name}"
                 );
-                assert_eq!(manifest_of(&again)["formatVersion"], "1.1", "{name}");
+                assert_eq!(
+                    manifest_of(&again)["formatVersion"],
+                    "1.2",
+                    "{name}: every save writes 1.2 (RFC-0008 §6)"
+                );
             }
             "seed-future-kind" => {
                 assert_eq!(codes, ["SNR-APP-035"], "{name}");
