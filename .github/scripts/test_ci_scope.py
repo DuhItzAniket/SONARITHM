@@ -148,9 +148,26 @@ class Fuzz(unittest.TestCase):
         )
 
     def test_crates_without_targets_and_other_changes_fuzz_nothing(self):
-        self.assertEqual(fuzzed("crates/sonarithm-core/src/lib.rs"), set())
+        self.assertEqual(fuzzed("crates/sonarithm-render/src/lib.rs"), set())
         self.assertEqual(fuzzed("crates/sonarithm-data-extra/src/lib.rs"), set())
-        self.assertEqual(fuzzed("Cargo.lock", ".github/workflows/ci.yml"), set())
+        self.assertEqual(fuzzed(".github/workflows/ci.yml", "docs/x.md"), set())
+        self.assertEqual(fuzzed("apps/desktop/src/app/App.tsx"), set())
+
+    def test_a_cargo_lock_only_pull_request_fuzzes_every_target(self):
+        # A dependency bump (calamine 0.37 to 0.38) changes parsers without touching them.
+        self.assertEqual(pr("Cargo.lock")["fuzz"], TARGETS)
+
+    def test_any_cargo_manifest_change_fuzzes_every_target(self):
+        for path in (
+            "Cargo.toml",
+            "crates/sonarithm-render/Cargo.toml",
+            "crates/sonarithm-data/fuzz/Cargo.lock",
+        ):
+            self.assertEqual(pr(path)["fuzz"], TARGETS, path)
+
+    def test_a_core_only_pull_request_fuzzes_every_target(self):
+        # Core types flow into every parser.
+        self.assertEqual(pr("crates/sonarithm-core/src/lib.rs")["fuzz"], TARGETS)
 
     def test_changing_the_fuzz_workflow_or_this_script_fuzzes_every_target(self):
         for path in ci_scope.FUZZ_EVERYTHING:

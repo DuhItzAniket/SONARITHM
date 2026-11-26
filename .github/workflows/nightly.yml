@@ -7,8 +7,8 @@
 # fuzzed without editing this file.
 # Manual dispatch takes the seconds per target; use 3600 for an exit run. A pull request
 # runs a two-minute smoke fuzz of each target in a crate it changes (the `plan` job,
-# .github/scripts/ci_scope.py), and of every target when it changes this workflow or that
-# script. From A05: the 10-minute allocation soak on the null device; from B06: the
+# .github/scripts/ci_scope.py), and of every target when it changes this workflow, that
+# script, `sonarithm-core`, or any `Cargo.toml` or `Cargo.lock`. From A05: the 10-minute allocation soak on the null device; from B06: the
 # 10-minute stream soak (PB-11) (testing-strategy §9.3). Not a required check.
 name: nightly
 
@@ -32,6 +32,9 @@ on:
       - "crates/engines/sonarithm-curvasona/**"
       - ".github/workflows/nightly.yml"
       - ".github/scripts/ci_scope.py"
+      # A dependency change smoke-fuzzes every target (ci_scope.py FUZZ_EVERYTHING_NAMES).
+      - "**/Cargo.toml"
+      - "**/Cargo.lock"
 
 permissions: {}
 

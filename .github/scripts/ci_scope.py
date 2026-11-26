@@ -63,8 +63,12 @@ DOCS_FILES = ("REUSE.toml", "lychee.toml", ".markdownlint-cli2.jsonc")
 #: a change to one runs it even in a docs-only pull request. The others count as everything.
 CODEGEN_OUTPUTS = ("docs/reference/error-codes.md",)
 
-#: Fuzz targets whose sources change run all of them: the workflow and this script.
+#: Changes that smoke-fuzz every target on a pull request: the fuzz workflow and this
+#: script; any `Cargo.toml` or `Cargo.lock`, because a dependency bump is when a parser's
+#: behaviour changes under it; and `sonarithm-core`, whose types flow into every parser.
 FUZZ_EVERYTHING = (".github/workflows/nightly.yml", ".github/scripts/ci_scope.py")
+FUZZ_EVERYTHING_NAMES = ("Cargo.toml", "Cargo.lock")
+FUZZ_EVERYTHING_PREFIXES = ("crates/sonarithm-core/",)
 
 #: `ci.yml` jobs and the `changes` output that decides whether they run. `changes` itself
 #: and `all-checks-pass` always run.
@@ -147,6 +151,15 @@ def fuzz_targets(root: Path) -> list[dict[str, str]]:
     return targets
 
 
+def fuzzes_everything(path: str) -> bool:
+    """Whether a pull request that changes this path smoke-fuzzes every target."""
+    return (
+        path in FUZZ_EVERYTHING
+        or PurePosixPath(path).name in FUZZ_EVERYTHING_NAMES
+        or path.startswith(FUZZ_EVERYTHING_PREFIXES)
+    )
+
+
 def scope(event: str, paths: list[str], included: set[str], targets: list[dict[str, str]]):
     """The `changes` outputs for these changed paths."""
     paths = [p for p in paths if p]
@@ -161,7 +174,7 @@ def scope(event: str, paths: list[str], included: set[str], targets: list[dict[s
     else:
         kind = "docs"
     rust = kind in ("everything", "rust")
-    if event != "pull_request" or any(p in FUZZ_EVERYTHING for p in paths):
+    if event != "pull_request" or any(fuzzes_everything(p) for p in paths):
         fuzz = targets
     else:
         fuzz = [t for t in targets if any(p.startswith(f"crates/{t['crate']}/") for p in paths)]
