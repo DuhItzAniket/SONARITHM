@@ -158,7 +158,11 @@ test("a11y_15_stop_all_audio_runs_even_in_an_overlay", () => {
 
 test("scope_precedence_a_text_field_keeps_its_editing_keys", () => {
   const reg = new CommandRegistry(
-    [{ id: "b.letter", name: "x", scope: "global", keys: ["K"] }, ...SPECS],
+    [
+      { id: "b.letter", name: "x", scope: "global", keys: ["K"] },
+      { id: "edit.undo", name: "x", scope: "global", keys: ["Ctrl+Z"] },
+      ...SPECS,
+    ],
     "windows",
   );
   reg.register("b.letter", { run: () => undefined });
@@ -168,6 +172,18 @@ test("scope_precedence_a_text_field_keeps_its_editing_keys", () => {
   assert.equal(reg.resolve("K", typing), null);
   assert.equal(reg.resolve("Ctrl+F", typing)?.id, "a.global");
   assert.equal(reg.resolve("F6", typing)?.id, "a.f6");
+  // Primary+Z in a text field undoes typing, not the spec (keyboard §2; B05-T03).
+  reg.register("edit.undo", { run: () => undefined });
+  assert.equal(reg.resolve("Ctrl+Z", typing), null);
+  assert.equal(
+    reg.resolve("Ctrl+Z", { scopes: ["global"], typing: false })?.id,
+    "edit.undo",
+  );
+  // The spec editor handles its editing keys itself and passes on the rest.
+  assert.equal(
+    reg.resolve("Ctrl+Z", { scopes: ["editor", "global"], typing: true })?.id,
+    "edit.undo",
+  );
 });
 
 test("kb_01_only_registered_commands_are_available_and_run", () => {

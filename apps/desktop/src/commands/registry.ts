@@ -25,11 +25,25 @@ export interface AvailableCommand {
  */
 export const OVERLAY_SAFE: ReadonlySet<string> = new Set(["transport.stopAll"]);
 
-/** Whether a text field keeps this key for typing (keyboard §2: editing keys stay). */
-function typedByTextField(chord: Chord): boolean {
+/** Letters that are text editing with Primary: undo, redo, select all, copy, cut, paste. */
+const EDITING_LETTERS = new Set(["Z", "Y", "A", "C", "X", "V"]);
+
+/**
+ * Whether a text field keeps this key for typing (keyboard §2: editing keys stay): every key
+ * without Ctrl, Alt or Meta except function keys, and Primary with an editing letter, so
+ * Primary+Z in a text field undoes typing, not the project. The spec editor is the exception:
+ * it handles those keys itself and passes on only what it has nothing to do with (B05-T03).
+ */
+function typedByTextField(chord: Chord, active: ActiveScopes): boolean {
   const { mods, key } = parseChord(chord);
   const modified = mods.has("Ctrl") || mods.has("Alt") || mods.has("Meta");
-  return !modified && !/^F\d{1,2}$/.test(key);
+  if (!modified) {
+    return !/^F\d{1,2}$/.test(key);
+  }
+  const primaryOnly = !mods.has("Alt") && mods.has("Ctrl") !== mods.has("Meta");
+  return (
+    primaryOnly && EDITING_LETTERS.has(key) && !active.scopes.includes("editor")
+  );
 }
 
 /**
@@ -82,7 +96,7 @@ export class CommandRegistry {
    * `null`. A text field keeps unmodified keys.
    */
   resolve(chord: Chord, active: ActiveScopes): CommandSpec | null {
-    if (active.typing && typedByTextField(chord)) {
+    if (active.typing && typedByTextField(chord, active)) {
       return null;
     }
     const wanted = normalize(chord);
