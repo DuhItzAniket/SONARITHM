@@ -223,7 +223,10 @@ export const Completion: StoryObj<typeof meta> = {
     await expect(editor).toHaveAttribute("aria-autocomplete", "list");
     await expect(editor).toHaveAttribute("aria-activedescendant");
     // Filtered by what was typed: only "name" starts with n.
-    await expect(within(list).getAllByRole("option")).toHaveLength(1);
+    // The list filters by what was typed once it has read it; wait for that.
+    await waitFor(() =>
+      expect(within(list).getAllByRole("option")).toHaveLength(1),
+    );
     await expect(within(list).getByRole("option")).toHaveTextContent('"name"');
     await userEvent.keyboard("{Escape}");
     await expect(document.querySelector(".cm-tooltip-autocomplete")).toBeNull();
