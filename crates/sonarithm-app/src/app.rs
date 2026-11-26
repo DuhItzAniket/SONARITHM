@@ -35,6 +35,7 @@ mod braille;
 mod corrections;
 mod cursor;
 mod functions;
+mod modalities;
 mod nav;
 mod profiles;
 mod projects;
@@ -184,6 +185,8 @@ impl App {
             sink.emit(Event::SettingsNotice { error });
         }
         let settings = loaded.settings;
+        // The toggles' choices, saved in the settings, are the explicit-UI-action layer.
+        let session_prefs = crate::profile::choices_layer(&settings.choices);
         let transport = Transport::spawn(audio, output(&settings), Arc::clone(&sink), speaker)?;
         let jobs = JobQueue::new(Arc::clone(&sink));
         // AUDAXIS builds the navigation tree that announcements describe (B03).
@@ -195,7 +198,7 @@ impl App {
         let app = Self {
             snr,
             localizer: Localizer::new(LOCALE).ok(),
-            session_prefs: crate::profile::InteractionPrefs::default(),
+            session_prefs,
             offers: BTreeMap::new(),
             next_offer: 1,
             next_stream: 1,
@@ -306,10 +309,7 @@ impl App {
                 streams: self.transport.stream_list()?,
             }),
             Request::LiveStart { stream } => self.live_start(stream),
-            Request::LiveStop => {
-                self.live = None;
-                Ok(Reply::Transport(self.transport.live(None)?))
-            }
+            Request::LiveStop => self.live_stop(),
             Request::ProfileList => Ok(self.profile_list(&[])),
             Request::ProfileGet { id } => self.profile_get(&id),
             Request::ProfileActivate { id } => self.profile_activate(id),
@@ -343,6 +343,8 @@ impl App {
             | Request::AudifyCalculate { .. }) => self.functions(request),
             Request::NavMove { verb } => self.nav_move(&verb),
             Request::NavWhere => self.nav_where(),
+            Request::ModalityToggle { modality } => self.modality_toggle(modality),
+            Request::ChoicesReset => self.choices_reset(),
             Request::BrailleRoute { cell } => self.braille_route(cell),
         }
     }
@@ -440,6 +442,13 @@ impl App {
         self.act(Action::State)
     }
 
+    /// Stops live playback (B06-T07): drops the worker and takes the transport off the
+    /// live session.
+    fn live_stop(&mut self) -> Result<Reply, IpcError> {
+        self.live = None;
+        Ok(Reply::Transport(self.transport.live(None)?))
+    }
+
     fn stream_act(&mut self, id: String, action: StreamAction) -> Result<Reply, IpcError> {
         Ok(Reply::Streams {
             streams: self.transport.stream_act(id, action)?,
@@ -454,6 +463,9 @@ impl App {
         config.speech.route = interaction.route;
         config.speech.duck_instead_of_pause = interaction.duck_instead_of_pause;
         config.speech.rate = WordsPerMinute(interaction.rate_wpm);
+        // The effective modalities: sonification, speech, braille, visual (B03-T09).
+        config.sonification_muted = !interaction.modalities[0];
+        config.speech_muted = !interaction.modalities[1];
         config
     }
 
@@ -844,6 +856,7 @@ impl App {
     fn settings_set(&mut self, settings: Settings) -> Result<Reply, IpcError> {
         self.store.save(&settings)?;
         self.settings = settings;
+        self.session_prefs = crate::profile::choices_layer(&self.settings.choices);
         self.transport.configure(self.output_config())?;
         Ok(Reply::Settings(self.settings.clone()))
     }
@@ -944,6 +957,9 @@ fn output(settings: &Settings) -> OutputConfig {
         volume_db: settings.audio.volume_db,
         calibrated_latency_s: settings.audio.calibrated_latency_s.clone(),
         speech,
+        // The effective modalities apply once the app has its layers (`output_config`).
+        speech_muted: false,
+        sonification_muted: false,
     }
 }
 

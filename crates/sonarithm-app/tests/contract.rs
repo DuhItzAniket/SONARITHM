@@ -36,13 +36,19 @@ fn chart(dir: &TempDir) -> (std::path::PathBuf, std::path::PathBuf) {
 }
 
 /// One request per command, in an order where each can succeed.
-/// A project saved before RFC-0008, whose linked `d2` waits to be checked and relinked.
-fn older_project(dir: &TempDir) -> std::path::PathBuf {
+/// The relink commands (RFC-0008 §6), run last: a project saved before RFC-0008, whose
+/// linked `d2` waits to be checked and relinked.
+fn relink_requests(dir: &TempDir) -> Vec<Value> {
     let fixtures = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("tests/fixtures/pre-470");
     for name in ["pre-470.sonarithm", "more.csv"] {
         std::fs::copy(fixtures.join(name), dir.path().join(name)).unwrap();
     }
-    dir.path().join("pre-470.sonarithm")
+    let older = dir.path().join("pre-470.sonarithm");
+    vec![
+        json!({ "command": "project_open", "args": { "path": older } }),
+        json!({ "command": "dataset_relink_check", "args": { "id": "d2" } }),
+        json!({ "command": "dataset_relink", "args": { "id": "d2" } }),
+    ]
 }
 
 fn requests(dir: &TempDir) -> Vec<Value> {
@@ -66,7 +72,6 @@ fn requests(dir: &TempDir) -> Vec<Value> {
     let project = dir.path().join("t.sonarithm");
     let exported = dir.path().join("contract.json");
     let (chart, corrections) = chart(dir);
-    let older = older_project(dir);
     vec![
         json!({ "command": "hello", "args": { "protocol": 1 } }),
         json!({ "command": "dataset_open", "args": { "path": csv } }),
@@ -129,6 +134,8 @@ fn requests(dir: &TempDir) -> Vec<Value> {
         json!({ "command": "profile_import", "args": { "path": exported } }),
         json!({ "command": "profile_flip_polarity", "args": { "field": "temp" } }),
         json!({ "command": "settings_effective" }),
+        json!({ "command": "modality_toggle", "args": { "modality": "visual" } }),
+        json!({ "command": "choices_reset" }),
         json!({ "command": "spec_quick", "args": { "dataset": "d1", "x": "day", "y": "temp" } }),
         json!({ "command": "cursor_set", "args": { "dataset": "d1", "row": 0, "origin": "table" } }),
         json!({ "command": "cursor_get" }),
@@ -142,9 +149,6 @@ fn requests(dir: &TempDir) -> Vec<Value> {
         json!({ "command": "function_open", "args": { "expr": "sin(x)", "domain": [0, 10] } }),
         json!({ "command": "audify_calculate", "args": { "dataset": "d3", "k": 1000 } }),
         json!({ "command": "dataset_close", "args": { "id": "d1" } }),
-        json!({ "command": "project_open", "args": { "path": older } }),
-        json!({ "command": "dataset_relink_check", "args": { "id": "d2" } }),
-        json!({ "command": "dataset_relink", "args": { "id": "d2" } }),
         json!({ "command": "project_new" }),
     ]
 }
@@ -158,6 +162,7 @@ fn every_command_answers_with_its_declared_reply_kind() {
     let table: std::collections::BTreeMap<&str, &str> = COMMANDS.iter().copied().collect();
     let mut seen = BTreeSet::new();
     let mut requests = requests(&dir);
+    requests.extend(relink_requests(&dir));
     // settings_set needs the settings as they are.
     let settings = app
         .dispatch_json(&json!({ "command": "settings_get" }).to_string())

@@ -107,6 +107,8 @@ pub const COMMANDS: &[(&str, &str)] = &[
     ("audify_calculate", "audify_readout"),
     ("nav_move", "nav"),
     ("nav_where", "announce"),
+    ("modality_toggle", "effective"),
+    ("choices_reset", "effective"),
     ("braille_route", "cursor"),
 ];
 
@@ -517,6 +519,18 @@ pub enum Request {
     /// excluded series (keyboard §6, A11Y-07). The cursor does not move. Replies
     /// [`Reply::Announce`].
     NavWhere,
+    /// Turns a modality on or off, or switches the verbosity (keyboard §5.5, B03-T09),
+    /// flipping its effective value in the explicit-UI-action layer, which is saved. The
+    /// change is announced with `E-MODE`: before speech goes off, after it comes on. A
+    /// change that would leave speech, sonification and braille all off is refused
+    /// (`SNR-APP-094`). Replies [`Reply::Effective`].
+    ModalityToggle {
+        /// What to flip.
+        modality: ToggleTarget,
+    },
+    /// Clears the toggles' choices, back to the profile's values. Replies
+    /// [`Reply::Effective`].
+    ChoicesReset,
     /// A braille routing-key press on cell `cell` of the braille field (B03-T10, keyboard
     /// §14). In sparkline mode it moves the one cursor to the point under the cell, with
     /// origin `braille`; in review mode it changes nothing. Replies [`Reply::Cursor`].
@@ -658,6 +672,8 @@ impl Request {
             Self::AudifyCalculate { .. } => "audify_calculate",
             Self::NavMove { .. } => "nav_move",
             Self::NavWhere => "nav_where",
+            Self::ModalityToggle { .. } => "modality_toggle",
+            Self::ChoicesReset => "choices_reset",
             Self::BrailleRoute { .. } => "braille_route",
             Self::ViewGet { .. } => "view_get",
             Self::TablePage { .. } => "table_page",
@@ -1010,6 +1026,10 @@ pub enum Channel {
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, TS)]
 #[serde(rename_all = "camelCase")]
 #[non_exhaustive]
+#[expect(
+    clippy::struct_excessive_bools,
+    reason = "independent wire flags of one announcement: urgency, interruption, who spoke it, muted"
+)]
 pub struct AnnouncementInfo {
     /// Its order.
     pub seq: u64,
@@ -1028,6 +1048,9 @@ pub struct AnnouncementInfo {
     pub self_voiced: bool,
     /// The navigation node it describes, if any.
     pub node: Option<u32>,
+    /// Speech is off (B03-T09): show and log it, but do not speak it. Errors and alarms are
+    /// never muted (INFER, OD-30).
+    pub muted: bool,
 }
 
 /// Why a linked dataset could not be verified against its project (RFC-0008 §6).
@@ -1226,6 +1249,23 @@ pub enum NavVerb {
         /// The value.
         value: f64,
     },
+}
+
+/// What [`Request::ModalityToggle`] flips (keyboard §5.5).
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize, TS)]
+#[serde(rename_all = "camelCase")]
+#[non_exhaustive]
+pub enum ToggleTarget {
+    /// Speech and text announcements (T).
+    Speech,
+    /// Sonification: point cues and playback (S).
+    Sonification,
+    /// Braille output (B).
+    Braille,
+    /// The visual highlight (V).
+    Visual,
+    /// Terse or verbose announcements (Shift+T).
+    Verbosity,
 }
 
 /// A landmark of [`NavVerb::Landmark`].
@@ -1649,6 +1689,8 @@ pub struct TransportState {
     pub live: bool,
     /// Underruns the output reported since the session started (PB-02, PB-11).
     pub xruns: u64,
+    /// Sonification is off (B03-T09): the output is silent until it is turned on again.
+    pub muted: bool,
     /// The compiled Score's tracks that playback leaves out, because the explorer's filters
     /// took their series out (B03-T09, ADR-0017 "Navigation"). Empty when the transport
     /// plays the compiled Score as it is; exports always render it whole.
@@ -1896,6 +1938,7 @@ mod tests {
             device: None,
             live: false,
             xruns: 0,
+            muted: false,
             excluded_tracks: Vec::new(),
         };
         let job = JobInfo {
@@ -1943,6 +1986,7 @@ mod tests {
                 interrupt: true,
                 self_voiced: false,
                 node: Some(7),
+                muted: false,
             }),
             Event::LiveNotice { error },
             Event::Cursor(CursorState::default()),
