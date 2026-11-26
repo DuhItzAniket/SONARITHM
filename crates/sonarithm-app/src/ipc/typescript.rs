@@ -144,6 +144,14 @@ pub fn typescript() -> String {
     declare::<DeviceSummary>(&mut out, &cfg);
     declare::<crate::ipc::ProjectSummary>(&mut out, &cfg);
     declare::<crate::ipc::ProjectDatasetInfo>(&mut out, &cfg);
+    declare::<crate::ipc::RasterCalibration>(&mut out, &cfg);
+    declare::<crate::ipc::RasterAxis>(&mut out, &cfg);
+    declare::<crate::ipc::RasterAxisKind>(&mut out, &cfg);
+    declare::<crate::ipc::RasterAnchor>(&mut out, &cfg);
+    declare::<crate::ipc::AnchorText>(&mut out, &cfg);
+    declare::<crate::ipc::PlotAreaInfo>(&mut out, &cfg);
+    declare::<crate::ipc::AxisFitInfo>(&mut out, &cfg);
+    declare::<crate::ipc::ValueAt>(&mut out, &cfg);
     declare::<crate::ipc::RecentProject>(&mut out, &cfg);
     declare::<crate::ipc::AutosaveInfo>(&mut out, &cfg);
     declare::<ViewRange>(&mut out, &cfg);

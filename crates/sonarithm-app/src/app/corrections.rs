@@ -188,9 +188,14 @@ impl App {
                 .primary()
                 .map_or(sonarithm_core::TableId(0), sonarithm_data::Table::id),
         );
-        let options = sonarithm::ExtractOptions::new()
+        let mut options = sonarithm::ExtractOptions::new()
             .with_ids(bundle_id, table_id)
             .with_corrections(CorrectionSet::File(Box::new(file.clone())));
+        // A raster chart is read only through its calibration (C02-T10), which the
+        // correction document keeps.
+        if let Some(calibration) = &file.calibration {
+            options = options.with_calibration(calibration.clone());
+        }
         let chart =
             sonarithm::read_chart_bytes(&bytes, &open.summary.name, &options).map_err(|err| {
                 err.diagnostics().iter().next().map_or_else(

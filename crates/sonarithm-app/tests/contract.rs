@@ -36,6 +36,30 @@ fn chart(dir: &TempDir) -> (std::path::PathBuf, std::path::PathBuf) {
 }
 
 /// One request per command, in an order where each can succeed.
+/// The raster calibration commands (C02-T10), run last: a chart image opened, checked and
+/// applied (it becomes the next dataset), and a second one closed.
+fn raster_requests(dir: &TempDir) -> Vec<Value> {
+    let manifest = std::path::Path::new(env!("CARGO_MANIFEST_DIR"));
+    let image = dir.path().join("rain.png");
+    std::fs::copy(
+        manifest.join("../engines/sonarithm-plotsona/tests/corpus/raster/d3-line@1x.png"),
+        &image,
+    )
+    .unwrap();
+    let text =
+        std::fs::read_to_string(manifest.join("tests/fixtures/raster/d3-line@1x.calibration.json"))
+            .unwrap();
+    let spec: Value = serde_json::from_str(&text).unwrap();
+    let calibration = json!({ "x": spec["axes"]["x"], "y": spec["axes"]["y"] });
+    vec![
+        json!({ "command": "chart_raster_open", "args": { "path": image } }),
+        json!({ "command": "chart_calibration_check", "args": { "id": 1, "calibration": calibration, "at": [10.5, 10.5] } }),
+        json!({ "command": "chart_calibration_apply", "args": { "id": 1, "calibration": calibration } }),
+        json!({ "command": "chart_raster_open", "args": { "path": image } }),
+        json!({ "command": "chart_raster_close", "args": { "id": 2 } }),
+    ]
+}
+
 fn requests(dir: &TempDir) -> Vec<Value> {
     let csv = dir.path().join("t.csv");
     std::fs::write(&csv, CSV).unwrap();
@@ -147,6 +171,7 @@ fn every_command_answers_with_its_declared_reply_kind() {
     let table: std::collections::BTreeMap<&str, &str> = COMMANDS.iter().copied().collect();
     let mut seen = BTreeSet::new();
     let mut requests = requests(&dir);
+    requests.extend(raster_requests(&dir));
     // settings_set needs the settings as they are.
     let settings = app
         .dispatch_json(&json!({ "command": "settings_get" }).to_string())
