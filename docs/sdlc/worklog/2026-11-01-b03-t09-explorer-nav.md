@@ -112,5 +112,6 @@ None.
 
 ## Next steps
 
+- **Before the PR opens (paused 2026-11-26 for a usage reset):** #503 merged into this branch (572f2152) after the checks above. Re-run codegen, clippy and the app core's tests in one short builder slot, after merging `main` again if the fingerprint hotfix #509 or CURVASONA's #506 (`Annotation.track`) has landed, then typecheck if the protocol changed, push, and open the PR with auto-merge on.
 - The query menu's statistics: the "Values" and "Statistics" sections and six items, after ECHOMETRIC's C05-T06 (approved 2026-11-26).
 - The 50 ms key-to-onset check of the point cue on HW-01 (#129), and the NVDA walkthrough of the explorer, the toggles, the query menu and the braille line (B07).
