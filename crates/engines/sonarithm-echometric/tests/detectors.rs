@@ -210,6 +210,68 @@ fn sdr_21_trend_segments_follow_the_reversals_of_gen_001() {
     }
 }
 
+/// #507 (F-207): the outliers' ends against the interior, on GEN-011 with spikes forced at
+/// both ends, over flat, sloped and periodic bases, with the ends skipped and with Theil–Sen
+/// end lines. The measured rates are printed for F-207; only the interior has floors here,
+/// so the ends are reported as measured, not tuned to pass.
+#[test]
+fn f_207_outlier_ends_against_the_interior() {
+    let bases = [
+        ("flat", 0.0, 0.0),
+        ("sloped", 0.0, 0.05),
+        ("periodic", 2.0, 0.0),
+    ];
+    for (base, amplitude, slope) in bases {
+        for ends in [outliers::EndFit::Skip, outliers::EndFit::TheilSen] {
+            let (mut end_hits, mut end_found, mut end_truth) = (0usize, 0usize, 0usize);
+            let (mut mid_hits, mut mid_found, mut mid_truth) = (0usize, 0usize, 0usize);
+            for seed in 0..100 {
+                let params = OutlierParams {
+                    amplitude,
+                    slope,
+                    ends: true,
+                    ..OutlierParams::default()
+                };
+                let stimulus = generate(&Params::Outliers(params), seed).unwrap();
+                let Truth::Outliers(truth) = &stimulus.truth else {
+                    panic!("GEN-011 has outlier truth");
+                };
+                let last = (stimulus.rows() - 1) as u64;
+                let is_end = |row: u64| row == 0 || row == last;
+                let truth: BTreeSet<u64> = truth.rows.iter().map(|&r| r as u64).collect();
+                let found: BTreeSet<u64> = outliers::detect_with(&series(&stimulus, "value"), ends)
+                    .iter()
+                    .map(|f| f.first)
+                    .collect();
+                for row in &found {
+                    let hit = truth.contains(row);
+                    if is_end(*row) {
+                        end_found += 1;
+                        end_hits += usize::from(hit);
+                    } else {
+                        mid_found += 1;
+                        mid_hits += usize::from(hit);
+                    }
+                }
+                end_truth += truth.iter().filter(|r| is_end(**r)).count();
+                mid_truth += truth.iter().filter(|r| !is_end(**r)).count();
+            }
+            let rate = |hits: usize, of: usize| hits as f64 / of.max(1) as f64;
+            println!(
+                "F-207 {base:>8} {ends:?}: ends precision {:.4} recall {:.4}; interior precision {:.4} recall {:.4}",
+                rate(end_hits, end_found),
+                rate(end_hits, end_truth),
+                rate(mid_hits, mid_found),
+                rate(mid_hits, mid_truth),
+            );
+            assert!(rate(mid_hits, mid_truth) >= 0.95, "{base} {ends:?} interior recall");
+            if ends == outliers::EndFit::Skip {
+                assert_eq!(end_found, 0, "skipped ends are never reported");
+            }
+        }
+    }
+}
+
 proptest! {
     /// Change points never make a segment shorter than the minimum, and the same series gives
     /// the same ones (ADR-0013).
