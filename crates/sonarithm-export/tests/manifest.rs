@@ -225,7 +225,7 @@ fn manifest_version_2_records_experiments_and_version_1_still_reads() {
     let mut inputs = provenance();
     inputs.experimental = vec!["lowConfidenceTimbre".to_owned()];
     let exported = export(&score(), &options, &inputs, &dir, "on").unwrap();
-    assert_eq!(exported.manifest.manifest_version, 2);
+    assert_eq!(exported.manifest.manifest_version, 3);
     assert_eq!(exported.manifest.spec.experimental, ["lowConfidenceTimbre"]);
     let text = std::fs::read_to_string(dir.join("on.render.json")).unwrap();
     let on: serde_json::Value = serde_json::from_str(&text).unwrap();
@@ -241,6 +241,7 @@ fn manifest_version_2_records_experiments_and_version_1_still_reads() {
     assert!(old["spec"].get("experimental").is_none());
     assert_eq!(off.manifest.spec.experimental, Vec::<String>::new());
     old["manifestVersion"] = serde_json::json!(1);
+    old["data"].as_object_mut().unwrap().remove("fingerprintScheme");
     let v1 = std::fs::read_to_string(
         std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
             .join("../../schemas/sonarithm-render-manifest-1.schema.json"),
@@ -249,5 +250,38 @@ fn manifest_version_2_records_experiments_and_version_1_still_reads() {
     validates(&v1, &old).unwrap();
     let read: sonarithm_export::manifest::RenderManifest = serde_json::from_value(old).unwrap();
     assert_eq!(read.manifest_version, 1);
+    let _ = std::fs::remove_dir_all(dir);
+}
+
+/// RFC-0008 §6: manifest version 3 names the fingerprint scheme from the Score header, and
+/// a version 2 manifest, which has none, still validates against its schema and reads as
+/// scheme 1.
+#[test]
+fn rfc_0008_manifest_version_3_names_the_fingerprint_scheme() {
+    let dir = scratch("scheme");
+    let options = ExportOptions::new(AudioFormat::Wav(WavEncoding::Pcm24));
+    let mut score = score();
+    score.header.data_fingerprint_scheme = 2;
+    score.header.ir_version = score.required_ir_version();
+    let exported = export(&score, &options, &provenance(), &dir, "v3").unwrap();
+    assert_eq!(exported.manifest.data.fingerprint_scheme, 2);
+    let text = std::fs::read_to_string(dir.join("v3.render.json")).unwrap();
+    let mut written: serde_json::Value = serde_json::from_str(&text).unwrap();
+    assert_eq!(written["manifestVersion"], serde_json::json!(3));
+    assert_eq!(written["data"]["fingerprintScheme"], serde_json::json!(2));
+    assert_eq!(written["score"]["irVersion"], serde_json::json!(3));
+    validates(&json_schema(), &written).unwrap();
+
+    written["manifestVersion"] = serde_json::json!(2);
+    written["data"].as_object_mut().unwrap().remove("fingerprintScheme");
+    let v2 = std::fs::read_to_string(
+        std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
+            .join("../../schemas/sonarithm-render-manifest-2.schema.json"),
+    )
+    .unwrap();
+    validates(&v2, &written).unwrap();
+    let read: sonarithm_export::manifest::RenderManifest =
+        serde_json::from_value(written).unwrap();
+    assert_eq!(read.data.fingerprint_scheme, 1);
     let _ = std::fs::remove_dir_all(dir);
 }

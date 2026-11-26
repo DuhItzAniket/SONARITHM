@@ -30,6 +30,37 @@ impl Sha256Digest {
     }
 }
 
+/// SHA-256 computed incrementally: the digest of everything passed to
+/// [`update`](Self::update), in order, without holding it all at once (the value-based data
+/// fingerprint, RFC-0008).
+#[derive(Clone, Default)]
+pub struct Sha256Hasher(Sha256);
+
+impl Sha256Hasher {
+    /// A hasher that has seen nothing yet.
+    #[must_use]
+    pub fn new() -> Self {
+        Self::default()
+    }
+
+    /// Adds `bytes` to the input.
+    pub fn update(&mut self, bytes: &[u8]) {
+        self.0.update(bytes);
+    }
+
+    /// The digest of the whole input.
+    #[must_use]
+    pub fn finish(self) -> Sha256Digest {
+        Sha256Digest(self.0.finalize().into())
+    }
+}
+
+impl fmt::Debug for Sha256Hasher {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.write_str("Sha256Hasher")
+    }
+}
+
 impl fmt::Display for Sha256Digest {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         for byte in self.0 {
@@ -92,6 +123,15 @@ mod tests {
             Sha256Digest::of(b"").to_string(),
             "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
         );
+    }
+
+    #[test]
+    fn an_incremental_digest_equals_the_digest_of_the_whole_input() {
+        let mut hasher = Sha256Hasher::new();
+        hasher.update(b"ab");
+        hasher.update(b"");
+        hasher.update(b"c");
+        assert_eq!(hasher.finish(), Sha256Digest::of(b"abc"));
     }
 
     #[test]

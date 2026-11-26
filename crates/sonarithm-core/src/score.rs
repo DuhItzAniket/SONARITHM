@@ -42,7 +42,14 @@ pub use invariants::InvariantViolation;
 ///
 /// Version 2 (RFC-0007): the earcon kinds `zero`, `asymptote`, `undefined` and `offscreen`,
 /// and the [`Audify`] event.
-pub const IR_VERSION: u32 = 2;
+///
+/// Version 3 (RFC-0008 §6): [`ScoreHeader::data_fingerprint_scheme`]. A Score whose
+/// fingerprint is scheme 1 leaves the field out and keeps its version.
+pub const IR_VERSION: u32 = 3;
+
+/// The data fingerprint scheme of a Score that does not name one: scheme 1, the Arrow IPC
+/// bytes (RFC-0008 §6). The schemes themselves are defined by `sonarithm-data`.
+pub const FINGERPRINT_SCHEME_1: u32 = 1;
 
 /// The first Score IR version (A03), which every Score without later additions records.
 pub const IR_VERSION_BASE: u32 = 1;
@@ -162,11 +169,17 @@ pub struct Score {
 
 impl Score {
     /// The lowest Score IR version that can read this Score (RFC-0007 §4): the highest
-    /// version any of its events needs, at least [`IR_VERSION_BASE`]. The compiler writes
-    /// it into the header.
+    /// version any of its events needs, and 3 when the header names a fingerprint scheme
+    /// (RFC-0008 §6), at least [`IR_VERSION_BASE`]. The compiler writes it into the header.
     #[must_use]
     pub fn required_ir_version(&self) -> u32 {
-        self.tracks
+        let header = if self.header.data_fingerprint_scheme == FINGERPRINT_SCHEME_1 {
+            IR_VERSION_BASE
+        } else {
+            3
+        };
+        let events = self
+            .tracks
             .iter()
             .flat_map(|track| &track.events)
             .map(|event| match event {
@@ -175,7 +188,8 @@ impl Score {
                 _ => IR_VERSION_BASE,
             })
             .max()
-            .unwrap_or(IR_VERSION_BASE)
+            .unwrap_or(IR_VERSION_BASE);
+        events.max(header)
     }
 
     /// An empty Score with `header`.
@@ -234,6 +248,15 @@ pub struct ScoreHeader {
     pub spec_hash: Sha256Digest,
     /// SHA-256 fingerprint of the input data (03 §2).
     pub data_fingerprint: Sha256Digest,
+    /// The scheme that computed [`data_fingerprint`](Self::data_fingerprint) (RFC-0008
+    /// §6): 2 for the value-based fingerprint. Left out when it is 1, which a Score without
+    /// the field reads as, so earlier Scores keep their form and hash; a Score that writes
+    /// it needs IR version 3.
+    #[serde(
+        default = "fingerprint_scheme_1",
+        skip_serializing_if = "is_fingerprint_scheme_1"
+    )]
+    pub data_fingerprint_scheme: u32,
     /// The seed every random stream derives from (SDR-02).
     pub seed: u64,
     /// The mode (SDR-36).
@@ -260,6 +283,7 @@ impl ScoreHeader {
             spec_version,
             spec_hash: Sha256Digest::ZERO,
             data_fingerprint: Sha256Digest::ZERO,
+            data_fingerprint_scheme: FINGERPRINT_SCHEME_1,
             seed,
             mode,
             duration: Seconds::ZERO,
@@ -267,6 +291,18 @@ impl ScoreHeader {
             shapers: Vec::new(),
         }
     }
+}
+
+const fn fingerprint_scheme_1() -> u32 {
+    FINGERPRINT_SCHEME_1
+}
+
+#[allow(
+    clippy::trivially_copy_pass_by_ref,
+    reason = "serde's skip_serializing_if passes a reference"
+)]
+const fn is_fingerprint_scheme_1(scheme: &u32) -> bool {
+    *scheme == FINGERPRINT_SCHEME_1
 }
 
 /// What a track carries.

@@ -186,6 +186,35 @@ The UI shows `text` in a read-only text field, with the caret at `caret` (keyboa
 
 **Settings.** `settings.braille = { mode: "review" | "sparkline", cells?: number }` holds Shift+B's mode and the display's cell count, which a web page cannot read. They are app settings, not profile fields: they belong to the user's device. `cells: 0` is refused (`SNR-APP-013`). Files without `braille` read the defaults (review, no cell count).
 
+#### Relinking linked data
+
+> Amended 2026-11-26, RFC-0008 §6: `dataset_relink_check`, `dataset_relink`, the `relink_check` and `relinked` replies and `SNR-APP-095` added, approved by the coordinator under the owner's delegation, additive. The Rust side lands first; the dialog is the UI's (Lane U).
+
+**Why.** A linked dataset that a project cannot verify opens as unavailable (`SNR-APP-034`, RFC-0002 §4). Under RFC-0008 that includes every link saved by a build before it: such an entry records no size or SHA-256 of the file, so a changed file and a new fingerprint scheme look the same. A row count alone never reopens it, because a same-length file with other values would compile silently, and a listener without the visual would hear wrong data. The user checks the file and relinks it explicitly.
+
+**Which datasets.** The unavailable datasets in the `project` reply's `datasets` (`linked: true`, `available: false`). The UI offers **Check and relink this file** for each of them, in the dataset's actions in the Project region and in the command palette; it does not need to know why the dataset is unavailable before asking.
+
+**Commands.**
+
+* `dataset_relink_check { id }` reads the linked file again under RFC-0002 §4's rules and limits, and replies `relink_check { name, rows, recordedRows, reason }`:
+  * `name` is the file name alone, never a path;
+  * `rows` is the file's row count now, and `recordedRows` the count the project recorded;
+  * `reason` is `"olderBuild"` when the project was saved before RFC-0008 (scheme 1, nothing to verify against), or `"changed"` when its recorded size and SHA-256 no longer match.
+  * Nothing else sees the data: it is not shown, analysed, compiled or kept. The session does not change, and no event is sent.
+* `dataset_relink { id }` reads the file once more, so a file changed between the check and the relink is what gets linked, and makes the dataset available. It replies `relinked { dataset, project }`: `dataset` is the `DatasetSummary` `dataset_open` gives (its `rows` is the row count now), and `project` the `ProjectSummary`, with `unsaved: true` and the dataset available. The dataset's entry now holds the file's size, SHA-256 and scheme-2 fingerprint, which the next save records. It announces "`{file}` is relinked. Save the project to keep it." (`announce-dataset-relinked`) on the `announcements` channel.
+* **Errors.** An unknown `id` is `SNR-APP-002`. A dataset that is available, or not linked, is `SNR-APP-095` ("There is nothing to relink"). A file that cannot be read under §4 is `SNR-APP-034`, with the wording of the warning a project open gives for it (for example "The linked data `prices.csv` is missing, so it is unavailable."); so is a project that has no folder yet (an unsaved recovery).
+
+**The dialog (UI).** RFC-0008 §6 fixes its wording; the strings are the catalogue's source text.
+
+* After `dataset_relink_check`, a modal dialog opens. Its title and description are announced when it opens, and focus starts on **Cancel**:
+  * title: "Relink `{name}`?";
+  * description: "This data could not be verified against the project: the project has no record of the file's contents to compare it with. It has {rows} rows now; the project recorded {recordedRows}. If you relink it, SONARITHM uses the file as it is now." When `rows` differs from `recordedRows`, it adds: "The number of rows has changed.";
+  * buttons: **Relink** (sends `dataset_relink`) and **Cancel**.
+* **Cancel** and Escape close the dialog, send nothing and announce nothing more. Focus returns to the action.
+* A refused check shows its `IpcError` message in the Status region, like other dataset errors, and opens no dialog.
+
+**Undo.** `dataset_relink` is not on the history, as `dataset_open` and `dataset_close` are not: undo and redo restore the spec and corrections only. RFC-0008 §6 asks for "one undoable edit, like other dataset changes", but no dataset change is undoable today. Until the coordinator decides otherwise (OD-32 in [open-decisions](../planning/open-decisions.md)), closing the dataset is the way back.
+
 #### Meter frames
 
 > Amended 2026-10-30, B01-T04, approved by the coordinator under delegation.
