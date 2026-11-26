@@ -78,6 +78,10 @@ function SpecEditor({
         event.preventDefault();
         handle.current?.complete();
       }
+      if ((event.ctrlKey || event.metaKey) && event.key === "f") {
+        event.preventDefault();
+        handle.current?.openSearch();
+      }
     };
     window.addEventListener("keydown", onKey);
     return () => {
@@ -224,5 +228,34 @@ export const Completion: StoryObj<typeof meta> = {
     await userEvent.keyboard("{Escape}");
     await expect(document.querySelector(".cm-tooltip-autocomplete")).toBeNull();
     await expect(editor).toHaveFocus();
+  },
+};
+
+/**
+ * The search panel (Primary+F in the app, opened here through the handle): F3 or Enter finds
+ * the next match, Escape closes the panel from its field and returns to the text with the match
+ * selected, so typing replaces it.
+ */
+export const Search: StoryObj<typeof meta> = {
+  args: { withDiagnostics: false },
+  play: async ({ canvasElement }) => {
+    const editor = textbox(canvasElement);
+    await userEvent.click(editor);
+    await userEvent.keyboard("{Control>}f{/Control}");
+    const field = await within(canvasElement).findByRole("textbox", {
+      name: "Find",
+    });
+    await expect(field).toHaveFocus();
+    // F3 finds the next match (Enter does too in a browser; the testing library's key
+    // events carry no keyCode, which CodeMirror's search field reads for Enter).
+    await userEvent.keyboard("tone{F3}");
+    await expect(
+      canvasElement.querySelector(".cm-searchMatch-selected")?.textContent,
+    ).toBe("tone");
+    await userEvent.keyboard("{Escape}");
+    await expect(canvasElement.querySelector(".cm-search")).toBeNull();
+    await expect(editor).toHaveFocus();
+    await userEvent.keyboard("glide");
+    await expect(editor.textContent).toContain('"mark": "glide"');
   },
 };

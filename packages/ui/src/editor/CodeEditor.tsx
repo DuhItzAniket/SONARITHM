@@ -253,8 +253,15 @@ export function CodeEditor({
         ...historyKeys((step) => latest.current.onTextHistory?.(step)),
         ...withoutAppKeys(completionKeymap),
         ...withoutAppKeys(closeBracketsKeymap),
-        { key: "F3", run: findNext, shift: findPrevious },
-        { key: "Escape", run: closeSearchPanel },
+        // In the editor and in its search panel's fields (CodeMirror's "search-panel" scope),
+        // so Escape closes the panel from its search field and returns to the text.
+        {
+          key: "F3",
+          run: findNext,
+          shift: findPrevious,
+          scope: "editor search-panel",
+        },
+        { key: "Escape", run: closeSearchPanel, scope: "editor search-panel" },
         ...withoutAppKeys(defaultKeymap),
       ]),
       labelCompartment.current.of(
