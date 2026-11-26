@@ -33,6 +33,7 @@ sonarithm-compiler.workspace = true
 sonarithm-core.workspace = true
 # Function sources, critical-point cues, the `audify` mark and `read_function` (C03-T07).
 sonarithm-curvasona.workspace = true
+sonarithm-echometric.workspace = true
 sonarithm-data.workspace = true
 sonarithm-dsp.workspace = true
 sonarithm-export.workspace = true

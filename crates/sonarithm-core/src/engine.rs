@@ -166,27 +166,49 @@ pub struct Annotation {
     pub label: String,
     /// The rows it covers.
     pub range: RowRange,
+    /// The data field it is about, or `None` for an analyzer of whole rows (RFC-0009 §1):
+    /// AUDAXIS links it to the series that plays this field.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub field: Option<String>,
     /// The value it reports, if any.
     pub value: Option<f64>,
     /// How confident the analyzer is.
     pub confidence: Confidence,
     /// The design rules behind it.
     pub rules: Vec<RuleId>,
+    /// The parameters the analyzer used, by name (RFC-0009 §1): the method and every
+    /// threshold, so a listener can find out why the annotation exists. Empty for analyzers
+    /// that record none; ordered, so it serializes the same way every time.
+    #[serde(default, skip_serializing_if = "BTreeMap::is_empty")]
+    pub params: BTreeMap<String, AnnotationParam>,
 }
 
 impl Annotation {
-    /// A certain annotation with no value and no rules.
+    /// A certain annotation with no value, no rules and no parameters.
     #[must_use]
     pub fn new(source: AnalyzerId, label: impl Into<String>, range: RowRange) -> Self {
         Self {
             source,
             label: label.into(),
             range,
+            field: None,
             value: None,
             confidence: Confidence::CERTAIN,
             rules: Vec::new(),
+            params: BTreeMap::new(),
         }
     }
+}
+
+/// One analyzer parameter's value (RFC-0009 §1).
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+#[serde(untagged)]
+#[non_exhaustive]
+pub enum AnnotationParam {
+    /// A number, such as a threshold.
+    Number(f64),
+    /// A name, such as the method.
+    Text(String),
 }
 
 /// What an encoder is asked to encode: the track, plus the spec sections every track's
@@ -334,7 +356,8 @@ pub trait Source<D>: Send + Sync {
 /// Finds structure in data: extrema, outliers, change points, critical points (ECHOMETRIC,
 /// CURVASONA).
 pub trait Analyzer<D>: Send + Sync {
-    /// Analyzes `data` with the spec's `analysis` object as parameters.
+    /// Analyzes `data` as `request` asks: the spec's `analysis` object and the fields the
+    /// spec's tracks play (RFC-0009 §1, ADR-0014 amended).
     ///
     /// # Errors
     ///
@@ -342,9 +365,50 @@ pub trait Analyzer<D>: Send + Sync {
     fn analyze(
         &self,
         data: &D,
-        params: &SpecFragment,
+        request: &AnalysisRequest<'_>,
         cx: &mut CompileContext,
     ) -> Result<Vec<Annotation>, CompileError>;
+}
+
+/// What an analyzer is asked to analyze (RFC-0009 §1).
+#[derive(Clone, Copy, Debug)]
+#[non_exhaustive]
+pub struct AnalysisRequest<'a> {
+    /// The spec's `analysis` object.
+    pub params: &'a SpecFragment,
+    /// The fields the spec's tracks play, in track order: what a detector of series
+    /// analyzes, so every insight belongs to a series that sounds.
+    pub fields: &'a [AnalyzedField],
+}
+
+impl<'a> AnalysisRequest<'a> {
+    /// A request for `fields`, with `params` as the `analysis` object.
+    #[must_use]
+    pub const fn new(params: &'a SpecFragment, fields: &'a [AnalyzedField]) -> Self {
+        Self { params, fields }
+    }
+}
+
+/// A field a spec's tracks play (RFC-0009 §1): each data track's pitch field, else its first
+/// channel mapped to a field (timbre aside, which is nominal by SDR-25).
+#[derive(Clone, Debug, PartialEq, Eq)]
+#[non_exhaustive]
+pub struct AnalyzedField {
+    /// The data field.
+    pub field: String,
+    /// The tracks that play it, in spec order.
+    pub tracks: Vec<TrackId>,
+}
+
+impl AnalyzedField {
+    /// The field `field`, played by `tracks`.
+    #[must_use]
+    pub fn new(field: impl Into<String>, tracks: Vec<TrackId>) -> Self {
+        Self {
+            field: field.into(),
+            tracks,
+        }
+    }
 }
 
 /// Turns data into one Score track (NUMISONA, TONALENS, CURVASONA, RESONUM).

@@ -15,7 +15,7 @@ use serde::Serialize;
 use sonarithm_core::diagnostic::{Diagnostic, Diagnostics, SpecPointer};
 use sonarithm_core::digest::Sha256Digest;
 use sonarithm_core::engine::{
-    Annotation, Budget, CancelToken, CompileContext, CompileError, Engine, MarkKind, Registry,
+    AnalysisRequest, AnalyzedField, Annotation, Budget, CancelToken, CompileContext, CompileError, Engine, MarkKind, Registry,
     SourceKind, SpecFragment, TrackRequest,
 };
 use sonarithm_core::ids::{AnalyzerId, EngineId, RuleId, TrackId};
@@ -24,6 +24,7 @@ use sonarithm_core::score::{EngineVersion, Score, ScoreHeader, ShaperStage};
 use sonarithm_core::units::Seconds;
 use sonarithm_spec::data::Source;
 use sonarithm_spec::sections::Detector;
+use sonarithm_spec::track::ChannelName;
 use sonarithm_spec::v02::TemplateRef;
 use sonarithm_spec::{Prepared, Spec, Transform, prepare};
 
@@ -79,6 +80,9 @@ pub struct Compiled {
     /// The keys of the experimental switches that are on (RFC-0006), sorted, for the
     /// render manifest and the description.
     pub experiments: Vec<String>,
+    /// Every analyzer's annotations, in `analysis.detect` order (RFC-0009 §1): with their
+    /// field and parameters. Not part of the Score.
+    pub annotations: Vec<Annotation>,
 }
 
 /// Why a compile produced no Score.
@@ -160,6 +164,7 @@ impl<D: CompilerData> Compiler<D> {
                 score,
                 provenance,
                 nav,
+                annotations,
             }) => {
                 let mut diagnostics = run.diagnostics;
                 diagnostics.extend(run.cx.take_diagnostics());
@@ -173,6 +178,7 @@ impl<D: CompilerData> Compiler<D> {
                     provenance,
                     nav,
                     experiments,
+                    annotations,
                 })
             }
             Err(Stop::Cancelled) => Err(Failure::Cancelled),
@@ -196,6 +202,7 @@ struct Finished {
     score: Score,
     provenance: BTreeMap<String, f64>,
     nav: Option<NavTree>,
+    annotations: Vec<Annotation>,
 }
 
 /// Why the stages stopped early.
@@ -275,6 +282,7 @@ impl<D: CompilerData> Run<'_, D> {
             provenance: data.provenance_mix(),
             score,
             nav,
+            annotations,
         })
     }
 
@@ -382,6 +390,8 @@ impl<D: CompilerData> Run<'_, D> {
         };
         let at = SpecPointer::root().key("analysis");
         let params = fragment(at.clone(), analysis)?;
+        let fields = analyzed_fields(spec);
+        let request = AnalysisRequest::new(&params, &fields);
         for (index, detector) in analysis.detect.iter().enumerate() {
             let id = AnalyzerId::from_static(detector_id(*detector));
             let (engine, analyzer) = registry.analyzer(&id).ok_or_else(|| {
@@ -395,7 +405,7 @@ impl<D: CompilerData> Run<'_, D> {
             self.use_engine(&engine.clone());
             annotations.extend(
                 analyzer
-                    .analyze(data, &params, &mut self.cx)
+                    .analyze(data, &request, &mut self.cx)
                     .map_err(stop)?,
             );
         }
@@ -706,6 +716,35 @@ fn detector_id(detector: Detector) -> &'static str {
     }
 }
 
+/// The fields the spec's tracks play (RFC-0009 §1): each track's pitch field, else its first
+/// channel mapped to a field other than timbre (nominal, SDR-25). A field several tracks play
+/// appears once, at its first track, with all of them.
+fn analyzed_fields(spec: &Spec) -> Vec<AnalyzedField> {
+    let mut fields: Vec<AnalyzedField> = Vec::new();
+    for track in &spec.tracks {
+        let present = track.channels.present();
+        let pitch = present
+            .iter()
+            .find(|(name, _)| *name == ChannelName::Pitch)
+            .and_then(|(_, channel)| channel.field.as_ref());
+        let main = pitch.or_else(|| {
+            present
+                .iter()
+                .filter(|(name, _)| *name != ChannelName::Timbre)
+                .find_map(|(_, channel)| channel.field.as_ref())
+        });
+        let Some(field) = main else {
+            continue;
+        };
+        let id = TrackId::new(track.id.clone());
+        match fields.iter_mut().find(|known| &known.field == field) {
+            Some(known) => known.tracks.push(id),
+            None => fields.push(AnalyzedField::new(field.clone(), vec![id])),
+        }
+    }
+    fields
+}
+
 fn detector_owner(detector: Detector) -> &'static str {
     if detector == Detector::CriticalPoints {
         "curvasona"
@@ -719,7 +758,40 @@ mod tests {
     use proptest::prelude::*;
     use sonarithm_core::testing::valid_score;
 
-    use super::duration;
+    use super::{analyzed_fields, duration};
+
+    /// RFC-0009 §1: each track's pitch field, else its first non-timbre field; a field two
+    /// tracks play appears once, with both; a track with no field adds nothing.
+    #[test]
+    fn rfc_0009_analyzed_fields_follow_the_tracks() {
+        let spec = sonarithm_spec::parse(
+            r#"{
+                "specVersion": "0.1",
+                "data": { "source": { "kind": "inline", "values": [{ "t": 1, "a": 2, "b": 3, "c": "x" }] } },
+                "tracks": [
+                    { "id": "one", "mark": "tone", "channels": { "pitch": { "field": "a" }, "loudness": { "field": "b" } } },
+                    { "id": "two", "mark": "tone", "channels": { "timbre": { "field": "c" }, "duration": { "field": "b" } } },
+                    { "id": "three", "mark": "tone", "channels": { "pitch": { "field": "a" } } },
+                    { "id": "four", "mark": "tone", "channels": { "pitch": { "value": 60 } } }
+                ]
+            }"#,
+        )
+        .expect("the spec parses");
+        let fields: Vec<(String, Vec<String>)> = analyzed_fields(&spec)
+            .into_iter()
+            .map(|f| {
+                let tracks = f.tracks.iter().map(|t| t.as_str().to_owned()).collect();
+                (f.field, tracks)
+            })
+            .collect();
+        assert_eq!(
+            fields,
+            [
+                ("a".to_owned(), vec!["one".to_owned(), "three".to_owned()]),
+                ("b".to_owned(), vec!["two".to_owned()]),
+            ]
+        );
+    }
 
     proptest! {
         /// The header duration the compiler stamps covers every event of any valid Score,

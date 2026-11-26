@@ -750,22 +750,36 @@ fn add_insights(
 }
 
 /// The first point, in series order then x order, whose row the annotation covers.
+///
+/// An annotation about a field (RFC-0009 §1) looks only in the series that play that field,
+/// so an outlier in a second series is never linked to the first. When it has no field, or
+/// no series that plays it covers its rows, every series is searched, as before.
 fn target(
     all: &[Series],
     placed: &[(NavNodeId, Vec<NavNodeId>)],
     annotation: &Annotation,
 ) -> Option<(NavNodeId, f64)> {
     let range = annotation.range;
-    all.iter().zip(placed).find_map(|(series, (_, ids))| {
-        series
-            .points
-            .iter()
-            .zip(ids)
-            .find(|(p, _)| {
-                p.row.table == range.table
-                    && p.row.generation == range.generation
-                    && (range.start..range.end).contains(&p.row.row)
+    let first_point = |only: Option<&str>| {
+        all.iter()
+            .zip(placed)
+            .filter(|(series, _)| only.is_none_or(|field| series.value_field.name.as_deref() == Some(field)))
+            .find_map(|(series, (_, ids))| {
+                series
+                    .points
+                    .iter()
+                    .zip(ids)
+                    .find(|(p, _)| {
+                        p.row.table == range.table
+                            && p.row.generation == range.generation
+                            && (range.start..range.end).contains(&p.row.row)
+                    })
+                    .map(|(p, &id)| (id, p.position))
             })
-            .map(|(p, &id)| (id, p.position))
-    })
+    };
+    annotation
+        .field
+        .as_deref()
+        .and_then(|field| first_point(Some(field)))
+        .or_else(|| first_point(None))
 }

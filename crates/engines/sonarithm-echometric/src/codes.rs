@@ -107,6 +107,15 @@ code!(
     []
 );
 
+code!(
+    /// A field the spec's tracks play is not in the data, or holds no numbers, so a detector
+    /// did not analyze it (C05-T01).
+    FIELD_NOT_ANALYZED, "SNR-ENG-640", Info,
+    "A played field was not analyzed",
+    "Detectors read numeric fields; map a numeric field to the track's pitch, or leave the detector out of `analysis.detect`.",
+    ["A11Y-23"]
+);
+
 /// Every code ECHOMETRIC emits, in ascending order.
 pub const CODES: CodeTable = CodeTable {
     area: Area::Eng,
@@ -122,6 +131,7 @@ pub const CODES: CodeTable = CodeTable {
         PROTOCOL_RESPONSE,
         LOG_UNREADABLE,
         LOG_MISMATCH,
+        FIELD_NOT_ANALYZED,
     ],
 };
 
