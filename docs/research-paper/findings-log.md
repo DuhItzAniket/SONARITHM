@@ -1042,6 +1042,17 @@ A05 (render engine, audio backends, export) uses F-050 to F-069.
 - **Evidence level / confidence:** EV-D / Strong for the cause (the failing OS set, the zero-change local re-record, and exmex's operator source); cross-platform agreement after the fix is shown by #449's CI, not yet
 - **Affects:** ADR-0013 §1; every function spec's Score and manifest (C03-T02, C03-T06, C03-T07); the curvasona-suite records; any snapshot that holds a function's full-precision values
 
+### F-206 · ECHOMETRIC's detectors read a field's whole column in table order, not the series each track plays
+
+- **Date:** 2026-11-26 · **Phase:** C05 · **Type:** engineering (correctness) · **Status:** new
+- **Statement:** PLOTSONA's review of #506 found that the first version of RFC-0009's `AnalysisRequest` grouped tracks by field and that ECHOMETRIC read each field's whole column in table order. NUMISONA instead plays each track's filtered rows, ordered by the substrate's time field.
+  - **On DS-003:** three tracks each filter one region of a month-major table. The series the detectors saw zig-zagged between regions (99.2, 49.2, 38.8, 94.9, …), so `extrema` turned at almost every month, and the global maximum and minimum were found once across all three regions.
+  - **Effect on listeners:** AUDAXIS links by field and row to the region that holds the row, so a listener on "north" would hear insights that its own sound contradicts. Any table not in time order is affected, even with one track.
+  - **Fix:** one `AnalyzedField` per track, with the rows it plays in play order (`sonarithm_data::play_rows`: the filter's rows, stably sorted by the time field). Annotations carry their track, and AUDAXIS links by track first.
+- **Evidence:** `a11y_23_each_region_has_its_own_maximum_on_its_own_track` (DS-003: each region's maximum is its own, on its own track and series); `rfc_0009_analyzed_rows_are_the_rows_each_track_plays` (`play_rows` equals the source rows of every note NUMISONA encodes, in order).
+- **Evidence level / confidence:** EV-D / Strong: a review finding reproduced by a test on the gallery's own spec.
+- **Affects:** RFC-0009 §1 (amended again); ADR-0014's amendment row; `CompilerData`; every ECHOMETRIC analyzer; AUDAXIS's insight links.
+
 ### F-205 · A robust z-score over a whole series misses spikes on a periodic base, and one inside small windows calls noise an outlier
 
 - **Date:** 2026-11-26 · **Phase:** C05 · **Type:** engineering (detector design) · **Status:** new

@@ -165,7 +165,7 @@ impl Analyzer<DataBundle> for Detector {
         };
         let mut annotations = Vec::new();
         for analyzed in request.fields {
-            let Some(series) = series_of(table, &analyzed.field) else {
+            let Some(series) = series_of(table, &analyzed.field, analyzed.rows.as_deref()) else {
                 cx.report(Diagnostic::new(
                     &codes::FIELD_NOT_ANALYZED,
                     format!(
@@ -178,7 +178,9 @@ impl Analyzer<DataBundle> for Detector {
             };
             cx.check_cancelled()?;
             for finding in self.findings(&series) {
-                annotations.push(annotation(*self, table, &analyzed.field, &finding));
+                let mut found = annotation(*self, table, &analyzed.field, &finding);
+                found.track = Some(analyzed.track.clone());
+                annotations.push(found);
             }
         }
         Ok(annotations)
@@ -186,12 +188,16 @@ impl Analyzer<DataBundle> for Detector {
 }
 
 /// A finding as an annotation of `field`, with the detector's parameters (RFC-0009 §1).
+///
+/// A track's series may skip rows (its filter) and run out of table order (its time field),
+/// so a finding's first and last rows bound its range in table order, whichever comes first;
+/// the annotation's `track` says which of those rows belong to it (RFC-0009 §1).
 fn annotation(detector: Detector, table: &Table, field: &str, finding: &Finding) -> Annotation {
     let range = RowRange {
         table: table.id(),
         generation: table.generation(),
-        start: finding.first,
-        end: finding.last.saturating_add(1),
+        start: finding.first.min(finding.last),
+        end: finding.first.max(finding.last).saturating_add(1),
     };
     let mut annotation = Annotation::new(detector.id(), finding.label, range);
     annotation.field = Some(field.to_owned());
@@ -218,12 +224,21 @@ fn annotation(detector: Detector, table: &Table, field: &str, finding: &Finding)
     annotation
 }
 
-/// The finite numbers of `field` in `table`, by row, or `None` when it is absent or not
-/// numeric.
-fn series_of(table: &Table, field: &str) -> Option<Series> {
+/// The finite numbers of `field` at `rows` of `table`, in that order (every row in table
+/// order when `rows` is `None`), or `None` when the field is absent or not numeric.
+fn series_of(table: &Table, field: &str, rows: Option<&[u64]>) -> Option<Series> {
     let column = table.column(field).ok()?;
     let values = numbers(column.as_ref())?;
-    Some(Series::new((0_u64..).zip(values)))
+    Some(match rows {
+        // The track's rows, in the order it plays them (RFC-0009 §1).
+        Some(rows) => Series::new(rows.iter().map(|&row| {
+            let value = usize::try_from(row)
+                .ok()
+                .and_then(|at| values.get(at).copied().flatten());
+            (row, value)
+        })),
+        None => Series::new((0_u64..).zip(values)),
+    })
 }
 
 /// The values of a numeric array, `None` for each null.

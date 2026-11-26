@@ -43,6 +43,10 @@ impl CompilerData for DataBundle {
         sonarithm_data::bundle_fingerprint(self).unwrap_or(Sha256Digest::ZERO)
     }
 
+    fn play_rows(&self, filter: Option<&str>, time: Option<&str>) -> Option<Vec<u64>> {
+        sonarithm_data::play_rows(self.primary()?, filter, time).ok()
+    }
+
     fn transform(
         &mut self,
         transforms: &[Transform],

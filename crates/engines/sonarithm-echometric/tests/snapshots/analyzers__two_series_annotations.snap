@@ -13,6 +13,7 @@ expression: json
       "end": 1
     },
     "field": "temp",
+    "track": "temp",
     "value": 10.0,
     "confidence": 1.0,
     "rules": [
@@ -33,6 +34,7 @@ expression: json
       "end": 3
     },
     "field": "temp",
+    "track": "temp",
     "value": 10.2,
     "confidence": 1.0,
     "rules": [
@@ -53,6 +55,7 @@ expression: json
       "end": 3
     },
     "field": "temp",
+    "track": "temp",
     "value": 10.2,
     "confidence": 1.0,
     "rules": [
@@ -73,6 +76,7 @@ expression: json
       "end": 4
     },
     "field": "temp",
+    "track": "temp",
     "value": 10.0,
     "confidence": 1.0,
     "rules": [
@@ -93,6 +97,7 @@ expression: json
       "end": 6
     },
     "field": "temp",
+    "track": "temp",
     "value": 10.2,
     "confidence": 1.0,
     "rules": [
@@ -113,6 +118,7 @@ expression: json
       "end": 7
     },
     "field": "temp",
+    "track": "temp",
     "value": 10.0,
     "confidence": 1.0,
     "rules": [
@@ -133,6 +139,7 @@ expression: json
       "end": 9
     },
     "field": "temp",
+    "track": "temp",
     "value": 10.2,
     "confidence": 1.0,
     "rules": [
@@ -153,6 +160,7 @@ expression: json
       "end": 10
     },
     "field": "temp",
+    "track": "temp",
     "value": 10.0,
     "confidence": 1.0,
     "rules": [
@@ -173,6 +181,7 @@ expression: json
       "end": 12
     },
     "field": "temp",
+    "track": "temp",
     "value": 10.2,
     "confidence": 1.0,
     "rules": [
@@ -193,6 +202,7 @@ expression: json
       "end": 13
     },
     "field": "temp",
+    "track": "temp",
     "value": 10.0,
     "confidence": 1.0,
     "rules": [
@@ -213,6 +223,7 @@ expression: json
       "end": 15
     },
     "field": "temp",
+    "track": "temp",
     "value": 10.2,
     "confidence": 1.0,
     "rules": [
@@ -233,6 +244,7 @@ expression: json
       "end": 16
     },
     "field": "temp",
+    "track": "temp",
     "value": 10.0,
     "confidence": 1.0,
     "rules": [
@@ -253,6 +265,7 @@ expression: json
       "end": 18
     },
     "field": "temp",
+    "track": "temp",
     "value": 10.2,
     "confidence": 1.0,
     "rules": [
@@ -273,6 +286,7 @@ expression: json
       "end": 19
     },
     "field": "temp",
+    "track": "temp",
     "value": 10.0,
     "confidence": 1.0,
     "rules": [
@@ -293,6 +307,7 @@ expression: json
       "end": 1
     },
     "field": "humidity",
+    "track": "humidity",
     "value": 40.0,
     "confidence": 1.0,
     "rules": [
@@ -313,6 +328,7 @@ expression: json
       "end": 13
     },
     "field": "humidity",
+    "track": "humidity",
     "value": 95.0,
     "confidence": 1.0,
     "rules": [
@@ -333,6 +349,7 @@ expression: json
       "end": 13
     },
     "field": "humidity",
+    "track": "humidity",
     "value": 95.0,
     "confidence": 1.0,
     "rules": [
@@ -353,6 +370,7 @@ expression: json
       "end": 13
     },
     "field": "humidity",
+    "track": "humidity",
     "value": 95.0,
     "confidence": 1.0,
     "rules": [
