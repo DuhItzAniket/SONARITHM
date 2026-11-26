@@ -253,3 +253,77 @@ command-results =
 command-no-results = No commands match.
 keyboard-reference-title = Keyboard shortcuts
 keyboard-no-binding = No shortcut
+
+## The spec editor (B05-T03; keyboard-and-navigation §5.9, §5.10). Diagnostics are said with
+## their severity, place, code and message; $detail is the code and the app core's message.
+
+ui-spec-editor = Spec (JSON)
+ui-spec-loading = Loading the spec editor.
+ui-spec-empty-hint = No spec yet. Type one here, then apply it with { $key }.
+# The editor's description: a summary of the live diagnostics, read when the editor is focused.
+ui-spec-summary =
+    { $errors ->
+        [0] { $warnings ->
+                [0] { $notes ->
+                        [0] No problems.
+                        [one] { $notes } note.
+                       *[other] { $notes } notes.
+                    }
+                [one] { $warnings } warning, { $notes } notes.
+               *[other] { $warnings } warnings, { $notes } notes.
+            }
+        [one] { $errors } error, { $warnings } warnings, { $notes } notes.
+       *[other] { $errors } errors, { $warnings } warnings, { $notes } notes.
+    }
+ui-spec-checking = Checking the spec.
+ui-severity-error = Error
+ui-severity-warning = Warning
+ui-severity-info = Note
+# Where a diagnostic is; the whole spec when it has no place.
+ui-diagnostic-location = Line { $line }, column { $column }
+ui-diagnostic-location-none = Whole spec
+# F8 and Enter on a diagnostic (keyboard §5.9, §5.10): $severity is one of the words above.
+ui-spec-diagnostic = { $severity }, line { $line }, column { $column }. { $detail }
+ui-spec-no-diagnostics = No problems in the spec.
+# Apply (Primary+Enter): $count is the number of tracks, $duration the Score's length.
+ui-spec-applied =
+    { $warnings ->
+        [0] Spec applied. Compiled { $count ->
+                [one] { $count } track
+               *[other] { $count } tracks
+            }, { $duration }.
+        [one] Spec applied. Compiled { $count ->
+                [one] { $count } track
+               *[other] { $count } tracks
+            }, { $duration }, with { $warnings } warning.
+       *[other] Spec applied. Compiled { $count ->
+                [one] { $count } track
+               *[other] { $count } tracks
+            }, { $duration }, with { $warnings } warnings.
+    }
+ui-spec-applied-not-compiled =
+    { $errors ->
+        [one] Spec applied, not compiled: { $errors } error. First: { $detail }
+       *[other] Spec applied, not compiled: { $errors } errors. First: { $detail }
+    }
+ui-spec-not-applied = Spec not applied: { $cause }
+ui-spec-format-failed = Cannot format the spec: it is not valid JSON. Fix the syntax error first.
+ui-spec-formatted = Spec formatted.
+ui-spec-no-completions = No completions here.
+# The spec changed outside the editor (the inspector, undo) while the editor has unapplied edits.
+ui-spec-changed-outside = The spec changed outside the editor. Your unapplied edits are kept.
+ui-spec-load-current = Load the current spec
+# Undo and redo name which history they stepped (B05-T03): typing in the editor, or the spec.
+ui-undo-text = Undid a text edit.
+ui-redo-text = Redid a text edit.
+ui-undo-spec = Undid spec change: { $label }
+ui-redo-spec = Redid spec change: { $label }
+ui-nothing-to-undo = Nothing to undo.
+ui-nothing-to-redo = Nothing to redo.
+command-spec-edit = Edit the spec
+command-spec-apply = Apply the spec
+command-spec-next-diagnostic = Go to the next diagnostic
+command-spec-previous-diagnostic = Go to the previous diagnostic
+command-spec-format = Format the spec
+command-spec-complete = Show completions
+command-spec-find = Find in the spec

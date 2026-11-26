@@ -101,6 +101,16 @@ fn sample_args(style: UnitStyle) -> Args {
         .text("modality", "speech")
         .text("on", "yes")
         .text("verbosity", "verbose")
+        // The spec editor (B05-T03).
+        .number("errors", 2.0)
+        .number("warnings", 1.0)
+        .number("notes", 4.0)
+        .text("severity", "19")
+        .number("line", 4.0)
+        .number("column", 12.0)
+        .text("label", "20")
+        .text("cause", "21")
+        .text("duration", "22")
 }
 
 #[test]

@@ -19,6 +19,8 @@ import {
 } from "@sonarithm/ipc";
 import { mockIPC } from "@tauri-apps/api/mocks";
 
+import { mockSpec } from "./mock-spec.ts";
+
 /**
  * Tauri's `mockIPC` answering the host's commands from `@sonarithm/ipc`'s in-memory host,
  * so Playwright drives the real UI code, including `createTauriTransport`, in any browser
@@ -253,7 +255,11 @@ function navMove(verb: string): {
   return { row: target, outcome: "moved", edge: null };
 }
 
+/** The spec commands (B05-T03). */
+const spec = mockSpec();
+
 const handlers: MockHandlers = {
+  ...spec.handlers,
   nav_move: (request) => {
     const step = navMove(request.args.verb.verb);
     return {
@@ -419,5 +425,9 @@ Reflect.set(window, "__SONARITHM_MOCK__", {
   /** The settings as the UI last saved them. */
   settings(): Settings {
     return settings;
+  },
+  /** The session's spec text (B05-T03). */
+  specText(): string | null {
+    return spec.text();
   },
 });

@@ -1344,3 +1344,27 @@ A05 (render engine, audio backends, export) uses F-050 to F-069.
 - **Evidence level / confidence:** EV-C / Strong for the upstream match (same browser build, same axe-then-lookup trigger, same error). The crash's exact read inside axe was not traced in our tests.
 - **Affects:** `apps/desktop/e2e/audio.spec.ts`; any later E2E test that runs axe after a named lookup in Firefox until the upgrade
 - **Papers:** none yet
+
+### F-227 · A React Aria tab panel whose content loads on demand stays a Tab stop for a moment, and WebKit then drops the focus to the page
+
+- **Date:** 2026-11-26 · **Phase:** B05-T03 · **Type:** engineering (accessibility, focus) · **Status:** new
+- **Statement:** React Aria's `TabPanel` takes `tabindex="0"` while it holds nothing tabbable, and drops it when a mutation observer sees a tabbable child. The Spec tab's editor loads on demand (PB-07), so for a moment after it appears the panel is still a Tab stop.
+  - **Chromium:** Tab from the tab list reached the editor in every run.
+  - **WebKit (Playwright 1.65.1, Windows):** in about two of three runs, a Tab pressed right after the editor appeared focused the panel; the panel then lost its tabindex while focused, and the focus fell to `<body>`.
+  - **Settling:** polled every 200 ms, the panel had no tabindex at the first poll.
+- **Fix (test):** the E2E waits for the panel to lose its tabindex before pressing Tab. The app is unchanged; a person is unlikely to press Tab within that moment, but a screen reader's quick navigation could.
+- **Open:** whether to keep the panel's tabindex in step with the lazy content (for example by giving the loading text a focusable role, or by making the editor part of the first render). To be checked with NVDA in the HP-07 walkthrough.
+- **Evidence:** `apps/desktop/e2e/spec.spec.ts` (`openSpecTab`); `react-aria` 3.53.1 `useHasTabbableChild` (a mutation observer; its `attributeFilter` names `tabIndex`, and HTML attribute names are lower case, so a tabindex change alone may not trigger a re-check; not confirmed).
+- **Evidence level / confidence:** EV-B / Moderate (reproduced in WebKit only; the cause is read from the source, not traced)
+- **Affects:** any React Aria tab panel whose content is loaded on demand
+- **Papers:** none yet
+
+### F-228 · CodeMirror's styles go in a `<style>` element, which a CSP without `'unsafe-inline'` blocks unless it has the page's nonce
+
+- **Date:** 2026-11-26 · **Phase:** B05-T03 · **Type:** engineering (security) · **Status:** new
+- **Statement:** CodeMirror 6 mounts its base theme through `style-mod` 4.1.5. On a document (not a shadow root) it adds a `<style>` element to `<head>`; it uses constructable stylesheets only for shadow roots. The desktop CSP is `style-src 'self'` with no `'unsafe-inline'` (09 §4), so that element needs a nonce.
+- **Route:** Tauri 2 replaces every `__TAURI_STYLE_NONCE__` in a served HTML page with a fresh random nonce and adds it to `style-src` (`tauri` 2.12.5 `manager::replace_csp_nonce`, tauri-utils `STYLE_NONCE_TOKEN`). `index.html` carries it on `<meta property="csp-nonce">`, and the editor passes it to `EditorView.cspNonce`. The CSP is not weakened.
+- **Evidence:** `style-mod` `StyleSet` constructor; `tauri` 2.12.5 `src/manager/mod.rs`. TODO(verify): the Spec tab rendering styled under the real CSP in the desktop app, before the PR merges.
+- **Evidence level / confidence:** EV-C / Moderate until the desktop check
+- **Affects:** 09 §4; `apps/desktop/index.html`, `apps/desktop/src/spec/nonce.ts`
+- **Papers:** none yet

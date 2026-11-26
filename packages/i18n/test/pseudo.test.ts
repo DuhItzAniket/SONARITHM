@@ -76,6 +76,16 @@ function sampleArgs(style: string): MessageArgs {
     modality: "speech",
     on: "yes",
     verbosity: "verbose",
+    // The spec editor (B05-T03).
+    errors: { number: 2 },
+    warnings: { number: 1 },
+    notes: { number: 4 },
+    severity: "19",
+    line: { number: 4 },
+    column: { number: 12 },
+    label: "20",
+    cause: "21",
+    duration: "22",
   };
 }
 

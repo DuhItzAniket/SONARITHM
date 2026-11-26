@@ -30,6 +30,19 @@ catalog:
   xstate: 5.33.4
   # Line and time-series plots (09 §3, B04-T01; notes/05 §6): Canvas2D, MIT, no dependencies.
   uplot: 1.6.32
+  # The spec editor (B05-T03; 09 §3): CodeMirror 6 and its JSON grammar, all MIT. Loaded
+  # only when the Spec tab first opens, so they stay out of the start-up bundle (PB-07).
+  "@codemirror/autocomplete": 6.20.4
+  "@codemirror/commands": 6.11.1
+  "@codemirror/lang-json": 6.0.2
+  "@codemirror/language": 6.13.1
+  "@codemirror/lint": 6.9.8
+  "@codemirror/search": 6.7.2
+  "@codemirror/state": 6.7.6
+  "@codemirror/view": 6.43.15
+  "@lezer/common": 1.5.5
+  "@lezer/highlight": 1.2.5
+  "@lezer/json": 1.0.3
   vite: 8.3.8
   # Frontend test infrastructure (B02-T03; testing-strategy §12, §13.1). Storybook 10 with
   # its accessibility (axe-core) and Vitest addons; Vitest 5 browser mode on Playwright's

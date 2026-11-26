@@ -46,6 +46,11 @@ test("kb_08_letters_bind_by_character_and_punctuation_by_physical_key", () => {
     chordOf(key({ key: "Shift", code: "ShiftLeft", shiftKey: true })),
     null,
   );
+  // macOS Option turns F into "Ï"; the chord keeps the letter key (B05-T03, spec.format).
+  assert.equal(
+    chordOf(key({ key: "Ï", code: "KeyF", altKey: true, shiftKey: true })),
+    "Alt+Shift+F",
+  );
   assert.equal(normalize("Shift+Ctrl+P"), "Ctrl+Shift+P");
   assert.equal(displayChord("Shift+Meta+P", "mac"), "Shift+Cmd+P");
 });

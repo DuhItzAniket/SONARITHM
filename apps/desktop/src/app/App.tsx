@@ -5,7 +5,7 @@ import type { Client, DatasetSummary, IpcTransport } from "@sonarithm/ipc";
 import { connect } from "@sonarithm/ipc";
 import { Tab, TabList, TabPanel, Tabs } from "@sonarithm/ui";
 import type { Key } from "react-aria-components";
-import { useEffect, useRef, useState } from "react";
+import { lazy, Suspense, useEffect, useMemo, useRef, useState } from "react";
 import { flushSync } from "react-dom";
 
 import type { RoutedAnnouncer } from "../announcer/announcer.ts";
@@ -25,9 +25,17 @@ import { ExplorerCommands } from "../explorer/ExplorerCommands.tsx";
 import { DatasetPlot } from "../plot/DatasetPlot.tsx";
 import { useCursor } from "../cursor/useCursor.ts";
 import { DatasetTable } from "../table/DatasetTable.tsx";
+import { EditorBridge, SpecContext } from "../spec/context.ts";
+import { SpecCommands } from "../spec/SpecCommands.tsx";
+import { SpecStore } from "../spec/store.ts";
 import { useTransport } from "../transport/useTransport.ts";
 import styles from "./App.module.css";
 import { Frame } from "./frame/Frame.tsx";
+
+// The spec editor and the diagnostics list load when their tabs first open, so CodeMirror
+// and the JSON parser stay out of the start-up bundle (B05-T03, PB-07).
+const SpecEditor = lazy(() => import("../spec/SpecEditor.tsx"));
+const DiagnosticsPanel = lazy(() => import("../spec/DiagnosticsPanel.tsx"));
 
 /**
  * Start-up facts the host passes before the page loads (`src-tauri/src/gpu.rs`): whether
@@ -128,6 +136,22 @@ export function App({
     });
     explorer.current?.focus();
   });
+  // The one spec store (B05-T03): the editor, the inspector and undo all go through it.
+  const spec = useMemo(
+    () =>
+      client === null
+        ? null
+        : { store: new SpecStore(client), bridge: new EditorBridge() },
+    [client],
+  );
+  useEffect(() => {
+    void spec?.store.refresh().catch(() => undefined);
+  }, [spec]);
+  const showSpec = () => {
+    flushSync(() => {
+      setWorkspaceTab("spec");
+    });
+  };
   const [preferencesOpen, setPreferencesOpen] = useState(false);
   useCommand("app.preferences", () => {
     setPreferencesOpen(true);
@@ -165,7 +189,7 @@ export function App({
     );
 
   return (
-    <>
+    <SpecContext value={spec}>
       <Frame
         startIn={start.state === "ready" ? "project" : null}
         top={<TransportBar transport={transportView} />}
@@ -210,7 +234,21 @@ export function App({
                 startText
               )}
             </TabPanel>
-            <TabPanel id="spec">{startText}</TabPanel>
+            <TabPanel id="spec">
+              {client !== null ? (
+                <Suspense
+                  fallback={
+                    <p className={styles.status}>
+                      {t.format("ui-spec-loading")}
+                    </p>
+                  }
+                >
+                  <SpecEditor announcer={announcer} autoComplete={false} />
+                </Suspense>
+              ) : (
+                startText
+              )}
+            </TabPanel>
           </Tabs>
         }
         inspector={
@@ -231,13 +269,22 @@ export function App({
                 <AnnouncementLog entries={log} />
               </TabPanel>
               <TabPanel id="diagnostics">
-                <p className={styles.status}>{t.format("ui-no-diagnostics")}</p>
+                <Suspense
+                  fallback={
+                    <p className={styles.status}>
+                      {t.format("ui-no-diagnostics")}
+                    </p>
+                  }
+                >
+                  <DiagnosticsPanel announcer={announcer} showSpec={showSpec} />
+                </Suspense>
               </TabPanel>
             </Tabs>
           </>
         }
       />
       <ExplorerCommands client={client} />
+      <SpecCommands announcer={announcer} showSpec={showSpec} />
       <Preferences
         client={client}
         isOpen={preferencesOpen}
@@ -254,6 +301,6 @@ export function App({
           setReferenceScopes(null);
         }}
       />
-    </>
+    </SpecContext>
   );
 }
