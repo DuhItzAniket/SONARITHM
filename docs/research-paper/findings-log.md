@@ -1273,7 +1273,7 @@ A05 (render engine, audio backends, export) uses F-050 to F-069.
 
 ### F-222 · A minor release of arrow moved every data fingerprint, because the fingerprint hashes arrow-ipc's bytes
 
-- **Date:** 2026-11-26 · **Phase:** maintenance (A04 code) · **Type:** engineering (determinism) · **Status:** new
+- **Date:** 2026-11-26 · **Phase:** maintenance (A04 code) · **Type:** engineering (determinism) · **Status:** resolved (RFC-0008, fingerprint scheme 2; see F-227)
 - **Statement:** Fixing main's `cargo deny` failure (RUSTSEC-2026-0442 in arrow-data) bumped arrow from 60.0.0 to 60.2.0, a minor release. Every data fingerprint changed although no data did.
   - **Why:** `sonarithm_data::fingerprint` hashes the Arrow IPC stream that `arrow_ipc::writer::StreamWriter` writes from a canonical copy of the table (`crates/sonarithm-data/src/fingerprint.rs`), so the digest depends on arrow-ipc's encoder as well as on the values.
   - **What moved:** the two pinned corpus digests, 16 insta snapshots (CLI 1, CURVASONA 1, NUMISONA 7, PLOTSONA 6, facade 1), 3 golden Scores and the parity Score (`data_fingerprint` only), and 98 lines of the replication gallery (each record's `data.fingerprint` and the `releaseIndependentHash` that covers it).
@@ -1286,7 +1286,7 @@ A05 (render engine, audio backends, export) uses F-050 to F-069.
 
 ### F-223 · The arrow upgrade made every earlier project with embedded data unopenable, because the reader refused a fingerprint mismatch as damage
 
-- **Date:** 2026-11-26 · **Phase:** maintenance (B05 code) · **Type:** engineering (compatibility) · **Status:** fixed (RFC-0002 §13, #476)
+- **Date:** 2026-11-26 · **Phase:** maintenance (B05 code) · **Type:** engineering (compatibility) · **Status:** fixed (RFC-0002 §13, #476); linked data resolved by RFC-0008 (project format 1.2)
 - **Statement:** After #470 moved every data fingerprint (F-222), opening a project saved by an earlier build failed with `SNR-APP-032` ("an embedded dataset does not match its fingerprint") whenever it embedded data. Its linked datasets reported `SNR-APP-034` and stayed unavailable.
   - **Why:** the B05-T04 reader compared each embedded dataset's recomputed fingerprint with the manifest's and treated a difference as damage. The member's SHA-256, checked first (RFC-0002 §6), already proves the bytes are the saved ones, so the comparison could only fail because the fingerprint computation changed.
   - **Who was affected:** only projects saved by the desktop app built from `main` between #283 (2026-10-25) and #470 (2026-11-26), including the nightly tester bundles. None of 0.1.0-alpha's published artifacts writes projects (the CLI and the Python package have no project API, and `sonarithm-app` was not published).
@@ -1344,3 +1344,16 @@ A05 (render engine, audio backends, export) uses F-050 to F-069.
 - **Evidence level / confidence:** EV-C / Strong for the upstream match (same browser build, same axe-then-lookup trigger, same error). The crash's exact read inside axe was not traced in our tests.
 - **Affects:** `apps/desktop/e2e/audio.spec.ts`; any later E2E test that runs axe after a named lookup in Firefox until the upgrade
 - **Papers:** none yet
+
+### F-227 · Fingerprint scheme 2 moved every fingerprint record once and raised every compiled Score to IR version 3, and changed no audio
+
+- **Date:** 2026-11-26 · **Phase:** maintenance (A04 and B05 code) · **Type:** engineering (determinism, compatibility) · **Status:** recorded (RFC-0008)
+- **Statement:** switching the data fingerprint to RFC-0008's value encoding (scheme 2), with the scheme named in every record, moved exactly the records it had to and nothing else.
+  - **What moved:** the 2 pinned corpus digests; 16 insta snapshots (CLI 1, CURVASONA 1, NUMISONA 7, PLOTSONA 6, facade 1); 3 golden Scores and the parity Score; all 91 replication records (per record `data.fingerprint`, `manifestVersion` 2→3, `score.irVersion`→3, the added `data.fingerprintScheme` and the `releaseIndependentHash` that covers them: 455 lines); DS-001 to DS-005. In the Score snapshots the only changed lines are `data_fingerprint`, `ir_version`, the added `data_fingerprint_scheme` and one Score hash.
+  - **What did not:** golden audio (every case identical at block 64 and 1024) and all 91 replication `output.sha256` values.
+  - **IR version 3 everywhere:** under RFC-0007 §4 a Score records the lowest IR version that reads it. Every Score compiled from the data layer now names scheme 2, which needs IR version 3, so no compiled Score stays at 1 or 2, and tools from 0.1.0-alpha (IR version 2 readers) refuse them. This is the intended consequence; a Score whose header names scheme 1 keeps its form and hash.
+  - **Dictionary order did not change one Score:** a spec with `timbre` on a text field compiled to the same tracks whether the field was a plain column or a dictionary that lists its values in another order. The fingerprints still differ, as RFC-0008 §3 requires, because other compile paths (NUMISONA's category order) can read the dictionary's order: scheme 2 is conservative there.
+- **Evidence:** `crates/sonarithm-data/src/fingerprint/tests.rs` (layout and sensitivity property tests, the hand-built encoding); `crates/sonarithm/tests/fingerprint_scheme.rs` and `string_layouts.rs`; `crates/sonarithm-app/tests/projects.rs` (`rfc_0008_*`); `cargo xtask golden`; `cargo xtask replication --update`
+- **Evidence level / confidence:** EV-C / Strong (every changed record diffed field by field)
+- **Affects:** ADR-0013 (amendment 1), RFC-0002 §14, RFC-0007 §4, F-222, F-223, `datasets.md`; the P01 paper's method sentence
+- **Papers:** P01 (the fingerprint's definition in the provenance paragraph)

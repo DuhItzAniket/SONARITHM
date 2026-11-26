@@ -10,7 +10,8 @@
 //! entry times, sorted members, a canonical manifest, no timestamps. Reading never trusts
 //! the file: member names, sizes, ratios and hashes are checked before anything is parsed,
 //! stored Parquet is read in place, and linked data must be a regular data file whose
-//! fingerprint matches.
+//! recorded size, SHA-256 and fingerprint match (format 1.2, RFC-0008 §6); a link saved
+//! before RFC-0008 waits for the user to check and relink it.
 //!
 //! [RFC-0002]: ../../docs/rfcs/0002-project-format-v1.md
 //! [ADR-0018]: ../../docs/decisions/0018-project-format-v1.md
