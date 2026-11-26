@@ -44,6 +44,8 @@ Write an ADR when a decision is hard to reverse, affects several crates or engin
 | [0028](0028-function-expression-language.md) | The expression language of a `function` source | accepted (2026-10-31, coordinator under owner delegation) | C03-T01: CURVASONA's `expr` parser, its tests and fuzz target `expr_parse`; the spec schema and 04 §3 cite it |
 | [0029](0029-function-cues-and-audification.md) | Function cues and audification in the Score IR per RFC-0007 | accepted (2026-10-31, coordinator under owner delegation) | C03-T04 (earcon kinds, cue track; golden case `function-cues` to follow), C03-T05 (the `Audify` event) |
 | [0030](0030-deterministic-audification-resampler.md) | A deterministic windowed-sinc resampler for audification, not rubato | accepted (2026-11-01, coordinator under owner delegation) | C03-T05: `sonarithm_render::resample` and its known-signal tests |
+| [0031](0031-echometric-numerics.md) | ECHOMETRIC numerics: detectors on libm, statrs and augurs as test references | accepted (2026-11-26, coordinator under owner delegation) | C05-T01 to T03: the detectors, the `reference` test crate, the float canary |
+| [0032](0032-the-lint-pass.md) | The lint pass: a core `Linter` that reads the compile and writes nothing to the Score | accepted (2026-11-26, coordinator under owner delegation) | C05-T07: the `Linter` trait, `LintInput`, `SNR-LINT` codes, the move of NUMISONA's warnings |
 
 ## Process
 

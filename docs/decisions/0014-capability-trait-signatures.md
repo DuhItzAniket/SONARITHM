@@ -64,3 +64,10 @@ A03-T04 tests register fake engines in a `Registry<()>`; A03-T09 compiles a spec
 ## More information
 
 Implemented in `sonarithm_core::engine` (A03-T04); 05 §3 links here. Related: [ADR-0007](0007-engines-as-pipeline-capabilities.md), [ADR-0009](0009-wasm-plugins-compile-time.md), [RFC-0001](../rfcs/0001-spec-v0.1.md) (spec v0.1, accepted 2026-10-19; [ADR-0015](0015-spec-v0.1-frozen.md)).
+
+## Amendments
+
+| Date | Change | Approved |
+|---|---|---|
+| 2026-11-26 | Lint is a core `Linter` pass over the finished compile, not a `Shaper`; it writes nothing to the Score ([ADR-0032](0032-the-lint-pass.md)). `ShaperStage::Lint` stays in the IR, unused | Coordinator, under the owner's delegation (C05 phase plan, D2) |
+| 2026-11-26 | `Analyzer::analyze` takes an `AnalysisRequest` (the `analysis` fragment and the fields the spec's tracks play) instead of the bare fragment, and `Annotation` gains `field` and `params` ([RFC-0009](../rfcs/0009-echometric-insights-in-the-score.md) §1) | Coordinator, under the owner's delegation (RFC-0009 acceptance) |
