@@ -191,7 +191,9 @@ fn a11y_23_each_region_has_its_own_maximum_on_its_own_track() {
         let maxima: Vec<_> = compiled
             .annotations
             .iter()
-            .filter(|a| a.label == "maximum" && a.track.as_ref().is_some_and(|t| t.as_str() == region))
+            .filter(|a| {
+                a.label == "maximum" && a.track.as_ref().is_some_and(|t| t.as_str() == region)
+            })
             .collect();
         assert_eq!(maxima.len(), 1, "{region}: {:?}", compiled.annotations);
         let maximum = maxima[0];
@@ -199,11 +201,9 @@ fn a11y_23_each_region_has_its_own_maximum_on_its_own_track() {
         let row = usize::try_from(maximum.range.start).unwrap();
         assert_eq!(rows[row].0, region, "the maximum's row is the region's own");
         // Every annotation of the track is about its own rows.
-        for annotation in compiled
-            .annotations
-            .iter()
-            .filter(|a| a.track.as_ref().is_some_and(|t| t.as_str() == region) && a.range.len() == 1)
-        {
+        for annotation in compiled.annotations.iter().filter(|a| {
+            a.track.as_ref().is_some_and(|t| t.as_str() == region) && a.range.len() == 1
+        }) {
             let row = usize::try_from(annotation.range.start).unwrap();
             assert_eq!(rows[row].0, region, "{annotation:?}");
         }

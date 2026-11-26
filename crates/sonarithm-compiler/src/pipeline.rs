@@ -795,8 +795,12 @@ mod tests {
             &mut self,
             _transforms: &[sonarithm_spec::Transform],
             _at: &sonarithm_core::diagnostic::SpecPointer,
-        ) -> Option<Result<sonarithm_core::diagnostic::Diagnostics, Box<sonarithm_core::diagnostic::Diagnostic>>>
-        {
+        ) -> Option<
+            Result<
+                sonarithm_core::diagnostic::Diagnostics,
+                Box<sonarithm_core::diagnostic::Diagnostic>,
+            >,
+        > {
             None
         }
     }

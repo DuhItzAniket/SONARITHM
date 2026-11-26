@@ -18,11 +18,11 @@ pub mod error;
 pub mod fingerprint;
 mod infer;
 pub mod meta;
+pub mod play;
 pub mod provenance;
 pub mod slots;
 pub mod source;
 pub mod stream;
-pub mod play;
 pub mod table;
 pub mod transform;
 pub mod view;
@@ -34,6 +34,7 @@ pub use downsample::{TileCache, XRange, lttb, m4};
 pub use error::{DataError, Limit};
 pub use fingerprint::{bundle_fingerprint, table_fingerprint};
 pub use meta::{Concept, FieldMeta, FieldType, Role, Unit};
+pub use play::play_rows;
 pub use provenance::{ProvenanceMix, RowProvenance};
 pub use source::{CsvOptions, JsonOptions, Limits, Loaded, ReadOptions, read_batches, read_bytes};
 #[cfg(feature = "xlsx")]
@@ -41,7 +42,6 @@ pub use source::{SheetOptions, SheetRef};
 #[cfg(feature = "fs")]
 pub use source::{read_file, read_parquet_at};
 pub use stream::{Appended, Capacity, Snapshot, StreamTable};
-pub use play::play_rows;
 pub use table::Table;
 pub use transform::{
     AggregateFn, AggregateOp, BinMethod, NormalizeMethod, ResampleMethod, SmoothMethod, SortOrder,
