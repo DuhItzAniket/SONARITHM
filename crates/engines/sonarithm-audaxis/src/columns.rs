@@ -37,16 +37,11 @@ pub(crate) fn read(array: &ArrayRef) -> Option<Values> {
         DataType::Dictionary(_, _) => {
             let dictionary = array.as_any_dictionary_opt()?;
             let labels = texts(dictionary.values().as_ref())?;
-            let keys = dictionary.normalized_keys();
-            (0..array.len())
-                .map(|row| {
-                    if array.is_null(row) {
-                        None
-                    } else {
-                        keys.get(row)
-                            .and_then(|&key| labels.get(key).cloned().flatten())
-                    }
-                })
+            // Not arrow's `normalized_keys`, which panics on an empty dictionary (#508); a
+            // key outside the values leaves the column unreadable for navigation.
+            let keys = sonarithm_data::dictionary_keys(array.as_ref()).ok()?;
+            keys.iter()
+                .map(|key| key.and_then(|key| labels.get(key).cloned().flatten()))
                 .collect()
         }
         _ => texts(array.as_ref())?,

@@ -294,6 +294,12 @@ fn values(column: &ArrayRef, rows: &[u64]) -> PageValues {
 /// Text columns, dictionaries of text (provenance) and anything else, as text.
 fn text(column: &ArrayRef, rows: &[u64]) -> PageValues {
     let idx = |r: u64| usize::try_from(r).unwrap_or(usize::MAX);
+    // A dictionary's keys, read once (#508): an empty dictionary has only null keys, and a
+    // key outside the values shows as a missing cell instead of another row's value.
+    let keys = match column.data_type() {
+        DataType::Dictionary(_, _) => crate::table::dictionary_keys(column.as_ref()).ok(),
+        _ => None,
+    };
     let cell = |r: u64| -> Option<String> {
         let i = idx(r);
         if i >= column.len() || column.is_null(i) {
@@ -305,7 +311,7 @@ fn text(column: &ArrayRef, rows: &[u64]) -> PageValues {
             DataType::Utf8View => Some(column.as_string_view().value(i).to_owned()),
             DataType::Dictionary(_, _) => {
                 let dict = column.as_any_dictionary();
-                let key = dict.normalized_keys().get(i).copied()?;
+                let key = keys.as_ref()?.get(i).copied().flatten()?;
                 let values = dict.values();
                 match values.data_type() {
                     DataType::Utf8 => Some(values.as_string::<i32>().value(key).to_owned()),

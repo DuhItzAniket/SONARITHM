@@ -44,7 +44,7 @@ pub use source::{SheetOptions, SheetRef};
 #[cfg(feature = "fs")]
 pub use source::{read_file, read_parquet_at};
 pub use stream::{Appended, Capacity, Snapshot, StreamTable};
-pub use table::Table;
+pub use table::{DictionaryKeyError, Table, dictionary_keys};
 pub use transform::{
     AggregateFn, AggregateOp, BinMethod, NormalizeMethod, ResampleMethod, SmoothMethod, SortOrder,
     Transform, TransformRecord, apply, apply_all,

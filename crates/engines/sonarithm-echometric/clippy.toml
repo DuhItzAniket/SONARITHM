@@ -11,6 +11,7 @@ doc-valid-idents = ["ECHOMETRIC", "NUMISONA", "SNR", ".."]
 # The std float functions can differ in the last bits between platforms; the Score IR
 # must be byte-identical everywhere (ADR-0013). Use sonarithm_core::math instead.
 disallowed-methods = [
+    { path = "arrow_array::array::AnyDictionaryArray::normalized_keys", reason = "panics on a dictionary with no values and clamps a key past the end; use sonarithm_data::dictionary_keys (#508, F-071)" },
     { path = "f64::exp", reason = "platform-dependent; use sonarithm_core::math::exp (ADR-0013)" },
     { path = "f64::exp2", reason = "platform-dependent; use sonarithm_core::math::exp2 (ADR-0013)" },
     { path = "f64::ln", reason = "platform-dependent; use sonarithm_core::math::ln (ADR-0013)" },
