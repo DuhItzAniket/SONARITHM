@@ -40,8 +40,11 @@ Default builds contain only permissive dependencies ([principle P9](../architect
 | `CC0-1.0` | |
 | `MPL-2.0` | File-level weak copyleft. Allowed, with this condition: if the project modifies an MPL-licensed file, the modified file must be published under MPL-2.0. Known MPL-2.0 dependencies: symphonia, triple_buffer, serialport, audio_thread_priority |
 | `OFL-1.1` | Fonts only (for example npm font packages) |
-| `BlueOak-1.0.0` | **Development-only dependencies only:** tooling that never ships in the desktop app, the CLI, the Python wheel or the WASM build. The owner's decision of 2026-11-26 ([change history](#change-history)). Current users, all npm development tooling: glob 13, minimatch 10, path-scurry 2, lru-cache 11 and minipass 7 |
-| `CC-BY-4.0` | **Development-only npm dependencies only**, as a data licence ([npm licence checking](#npm-licence-checking)): caniuse-lite's browser data |
+| `0BSD` | Everywhere. Owner decision, 2026-11-26 ([change history](#change-history)). Current users: tslib 2.8.1 (npm, shipped in the app through react-aria's @swc/helpers). No Rust crate |
+| `MIT-0` | Everywhere. Owner decision, 2026-11-26. Current users: @csstools/css-syntax-patches-for-csstree 1.1.15, @csstools/selector-resolve-nested 4.0.2 and @csstools/selector-specificity 6.0.1 (npm, development-only, Stylelint). No Rust crate |
+| `BlueOak-1.0.0` | **Development-only dependencies only:** tooling that never ships in the desktop app, the CLI, the Python wheel or the WASM build. Owner decision, 2026-11-26 ([change history](#change-history)). Current users, all npm development tooling: glob 13.0.6, minimatch 10.2.6, path-scurry 2.0.2, lru-cache 11.5.3 and minipass 7.1.3 |
+| `Python-2.0` | **Development-only dependencies only**, as for `BlueOak-1.0.0`. Owner decision, 2026-11-26. Current user: argparse 2.0.1 (npm, development-only, through ESLint's js-yaml) |
+| `CC-BY-4.0` | **Development-only npm dependencies only**, as a data licence ([npm licence checking](#npm-licence-checking)). Current user: caniuse-lite 1.0.30001816 (browser data) |
 
 A licence not in this table is denied until a PR adds it with a rationale. Research notes 04 §12 also listed `Unlicense`; it is not on the initial allowlist and can be added by PR if a needed dependency requires it.
 
@@ -293,7 +296,7 @@ The frontend workspace (pnpm) uses the same allowlist, plus `OFL-1.1` for font p
 
 - The `ci / licenses-npm` job lists every package of the workspace with `pnpm -r licenses list --json`, and the shipped ones with `--prod`. `.github/scripts/npm_licences.py` (Python standard library only) checks each package's SPDX expression and fails on any package whose licence is not allowed for how it is used. In an expression, `OR` needs one allowed side and `AND` needs both. A licence pnpm cannot read (`Unknown`, `SEE LICENSE IN …`) fails.
 - **Shipped packages** (the desktop app's bundle) may use the [allowed](#allowed) licences without a development-only restriction. The script reads them from `deny.toml` and adds `OFL-1.1`, and a test checks that the table above lists each one.
-- **Development-only packages** (build, test and lint tooling that is never shipped) may also use `BlueOak-1.0.0` and the data licence `CC-BY-4.0`. They are still denied AGPL, GPL and SSPL.
+- **Development-only packages** (build, test and lint tooling that is never shipped) may also use `BlueOak-1.0.0`, `Python-2.0` and the data licence `CC-BY-4.0`. They are still denied AGPL, GPL and SSPL.
 - The npm licence report feeds the third-party notices.
 
 ## Model weights
@@ -446,4 +449,4 @@ Not legal advice. Based on [notes 07 §4](../research/notes/07-engineering-publi
 
 | Date | Change | Decided by |
 |---|---|---|
-| 2026-11-26 | `BlueOak-1.0.0` allowed for development-only dependencies, never for anything that ships in the app, the CLI, the wheel or the WASM build. Current users are npm development tooling only: glob 13, minimatch 10, path-scurry 2, lru-cache 11 and minipass 7. The npm licence check now exists (`ci / licenses-npm`) and enforces the scope | The owner (2026-11-26) |
+| 2026-11-26 | `BlueOak-1.0.0` and `Python-2.0` allowed for development-only dependencies, never for anything that ships in the app, the CLI, the wheel or the WASM build. `0BSD` and `MIT-0` allowed everywhere, and added to `deny.toml` so the Rust and npm checks agree. `CC-BY-4.0` confirmed as covered by the data-licence rule for development-only npm dependencies. The npm licence check now exists (`ci / licenses-npm`) and enforces these scopes. Current users are listed in [Allowed](#allowed) | Owner decision, 2026-11-26 |

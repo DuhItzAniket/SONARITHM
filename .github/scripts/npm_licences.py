@@ -25,9 +25,9 @@ from pathlib import Path
 SHIPPED_EXTRA = ("OFL-1.1",)
 
 #: Licences only development-only packages may use (never in the app, the CLI, the wheel
-#: or the WASM build). `BlueOak-1.0.0`: the owner's decision of 2026-11-26. `CC-BY-4.0`:
-#: data licences are allowed for build-time tools (caniuse-lite's browser data).
-DEV_ONLY = ("BlueOak-1.0.0", "CC-BY-4.0")
+#: or the WASM build). `BlueOak-1.0.0` and `Python-2.0`: owner decision, 2026-11-26.
+#: `CC-BY-4.0`: data licences are allowed for build-time tools (caniuse-lite's data).
+DEV_ONLY = ("BlueOak-1.0.0", "Python-2.0", "CC-BY-4.0")
 
 _TOKEN = re.compile(r"\(|\)|[^\s()]+")
 

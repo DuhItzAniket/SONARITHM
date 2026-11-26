@@ -75,7 +75,24 @@ class Policy(unittest.TestCase):
     def test_the_shipped_list_is_deny_toml_plus_fonts(self):
         self.assertIn("MPL-2.0", SHIPPED)
         self.assertIn("OFL-1.1", SHIPPED)
-        self.assertNotIn("BlueOak-1.0.0", SHIPPED)
+
+    def test_owner_decisions_of_2026_11_26(self):
+        # 0BSD and MIT-0 everywhere (and in deny.toml); BlueOak and Python-2.0 dev-only.
+        for licence in ("0BSD", "MIT-0"):
+            self.assertIn(licence, SHIPPED)
+        for licence in ("BlueOak-1.0.0", "Python-2.0"):
+            self.assertNotIn(licence, SHIPPED)
+            self.assertIn(licence, DEV_ONLY)
+        everything = report(
+            ("tslib", "2.8.1", "0BSD"),
+            ("argparse", "2.0.1", "Python-2.0"),
+            ("@csstools/selector-specificity", "6.0.1", "MIT-0"),
+        )
+        self.assertEqual(problems(everything, report(("tslib", "2.8.1", "0BSD")), SHIPPED), [])
+        self.assertEqual(
+            problems(everything, report(("argparse", "2.0.1", "Python-2.0")), SHIPPED),
+            ["argparse@2.0.1: Python-2.0 (shipped)"],
+        )
 
     def test_the_policy_table_lists_every_allowed_licence(self):
         doc = (ROOT / "docs/engineering/supply-chain-and-licensing.md").read_text(encoding="utf-8")
