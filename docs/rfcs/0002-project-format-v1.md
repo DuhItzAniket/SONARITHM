@@ -254,6 +254,23 @@ No data member is written: the definition is the dataset. The manifest stays can
 - A fixture saved by a build from before #470, with an embedded and a linked dataset, opens: the embedded dataset with `SNR-APP-093`, available and compilable; the linked one with `SNR-APP-034`, unavailable. Saving records the new fingerprint for the embedded dataset and keeps the linked entry; reopening gives no `SNR-APP-093`.
 - The same fixture with one byte of its Parquet member changed is refused with `SNR-APP-032`.
 
+### 14. Amendment 3 (2026-11-26): format 1.2, fingerprint schemes and linked-file hashes
+
+| Date | Change | Approved |
+|---|---|---|
+| 2026-11-26 | `formatVersion` 1.2 ([RFC-0008 §6](0008-value-based-data-fingerprint.md)): every dataset entry has `fingerprintScheme`; a linked entry also has the file's `bytes` and `sha256`. Every writer writes 1.2 | Coordinator, under the owner's delegation of contract approvals (RFC-0008 accepted 2026-11-26) |
+
+- **Why.** The value-based fingerprint (scheme 2) replaces the Arrow IPC one, so every entry says which scheme computed its `fingerprint`. A linked entry records the file's size and SHA-256, so a later build can tell a changed file from a new fingerprint scheme, which §13 could not do for linked data.
+- **Writing.** Every project is written as 1.2, because every entry now has `fingerprintScheme`. This ends §12's "1.0 when nothing of 1.1 is used": a project saved by this build is not byte-identical to one saved before it.
+- **Reading** (RFC-0008 §6):
+  - an entry without `fingerprintScheme` is scheme 1;
+  - **embedded or function, any scheme:** as §12 and §13 (a fingerprint that differs after a verified member hash is `SNR-APP-093`);
+  - **linked, scheme 1:** unavailable (`SNR-APP-034`) with a pointer to **Check and relink this file**, never opened on its row count alone;
+  - **linked, scheme 2:** the file's size and SHA-256 must match, then its fingerprint; a fingerprint of another scheme with a matching hash is `SNR-APP-093`. A mismatch is `SNR-APP-034` with the same pointer.
+- **Relinking** is two protocol commands, `dataset_relink_check` and `dataset_relink` (ADR-0017 "Relinking linked data").
+- **Older readers.** A 1.0 or 1.1 reader opens a 1.2 project with `SNR-APP-035` and ignores the new fields (§5). Its next save drops them and writes its own version.
+- **Tests.** `crates/sonarithm-app/tests/projects.rs`: `rfc_0008_a_link_from_an_older_build_is_checked_relinked_and_saved` and `rfc_0008_a_same_length_file_with_other_values_is_never_opened_silently`, on the pre-#470 fixture.
+
 ## Drawbacks
 
 - ZIP is more complex than a folder; the reader must defend against crafted archives.

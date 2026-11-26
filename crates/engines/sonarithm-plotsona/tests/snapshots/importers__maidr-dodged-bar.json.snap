@@ -4,14 +4,15 @@ expression: "score.review_json(&ReviewOptions::default())"
 ---
 {
   "header": {
-    "data_fingerprint": "1048e159750cc313b64310f999b9799a9e536b9a2dae1a6e28d825f69d1af750",
+    "data_fingerprint": "18e2ded396c62690d92af9076c5aa4a52f575be0678b18d5ed27f2e91c84181d",
+    "data_fingerprint_scheme": 2,
     "duration": 5.8,
     "engines": {
       "numisona": "*",
       "platform": "*",
       "plotsona": "*"
     },
-    "ir_version": 1,
+    "ir_version": 3,
     "mode": "analysis",
     "seed": 0,
     "shapers": [],

@@ -88,7 +88,7 @@ Offline export writes WAV or FLAC with optional loudness normalization. [[TODO(v
 
 ### 4.4 Provenance manifest
 
-Every export writes a manifest next to the audio file: the software and engine versions, the IR version and Score hash, the specification version and hash, the data fingerprint (SHA-256 over a canonical Arrow IPC encoding of the data), the seed, the sample rate and block size, the audio file's own SHA-256, and loudness figures. It records no timestamp and no directory names, so two renders of the same inputs produce the same manifest, and no user path leaks into a published artifact. [[TODO(verify): field list against `schemas/sonarithm-render-manifest-1.schema.json` once A05-T08 is merged.]]
+Every export writes a manifest next to the audio file: the software and engine versions, the IR version and Score hash, the specification version and hash, the data fingerprint (SHA-256 over an encoding of the data's logical values, field names, types and metadata, which does not depend on the Arrow version or on how the data was laid out in memory) and the scheme that computed it, the seed, the sample rate and block size, the audio file's own SHA-256, and loudness figures. It records no timestamp and no directory names, so two renders of the same inputs produce the same manifest, and no user path leaks into a published artifact. [[TODO(verify): field list against `schemas/sonarithm-render-manifest-1.schema.json` once A05-T08 is merged.]]
 
 ### 4.5 Front ends
 

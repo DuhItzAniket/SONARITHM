@@ -107,7 +107,12 @@ fn sdr_31_a_sine_in_gives_the_expected_tone_out() {
         "{:?}",
         codes_of(&compiled)
     );
-    assert_eq!(compiled.score.header.ir_version, 2);
+    // The Audify event needs IR version 2 (RFC-0007 §4); the header's fingerprint scheme 2
+    // needs 3 (RFC-0008 §6).
+    assert_eq!(compiled.score.header.ir_version, 3);
+    let mut events_only = compiled.score.clone();
+    events_only.header.data_fingerprint_scheme = 1;
+    assert_eq!(events_only.required_ir_version(), 2);
 }
 
 /// `audify.band` chooses k so that the series' top frequency lands at the band's top.

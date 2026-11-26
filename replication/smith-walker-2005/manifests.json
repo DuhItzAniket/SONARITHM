@@ -2,14 +2,15 @@
   "clicks": {
     "cues": null,
     "data": {
-      "fingerprint": "sha256:8192002a3cde62c2965fcd3a21a368d3adb0c74e449bec6dc40051c120b178e2",
+      "fingerprint": "sha256:6cebb683621f01ee11764d45fc5362bfb97f58736b943cfc99d265e039ddabbb",
+      "fingerprintScheme": 2,
       "provenance": {},
       "source": {
         "kind": "file",
         "name": "data.csv"
       }
     },
-    "manifestVersion": 2,
+    "manifestVersion": 3,
     "output": {
       "bitsPerSample": 24,
       "channels": 2,
@@ -31,8 +32,8 @@
       "seed": 20261019
     },
     "score": {
-      "irVersion": 1,
-      "releaseIndependentHash": "sha256:9db9d3f4f24770d50f1ea601ba3b7001aafd29a512dfaacddaf316eb440b6194"
+      "irVersion": 3,
+      "releaseIndependentHash": "sha256:cec88cbd5fbdae3a2ff56510e01ca1fa0cb665372f8ac607977b070df927d270"
     },
     "spec": {
       "embedded": null,
@@ -75,14 +76,15 @@
   "clicks-dynamic": {
     "cues": null,
     "data": {
-      "fingerprint": "sha256:8192002a3cde62c2965fcd3a21a368d3adb0c74e449bec6dc40051c120b178e2",
+      "fingerprint": "sha256:6cebb683621f01ee11764d45fc5362bfb97f58736b943cfc99d265e039ddabbb",
+      "fingerprintScheme": 2,
       "provenance": {},
       "source": {
         "kind": "file",
         "name": "data.csv"
       }
     },
-    "manifestVersion": 2,
+    "manifestVersion": 3,
     "output": {
       "bitsPerSample": 24,
       "channels": 2,
@@ -104,8 +106,8 @@
       "seed": 20261019
     },
     "score": {
-      "irVersion": 1,
-      "releaseIndependentHash": "sha256:1cb048042981854acdbdc66cb98eb9bdb96a80429dade5abc95f4da2abe3e32a"
+      "irVersion": 3,
+      "releaseIndependentHash": "sha256:7c788dce574e29d675ad2b6490d901cd8b6584aef0122a876951a3fc5afd5645"
     },
     "spec": {
       "embedded": null,
@@ -163,14 +165,15 @@
   "clicks-static": {
     "cues": null,
     "data": {
-      "fingerprint": "sha256:8192002a3cde62c2965fcd3a21a368d3adb0c74e449bec6dc40051c120b178e2",
+      "fingerprint": "sha256:6cebb683621f01ee11764d45fc5362bfb97f58736b943cfc99d265e039ddabbb",
+      "fingerprintScheme": 2,
       "provenance": {},
       "source": {
         "kind": "file",
         "name": "data.csv"
       }
     },
-    "manifestVersion": 2,
+    "manifestVersion": 3,
     "output": {
       "bitsPerSample": 24,
       "channels": 2,
@@ -192,8 +195,8 @@
       "seed": 20261019
     },
     "score": {
-      "irVersion": 1,
-      "releaseIndependentHash": "sha256:f68d94e50cf3e322f78b58b9e164b3f7c9ca79a7f2c69de1b2b02c747bc7cbd9"
+      "irVersion": 3,
+      "releaseIndependentHash": "sha256:a5856e361ff2ca5f2dcedd85a5cb5a47205e481110c30bdb29aa9448fa9f6073"
     },
     "spec": {
       "embedded": null,
@@ -251,14 +254,15 @@
   "dynamic": {
     "cues": null,
     "data": {
-      "fingerprint": "sha256:8192002a3cde62c2965fcd3a21a368d3adb0c74e449bec6dc40051c120b178e2",
+      "fingerprint": "sha256:6cebb683621f01ee11764d45fc5362bfb97f58736b943cfc99d265e039ddabbb",
+      "fingerprintScheme": 2,
       "provenance": {},
       "source": {
         "kind": "file",
         "name": "data.csv"
       }
     },
-    "manifestVersion": 2,
+    "manifestVersion": 3,
     "output": {
       "bitsPerSample": 24,
       "channels": 2,
@@ -280,8 +284,8 @@
       "seed": 20261019
     },
     "score": {
-      "irVersion": 1,
-      "releaseIndependentHash": "sha256:247c45f113f8c24d149e6b6a206f8201080d59330ee0aa92a9c273a67bd324dc"
+      "irVersion": 3,
+      "releaseIndependentHash": "sha256:604483b8b5b0fde873e0b9cd5fdbd11ec123cbacf3f77a9248014487843e949e"
     },
     "spec": {
       "embedded": null,
@@ -324,14 +328,15 @@
   "none": {
     "cues": null,
     "data": {
-      "fingerprint": "sha256:8192002a3cde62c2965fcd3a21a368d3adb0c74e449bec6dc40051c120b178e2",
+      "fingerprint": "sha256:6cebb683621f01ee11764d45fc5362bfb97f58736b943cfc99d265e039ddabbb",
+      "fingerprintScheme": 2,
       "provenance": {},
       "source": {
         "kind": "file",
         "name": "data.csv"
       }
     },
-    "manifestVersion": 2,
+    "manifestVersion": 3,
     "output": {
       "bitsPerSample": 24,
       "channels": 2,
@@ -353,8 +358,8 @@
       "seed": 20261019
     },
     "score": {
-      "irVersion": 1,
-      "releaseIndependentHash": "sha256:81894a3800c7503081fdf00aa225231a2ffae7125b5b981975e348ea57a1ff70"
+      "irVersion": 3,
+      "releaseIndependentHash": "sha256:fcab1e2adbdabb4cca9bf1b2a718541248eccc7f82feebce355367410b47054f"
     },
     "spec": {
       "embedded": null,
@@ -382,14 +387,15 @@
   "static": {
     "cues": null,
     "data": {
-      "fingerprint": "sha256:8192002a3cde62c2965fcd3a21a368d3adb0c74e449bec6dc40051c120b178e2",
+      "fingerprint": "sha256:6cebb683621f01ee11764d45fc5362bfb97f58736b943cfc99d265e039ddabbb",
+      "fingerprintScheme": 2,
       "provenance": {},
       "source": {
         "kind": "file",
         "name": "data.csv"
       }
     },
-    "manifestVersion": 2,
+    "manifestVersion": 3,
     "output": {
       "bitsPerSample": 24,
       "channels": 2,
@@ -411,8 +417,8 @@
       "seed": 20261019
     },
     "score": {
-      "irVersion": 1,
-      "releaseIndependentHash": "sha256:d8d4b3ed70fa5301148345cf4a12c7339ca278ac2151f40938b0ef38992aa5cb"
+      "irVersion": 3,
+      "releaseIndependentHash": "sha256:27e086a0f39dfd0e76eda693aa28323e0e684f15df812a8a367ad85da6dd2684"
     },
     "spec": {
       "embedded": null,

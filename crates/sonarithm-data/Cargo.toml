@@ -39,12 +39,17 @@ sonarithm-core.workspace = true
 thiserror.workspace = true
 
 [dev-dependencies]
+allocation-counter.workspace = true
 criterion.workspace = true
 proptest.workspace = true
 zip.workspace = true
 
 [[bench]]
 name = "csv_ingest"
+harness = false
+
+[[bench]]
+name = "fingerprint"
 harness = false
 
 [lints]

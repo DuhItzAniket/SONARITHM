@@ -3,10 +3,11 @@
 
 //! A04-T09 acceptance: fingerprints are identical across operating systems for the corpus.
 //!
-//! The digests below were computed on Windows; CI checks them on Linux and macOS too. A
-//! change here means the canonical form changed (for example an Arrow upgrade that encodes
-//! IPC differently): record it in the changelog, because render manifests carry these
-//! digests (ADR-0013). The corpus is read without semantic inference, so inference rule
+//! The digests below are fingerprint scheme 2 (RFC-0008), computed on Windows; CI checks
+//! them on Linux and macOS too. Scheme 2 hashes values, not Arrow's bytes, so an Arrow
+//! upgrade must move none of them. A change here means the encoding changed: that needs an
+//! RFC and a changelog entry, because Score headers and render manifests carry these digests
+//! (ADR-0013). The corpus is read without semantic inference, so inference rule
 //! changes do not move these digests; the full pipeline is covered by `loaded_tables_*`.
 
 use std::collections::BTreeMap;
@@ -18,11 +19,11 @@ use sonarithm_core::Sha256Digest;
 use sonarithm_data::{CsvOptions, Format, ReadOptions, read_bytes, table_fingerprint};
 
 /// The fingerprint of every corpus file (read without inference), hashed in file order.
-const CORPUS_DIGEST: &str = "d6416b53d768aedfc5644aada58bd3863011bb8bbb6d4cc3a3362a35ed6221d0";
+const CORPUS_DIGEST: &str = "52492237c5757f57f4078fb513a9cd4e3470e97dc5328db73c99eb1aede74560";
 
 /// The fingerprint of one file with dates, units and a header, with inference.
 const PLAIN_WITH_INFERENCE: &str =
-    "405c630f942256e6e49caf93d6912f79b14d30a8163531a496c11eb0e35a4009";
+    "7d1e890bcaacadd7d1ed193aeacd7d1326eb2bc826061d8eb44aea9326d3211e";
 
 #[derive(Deserialize)]
 struct Expected {
