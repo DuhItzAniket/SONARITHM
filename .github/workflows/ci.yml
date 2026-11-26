@@ -1,6 +1,12 @@
 # Rust checks on Linux, Windows and macOS (docs/engineering/ci-cd.md).
 # The required status check is `ci / all-checks-pass`, which aggregates every job, so
 # jobs can be added without editing the branch ruleset. Job names are part of that contract.
+#
+# On pull requests the `changes` job decides which jobs run (ci-cd.md#change-scoped-jobs):
+# docs-only changes skip every job but the gate, and frontend-only changes run only
+# `frontend`, `frontend-browser` and `desktop`. Pushes to main and the merge queue run
+# everything. A new job needs `needs: changes`, an `if:` on one of its outputs, and an entry
+# in SCOPED_JOBS of .github/scripts/ci_scope.py; the script's tests check all three.
 name: ci
 
 on:
@@ -19,7 +25,38 @@ env:
   CARGO_TERM_COLOR: always
 
 jobs:
+  # Which jobs this change needs: `git diff --name-only` of the pull request's merge commit
+  # against its first parent (the base branch), classified by .github/scripts/ci_scope.py.
+  changes:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    timeout-minutes: 5
+    outputs:
+      rust: ${{ steps.scope.outputs.rust }}
+      code: ${{ steps.scope.outputs.code }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          fetch-depth: 2
+      - run: python3 -m unittest discover --start-directory .github/scripts --verbose
+      # `shell: bash` adds pipefail, so a failing script fails the step despite `tee`.
+      - id: scope
+        shell: bash
+        env:
+          EVENT: ${{ github.event_name }}
+        run: |
+          if [ "$EVENT" = pull_request ]; then
+            git diff --name-only --no-renames HEAD^1 HEAD > "$RUNNER_TEMP/changed.txt"
+          else
+            : > "$RUNNER_TEMP/changed.txt"
+          fi
+          python3 .github/scripts/ci_scope.py changes --event "$EVENT" < "$RUNNER_TEMP/changed.txt" | tee -a "$GITHUB_OUTPUT"
+
   fmt:
+    needs: changes
+    if: needs.changes.outputs.rust == 'true'
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -33,6 +70,8 @@ jobs:
       - run: cargo fmt --all --check
 
   clippy-test:
+    needs: changes
+    if: needs.changes.outputs.rust == 'true'
     name: clippy and test (${{ matrix.os }})
     strategy:
       fail-fast: false
@@ -64,6 +103,8 @@ jobs:
       - run: cargo test --workspace --exclude sonarithm-desktop --doc --locked
 
   doc:
+    needs: changes
+    if: needs.changes.outputs.rust == 'true'
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -85,6 +126,8 @@ jobs:
       - run: cargo doc --workspace --exclude sonarithm-desktop --no-deps --locked
 
   deny:
+    needs: changes
+    if: needs.changes.outputs.rust == 'true'
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -102,6 +145,8 @@ jobs:
       - run: cargo deny --locked check
 
   check-deps:
+    needs: changes
+    if: needs.changes.outputs.rust == 'true'
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -122,6 +167,8 @@ jobs:
       - run: cargo xtask citation --check
 
   msrv:
+    needs: changes
+    if: needs.changes.outputs.rust == 'true'
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -146,6 +193,8 @@ jobs:
       - run: cargo hack check --rust-version --workspace --exclude sonarithm-desktop --all-targets --locked
 
   wasm32:
+    needs: changes
+    if: needs.changes.outputs.rust == 'true'
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -166,6 +215,8 @@ jobs:
   # Golden audio (testing-strategy §5, A05-T11): each OS checks every case against its
   # manifest and at other block sizes, then uploads its renders for the cross-OS comparison.
   golden:
+    needs: changes
+    if: needs.changes.outputs.rust == 'true'
     name: golden (${{ matrix.os }})
     strategy:
       fail-fast: false
@@ -198,7 +249,8 @@ jobs:
   # PB-06: the Windows and macOS renders against the Linux renders (null residual ≤ −90 dBFS,
   # ΔLUFS ≤ 0.1).
   golden-compare:
-    needs: golden
+    needs: [changes, golden]
+    if: needs.changes.outputs.rust == 'true'
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -226,6 +278,8 @@ jobs:
   # the scripted render session, the whole callback on the null device, then a 60 s soak on
   # the timer-driven null device. The 10-minute soak is the alloc-soak job of nightly.yml.
   no-alloc:
+    needs: changes
+    if: needs.changes.outputs.rust == 'true'
     name: no-alloc (${{ matrix.os }})
     strategy:
       fail-fast: false
@@ -251,6 +305,8 @@ jobs:
       - run: cargo run --locked -p sonarithm-audio --features count-allocations --example soak -- --backend null --seconds 60 --strict
 
   frontend:
+    needs: changes
+    if: needs.changes.outputs.code == 'true'
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -281,6 +337,8 @@ jobs:
   # screenshots render with the same Chromium and fonts every run. The image tag must match
   # the `playwright` version in pnpm-workspace.yaml.
   frontend-browser:
+    needs: changes
+    if: needs.changes.outputs.code == 'true'
     runs-on: ubuntu-latest
     container:
       image: mcr.microsoft.com/playwright:v1.65.1-noble
@@ -347,6 +405,8 @@ jobs:
   # their seeded generators, and every spec renders with the CLI. The renders are uploaded
   # so they can be listened to.
   gallery:
+    needs: changes
+    if: needs.changes.outputs.rust == 'true'
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -381,6 +441,8 @@ jobs:
   # that records every outbound connection attempt (strace, sandbox-exec, WFP auditing;
   # testing-strategy §10). The self-test first proves the mechanism sees a deliberate one.
   network-deny:
+    needs: changes
+    if: needs.changes.outputs.rust == 'true'
     name: network-deny (${{ matrix.os }})
     strategy:
       fail-fast: false
@@ -411,6 +473,8 @@ jobs:
   # checks the protocol handshake, a 1 MB binary view under the CSP (F-042) and, on
   # WebView2, that browser accelerator keys are off (keyboard §12.3).
   desktop:
+    needs: changes
+    if: needs.changes.outputs.code == 'true'
     name: desktop (${{ matrix.os }})
     strategy:
       fail-fast: false
@@ -484,6 +548,8 @@ jobs:
   # right provenance class, within 0.5 % relative error and with an RMS-F1 of at least
   # 0.99. The per-chart report is uploaded.
   chart-accuracy:
+    needs: changes
+    if: needs.changes.outputs.rust == 'true'
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -510,12 +576,20 @@ jobs:
           retention-days: 30
           if-no-files-found: error
 
+  # Passes when every job succeeded or was skipped by design (its `changes` output was
+  # false); fails on a failure, a cancellation, or any other skip (ci_scope.py `gate`).
   all-checks-pass:
     if: always()
-    needs: [fmt, clippy-test, doc, deny, check-deps, msrv, wasm32, golden, golden-compare, no-alloc, frontend, frontend-browser, gallery, network-deny, desktop, chart-accuracy]
+    needs: [changes, fmt, clippy-test, doc, deny, check-deps, msrv, wasm32, golden, golden-compare, no-alloc, frontend, frontend-browser, gallery, network-deny, desktop, chart-accuracy]
     runs-on: ubuntu-latest
-    permissions: {}
+    permissions:
+      contents: read
     timeout-minutes: 5
     steps:
-      - if: contains(needs.*.result, 'failure') || contains(needs.*.result, 'cancelled') || contains(needs.*.result, 'skipped')
-        run: exit 1
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          sparse-checkout: .github/scripts
+      - env:
+          NEEDS: ${{ toJSON(needs) }}
+        run: python3 .github/scripts/ci_scope.py gate
