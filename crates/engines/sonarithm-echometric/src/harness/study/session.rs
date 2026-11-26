@@ -616,9 +616,7 @@ fn first_query(truth: &Truth) -> Option<&Query> {
     match truth {
         Truth::Reversals(truth) => truth.queries.first(),
         Truth::Prices(truth) => truth.queries.first(),
-        Truth::Transits(_) | Truth::Correlations(_) | Truth::Outliers(_) | Truth::Shifts(_) => {
-            None
-        }
+        Truth::Transits(_) | Truth::Correlations(_) | Truth::Outliers(_) | Truth::Shifts(_) => None,
     }
 }
 

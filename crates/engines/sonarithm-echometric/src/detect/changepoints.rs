@@ -56,7 +56,8 @@ impl Sums {
     /// The squared deviations from the mean of `values[start..end]`.
     fn cost(&self, start: usize, end: usize) -> f64 {
         let n = (end - start) as f64;
-        let s = self.sum.get(end).copied().unwrap_or(0.0) - self.sum.get(start).copied().unwrap_or(0.0);
+        let s =
+            self.sum.get(end).copied().unwrap_or(0.0) - self.sum.get(start).copied().unwrap_or(0.0);
         let q = self.squares.get(end).copied().unwrap_or(0.0)
             - self.squares.get(start).copied().unwrap_or(0.0);
         (q - s * s / n).max(0.0)
@@ -64,7 +65,8 @@ impl Sums {
 
     /// The mean of `values[start..end]`.
     fn mean(&self, start: usize, end: usize) -> f64 {
-        let s = self.sum.get(end).copied().unwrap_or(0.0) - self.sum.get(start).copied().unwrap_or(0.0);
+        let s =
+            self.sum.get(end).copied().unwrap_or(0.0) - self.sum.get(start).copied().unwrap_or(0.0);
         s / (end - start) as f64
     }
 }
@@ -72,10 +74,13 @@ impl Sums {
 /// The noise variance, from the MAD of the first differences: a level shift moves one
 /// difference and does not inflate it (σ² = (MAD / 0.6745)² / 2).
 fn noise_variance(values: &[f64]) -> f64 {
-    let differences: Vec<f64> = values.windows(2).map(|pair| match pair {
-        [a, b] => b - a,
-        _ => 0.0,
-    }).collect();
+    let differences: Vec<f64> = values
+        .windows(2)
+        .map(|pair| match pair {
+            [a, b] => b - a,
+            _ => 0.0,
+        })
+        .collect();
     if differences.is_empty() {
         return 0.0;
     }
@@ -114,17 +119,17 @@ pub fn starts(values: &[f64]) -> Vec<usize> {
                 continue;
             }
             let total = best.get(tau).copied().unwrap_or(f64::INFINITY) + sums.cost(tau, t) + beta;
-            // Ties keep the earliest start, so the result does not depend on the order
-            // candidates were added in.
-            if chosen.is_none_or(|(cost, at)| total < cost || (total == cost && tau < at)) {
+            // Candidates are visited in increasing start order, so a strict `<` keeps the
+            // earliest start on a tie: the result is the same however costs round.
+            if chosen.is_none_or(|(cost, _)| total < cost) {
                 chosen = Some((total, tau));
             }
         }
-        if let Some((cost, tau)) = chosen {
-            if let (Some(b), Some(l)) = (best.get_mut(t), last.get_mut(t)) {
-                *b = cost;
-                *l = tau;
-            }
+        if let Some((cost, tau)) = chosen
+            && let (Some(b), Some(l)) = (best.get_mut(t), last.get_mut(t))
+        {
+            *b = cost;
+            *l = tau;
         }
         let bound = best.get(t).copied().unwrap_or(f64::INFINITY);
         // PELT's pruning: a start whose cost without the penalty already exceeds the best
@@ -199,7 +204,11 @@ mod tests {
             .collect();
         let found = detect(&series(&values));
         assert_eq!(found.iter().map(|f| f.first).collect::<Vec<_>>(), [20]);
-        assert!(found[0].score.is_some_and(|shift| (shift - 10.0).abs() < 0.5));
+        assert!(
+            found[0]
+                .score
+                .is_some_and(|shift| (shift - 10.0).abs() < 0.5)
+        );
     }
 
     #[test]
@@ -223,6 +232,9 @@ mod tests {
 
     #[test]
     fn a_short_series_is_not_split() {
-        assert_eq!(starts(&[0.0, 1.0, 0.0, 10.0, 10.0, 11.0]), Vec::<usize>::new());
+        assert_eq!(
+            starts(&[0.0, 1.0, 0.0, 10.0, 10.0, 11.0]),
+            Vec::<usize>::new()
+        );
     }
 }

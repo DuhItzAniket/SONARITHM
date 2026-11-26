@@ -40,7 +40,9 @@ pub fn detect(series: &Series) -> Vec<Finding> {
     let mut bounds = vec![0usize];
     bounds.extend(extrema::turns(series, HYSTERESIS).iter().map(|t| t.index));
     bounds.push(values.len() - 1);
-    let band = series.bounds().map_or(0.0, |(lo, hi)| HYSTERESIS * (hi - lo));
+    let band = series
+        .bounds()
+        .map_or(0.0, |(lo, hi)| HYSTERESIS * (hi - lo));
     let last_index = values.len() - 1;
     bounds
         .windows(2)
@@ -78,8 +80,12 @@ mod tests {
     #[test]
     fn a_zigzag_is_rising_and_falling_segments_between_its_turns() {
         let found = detect(&series(&[0.0, 10.0, 0.0, 10.0]));
-        let shown: Vec<(&str, u64, u64)> = found.iter().map(|f| (f.label, f.first, f.last)).collect();
-        assert_eq!(shown, [("rising", 0, 0), ("falling", 1, 1), ("rising", 2, 3)]);
+        let shown: Vec<(&str, u64, u64)> =
+            found.iter().map(|f| (f.label, f.first, f.last)).collect();
+        assert_eq!(
+            shown,
+            [("rising", 0, 0), ("falling", 1, 1), ("rising", 2, 3)]
+        );
         assert_eq!(reversals(&series(&[0.0, 10.0, 0.0, 10.0])), 2);
     }
 
@@ -90,7 +96,11 @@ mod tests {
         assert_eq!(found.first().map(|f| f.first), Some(0));
         assert_eq!(found.last().map(|f| f.last), Some(49));
         for pair in found.windows(2) {
-            assert_eq!(pair[0].last + 1, pair[1].first, "a partition: contiguous, no overlap");
+            assert_eq!(
+                pair[0].last + 1,
+                pair[1].first,
+                "a partition: contiguous, no overlap"
+            );
         }
     }
 

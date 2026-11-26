@@ -1,0 +1,9 @@
+---
+source: crates/engines/sonarithm-echometric/tests/detectors.rs
+expression: "shown(changepoints::params())"
+---
+[
+    "method=Text(\"pelt-l2\")",
+    "minSegment=Number(5.0)",
+    "penalty=Number(2.0)",
+]

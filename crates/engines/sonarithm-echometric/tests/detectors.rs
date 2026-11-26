@@ -147,7 +147,9 @@ fn c05_t03_changepoints_precision_and_recall_on_gen_012() {
     }
     let precision = hits as f64 / found_all.max(1) as f64;
     let recall = hits as f64 / truth_all.max(1) as f64;
-    println!("changepoints on GEN-012 (100 seeds, defaults): precision {precision:.4}, recall {recall:.4}");
+    println!(
+        "changepoints on GEN-012 (100 seeds, defaults): precision {precision:.4}, recall {recall:.4}"
+    );
     assert!(precision >= 0.9, "precision {precision}");
     assert!(recall >= 0.9, "recall {recall}");
 }
@@ -177,7 +179,9 @@ fn c05_t03_periodicity_on_gen_012() {
             false_alarms += 1;
         }
     }
-    println!("periodicity on GEN-012 (100 seeds): period found {right}/100, false alarms {false_alarms}/100");
+    println!(
+        "periodicity on GEN-012 (100 seeds): period found {right}/100, false alarms {false_alarms}/100"
+    );
     assert!(right >= 95, "{right}/100");
     assert!(false_alarms <= 5, "{false_alarms}/100");
 }
@@ -191,7 +195,11 @@ fn sdr_21_trend_segments_follow_the_reversals_of_gen_001() {
                 let params = ReversalParams::cell(rate, reversals);
                 let stimulus = generate(&Params::TrendReversals(params), seed).unwrap();
                 let s = series(&stimulus, "price");
-                assert_eq!(trends::reversals(&s), reversals as usize, "rate {rate}, seed {seed}");
+                assert_eq!(
+                    trends::reversals(&s),
+                    reversals as usize,
+                    "rate {rate}, seed {seed}"
+                );
                 let segments = trends::detect(&s);
                 assert_eq!(segments.len(), reversals as usize + 1);
                 for pair in segments.windows(2) {
