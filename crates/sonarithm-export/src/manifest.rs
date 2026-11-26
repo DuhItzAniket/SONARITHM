@@ -34,18 +34,21 @@ pub fn mode_name(mode: Mode) -> &'static str {
 ///
 /// Version 2 adds `spec.experimental` (RFC-0006 §4). Version 1 manifests still read: the
 /// field is optional and left out when no experiment is on.
-pub const MANIFEST_VERSION: u32 = 2;
+///
+/// Version 3 adds `data.fingerprintScheme` (RFC-0008 §6), always written. Versions 1 and 2
+/// still read, as fingerprint scheme 1.
+pub const MANIFEST_VERSION: u32 = 3;
 
 /// Where the generated schema is committed, relative to the workspace root. The version 1
-/// schema stays as written.
-pub const MANIFEST_SCHEMA_PATH: &str = "schemas/sonarithm-render-manifest-2.schema.json";
+/// and 2 schemas stay as written.
+pub const MANIFEST_SCHEMA_PATH: &str = "schemas/sonarithm-render-manifest-3.schema.json";
 
 /// A render manifest.
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize, JsonSchema)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 #[non_exhaustive]
 pub struct RenderManifest {
-    /// The manifest format version (`MANIFEST_VERSION`, currently 2; 1 still reads).
+    /// The manifest format version (`MANIFEST_VERSION`, currently 3; 1 and 2 still read).
     pub manifest_version: u32,
     /// The software that rendered.
     pub sonarithm: Software,
@@ -117,10 +120,19 @@ pub struct DataInfo {
     /// SHA-256 fingerprint of the data (03 §2).
     #[schemars(regex(pattern = r"^sha256:[0-9a-f]{64}$"))]
     pub fingerprint: String,
+    /// The scheme that computed `fingerprint` (RFC-0008 §6): 2 for the value-based
+    /// fingerprint. A manifest of version 1 or 2 has none, and reads as scheme 1.
+    #[serde(default = "fingerprint_scheme_1")]
+    #[schemars(range(min = 1))]
+    pub fingerprint_scheme: u32,
     /// Where it came from, without any directory.
     pub source: Option<DataSource>,
     /// The share of values in each provenance class (03 §4), for example `exact: 1.0`.
     pub provenance: BTreeMap<String, f64>,
+}
+
+const fn fingerprint_scheme_1() -> u32 {
+    sonarithm_core::score::FINGERPRINT_SCHEME_1
 }
 
 /// A data source: its kind and a name with no directory.

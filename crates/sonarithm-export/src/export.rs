@@ -263,6 +263,7 @@ fn manifest(
         },
         data: DataInfo {
             fingerprint: sha256_text(&header.data_fingerprint),
+            fingerprint_scheme: header.data_fingerprint_scheme,
             source: inputs.data_source.clone(),
             provenance: inputs.provenance.clone(),
         },

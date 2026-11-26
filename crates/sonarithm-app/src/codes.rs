@@ -447,8 +447,21 @@ pub const DATASET_REFINGERPRINTED: CodeInfo = CodeInfo {
     severity: Severity::Warning,
     summary: "A dataset was fingerprinted again",
     help: "Another SONARITHM build computed the dataset's fingerprint differently. Embedded \
-           data matches the project's own checksum, so it opens unchanged; a function opens \
-           sampled again from its definition. Save the project to record the new fingerprint.",
+           data matches the project's own checksum, and linked data the size and checksum \
+           the project recorded, so it opens unchanged; a function opens sampled again from \
+           its definition. Save the project to record the new fingerprint.",
+    rules: &[],
+    status: CodeStatus::Active,
+};
+
+/// `dataset_relink_check` or `dataset_relink` named a dataset that is available, or not
+/// linked (RFC-0008 §6).
+pub const NOTHING_TO_RELINK: CodeInfo = CodeInfo {
+    code: "SNR-APP-095",
+    severity: Severity::Error,
+    summary: "There is nothing to relink",
+    help: "Only a linked dataset that the project could not verify, which shows as \
+           unavailable, can be checked and relinked. Nothing was changed.",
     rules: &[],
     status: CodeStatus::Active,
 };
@@ -527,6 +540,7 @@ pub const CODES: CodeTable = CodeTable {
         NAV_NO_TREE,
         DATASET_REFINGERPRINTED,
         MODALITY_LOCKOUT,
+        NOTHING_TO_RELINK,
         RASTER_SESSION,
     ],
 };

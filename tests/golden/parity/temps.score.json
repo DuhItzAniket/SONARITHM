@@ -1,12 +1,13 @@
 {
   "header": {
-    "data_fingerprint": "7708a22dd4c66009be82b4536a0449dfa8c167a632ad776644cd94e9adb005c8",
+    "data_fingerprint": "c974a50c46613942559380ee157f2a8ffea2614f9af21d7fe0bf86352f3dabed",
+    "data_fingerprint_scheme": 2,
     "duration": 3.25,
     "engines": {
       "numisona": "*",
       "platform": "*"
     },
-    "ir_version": 1,
+    "ir_version": 3,
     "mode": "analysis",
     "seed": 0,
     "shapers": [],

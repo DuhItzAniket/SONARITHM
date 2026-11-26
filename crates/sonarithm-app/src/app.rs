@@ -40,6 +40,7 @@ mod nav;
 mod profiles;
 mod projects;
 mod raster;
+mod relink;
 
 /// How the app core starts.
 #[derive(Clone, Debug)]
@@ -100,6 +101,9 @@ struct Open {
     /// For a dataset sampled from a function: its definition (C03-T08). Projects cannot
     /// save it yet (`SNR-APP-089`).
     function: Option<sonarithm::FunctionSpec>,
+    /// For data read from a file, the file's size and SHA-256 when it was read: what a
+    /// saved link records (format 1.2, RFC-0008 §6).
+    file: Option<crate::project::LinkedFile>,
 }
 
 /// What an undoable edit changed: the spec, or one chart dataset's corrections (C02-T06).
@@ -251,9 +255,13 @@ impl App {
     fn run(&mut self, request: Request) -> Result<Reply, IpcError> {
         match request {
             Request::Hello { protocol } => hello(protocol),
-            Request::DatasetOpen { path } => self.edit(|app| app.dataset_open(Path::new(&path))),
-            Request::DatasetClose { id } => self.edit(|app| app.dataset_close(&id)),
-            Request::DatasetList => Ok(self.datasets()),
+            request @ (Request::DatasetOpen { .. }
+            | Request::DatasetClose { .. }
+            | Request::DatasetList
+            | Request::DatasetRelinkCheck { .. }
+            | Request::DatasetRelink { .. }
+            | Request::ViewGet { .. }
+            | Request::TablePage { .. }) => self.datasets_request(request),
             Request::SpecGet => Ok(self.spec_get()),
             Request::SpecSet { text } => self.edit(|app| app.spec_set(text)),
             Request::SpecApply { patch, label } => self.edit(|app| app.spec_apply(&patch, label)),
@@ -341,10 +349,6 @@ impl App {
             Request::ModalityToggle { modality } => self.modality_toggle(modality),
             Request::ChoicesReset => self.choices_reset(),
             Request::BrailleRoute { cell } => self.braille_route(cell),
-            Request::ViewGet { .. } | Request::TablePage { .. } => Err(IpcError::new(
-                &codes::BAD_REQUEST,
-                "This command returns a binary view; send it with dispatch_binary.",
-            )),
         }
     }
 
@@ -578,6 +582,22 @@ impl App {
         self.transport.act(action).map(Reply::Transport)
     }
 
+    /// The dataset commands: open, close, list and relink (RFC-0008 §6). The binary views
+    /// are refused here: they go through [`App::dispatch_binary`].
+    fn datasets_request(&mut self, request: Request) -> Result<Reply, IpcError> {
+        match request {
+            Request::DatasetOpen { path } => self.edit(|app| app.dataset_open(Path::new(&path))),
+            Request::DatasetClose { id } => self.edit(|app| app.dataset_close(&id)),
+            Request::DatasetList => Ok(self.datasets()),
+            Request::DatasetRelinkCheck { id } => self.dataset_relink_check(&id),
+            Request::DatasetRelink { id } => self.dataset_relink(&id),
+            _ => Err(IpcError::new(
+                &codes::BAD_REQUEST,
+                "This command returns a binary view; send it with dispatch_binary.",
+            )),
+        }
+    }
+
     /// The session's spec, with no undo token (`spec_get`).
     fn spec_get(&self) -> Reply {
         Reply::Spec(SpecState {
@@ -599,6 +619,9 @@ impl App {
         // Each dataset's table gets its own ID, so cached view tiles never mix datasets.
         let ids = u32::try_from(number).unwrap_or(u32::MAX);
         let name = file_name(&path);
+        // Taken before the file is read, so a file that changes while it is read fails the
+        // fingerprint check when the project is opened again.
+        let file = crate::project::LinkedFile::of(&path).ok();
         let chart = open_chart(&path, &name, BundleId(number), TableId(ids))?;
         let mut chart_state = None;
         let (bundle, diagnostics) = if let Some((bundle, diagnostics, state)) = chart {
@@ -621,6 +644,7 @@ impl App {
                 origin: Some(path.clone()),
                 chart: chart_state,
                 function: None,
+                file,
             },
         );
         Ok(Reply::Dataset(summary))

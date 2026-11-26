@@ -144,6 +144,7 @@ pub fn typescript() -> String {
     declare::<DeviceSummary>(&mut out, &cfg);
     declare::<crate::ipc::ProjectSummary>(&mut out, &cfg);
     declare::<crate::ipc::ProjectDatasetInfo>(&mut out, &cfg);
+    declare::<crate::ipc::RelinkReason>(&mut out, &cfg);
     declare::<crate::ipc::RasterCalibration>(&mut out, &cfg);
     declare::<crate::ipc::RasterAxis>(&mut out, &cfg);
     declare::<crate::ipc::RasterAxisKind>(&mut out, &cfg);

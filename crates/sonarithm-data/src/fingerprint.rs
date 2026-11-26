@@ -1,57 +1,606 @@
 // SPDX-FileCopyrightText: 2026 SONARITHM contributors
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
-//! Data fingerprints: SHA-256 over a canonical Arrow IPC serialization (03 §2, ADR-0013).
+//! Data fingerprints: SHA-256 over an encoding of the data's logical values (03 §2,
+//! ADR-0013, [RFC-0008]). This is scheme [`FINGERPRINT_SCHEME`] (2).
 //!
-//! The canonical form is one Arrow IPC stream (schema with its metadata, then a single
-//! record batch, uncompressed) written from a canonical copy of the table:
+//! The input is fed to SHA-256 as a stream (RFC-0008 §2):
 //!
-//! - batches are concatenated, so the fingerprint does not depend on how a reader chunked
-//!   the rows;
-//! - every array is rebuilt with zeroed slots under nulls and offsets starting at zero, so
-//!   logically equal arrays hash equally whatever computation produced them (flat types:
-//!   numbers, booleans, text, binary, temporal values and dictionaries of them; nested
-//!   types are written as they are);
-//! - schema and field metadata are sorted maps in arrow-rs 60, so their order is fixed.
+//! 1. the tag `sonarithm-data table fingerprint v2` and a NUL byte;
+//! 2. the schema: a u64 byte length, then RFC 8785 canonical JSON `{ "fields": [{ "meta",
+//!    "name", "type" }, …], "meta" }`, where `type` is the logical type (§3) and each
+//!    `meta` holds only the `snr.*` metadata keys (of the field, and of the schema);
+//! 3. the row count, u64;
+//! 4. each column in schema order, preceded by its byte length (u64): every row in order
+//!    across all batches, as a tag byte (`0` null, `1` valid) and, for a valid row, the
+//!    value bytes of §3.
 //!
-//! The digest is identical on every platform for the same table (tested on the corpus on
-//! Linux, Windows and macOS in CI). It covers values, types, field names and `snr.*`
-//! metadata, and therefore inferred semantics too; it does not cover the table name, ID or
-//! generation. An Arrow upgrade that changes the IPC encoding changes digests; the pinned
-//! corpus test catches that.
+//! Integers are little-endian u64 throughout. What is left out is layout, and nothing a
+//! compile path reads: batch boundaries, offsets, slicing, padding, the bytes under nulls,
+//! string and list layouts (`Utf8`, `LargeUtf8` and `Utf8View` are all `string`), dictionary key
+//! widths, run ends, nullability, non-`snr.*` metadata, and the table's name, ID and
+//! generation. Floats are hashed bit-exact (§4), because compile paths order them with
+//! `f64::total_cmp`. A dictionary stays distinct from a plain column, because NUMISONA takes
+//! a category order from its dictionary (§3).
+//!
+//! The digest does not depend on the Arrow version, and is the same on every platform
+//! (the pinned corpus test runs on Linux, Windows and macOS in CI).
+//!
+//! Scheme 1, SHA-256 over the Arrow IPC bytes of a canonical copy (A04-T09), is kept as
+//! [`table_fingerprint_v1`] for the RFC-0008 bench only: no record is written with it, and
+//! a scheme-1 fingerprint is never recomputed, since it depends on the arrow-ipc version
+//! that wrote it (RFC-0008 §6).
+//!
+//! [RFC-0008]: ../../docs/rfcs/0008-value-based-data-fingerprint.md
 
 use std::sync::Arc;
 
 use arrow_array::cast::AsArray;
 use arrow_array::types::{
-    ArrowDictionaryKeyType, ArrowPrimitiveType, Date32Type, Date64Type, DurationMicrosecondType,
-    DurationMillisecondType, DurationNanosecondType, DurationSecondType, Float32Type, Float64Type,
-    Int8Type, Int16Type, Int32Type, Int64Type, Time32MillisecondType, Time32SecondType,
-    Time64MicrosecondType, Time64NanosecondType, TimestampMicrosecondType,
-    TimestampMillisecondType, TimestampNanosecondType, TimestampSecondType, UInt8Type, UInt16Type,
-    UInt32Type, UInt64Type,
+    ArrowDictionaryKeyType, ArrowPrimitiveType, Date32Type, Date64Type, Decimal128Type,
+    Decimal256Type, DurationMicrosecondType, DurationMillisecondType, DurationNanosecondType,
+    DurationSecondType, Float16Type, Float32Type, Float64Type, Int8Type, Int16Type, Int32Type,
+    Int64Type, Time32MillisecondType, Time32SecondType, Time64MicrosecondType,
+    Time64NanosecondType, TimestampMicrosecondType, TimestampMillisecondType,
+    TimestampNanosecondType, TimestampSecondType, UInt8Type, UInt16Type, UInt32Type, UInt64Type,
 };
 use arrow_array::{
     Array, ArrayRef, BinaryArray, BooleanArray, DictionaryArray, LargeBinaryArray,
     LargeStringArray, PrimitiveArray, RecordBatch, RecordBatchOptions, StringArray,
 };
 use arrow_ipc::writer::StreamWriter;
-use arrow_schema::{DataType, TimeUnit};
-use sonarithm_core::Sha256Digest;
+use arrow_schema::{DataType, Field, FieldRef, Schema, TimeUnit, UnionMode};
+use sonarithm_core::{Sha256Digest, Sha256Hasher};
 
 use crate::bundle::DataBundle;
 use crate::error::DataError;
 use crate::table::Table;
 
-/// The tag that starts a bundle fingerprint's input, versioning the scheme.
-const BUNDLE_TAG: &[u8] = b"sonarithm-data bundle fingerprint v1\0";
+/// The fingerprint scheme this build computes (RFC-0008 §6). Records name it beside every
+/// fingerprint; a record without it was written under scheme 1.
+pub const FINGERPRINT_SCHEME: u32 = 2;
 
-/// The fingerprint of one table's content.
+/// The tag that starts a table fingerprint's input.
+const TABLE_TAG: &[u8] = b"sonarithm-data table fingerprint v2\0";
+
+/// The tag that starts a bundle fingerprint's input (RFC-0008 §5).
+const BUNDLE_TAG: &[u8] = b"sonarithm-data bundle fingerprint v2\0";
+
+/// The fingerprint of one table's content (scheme 2).
+///
+/// # Errors
+///
+/// [`DataError::Unfingerprintable`] for a field whose type has no encoding (intervals,
+/// 32- and 64-bit decimals, and the rarer Arrow types), and [`DataError::MalformedTable`]
+/// if batches with different dictionaries cannot be concatenated.
+pub fn table_fingerprint(table: &Table) -> Result<Sha256Digest, DataError> {
+    let schema = table.schema();
+    let types = schema
+        .fields()
+        .iter()
+        .map(|field| {
+            logical_type(field.data_type()).ok_or_else(|| DataError::Unfingerprintable {
+                field: field.name().clone(),
+                data_type: field.data_type().to_string(),
+            })
+        })
+        .collect::<Result<Vec<_>, _>>()?;
+    let header = schema_json(schema, &types);
+    let mut out = Hashing::new();
+    out.put(TABLE_TAG);
+    out.put(&(header.len() as u64).to_le_bytes());
+    out.put(header.as_bytes());
+    out.put(&table.num_rows().to_le_bytes());
+    for (index, field) in schema.fields().iter().enumerate() {
+        let parts = column_parts(table, index, field)?;
+        let mut counted = Counting(0);
+        encode_column(&parts, &mut counted);
+        out.put(&counted.0.to_le_bytes());
+        encode_column(&parts, &mut out);
+    }
+    Ok(out.finish())
+}
+
+/// The fingerprint of a bundle: SHA-256 over a version tag and its tables' fingerprints,
+/// in table order (RFC-0008 §5). Render manifests and Score headers record it (ADR-0013).
+///
+/// # Errors
+///
+/// As [`table_fingerprint`].
+pub fn bundle_fingerprint(bundle: &DataBundle) -> Result<Sha256Digest, DataError> {
+    let mut input = BUNDLE_TAG.to_vec();
+    for table in bundle.tables() {
+        input.extend_from_slice(table_fingerprint(table)?.as_bytes());
+    }
+    Ok(Sha256Digest::of(&input))
+}
+
+/// Where encoded bytes go: a counter (for a column's length) or the hasher. The encoder
+/// is generic over it, so each pass compiles to direct calls.
+trait Sink {
+    /// Whether only the byte count matters, so fixed-width runs can be counted without
+    /// visiting their rows.
+    const COUNTING: bool = false;
+
+    fn put(&mut self, bytes: &[u8]);
+
+    /// Adds `n` bytes to a count without their content (counting sinks only).
+    fn skip(&mut self, n: u64) {
+        let _ = n;
+    }
+
+    fn tag(&mut self, valid: bool) {
+        self.put(&[u8::from(valid)]);
+    }
+
+    fn len(&mut self, len: usize) {
+        self.put(&(len as u64).to_le_bytes());
+    }
+}
+
+/// Counts bytes, so a column's length can precede it without buffering it.
+struct Counting(u64);
+
+impl Sink for Counting {
+    const COUNTING: bool = true;
+
+    fn put(&mut self, bytes: &[u8]) {
+        self.0 += bytes.len() as u64;
+    }
+
+    fn skip(&mut self, n: u64) {
+        self.0 += n;
+    }
+}
+
+/// Feeds SHA-256 through a small buffer, so one-byte tags do not each reach the hasher.
+struct Hashing {
+    hasher: Sha256Hasher,
+    buffer: Vec<u8>,
+}
+
+impl Hashing {
+    const FLUSH: usize = 64 << 10;
+
+    fn new() -> Self {
+        Self {
+            hasher: Sha256Hasher::new(),
+            buffer: Vec::with_capacity(Self::FLUSH),
+        }
+    }
+
+    fn finish(mut self) -> Sha256Digest {
+        self.hasher.update(&self.buffer);
+        self.hasher.finish()
+    }
+}
+
+impl Sink for Hashing {
+    fn put(&mut self, bytes: &[u8]) {
+        if self.buffer.len() + bytes.len() > Self::FLUSH {
+            self.hasher.update(&self.buffer);
+            self.buffer.clear();
+        }
+        if bytes.len() > Self::FLUSH {
+            self.hasher.update(bytes);
+        } else {
+            self.buffer.extend_from_slice(bytes);
+        }
+    }
+}
+
+/// The logical type of RFC-0008 §3, or `None` for a type with no encoding. Layouts that
+/// hold the same values share one name: the string, binary and list layouts, key widths of
+/// dictionaries, sparse and dense unions, and run-end encoding (the values' type).
+fn logical_type(data_type: &DataType) -> Option<String> {
+    let unit = |unit: &TimeUnit| match unit {
+        TimeUnit::Second => "s",
+        TimeUnit::Millisecond => "ms",
+        TimeUnit::Microsecond => "us",
+        TimeUnit::Nanosecond => "ns",
+    };
+    let child = |field: &FieldRef| logical_type(field.data_type());
+    Some(match data_type {
+        DataType::Null => "null".to_owned(),
+        DataType::Boolean => "bool".to_owned(),
+        DataType::Int8 => "int8".to_owned(),
+        DataType::Int16 => "int16".to_owned(),
+        DataType::Int32 => "int32".to_owned(),
+        DataType::Int64 => "int64".to_owned(),
+        DataType::UInt8 => "uint8".to_owned(),
+        DataType::UInt16 => "uint16".to_owned(),
+        DataType::UInt32 => "uint32".to_owned(),
+        DataType::UInt64 => "uint64".to_owned(),
+        DataType::Float16 => "float16".to_owned(),
+        DataType::Float32 => "float32".to_owned(),
+        DataType::Float64 => "float64".to_owned(),
+        DataType::Decimal128(p, s) | DataType::Decimal256(p, s) => format!("decimal({p},{s})"),
+        DataType::Date32 => "date32".to_owned(),
+        DataType::Date64 => "date64".to_owned(),
+        DataType::Time32(u) | DataType::Time64(u) => format!("time({})", unit(u)),
+        DataType::Duration(u) => format!("duration({})", unit(u)),
+        DataType::Timestamp(u, None) => format!("timestamp({})", unit(u)),
+        DataType::Timestamp(u, Some(tz)) => format!("timestamp({},{tz})", unit(u)),
+        DataType::Utf8 | DataType::LargeUtf8 | DataType::Utf8View => "string".to_owned(),
+        DataType::Binary | DataType::LargeBinary | DataType::BinaryView => "binary".to_owned(),
+        DataType::FixedSizeBinary(n) => format!("fixed_binary({n})"),
+        DataType::Dictionary(key, values) if key.is_dictionary_key_type() => {
+            format!("dictionary<{}>", logical_type(values)?)
+        }
+        DataType::List(f)
+        | DataType::LargeList(f)
+        | DataType::ListView(f)
+        | DataType::LargeListView(f) => format!("list<{}>", child(f)?),
+        DataType::FixedSizeList(f, n) => format!("fixed_list<{},{n}>", child(f)?),
+        DataType::Struct(fields) => {
+            let children = fields
+                .iter()
+                .map(|f| Some(format!("{}:{}", quoted(f.name()), child(f)?)))
+                .collect::<Option<Vec<_>>>()?;
+            format!("struct{{{}}}", children.join(","))
+        }
+        DataType::Map(entries, sorted) => {
+            let DataType::Struct(kv) = entries.data_type() else {
+                return None;
+            };
+            let [key, value] = kv.iter().collect::<Vec<_>>()[..] else {
+                return None;
+            };
+            let order = if *sorted { "sorted_map" } else { "map" };
+            format!("{order}<{},{}>", child(key)?, child(value)?)
+        }
+        DataType::Union(fields, _) => {
+            let children = fields
+                .iter()
+                .map(|(id, f)| Some(format!("{id} {}:{}", quoted(f.name()), child(f)?)))
+                .collect::<Option<Vec<_>>>()?;
+            format!("union{{{}}}", children.join(","))
+        }
+        DataType::RunEndEncoded(_, values) => child(values)?,
+        _ => return None,
+    })
+}
+
+/// A child name inside a logical type, as a JSON string, so no name can imitate the
+/// type's punctuation.
+fn quoted(name: &str) -> String {
+    let mut out = String::new();
+    json_string(&mut out, name);
+    out
+}
+
+/// The schema part of the input: RFC 8785 canonical JSON. It holds only objects, arrays
+/// and strings, so the canonical form needs no number formatting: keys sorted by UTF-16
+/// code units, no whitespace, and strings escaped as RFC 8785 §3.2.2.2 says.
+/// (`sonarithm-data` may depend only on `sonarithm-core`, so it cannot use
+/// `sonarithm_spec::canonical`; the facade's tests check the two agree.)
+fn schema_json(schema: &Schema, types: &[String]) -> String {
+    let mut out = String::from("{\"fields\":[");
+    for (index, (field, logical)) in schema.fields().iter().zip(types).enumerate() {
+        if index > 0 {
+            out.push(',');
+        }
+        out.push_str("{\"meta\":");
+        snr_meta(&mut out, field.metadata().iter());
+        out.push_str(",\"name\":");
+        json_string(&mut out, field.name());
+        out.push_str(",\"type\":");
+        json_string(&mut out, logical);
+        out.push('}');
+    }
+    out.push_str("],\"meta\":");
+    snr_meta(&mut out, schema.metadata().iter());
+    out.push('}');
+    out
+}
+
+/// The `snr.*` entries of `metadata` as a canonical JSON object.
+fn snr_meta<'a>(out: &mut String, metadata: impl Iterator<Item = (&'a String, &'a String)>) {
+    let mut entries: Vec<(&String, &String)> = metadata
+        .filter(|(key, _)| key.starts_with("snr."))
+        .collect();
+    entries.sort_by(|a, b| a.0.encode_utf16().cmp(b.0.encode_utf16()));
+    out.push('{');
+    for (index, (key, value)) in entries.into_iter().enumerate() {
+        if index > 0 {
+            out.push(',');
+        }
+        json_string(out, key);
+        out.push(':');
+        json_string(out, value);
+    }
+    out.push('}');
+}
+
+/// A JSON string as RFC 8785 writes it (ECMAScript `JSON.stringify`).
+fn json_string(out: &mut String, text: &str) {
+    use std::fmt::Write as _;
+    out.push('"');
+    for c in text.chars() {
+        match c {
+            '"' => out.push_str("\\\""),
+            '\\' => out.push_str("\\\\"),
+            '\u{8}' => out.push_str("\\b"),
+            '\u{c}' => out.push_str("\\f"),
+            '\n' => out.push_str("\\n"),
+            '\r' => out.push_str("\\r"),
+            '\t' => out.push_str("\\t"),
+            c if u32::from(c) < 0x20 => {
+                let _ = write!(out, "\\u{:04x}", u32::from(c));
+            }
+            c => out.push(c),
+        }
+    }
+    out.push('"');
+}
+
+/// One column's arrays, one per batch. Batches of a dictionary column whose dictionaries
+/// differ are concatenated first, as the compile paths see them through [`Table::column`],
+/// so the column has one dictionary (RFC-0008 §3).
+fn column_parts(table: &Table, index: usize, field: &Field) -> Result<Vec<ArrayRef>, DataError> {
+    let parts: Vec<ArrayRef> = table
+        .batches()
+        .iter()
+        .map(|batch| Arc::clone(batch.column(index)))
+        .collect();
+    if !matches!(field.data_type(), DataType::Dictionary(..)) || parts.len() < 2 {
+        return Ok(parts);
+    }
+    let values = |array: &ArrayRef| {
+        array
+            .as_any_dictionary_opt()
+            .map(|dictionary| dictionary.values().to_data())
+    };
+    let first = values(&parts[0]);
+    if parts.iter().all(|part| values(part) == first) {
+        return Ok(parts);
+    }
+    Ok(vec![table.column(field.name())?])
+}
+
+/// Every row of a column, in order across its parts.
+fn encode_column<S: Sink>(parts: &[ArrayRef], out: &mut S) {
+    let dictionary = parts.first().and_then(|part| part.as_any_dictionary_opt());
+    if let Some(first) = dictionary {
+        // The dictionary's values as a column (all of them, in order), then each row's key
+        // as an index into them: key widths are layout, unused values and order are not.
+        let values = first.values();
+        out.len(values.len());
+        encode_rows(values.as_ref(), out);
+        for part in parts {
+            if let Some(dictionary) = part.as_any_dictionary_opt() {
+                let keys = dictionary.keys();
+                if S::COUNTING {
+                    let valid = keys.len() - keys.null_count();
+                    out.skip((keys.len() + 8 * valid) as u64);
+                    continue;
+                }
+                let nulls = keys.nulls();
+                for (row, key) in dictionary.normalized_keys().into_iter().enumerate() {
+                    let valid = nulls.is_none_or(|nulls| nulls.is_valid(row));
+                    out.tag(valid);
+                    if valid {
+                        out.put(&(key as u64).to_le_bytes());
+                    }
+                }
+            }
+        }
+        return;
+    }
+    for part in parts {
+        encode_rows(part.as_ref(), out);
+    }
+}
+
+/// Every row of `array`: a tag byte, then a valid row's value bytes.
+fn encode_rows<S: Sink>(array: &dyn Array, out: &mut S) {
+    macro_rules! fixed {
+        ($t:ty) => {{
+            let typed = array.as_primitive::<$t>();
+            if S::COUNTING {
+                let width = std::mem::size_of::<<$t as ArrowPrimitiveType>::Native>();
+                let valid = typed.len() - typed.null_count();
+                out.skip((typed.len() + width * valid) as u64);
+                return;
+            }
+            let nulls = typed.nulls();
+            for (row, value) in typed.values().iter().enumerate() {
+                let valid = nulls.is_none_or(|nulls| nulls.is_valid(row));
+                out.tag(valid);
+                if valid {
+                    out.put(&value.to_le_bytes());
+                }
+            }
+        }};
+    }
+    macro_rules! text {
+        ($typed:expr) => {{
+            let typed = $typed;
+            let nulls = typed.nulls();
+            for row in 0..typed.len() {
+                let valid = nulls.is_none_or(|nulls| nulls.is_valid(row));
+                out.tag(valid);
+                if valid {
+                    let value: &[u8] = typed.value(row).as_ref();
+                    out.len(value.len());
+                    out.put(value);
+                }
+            }
+        }};
+    }
+    match array.data_type() {
+        DataType::Int8 => fixed!(Int8Type),
+        DataType::Int16 => fixed!(Int16Type),
+        DataType::Int32 => fixed!(Int32Type),
+        DataType::Int64 => fixed!(Int64Type),
+        DataType::UInt8 => fixed!(UInt8Type),
+        DataType::UInt16 => fixed!(UInt16Type),
+        DataType::UInt32 => fixed!(UInt32Type),
+        DataType::UInt64 => fixed!(UInt64Type),
+        DataType::Float32 => fixed!(Float32Type),
+        DataType::Float64 => fixed!(Float64Type),
+        DataType::Date32 => fixed!(Date32Type),
+        DataType::Date64 => fixed!(Date64Type),
+        DataType::Timestamp(TimeUnit::Second, _) => fixed!(TimestampSecondType),
+        DataType::Timestamp(TimeUnit::Millisecond, _) => fixed!(TimestampMillisecondType),
+        DataType::Timestamp(TimeUnit::Microsecond, _) => fixed!(TimestampMicrosecondType),
+        DataType::Timestamp(TimeUnit::Nanosecond, _) => fixed!(TimestampNanosecondType),
+        DataType::Utf8 => text!(array.as_string::<i32>()),
+        DataType::LargeUtf8 => text!(array.as_string::<i64>()),
+        DataType::Utf8View => text!(array.as_string_view()),
+        _ => {
+            for row in 0..array.len() {
+                encode_row(array, row, out);
+            }
+        }
+    }
+}
+
+/// One row of `array`: its tag byte and, when valid, its value bytes (RFC-0008 §3).
+fn encode_row<S: Sink>(array: &dyn Array, row: usize, out: &mut S) {
+    match array.data_type() {
+        DataType::Null => out.tag(false),
+        // A run's value, whatever the run ends.
+        DataType::RunEndEncoded(ends, _) => {
+            let (values, physical) = match ends.data_type() {
+                DataType::Int16 => run_value::<Int16Type>(array, row),
+                DataType::Int32 => run_value::<Int32Type>(array, row),
+                DataType::Int64 => run_value::<Int64Type>(array, row),
+                _ => return out.tag(false),
+            };
+            match values {
+                Some(values) => encode_row(values.as_ref(), physical, out),
+                None => out.tag(false),
+            }
+        }
+        // Inside a nested value a dictionary is resolved: its key selects a value row.
+        DataType::Dictionary(..) => match array.as_any_dictionary_opt() {
+            Some(dictionary) if dictionary.keys().is_valid(row) => {
+                let key = dictionary.normalized_keys()[row];
+                encode_row(dictionary.values().as_ref(), key, out);
+            }
+            _ => out.tag(false),
+        },
+        // A union slot is always present: the type ID, then the selected child's row.
+        DataType::Union(_, mode) => {
+            let union = array.as_union();
+            let type_id = union.type_id(row);
+            out.tag(true);
+            out.put(&type_id.to_le_bytes());
+            let at = match mode {
+                UnionMode::Dense => union.value_offset(row),
+                UnionMode::Sparse => row,
+            };
+            encode_row(union.child(type_id).as_ref(), at, out);
+        }
+        _ => {
+            let valid = array.is_valid(row);
+            out.tag(valid);
+            if valid {
+                encode_value(array, row, out);
+            }
+        }
+    }
+}
+
+/// The values array and the physical index of a run-end encoded array's `row`.
+fn run_value<R: arrow_array::types::RunEndIndexType>(
+    array: &dyn Array,
+    row: usize,
+) -> (Option<&ArrayRef>, usize) {
+    match array.as_run_opt::<R>() {
+        Some(run) => (Some(run.values()), run.get_physical_index(row)),
+        None => (None, 0),
+    }
+}
+
+/// The value bytes of a valid row (RFC-0008 §3's table).
+fn encode_value<S: Sink>(array: &dyn Array, row: usize, out: &mut S) {
+    macro_rules! fixed {
+        ($t:ty) => {
+            out.put(&array.as_primitive::<$t>().value(row).to_le_bytes())
+        };
+    }
+    fn bytes<S: Sink>(out: &mut S, value: &[u8]) {
+        out.len(value.len());
+        out.put(value);
+    }
+    fn elements<S: Sink>(out: &mut S, values: &ArrayRef, counted: bool) {
+        if counted {
+            out.len(values.len());
+        }
+        for index in 0..values.len() {
+            encode_row(values.as_ref(), index, out);
+        }
+    }
+    match array.data_type() {
+        DataType::Boolean => out.put(&[u8::from(array.as_boolean().value(row))]),
+        DataType::Int8 => fixed!(Int8Type),
+        DataType::Int16 => fixed!(Int16Type),
+        DataType::Int32 => fixed!(Int32Type),
+        DataType::Int64 => fixed!(Int64Type),
+        DataType::UInt8 => fixed!(UInt8Type),
+        DataType::UInt16 => fixed!(UInt16Type),
+        DataType::UInt32 => fixed!(UInt32Type),
+        DataType::UInt64 => fixed!(UInt64Type),
+        DataType::Float16 => fixed!(Float16Type),
+        DataType::Float32 => fixed!(Float32Type),
+        DataType::Float64 => fixed!(Float64Type),
+        DataType::Decimal128(..) => fixed!(Decimal128Type),
+        DataType::Decimal256(..) => fixed!(Decimal256Type),
+        DataType::Date32 => fixed!(Date32Type),
+        DataType::Date64 => fixed!(Date64Type),
+        DataType::Time32(TimeUnit::Second) => fixed!(Time32SecondType),
+        DataType::Time32(_) => fixed!(Time32MillisecondType),
+        DataType::Time64(TimeUnit::Microsecond) => fixed!(Time64MicrosecondType),
+        DataType::Time64(_) => fixed!(Time64NanosecondType),
+        DataType::Duration(TimeUnit::Second) => fixed!(DurationSecondType),
+        DataType::Duration(TimeUnit::Millisecond) => fixed!(DurationMillisecondType),
+        DataType::Duration(TimeUnit::Microsecond) => fixed!(DurationMicrosecondType),
+        DataType::Duration(TimeUnit::Nanosecond) => fixed!(DurationNanosecondType),
+        DataType::Timestamp(TimeUnit::Second, _) => fixed!(TimestampSecondType),
+        DataType::Timestamp(TimeUnit::Millisecond, _) => fixed!(TimestampMillisecondType),
+        DataType::Timestamp(TimeUnit::Microsecond, _) => fixed!(TimestampMicrosecondType),
+        DataType::Timestamp(TimeUnit::Nanosecond, _) => fixed!(TimestampNanosecondType),
+        DataType::Utf8 => bytes(out, array.as_string::<i32>().value(row).as_bytes()),
+        DataType::LargeUtf8 => bytes(out, array.as_string::<i64>().value(row).as_bytes()),
+        DataType::Utf8View => bytes(out, array.as_string_view().value(row).as_bytes()),
+        DataType::Binary => bytes(out, array.as_binary::<i32>().value(row)),
+        DataType::LargeBinary => bytes(out, array.as_binary::<i64>().value(row)),
+        DataType::BinaryView => bytes(out, array.as_binary_view().value(row)),
+        DataType::FixedSizeBinary(_) => out.put(array.as_fixed_size_binary().value(row)),
+        DataType::List(_) => elements(out, &array.as_list::<i32>().value(row), true),
+        DataType::LargeList(_) => elements(out, &array.as_list::<i64>().value(row), true),
+        DataType::ListView(_) => elements(out, &array.as_list_view::<i32>().value(row), true),
+        DataType::LargeListView(_) => {
+            elements(out, &array.as_list_view::<i64>().value(row), true);
+        }
+        DataType::FixedSizeList(..) => {
+            elements(out, &array.as_fixed_size_list().value(row), false);
+        }
+        DataType::Struct(_) => {
+            for column in array.as_struct().columns() {
+                encode_row(column.as_ref(), row, out);
+            }
+        }
+        DataType::Map(..) => {
+            let entries: ArrayRef = Arc::new(array.as_map().value(row));
+            elements(out, &entries, true);
+        }
+        // `logical_type` refused every other type before encoding started.
+        _ => {}
+    }
+}
+
+/// The scheme-1 fingerprint: SHA-256 over the Arrow IPC stream of a canonical copy of the
+/// table (A04-T09). Kept for the RFC-0008 §8 bench, which compares the two schemes; no
+/// record is written with it any more.
 ///
 /// # Errors
 ///
 /// [`DataError::Write`] if Arrow cannot encode the table.
-pub fn table_fingerprint(table: &Table) -> Result<Sha256Digest, DataError> {
+#[doc(hidden)]
+pub fn table_fingerprint_v1(table: &Table) -> Result<Sha256Digest, DataError> {
     let failed = |reason: String| DataError::Write {
         format: crate::bundle::Format::Arrow,
         reason,
@@ -71,21 +620,7 @@ pub fn table_fingerprint(table: &Table) -> Result<Sha256Digest, DataError> {
     Ok(Sha256Digest::of(&bytes))
 }
 
-/// The fingerprint of a bundle: SHA-256 over a version tag and its tables' fingerprints,
-/// in table order. Render manifests record it (ADR-0013).
-///
-/// # Errors
-///
-/// As [`table_fingerprint`].
-pub fn bundle_fingerprint(bundle: &DataBundle) -> Result<Sha256Digest, DataError> {
-    let mut input = BUNDLE_TAG.to_vec();
-    for table in bundle.tables() {
-        input.extend_from_slice(table_fingerprint(table)?.as_bytes());
-    }
-    Ok(Sha256Digest::of(&input))
-}
-
-/// A canonical copy of an array: zeroed slots under nulls, offsets from zero.
+/// A canonical copy of an array for scheme 1: zeroed slots under nulls, offsets from zero.
 fn canonical(array: &ArrayRef) -> ArrayRef {
     macro_rules! primitive {
         ($t:ty) => {
@@ -165,83 +700,4 @@ fn rebuild_dictionary<K: ArrowDictionaryKeyType>(array: &ArrayRef) -> ArrayRef {
 }
 
 #[cfg(test)]
-mod tests {
-    use arrow_array::{Float64Array, Int64Array};
-    use arrow_schema::{Field, Schema};
-    use sonarithm_core::TableId;
-
-    use super::*;
-    use crate::meta::{FieldMeta, FieldType};
-
-    fn table(values: ArrayRef, meta: &FieldMeta) -> Table {
-        let schema = Arc::new(Schema::new(vec![meta.apply(Field::new(
-            "v",
-            values.data_type().clone(),
-            true,
-        ))]));
-        let batch = RecordBatch::try_new(schema, vec![values]).unwrap();
-        Table::from_batch(TableId(0), "t", batch)
-    }
-
-    #[test]
-    fn batching_slicing_and_bytes_under_nulls_do_not_matter() {
-        let meta = FieldMeta::new();
-        let whole = table(
-            Arc::new(Int64Array::from(vec![Some(1), None, Some(3)])),
-            &meta,
-        );
-        // The same values, built from a slice of a longer array with garbage under the null.
-        let longer = Int64Array::from(vec![Some(9), Some(1), Some(42), Some(3)]);
-        let mask = BooleanArray::from(vec![false, false, true, false]);
-        let with_garbage = arrow_select::nullif::nullif(&longer, &mask)
-            .unwrap()
-            .slice(1, 3);
-        assert!(with_garbage.is_null(1));
-        let sliced = table(with_garbage, &meta);
-        assert_eq!(
-            table_fingerprint(&whole).unwrap(),
-            table_fingerprint(&sliced).unwrap()
-        );
-        // Two batches instead of one.
-        let split = Table::new(
-            TableId(5),
-            "other name",
-            Arc::clone(whole.schema()),
-            vec![
-                whole.batches()[0].slice(0, 1),
-                whole.batches()[0].slice(1, 2),
-            ],
-        )
-        .unwrap();
-        assert_eq!(
-            table_fingerprint(&whole).unwrap(),
-            table_fingerprint(&split).unwrap()
-        );
-    }
-
-    #[test]
-    fn values_types_and_metadata_change_the_fingerprint() {
-        let base = table(
-            Arc::new(Float64Array::from(vec![1.0, 2.0])),
-            &FieldMeta::new(),
-        );
-        let other_value = table(
-            Arc::new(Float64Array::from(vec![1.0, 2.5])),
-            &FieldMeta::new(),
-        );
-        let other_type = table(Arc::new(Int64Array::from(vec![1, 2])), &FieldMeta::new());
-        let other_meta = table(
-            Arc::new(Float64Array::from(vec![1.0, 2.0])),
-            &FieldMeta::new().with_type(FieldType::Quantitative),
-        );
-        let base_fp = table_fingerprint(&base).unwrap();
-        for other in [&other_value, &other_type, &other_meta] {
-            assert_ne!(table_fingerprint(other).unwrap(), base_fp);
-        }
-        assert_eq!(
-            table_fingerprint(&base).unwrap(),
-            base_fp,
-            "stable across calls"
-        );
-    }
-}
+mod tests;

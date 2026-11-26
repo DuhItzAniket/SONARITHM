@@ -31,7 +31,9 @@ pub use bundle::{
 };
 pub use downsample::{TileCache, XRange, lttb, m4};
 pub use error::{DataError, Limit};
-pub use fingerprint::{bundle_fingerprint, table_fingerprint};
+pub use fingerprint::{
+    FINGERPRINT_SCHEME, bundle_fingerprint, table_fingerprint, table_fingerprint_v1,
+};
 pub use meta::{Concept, FieldMeta, FieldType, Role, Unit};
 pub use provenance::{ProvenanceMix, RowProvenance};
 pub use source::{CsvOptions, JsonOptions, Limits, Loaded, ReadOptions, read_batches, read_bytes};

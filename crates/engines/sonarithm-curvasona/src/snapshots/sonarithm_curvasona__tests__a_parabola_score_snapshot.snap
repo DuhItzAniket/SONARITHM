@@ -4,13 +4,14 @@ expression: "score.review_json(&ReviewOptions::default())"
 ---
 {
   "header": {
-    "data_fingerprint": "7f986993138d5b84d5d7522202ad992fbf9ede459300bd6add27cd67bee930ae",
+    "data_fingerprint": "8d736d12a8127eb77d9ee9104e27268cc40db51bcac026933aa7e9878ba3808f",
+    "data_fingerprint_scheme": 2,
     "duration": 4.0,
     "engines": {
       "curvasona": "*",
       "numisona": "*"
     },
-    "ir_version": 1,
+    "ir_version": 3,
     "mode": "analysis",
     "seed": 3,
     "shapers": [],

@@ -2,14 +2,15 @@
   "snr10-n0": {
     "cues": null,
     "data": {
-      "fingerprint": "sha256:587009df5a783622c52d32d5612437b9aac9996942e6d52ceec8746e8f3aa891",
+      "fingerprint": "sha256:5c481a8dc67252b28a77e79f6ffe3d311153d2979629a27d3b75f96e9182c4ea",
+      "fingerprintScheme": 2,
       "provenance": {},
       "source": {
         "kind": "file",
         "name": "snr10-n0.csv"
       }
     },
-    "manifestVersion": 2,
+    "manifestVersion": 3,
     "output": {
       "bitsPerSample": 24,
       "channels": 2,
@@ -31,8 +32,8 @@
       "seed": 20261028
     },
     "score": {
-      "irVersion": 1,
-      "releaseIndependentHash": "sha256:4227dc7018059b127b1313f72156f34388edeef463f5d0746026317a3bc2644c"
+      "irVersion": 3,
+      "releaseIndependentHash": "sha256:835cdb4b0d91f09b86d353872e8f1e1882303b968bb493bcd4d03dee2f9e3334"
     },
     "spec": {
       "embedded": null,
@@ -60,14 +61,15 @@
   "snr10-n1": {
     "cues": null,
     "data": {
-      "fingerprint": "sha256:bdf0f608d221942c30c1114f032069ea0ea1034bed63b5b113b63086f5e4df4f",
+      "fingerprint": "sha256:0d1fbc804d5862a5a1f748297196e2fbf9f53716a707ab96c3eb3ed98b5f0f7a",
+      "fingerprintScheme": 2,
       "provenance": {},
       "source": {
         "kind": "file",
         "name": "snr10-n1.csv"
       }
     },
-    "manifestVersion": 2,
+    "manifestVersion": 3,
     "output": {
       "bitsPerSample": 24,
       "channels": 2,
@@ -89,8 +91,8 @@
       "seed": 20261029
     },
     "score": {
-      "irVersion": 1,
-      "releaseIndependentHash": "sha256:3c19d02f5f47eb018f6eb5170b637d8059fe9e2a0237f40ae724222fc4a6edcf"
+      "irVersion": 3,
+      "releaseIndependentHash": "sha256:f4980c108110f5feb126f00cb47cbd39a92726d5fee85ba5c6ea72e191fa70f7"
     },
     "spec": {
       "embedded": null,
@@ -118,14 +120,15 @@
   "snr10-n2": {
     "cues": null,
     "data": {
-      "fingerprint": "sha256:daaf5ef3a45050d7c0f0c5dcd7812b30b5c5c0e112626c3130d895c0f1fe2251",
+      "fingerprint": "sha256:90a886f38cdbc965a8de1cea5abc144fda4a775af960ca7a5cc9143eb4cacc2c",
+      "fingerprintScheme": 2,
       "provenance": {},
       "source": {
         "kind": "file",
         "name": "snr10-n2.csv"
       }
     },
-    "manifestVersion": 2,
+    "manifestVersion": 3,
     "output": {
       "bitsPerSample": 24,
       "channels": 2,
@@ -147,8 +150,8 @@
       "seed": 20261030
     },
     "score": {
-      "irVersion": 1,
-      "releaseIndependentHash": "sha256:5f60cf81080da633ac529a8a95389b4c02d19310085e3277592d645c52de028a"
+      "irVersion": 3,
+      "releaseIndependentHash": "sha256:ccf1e0549dba00082e2f69314e95f9790443c98a8d867341c8eb174202dbf44b"
     },
     "spec": {
       "embedded": null,
@@ -176,14 +179,15 @@
   "snr100-n0": {
     "cues": null,
     "data": {
-      "fingerprint": "sha256:a897d661fd7d6251fe206f0154584be361daea79fc0bbd0266f3722f6ee29e96",
+      "fingerprint": "sha256:b5b50fe90d524e9544532523634480770c5c57c33c42a42ea17cbcb3cbf49fed",
+      "fingerprintScheme": 2,
       "provenance": {},
       "source": {
         "kind": "file",
         "name": "snr100-n0.csv"
       }
     },
-    "manifestVersion": 2,
+    "manifestVersion": 3,
     "output": {
       "bitsPerSample": 24,
       "channels": 2,
@@ -205,8 +209,8 @@
       "seed": 20261034
     },
     "score": {
-      "irVersion": 1,
-      "releaseIndependentHash": "sha256:932d65e7f9485e918b08c356507b84285599dbe2fa4891ee775a247d4fa6eb1a"
+      "irVersion": 3,
+      "releaseIndependentHash": "sha256:b6f8cb5867de498a756248333fb800f2922ccbe65acb7a6974ea4f81b231b4e9"
     },
     "spec": {
       "embedded": null,
@@ -234,14 +238,15 @@
   "snr100-n1": {
     "cues": null,
     "data": {
-      "fingerprint": "sha256:1aedfad3f4b0accd10c41a30f92a0620976662c633ef95a947503f8ef71cebe1",
+      "fingerprint": "sha256:b7f13dbea7953e31726104fee0c6d9b3281ba32c265812c25cabcc1e702e2020",
+      "fingerprintScheme": 2,
       "provenance": {},
       "source": {
         "kind": "file",
         "name": "snr100-n1.csv"
       }
     },
-    "manifestVersion": 2,
+    "manifestVersion": 3,
     "output": {
       "bitsPerSample": 24,
       "channels": 2,
@@ -263,8 +268,8 @@
       "seed": 20261035
     },
     "score": {
-      "irVersion": 1,
-      "releaseIndependentHash": "sha256:7529984a6302be03893cfc27b4b1969622aa331fe9a843344b88a70f5d983a4c"
+      "irVersion": 3,
+      "releaseIndependentHash": "sha256:92316311a04565d813d788e4083fe43727a1969aa3196f615c4ec235c20cff99"
     },
     "spec": {
       "embedded": null,
@@ -292,14 +297,15 @@
   "snr100-n2": {
     "cues": null,
     "data": {
-      "fingerprint": "sha256:c80a5acf1c43b03a7ffeb6ed7ef829391112369d4d038f0405c0b7cb1b442f9a",
+      "fingerprint": "sha256:1474cd33bbad37048a3434129b60d4f3c88ee11c76551afc341956fa00f4586e",
+      "fingerprintScheme": 2,
       "provenance": {},
       "source": {
         "kind": "file",
         "name": "snr100-n2.csv"
       }
     },
-    "manifestVersion": 2,
+    "manifestVersion": 3,
     "output": {
       "bitsPerSample": 24,
       "channels": 2,
@@ -321,8 +327,8 @@
       "seed": 20261036
     },
     "score": {
-      "irVersion": 1,
-      "releaseIndependentHash": "sha256:7bc2e211ec6ef2be28fa362538529f06f171f8b295d2071470521d40b4be3484"
+      "irVersion": 3,
+      "releaseIndependentHash": "sha256:8ed2fc28627b805d7a9541e6e83b46f23f126a36c8918e63da0cce7177a38961"
     },
     "spec": {
       "embedded": null,
@@ -350,14 +356,15 @@
   "snr3-n0": {
     "cues": null,
     "data": {
-      "fingerprint": "sha256:66947041dfbe6534cf08e295cea463213f392e906da4f6777f63209c6176b6a3",
+      "fingerprint": "sha256:0ba8ac06472c2b798f8714180902afefb77da28d905208d4c245377ca4375daf",
+      "fingerprintScheme": 2,
       "provenance": {},
       "source": {
         "kind": "file",
         "name": "snr3-n0.csv"
       }
     },
-    "manifestVersion": 2,
+    "manifestVersion": 3,
     "output": {
       "bitsPerSample": 24,
       "channels": 2,
@@ -379,8 +386,8 @@
       "seed": 20261019
     },
     "score": {
-      "irVersion": 1,
-      "releaseIndependentHash": "sha256:ae5f42ea06b869229859d77aa8a418900c2aeffdf89d3e0ebadef8ed28f5abf0"
+      "irVersion": 3,
+      "releaseIndependentHash": "sha256:ca66bf3072172fc5e770c7971d46944ee3fec5afc9b267c0f4ed9e89ff137543"
     },
     "spec": {
       "embedded": null,
@@ -408,14 +415,15 @@
   "snr3-n1": {
     "cues": null,
     "data": {
-      "fingerprint": "sha256:aea834f345b11ea7f544b2864e434245210700cf3f42e6d3b217ddf36e61f9ec",
+      "fingerprint": "sha256:d5e3d58f97cab4feddd8db01b221dfabc249d210e6927cc0dcfdc9c884078f9b",
+      "fingerprintScheme": 2,
       "provenance": {},
       "source": {
         "kind": "file",
         "name": "snr3-n1.csv"
       }
     },
-    "manifestVersion": 2,
+    "manifestVersion": 3,
     "output": {
       "bitsPerSample": 24,
       "channels": 2,
@@ -437,8 +445,8 @@
       "seed": 20261020
     },
     "score": {
-      "irVersion": 1,
-      "releaseIndependentHash": "sha256:414ff31bf875522db0d508955aef3ffad4431681e35a3e9bf675eaede8dfec80"
+      "irVersion": 3,
+      "releaseIndependentHash": "sha256:af5fbecea17d49a0c359e1152b59608de722ec129989acf1a06faed09e36abf0"
     },
     "spec": {
       "embedded": null,
@@ -466,14 +474,15 @@
   "snr3-n2": {
     "cues": null,
     "data": {
-      "fingerprint": "sha256:15fc36bc6cd287275614c0b599a1749841ddc45a69cb0dda6021de993c112c22",
+      "fingerprint": "sha256:aa6b336b22f38139a4f598886a0c123495afd9c63b14eeb681dcba3a69a9240c",
+      "fingerprintScheme": 2,
       "provenance": {},
       "source": {
         "kind": "file",
         "name": "snr3-n2.csv"
       }
     },
-    "manifestVersion": 2,
+    "manifestVersion": 3,
     "output": {
       "bitsPerSample": 24,
       "channels": 2,
@@ -495,8 +504,8 @@
       "seed": 20261021
     },
     "score": {
-      "irVersion": 1,
-      "releaseIndependentHash": "sha256:d4554c5d75cedf8318dacd769f5690be38061c91746e1634e2e2f470eb3b98e4"
+      "irVersion": 3,
+      "releaseIndependentHash": "sha256:4894a2fcc044d20899bb3257b2e0c176dcc0e4794d17cec99928b708ccd61832"
     },
     "spec": {
       "embedded": null,
@@ -524,14 +533,15 @@
   "snr30-n0": {
     "cues": null,
     "data": {
-      "fingerprint": "sha256:3752e5068c10e83c613e89ec15c7c98be2fccbcab0c152df3cea03ae95533631",
+      "fingerprint": "sha256:3b9fa99b5ce88719b8a1876bd1d729ec3edb27c7a044825a179a97917f7c415e",
+      "fingerprintScheme": 2,
       "provenance": {},
       "source": {
         "kind": "file",
         "name": "snr30-n0.csv"
       }
     },
-    "manifestVersion": 2,
+    "manifestVersion": 3,
     "output": {
       "bitsPerSample": 24,
       "channels": 2,
@@ -553,8 +563,8 @@
       "seed": 20261031
     },
     "score": {
-      "irVersion": 1,
-      "releaseIndependentHash": "sha256:ab3b3aab7beb76b55324798cc0798fc78772602e19b6082f7e1d4d7cc9e47596"
+      "irVersion": 3,
+      "releaseIndependentHash": "sha256:9728cf9064053467bb5bb0a611924c19c30aac6502302909f4ddbcbf639e6393"
     },
     "spec": {
       "embedded": null,
@@ -582,14 +592,15 @@
   "snr30-n1": {
     "cues": null,
     "data": {
-      "fingerprint": "sha256:3de96b88fc06ea4e53aa19893041a1d5030d4a93580ee96ca723bfb71d5714b4",
+      "fingerprint": "sha256:bc53c06ee6431ea3d4fb798bf89d4dd05e117cb2663f839f0f7ff520915798fc",
+      "fingerprintScheme": 2,
       "provenance": {},
       "source": {
         "kind": "file",
         "name": "snr30-n1.csv"
       }
     },
-    "manifestVersion": 2,
+    "manifestVersion": 3,
     "output": {
       "bitsPerSample": 24,
       "channels": 2,
@@ -611,8 +622,8 @@
       "seed": 20261032
     },
     "score": {
-      "irVersion": 1,
-      "releaseIndependentHash": "sha256:a708162072212ac8b279eadb0d69b98250c5f05c4155aca7837594a22bed1caf"
+      "irVersion": 3,
+      "releaseIndependentHash": "sha256:f522eaf3df3127f695851cd44dcd094833936f982e36c181934505ab0f32ff93"
     },
     "spec": {
       "embedded": null,
@@ -640,14 +651,15 @@
   "snr30-n2": {
     "cues": null,
     "data": {
-      "fingerprint": "sha256:0186851bcd10b50bcc483da39aa40716732d305c400d98e9e01ec32d77bf303b",
+      "fingerprint": "sha256:cf00f70c1a62d369441d73a7f0dc532fee6cfe87b0edb3d90c6ae3fd90e49a0f",
+      "fingerprintScheme": 2,
       "provenance": {},
       "source": {
         "kind": "file",
         "name": "snr30-n2.csv"
       }
     },
-    "manifestVersion": 2,
+    "manifestVersion": 3,
     "output": {
       "bitsPerSample": 24,
       "channels": 2,
@@ -669,8 +681,8 @@
       "seed": 20261033
     },
     "score": {
-      "irVersion": 1,
-      "releaseIndependentHash": "sha256:7fc468144c61a46eddfe8eb333a7c0f5808a99b1a5b9b6d73b4cc5dd19a01c00"
+      "irVersion": 3,
+      "releaseIndependentHash": "sha256:101e4213b4e68fa462d52f039fcd1f5a20e97efe4599f73df6d442a978323563"
     },
     "spec": {
       "embedded": null,
@@ -698,14 +710,15 @@
   "snr5-n0": {
     "cues": null,
     "data": {
-      "fingerprint": "sha256:5d6a85135e3bd3cd1f64bb5a696b0d769c29a8646bf19dc804e5a84539102d41",
+      "fingerprint": "sha256:cd3921f4dc3462be6b1609965cec340b3b9c2ad4ea461bd18b736944d0c13e32",
+      "fingerprintScheme": 2,
       "provenance": {},
       "source": {
         "kind": "file",
         "name": "snr5-n0.csv"
       }
     },
-    "manifestVersion": 2,
+    "manifestVersion": 3,
     "output": {
       "bitsPerSample": 24,
       "channels": 2,
@@ -727,8 +740,8 @@
       "seed": 20261022
     },
     "score": {
-      "irVersion": 1,
-      "releaseIndependentHash": "sha256:4a33b861cd80bcfec53890c483cb578cbbbeac62cad9c9bfd1aae4ca1ed02d95"
+      "irVersion": 3,
+      "releaseIndependentHash": "sha256:55b62fb035bdc697b8f23a9a5f40e8c00322e5b7f3040811ab41a24a5434b7d3"
     },
     "spec": {
       "embedded": null,
@@ -756,14 +769,15 @@
   "snr5-n1": {
     "cues": null,
     "data": {
-      "fingerprint": "sha256:bc3268db47c0455fb94a71c7e77abe9cfd50feadbf257a9770f7c2f3da0ab6d1",
+      "fingerprint": "sha256:b5ba54b84270c59728bbb0412cb8a0addf59f2ecceea319834fea81dfb2ae556",
+      "fingerprintScheme": 2,
       "provenance": {},
       "source": {
         "kind": "file",
         "name": "snr5-n1.csv"
       }
     },
-    "manifestVersion": 2,
+    "manifestVersion": 3,
     "output": {
       "bitsPerSample": 24,
       "channels": 2,
@@ -785,8 +799,8 @@
       "seed": 20261023
     },
     "score": {
-      "irVersion": 1,
-      "releaseIndependentHash": "sha256:60141ded5ad323f849b30e203add4c1e202ec7ea7f5432cee9ebd0e4aa7592bc"
+      "irVersion": 3,
+      "releaseIndependentHash": "sha256:03ebcc3c42f84b335e735fc1e017fc7d77d0312a7cef173a6830352bfb523b54"
     },
     "spec": {
       "embedded": null,
@@ -814,14 +828,15 @@
   "snr5-n2": {
     "cues": null,
     "data": {
-      "fingerprint": "sha256:f1fdf98723c0ca6da34a81b05022e89df792a598bb02a90d728c2800b6a4b233",
+      "fingerprint": "sha256:d5e34d00c189c84995e1e7230603cc3de565d1988121d2baa78b28303fb54a9c",
+      "fingerprintScheme": 2,
       "provenance": {},
       "source": {
         "kind": "file",
         "name": "snr5-n2.csv"
       }
     },
-    "manifestVersion": 2,
+    "manifestVersion": 3,
     "output": {
       "bitsPerSample": 24,
       "channels": 2,
@@ -843,8 +858,8 @@
       "seed": 20261024
     },
     "score": {
-      "irVersion": 1,
-      "releaseIndependentHash": "sha256:fa6b46f19347e19ef5bb6c7f2dce603daffde2d13d68a49241cc5cba2db1492f"
+      "irVersion": 3,
+      "releaseIndependentHash": "sha256:d6d4f226445398a613d9a134c7293688e3c64458fcad895f8a7b16a3396ae6c8"
     },
     "spec": {
       "embedded": null,
@@ -872,14 +887,15 @@
   "snr7-n0": {
     "cues": null,
     "data": {
-      "fingerprint": "sha256:9dc164b9563368cdba55ede27ef3e80d9e6531bc5821a8090de2986f8e5dadab",
+      "fingerprint": "sha256:8ef7705232b3b668feb98a908839eb633852c9ab1ba0f608d354168db3ed88d6",
+      "fingerprintScheme": 2,
       "provenance": {},
       "source": {
         "kind": "file",
         "name": "snr7-n0.csv"
       }
     },
-    "manifestVersion": 2,
+    "manifestVersion": 3,
     "output": {
       "bitsPerSample": 24,
       "channels": 2,
@@ -901,8 +917,8 @@
       "seed": 20261025
     },
     "score": {
-      "irVersion": 1,
-      "releaseIndependentHash": "sha256:1f262c0fbdd219b130a58607f35a479ff2796701ff2e5da3ceb7f615b88479f9"
+      "irVersion": 3,
+      "releaseIndependentHash": "sha256:817f13a7c2363c2e7f6958898c5503048c2146e7a35dbd009be5c1c48c68e640"
     },
     "spec": {
       "embedded": null,
@@ -930,14 +946,15 @@
   "snr7-n1": {
     "cues": null,
     "data": {
-      "fingerprint": "sha256:6e0bb25f443e21c0fa8e5ed8e4c52d077678520810b4f8352e09610f1a2948a3",
+      "fingerprint": "sha256:e6fde3cfc620eaead02d2697321701b34a9e2a8eac521b9f2f647e2b26d6ef85",
+      "fingerprintScheme": 2,
       "provenance": {},
       "source": {
         "kind": "file",
         "name": "snr7-n1.csv"
       }
     },
-    "manifestVersion": 2,
+    "manifestVersion": 3,
     "output": {
       "bitsPerSample": 24,
       "channels": 2,
@@ -959,8 +976,8 @@
       "seed": 20261026
     },
     "score": {
-      "irVersion": 1,
-      "releaseIndependentHash": "sha256:7b2999b4c6f4d2512903e3da98a564cca5b3b9f05d8dd22226747bce002bc8dd"
+      "irVersion": 3,
+      "releaseIndependentHash": "sha256:766ba85ca51668c0cf22ab769e02461af6424dabedc7bdb3010eb6e3489016a5"
     },
     "spec": {
       "embedded": null,
@@ -988,14 +1005,15 @@
   "snr7-n2": {
     "cues": null,
     "data": {
-      "fingerprint": "sha256:9956f84abd2c245233cfd2d876670d6349f00c0b8d5e1302ffbe48a052e9d1d0",
+      "fingerprint": "sha256:cfae2a9fcd76ff59fb1d1020a9045f82a56a1143fb662d4894930f7994f640f6",
+      "fingerprintScheme": 2,
       "provenance": {},
       "source": {
         "kind": "file",
         "name": "snr7-n2.csv"
       }
     },
-    "manifestVersion": 2,
+    "manifestVersion": 3,
     "output": {
       "bitsPerSample": 24,
       "channels": 2,
@@ -1017,8 +1035,8 @@
       "seed": 20261027
     },
     "score": {
-      "irVersion": 1,
-      "releaseIndependentHash": "sha256:e7376e5e626b785af4a891bce306769d7569b6cc27cc2cf33ba38828dcfa48f2"
+      "irVersion": 3,
+      "releaseIndependentHash": "sha256:ab23a9d6a1664f954c48300d317cca4aa4833b3f1c994e2c59ef00f75bedb712"
     },
     "spec": {
       "embedded": null,
