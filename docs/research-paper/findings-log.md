@@ -1273,7 +1273,7 @@ A05 (render engine, audio backends, export) uses F-050 to F-069.
 
 ### F-222 · A minor release of arrow moved every data fingerprint, because the fingerprint hashes arrow-ipc's bytes
 
-- **Date:** 2026-11-26 · **Phase:** maintenance (A04 code) · **Type:** engineering (determinism) · **Status:** resolved (RFC-0008, fingerprint scheme 2; see F-227)
+- **Date:** 2026-11-26 · **Phase:** maintenance (A04 code) · **Type:** engineering (determinism) · **Status:** resolved (RFC-0008, fingerprint scheme 2; see F-240)
 - **Statement:** Fixing main's `cargo deny` failure (RUSTSEC-2026-0442 in arrow-data) bumped arrow from 60.0.0 to 60.2.0, a minor release. Every data fingerprint changed although no data did.
   - **Why:** `sonarithm_data::fingerprint` hashes the Arrow IPC stream that `arrow_ipc::writer::StreamWriter` writes from a canonical copy of the table (`crates/sonarithm-data/src/fingerprint.rs`), so the digest depends on arrow-ipc's encoder as well as on the values.
   - **What moved:** the two pinned corpus digests, 16 insta snapshots (CLI 1, CURVASONA 1, NUMISONA 7, PLOTSONA 6, facade 1), 3 golden Scores and the parity Score (`data_fingerprint` only), and 98 lines of the replication gallery (each record's `data.fingerprint` and the `releaseIndependentHash` that covers it).
@@ -1345,7 +1345,27 @@ A05 (render engine, audio backends, export) uses F-050 to F-069.
 - **Affects:** `apps/desktop/e2e/audio.spec.ts`; any later E2E test that runs axe after a named lookup in Firefox until the upgrade
 - **Papers:** none yet
 
-### F-227 · Fingerprint scheme 2 moved every fingerprint record once and raised every compiled Score to IR version 3, and changed no audio
+### F-227 · The installed release app meets PB-09 on all three CI runners, with one 84 ms outlier on macOS
+
+- **Date:** 2026-11-26 · **Phase:** A02 close-out (B01-T04 data) · **Type:** benchmark · **Status:** new
+- **Statement:** The `desktop-nightly` workflow installs the release bundle on each runner and runs its smoke test. The test times 30 `view_get` round trips of a cached 1.2 MB M4 view (1,200,088 bytes), from request to `ArrayBuffer` (`pb09` in `smoke.json`). Two runs, Tauri 2.12.5, both within PB-09 (≤ 30 ms for 1 MB) at p95:
+
+  | Runner, webview | 2026-11-25 (p50 / p95 / max) | 2026-11-26 (p50 / p95 / max) |
+  |---|---|---|
+  | CI-LNX, WebKitGTK 2.52.6 (Xvfb) | 4 / 8 / 9 ms | 4 / 7 / 10 ms |
+  | CI-WIN, WebView2 157.0.4341.60 and 157.0.4341.46 | 9.9 / 10.7 / 11 ms | 14.3 / 14.7 / 14.8 ms |
+  | CI-MAC, WKWebView 21624.5.1.11.3 | 7 / 18 / 19 ms | 4 / 10 / 84 ms |
+
+- **Reading:**
+  - This is the product's IPC path, not the A02 spike's, and it agrees with the spike's CI numbers (F-040). The worst p95 leaves 1.6 times headroom.
+  - One macOS round trip took 84 ms. One sample in 30 is a maximum, not a p95, and the runners are shared virtual machines. It is worth watching on a real Mac, which F-041's App Nap question needs anyway.
+  - These are CI runners, not reference hardware (R-22).
+- **Evidence:** the `smoke.json` printed in the job logs of `desktop-nightly` runs [45721428975](https://github.com/DuhItzAniket/SONARITHM/actions/runs/45721428975) (`dac31c3b`) and [45741192836](https://github.com/DuhItzAniket/SONARITHM/actions/runs/45741192836) (`885ff7fa`), both on a pull request that changes only GitHub Actions versions ([#486](https://github.com/DuhItzAniket/SONARITHM/pull/486)); benchmarks-log row "B01 (B01-T04)"
+- **Evidence level / confidence:** EV-C / Moderate. Measured twice, but on shared virtual machines
+- **Affects:** PB-09; A02-T05; ADR-0002 Confirmation (1); B01-T04
+- **Papers:** P07
+
+### F-240 · Fingerprint scheme 2 moved every fingerprint record once and raised every compiled Score to IR version 3, and changed no audio
 
 - **Date:** 2026-11-26 · **Phase:** maintenance (A04 and B05 code) · **Type:** engineering (determinism, compatibility) · **Status:** recorded (RFC-0008)
 - **Statement:** switching the data fingerprint to RFC-0008's value encoding (scheme 2), with the scheme named in every record, moved exactly the records it had to and nothing else.

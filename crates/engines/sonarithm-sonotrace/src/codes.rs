@@ -37,7 +37,7 @@ pub const SOUNDSCAPE_UNAVAILABLE: CodeInfo = CodeInfo {
     code: "SNR-ENG-240",
     severity: Severity::Warning,
     summary: "The soundscape is not available",
-    help: "Only the default soundscape exists until B06's evaluation chooses others; it plays            instead.",
+    help: "Only the default soundscape exists until B06's evaluation chooses others; it plays instead.",
     rules: &["SDR-35"],
     status: CodeStatus::Active,
 };
@@ -47,7 +47,7 @@ pub const COMFORT_BUDGET: CodeInfo = CodeInfo {
     code: "SNR-ENG-241",
     severity: Severity::Info,
     summary: "Experimental comfort budget",
-    help: "SDR-39 is an inference: the share of the session the soundscape is bright is            reported, not enforced, until an experiment validates a budget (H-12).",
+    help: "SDR-39 is an inference: the share of the session the soundscape is bright is reported, not enforced, until an experiment validates a budget (H-12).",
     rules: &["SDR-39"],
     status: CodeStatus::Active,
 };

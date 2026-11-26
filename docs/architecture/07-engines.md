@@ -147,6 +147,8 @@ The `function` source adds a row at each zero, extremum and inflection (as at po
 
 **As built (#441).** Function specs put `x` on time (`secondsPerUnit` = T/(max − min)), so a cue sounds at its x whatever rows the source inserts (F-200, F-202). The cue timing reads one glide breakpoint per row of a glide's one-past-the-end `src`, not the hold breakpoint after it. A row outside the timed rows has its time extended along the nearest two (F-203, which corrects F-193).
 
+**As built (C03-T08, text).** A function's critical-point list and summary come from the catalogue `function.ftl` (`function-kind-*`, `function-count-*` with plurals, the entry templates and `function-summary`), in any locale (`critical_points_in`, `summary_in`); numbers are formatted by the locale without grouping, so the English text is the same as before byte for byte. AUDAXIS announces an insight of analyzer A with label L through `insight-A-L` when the catalogue has it, else L as written; `function.ftl` names CURVASONA's twelve kinds, so a critical point is spoken in the listener's language (F-191). No core type changed.
+
 ## AXONOTE (`sonarithm-axonote`), C04
 
 **Registers:** Shaper `Quantize` (presentation only); VoiceProvider for the instrument library; Sinks for MIDI file, live MIDI and OSC. The engine crate stays pure and builds for `wasm32`; live MIDI ports and OSC sockets live in the leaf crate `sonarithm-axonote-live` ([02 §2](02-repository-and-crate-layout.md#2-crate-catalogue), placement decided in C04-T01).
@@ -167,7 +169,7 @@ The `function` source adds a row at each zero, extremum and inflection (as at po
 
 | Module | Responsibility |
 |---|---|
-| `detect` | Detectors (statrs, augurs); parameters recorded in annotations |
+| `detect` | Detectors on `libm`, with statrs and augurs only as test references ([ADR-0031](../decisions/0031-echometric-numerics.md)); parameters recorded in annotations ([RFC-0009](../rfcs/0009-echometric-insights-in-the-score.md)) |
 | `describe` | Deterministic L1 (encoding facts) and L2 (statistics) text; the L3 fact list for optional LLM phrasing with numeric verification (D04); never automatic L4 (A11Y-02) |
 | `query` | min, max, mean, median, mode, sd, sum, range, value-at-x (A11Y-22) |
 | `lint` | Rules: SDR-14 (flagged concept), SDR-17 (static reference), SDR-19 (rate), SDR-23 (loudness carrying data), SDR-26 (stream count), SDR-27 (redundant spatial), SDR-28 (critical-band clash), SDR-39 (comfort), A11Y-14 (pan-only information) |

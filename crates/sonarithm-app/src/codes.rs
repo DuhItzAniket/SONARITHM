@@ -88,7 +88,7 @@ pub const COMPILE_FAILED: CodeInfo = CodeInfo {
     code: "SNR-APP-008",
     severity: Severity::Error,
     summary: "The compile failed",
-    help: "Check the spec and its data source, then compile again. If it happens again, report            it with the spec.",
+    help: "Check the spec and its data source, then compile again. If it happens again, report it with the spec.",
     rules: &[],
     status: CodeStatus::Active,
 };
@@ -98,7 +98,7 @@ pub const BAD_REQUEST: CodeInfo = CodeInfo {
     code: "SNR-APP-009",
     severity: Severity::Error,
     summary: "Invalid IPC request",
-    help: "Send a request generated from the protocol types: {\"command\": \"<name>\", \"args\":            {...}}.",
+    help: "Send a request generated from the protocol types: {\"command\": \"<name>\", \"args\": {...}}.",
     rules: &[],
     status: CodeStatus::Active,
 };
@@ -286,7 +286,7 @@ pub const STREAM_SOURCE: CodeInfo = CodeInfo {
     code: "SNR-APP-071",
     severity: Severity::Error,
     summary: "The stream source is not valid",
-    help: "Give a transport (websocket, osc, serial, mqtt or tail) and its address; a file to            follow is an absolute path in an existing folder.",
+    help: "Give a transport (websocket, osc, serial, mqtt or tail) and its address; a file to follow is an absolute path in an existing folder.",
     rules: &[],
     status: CodeStatus::Active,
 };
@@ -297,7 +297,7 @@ pub const STREAM_CONNECT: CodeInfo = CodeInfo {
     code: "SNR-APP-072",
     severity: Severity::Error,
     summary: "The stream cannot connect",
-    help: "Offer the stream again with stream_offer, show the user what it connects to, and            connect with the token only after the user approves.",
+    help: "Offer the stream again with stream_offer, show the user what it connects to, and connect with the token only after the user approves.",
     rules: &["A11Y-16"],
     status: CodeStatus::Active,
 };
@@ -308,7 +308,7 @@ pub const LIVE_SPEC: CodeInfo = CodeInfo {
     code: "SNR-APP-073",
     severity: Severity::Error,
     summary: "The spec cannot play live",
-    help: "Give the spec a stream source and a pace of secondsPerUnit or pointsPerSecond,            then start live playback again.",
+    help: "Give the spec a stream source and a pace of secondsPerUnit or pointsPerSecond, then start live playback again.",
     rules: &[],
     status: CodeStatus::Active,
 };
@@ -318,7 +318,7 @@ pub const LIVE_COMPILE: CodeInfo = CodeInfo {
     code: "SNR-APP-074",
     severity: Severity::Warning,
     summary: "A live window did not compile",
-    help: "Playback goes on with the last window that compiled. Check the stream's fields            against the spec.",
+    help: "Playback goes on with the last window that compiled. Check the stream's fields against the spec.",
     rules: &[],
     status: CodeStatus::Active,
 };
@@ -370,7 +370,7 @@ pub const CORRECTIONS_INVALID: CodeInfo = CodeInfo {
     code: "SNR-APP-084",
     severity: Severity::Error,
     summary: "The corrections are not valid",
-    help: "A correction set follows RFC-0005: edits with IDs e1, e2, …, `before` on every edit            of an existing point, and `+e<n>` only for an earlier `add`. Nothing was changed.",
+    help: "A correction set follows RFC-0005: edits with IDs e1, e2, …, `before` on every edit of an existing point, and `+e<n>` only for an earlier `add`. Nothing was changed.",
     rules: &[],
     status: CodeStatus::Active,
 };
@@ -380,7 +380,7 @@ pub const CORRECTIONS_READ_ONLY: CodeInfo = CodeInfo {
     code: "SNR-APP-085",
     severity: Severity::Error,
     summary: "These corrections cannot change now",
-    help: "A project keeps a chart's corrections and their history, but not the chart file.            Open the chart file again to correct it; export works as it is.",
+    help: "A project keeps a chart's corrections and their history, but not the chart file. Open the chart file again to correct it; export works as it is.",
     rules: &[],
     status: CodeStatus::Active,
 };
@@ -390,7 +390,7 @@ pub const CORRECTIONS_NOT_HERE: CodeInfo = CodeInfo {
     code: "SNR-APP-086",
     severity: Severity::Error,
     summary: "These corrections do not belong to this dataset",
-    help: "Corrections apply to a dataset opened from a chart, and a correction file only to            the chart it was made on (same SHA-256 and extractor, RFC-0005 §3).",
+    help: "Corrections apply to a dataset opened from a chart, and a correction file only to the chart it was made on (same SHA-256 and extractor, RFC-0005 §3).",
     rules: &[],
     status: CodeStatus::Active,
 };
