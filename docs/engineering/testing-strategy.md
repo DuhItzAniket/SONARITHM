@@ -59,7 +59,7 @@ From the base (many, fast, every PR) to the top (few, slow, scheduled or manual)
 | Manual accessibility | Real assistive technology works | screen-reader matrix, Chartability | Every release |
 | Research validation | Replicated designs still render as published | replication gallery | Every PR (gallery), per study |
 
-"Every PR" means every PR whose files the test can depend on. Docs-only PRs skip the Rust, frontend and desktop jobs, and frontend-only PRs run only the frontend, browser and desktop jobs; pushes to `main` run everything ([ci-cd: change-scoped jobs](ci-cd.md#change-scoped-jobs)). A test that starts reading a file under `docs/` or the frontend trees at run time must be added to `.github/scripts/ci_scope.py`; files compiled in with `include_str!` are found automatically.
+"Every PR" means every PR whose files the test can depend on. Docs-only PRs skip the Rust, frontend and desktop jobs, and frontend-only PRs run only the frontend, npm licence, browser and desktop jobs; pushes to `main` run everything ([ci-cd: change-scoped jobs](ci-cd.md#change-scoped-jobs)). A test that starts reading a file under `docs/` or the frontend trees at run time must be added to `.github/scripts/ci_scope.py`; files compiled in with `include_str!` are found automatically.
 
 ## 3. Unit and property tests
 
