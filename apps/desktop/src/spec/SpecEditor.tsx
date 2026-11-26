@@ -16,6 +16,8 @@ import { displayChord } from "../commands/chords.ts";
 import { useCommands } from "../commands/context.tsx";
 import { useLocalizer } from "../i18n.ts";
 import type { Schema } from "./completion.ts";
+import type { Coalescer } from "./coalesce.ts";
+import { coalesce } from "./coalesce.ts";
 import { completeAt } from "./completion.ts";
 import { useSpecContext, useSpecSnapshot } from "./context.ts";
 import { styleNonce } from "./nonce.ts";
@@ -25,6 +27,9 @@ import styles from "./spec.module.css";
 
 /** Live validation waits this long after the last keystroke (B05-T03). */
 export const VALIDATE_AFTER_MS = 400;
+
+/** Outside changes closer together than this are said once more, not each (B05-T03). */
+export const OUTSIDE_QUIET_MS = 1500;
 
 /**
  * The generated schema (`SPEC_SCHEMA_FILE`; a test checks that this path names it), loaded
@@ -64,7 +69,9 @@ export default function SpecEditor({
   const [draft, setDraft] = useState(snapshot.text ?? "");
   // The session text the draft started from: the draft has unapplied edits when it differs.
   const [base, setBase] = useState(snapshot.text ?? "");
-  const [changedOutside, setChangedOutside] = useState(false);
+  // Changes made outside the editor while it holds unapplied edits: each one is said.
+  const [outsideChanges, setOutsideChanges] = useState(0);
+  const changedOutside = outsideChanges > 0;
   const [schema, setSchema] = useState<Schema | null>(null);
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -86,19 +93,39 @@ export default function SpecEditor({
     if (text === draft || draft === base) {
       setDraft(text);
       setBase(text);
-      setChangedOutside(false);
+      setOutsideChanges(0);
     } else {
-      setChangedOutside(true);
+      setOutsideChanges((count) => count + 1);
     }
   }
+  // Said for every further change too, politely; a burst of changes is said once more.
+  const say = useRef<() => void>(() => undefined);
   useEffect(() => {
-    if (changedOutside) {
+    say.current = () => {
       announcer.announce({
         text: t.format("ui-spec-changed-outside"),
         assertive: false,
       });
-    }
-  }, [changedOutside, announcer, t]);
+    };
+  });
+  const notice = useRef<Coalescer | null>(null);
+  useEffect(() => {
+    const coalescer = coalesce(OUTSIDE_QUIET_MS, () => {
+      say.current();
+    });
+    notice.current = coalescer;
+    return () => {
+      coalescer.cancel();
+    };
+  }, []);
+  useEffect(() => {
+    if (outsideChanges > 0) notice.current?.trigger();
+  }, [outsideChanges]);
+
+  // The Diagnostics tab reads the draft, to show only diagnostics of this text.
+  useEffect(() => {
+    bridge?.setDraft(draft);
+  }, [bridge, draft]);
 
   // Validate the draft once typing pauses (and once on opening).
   useEffect(() => {
@@ -106,7 +133,9 @@ export default function SpecEditor({
     if (timer.current !== null) clearTimeout(timer.current);
     timer.current = setTimeout(() => {
       timer.current = null;
-      if (draft.trim() !== "") void store.validate(draft);
+      // An empty editor has nothing to check: clear the list rather than keep an old one.
+      if (draft.trim() === "") store.clearChecked(draft);
+      else void store.validate(draft);
     }, VALIDATE_AFTER_MS);
     return () => {
       if (timer.current !== null) clearTimeout(timer.current);
@@ -210,7 +239,7 @@ export default function SpecEditor({
               const text = snapshot.text ?? "";
               setDraft(text);
               setBase(text);
-              setChangedOutside(false);
+              setOutsideChanges(0);
             }}
           >
             {t.format("ui-spec-load-current")}

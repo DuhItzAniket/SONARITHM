@@ -9,13 +9,18 @@ import { useCommand } from "../commands/context.tsx";
 import { useLocalizer } from "../i18n.ts";
 import { useSpecContext } from "./context.ts";
 import type { PlacedDiagnostic } from "./speech.ts";
-import { diagnosticSpeech, nextDiagnosticFrom } from "./speech.ts";
+import { diagnosticSpeech, stepDiagnostic } from "./speech.ts";
 import type { ApplyOutcome, HistoryOutcome } from "./store.ts";
 
 /** What Apply says: applied and compiled, applied with errors, or not applied. */
 export function applySpeech(t: Localizer, outcome: ApplyOutcome): string {
   if (outcome.kind === "notApplied") {
     return t.format("ui-spec-not-applied", { cause: outcome.error.message });
+  }
+  if (outcome.kind === "appliedNotCompiled") {
+    return t.format("ui-spec-applied-compile-failed", {
+      cause: outcome.error.message,
+    });
   }
   const report: CompileReport = outcome.report;
   if (report.ok && report.score !== null) {
@@ -86,19 +91,24 @@ export function SpecCommands({
   };
   const goTo = (direction: "next" | "previous") => {
     withEditor((editor) => {
-      const placed: readonly PlacedDiagnostic[] =
-        context?.bridge.diagnostics ?? [];
-      const target = nextDiagnosticFrom(
-        placed.map((d) => ({ d, from: d.span?.from ?? 0 })),
-        editor.caret(),
+      const bridge = context?.bridge;
+      const placed: readonly PlacedDiagnostic[] = bridge?.diagnostics ?? [];
+      const sorted = placed.map((d) => ({ d, from: d.span?.from ?? 0 }));
+      const caret = editor.caret();
+      const index = stepDiagnostic(
+        sorted,
+        caret,
+        bridge?.lastStep ?? null,
         direction,
       );
-      if (target === null) {
+      const target = index === null ? undefined : sorted[index];
+      if (index === null || target === undefined) {
         editor.focus();
         say(t.format("ui-spec-no-diagnostics"));
         return;
       }
       editor.select(target.from);
+      if (bridge !== undefined) bridge.lastStep = { index, caret: target.from };
       say(diagnosticSpeech(t, target.d));
     });
   };
@@ -113,12 +123,12 @@ export function SpecCommands({
       const store = context?.store;
       if (store === undefined) return;
       void store.apply(editor.text()).then((outcome) => {
-        if (outcome.kind === "applied") {
+        if (outcome.kind !== "notApplied") {
           // The applied text is now a spec change: Undo outside steps it back, and the
           // editor's own undo starts again from here.
           editor.resetHistory();
         }
-        say(applySpeech(t, outcome), outcome.kind === "notApplied");
+        say(applySpeech(t, outcome), outcome.kind !== "applied");
       });
     });
   });
@@ -130,16 +140,18 @@ export function SpecCommands({
   });
   useCommand("spec.format", () => {
     withEditor((editor) => {
-      let value: unknown;
-      try {
-        value = JSON.parse(editor.text());
-      } catch {
-        say(t.format("ui-spec-format-failed"));
-        return;
-      }
-      editor.replaceAll(`${JSON.stringify(value, null, 2)}\n`);
-      editor.focus();
-      say(t.format("ui-spec-formatted"));
+      // The formatter loads with the editor's parser, not at start-up (PB-07).
+      void import("./format.ts").then(({ formatJson }) => {
+        const formatted = formatJson(editor.text());
+        if (!formatted.ok) {
+          editor.select(formatted.offset);
+          say(t.format("ui-spec-format-failed"));
+          return;
+        }
+        editor.replaceAll(formatted.text);
+        editor.focus();
+        say(t.format("ui-spec-formatted"));
+      });
     });
   });
   useCommand("spec.complete", () => {

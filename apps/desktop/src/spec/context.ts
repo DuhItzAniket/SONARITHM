@@ -4,7 +4,7 @@
 import type { CodeEditorHandle } from "@sonarithm/ui/code-editor";
 import { createContext, use, useSyncExternalStore } from "react";
 
-import type { PlacedDiagnostic } from "./speech.ts";
+import type { DiagnosticStep, PlacedDiagnostic } from "./speech.ts";
 import type { SpecSnapshot, SpecStore } from "./store.ts";
 
 /**
@@ -15,6 +15,29 @@ export class EditorBridge {
   private handle: CodeEditorHandle | null = null;
   private pending: ((handle: CodeEditorHandle) => void)[] = [];
   private placed: readonly PlacedDiagnostic[] = [];
+  private text: string | null = null;
+  private readonly listeners = new Set<() => void>();
+  /** Where F8 last went, so diagnostics at one offset are each reached (B05-T03). */
+  lastStep: DiagnosticStep | null = null;
+
+  /** For `useSyncExternalStore`: the editor's draft. */
+  subscribe = (listener: () => void): (() => void) => {
+    this.listeners.add(listener);
+    return () => this.listeners.delete(listener);
+  };
+
+  /**
+   * The text in the editor, applied or not; `null` while the editor has not loaded. The
+   * Diagnostics tab shows only diagnostics found in this text.
+   */
+  draft = (): string | null => this.text;
+
+  /** Called by the editor on every edit. */
+  setDraft(text: string | null): void {
+    if (text === this.text) return;
+    this.text = text;
+    for (const listener of this.listeners) listener();
+  }
 
   /** The diagnostics placed in the editor's current text, in text order. */
   get diagnostics(): readonly PlacedDiagnostic[] {
@@ -26,6 +49,7 @@ export class EditorBridge {
     this.placed = [...diagnostics].sort(
       (a, b) => (a.span?.from ?? 0) - (b.span?.from ?? 0),
     );
+    this.lastStep = null;
   }
 
   /** Called by the editor when it mounts. */
@@ -41,6 +65,8 @@ export class EditorBridge {
     if (this.handle === handle) {
       this.handle = null;
       this.placed = [];
+      this.lastStep = null;
+      this.setDraft(null);
     }
   }
 

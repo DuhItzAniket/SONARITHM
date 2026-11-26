@@ -65,3 +65,9 @@
     border-block-end-color: Highlight;
   }
 }
+
+/* A panel kept mounted while another tab shows (React Aria's `shouldForceMount`) is inert
+   and hidden, so it keeps its state without being seen, reached or read. */
+.panel[data-inert] {
+  display: none;
+}

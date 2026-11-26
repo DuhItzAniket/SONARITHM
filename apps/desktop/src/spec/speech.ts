@@ -36,17 +36,37 @@ export interface PlacedDiagnostic {
   readonly at: LineColumn | null;
 }
 
-/** The next (or previous) diagnostic after `caret`, wrapping at the ends; `null` if none. */
-export function nextDiagnosticFrom<D extends { readonly from: number }>(
-  diagnostics: readonly D[],
+/** Where F8 last went: the index in the sorted list and the caret it left. */
+export interface DiagnosticStep {
+  readonly index: number;
+  readonly caret: number;
+}
+
+/**
+ * The index of the next (or previous) diagnostic in `sorted` (by offset), wrapping at the
+ * ends; `null` if there is none. While the caret is where the last step left it, steps go by
+ * index, so several diagnostics at one offset (one pointer, or the whole spec at 0) are each
+ * reached; once the caret has moved, the step starts from the caret.
+ */
+export function stepDiagnostic(
+  sorted: readonly { readonly from: number }[],
   caret: number,
+  last: DiagnosticStep | null,
   direction: "next" | "previous",
-): D | null {
-  const sorted = [...diagnostics].sort((a, b) => a.from - b.from);
-  if (direction === "next") {
-    return sorted.find((d) => d.from > caret) ?? sorted[0] ?? null;
+): number | null {
+  const count = sorted.length;
+  if (count === 0) return null;
+  if (last !== null && last.caret === caret && last.index < count) {
+    return direction === "next"
+      ? (last.index + 1) % count
+      : (last.index - 1 + count) % count;
   }
-  return sorted.findLast((d) => d.from < caret) ?? sorted.at(-1) ?? null;
+  if (direction === "next") {
+    const found = sorted.findIndex((d) => d.from > caret);
+    return found === -1 ? 0 : found;
+  }
+  const found = sorted.findLastIndex((d) => d.from < caret);
+  return found === -1 ? count - 1 : found;
 }
 
 /** The severity in words. */

@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
 import { DiagnosticList } from "@sonarithm/ui/diagnostic-list";
-import { useMemo } from "react";
+import { useMemo, useSyncExternalStore } from "react";
 
 import type { RoutedAnnouncer } from "../announcer/announcer.ts";
 import { useLocalizer } from "../i18n.ts";
@@ -13,6 +13,9 @@ import {
   place,
   severityLabel,
 } from "./place.ts";
+
+const noop = () => () => undefined;
+const none = () => null;
 
 /**
  * The Status region's Diagnostics tab (B05-T03; keyboard-and-navigation §5.10): the latest
@@ -30,9 +33,20 @@ export default function DiagnosticsPanel({
   const t = useLocalizer();
   const context = useSpecContext();
   const snapshot = useSpecSnapshot(context?.store ?? null);
+  const draft = useSyncExternalStore(
+    context?.bridge.subscribe ?? noop,
+    context?.bridge.draft ?? none,
+  );
+  // Only diagnostics of the text in the editor (or, before it loads, the session's): an
+  // older check's offsets would point into text that is gone.
+  const current = draft ?? snapshot.text ?? "";
+  const checked =
+    snapshot.checked !== null && snapshot.checked.text === current
+      ? snapshot.checked
+      : null;
   const placed = useMemo(
-    () => (snapshot.checked === null ? [] : place(snapshot.checked)),
-    [snapshot.checked],
+    () => (checked === null ? [] : place(checked)),
+    [checked],
   );
   const rows = placed.map((d) => ({
     id: d.id,
@@ -46,7 +60,11 @@ export default function DiagnosticsPanel({
     <DiagnosticList
       label={t.format("ui-tab-diagnostics")}
       rows={rows}
-      empty={t.format("ui-no-diagnostics")}
+      empty={
+        checked === null && current.trim() !== ""
+          ? t.format("ui-spec-checking")
+          : t.format("ui-no-diagnostics")
+      }
       onActivate={(id) => {
         const target = placed.find((d) => d.id === id);
         if (target === undefined || context === null) return;

@@ -30,6 +30,7 @@ import { SpecCommands } from "../spec/SpecCommands.tsx";
 import { SpecStore } from "../spec/store.ts";
 import { useTransport } from "../transport/useTransport.ts";
 import styles from "./App.module.css";
+import { ChunkBoundary } from "./ChunkBoundary.tsx";
 import { Frame } from "./frame/Frame.tsx";
 
 // The spec editor and the diagnostics list load when their tabs first open, so CodeMirror
@@ -129,6 +130,18 @@ export function App({
   // from any tab; "Go to the chart explorer" selects the Plot tab, then focuses it.
   const explorer = useRef<HTMLDivElement>(null);
   const [workspaceTab, setWorkspaceTab] = useState<Key>("plot");
+  // Once opened, the Spec tab stays mounted (hidden while another tab shows), so its
+  // unapplied edits and their undo history survive a tab switch (B05-T03). Before that it
+  // is not mounted, so CodeMirror stays out of the start-up bundle (PB-07).
+  const [specOpened, setSpecOpened] = useState(false);
+  if (workspaceTab === "spec" && !specOpened) {
+    setSpecOpened(true);
+  }
+  const chunkFailed = (name: string) => (message: string) => (
+    <p role="alert" className={styles.error}>
+      {t.format("ui-chunk-failed", { name, cause: message })}
+    </p>
+  );
   useCommand("view.focusExplorer", () => {
     // Render the Plot tab now, so its explorer exists to take the focus.
     flushSync(() => {
@@ -249,20 +262,24 @@ export function App({
                 startText
               )}
             </TabPanel>
-            <TabPanel id="spec">
+            <TabPanel id="spec" shouldForceMount={specOpened}>
               {client !== null ? (
-                <Suspense
-                  fallback={
-                    <p className={styles.status}>
-                      {t.format("ui-spec-loading")}
-                    </p>
-                  }
+                <ChunkBoundary
+                  fallback={chunkFailed(t.format("ui-spec-editor"))}
                 >
-                  <SpecEditor
-                    announcer={announcer}
-                    autoComplete={autoComplete}
-                  />
-                </Suspense>
+                  <Suspense
+                    fallback={
+                      <p className={styles.status}>
+                        {t.format("ui-spec-loading")}
+                      </p>
+                    }
+                  >
+                    <SpecEditor
+                      announcer={announcer}
+                      autoComplete={autoComplete}
+                    />
+                  </Suspense>
+                </ChunkBoundary>
               ) : (
                 startText
               )}
@@ -287,15 +304,22 @@ export function App({
                 <AnnouncementLog entries={log} />
               </TabPanel>
               <TabPanel id="diagnostics">
-                <Suspense
-                  fallback={
-                    <p className={styles.status}>
-                      {t.format("ui-no-diagnostics")}
-                    </p>
-                  }
+                <ChunkBoundary
+                  fallback={chunkFailed(t.format("ui-tab-diagnostics"))}
                 >
-                  <DiagnosticsPanel announcer={announcer} showSpec={showSpec} />
-                </Suspense>
+                  <Suspense
+                    fallback={
+                      <p className={styles.status}>
+                        {t.format("ui-no-diagnostics")}
+                      </p>
+                    }
+                  >
+                    <DiagnosticsPanel
+                      announcer={announcer}
+                      showSpec={showSpec}
+                    />
+                  </Suspense>
+                </ChunkBoundary>
               </TabPanel>
             </Tabs>
           </>

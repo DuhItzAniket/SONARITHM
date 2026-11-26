@@ -307,6 +307,10 @@ ui-spec-applied-not-compiled =
        *[other] Spec applied, not compiled: { $errors } errors. First: { $detail }
     }
 ui-spec-not-applied = Spec not applied: { $cause }
+# Apply set the spec (Undo steps it back), but the compile could not run at all.
+ui-spec-applied-compile-failed = Spec applied, but it could not be compiled: { $cause }
+# A part of the app that loads on demand failed to load; $name is the part.
+ui-chunk-failed = { $name } could not load: { $cause } Close SONARITHM and start it again to retry.
 ui-spec-format-failed = Cannot format the spec: it is not valid JSON. Fix the syntax error first.
 ui-spec-formatted = Spec formatted.
 ui-spec-no-completions = No completions here.

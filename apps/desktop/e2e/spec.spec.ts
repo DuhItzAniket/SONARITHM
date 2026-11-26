@@ -316,3 +316,72 @@ test("completion_opens_on_request_and_tab_leaves_the_editor", async ({
   await page.keyboard.press("Tab");
   await expect(editor(page)).not.toBeFocused();
 });
+
+/** CodeMirror's Primary key: from `navigator.platform` (see `undo_says_which_history…`). */
+async function textPrimary(page: Page): Promise<"Meta" | "Control"> {
+  const mac = await page.evaluate(() => navigator.platform.includes("Mac"));
+  return mac ? "Meta" : "Control";
+}
+
+test("unapplied_edits_and_their_undo_survive_a_tab_switch", async ({
+  page,
+}) => {
+  await openSpecTab(page);
+  await page.keyboard.press("Tab");
+  await expect(editor(page)).toBeFocused();
+  await page.keyboard.press(`${await textPrimary(page)}+End`);
+  await page.keyboard.type(" ");
+  await expect(summary(page)).toHaveText("Checking the spec.");
+  // To the Table tab and back.
+  const spec = page.getByRole("tab", { name: "Spec" });
+  await spec.focus();
+  await page.keyboard.press("ArrowLeft");
+  await expect(page.getByRole("tab", { name: "Table" })).toHaveAttribute(
+    "aria-selected",
+    "true",
+  );
+  // The hidden panel cannot be reached or read.
+  await expect(editor(page)).toBeHidden();
+  await page.keyboard.press("ArrowRight");
+  await expect(editor(page)).toBeVisible();
+  await expect(editor(page)).toHaveText(/\} $/);
+  // Its text undo history is still there.
+  await editor(page).focus();
+  await page.keyboard.press(`${await textPrimary(page)}+z`);
+  await expect(polite(page)).toHaveText("Undid a text edit.");
+  await expect(editor(page)).not.toHaveText(/\} $/);
+});
+
+test("the_diagnostics_tab_lists_only_the_text_in_the_editor", async ({
+  page,
+}) => {
+  await openSpecTab(page);
+  await expect(summary(page)).toHaveText("1 error, 0 warnings, 0 notes.");
+  const diagnostics = page.getByRole("tab", { name: "Diagnostics" });
+  await diagnostics.focus();
+  await page.keyboard.press("Enter");
+  const grid = page.getByRole("grid", { name: "Diagnostics" });
+  await expect(grid.getByRole("row")).toHaveCount(1);
+  // Clearing the editor clears the list; nothing old is left to jump to.
+  await page.keyboard.press("F6");
+  await editor(page).focus();
+  await page.keyboard.press(`${await textPrimary(page)}+a`);
+  await page.keyboard.press("Delete");
+  await expect(summary(page)).toHaveText("No problems.");
+  await expect(grid.getByRole("row")).toHaveCount(0);
+  await expect(page.getByText("No diagnostics.")).toBeVisible();
+});
+
+test("a_part_that_fails_to_load_says_so_in_its_tab", async ({ page }) => {
+  await page.route("**/src/spec/SpecEditor.tsx*", (route) => route.abort());
+  await page.getByRole("tab", { name: "Plot" }).focus();
+  await page.keyboard.press("ArrowRight");
+  await page.keyboard.press("ArrowRight");
+  await expect(
+    page.getByRole("tabpanel", { name: "Spec" }).getByRole("alert"),
+  ).toHaveText(
+    /^Spec \(JSON\) could not load: .+ Close SONARITHM and start it again to retry\.$/,
+  );
+  // The rest of the app still works.
+  await expect(page.getByRole("tab", { name: "Table" })).toBeVisible();
+});

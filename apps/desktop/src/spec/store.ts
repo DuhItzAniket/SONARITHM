@@ -35,6 +35,8 @@ export interface SpecSnapshot {
 /** What Apply did (B05-T03). */
 export type ApplyOutcome =
   | { readonly kind: "applied"; readonly report: CompileReport }
+  /** The spec was set (and is undoable), but the compile could not run. */
+  | { readonly kind: "appliedNotCompiled"; readonly error: IpcError }
   | { readonly kind: "notApplied"; readonly error: IpcError };
 
 /** What an undo or redo did, and which history it stepped. */
@@ -123,8 +125,24 @@ export class SpecStore {
       });
       return { kind: "applied", report };
     } catch (error) {
-      return { kind: "notApplied", error: ipcError(error) };
+      return { kind: "appliedNotCompiled", error: ipcError(error) };
     }
+  }
+
+  /**
+   * Clears the latest check when there is nothing to check (an empty editor), so no view
+   * shows diagnostics of a text that is gone.
+   */
+  clearChecked(text: string): void {
+    this.validation += 1;
+    this.update({
+      checked: {
+        text,
+        diagnostics: [],
+        counts: { errors: 0, warnings: 0, info: 0 },
+      },
+      checking: false,
+    });
   }
 
   /** A JSON Patch (`spec_apply`), as the inspector sends: one undoable edit. */
