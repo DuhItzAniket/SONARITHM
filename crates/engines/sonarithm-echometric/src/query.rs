@@ -166,10 +166,18 @@ fn mode(scope: &Scope<'_>, used: &[&Value]) -> StatAnswer {
     for v in used {
         if let Some(x) = v.value {
             let x = if x == 0.0 { 0.0 } else { x };
-            counts.entry(x.to_bits()).or_insert((x, Vec::new())).1.push(v.row);
+            counts
+                .entry(x.to_bits())
+                .or_insert((x, Vec::new()))
+                .1
+                .push(v.row);
         }
     }
-    let most = counts.values().map(|(_, rows)| rows.len()).max().unwrap_or(0);
+    let most = counts
+        .values()
+        .map(|(_, rows)| rows.len())
+        .max()
+        .unwrap_or(0);
     if most < 2 {
         return StatAnswer::unavailable(Statistic::Mode, Unavailable::NoRepeat);
     }
@@ -241,7 +249,10 @@ mod tests {
     fn discrete_values_that_never_repeat_have_no_mode() {
         let v = values(&[Some(1.0), Some(2.0), Some(3.0)]);
         let a = answer(&scope(&v, Scale::Discrete), Statistic::Mode);
-        assert_eq!((a.value, a.unavailable), (None, Some(Unavailable::NoRepeat)));
+        assert_eq!(
+            (a.value, a.unavailable),
+            (None, Some(Unavailable::NoRepeat))
+        );
         // The continuous case keeps keyboard §7's own reason.
         let c = answer(&scope(&v, Scale::Continuous), Statistic::Mode);
         assert_eq!(c.unavailable, Some(Unavailable::NotMeaningful));
@@ -257,7 +268,10 @@ mod tests {
     #[test]
     fn one_value_has_no_standard_deviation_and_none_has_no_mean() {
         let one = values(&[Some(7.0)]);
-        let sd = answer(&scope(&one, Scale::Continuous), Statistic::StandardDeviation);
+        let sd = answer(
+            &scope(&one, Scale::Continuous),
+            Statistic::StandardDeviation,
+        );
         assert_eq!(sd.unavailable, Some(Unavailable::NotMeaningful));
         let none = values(&[None, None]);
         let m = answer(&scope(&none, Scale::Continuous), Statistic::Mean);
@@ -268,6 +282,10 @@ mod tests {
     fn estimates_are_counted_for_qualifying() {
         let v = values(&[Some(1.0), Some(2.0), Some(3.0), Some(4.0)]);
         let a = answer(&scope(&v, Scale::Continuous), Statistic::Mean);
-        assert_eq!((a.value, a.estimated), (Some(2.5), 1), "row 2 is an estimate");
+        assert_eq!(
+            (a.value, a.estimated),
+            (Some(2.5), 1),
+            "row 2 is an estimate"
+        );
     }
 }

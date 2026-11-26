@@ -5428,6 +5428,7 @@ dependencies = [
  "augurs-seasons",
  "proptest",
  "serde_json",
+ "sonarithm-core",
  "sonarithm-echometric",
  "statrs",
 ]
