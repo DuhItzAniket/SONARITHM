@@ -24,9 +24,12 @@ pub fn reversals(series: &Series) -> usize {
     extrema::turns(series, HYSTERESIS).len()
 }
 
-/// The trend segments of `series`, in row order: from its first value to each turn and on to
-/// its last, labelled `rising` or `falling` by where each ends, with the change in value as
-/// the value. A series that never moves beyond the band is one `flat` segment.
+/// The trend segments of `series`, in play order: from its first value to each turn and on to
+/// its last, labelled `rising` or `falling` by the change to the next turn, which is the
+/// value. Segments partition the series: each covers its points up to the one before the
+/// next turn, and the last runs to the end, so no point belongs to two (AUDAXIS uses them as
+/// the navigation tree's segments). A series that never moves beyond the band is one `flat`
+/// segment.
 #[must_use]
 pub fn detect(series: &Series) -> Vec<Finding> {
     let rows = series.rows();
@@ -38,11 +41,14 @@ pub fn detect(series: &Series) -> Vec<Finding> {
     bounds.extend(extrema::turns(series, HYSTERESIS).iter().map(|t| t.index));
     bounds.push(values.len() - 1);
     let band = series.bounds().map_or(0.0, |(lo, hi)| HYSTERESIS * (hi - lo));
+    let last_index = values.len() - 1;
     bounds
         .windows(2)
         .filter_map(|pair| {
             let (&start, &end) = (pair.first()?, pair.get(1)?);
             let change = values.get(end)? - values.get(start)?;
+            // The turn starts the next segment; the last segment keeps the final point.
+            let through = if end == last_index { end } else { end - 1 };
             let label = if change > band {
                 "rising"
             } else if change < -band {
@@ -53,7 +59,7 @@ pub fn detect(series: &Series) -> Vec<Finding> {
             Some(Finding {
                 label,
                 first: *rows.get(start)?,
-                last: *rows.get(end)?,
+                last: *rows.get(through.max(start))?,
                 value: change,
                 score: None,
             })
@@ -73,7 +79,7 @@ mod tests {
     fn a_zigzag_is_rising_and_falling_segments_between_its_turns() {
         let found = detect(&series(&[0.0, 10.0, 0.0, 10.0]));
         let shown: Vec<(&str, u64, u64)> = found.iter().map(|f| (f.label, f.first, f.last)).collect();
-        assert_eq!(shown, [("rising", 0, 1), ("falling", 1, 2), ("rising", 2, 3)]);
+        assert_eq!(shown, [("rising", 0, 0), ("falling", 1, 1), ("rising", 2, 3)]);
         assert_eq!(reversals(&series(&[0.0, 10.0, 0.0, 10.0])), 2);
     }
 
@@ -84,7 +90,7 @@ mod tests {
         assert_eq!(found.first().map(|f| f.first), Some(0));
         assert_eq!(found.last().map(|f| f.last), Some(49));
         for pair in found.windows(2) {
-            assert_eq!(pair[0].last, pair[1].first, "contiguous");
+            assert_eq!(pair[0].last + 1, pair[1].first, "a partition: contiguous, no overlap");
         }
     }
 
