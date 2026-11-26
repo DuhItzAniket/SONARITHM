@@ -3,7 +3,7 @@
 > **Status:** Throwaway spike for the A02 prototype gate. Deleted or archived after the gate. Not production code.
 > **Tasks:** A02-T05 (IPC), A02-T06 (WebGL2), A02-T07 (accessibility) in [implementation-plan §2](../../docs/planning/implementation-plan.md). **Decisions under test:** [ADR-0002](../../docs/decisions/0002-desktop-shell-tauri.md), [ADR-0003](../../docs/decisions/0003-frontend-react-and-react-aria.md). **Design:** [09 §2](../../docs/architecture/09-desktop-app.md#2-ipc-design).
 
-One Tauri 2.12.4 app (Rust host in `src-tauri/`, Vite + TypeScript frontend in `src/`) with one page per suite. The host takes `--autorun <suite>` and `--out <file>`: the suite runs without interaction, the host adds OS, Tauri and webview versions, writes the JSON report and exits. CI uses the same mode. The `spike-a02-tauri` workflow builds the app on Linux, Windows and macOS, runs the IPC suite on each runner, and keeps the builds (`.deb`, `.app`, `.exe`) as artifacts for 30 days.
+One Tauri 2.12.4 app (Rust host in `src-tauri/`, Vite + TypeScript frontend in `src/`) with one page per suite. The host takes `--autorun <suite>` and `--out <file>`: the suite runs without interaction, the host adds OS, Tauri and webview versions, writes the JSON report and exits. CI uses the same mode. The `spike-a02-tauri` workflow built the app on Linux, Windows and macOS, ran the IPC suite on each runner, and kept the builds (`.deb`, `.app`, `.exe`) as artifacts for 30 days. It was retired on 2026-11-26 after the A02 gate; its last version is in commit `04d0fe16`. Build locally as below.
 
 The spike has its own `pnpm-workspace.yaml`, so it stays out of the repository's pnpm workspace and its lint jobs.
 

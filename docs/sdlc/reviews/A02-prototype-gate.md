@@ -15,6 +15,8 @@ This report follows the [gate review template](_gate-review-template.md) and add
 | WebGL2 frame times | A02-T06 | [#102](https://github.com/DuhItzAniket/SONARITHM/pull/102), stacked on #101 | `spikes/tauri-webview/src/webgl.ts` |
 | Accessibility prototype and walkthrough scripts | A02-T07 | [#107](https://github.com/DuhItzAniket/SONARITHM/pull/107), stacked on #102 | `spikes/tauri-webview/src/a11y/`, `spikes/tauri-webview/WALKTHROUGH.md` |
 
+The two spike workflows (`spike-a02-determinism.yml`, `spike-a02-tauri.yml`) were retired on 2026-11-26 to save CI time: Dependabot's weekly action updates edited them, so each update ran 7 spike jobs. Their last version is in commit `04d0fe16`, and their runs and results are recorded below and in the findings log.
+
 All measurements were taken on the owner's laptop (HW-01) or on GitHub-hosted runners (CI-LNX, CI-WIN, CI-MAC); the hardware records are in the [benchmarks log](../../research-paper/benchmarks-log.md#reference-hardware). HW-01 is much faster than the Windows reference machine. Where a result exceeded 50% of its budget, it was measured again with the CPU limited to 4 E-cores (HW-01e), as the headroom rule of [12 §8](../../architecture/12-cross-cutting-concerns.md#8-performance-budgets) requires. No number in this report is estimated; everything not measured is marked **pending**.
 
 ## Decision

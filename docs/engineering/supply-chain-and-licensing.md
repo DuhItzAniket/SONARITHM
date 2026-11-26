@@ -40,6 +40,8 @@ Default builds contain only permissive dependencies ([principle P9](../architect
 | `CC0-1.0` | |
 | `MPL-2.0` | File-level weak copyleft. Allowed, with this condition: if the project modifies an MPL-licensed file, the modified file must be published under MPL-2.0. Known MPL-2.0 dependencies: symphonia, triple_buffer, serialport, audio_thread_priority |
 | `OFL-1.1` | Fonts only (for example npm font packages) |
+| `BlueOak-1.0.0` | **Development-only dependencies only:** tooling that never ships in the desktop app, the CLI, the Python wheel or the WASM build. The owner's decision of 2026-11-26 ([change history](#change-history)). Current users, all npm development tooling: glob 13, minimatch 10, path-scurry 2, lru-cache 11 and minipass 7 |
+| `CC-BY-4.0` | **Development-only npm dependencies only**, as a data licence ([npm licence checking](#npm-licence-checking)): caniuse-lite's browser data |
 
 A licence not in this table is denied until a PR adds it with a rationale. Research notes 04 §12 also listed `Unlicense`; it is not on the initial allowlist and can be added by PR if a needed dependency requires it.
 
@@ -289,8 +291,9 @@ C04-T04 (SoundFont playback) does not wait for OD-22: it works with user-supplie
 
 The frontend workspace (pnpm) uses the same allowlist, plus `OFL-1.1` for font packages.
 
-- From B01, a CI job lists production dependency licences (for example with `pnpm licenses list --prod --json`) and fails on any licence outside the allowlist. The exact tool is chosen in B01.
-- Build-time-only `devDependencies` that are never shipped are checked against a wider list that also permits data licences such as `CC-BY-4.0`. They are still denied AGPL, GPL and SSPL.
+- The `ci / licenses-npm` job lists every package of the workspace with `pnpm -r licenses list --json`, and the shipped ones with `--prod`. `.github/scripts/npm_licences.py` (Python standard library only) checks each package's SPDX expression and fails on any package whose licence is not allowed for how it is used. In an expression, `OR` needs one allowed side and `AND` needs both. A licence pnpm cannot read (`Unknown`, `SEE LICENSE IN …`) fails.
+- **Shipped packages** (the desktop app's bundle) may use the [allowed](#allowed) licences without a development-only restriction. The script reads them from `deny.toml` and adds `OFL-1.1`, and a test checks that the table above lists each one.
+- **Development-only packages** (build, test and lint tooling that is never shipped) may also use `BlueOak-1.0.0` and the data licence `CC-BY-4.0`. They are still denied AGPL, GPL and SSPL.
 - The npm licence report feeds the third-party notices.
 
 ## Model weights
@@ -438,3 +441,9 @@ Not legal advice. Based on [notes 07 §4](../research/notes/07-engineering-publi
 - An OSPS Baseline target.
 
 **Re-assessment triggers:** a legal home (a foundation, a university or a spin-off), monetisation, or commercial distribution by the project. Any of these leads to an ADR informed by legal advice.
+
+## Change history
+
+| Date | Change | Decided by |
+|---|---|---|
+| 2026-11-26 | `BlueOak-1.0.0` allowed for development-only dependencies, never for anything that ships in the app, the CLI, the wheel or the WASM build. Current users are npm development tooling only: glob 13, minimatch 10, path-scurry 2, lru-cache 11 and minipass 7. The npm licence check now exists (`ci / licenses-npm`) and enforces the scope | The owner (2026-11-26) |
