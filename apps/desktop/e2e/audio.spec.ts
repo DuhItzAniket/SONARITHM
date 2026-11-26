@@ -20,6 +20,26 @@ interface Mock {
   };
 }
 
+/**
+ * The axe check of the Preferences dialog after its controls were used. Playwright 1.65's
+ * Firefox (build 1572) crashes the page when axe reads `ariaLabelledByElements` after a named
+ * lookup has read it in Playwright's own world (microsoft/playwright#43967, Mozilla bug
+ * 2090055; F-226). Firefox skips only this scan, with a fixme note in the report; every other
+ * step still runs in Firefox, and Chromium and WebKit run the scan. Remove the skip when
+ * Playwright ships Firefox build 1575 or later (#487).
+ */
+async function expectNoSeriousViolations(page: Page, browserName: string) {
+  if (browserName === "firefox") {
+    test.info().annotations.push({
+      type: "fixme",
+      description:
+        "axe scan skipped in Firefox: microsoft/playwright#43967 (Mozilla bug 2090055); remove with #487",
+    });
+    return;
+  }
+  expect(await seriousViolations(page)).toEqual([]);
+}
+
 const host = (page: Page) =>
   page.evaluateHandle(() => Reflect.get(window, "__SONARITHM_MOCK__") as Mock);
 
@@ -71,6 +91,7 @@ test("t_13_stop_all_audio_from_every_region_and_from_a_dialog", async ({
 
 test("fr_118_preferences_choose_the_device_and_set_the_volume_by_keyboard", async ({
   page,
+  browserName,
 }) => {
   const opener = await focused(page);
   await page.keyboard.press(`${await primary(page)}+Comma`);
@@ -95,7 +116,7 @@ test("fr_118_preferences_choose_the_device_and_set_the_volume_by_keyboard", asyn
     dialog.getByText("the system volume does not change", { exact: false }),
   ).toBeVisible();
 
-  expect(await seriousViolations(page)).toEqual([]);
+  await expectNoSeriousViolations(page, browserName);
 
   // Escape closes it and the focus goes back where it was. React Aria restores the focus in
   // the animation frame after the dialog unmounts, so wait for it (WebKit in CI read too early).
@@ -151,6 +172,7 @@ test("f_044_a_gpu_fallback_at_start_up_is_said_in_words", async ({ page }) => {
 
 test("b04_t04_preferences_store_the_measured_latency_of_the_selected_device", async ({
   page,
+  browserName,
 }) => {
   await page.keyboard.press(`${await primary(page)}+Comma`);
   const dialog = page.getByRole("dialog", { name: "Preferences" });
@@ -171,5 +193,5 @@ test("b04_t04_preferences_store_the_measured_latency_of_the_selected_device", as
   await expect
     .poll(async () => (await audio(page)).calibratedLatencyS)
     .toEqual({});
-  expect(await seriousViolations(page)).toEqual([]);
+  await expectNoSeriousViolations(page, browserName);
 });

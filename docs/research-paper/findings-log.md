@@ -1298,3 +1298,37 @@ A05 (render engine, audio backends, export) uses F-050 to F-069.
 - **Evidence level / confidence:** EV-C / Strong
 - **Affects:** 03 §2 and §3, RFC-0008, F-100
 - **Papers:** none yet
+
+### F-225 · Vitest 4's headless screenshots were scaled to 0.9375, so its baselines blended the 1px borders
+
+- **Date:** 2026-11-26 · **Phase:** maintenance (B02-T03 code) · **Type:** engineering (test tooling) · **Status:** new
+- **Statement:** With Vitest 5, all four `foundations` screenshot tests failed: each new screenshot was 1024 × 280 against a 960 × 263 baseline, which pixelmatch cannot compare.
+  - **Why:** Vitest 4.1.12 fitted the tester iframe into Playwright's default page, scaling it by `min(1, page width / 1024, page height / 768)`. The page is 720 px high, so the scale was 720 / 768 = 0.9375 = 960 / 1024. Vitest 5.0.5 scales the iframe only when `browser.ui` is on, so headless runs capture at 1 : 1.
+  - **What changed:** only the scale. The surface colours match exactly in all four themes. Every colour found only in the new screenshots is a token value drawn at full strength. In high-contrast light, `--border` oklch(0.4 0 0) is #484848, where the old baseline had a lighter blend, #585858. The old baselines understated the borders' contrast.
+  - **Not the cause:** `toMatchScreenshot`'s defaults are the same in both versions (pixelmatch, threshold 0.1, timeout 5000 ms, `scale: "device"`). "Matcher did not succeed in time" is `expect.element`'s retry giving up on a size mismatch that could never pass.
+- **Fix:** the new baselines are the screenshots the CI image (`playwright:v1.65.1-noble`, Vitest 5.0.5) captured in the failing run, from its `visual-baselines` artifact. They were not rendered on Windows.
+- **Evidence:** CI job 139554179659 and its `visual-baselines` artifact. `@vitest/browser` 4.1.12 `orchestrator` `setIframeViewport` against 5.0.5's orchestrator, which applies the scale under `config.browser.ui`. Both versions' `defaultOptions` in `dist/index.js`.
+- **Evidence level / confidence:** EV-C / Strong (sizes, colours and the source of both versions checked)
+- **Affects:** testing-strategy §12 (visual baselines); `packages/ui/test/visual`
+- **Papers:** none yet
+
+- **Papers:** none yet
+
+### F-226 · Playwright 1.65's Firefox crashes when axe runs after a named lookup, so two Preferences tests skip their axe scan in Firefox
+
+- **Date:** 2026-11-26 · **Phase:** maintenance (B01-T08, B04-T04 tests) · **Type:** engineering (test tooling) · **Status:** new
+- **Statement:** With `@playwright/test` 1.65.1 and its CI image, two E2E tests failed in Firefox only, with "frame.evaluate: Page crashed" in the final axe scan: `fr_118_preferences_choose_the_device_and_set_the_volume_by_keyboard` and `b04_t04_preferences_store_the_measured_latency_of_the_selected_device`.
+  - **Steps before the scan:** every step before the scan passed, in Firefox too.
+  - **Other browsers:** Chromium and WebKit passed.
+  - **On 1.64.1:** main's last two runs, on the 1.64.1 image, passed both tests in Firefox.
+  - **@axe-core/playwright:** 4.14.0 on both.
+- **Cause (upstream):** microsoft/playwright#43967, a duplicate of #44135 and Mozilla bug 2090055.
+  - **What crashes:** Playwright 1.65's Firefox (build 1572) crashes the content process when an element's `ariaLabelledByElements` is read both in Playwright's isolated world and in the page.
+  - **How the tests hit it:** a named `getByRole` lookup does the first read and axe-core's scan does the second. Both tests make named lookups among the dialog's labelled controls before the scan.
+  - **Fix status:** fixed by Firefox build 1575 and later on Playwright's main branch. 1.65.1 (2026-11-13) is the latest release and still ships build 1572.
+- **Not a cause:** SONARITHM's code. Page content cannot legitimately crash the browser, and the same page passes on 1.64.1.
+- **Workaround:** in these two tests, Firefox skips only the axe scan (removal tracked by #487). The test records a `fixme` annotation naming the upstream issue, so the report shows it. All the other steps still run in Firefox, and Chromium and WebKit still run the scan. Remove the skip when a Playwright release ships Firefox build 1575 or later.
+- **Not reproduced locally:** Firefox does not launch on the Windows development machine. The evidence is CI job 139572491722 (1.65.1) against jobs 139562988096 and 139517563060 (1.64.1), and the upstream reproductions.
+- **Evidence level / confidence:** EV-C / Strong for the upstream match (same browser build, same axe-then-lookup trigger, same error). The crash's exact read inside axe was not traced in our tests.
+- **Affects:** `apps/desktop/e2e/audio.spec.ts`; any later E2E test that runs axe after a named lookup in Firefox until the upgrade
+- **Papers:** none yet
