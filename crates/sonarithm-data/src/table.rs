@@ -264,6 +264,26 @@ fn row_count(batch: &RecordBatch) -> u64 {
     u64::try_from(batch.num_rows()).unwrap_or(u64::MAX)
 }
 
+/// Whether `data_type` is one of Arrow's string layouts: plain, large (64-bit offsets) or
+/// view. They hold the same values, so every reader treats them alike (RFC-0008 §3).
+pub(crate) fn is_text(data_type: &DataType) -> bool {
+    matches!(
+        data_type,
+        DataType::Utf8 | DataType::LargeUtf8 | DataType::Utf8View
+    )
+}
+
+/// The values of a text column in any string layout ([`is_text`]), or `None` for another
+/// type.
+pub(crate) fn text_values(array: &dyn Array) -> Option<Vec<Option<&str>>> {
+    Some(match array.data_type() {
+        DataType::Utf8 => array.as_string_opt::<i32>()?.iter().collect(),
+        DataType::LargeUtf8 => array.as_string_opt::<i64>()?.iter().collect(),
+        DataType::Utf8View => array.as_string_view_opt()?.iter().collect(),
+        _ => return None,
+    })
+}
+
 /// The keys of a dictionary array as `UInt32` indices into its values, ready for
 /// `arrow_select::take`. Null keys stay null.
 ///

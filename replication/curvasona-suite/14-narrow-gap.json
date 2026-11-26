@@ -1,0 +1,41 @@
+{
+  "analysis": {
+    "cue": "earcon",
+    "detect": [
+      "critical-points"
+    ]
+  },
+  "data": {
+    "source": {
+      "domain": [
+        -1.0,
+        1.0
+      ],
+      "expr": "sqrt(x^2 - 0.000001)",
+      "kind": "function"
+    }
+  },
+  "description": "f(x) = sqrt(x^2 - 0.000001) over [-1, 1], one curve of the 40-curve suite with analytically known critical points (C03-T03), as a glide with its critical points as earcons. Curve gallery, C03-T06.",
+  "name": "CURVASONA suite: narrow gap",
+  "specVersion": "0.4",
+  "substrate": {
+    "time": {
+      "pace": {
+        "duration": {
+          "s": 8.0
+        }
+      }
+    }
+  },
+  "tracks": [
+    {
+      "channels": {
+        "pitch": {
+          "field": "y"
+        }
+      },
+      "id": "f",
+      "mark": "glide"
+    }
+  ]
+}
