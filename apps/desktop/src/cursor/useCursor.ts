@@ -17,6 +17,7 @@ function stateOf(
     path: value.path,
     excluded: value.excluded,
     origin: value.origin,
+    braille: value.braille,
   };
 }
 
