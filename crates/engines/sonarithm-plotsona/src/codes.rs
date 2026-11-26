@@ -158,7 +158,7 @@ pub const CALIBRATION_ANCHORS: CodeInfo = CodeInfo {
     code: "SNR-ENG-320",
     severity: Severity::Error,
     summary: "The axis has too few anchors to calibrate",
-    help: "Calibration needs at least two ticks or anchors with different positions and            values. Enter two anchors by hand in `calibration` if the labels cannot be read.",
+    help: "Calibration needs at least two ticks or anchors with different positions and values. Enter two anchors by hand in `calibration` if the labels cannot be read.",
     rules: &[],
     status: CodeStatus::Active,
 };
@@ -178,7 +178,7 @@ pub const TICKS_NOT_MONOTONIC: CodeInfo = CodeInfo {
     code: "SNR-ENG-322",
     severity: Severity::Error,
     summary: "The axis ticks are not monotonic",
-    help: "Tick values must rise (or fall) steadily along the axis (10 §3.1). Labels may            have been read from the wrong ticks; enter the anchors by hand.",
+    help: "Tick values must rise (or fall) steadily along the axis (10 §3.1). Labels may have been read from the wrong ticks; enter the anchors by hand.",
     rules: &[],
     status: CodeStatus::Active,
 };
@@ -188,7 +188,7 @@ pub const SCALE_MISMATCH: CodeInfo = CodeInfo {
     code: "SNR-ENG-323",
     severity: Severity::Warning,
     summary: "The axis scale does not match its tick spacing",
-    help: "A log axis read as linear, or the reverse, distorts every value (10 §3.1). Set            the axis kind in `calibration`.",
+    help: "A log axis read as linear, or the reverse, distorts every value (10 §3.1). Set the axis kind in `calibration`.",
     rules: &[],
     status: CodeStatus::Active,
 };
@@ -198,7 +198,7 @@ pub const POINTS_OUTSIDE_PLOT: CodeInfo = CodeInfo {
     code: "SNR-ENG-324",
     severity: Severity::Warning,
     summary: "Some points lie outside the plot area",
-    help: "Their values are extrapolated beyond the ticks and may belong to a legend or an            annotation rather than the data (10 §3.1).",
+    help: "Their values are extrapolated beyond the ticks and may belong to a legend or an annotation rather than the data (10 §3.1).",
     rules: &[],
     status: CodeStatus::Active,
 };
@@ -208,7 +208,7 @@ pub const CALIBRATION_RESIDUAL: CodeInfo = CodeInfo {
     code: "SNR-ENG-325",
     severity: Severity::Warning,
     summary: "The axis calibration is imprecise",
-    help: "The ticks sit more than 0.5 % of the axis away from the fitted scale, so values            read through it carry that error. Their confidence is lowered to match.",
+    help: "The ticks sit more than 0.5 % of the axis away from the fitted scale, so values read through it carry that error. Their confidence is lowered to match.",
     rules: &[],
     status: CodeStatus::Active,
 };
@@ -238,7 +238,7 @@ pub const NO_CACHE: CodeInfo = CodeInfo {
     code: "SNR-ENG-341",
     severity: Severity::Error,
     summary: "A chart series has no stored values",
-    help: "Office charts keep a cache of the values they show. Open the file in the            program that made it and save it again to rebuild the cache.",
+    help: "Office charts keep a cache of the values they show. Open the file in the program that made it and save it again to rebuild the cache.",
     rules: &[],
     status: CodeStatus::Active,
 };
@@ -248,7 +248,7 @@ pub const EXTERNAL_LINK: CodeInfo = CodeInfo {
     code: "SNR-ENG-342",
     severity: Severity::Warning,
     summary: "An external data link was not followed",
-    help: "PLOTSONA never opens files or addresses a document points to (12 §6). The values            cached in the chart are used.",
+    help: "PLOTSONA never opens files or addresses a document points to (12 §6). The values cached in the chart are used.",
     rules: &[],
     status: CodeStatus::Active,
 };
@@ -268,7 +268,7 @@ pub const VALUES_SOURCE: CodeInfo = CodeInfo {
     code: "SNR-ENG-344",
     severity: Severity::Info,
     summary: "Values were read from the chart's workbook",
-    help: "The workbook is the data the chart was built from, so it is preferred to the            chart's cache.",
+    help: "The workbook is the data the chart was built from, so it is preferred to the chart's cache.",
     rules: &[],
     status: CodeStatus::Active,
 };
@@ -278,7 +278,7 @@ pub const STALE_CACHE: CodeInfo = CodeInfo {
     code: "SNR-ENG-345",
     severity: Severity::Warning,
     summary: "The chart's cache differs from its workbook",
-    help: "The workbook's values were used. What the chart shows may be older until the            file is opened and saved in its program.",
+    help: "The workbook's values were used. What the chart shows may be older until the file is opened and saved in its program.",
     rules: &[],
     status: CodeStatus::Active,
 };
@@ -378,7 +378,7 @@ pub const PDF_NO_VECTOR: CodeInfo = CodeInfo {
     code: "SNR-ENG-364",
     severity: Severity::Error,
     summary: "The PDF has no vector chart",
-    help: "The pages hold only images, so the chart must be read by the raster tier (C02),            as an estimate. Use the chart's source file or a vector export if you have one.",
+    help: "The pages hold only images, so the chart must be read by the raster tier (C02), as an estimate. Use the chart's source file or a vector export if you have one.",
     rules: &[],
     status: CodeStatus::Active,
 };
@@ -388,7 +388,7 @@ pub const EXPERIMENTAL_TEMPLATE: CodeInfo = CodeInfo {
     code: "SNR-ENG-380",
     severity: Severity::Warning,
     summary: "Experimental chart template",
-    help: "No design rule covers this chart type's sound design yet (pie and stacked bar), so            it may change when a study supports one. Write `tracks` to choose the design            yourself.",
+    help: "No design rule covers this chart type's sound design yet (pie and stacked bar), so it may change when a study supports one. Write `tracks` to choose the design yourself.",
     rules: &["SDR-03"],
     status: CodeStatus::Active,
 };
@@ -398,7 +398,7 @@ pub const IMPORT_UNMAPPED: CodeInfo = CodeInfo {
     code: "SNR-ENG-381",
     severity: Severity::Warning,
     summary: "A chart construct was not imported",
-    help: "SONARITHM has no equivalent for it; the note says what to write by hand. The            pointer is in the imported document.",
+    help: "SONARITHM has no equivalent for it; the note says what to write by hand. The pointer is in the imported document.",
     rules: &["SDR-05"],
     status: CodeStatus::Active,
 };
@@ -418,7 +418,7 @@ pub const IMPORT_UNREADABLE: CodeInfo = CodeInfo {
     code: "SNR-ENG-383",
     severity: Severity::Error,
     summary: "The document cannot be imported",
-    help: "Check that it is a Vega-Lite or MAIDR document of a supported chart type, or            write the spec's tracks by hand.",
+    help: "Check that it is a Vega-Lite or MAIDR document of a supported chart type, or write the spec's tracks by hand.",
     rules: &[],
     status: CodeStatus::Active,
 };
@@ -428,7 +428,7 @@ pub const IMPORT_NO_DATA: CodeInfo = CodeInfo {
     code: "SNR-ENG-384",
     severity: Severity::Error,
     summary: "The imported chart has no readable data",
-    help: "Give the chart inline values or a local data file; SONARITHM never fetches data            from the network (ADR-0012).",
+    help: "Give the chart inline values or a local data file; SONARITHM never fetches data from the network (ADR-0012).",
     rules: &[],
     status: CodeStatus::Active,
 };
@@ -438,7 +438,7 @@ pub const CHART_EXTRACTED: CodeInfo = CodeInfo {
     code: "SNR-ENG-385",
     severity: Severity::Info,
     summary: "Chart extracted",
-    help: "The message counts the points by how they were obtained: exact, calibrated from            the drawing, or estimated. Estimated values are announced as estimates.",
+    help: "The message counts the points by how they were obtained: exact, calibrated from the drawing, or estimated. Estimated values are announced as estimates.",
     rules: &[],
     status: CodeStatus::Active,
 };
@@ -471,7 +471,7 @@ pub const CORRECTION_NOT_APPLIED: CodeInfo = CodeInfo {
     code: "SNR-ENG-386",
     severity: Severity::Warning,
     summary: "A chart correction was not applied",
-    help: "An edit applies only to the point it was made on, checked by its `was` value; the            point is gone or now has another value. Re-make the edit on the current extraction.",
+    help: "An edit applies only to the point it was made on, checked by its `was` value; the point is gone or now has another value. Re-make the edit on the current extraction.",
     rules: &[],
     status: CodeStatus::Active,
 };
@@ -481,7 +481,7 @@ pub const CORRECTIONS_OTHER_CHART: CodeInfo = CodeInfo {
     code: "SNR-ENG-387",
     severity: Severity::Warning,
     summary: "The corrections were made on another chart",
-    help: "A correction file is bound to its chart by the chart's SHA-256 and the extractor;            this chart differs, so no edit was applied. Open the chart the file was made for.",
+    help: "A correction file is bound to its chart by the chart's SHA-256 and the extractor; this chart differs, so no edit was applied. Open the chart the file was made for.",
     rules: &[],
     status: CodeStatus::Active,
 };

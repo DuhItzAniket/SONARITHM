@@ -322,7 +322,7 @@ pub fn check_monotonic(anchors: &[Anchor], axis: &str) -> Result<(), Box<Diagnos
             return Err(Box::new(Diagnostic::new(
                 &codes::TICKS_NOT_MONOTONIC,
                 format!(
-                    "The {axis} axis ticks do not change in one direction (at {} and {});                      the axis cannot be calibrated from them.",
+                    "The {axis} axis ticks do not change in one direction (at {} and {}); the axis cannot be calibrated from them.",
                     a.value, b.value
                 ),
             )));
