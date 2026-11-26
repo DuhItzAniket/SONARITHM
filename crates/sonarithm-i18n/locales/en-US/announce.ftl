@@ -222,6 +222,28 @@ announce-filter-live = Filters cannot change while a live stream is monitored. S
 
 announce-export-all-series = Export includes all series; exclusions apply to playback only.
 
+## The explorer's toggles (B03-T09, keyboard §5.5): T, S, B and V turn a modality on or
+## off ($on is yes or no), and Shift+T switches the verbosity.
+
+announce-modality-changed =
+    { $modality ->
+        [speech] Speech
+        [sonification] Sonification
+        [braille] Braille
+       *[visual] Visual highlight
+    } { $on ->
+        [yes] on
+       *[no] off
+    }
+announce-verbosity-changed =
+    { $verbosity ->
+        [verbose] Verbose announcements
+       *[terse] Terse announcements
+    }
+# A toggle refused because nothing but the screen would be left (SNR-APP-094).
+announce-modality-lockout = Speech, sonification and braille cannot all be off. Turn another one on first.
+announce-choices-reset = Toggles reset to your profile's defaults.
+
 ## Audio output (B01-T08, HS-05): the device changed or failed. $device is the new device's
 ## name; $detail is the system's message; $paused is yes when playback was paused by it.
 

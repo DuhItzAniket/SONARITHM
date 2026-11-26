@@ -110,10 +110,14 @@ fn check(params: &ShiftParams) -> Result<usize, GeneratorError> {
     if !params.noise.is_finite() || params.noise <= 0.0 {
         return Err(invalid(ID, "noise", "a positive standard deviation"));
     }
-    if let Some(period) = params.period {
-        if period < 4 || period.saturating_mul(4) > params.points {
-            return Err(invalid(ID, "period", "4 or more points, with at least 4 periods"));
-        }
+    if let Some(period) = params.period
+        && (period < 4 || period.saturating_mul(4) > params.points)
+    {
+        return Err(invalid(
+            ID,
+            "period",
+            "4 or more points, with at least 4 periods",
+        ));
     }
     if !params.amplitude.is_finite() || params.amplitude < 0.0 {
         return Err(invalid(ID, "amplitude", "zero or more"));
@@ -138,7 +142,12 @@ fn change_rows(rng: &mut Rng, points: usize, count: usize, spacing: usize) -> Ve
 pub(crate) fn generate(params: &ShiftParams, seed: u64) -> Result<Stimulus, GeneratorError> {
     let points = check(params)?;
     let mut rng = Rng::new(seed, ID);
-    let rows = change_rows(&mut rng, points, params.shifts as usize, params.spacing as usize);
+    let rows = change_rows(
+        &mut rng,
+        points,
+        params.shifts as usize,
+        params.spacing as usize,
+    );
     let mut level = 0.0;
     let mut next = rows.iter().peekable();
     let values: Vec<f64> = (0..points)

@@ -1,0 +1,8 @@
+---
+source: crates/engines/sonarithm-echometric/tests/detectors.rs
+expression: "shown(trends::params())"
+---
+[
+    "hysteresis=Number(0.1)",
+    "method=Text(\"reversal-hysteresis\")",
+]

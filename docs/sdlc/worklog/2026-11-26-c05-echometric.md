@@ -36,6 +36,11 @@
   - `trend-segments`: the runs between `extrema`'s turns.
   - GEN-012, labelled level shifts and periods (DS-010).
   - Each finding's score is recorded under its own name (`robustZ`, `shift`, `correlation`).
+  - Trend segments partition the series (each ends one point before the next turn), and AUDAXIS takes them as the navigation tree's segments only for their own track, placed by their two endpoint rows in the series' own order (RFC-0009 §1).
+  - **Measured on HW-01:**
+    - `changepoints` on GEN-012's defaults (100 seeds, 300 shifts): precision 0.9868, recall 1.0000, a hit being within one minimum segment;
+    - `periodicity`: the period found within a point in 100 of 100 periodic series, and no false alarm in 100 noise-only series;
+    - against augurs: BOCPD change points agree on 47 of 50 series, and the periodogram's periods on 50 of 50.
 
 ## Decisions
 
@@ -48,6 +53,7 @@
 | The first and last values are never judged as outliers, and the limitation is stated, not silent | The coordinator's condition for the ADR-0031 amendment; a fair judgement of an end needs the local trend | F-205, #507 |
 | PELT's penalty scales with σ² from the MAD of first differences | A level shift moves one difference and does not inflate the estimate, so the same shift is found in any unit | `detect/changepoints.rs` |
 | A period is the first strong autocorrelation peak within 0.1 of the highest | A period's multiples correlate almost as well; the highest peak alone can pick 2P | `detect/periodicity.rs` |
+| augurs-changepoint's results pinned as a fixture, augurs-seasons kept live | augurs-changepoint's dependencies (argmin through rv) carry unmaintained-crate advisories (bincode, instant, paste) that `cargo deny` refuses; ADR-0031's fallback pins a reference's values instead of changing the advisory policy | `reference/tests/fixtures/augurs-changepoint-0.10.3.json` |
 | A GEN-001 turn may sit one row from the generator's on a tie | At one point per hour, a sine peak falls between two equal rows; the count is exact | `tests/detectors.rs` |
 
 ## Findings to log
@@ -56,5 +62,5 @@
 
 ## Next
 
-- C05-T03's augurs references (change points and seasonality), with the builder slot.
+- C05-T06's second half (`nav_query`, the composer's statistics messages, the CLI) once Lane U's explorer batch is on `main`.
 - C05-T06 starts after Lane U's batched explorer PR, extending `nav_query` (c05-t06 proposal, approved).

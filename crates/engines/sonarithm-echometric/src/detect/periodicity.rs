@@ -75,7 +75,10 @@ pub fn period(values: &[f64]) -> Option<(usize, f64)> {
             (here >= MIN_CORRELATION && here > before && here >= after).then_some((lag, here))
         })
         .collect();
-    let highest = peaks.iter().map(|&(_, r)| r).fold(f64::NEG_INFINITY, f64::max);
+    let highest = peaks
+        .iter()
+        .map(|&(_, r)| r)
+        .fold(f64::NEG_INFINITY, f64::max);
     peaks
         .into_iter()
         .find(|&(_, r)| r >= highest - PEAK_TOLERANCE)
@@ -125,7 +128,7 @@ mod tests {
         // Two periods of 10 and 20 rows: the 20-row lag correlates as well, but 10 is the period.
         let values: Vec<f64> = (0..200)
             .map(|i| {
-                let t = std::f64::consts::TAU * i as f64;
+                let t = std::f64::consts::TAU * f64::from(i);
                 math::sin(t / 10.0) + 0.2 * math::sin(t / 20.0)
             })
             .collect();

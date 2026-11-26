@@ -23,9 +23,9 @@ use sonarithm_data::{
 use super::generators::Params;
 use super::generators::correlation::CorrelationTruth;
 use super::generators::outliers::OutlierTruth;
-use super::generators::shifts::ShiftTruth;
 use super::generators::prices::PriceTruth;
 use super::generators::reversals::ReversalTruth;
+use super::generators::shifts::ShiftTruth;
 use super::generators::transits::TransitTruth;
 
 /// A registered stimulus generator (docs/research-paper/datasets.md).

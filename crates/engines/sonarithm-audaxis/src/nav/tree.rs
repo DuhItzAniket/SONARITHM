@@ -540,21 +540,28 @@ fn segments(series: &Series, annotations: &[Annotation]) -> Vec<(bool, Range<usi
 }
 
 /// Trend-segment annotations as runs of points, if they partition the series exactly.
+///
+/// Only this track's segments count (an annotation without a track, any series'), and a
+/// segment's run is taken from its two endpoint rows in the series' own point order, never
+/// from the rows between them in table order: a filtered or time-ordered track's range spans
+/// rows of other tracks (RFC-0009 §1).
 fn semantic_segments(series: &Series, annotations: &[Annotation]) -> Option<Vec<Range<usize>>> {
     let first_row = series.points.first()?.row;
+    let index_of = |row: u64| {
+        series.points.iter().position(|p| {
+            p.row.table == first_row.table
+                && p.row.generation == first_row.generation
+                && p.row.row == row
+        })
+    };
     let mut runs: Vec<Range<usize>> = annotations
         .iter()
         .filter(|a| a.source.as_str() == TREND_SEGMENTS && a.range.table == first_row.table)
+        .filter(|a| a.track.as_ref().is_none_or(|track| track == &series.track))
         .filter_map(|a| {
-            let members: Vec<usize> = series
-                .points
-                .iter()
-                .enumerate()
-                .filter(|(_, p)| (a.range.start..a.range.end).contains(&p.row.row))
-                .map(|(i, _)| i)
-                .collect();
-            let (&lo, &hi) = (members.first()?, members.last()?);
-            (hi - lo + 1 == members.len()).then_some(lo..hi + 1)
+            let first = index_of(a.range.start)?;
+            let last = index_of(a.range.end.checked_sub(1)?)?;
+            Some(first.min(last)..first.max(last) + 1)
         })
         .collect();
     if runs.is_empty() {
@@ -751,21 +758,20 @@ fn add_insights(
 
 /// The first point, in series order then x order, whose row the annotation covers.
 ///
-/// An annotation about a field (RFC-0009 §1) looks only in the series that play that field,
-/// so an outlier in a second series is never linked to the first. When it has no field, or
-/// no series that plays it covers its rows, every series is searched, as before.
+/// An annotation about one track's series (RFC-0009 §1) looks only in that track's series,
+/// then one about a field only in the series that play it, so an outlier in a second series
+/// is never linked to the first. When it names neither, or none of those covers its rows,
+/// every series is searched, as before.
 fn target(
     all: &[Series],
     placed: &[(NavNodeId, Vec<NavNodeId>)],
     annotation: &Annotation,
 ) -> Option<(NavNodeId, f64)> {
     let range = annotation.range;
-    let first_point = |only: Option<&str>| {
+    let first_point = |keep: &dyn Fn(&Series) -> bool| {
         all.iter()
             .zip(placed)
-            .filter(|(series, _)| {
-                only.is_none_or(|field| series.value_field.name.as_deref() == Some(field))
-            })
+            .filter(|(series, _)| keep(series))
             .find_map(|(series, (_, ids))| {
                 series
                     .points
@@ -779,9 +785,16 @@ fn target(
                     .map(|(p, &id)| (id, p.position))
             })
     };
-    annotation
-        .field
-        .as_deref()
-        .and_then(|field| first_point(Some(field)))
-        .or_else(|| first_point(None))
+    let by_track = annotation
+        .track
+        .as_ref()
+        .and_then(|track| first_point(&|series: &Series| &series.track == track));
+    let by_field = || {
+        annotation.field.as_deref().and_then(|field| {
+            first_point(&|series: &Series| series.value_field.name.as_deref() == Some(field))
+        })
+    };
+    by_track
+        .or_else(by_field)
+        .or_else(|| first_point(&|_: &Series| true))
 }
