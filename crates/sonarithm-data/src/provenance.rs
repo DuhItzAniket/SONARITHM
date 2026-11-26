@@ -282,8 +282,11 @@ fn read_classes(column: &ArrayRef) -> Result<Vec<ProvenanceClass>, DataError> {
         }
     };
     match column.data_type() {
-        DataType::Utf8 => column.as_string::<i32>().iter().map(by_name).collect(),
-        DataType::LargeUtf8 => column.as_string::<i64>().iter().map(by_name).collect(),
+        text if crate::table::is_text(text) => crate::table::text_values(column.as_ref())
+            .unwrap_or_default()
+            .into_iter()
+            .map(by_name)
+            .collect(),
         DataType::UInt8 => column
             .as_primitive::<UInt8Type>()
             .iter()
@@ -294,9 +297,7 @@ fn read_classes(column: &ArrayRef) -> Result<Vec<ProvenanceClass>, DataError> {
                 }),
             })
             .collect(),
-        DataType::Dictionary(_, value)
-            if matches!(**value, DataType::Utf8 | DataType::LargeUtf8) =>
-        {
+        DataType::Dictionary(_, value) if crate::table::is_text(value) => {
             let keys = dictionary_indices(column.as_ref()).map_err(|row| {
                 invalid(format!(
                     "`{PROV_COLUMN}` row {row} has a dictionary key outside its values"
@@ -478,6 +479,37 @@ mod tests {
         assert_eq!(p.get(1).class, ProvenanceClass::CvEstimate);
         assert_eq!(p.get(1).confidence, Confidence::new(0.75));
         assert_eq!(forms[0].schema().field(1).data_type(), &prov_type());
+    }
+
+    /// RFC-0008 §3: provenance classes read the same in every string layout.
+    #[test]
+    fn every_string_layout_reads_as_one_provenance_form() {
+        use arrow_array::types::Int32Type;
+        use arrow_array::{Int32Array, LargeStringArray, StringViewArray};
+
+        let v: ArrayRef = Arc::new(Float64Array::from(vec![1.0, 2.0, 3.0]));
+        let classes = vec![Some("exact"), Some("cv_estimate"), None];
+        let views = DictionaryArray::<Int32Type>::try_new(
+            Int32Array::from(vec![Some(0), Some(1), None]),
+            Arc::new(StringViewArray::from(vec!["exact", "cv_estimate"])),
+        )
+        .unwrap();
+        let forms: Vec<Table> = [
+            Arc::new(StringArray::from(classes.clone())) as ArrayRef,
+            Arc::new(LargeStringArray::from(classes.clone())),
+            Arc::new(StringViewArray::from(classes)),
+            Arc::new(views),
+        ]
+        .into_iter()
+        .map(|prov| normalize(&table(vec![("v", v.clone()), (PROV_COLUMN, prov)])).unwrap())
+        .collect();
+        for form in &forms[1..] {
+            assert_eq!(form, &forms[0]);
+        }
+        assert_eq!(
+            RowProvenance::read(&forms[0]).unwrap().get(1).class,
+            ProvenanceClass::CvEstimate
+        );
     }
 
     #[test]

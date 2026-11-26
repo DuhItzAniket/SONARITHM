@@ -310,6 +310,7 @@ fn text(column: &ArrayRef, rows: &[u64]) -> PageValues {
                 match values.data_type() {
                     DataType::Utf8 => Some(values.as_string::<i32>().value(key).to_owned()),
                     DataType::LargeUtf8 => Some(values.as_string::<i64>().value(key).to_owned()),
+                    DataType::Utf8View => Some(values.as_string_view().value(key).to_owned()),
                     _ => None,
                 }
             }
@@ -377,6 +378,30 @@ mod tests {
         )
         .unwrap();
         Table::from_batch(TableId(1), "t", batch)
+    }
+
+    /// RFC-0008 §3: a dictionary of string views reads as text, like one of plain strings.
+    #[test]
+    fn dictionaries_of_every_string_layout_read_as_text() {
+        use arrow_array::types::Int8Type;
+        use arrow_array::{DictionaryArray, Int8Array, LargeStringArray, StringViewArray};
+
+        let keys = Int8Array::from(vec![Some(1), None, Some(0)]);
+        let values: [ArrayRef; 3] = [
+            Arc::new(StringArray::from(vec!["low", "high"])),
+            Arc::new(LargeStringArray::from(vec!["low", "high"])),
+            Arc::new(StringViewArray::from(vec!["low", "high"])),
+        ];
+        for values in values {
+            let column: ArrayRef =
+                Arc::new(DictionaryArray::<Int8Type>::try_new(keys.clone(), values).unwrap());
+            assert_eq!(
+                text(&column, &[0, 1, 2]),
+                PageValues::Text(vec![Some("high".into()), None, Some("low".into())]),
+                "{}",
+                column.data_type()
+            );
+        }
     }
 
     #[test]
