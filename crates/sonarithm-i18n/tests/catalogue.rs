@@ -97,6 +97,16 @@ fn sample_args(style: UnitStyle) -> Args {
         .text("condition", "15")
         .text("device", "16")
         .text("paused", "yes")
+        // Functions (function.ftl): the label is a catalogue message, the rest data.
+        .text("label", "19")
+        .text("y", "20")
+        .text("end", "21")
+        .text("expr", "22")
+        .text("min", "23")
+        .text("max", "24")
+        .text("grid", "25")
+        .text("counts", "26")
+        .text("step", "27")
         // The chart explorer toggles (B03-T09).
         .text("modality", "speech")
         .text("on", "yes")
@@ -128,6 +138,25 @@ fn every_catalogue_file_is_embedded() {
             .collect();
         assert_eq!(on_disk, embedded, "{locale}: embed every .ftl file");
     }
+}
+
+/// No catalogue line holds a tab, a trailing space or a run of spaces after its
+/// indentation: the marks a lost `\` line continuation leaves when a file is written
+/// through a shell heredoc. Indentation itself (continuation lines, attributes) is allowed.
+#[test]
+fn catalogue_lines_have_no_tabs_or_runs_of_spaces() {
+    let mut broken = Vec::new();
+    for locale in CATALOGUE_LOCALES {
+        for (file, source) in catalogue_files(locale).unwrap_or_default() {
+            for (number, line) in source.lines().enumerate() {
+                let text = line.trim_start_matches(' ');
+                if line.contains('\t') || text.contains("  ") || text.ends_with(' ') {
+                    broken.push(format!("{locale}/{file}:{}", number + 1));
+                }
+            }
+        }
+    }
+    assert!(broken.is_empty(), "fix the spacing at {broken:?}");
 }
 
 #[test]
