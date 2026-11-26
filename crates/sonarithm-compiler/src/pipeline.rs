@@ -392,7 +392,8 @@ impl<D: CompilerData> Run<'_, D> {
     fn analyze(&mut self, spec: &Spec, data: &D) -> Result<Vec<Annotation>, Stop> {
         let registry = self.registry;
         let mut annotations = Vec::new();
-        let Some(analysis) = &spec.analysis else {
+        let Some(analysis) = spec.analysis.as_ref().filter(|a| !a.detect.is_empty()) else {
+            // No detector: no rows are gathered for one (RFC-0009 §1).
             return Ok(annotations);
         };
         let at = SpecPointer::root().key("analysis");
