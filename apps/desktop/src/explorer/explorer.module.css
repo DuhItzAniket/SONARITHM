@@ -1,0 +1,37 @@
+/* SPDX-FileCopyrightText: 2026 SONARITHM contributors */
+/* SPDX-License-Identifier: MIT OR Apache-2.0 */
+
+/* The chart explorer (B03-T09): one focusable surface above the plot and its hint. */
+.explorer {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  align-items: baseline;
+  margin-block-end: var(--space-2);
+}
+
+.surface {
+  padding: var(--space-1) var(--space-2);
+  border: var(--border-width) solid var(--border);
+  border-radius: var(--radius-1);
+  color: var(--text-1);
+  font-size: var(--type-13-size);
+  line-height: var(--type-13-line);
+  font-variant-numeric: var(--numeric);
+}
+
+.surface:focus-visible {
+  outline: var(--focus-ring-width) solid var(--focus);
+  outline-offset: var(--focus-ring-offset);
+}
+
+.position {
+  white-space: nowrap;
+}
+
+.hint {
+  margin: 0;
+  color: var(--text-2);
+  font-size: var(--type-13-size);
+  line-height: var(--type-13-line);
+}

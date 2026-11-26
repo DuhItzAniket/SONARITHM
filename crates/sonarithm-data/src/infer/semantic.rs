@@ -25,7 +25,7 @@ use sonarithm_core::{Diagnostic, Diagnostics};
 use crate::codes;
 use crate::error::DataError;
 use crate::meta::{Concept, FieldMeta, FieldType, Role};
-use crate::table::Table;
+use crate::table::{Table, is_text, text_values};
 
 /// More distinct values than this make an integer field quantitative (03 §3.1).
 const MAX_ORDINAL_LEVELS: usize = 12;
@@ -288,10 +288,7 @@ impl Facts {
             Kind::Numeric
         } else if data_type.is_temporal() {
             Kind::Temporal
-        } else if matches!(
-            data_type,
-            DataType::Utf8 | DataType::LargeUtf8 | DataType::Dictionary(..)
-        ) {
+        } else if is_text(data_type) || matches!(data_type, DataType::Dictionary(..)) {
             Kind::Text
         } else if *data_type == DataType::Boolean {
             Kind::Boolean
@@ -303,10 +300,10 @@ impl Facts {
             kind,
             ..Self::default()
         };
-        if let Some(strings) = column.as_string_opt::<i32>() {
+        if let Some(strings) = text_values(column.as_ref()) {
             let mut seen = HashSet::new();
             let mut duplicate = false;
-            for value in strings.iter().flatten() {
+            for value in strings.into_iter().flatten() {
                 duplicate |= !seen.insert(value);
             }
             facts.distinct = seen.len();
@@ -506,8 +503,8 @@ fn field_type(
             None,
         );
     }
-    if let Some(strings) = column.as_string_opt::<i32>()
-        && let Some((labels, array)) = ordered_labels(strings)
+    if let Some(strings) = text_values(column.as_ref())
+        && let Some((labels, array)) = ordered_labels(&strings)
     {
         return (
             FieldType::Ordinal,
@@ -550,8 +547,9 @@ fn small_scale(column: &ArrayRef, facts: &Facts) -> bool {
 
 /// Text whose distinct values all belong to one ordered label set: the labels in order (as
 /// written in the data) and the column re-encoded as a dictionary in that order, so a key
-/// is the label's rank.
-fn ordered_labels(strings: &StringArray) -> Option<(Vec<String>, ArrayRef)> {
+/// is the label's rank. `strings` is a text column in any string layout ([`text_values`]),
+/// so the result is the same for all of them.
+fn ordered_labels(strings: &[Option<&str>]) -> Option<(Vec<String>, ArrayRef)> {
     let mut distinct: Vec<String> = Vec::new();
     for value in strings.iter().flatten() {
         let key = value.trim().to_lowercase();
@@ -583,7 +581,7 @@ fn ordered_labels(strings: &StringArray) -> Option<(Vec<String>, ArrayRef)> {
     let keys: UInt8Array = strings
         .iter()
         .map(|value| {
-            let value = value?.trim().to_lowercase();
+            let value = (*value)?.trim().to_lowercase();
             order
                 .iter()
                 .position(|label| label.to_lowercase() == value)
@@ -897,6 +895,66 @@ mod tests {
             dict.keys().iter().collect::<Vec<_>>(),
             [Some(2), Some(0), None, Some(1), Some(0)]
         );
+    }
+
+    /// RFC-0008 §3: the same text in each string layout infers the same field semantics,
+    /// counts the same distinct values and re-encodes ordered labels the same way.
+    #[test]
+    fn every_string_layout_infers_alike() {
+        use arrow_array::{LargeStringArray, StringViewArray};
+
+        type Layout = fn(Vec<Option<&'static str>>) -> ArrayRef;
+
+        let level = vec![
+            Some("High"),
+            Some("low"),
+            None,
+            Some("Medium"),
+            Some("low"),
+            Some("High"),
+        ];
+        let region = vec![
+            Some("north"),
+            Some("south"),
+            Some("north"),
+            Some("east"),
+            Some("south"),
+            Some("north"),
+        ];
+        let layouts: [Layout; 3] = [
+            |v| Arc::new(StringArray::from(v)),
+            |v| Arc::new(LargeStringArray::from(v)),
+            |v| Arc::new(StringViewArray::from(v)),
+        ];
+        let inferred: Vec<_> = layouts
+            .iter()
+            .map(|layout| {
+                let (t, diagnostics) = infer(&table(vec![
+                    ("level", layout(level.clone())),
+                    ("region", layout(region.clone())),
+                ]));
+                let messages: Vec<String> = diagnostics.iter().map(|d| d.message.clone()).collect();
+                (
+                    meta(&t, "level"),
+                    meta(&t, "region"),
+                    t.column("level").unwrap().to_data(),
+                    messages,
+                )
+            })
+            .collect();
+        assert_eq!(inferred[0].0.ftype, Some(FieldType::Ordinal));
+        assert_eq!(inferred[0].1.ftype, Some(FieldType::Nominal));
+        assert!(
+            inferred[0]
+                .3
+                .iter()
+                .any(|m| m.contains("3 distinct values")),
+            "{:?}",
+            inferred[0].3
+        );
+        for other in &inferred[1..] {
+            assert_eq!(other, &inferred[0]);
+        }
     }
 
     #[test]

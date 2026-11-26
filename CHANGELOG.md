@@ -10,6 +10,7 @@ From phase A07, release-plz maintains this file: it generates each release's ent
 
 ### Added
 
+- The chart explorer (B03-T09): in the Plot tab, one Tab stop (Ctrl+Shift+C, Cmd+Shift+C from anywhere) whose keys move through the chart: arrows along and between levels, Home and End, Page Up and Page Down across series, Jump with arrows for 10 % steps and the maximum and minimum, letters for insights and landmarks, G to go to an x value, Ctrl+F to find a value, W for where am I and R to repeat. H or F1 lists the keys. Every explorer command is also in the command palette, from any tab. The table, the plot and the readout follow every move.
 - Functions in the command line and Python (C03-T07): `sonarithm quick --function "sin(x)/x" --domain -20,20` plays a function as a glide with earcons at its zeros, extrema and asymptotes, and first prints its critical points as text, such as "Local maximum at x = 1.5708, y = 1.". `sonarithm inspect` lists a function spec's critical points and prints an audification's speed-up, length and audible band. Python gains `read_function`. The `sonarithm-curvasona` crate is published as experimental.
 - Smoke-run diagnostics (#436): a desktop smoke run that hangs or whose page fails to load now ends with a failing report that names the stuck check, instead of waiting until CI's time limit.
 - Zoom and pan on the plot (B04-T07): drag across the plot to zoom to that range, or use the Plot view toolbar (Zoom in, Zoom out, Reset zoom, Pan left, Pan right) or Ctrl+Plus, Ctrl+Minus and Ctrl+0 (Cmd on macOS). Zooming keeps the cursor in place, and the shown range is displayed and announced.
@@ -26,6 +27,8 @@ From phase A07, release-plz maintains this file: it generates each release's ent
 
 ### Fixed
 
+- Text read from Arrow and Parquet files as large strings or string views is treated like plain text (RFC-0008 §10, step 1): ordered labels such as low, medium and high are recognised, distinct values are counted for the inferred type, provenance columns are read, and transform expressions can use the text. Before, those layouts were inferred differently and some were refused, so the same data could sound different depending on the library that wrote the file.
+- A function now sounds and exports the same on Windows, macOS and Linux. Its values were computed with each system's own maths library, whose results differ in the last digits, so the same function gave slightly different samples, Scores and renders on each system (F-204).
 - The desktop app starts and draws plots under a POSIX "C" locale (for example `LANG=C` on Linux), which made the plot library throw while loading (#436).
 
 ## [0.1.0-alpha] - 2026-10-30

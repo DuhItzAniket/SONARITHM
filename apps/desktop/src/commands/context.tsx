@@ -53,6 +53,34 @@ export function useCommand(id: string, run: () => void): void {
 }
 
 /**
+ * Registers a table of handlers while the component is mounted, as {@link useCommand} does
+ * for one; for a feature that implements many commands (the chart explorer). The IDs must
+ * not change between renders; the latest handlers are always the ones called.
+ */
+export function useCommandTable(
+  table: readonly (readonly [string, () => void])[],
+): void {
+  const registry = useCommands();
+  const latest = useRef(table);
+  useEffect(() => {
+    latest.current = table;
+  });
+  const ids = table.map(([id]) => id).join(" ");
+  useEffect(() => {
+    const removers = ids.split(" ").map((id, index) =>
+      registry.register(id, {
+        run: () => {
+          latest.current[index]?.[1]();
+        },
+      }),
+    );
+    return () => {
+      for (const remove of removers) remove();
+    };
+  }, [registry, ids]);
+}
+
+/**
  * The one keyboard dispatcher (keyboard-and-navigation §2): each key press resolves to the
  * command bound in the highest-precedence active scope. Components never add their own
  * shortcut handlers (coding-standards §12.3); widgets keep their APG keys.

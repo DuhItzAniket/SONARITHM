@@ -16,6 +16,9 @@ arrow-schema.workspace = true
 # Expression evaluation behind the `expr` facade (07 CURVASONA, C03-T01). Never evalexpr
 # (AGPL since 12.0, banned in deny.toml).
 exmex.workspace = true
+# Every function exmex evaluates is libm's, not std's, so a function samples the same on
+# every platform (ADR-0013 §1, F-204).
+libm.workspace = true
 sonarithm-core.workspace = true
 sonarithm-data.workspace = true
 serde_json.workspace = true

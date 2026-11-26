@@ -1016,6 +1016,14 @@ A05 (render engine, audio backends, export) uses F-050 to F-069.
 - **Affects:** C02-T09, A11Y-02, A11Y-12, A11Y-24, FR-008, OD-07, H-06
 - **Papers:** none yet
 
+### F-204 · CURVASONA sampled functions with each platform's own maths library, so one function gave three Scores
+
+- **Date:** 2026-11-01 · **Phase:** C03 · **Type:** engineering (determinism) · **Status:** new
+- **Statement:** The replication gallery's curvasona-suite records, rendered on HW-01 (Windows 11), matched CI's Windows job but failed `the_replication_gallery_renders_reproducibly` on CI Ubuntu and macOS (#449, job 124767740975, ebf14dd1 merged into 41b7a992). A local re-record after merging `main` changed none of the 129 files, so the failure was not a stale record. The cause: CURVASONA evaluates expressions through exmex, and exmex's default operators call the `std` float functions (`sin`, `exp`, `ln`, `powf`…), which each platform's maths library computes to slightly different last bits. Two step sizes in the derivatives also used `std` (`EPSILON.cbrt()`, `EPSILON.powf(0.25)`). The sampled `y` and `dy` columns therefore differed by platform, and so did the data fingerprint, the Score's hash and the render, against ADR-0013 §1 (a byte-identical Score from platform-independent maths). Which values differed on Linux and macOS was not inspected: CI reports only that the file differs. The fix gives exmex its own operator set (`expr/ops.rs`) in which every admitted function and `^` is `libm`'s, folds constant powers with `libm::pow`, and writes the two step sizes with `libm` or as the exact constant 2^-13.
+- **Evidence:** `crates/engines/sonarithm-curvasona/src/expr/ops.rs`; the test `adr_0013_every_function_evaluates_with_libm_bit_for_bit` (every name in `FUNCTIONS`, and `^`, bit for bit against `libm` at six points); CI's three platforms on #449 once it is re-recorded on top of the fix. Re-recorded on HW-01 (Windows 11), the fix moved 30 of the 40 suite tables and one render (the inverse hyperbolic tangent's audio; its loudness, peak and duration are unchanged); a bisect puts every other moved field on arrow 60.2 (#470, F-222)
+- **Evidence level / confidence:** EV-D / Strong for the cause (the failing OS set, the zero-change local re-record, and exmex's operator source); cross-platform agreement after the fix is shown by #449's CI, not yet
+- **Affects:** ADR-0013 §1; every function spec's Score and manifest (C03-T02, C03-T06, C03-T07); the curvasona-suite records; any snapshot that holds a function's full-precision values
+
 ### F-201 · A hole on a pole's steep slope was taken for a jump, because the sides were compared with a fixed tolerance
 
 - **Date:** 2026-11-01 · **Phase:** C03 · **Type:** engineering (robustness) · **Status:** new
@@ -1245,17 +1253,32 @@ A05 (render engine, audio backends, export) uses F-050 to F-069.
 - **Affects:** B03-T09 (point cue), A05 render voice pools, 06 §3 and §5
 - **Papers:** none yet
 
-### F-222 · A patch release of arrow moved every data fingerprint, because the fingerprint hashes arrow-ipc's bytes
+### F-222 · A minor release of arrow moved every data fingerprint, because the fingerprint hashes arrow-ipc's bytes
 
 - **Date:** 2026-11-26 · **Phase:** maintenance (A04 code) · **Type:** engineering (determinism) · **Status:** new
-- **Statement:** Fixing main's `cargo deny` failure (RUSTSEC-2026-0442 in arrow-data) bumped arrow from 60.0.0 to 60.2.0, a patch range. Every data fingerprint changed although no data did.
+- **Statement:** Fixing main's `cargo deny` failure (RUSTSEC-2026-0442 in arrow-data) bumped arrow from 60.0.0 to 60.2.0, a minor release. Every data fingerprint changed although no data did.
   - **Why:** `sonarithm_data::fingerprint` hashes the Arrow IPC stream that `arrow_ipc::writer::StreamWriter` writes from a canonical copy of the table (`crates/sonarithm-data/src/fingerprint.rs`), so the digest depends on arrow-ipc's encoder as well as on the values.
-  - **What moved:** the two pinned corpus digests, 7 insta snapshots, 3 golden Scores and the parity Score (`data_fingerprint` only), and 98 lines of the replication gallery (each record's `data.fingerprint` and the `releaseIndependentHash` that covers it).
+  - **What moved:** the two pinned corpus digests, 16 insta snapshots (CLI 1, CURVASONA 1, NUMISONA 7, PLOTSONA 6, facade 1), 3 golden Scores and the parity Score (`data_fingerprint` only), and 98 lines of the replication gallery (each record's `data.fingerprint` and the `releaseIndependentHash` that covers it).
   - **What did not:** golden audio (all 10 cases identical) and the parity WAV hash.
-  - **Why it matters:** the module doc expected this for an Arrow upgrade, but in a patch release it turns a security fix into a re-record of every provenance record, and render manifests from older builds no longer match the same data (ADR-0013). Which arrow-ipc change altered the bytes was not traced.
+  - **Why it matters:** the module doc expected this for an Arrow upgrade, but in a minor release it turns a security fix into a re-record of every provenance record, and render manifests from older builds no longer match the same data (ADR-0013). Which arrow-ipc change altered the bytes was not traced.
 - **Evidence:** `crates/sonarithm-data/tests/fingerprints.rs` (`corpus_fingerprints_are_pinned`, `loaded_tables_with_inference_are_pinned`); the re-recorded files in the deny-fix PR; #469 (a value-based fingerprint proposal)
 - **Evidence level / confidence:** EV-C / Strong (every changed record checked: only fingerprints and the hashes that cover them moved)
 - **Affects:** 03 §2 (`Fingerprint`), ADR-0013, F-071; every render manifest and golden or replication record; #469
+- **Papers:** none yet
+
+### F-224 · The data layer read Arrow's large and view string layouts differently from plain strings in four places
+
+- **Date:** 2026-11-26 · **Phase:** maintenance (A04 code) · **Type:** engineering (consistency) · **Status:** fixed (RFC-0008 §10 step 1)
+- **Statement:** RFC-0008 found two places where Utf8View text was not treated as text. While fixing them, four places in `sonarithm-data` turned out to read only some of the three string layouts (Utf8, LargeUtf8, Utf8View) that hold the same values:
+  - **inference** (`infer/semantic.rs`): Utf8View was not classed as text; and both LargeUtf8 and Utf8View skipped the distinct-value count and the ordered-label re-encoding, so "low, medium, high" became ordinal only as Utf8;
+  - **the data view** (`view.rs`): a dictionary of Utf8View values showed no text;
+  - **provenance** (`provenance.rs`): a provenance column of Utf8View text, or a dictionary of it, was refused as invalid;
+  - **transform expressions** (`transform/expr.rs`): only Utf8 text, or a dictionary of it, could be read.
+  - **Why it matters:** in-memory data is normalised to plain strings (`read_batches`, F-100), but Arrow IPC and Parquet files keep the layout their writer chose (pyarrow's `large_string`, polars' string views), so the same data could compile differently depending on the library that wrote the file.
+- **Fix:** one helper (`table::is_text`, `table::text_values`) that every reader uses. Tests in each module, and `crates/sonarithm/tests/string_layouts.rs`, which compiles the same table in each layout to the same Score.
+- **Evidence:** the tests above; RFC-0008 §3 and §10
+- **Evidence level / confidence:** EV-C / Strong
+- **Affects:** 03 §2 and §3, RFC-0008, F-100
 - **Papers:** none yet
 
 ### F-225 · Vitest 4's headless screenshots were scaled to 0.9375, so its baselines blended the 1px borders
@@ -1269,6 +1292,8 @@ A05 (render engine, audio backends, export) uses F-050 to F-069.
 - **Evidence:** CI job 139554179659 and its `visual-baselines` artifact. `@vitest/browser` 4.1.12 `orchestrator` `setIframeViewport` against 5.0.5's orchestrator, which applies the scale under `config.browser.ui`. Both versions' `defaultOptions` in `dist/index.js`.
 - **Evidence level / confidence:** EV-C / Strong (sizes, colours and the source of both versions checked)
 - **Affects:** testing-strategy §12 (visual baselines); `packages/ui/test/visual`
+- **Papers:** none yet
+
 - **Papers:** none yet
 
 ### F-226 · Playwright 1.65's Firefox crashes when axe runs after a named lookup, so two Preferences tests skip their axe scan in Firefox
