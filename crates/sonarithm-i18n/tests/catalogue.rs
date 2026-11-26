@@ -120,6 +120,25 @@ fn every_catalogue_file_is_embedded() {
     }
 }
 
+/// No catalogue line holds a tab, a trailing space or a run of spaces after its
+/// indentation: the marks a lost `\` line continuation leaves when a file is written
+/// through a shell heredoc. Indentation itself (continuation lines, attributes) is allowed.
+#[test]
+fn catalogue_lines_have_no_tabs_or_runs_of_spaces() {
+    let mut broken = Vec::new();
+    for locale in CATALOGUE_LOCALES {
+        for (file, source) in catalogue_files(locale).unwrap_or_default() {
+            for (number, line) in source.lines().enumerate() {
+                let text = line.trim_start_matches(' ');
+                if line.contains('\t') || text.contains("  ") || text.ends_with(' ') {
+                    broken.push(format!("{locale}/{file}:{}", number + 1));
+                }
+            }
+        }
+    }
+    assert!(broken.is_empty(), "fix the spacing at {broken:?}");
+}
+
 #[test]
 fn nfr_09_every_catalogue_loads() {
     for locale in CATALOGUE_LOCALES {
