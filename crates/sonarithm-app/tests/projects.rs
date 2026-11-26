@@ -696,10 +696,12 @@ fn rfc_0002_12_a_function_dataset_round_trips_as_its_definition() {
     assert_eq!(manifest_of(&csv_project)["formatVersion"], "1.0");
 }
 
-/// RFC-0002 §12: a function whose samples differ from the saved fingerprint (CURVASONA
-/// sampling differently) opens with the new samples and a warning (`SNR-APP-034`).
+/// RFC-0002 §12, following §13: a function whose samples differ from the saved fingerprint
+/// (CURVASONA sampling differently) opens with the new samples and the warning
+/// `SNR-APP-093`, as embedded data another build fingerprinted does; the next save records
+/// the new fingerprint, so reopening is quiet.
 #[test]
-fn rfc_0002_12_a_changed_function_fingerprint_is_a_warning() {
+fn rfc_0002_12_a_changed_function_fingerprint_opens_with_093_and_is_saved() {
     let dir = TempDir::new("function-fingerprint");
     let spec = spec("d1").into_bytes();
     let mut crafted = manifest("1.1", &[member("specs/main.json", &spec)]);
@@ -716,16 +718,34 @@ fn rfc_0002_12_a_changed_function_fingerprint_is_a_warning() {
     );
     let opened = project::open(&path, &mut || 1).unwrap();
     assert_eq!(opened.warnings.len(), 1, "{:?}", opened.warnings);
-    assert_eq!(opened.warnings[0].code, "SNR-APP-034");
-    assert!(opened.warnings[0].message.contains("samples differently"));
+    assert_eq!(opened.warnings[0].code, "SNR-APP-093");
+    let message = &opened.warnings[0].message;
+    assert!(
+        message.contains("`f(x) = x^2`") && message.contains("samples differently"),
+        "{message}"
+    );
     let dataset = &opened.project.datasets[0];
     assert!(dataset.table.is_some());
     assert!(dataset.function.is_some());
     assert_ne!(
         dataset.fingerprint,
         "0".repeat(64),
-        "the new fingerprint is recorded"
+        "the new fingerprint is kept"
     );
+
+    let saved = dir.path().join("saved.sonarithm");
+    std::fs::write(
+        &saved,
+        project::write(&opened.project, &saved, true).unwrap(),
+    )
+    .unwrap();
+    assert_eq!(
+        manifest_of(&saved)["datasets"][0]["fingerprint"],
+        dataset.fingerprint.as_str(),
+        "the next save records it"
+    );
+    let reopened = project::open(&saved, &mut || 1).unwrap();
+    assert!(reopened.warnings.is_empty(), "{:?}", reopened.warnings);
 }
 
 /// The dataset fingerprints a bundle's manifest records, in manifest order.

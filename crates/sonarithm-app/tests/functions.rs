@@ -247,11 +247,15 @@ fn sdr_31_the_calculator_agrees_with_the_compile() {
 fn rfc_0002_12_autosave_keeps_a_function_and_recovers_it() {
     let mut h = Harness::new("function-autosave");
     let csv = h.dir.path().join("temps.csv");
-    std::fs::write(&csv, "day,temp
+    std::fs::write(
+        &csv,
+        "day,temp
 1,20.5
 2,21.0
 3,19.8
-").unwrap();
+",
+    )
+    .unwrap();
     h.ok(&json!({ "command": "dataset_open", "args": { "path": csv } }));
     h.ok(&cubic());
     let spec = json!({

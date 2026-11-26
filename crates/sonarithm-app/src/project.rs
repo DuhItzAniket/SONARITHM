@@ -879,7 +879,9 @@ fn embedded(
         warnings.push(IpcError::new(
             &codes::DATASET_REFINGERPRINTED,
             format!(
-                "The embedded data `{}` was fingerprinted by another SONARITHM build. It                  matches the project's checksum, so it opens unchanged; saving the project                  records the new fingerprint.",
+                "The embedded data `{}` was fingerprinted by another SONARITHM build. It \
+                 matches the project's checksum, so it opens unchanged; saving the project \
+                 records the new fingerprint.",
                 file_name(&entry.name)
             ),
         ));
@@ -899,9 +901,11 @@ fn embedded(
 }
 
 /// A function dataset (format 1.1): sampled again from its definition. A different
-/// fingerprint (CURVASONA samples differently from the saving build) is a warning, and
-/// the new samples are used; an expression this build cannot read leaves it unavailable,
-/// its definition kept for the next save.
+/// fingerprint (CURVASONA samples differently from the saving build) is the warning
+/// `SNR-APP-093`, as for embedded data another build fingerprinted (RFC-0002 §12, §13):
+/// the new samples are used and the next save records their fingerprint. An expression
+/// this build cannot read leaves it unavailable (`SNR-APP-034`), its definition kept for
+/// the next save.
 fn function_dataset(
     entry: &DatasetEntry,
     ids: u32,
@@ -941,9 +945,10 @@ fn function_dataset(
         .to_string();
     if fingerprint != entry.fingerprint {
         warnings.push(IpcError::new(
-            &codes::LINKED_DATA,
+            &codes::DATASET_REFINGERPRINTED,
             format!(
-                "The function `{name}` samples differently in this version; it opens with the new samples, and saving records them."
+                "The function `{name}` samples differently in this SONARITHM build. It \
+                 opens with the new samples; saving the project records their fingerprint."
             ),
         ));
     }

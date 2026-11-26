@@ -173,7 +173,7 @@ A fuzz target (`project_open`) runs the reader on arbitrary bytes in `nightly.ym
 
 ### 10. Codes
 
-`SNR-APP-030` no project path; `031` newer major version; `032` unsafe or damaged bundle; `033` absolute path refused; `034` linked data missing or changed (warning); `035` newer minor version or unknown members (warning). Amendment 1 (§12) adds function datasets to `034` (fingerprint changed on re-sampling) and unknown storages to `035`, and retires `089`. Amendment 2 (§13) adds `093`: an embedded dataset fingerprinted again (warning).
+`SNR-APP-030` no project path; `031` newer major version; `032` unsafe or damaged bundle; `033` absolute path refused; `034` linked data missing or changed (warning); `035` newer minor version or unknown members (warning). Amendment 1 (§12) adds unknown storages to `035`, a function that cannot be sampled to `034`, and retires `089`. Amendment 2 (§13) adds `093`: an embedded dataset fingerprinted again (warning); a function whose fingerprint changed on re-sampling is `093` too (§12).
 
 ### 11. Testing
 
@@ -213,18 +213,18 @@ A fuzz target (`project_open`) runs the reader on arbitrary bytes in `nightly.ym
 
 No data member is written: the definition is the dataset. The manifest stays canonical JSON (§3), so the entry is byte-stable.
 
-**Reading.** A 1.1 reader samples the function again with CURVASONA's limits (the expression language's budgets, ADR-0028) and compares the fingerprint. Sampling is deterministic (ADR-0013), so a mismatch means CURVASONA samples differently from the build that saved the project (a fix such as F-194 can add or merge rows). That is a warning (`SNR-APP-034`, naming the dataset by its name), not a refusal: the definition is what the project stores, so the function opens with the new samples, and the next save records the new fingerprint. An expression this build cannot read (`SNR-ENG-400` to `404`) leaves the dataset unavailable with that diagnostic, and its entry is kept on re-save (below).
+**Reading.** A 1.1 reader samples the function again with CURVASONA's limits (the expression language's budgets, ADR-0028) and compares the fingerprint. Sampling is deterministic (ADR-0013), so a mismatch means CURVASONA samples differently from the build that saved the project (a fix such as F-194 can add or merge rows). That is a warning (`SNR-APP-093`, naming the dataset by its name), not a refusal: the definition is what the project stores, so the function opens with the new samples, and the next save records the new fingerprint. This follows §13: `093` is the warning for a dataset that opens with a fingerprint another build computed differently, and `034` keeps meaning that linked data is unavailable. Until 2026-11-26 this case was `034`; no released build wrote it. An expression this build cannot read (`SNR-ENG-400` to `404`) leaves the dataset unavailable with that diagnostic, and its entry is kept on re-save (below).
 
 **Unknown storages.** RFC-0002 §5 lets a 1.x reader open a newer minor version and ignore unknown manifest fields, but a storage value it does not know is not a field: read strictly, the entry fails to parse, and the whole bundle is refused as damaged (`SNR-APP-032`). From 1.1, a reader treats a dataset entry whose `storage` it does not know as an **unavailable dataset**: it warns with `SNR-APP-035`, naming the dataset and the storage; specs that use it report `SNR-COMP-026` when compiled, as for missing linked data (§4); and on re-save the entry is written back byte for byte (its known and unknown fields alike), so a newer build's data survives a round trip through an older one. A future storage then needs only a minor version.
 
 **Writing.** A writer writes `formatVersion` 1.1 only when the project has a function dataset or keeps an unknown-storage entry, and 1.0 otherwise, so projects without functions stay byte-identical to what 1.0 writers produce. A 1.0 reader (only development builds; no released build reads projects) refuses a 1.1 bundle with a function dataset as damaged; that is the behaviour this amendment fixes for later versions.
 
-**Codes.** `SNR-APP-089` (a project with a function dataset cannot be saved) is retired when this lands in code: it stays registered as retired and is never reused. `SNR-APP-034` and `035` gain the cases above.
+**Codes.** `SNR-APP-089` (a project with a function dataset cannot be saved) is retired when this lands in code: it stays registered as retired and is never reused. `SNR-APP-093` (§13) and `035` gain the cases above; `034` gains only a function this build cannot sample.
 
 **Testing** (in the implementation PR):
 
 - A function dataset round-trips: definition, rows and fingerprint equal, and saving again without changes gives identical bytes.
-- A fingerprint mismatch (a fixture whose fingerprint is altered) opens with `SNR-APP-034`, and the new fingerprint is saved.
+- A fingerprint mismatch (a fixture whose fingerprint is altered) opens with `SNR-APP-093`, and the new fingerprint is saved.
 - A fixture bundle with `storage: "future-kind"` opens with `SNR-APP-035`, the dataset unavailable; saving keeps its entry byte for byte.
 - A project without functions is written as 1.0, byte-identical to before.
 - The `project_open` fuzz target gains function and unknown-storage entries.

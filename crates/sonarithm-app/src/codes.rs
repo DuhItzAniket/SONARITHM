@@ -440,14 +440,15 @@ pub const NAV_NO_TREE: CodeInfo = CodeInfo {
 
 /// An embedded dataset whose member checksum verifies but whose fingerprint differs: another
 /// build fingerprinted it, so it opens and the next save records the new fingerprint
-/// (RFC-0002 §13).
+/// (RFC-0002 §13). A function dataset that samples differently from the saving build opens
+/// the same way (§12).
 pub const DATASET_REFINGERPRINTED: CodeInfo = CodeInfo {
     code: "SNR-APP-093",
     severity: Severity::Warning,
     summary: "A dataset was fingerprinted again",
-    help: "The data matches the project's own checksum, so it opens unchanged; another \
-           SONARITHM build computed its fingerprint differently. Save the project to record \
-           the new fingerprint.",
+    help: "Another SONARITHM build computed the dataset's fingerprint differently. Embedded \
+           data matches the project's own checksum, so it opens unchanged; a function opens \
+           sampled again from its definition. Save the project to record the new fingerprint.",
     rules: &[],
     status: CodeStatus::Active,
 };
