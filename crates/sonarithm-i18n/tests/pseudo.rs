@@ -95,7 +95,7 @@ fn sample_args(style: UnitStyle) -> Args {
         .text("severity", "19")
         .number("line", 4.0)
         .number("column", 12.0)
-        .text("label", "20")
+        // `label` is shared with the function messages above.
         .text("cause", "21")
         .text("duration", "22")
 }

@@ -93,7 +93,7 @@ function sampleArgs(style: string): MessageArgs {
     severity: "19",
     line: { number: 4 },
     column: { number: 12 },
-    label: "20",
+    // `label` is shared with the function messages above.
     cause: "21",
     duration: "22",
   };
