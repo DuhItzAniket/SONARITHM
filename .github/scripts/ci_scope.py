@@ -87,6 +87,7 @@ SCOPED_JOBS = {
     "network-deny": "rust",
     "chart-accuracy": "rust",
     "frontend": "code",
+    "licenses-npm": "code",
     "frontend-browser": "code",
     "desktop": "code",
 }

@@ -56,7 +56,7 @@ This table lists CI jobs. The authoritative list of test types per phase is [tes
 | `semver` | ubuntu | `cargo semver-checks` on published library crates (needs a published baseline) | A07 |
 | `python` | ubuntu, windows, macos | Build the wheel with maturin, install it, run the pytest smoke suite | A07 |
 | `frontend` | ubuntu, windows, macos | `pnpm install --frozen-lockfile`, lint, typecheck, Vitest browser-mode tests, Storybook axe checks and Playwright with Tauri IPC mocking (both from B02) | B01 |
-| `licenses-npm` | ubuntu | npm licence allowlist check ([supply chain](supply-chain-and-licensing.md#npm-licence-checking)) | B01 |
+| `licenses-npm` | ubuntu | `pnpm -r licenses list --json` (and `--prod` for the shipped packages) checked by `.github/scripts/npm_licences.py` against the allowlist, with the development-only licences only for packages that do not ship ([supply chain](supply-chain-and-licensing.md#npm-licence-checking)). Runs whenever the frontend jobs do | 2026-11 (planned for B01) |
 | `reuse` | ubuntu | `reuse lint` ([supply chain](supply-chain-and-licensing.md#reuse-and-spdx-headers)); runs in `docs.yml` | A01 |
 | `all-checks-pass` | ubuntu | Fails if any job above failed or was cancelled, or was skipped when its change scope said it should run (`ci_scope.py gate`) | A01 |
 
@@ -72,7 +72,7 @@ GitHub runs only a few jobs at once for this repository, so a PR's checks mostly
 |---|---|---|
 | Everything | Any `Cargo.toml` or `Cargo.lock`, `.github/**`, `schemas/**`, `xtask/**`, `packages/ipc/src/generated/**` | Every job runs |
 | Rust | Anything not listed below, `apps/desktop/src-tauri/**`, and any file Rust compiles in with a literal `include_str!` or `include_bytes!` path (today `docs/research/design-rules.md` and `docs/architecture/04-sonification-spec.md`, found by scanning the `.rs` files on each run) | Every job runs |
-| Frontend | `apps/desktop/**` except `src-tauri/`, `packages/**` (Markdown included: each package's `prettier --check .` reads it), the root `package.json`, `pnpm-lock.yaml`, `pnpm-workspace.yaml`, `eslint.config.js`, `prettier.config.js`, `stylelint.config.js` and `tsconfig.base.json` | `frontend`, `frontend-browser` and `desktop` (which builds the shell) run; the other `ci.yml` jobs are skipped |
+| Frontend | `apps/desktop/**` except `src-tauri/`, `packages/**` (Markdown included: each package's `prettier --check .` reads it), the root `package.json`, `pnpm-lock.yaml`, `pnpm-workspace.yaml`, `eslint.config.js`, `prettier.config.js`, `stylelint.config.js` and `tsconfig.base.json` | `frontend`, `licenses-npm`, `frontend-browser` and `desktop` (which builds the shell) run; the other `ci.yml` jobs are skipped |
 | Docs | `docs/**`, `*.md`, `LICENSES/**`, and the files only `docs.yml` reads (`REUSE.toml`, `lychee.toml`, `.markdownlint-cli2.jsonc`) | Every `ci.yml` job but `changes` and the gate is skipped |
 
 The PR takes the widest class among its paths. `docs.yml` always runs all its jobs: `markdown`, `internal-links`, `external-links` and `reuse` do their full check, and `schema-diff` builds and regenerates only when Rust or a generated file changed (`docs/reference/error-codes.md` counts, so a hand edit of it is still caught). `dco`, `pr-title` and CodeQL do not depend on the paths.
@@ -97,14 +97,14 @@ A file that code reads at run time, not through `include_str!` or `include_bytes
 | PR changes | `ci` | `docs` | `codeql` + `dco` + `pr-title` | `nightly` | Total before | Total after |
 |---|---|---|---|---|---|---|
 | Docs only | 2 | 5 | 5 | 0 | 37 | 12 |
-| Frontend only | 7 | 5 | 5 | 0 | 37 | 17 |
-| Rust, no fuzzed crate (with `wheels`) | 28 | 5 | 5 | 0 | 47 | 48 |
-| Rust in `sonarithm-data` (with `wheels`) | 28 | 5 | 5 | 1 + 4 fuzz + 6 soak | 74 | 59 |
-| Rust in PLOTSONA (with `wheels`) | 28 | 5 | 5 | 1 + 9 fuzz + 6 soak | 74 | 64 |
-| Rust in `sonarithm-core` only (with `wheels`) | 28 | 5 | 5 | 1 + 21 fuzz + 6 soak | 74 | 76 |
-| `Cargo.lock` only (with `wheels`) | 28 | 5 | 5 | 1 + 21 fuzz + 6 soak | 47 | 76 |
-| Dependency bump, root `Cargo.toml` and `Cargo.lock` (with `wheels` and the `release-plz` dry run) | 28 | 5 | 5 | 1 + 21 fuzz + 6 soak | 48 | 77 |
-| `.github/**` only, not `nightly.yml` or `ci_scope.py` | 28 | 5 | 5 | 0 | 37 | 38 |
+| Frontend only | 8 | 5 | 5 | 0 | 37 | 18 |
+| Rust, no fuzzed crate (with `wheels`) | 29 | 5 | 5 | 0 | 47 | 49 |
+| Rust in `sonarithm-data` (with `wheels`) | 29 | 5 | 5 | 1 + 4 fuzz + 6 soak | 74 | 60 |
+| Rust in PLOTSONA (with `wheels`) | 29 | 5 | 5 | 1 + 9 fuzz + 6 soak | 74 | 65 |
+| Rust in `sonarithm-core` only (with `wheels`) | 29 | 5 | 5 | 1 + 21 fuzz + 6 soak | 74 | 77 |
+| `Cargo.lock` only (with `wheels`) | 29 | 5 | 5 | 1 + 21 fuzz + 6 soak | 47 | 77 |
+| Dependency bump, root `Cargo.toml` and `Cargo.lock` (with `wheels` and the `release-plz` dry run) | 29 | 5 | 5 | 1 + 21 fuzz + 6 soak | 48 | 78 |
+| `.github/**` only, not `nightly.yml` or `ci_scope.py` | 29 | 5 | 5 | 0 | 37 | 39 |
 
 ## Required status checks
 
