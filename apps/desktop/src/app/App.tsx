@@ -152,6 +152,21 @@ export function App({
       setWorkspaceTab("spec");
     });
   };
+  // Whether the spec editor's completion opens while typing (B05-T03): off unless set.
+  const [autoComplete, setAutoComplete] = useState(false);
+  useEffect(() => {
+    if (client === null) return;
+    let live = true;
+    client.call({ command: "settings_get" }).then(
+      (settings) => {
+        if (live) setAutoComplete(settings.editor.autoComplete);
+      },
+      () => undefined,
+    );
+    return () => {
+      live = false;
+    };
+  }, [client]);
   const [preferencesOpen, setPreferencesOpen] = useState(false);
   useCommand("app.preferences", () => {
     setPreferencesOpen(true);
@@ -243,7 +258,10 @@ export function App({
                     </p>
                   }
                 >
-                  <SpecEditor announcer={announcer} autoComplete={false} />
+                  <SpecEditor
+                    announcer={announcer}
+                    autoComplete={autoComplete}
+                  />
                 </Suspense>
               ) : (
                 startText
@@ -289,6 +307,9 @@ export function App({
         client={client}
         isOpen={preferencesOpen}
         onOpenChange={setPreferencesOpen}
+        onSaved={(settings) => {
+          setAutoComplete(settings.editor.autoComplete);
+        }}
       />
       <CommandPalette
         isOpen={paletteOpen}

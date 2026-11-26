@@ -313,6 +313,10 @@ ui-spec-no-completions = No completions here.
 # The spec changed outside the editor (the inspector, undo) while the editor has unapplied edits.
 ui-spec-changed-outside = The spec changed outside the editor. Your unapplied edits are kept.
 ui-spec-load-current = Load the current spec
+# Preferences (B05-T03): whether completion opens while typing; off by default.
+ui-spec-editor-section = Spec editor
+ui-auto-complete = Show completions while typing
+ui-auto-complete-note = When off, completions open only when you ask, with { $key }. A list that opens while typing can interrupt your screen reader.
 # Undo and redo name which history they stepped (B05-T03): typing in the editor, or the spec.
 ui-undo-text = Undid a text edit.
 ui-redo-text = Redid a text edit.

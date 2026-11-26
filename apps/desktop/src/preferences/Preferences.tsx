@@ -14,6 +14,8 @@ import {
 } from "@sonarithm/ui";
 import { useEffect, useState } from "react";
 
+import { displayChord } from "../commands/chords.ts";
+import { useCommands } from "../commands/context.tsx";
 import { useLocalizer } from "../i18n.ts";
 import styles from "./preferences.module.css";
 import { settingsOf } from "./settings.ts";
@@ -43,12 +45,17 @@ export function Preferences({
   client,
   isOpen,
   onOpenChange,
+  onSaved,
 }: {
   readonly client: Client | null;
   readonly isOpen: boolean;
   readonly onOpenChange: (isOpen: boolean) => void;
+  /** Called with the settings after each save, for views that follow a setting. */
+  readonly onSaved?: (settings: Settings) => void;
 }) {
   const t = useLocalizer();
+  const registry = useCommands();
+  const completeKey = registry.bindings("spec.complete")[0];
   const [settings, setSettings] = useState<Settings | null>(null);
   const [devices, setDevices] = useState<readonly DeviceSummary[]>([]);
   const [volume, setVolume] = useState<number | null>(null);
@@ -159,6 +166,25 @@ export function Preferences({
     );
   };
 
+  /**
+   * Whether the spec editor's completion list opens while typing (B05-T03). Off by default:
+   * a list that opens while typing interrupts speech (INFER, OD-30).
+   */
+  const saveAutoComplete = (autoComplete: boolean) => {
+    if (client === null || settings === null) {
+      return;
+    }
+    const next: Settings = { ...settings, editor: { autoComplete } };
+    client.call({ command: "settings_set", args: { settings: next } }).then(
+      (saved) => {
+        const current = settingsOf(saved);
+        setSettings(current);
+        onSaved?.(current);
+      },
+      () => undefined,
+    );
+  };
+
   return (
     <ModalDialog
       title={t.format("ui-preferences")}
@@ -240,6 +266,27 @@ export function Preferences({
               onChange={saveGpu}
             >
               {t.format("ui-gpu-high-performance")}
+            </Switch>
+          </section>
+          <section
+            aria-labelledby="preferences-editor"
+            className={styles.section}
+          >
+            <h3 id="preferences-editor" className={styles.heading}>
+              {t.format("ui-spec-editor-section")}
+            </h3>
+            <Switch
+              isSelected={settings?.editor.autoComplete === true}
+              isDisabled={settings === null}
+              description={t.format("ui-auto-complete-note", {
+                key:
+                  completeKey === undefined
+                    ? t.format("keyboard-no-binding")
+                    : displayChord(completeKey, registry.platform),
+              })}
+              onChange={saveAutoComplete}
+            >
+              {t.format("ui-auto-complete")}
             </Switch>
           </section>
           <DialogActions>

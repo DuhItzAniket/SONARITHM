@@ -47,8 +47,9 @@ Every effective value is inspectable through `sonarithm inspect --settings` and 
   - Only WebView2 (Windows) can be asked. The host reads the setting at start-up and adds `--force_high_performance_gpu` to wry's default browser arguments ([09 §7](09-desktop-app.md#7-startup-sequence-target--2-s-cold)), so a change applies after a restart.
   - Elsewhere the Preferences switch is disabled, with the reason in visible text.
   - There is no GPU detection and no telemetry.
+- `editor.autoComplete` (B05-T03; approved by the coordinator on 2026-11-26): whether the spec editor's completion list opens while typing. `false` by default, so completion opens only on request (Primary+I), because a list that opens while typing interrupts speech. INFER: checked in the OD-30 walkthrough. Preferences has a switch for it; a settings file without `editor` reads the default.
 
-Both are additive, with serde defaults, so `PROTOCOL_VERSION` and the settings version are unchanged.
+All are additive, with serde defaults, so `PROTOCOL_VERSION` and the settings version are unchanged.
 
 ## 4. Project file format
 

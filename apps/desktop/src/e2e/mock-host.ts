@@ -75,6 +75,7 @@ let settings: Settings = {
   },
   gpu: "default",
   braille: { mode: "review" },
+  editor: { autoComplete: false },
 };
 
 const DEVICES = [

@@ -27,6 +27,7 @@ const BROKEN = `{
 interface Mock {
   commands(): string[];
   specText(): string | null;
+  settings(): { editor: { autoComplete: boolean } };
 }
 
 const host = (page: Page) =>
@@ -251,6 +252,40 @@ test("a_change_outside_the_editor_shows_in_it_and_keeps_unapplied_edits", async 
   expect(await editor(page).textContent()).toBe(
     (await specText(page))?.replaceAll("\n", ""),
   );
+});
+
+test("b05_t03_preferences_turn_on_completion_while_typing_by_keyboard", async ({
+  page,
+}) => {
+  const mod = await primary(page);
+  await page.keyboard.press(`${mod}+Comma`);
+  const dialog = page.getByRole("dialog", { name: "Preferences" });
+  const toggle = dialog.getByRole("switch", {
+    name: "Show completions while typing",
+  });
+  await expect(toggle).not.toBeChecked();
+  await expect(toggle).toHaveAccessibleDescription(
+    /completions open only when you ask/,
+  );
+  await toggle.focus();
+  await page.keyboard.press("Space");
+  await expect(toggle).toBeChecked();
+  await expect
+    .poll(async () =>
+      (await host(page)).evaluate((m) => m.settings().editor.autoComplete),
+    )
+    .toBe(true);
+  await page.keyboard.press("Escape");
+  await expect(dialog).toBeHidden();
+
+  // Now typing a key opens the list on its own.
+  await openSpecTab(page);
+  await page.keyboard.press("Tab");
+  await page.keyboard.press(`${mod}+Home`);
+  await page.keyboard.press("End");
+  await page.keyboard.press("Enter");
+  await page.keyboard.type('"na');
+  await expect(page.getByRole("listbox")).toBeVisible();
 });
 
 test("completion_opens_on_request_and_tab_leaves_the_editor", async ({
