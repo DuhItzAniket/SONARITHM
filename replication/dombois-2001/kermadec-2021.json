@@ -1,0 +1,45 @@
+{
+  "specVersion": "0.4",
+  "name": "Dombois (2001): Kermadec 2021 at MORC (far, about 160°)",
+  "description": "The Mw 8.0 Kermadec Islands earthquake of 2021-03-04 19:28:36 UTC, about 160° from GEOFON station MORC (beyond 103°, so its waves arrive through the core): 60 minutes of the vertical component from 19:43:35 UTC, audified 2,200 times faster as Dombois (2001) did, so a far quake sounds as a longer, deeper rumble. Data: GEOFON Seismic Network (GFZ), doi:10.14470/TR560404, CC BY 4.0. Replication gallery, C03-T06.",
+  "data": {
+    "source": {
+      "kind": "file",
+      "path": "data/kermadec-2021-morc-bhz.parquet"
+    },
+    "fields": {
+      "time": {
+        "role": "time",
+        "description": "Sample time, UTC"
+      },
+      "z": {
+        "role": "y",
+        "unit": "counts",
+        "label": "Vertical ground velocity, DC removed",
+        "description": "Raw counts of the BHZ channel minus the window's mean"
+      }
+    }
+  },
+  "substrate": {
+    "time": {
+      "field": "time"
+    }
+  },
+  "tracks": [
+    {
+      "id": "z",
+      "mark": "audify",
+      "audify": {
+        "k": 2200
+      }
+    }
+  ],
+  "x-attribution": {
+    "source": "GEOFON Data Centre (1993): GEOFON Seismic Network. Deutsches GeoForschungsZentrum GFZ. doi:10.14470/TR560404",
+    "doi": "10.14470/TR560404",
+    "licence": "CC-BY-4.0",
+    "channel": "GE.MORC..BHZ (STS-2/N, 20 samples per second), Moravsky Beroun, Czech Republic",
+    "modified": "Clip of one channel; the window's mean removed as an integer offset; converted from miniSEED to Parquet by convert.py",
+    "request": "https://geofon.gfz.de/fdsnws/dataselect/1/query?network=GE&station=MORC&location=--&channel=BHZ, 2021-03-04T19:43:35 to 2021-03-04T20:43:35 UTC"
+  }
+}
