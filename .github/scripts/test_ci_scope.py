@@ -217,6 +217,20 @@ class Gate(unittest.TestCase):
             ["desktop: skipped (not skipped by design)"],
         )
 
+    def test_the_npm_licence_check_runs_with_the_frontend(self):
+        # Skipped only on docs-only PRs; on a frontend-only PR or on main it must run and pass.
+        self.assertEqual(SCOPED_JOBS["licenses-npm"], "code")
+        self.assertEqual(gate(needs(DOCS_ONLY, **{"licenses-npm": "skipped"})), [])
+        self.assertEqual(gate(needs(FRONTEND_ONLY, **{"licenses-npm": "success"})), [])
+        self.assertEqual(
+            gate(needs(FRONTEND_ONLY, **{"licenses-npm": "skipped"})),
+            ["licenses-npm: skipped (not skipped by design)"],
+        )
+        self.assertEqual(
+            gate(needs(EVERYTHING, **{"licenses-npm": "failure"})), ["licenses-npm: failure"]
+        )
+        self.assertTrue(pr("pnpm-lock.yaml")["code"])
+
     def test_a_job_outside_the_scope_table_may_not_be_skipped(self):
         self.assertEqual(
             gate(needs(DOCS_ONLY, **{"new-job": "skipped"})),

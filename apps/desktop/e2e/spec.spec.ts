@@ -64,7 +64,7 @@ async function openSpecTab(page: Page) {
   await expect(editor(page)).toBeVisible();
   // React Aria gives a tab panel with nothing tabbable a tabindex of 0 and drops it when a
   // mutation observer sees the editor; until then a Tab lands on the panel, which WebKit then
-  // blurs (F-227). Wait for the panel to settle.
+  // blurs (F-228). Wait for the panel to settle.
   await expect(
     page.getByRole("tabpanel", { name: "Spec" }),
   ).not.toHaveAttribute("tabindex");

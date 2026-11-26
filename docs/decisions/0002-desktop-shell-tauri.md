@@ -53,6 +53,8 @@ The **A02 prototype gate** measures:
 
 **Provisional opening (2026-10-29, [OD-15](../planning/open-decisions.md#closed-decisions) amended by the owner).** B01's shell and UI work started before the Windows walkthroughs. The NVDA walkthrough runs as a checkpoint (the coordinator, through desktop control, with NVDA's Speech Viewer as the transcript), and the owner's Narrator walkthrough comes before the first component sign-off (B02-T10). This ADR stays provisional until that evidence is in. A failure leads to rework issues (R-33), not a change of shell, unless the Electron trigger above applies.
 
+**macOS deferral (2026-11-26, [OD-33](../planning/open-decisions.md#closed-decisions), owner decision).** No Mac is available (R-22). (1) is accepted as measured on all three OSes from CI: the A02 spike (F-040) and the installed product's smoke run (F-227), on virtual machines, not reference hardware. The macOS parts of (2) and (3), WKWebView frame rates on real hardware and the VoiceOver walkthrough, move from B03's exit to B07's M-04 session (B07-T02). The Linux parts stay due by B03's exit, because they decide the Electron trigger. This ADR is confirmed for Windows once the Narrator walkthrough is recorded, and stays provisional for macOS and Linux until their evidence is in.
+
 ## Pros and cons of the options
 
 ### Electron 44
