@@ -53,6 +53,7 @@ Owner: `sonarithm-app`.
 | `SNR-APP-089` | error | RETIRED: A function dataset could not be saved in a project | Retired: project format 1.1 saves a function dataset as its definition (RFC-0002 §12). | — |
 | `SNR-APP-090` | error | There is nothing to explore yet | The chart explorer moves through the navigation tree of the compiled Score. Compile the spec, then explore. Nothing was changed. | — |
 | `SNR-APP-093` | warning | A dataset was fingerprinted again | Another SONARITHM build computed the dataset's fingerprint differently. Embedded data matches the project's own checksum, so it opens unchanged; a function opens sampled again from its definition. Save the project to record the new fingerprint. | — |
+| `SNR-APP-094` | error | That would silence every output | Speech, sonification and braille cannot all be off: nothing would tell you what the app is doing. Turn another one on first, or reset the toggles to your profile's defaults. Nothing was changed. | — |
 
 ## SNR-COMP
 
