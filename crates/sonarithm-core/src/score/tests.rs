@@ -133,6 +133,33 @@ fn canonical_form_is_compact_json_in_declaration_order() {
     );
 }
 
+/// RFC-0008 §6: a header that names fingerprint scheme 2 writes the field and needs IR
+/// version 3; a header without the field reads as scheme 1, and writes nothing new, so
+/// earlier Scores keep their form and hash.
+#[test]
+fn rfc_0008_the_fingerprint_scheme_is_named_and_raises_the_ir_version() {
+    let mut score = fixture();
+    let before = score.canonical_hash().unwrap();
+    let ir_version = score.header.ir_version;
+    assert_eq!(score.header.data_fingerprint_scheme, 1);
+
+    score.header.data_fingerprint_scheme = 2;
+    assert_eq!(score.required_ir_version(), 3);
+    score.header.ir_version = 3;
+    let text = String::from_utf8(score.canonical_json().unwrap()).unwrap();
+    assert!(text.contains(r#""data_fingerprint_scheme":2"#));
+    let read: Score = serde_json::from_str(&text).unwrap();
+    assert_eq!(read.header.data_fingerprint_scheme, 2);
+
+    score.header.data_fingerprint_scheme = 1;
+    score.header.ir_version = ir_version;
+    let text = String::from_utf8(score.canonical_json().unwrap()).unwrap();
+    assert!(!text.contains("data_fingerprint_scheme"));
+    assert_eq!(score.canonical_hash().unwrap(), before);
+    let read: Score = serde_json::from_str(&text).unwrap();
+    assert_eq!(read.header.data_fingerprint_scheme, 1);
+}
+
 #[test]
 fn a_score_that_breaks_an_invariant_has_no_canonical_form() {
     let mut score = fixture();

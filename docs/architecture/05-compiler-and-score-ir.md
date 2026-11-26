@@ -124,10 +124,11 @@ pub struct Score {
 }
 
 pub struct ScoreHeader {
-    pub ir_version: u32,                 // bump on any snapshot-format change
+    pub ir_version: u32,                 // the lowest IR version that reads it (RFC-0007 §4)
     pub spec_version: SpecVersion,
     pub spec_hash: Sha256,               // RFC 8785 canonical spec, defaults applied
     pub data_fingerprint: Fingerprint,
+    pub data_fingerprint_scheme: u32,    // 2 (RFC-0008); left out, and read, as 1; needs IR v3
     pub seed: u64,
     pub mode: Mode,                      // Analysis | Presentation | Monitoring
     pub duration: Seconds,

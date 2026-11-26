@@ -1,9 +1,10 @@
 {
   "header": {
-    "ir_version": 1,
+    "ir_version": 3,
     "spec_version": "0.1",
     "spec_hash": "1096a06906c1d833871ab2aaa8883dc8673eaf987fbcd34d4d8d9487a98543e6",
-    "data_fingerprint": "6861316087c5aa9101da022b94c4e7de31da4bae137f68a8820c7d8009b6ae5b",
+    "data_fingerprint": "e5056b1b043c52a78f622df60183ca0faf1df13dba09457b5ccff35cd2e14282",
+    "data_fingerprint_scheme": 2,
     "seed": 0,
     "mode": "analysis",
     "duration": 5.75,

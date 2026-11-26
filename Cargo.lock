@@ -5157,6 +5157,7 @@ name = "sonarithm"
 version = "0.1.0-alpha"
 dependencies = [
  "arrow-array",
+ "arrow-schema",
  "insta",
  "serde",
  "serde_json",
@@ -5310,6 +5311,7 @@ dependencies = [
 name = "sonarithm-data"
 version = "0.1.0-alpha"
 dependencies = [
+ "allocation-counter",
  "arrow-array",
  "arrow-data",
  "arrow-ipc",

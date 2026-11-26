@@ -36,15 +36,19 @@ use crate::pipeline::CompilerData;
 pub const PLATFORM: EngineId = EngineId::from_static("platform");
 
 impl CompilerData for DataBundle {
-    /// The data layer's canonical fingerprint (03 §2). It fails only if Arrow cannot write
-    /// a table it holds, which its construction rules out; the zero digest then marks the
-    /// header as unfingerprinted.
+    /// The data layer's value-based fingerprint (03 §2, RFC-0008). It fails only for a
+    /// field type the fingerprint does not encode (`SNR-DATA-007`); the zero digest then
+    /// marks the header as unfingerprinted.
     fn fingerprint(&self) -> Sha256Digest {
         sonarithm_data::bundle_fingerprint(self).unwrap_or(Sha256Digest::ZERO)
     }
 
     fn play_rows(&self, filter: Option<&str>, time: Option<&str>) -> Option<Vec<u64>> {
         sonarithm_data::play_rows(self.primary()?, filter, time).ok()
+    }
+
+    fn fingerprint_scheme(&self) -> u32 {
+        sonarithm_data::FINGERPRINT_SCHEME
     }
 
     fn transform(

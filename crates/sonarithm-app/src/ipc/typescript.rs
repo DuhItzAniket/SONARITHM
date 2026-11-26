@@ -144,6 +144,7 @@ pub fn typescript() -> String {
     declare::<DeviceSummary>(&mut out, &cfg);
     declare::<crate::ipc::ProjectSummary>(&mut out, &cfg);
     declare::<crate::ipc::ProjectDatasetInfo>(&mut out, &cfg);
+    declare::<crate::ipc::RelinkReason>(&mut out, &cfg);
     declare::<crate::ipc::RecentProject>(&mut out, &cfg);
     declare::<crate::ipc::AutosaveInfo>(&mut out, &cfg);
     declare::<ViewRange>(&mut out, &cfg);

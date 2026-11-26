@@ -2,4 +2,4 @@
 source: crates/engines/sonarithm-numisona/tests/encode.rs
 expression: hash.to_string()
 ---
-d8f738964048b3c9c3f451f9742188ade33e3859ca22b2d59302454ef8af9d24
+67e65617dcb665977501716763a42034ce84c1333983ac4b0a0a13eed73e496e

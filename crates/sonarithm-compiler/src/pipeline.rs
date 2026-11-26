@@ -37,6 +37,12 @@ pub trait CompilerData {
     /// SHA-256 fingerprint of the data (03 §2), recorded in the Score header.
     fn fingerprint(&self) -> Sha256Digest;
 
+    /// The scheme that computes [`fingerprint`](Self::fingerprint) (RFC-0008 §6), recorded
+    /// beside it. The default, 1, leaves the header as it was before RFC-0008.
+    fn fingerprint_scheme(&self) -> u32 {
+        sonarithm_core::score::FINGERPRINT_SCHEME_1
+    }
+
     /// Applies the spec's `transform` list (03 §6), located at `at`, and returns the data
     /// layer's diagnostics; `None` when this data type cannot apply transforms, in which
     /// case the compiler warns (`SNR-COMP-022`) and uses the data as loaded.
@@ -263,6 +269,7 @@ impl<D: CompilerData> Run<'_, D> {
         );
         header.spec_hash = spec_hash;
         header.data_fingerprint = data.fingerprint();
+        header.data_fingerprint_scheme = data.fingerprint_scheme();
         let mut score = Score::new(header);
         self.encode(spec, &data, &annotations, &mut score)?;
         self.add_context(spec, &data, &annotations, &mut score)?;
