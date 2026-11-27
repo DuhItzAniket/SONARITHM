@@ -269,7 +269,7 @@ Engine colours are identity, not semantics. They appear only in small chips and 
 - **Plot.** `@sonarithm/viz`'s `Plot` draws the series in their tokens, each with its own dash pattern, plus a legend of line samples.
   - It is one image named by the summary's L1 and described by its L2 (A11Y-01).
   - It is not focusable, and it has no hover readout.
-- **Colormaps.** viridis and magma ship as 256-entry lookup tables (CC0). cividis waits on OD-29.
+- **Colormaps.** viridis and magma ship as 256-entry lookup tables (CC0). cividis comes from its paper's own 256-entry table, also CC0 (OD-29, decided 2026-11-28), in B04-T02.
 
 A diverging map is not chosen yet; B04 selects one with the same CVD and perceptual-uniformity criteria.
 
