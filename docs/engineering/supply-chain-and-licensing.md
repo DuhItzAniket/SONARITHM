@@ -75,7 +75,7 @@ From the research. The cargo-deny allowlist catches the crates automatically; th
 | Engauge Digitizer | GPL | Digitizer reference | Reference only, under the same [clean-room procedure](#clean-room-procedure-raster-digitizer); dormant upstream |
 | midly | `Unlicense`, which is not on the allowlist (checked on crates.io, 2026-10-26) | MIDI file export (AXONOTE, C04); [02 §2](../architecture/02-repository-and-crate-layout.md#2-crate-catalogue) names it for `sonarithm-export` | Not added. The owner decides between allowing `Unlicense` and an MIT alternative ([OD-21](../planning/open-decisions.md)) |
 | Highcharts | The library is not open source | Chart JSON extraction (PLOTSONA, C01) | Never used or bundled. Fixtures are options JSON written by hand from its documented format |
-| OCR models (for example ocrs's) | ocrs and rten are `MIT OR Apache-2.0`; the models' own licence is not stated, and they are trained on HierText (CC BY-SA 4.0), TODO(verify) | Tick-label reading (PLOTSONA, C02) | Not bundled. The owner decides ([OD-23](../planning/open-decisions.md)); any model follows [model weights](#model-weights) |
+| OCR models (for example ocrs's) | ocrs and rten are `MIT OR Apache-2.0`; the models' own licence is not stated, and they are trained on HierText (CC BY-SA 4.0), TODO(verify) | Tick-label reading (PLOTSONA, C02) | Not bundled. OCR is deferred to D04 ([OD-23](../planning/open-decisions.md), owner decision 2026-11-28); any model follows [model weights](#model-weights) |
 | Slint | GPLv3 or commercial | Native GUI | Not used (Tauri chosen, [ADR-0002](../decisions/0002-desktop-shell-tauri.md)) |
 | dockview | Keyboard docking and spatial navigation are Enterprise-only | Docking UI | Not used; fixed regions with F6 cycling instead |
 
