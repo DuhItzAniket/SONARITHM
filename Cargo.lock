@@ -5289,6 +5289,8 @@ dependencies = [
 name = "sonarithm-compiler"
 version = "0.1.0-alpha"
 dependencies = [
+ "arrow-array",
+ "arrow-schema",
  "insta",
  "proptest",
  "serde",

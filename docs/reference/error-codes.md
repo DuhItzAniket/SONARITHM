@@ -104,6 +104,7 @@ Owner: `sonarithm-data`.
 | `SNR-DATA-013` | info | Blank or repeated field names were replaced | Give every column a unique name in the header row. | — |
 | `SNR-DATA-014` | warning | Invalid bytes were replaced | Check the file's encoding and set `encoding` if it was guessed wrong. | — |
 | `SNR-DATA-015` | info | Lines above the header were skipped | Remove title lines above the header, or set `header` explicitly. | — |
+| `SNR-DATA-016` | warning | A column of a type that cannot be used was not loaded | Convert the column to numbers, text, dates or times before loading the file if you need it. | — |
 | `SNR-DATA-020` | info | The JSON shape was detected | Set `pointer` in the source options if the wrong part of the document was read. | — |
 | `SNR-DATA-021` | error | The JSON is not a table | Point `pointer` at an array of records, an array of rows or an object of equal-length arrays. | — |
 | `SNR-DATA-022` | info | A spreadsheet sheet was read | Set `sheet` and `range` in the source if the wrong cells were read. | — |

@@ -292,9 +292,11 @@ fn data_with_no_fingerprint_is_an_error_not_a_zero_digest() {
         DataType::Interval(IntervalUnit::YearMonth),
         true,
     )]));
-    let batch =
-        RecordBatch::try_new(schema, vec![Arc::new(IntervalYearMonthArray::from(vec![14]))])
-            .unwrap();
+    let batch = RecordBatch::try_new(
+        schema,
+        vec![Arc::new(IntervalYearMonthArray::from(vec![14]))],
+    )
+    .unwrap();
     let bundle = DataBundle::single(
         BundleId(0),
         SourceDescriptor::new(SourceKind::Memory, "by-hand", "arrow"),

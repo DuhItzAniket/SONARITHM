@@ -14,9 +14,7 @@
 
 use sonarithm_core::Sha256Digest;
 use sonarithm_data::source::write_ipc;
-use sonarithm_data::{
-    DataError, Format, Limits, ReadOptions, Table, read_bytes, table_fingerprint,
-};
+use sonarithm_data::{Format, Limits, ReadOptions, Table, read_bytes, table_fingerprint};
 
 /// The fuzz target's options: limits small enough that no input exhausts memory.
 fn options() -> ReadOptions {
@@ -61,19 +59,18 @@ fn columnar_regression_seeds_are_refused_without_running_away() {
     }
 }
 
-/// A table's fingerprint, or `None` for a type RFC-0008 §3 does not encode (an interval:
-/// `SNR-DATA-007`, as designed). Any other error fails the test.
-fn fingerprint(name: &str, table: &Table) -> Option<Sha256Digest> {
+/// A loaded table's fingerprint. Every loaded table has one: the readers drop the columns
+/// RFC-0008 §3 does not encode, such as intervals (#511), so an error fails the test.
+fn fingerprint(name: &str, table: &Table) -> Sha256Digest {
     match table_fingerprint(table) {
-        Ok(digest) => Some(digest),
-        Err(DataError::Unfingerprintable { .. }) => None,
+        Ok(digest) => digest,
         Err(error) => panic!("{name}: no fingerprint: {error}"),
     }
 }
 
-/// The fuzz target's `check`: a loaded table has a fingerprint unless one of its types has no
-/// encoding, survives an Arrow IPC round trip unchanged, and keeps its fingerprint (or its
-/// refusal).
+/// The fuzz target's `check`: a loaded table has a fingerprint, survives an Arrow IPC round
+/// trip unchanged, and keeps its fingerprint. `seed-check-interval-column` (F-241) now loads
+/// without its interval column (#511).
 #[test]
 fn columnar_check_seeds_read_round_trip_and_keep_their_fingerprint() {
     for (name, format, file) in seeds("seed-check-") {

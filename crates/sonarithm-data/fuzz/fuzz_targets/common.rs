@@ -5,7 +5,7 @@
 
 use sonarithm_data::source::write_ipc;
 use sonarithm_data::{
-    DataError, Format, Limits, Loaded, ReadOptions, Table, read_bytes, table_fingerprint,
+    Format, Limits, Loaded, ReadOptions, Table, read_bytes, table_fingerprint,
 };
 
 /// Lets the data layer contain panics of third-party decoders (arrow-ipc, parquet,
@@ -28,18 +28,17 @@ pub fn options() -> ReadOptions {
     ReadOptions::new().with_limits(limits)
 }
 
-/// A table's fingerprint, or `None` for a type RFC-0008 §3 does not encode (an interval:
-/// `SNR-DATA-007`, as designed). Any other error is a finding.
-fn fingerprint(table: &Table) -> Option<String> {
+/// A loaded table's fingerprint. Every loaded table has one: the readers drop the columns
+/// RFC-0008 §3 does not encode, such as intervals (#511), so an error is a finding.
+fn fingerprint(table: &Table) -> String {
     match table_fingerprint(table) {
-        Ok(digest) => Some(digest.to_string()),
-        Err(DataError::Unfingerprintable { .. }) => None,
+        Ok(digest) => digest.to_string(),
         Err(error) => panic!("a loaded table has a fingerprint: {error}"),
     }
 }
 
-/// What every successful read must satisfy: the table survives an Arrow IPC round trip
-/// unchanged, and its fingerprint (or its refusal, for a type with no encoding) is stable.
+/// What every successful read must satisfy: the table has a fingerprint, survives an Arrow
+/// IPC round trip unchanged, and keeps its fingerprint.
 pub fn check(loaded: &Loaded) {
     let Some(table) = loaded.bundle.primary() else {
         return;

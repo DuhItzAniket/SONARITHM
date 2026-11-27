@@ -540,6 +540,10 @@ fn finish(
 /// (`SNR-DATA-016`, #511). Every table that loads then has a fingerprint, so it can be saved
 /// in a project and compiled with its provenance. The other columns are kept as they are, as
 /// columns of other types no channel takes (binary, maps, unions) are.
+///
+/// # Errors
+///
+/// [`DataError::Unfingerprintable`], naming the first column, when no column would be left.
 fn drop_unencodable(table: &Table, diagnostics: &mut Diagnostics) -> Result<Table, DataError> {
     use std::sync::Arc;
 
@@ -549,6 +553,13 @@ fn drop_unencodable(table: &Table, diagnostics: &mut Diagnostics) -> Result<Tabl
         .collect();
     if kept.len() == schema.fields().len() {
         return Ok(table.clone());
+    }
+    if kept.is_empty() {
+        let field = schema.field(0);
+        return Err(DataError::Unfingerprintable {
+            field: field.name().clone(),
+            data_type: field.data_type().to_string(),
+        });
     }
     for field in schema.fields() {
         if !crate::fingerprint::encodes(field.data_type()) {
@@ -563,12 +574,15 @@ fn drop_unencodable(table: &Table, diagnostics: &mut Diagnostics) -> Result<Tabl
             ));
         }
     }
-    let projected = Arc::new(schema.project(&kept).map_err(|source| {
-        DataError::MalformedTable {
-            table: table.name().to_owned(),
-            source,
-        }
-    })?);
+    let projected =
+        Arc::new(
+            schema
+                .project(&kept)
+                .map_err(|source| DataError::MalformedTable {
+                    table: table.name().to_owned(),
+                    source,
+                })?,
+        );
     let batches = table
         .batches()
         .iter()
@@ -853,11 +867,15 @@ mod tests {
         .unwrap();
         let ipc = write_ipc(&Table::from_batch(TableId(0), "t", batch.clone())).unwrap();
         let from_file = read_bytes(&ipc, Format::Arrow, "t.arrow", &ReadOptions::new()).unwrap();
-        let from_memory =
-            read_batches(&schema, vec![batch], "frame", &ReadOptions::new()).unwrap();
+        let from_memory = read_batches(&schema, vec![batch], "frame", &ReadOptions::new()).unwrap();
         for loaded in [from_file, from_memory] {
             let table = loaded.bundle.primary().unwrap();
-            let names: Vec<_> = table.schema().fields().iter().map(|f| f.name().clone()).collect();
+            let names: Vec<_> = table
+                .schema()
+                .fields()
+                .iter()
+                .map(|f| f.name().clone())
+                .collect();
             assert_eq!(names, ["temp"]);
             assert_eq!(table.num_rows(), 2);
             assert!(crate::table_fingerprint(table).is_ok());
@@ -867,10 +885,14 @@ mod tests {
                 .filter(|d| d.code.as_str() == "SNR-DATA-016")
                 .collect();
             assert_eq!(dropped.len(), 1, "{:?}", loaded.diagnostics);
-            assert!(dropped[0].message.contains("`span`"), "{}", dropped[0].message);
+            assert!(
+                dropped[0].message.contains("`span`"),
+                "{}",
+                dropped[0].message
+            );
         }
 
-        // A table of such columns alone keeps its rows and no fields.
+        // A table of such columns alone is refused, naming the column.
         let only = Arc::new(Schema::new(vec![Field::new(
             "span",
             DataType::Interval(IntervalUnit::YearMonth),
@@ -881,8 +903,13 @@ mod tests {
             vec![Arc::new(IntervalYearMonthArray::from(vec![1, 2, 3]))],
         )
         .unwrap();
-        let loaded = read_batches(&only, vec![batch], "frame", &ReadOptions::new()).unwrap();
-        let table = loaded.bundle.primary().unwrap();
-        assert_eq!((table.num_fields(), table.num_rows()), (0, 3));
+        let err = read_batches(&only, vec![batch], "frame", &ReadOptions::new()).unwrap_err();
+        let diagnostic = err.to_diagnostic();
+        assert_eq!(diagnostic.code.as_str(), "SNR-DATA-007");
+        assert!(
+            diagnostic.message.contains("`span`"),
+            "{}",
+            diagnostic.message
+        );
     }
 }
