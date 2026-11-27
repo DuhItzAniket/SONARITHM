@@ -309,6 +309,7 @@ impl App {
         profile: &Profile,
     ) -> Result<Reply, IpcError> {
         profile::validate(profile)?;
+        profile::check_keys(profile)?;
         match id {
             Some(PROJECT_ID) => {
                 let bytes = profile::write(profile)?;
@@ -346,6 +347,7 @@ impl App {
             )
         })?;
         let (imported, warnings) = profile::parse(&bytes)?;
+        profile::check_keys(&imported)?;
         let id = self.new_id(&imported.name);
         self.write_user(&id, &imported)?;
         Ok(self.profile_list(&warnings))

@@ -50,7 +50,14 @@ export function bindingProblems(
   const meta = mods.has("Meta");
   const problems: BindingProblem[] = [];
 
-  if (key === "Insert" || key === "CapsLock") {
+  // Insert and CapsLock are screen-reader modifiers, as the key or held with it (§13
+  // rule 6; the app core's check is the same).
+  if (
+    key === "Insert" ||
+    key === "CapsLock" ||
+    mods.has("Insert") ||
+    mods.has("CapsLock")
+  ) {
     problems.push({ rule: "KB-03", reason: "screen-reader modifier key" });
   }
   if (platform === "mac" && ctrl && alt) {

@@ -3,9 +3,9 @@
 
 import type { Chord, Platform } from "./chords.ts";
 import { normalize, parseChord } from "./chords.ts";
-import { isCharacter } from "./lint.ts";
+import { bindingProblems, isCharacter } from "./lint.ts";
 import type { CommandSpec } from "./keymap.ts";
-import { bindingsFor } from "./keymap.ts";
+import { REGION_COMMANDS, bindingsFor } from "./keymap.ts";
 import type { ActiveScopes } from "./scopes.ts";
 
 /** What a feature supplies for a command it implements. */
@@ -87,16 +87,34 @@ export class CommandRegistry {
    * chords, separated by spaces, or the empty string to unbind it. With `singleKeyCommands`
    * off, every single-character binding (letters, Shift+letters, punctuation) is unbound
    * (KB-02, §13 rule 3); arrows, Home, End, Page Up, Page Down, Space and Escape stay.
+   *
+   * A reserved chord (§13 rule 6: Tab, F6, screen-reader keys and the rest) is never
+   * bound, whatever the keymap says: the app core refuses and drops them too, so this is
+   * defence in depth against a keyboard trap (#513 review).
    */
   configure(
     keymap: Readonly<Record<string, string>>,
     singleKeyCommands: boolean,
   ): void {
     this.overrides = new Map(
-      Object.entries(keymap).map(([id, keys]) => [
-        id,
-        keys.split(" ").filter((chord) => chord !== ""),
-      ]),
+      Object.entries(keymap).map(([id, keys]) => {
+        const scope =
+          this.specs.find((spec) => spec.id === id)?.scope ?? "global";
+        const allowed = (chord: Chord) =>
+          !bindingProblems(
+            chord,
+            scope,
+            this.platform,
+            REGION_COMMANDS.has(id),
+          ).some(
+            (problem) =>
+              problem.rule === "reserved" || problem.rule === "KB-03",
+          );
+        return [
+          id,
+          keys.split(" ").filter((chord) => chord !== "" && allowed(chord)),
+        ];
+      }),
     );
     this.singleKeys = singleKeyCommands;
     this.changed();

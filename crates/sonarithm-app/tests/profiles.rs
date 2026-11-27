@@ -454,3 +454,49 @@ fn adr_0020_a_score_re_renders_from_its_manifest_without_the_profile() {
         report["score"]["scoreHash"].as_str().map(str::to_owned)
     );
 }
+
+/// Keyboard §13 rule 6 (#513 review): a profile the user saves or imports may set keys,
+/// but never a reserved one, so it cannot turn Tab into a keyboard trap.
+#[test]
+fn keyboard_13_rule_6_a_profile_cannot_bind_a_reserved_key() {
+    let mut h = Harness::new("reserved");
+    let trap = profile(&json!({}), &json!({ "keymap": { "app.preferences": "Tab" } }));
+    let saved = h.send(&json!({ "command": "profile_save", "args": { "profile": trap } }));
+    assert_eq!(saved.unwrap_err().code, "SNR-APP-091");
+    let file = h.dir.path().join("trap.json");
+    std::fs::write(&file, serde_json::to_vec(&trap).unwrap()).unwrap();
+    let imported = h.send(&json!({ "command": "profile_import", "args": { "path": file } }));
+    assert_eq!(imported.unwrap_err().code, "SNR-APP-091");
+    // Other keys are the listener's to set in a profile they activate (ADR-0020).
+    let fine = profile(&json!({}), &json!({ "keymap": { "nav.next": "L" } }));
+    h.ok(&json!({ "command": "profile_save", "args": { "profile": fine } }));
+}
+
+/// Keyboard §13 rule 6: a profile file edited by hand to bind Tab is still read, but the
+/// reserved binding is dropped from the effective keymap, and the rest of it applies.
+#[test]
+fn keyboard_13_rule_6_a_hand_edited_profile_never_binds_tab() {
+    let mut h = Harness::new("handedit");
+    let id = h.activate(&profile(&json!({}), &json!({ "verbosity": "verbose" })));
+    let edited = profile(
+        &json!({}),
+        &json!({ "verbosity": "verbose", "keymap": { "app.preferences": "Tab", "nav.next": "L" } }),
+    );
+    let path = h
+        .dir
+        .path()
+        .join("config")
+        .join("profiles")
+        .join(format!("{id}.json"));
+    assert!(path.is_file(), "{}", path.display());
+    std::fs::write(&path, serde_json::to_vec_pretty(&edited).unwrap()).unwrap();
+    assert_eq!(h.effective("interaction.keymap.app.preferences").1, "default");
+    assert_eq!(
+        h.effective("interaction.keymap.nav.next"),
+        (json!("L"), "profile".to_owned())
+    );
+    assert_eq!(
+        h.effective("interaction.verbosity"),
+        (json!("verbose"), "profile".to_owned())
+    );
+}

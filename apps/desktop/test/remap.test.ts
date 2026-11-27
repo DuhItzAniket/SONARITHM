@@ -83,3 +83,20 @@ test("keyboard_13_rule_6_the_recorder_refuses_reserved_combinations", () => {
   assert.ok(fresh.ok);
   assert.deepEqual(fresh.shadows, []);
 });
+
+test("keyboard_13_rule_6_the_registry_never_binds_a_reserved_chord", () => {
+  // Defence in depth (#513 review): even if a keymap reached the UI with Tab, F6 or a
+  // screen-reader key in it, those chords are dropped and Tab keeps moving the focus.
+  const reg = registry();
+  const global = { scopes: ["global"], typing: false } as const;
+  reg.configure(
+    { "app.preferences": "Tab F6 Insert+P Ctrl+Shift+Period" },
+    true,
+  );
+  assert.deepEqual(reg.bindings("app.preferences"), ["Ctrl+Shift+Period"]);
+  assert.equal(reg.resolve("Tab", global), null);
+  assert.equal(reg.resolve("F6", global)?.id ?? null, "view.nextRegion");
+  // The region commands keep F6.
+  reg.configure({ "view.nextRegion": "F6" }, true);
+  assert.deepEqual(reg.bindings("view.nextRegion"), ["F6"]);
+});
