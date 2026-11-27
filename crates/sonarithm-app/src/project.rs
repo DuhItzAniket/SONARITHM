@@ -10,7 +10,8 @@
 //! entry times, sorted members, a canonical manifest, no timestamps. Reading never trusts
 //! the file: member names, sizes, ratios and hashes are checked before anything is parsed,
 //! stored Parquet is read in place, and linked data must be a regular data file whose
-//! fingerprint matches.
+//! recorded size, SHA-256 and fingerprint match (format 1.2, RFC-0008 §6); a link saved
+//! before RFC-0008 waits for the user to check and relink it.
 //!
 //! [RFC-0002]: ../../docs/rfcs/0002-project-format-v1.md
 //! [ADR-0018]: ../../docs/decisions/0018-project-format-v1.md
@@ -25,7 +26,8 @@ use sha2::{Digest as _, Sha256};
 use sonarithm_core::TableId;
 use sonarithm_data::source::write_parquet;
 use sonarithm_data::{
-    BundleId, Limits, ReadOptions, Table, read_file, read_parquet_at, table_fingerprint,
+    BundleId, FINGERPRINT_SCHEME, Limits, Loaded, ReadOptions, Table, read_file, read_parquet_at,
+    table_fingerprint,
 };
 use zip::write::SimpleFileOptions;
 use zip::{CompressionMethod, ZipArchive, ZipWriter};
@@ -35,12 +37,11 @@ use crate::ipc::IpcError;
 
 /// The bundle format's name in the manifest.
 pub const FORMAT: &str = "sonarithm-project";
-/// The newest format version this build reads and writes, `MAJOR.MINOR`. It writes 1.1
-/// only when a project needs it (a function dataset, or an entry it keeps unread), and
-/// [`BASE_VERSION`] otherwise, so projects without them stay byte-identical (RFC-0002 §12).
-pub const FORMAT_VERSION: (u32, u32) = (1, 1);
-/// The version written when nothing of 1.1 is used.
-pub const BASE_VERSION: (u32, u32) = (1, 0);
+/// The format version this build reads and writes, `MAJOR.MINOR`. Version 1.2 (RFC-0008
+/// §6) names each dataset's fingerprint scheme and records a linked file's size and
+/// SHA-256; every project is written as 1.2, since every dataset now records its scheme.
+/// Versions 1.0 and 1.1 still read, their fingerprints as scheme 1.
+pub const FORMAT_VERSION: (u32, u32) = (1, 2);
 /// The storages this build reads; any other is kept unread (RFC-0002 §12).
 const KNOWN_STORAGES: [&str; 3] = ["embedded", "linked", "function"];
 /// The extension of project files.
@@ -111,7 +112,48 @@ struct DatasetEntry {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     function: Option<FunctionDef>,
     fingerprint: String,
+    /// The scheme of `fingerprint` (format 1.2, RFC-0008 §6); 1 when absent.
+    #[serde(default = "fingerprint_scheme_1")]
+    fingerprint_scheme: u32,
     rows: u64,
+    /// A linked file's size in bytes, when it was recorded (format 1.2).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    bytes: Option<u64>,
+    /// A linked file's SHA-256, when it was recorded (format 1.2).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    sha256: Option<String>,
+}
+
+const fn fingerprint_scheme_1() -> u32 {
+    sonarithm_core::score::FINGERPRINT_SCHEME_1
+}
+
+/// A linked file's size and SHA-256 (format 1.2, RFC-0008 §6), so a later build can tell
+/// a changed file from a new fingerprint scheme.
+#[derive(Clone, Debug, PartialEq, Eq)]
+#[non_exhaustive]
+pub struct LinkedFile {
+    /// The size in bytes.
+    pub bytes: u64,
+    /// The SHA-256, 64 lowercase hexadecimal digits.
+    pub sha256: String,
+}
+
+impl LinkedFile {
+    /// The size and SHA-256 of the file at `path`, read 1 MiB at a time.
+    ///
+    /// # Errors
+    ///
+    /// A short reason in words when the file cannot be read.
+    pub fn of(path: &Path) -> Result<Self, String> {
+        let file = File::open(path).map_err(|_| "cannot be read".to_owned())?;
+        let bytes = file
+            .metadata()
+            .map_err(|_| "cannot be read".to_owned())?
+            .len();
+        let sha256 = hash_in_place(&file, 0, bytes).map_err(|_| "cannot be read".to_owned())?;
+        Ok(Self { bytes, sha256 })
+    }
 }
 
 /// A function dataset's definition (format 1.1): the canonical expression, the domain, the
@@ -183,6 +225,12 @@ pub struct ProjectDataset {
     pub link: Option<String>,
     /// The fingerprint the manifest records (A04-T09).
     pub fingerprint: String,
+    /// The scheme of `fingerprint` (RFC-0008 §6): this build's
+    /// ([`sonarithm_data::FINGERPRINT_SCHEME`]) for data it read, the recorded one for an
+    /// unavailable dataset.
+    pub fingerprint_scheme: u32,
+    /// For linked data, the linked file's size and SHA-256 when known (format 1.2).
+    pub file: Option<LinkedFile>,
     /// Rows, as recorded.
     pub rows: u64,
     /// For a function dataset, its definition (format 1.1): saved instead of its samples.
@@ -206,6 +254,8 @@ impl ProjectDataset {
             linked: false,
             link: None,
             fingerprint,
+            fingerprint_scheme: FINGERPRINT_SCHEME,
+            file: None,
             function: None,
             kept: None,
         }
@@ -382,8 +432,7 @@ pub fn write(project: &Project, target: &Path, embed_all: bool) -> Result<Vec<u8
         .iter()
         .filter_map(|dataset| dataset.kept.as_ref())
         .collect();
-    let newer = !kept.is_empty() || datasets.iter().any(|d| d.storage == Storage::Function);
-    let version = if newer { FORMAT_VERSION } else { BASE_VERSION };
+    let version = FORMAT_VERSION;
     for (path, bytes) in &project.reserved {
         members.insert(path.clone(), bytes.clone());
     }
@@ -486,7 +535,10 @@ fn dataset_member(
                 link: None,
                 function: Some(FunctionDef::of(function)),
                 fingerprint: dataset.fingerprint.clone(),
+                fingerprint_scheme: dataset.fingerprint_scheme,
                 rows: dataset.rows,
+                bytes: None,
+                sha256: None,
             });
         }
         let link = match (&dataset.origin, &dataset.table) {
@@ -516,7 +568,10 @@ fn dataset_member(
                 link: Some(link),
                 function: None,
                 fingerprint: dataset.fingerprint.clone(),
+                fingerprint_scheme: dataset.fingerprint_scheme,
                 rows: dataset.rows,
+                bytes: dataset.file.as_ref().map(|file| file.bytes),
+                sha256: dataset.file.as_ref().map(|file| file.sha256.clone()),
             });
         }
         let table = dataset.table.as_ref().ok_or_else(|| {
@@ -544,7 +599,10 @@ fn dataset_member(
             link: None,
             function: None,
             fingerprint: dataset.fingerprint.clone(),
+            fingerprint_scheme: dataset.fingerprint_scheme,
             rows: dataset.rows,
+            bytes: None,
+            sha256: None,
         })
     }
 }
@@ -725,6 +783,11 @@ pub fn open(path: &Path, table_ids: &mut dyn FnMut() -> u32) -> Result<Opened, I
             linked: false,
             link: None,
             fingerprint: value["fingerprint"].as_str().unwrap_or_default().to_owned(),
+            fingerprint_scheme: value["fingerprintScheme"]
+                .as_u64()
+                .and_then(|scheme| u32::try_from(scheme).ok())
+                .unwrap_or(fingerprint_scheme_1()),
+            file: None,
             rows: value["rows"].as_u64().unwrap_or(0),
             function: None,
             kept: Some(value),
@@ -895,6 +958,8 @@ fn embedded(
         linked: false,
         link: None,
         fingerprint,
+        fingerprint_scheme: FINGERPRINT_SCHEME,
+        file: None,
         function: None,
         kept: None,
     })
@@ -935,6 +1000,8 @@ fn function_dataset(
             linked: false,
             link: None,
             fingerprint: entry.fingerprint.clone(),
+            fingerprint_scheme: entry.fingerprint_scheme,
+            file: None,
             rows: entry.rows,
             function: Some(spec),
             kept: None,
@@ -961,44 +1028,215 @@ fn function_dataset(
         linked: false,
         link: None,
         fingerprint,
+        fingerprint_scheme: FINGERPRINT_SCHEME,
+        file: None,
         function: Some(spec),
         kept: None,
     })
 }
 
-/// A linked dataset: loaded when RFC-0002 §4's conditions hold, else unavailable with a
-/// warning that names the file alone.
+/// Why a linked file was not opened, and whether the user can check and relink it
+/// (RFC-0008 §6).
+struct Refusal {
+    /// Why, in words that follow the file name: "is missing".
+    why: String,
+    /// The file is there and readable, but it cannot be verified against the project.
+    relink: bool,
+}
+
+impl Refusal {
+    fn plain(why: impl Into<String>) -> Self {
+        Self {
+            why: why.into(),
+            relink: false,
+        }
+    }
+
+    fn changed() -> Self {
+        Self {
+            why: "has changed since the project was saved".to_owned(),
+            relink: true,
+        }
+    }
+
+    /// The `SNR-APP-034` warning, naming the file alone.
+    fn warning(&self, name: &str) -> IpcError {
+        let pointer = if self.relink {
+            " Choose Check and relink this file to read it again."
+        } else {
+            ""
+        };
+        IpcError::new(
+            &codes::LINKED_DATA,
+            format!(
+                "The linked data `{}` {}, so it is unavailable.{pointer}",
+                file_name(name),
+                self.why
+            ),
+        )
+    }
+}
+
+/// A linked dataset, under RFC-0002 §4's conditions and RFC-0008 §6's rules; else
+/// unavailable with a warning that names the file alone.
+///
+/// - **Scheme 1** (saved before RFC-0008): the entry records no size or hash of the file,
+///   so a changed file and the new fingerprint scheme look the same. A matching row count
+///   is not enough (a same-length file with other values would compile silently), so the
+///   dataset stays unavailable until the user checks and relinks it.
+/// - **Scheme 2:** the file's size and SHA-256 must match the recorded ones, then its
+///   fingerprint must too. A fingerprint from another scheme, with the file's hash
+///   matching, is only a scheme change: it opens with `SNR-APP-093`.
 fn linked_dataset(
     folder: &Path,
     entry: &DatasetEntry,
     options: &ReadOptions,
     warnings: &mut Vec<IpcError>,
 ) -> ProjectDataset {
-    let (table, origin) = match linked(folder, entry.link.as_deref(), &entry.fingerprint, options) {
-        Ok((table, origin)) => (Some(table), Some(origin)),
-        Err(why) => {
-            warnings.push(IpcError::new(
-                &codes::LINKED_DATA,
-                format!(
-                    "The linked data `{}` {why}, so it is unavailable.",
-                    file_name(&entry.name)
-                ),
-            ));
-            (None, None)
-        }
+    let recorded = match (entry.bytes, &entry.sha256) {
+        (Some(bytes), Some(sha256)) => Some(LinkedFile {
+            bytes,
+            sha256: sha256.clone(),
+        }),
+        _ => None,
     };
-    ProjectDataset {
+    let mut dataset = ProjectDataset {
         id: entry.id.clone(),
         name: entry.name.clone(),
-        table,
-        origin,
+        table: None,
+        origin: None,
         linked: true,
         link: entry.link.clone(),
         fingerprint: entry.fingerprint.clone(),
+        fingerprint_scheme: entry.fingerprint_scheme,
+        file: recorded.clone(),
         rows: entry.rows,
         function: None,
         kept: None,
+    };
+    match linked(folder, entry, recorded.as_ref(), options) {
+        Ok(found) => {
+            if found.fingerprint != entry.fingerprint {
+                warnings.push(IpcError::new(
+                    &codes::DATASET_REFINGERPRINTED,
+                    format!(
+                        "The linked data `{}` was fingerprinted by another SONARITHM build. It matches the size and checksum the project recorded, so it opens unchanged; saving the project records the new fingerprint.",
+                        file_name(&entry.name)
+                    ),
+                ));
+            }
+            dataset.rows = found.table.num_rows();
+            dataset.table = Some(found.table);
+            dataset.origin = Some(found.origin);
+            dataset.fingerprint = found.fingerprint;
+            dataset.fingerprint_scheme = FINGERPRINT_SCHEME;
+            dataset.file = Some(found.file);
+        }
+        Err(refusal) => warnings.push(refusal.warning(&entry.name)),
     }
+    dataset
+}
+
+/// A linked file read for a project: its table, where it is, its size and hash, and the
+/// fingerprint this build computes.
+struct Found {
+    table: Table,
+    origin: PathBuf,
+    file: LinkedFile,
+    fingerprint: String,
+    loaded: Loaded,
+}
+
+/// Opens a linked dataset under RFC-0002 §4's conditions and RFC-0008 §6's rules.
+fn linked(
+    folder: &Path,
+    entry: &DatasetEntry,
+    recorded: Option<&LinkedFile>,
+    options: &ReadOptions,
+) -> Result<Found, Refusal> {
+    let canonical = resolve_link(folder, entry.link.as_deref()).map_err(Refusal::plain)?;
+    if entry.fingerprint_scheme == fingerprint_scheme_1() {
+        return Err(Refusal {
+            why:
+                "was linked by an older SONARITHM build and cannot be verified against the project"
+                    .to_owned(),
+            relink: true,
+        });
+    }
+    // The hash is taken before the file is read: a file that changes while it is read
+    // then fails the fingerprint check below.
+    let file = LinkedFile::of(&canonical).map_err(Refusal::plain)?;
+    if recorded.is_some_and(|recorded| *recorded != file) {
+        return Err(Refusal::changed());
+    }
+    let found = read_linked(canonical, file, options).map_err(Refusal::plain)?;
+    // Under this build's own scheme the fingerprint must match; under another scheme it
+    // cannot, and only the file's recorded hash can vouch for it.
+    let same_scheme = entry.fingerprint_scheme == FINGERPRINT_SCHEME;
+    if found.fingerprint != entry.fingerprint && (same_scheme || recorded.is_none()) {
+        return Err(Refusal::changed());
+    }
+    Ok(found)
+}
+
+/// Reads the linked file at `canonical`, whose size and hash are `file`.
+fn read_linked(
+    canonical: PathBuf,
+    file: LinkedFile,
+    options: &ReadOptions,
+) -> Result<Found, String> {
+    let loaded = read_file(&canonical, None, options).map_err(|_| "cannot be read".to_owned())?;
+    let table = loaded.bundle.primary().cloned().ok_or("holds no table")?;
+    let fingerprint = table_fingerprint(&table)
+        .map_err(|_| "cannot be checked".to_owned())?
+        .to_string();
+    Ok(Found {
+        table,
+        origin: canonical,
+        file,
+        fingerprint,
+        loaded,
+    })
+}
+
+/// A linked dataset read again for the user to check and relink (RFC-0008 §6): the data,
+/// where it is, its size, hash and fingerprint. Nothing else sees the data until the caller
+/// links it.
+#[derive(Debug)]
+#[non_exhaustive]
+pub struct Relink {
+    /// The file as read, with the reader's diagnostics.
+    pub loaded: Loaded,
+    /// The canonical file.
+    pub origin: PathBuf,
+    /// Its size and SHA-256, taken before it was read.
+    pub file: LinkedFile,
+    /// Its fingerprint under this build's scheme.
+    pub fingerprint: String,
+}
+
+/// Reads the linked file of the unavailable `dataset` again, under RFC-0002 §4's rules and
+/// limits, for the check-and-relink action (RFC-0008 §6). `folder` is the project's.
+///
+/// # Errors
+///
+/// `SNR-APP-034` when the file cannot be read under §4, with the wording a project open
+/// gives for it.
+pub fn relink(
+    folder: &Path,
+    dataset: &ProjectDataset,
+    options: &ReadOptions,
+) -> Result<Relink, IpcError> {
+    let refuse = |why: String| Refusal::plain(why).warning(&dataset.name);
+    let canonical = resolve_link(folder, dataset.link.as_deref()).map_err(refuse)?;
+    let file = LinkedFile::of(&canonical).map_err(refuse)?;
+    let found = read_linked(canonical, file, options).map_err(refuse)?;
+    Ok(Relink {
+        loaded: found.loaded,
+        origin: found.origin,
+        file: found.file,
+        fingerprint: found.fingerprint,
+    })
 }
 
 /// The file name part of a recorded name, never directories (RFC-0002 §4).
@@ -1006,13 +1244,9 @@ fn file_name(name: &str) -> &str {
     name.rsplit(['/', '\\']).next().unwrap_or(name)
 }
 
-/// Opens a linked dataset under RFC-0002 §4's conditions; `Err` says why not, in words.
-fn linked(
-    folder: &Path,
-    link: Option<&str>,
-    fingerprint: &str,
-    options: &ReadOptions,
-) -> Result<(Table, PathBuf), String> {
+/// The canonical file a link names, under RFC-0002 §4's conditions (relative, a data file,
+/// a regular file); `Err` says why not, in words that follow the file name.
+fn resolve_link(folder: &Path, link: Option<&str>) -> Result<PathBuf, String> {
     let link = link.ok_or("has no link")?;
     let relative_only = !link.is_empty()
         && !link.starts_with('/')
@@ -1050,15 +1284,7 @@ fn linked(
     if !std::fs::metadata(&canonical).is_ok_and(|m| m.is_file()) {
         return Err("is not a regular file".to_owned());
     }
-    let loaded = read_file(&canonical, None, options).map_err(|_| "cannot be read".to_owned())?;
-    let table = loaded.bundle.primary().cloned().ok_or("holds no table")?;
-    let found = table_fingerprint(&table)
-        .map_err(|_| "cannot be checked".to_owned())?
-        .to_string();
-    if found != fingerprint {
-        return Err("has changed since the project was saved".to_owned());
-    }
-    Ok((table, canonical))
+    Ok(canonical)
 }
 
 /// Parses the manifest: the format, the version, then the fields this version knows.
@@ -1174,7 +1400,10 @@ fn strip_unknown(value: &mut serde_json::Value) {
                 "link",
                 "function",
                 "fingerprint",
+                "fingerprintScheme",
                 "rows",
+                "bytes",
+                "sha256",
             ][..],
         ),
         ("members", &["path", "bytes", "sha256"][..]),

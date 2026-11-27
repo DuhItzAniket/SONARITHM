@@ -114,6 +114,14 @@ pub enum DataError {
         /// What a valid value looks like.
         reason: &'static str,
     },
+    /// A field's type has no encoding in the data fingerprint (RFC-0008 §3).
+    #[error("field `{field}` has the type {data_type}, which the data fingerprint does not encode")]
+    Unfingerprintable {
+        /// The field.
+        field: String,
+        /// The Arrow type, as Arrow writes it.
+        data_type: String,
+    },
     /// A table cannot be encoded.
     #[error("the table cannot be written as {format}: {reason}")]
     Write {
@@ -265,6 +273,12 @@ impl DataError {
             Self::InvalidOption { option, reason } => (
                 &codes::INVALID_OPTION,
                 format!("The source option `{option}` is invalid: {reason}."),
+            ),
+            Self::Unfingerprintable { field, data_type } => (
+                &codes::UNFINGERPRINTABLE,
+                format!(
+                    "Field `{field}` has the type {data_type}, which the data fingerprint does not encode."
+                ),
             ),
             Self::Write { format, reason } => (
                 &codes::WRITE_FAILED,
