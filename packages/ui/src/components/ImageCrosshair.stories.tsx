@@ -118,14 +118,19 @@ export const ClickToPlace: Story = {
     const canvas = within(canvasElement);
     const image = canvas.getByRole("img");
     const box = image.getBoundingClientRect();
+    // A quarter of the way across. Browsers give a click whole CSS pixels, so the pixel
+    // expected is the one under the coordinate actually sent.
+    const clientX = Math.round(box.left + box.width / 4);
     await fireEvent.click(image, {
-      clientX: box.left + box.width / 4,
-      clientY: box.top + box.height / 2,
+      clientX,
+      clientY: Math.round(box.top + box.height / 2),
     });
+    const expected = Math.floor(((clientX - box.left) / box.width) * 200);
+    await expect(Math.abs(expected - 50)).toBeLessThanOrEqual(1);
     await expect(
       canvas.getByRole("slider", {
         name: t.format("ui-calibrate-crosshair-x"),
       }),
-    ).toHaveAttribute("aria-valuetext", pixel(50));
+    ).toHaveAttribute("aria-valuetext", pixel(expected));
   },
 };
