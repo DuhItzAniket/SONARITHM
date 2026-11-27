@@ -1042,6 +1042,20 @@ A05 (render engine, audio backends, export) uses F-050 to F-069.
 - **Evidence level / confidence:** EV-D / Strong for the cause (the failing OS set, the zero-change local re-record, and exmex's operator source); cross-platform agreement after the fix is shown by #449's CI, not yet
 - **Affects:** ADR-0013 §1; every function spec's Score and manifest (C03-T02, C03-T06, C03-T07); the curvasona-suite records; any snapshot that holds a function's full-precision values
 
+### F-208 · The outlier detector's zero-MAD fallback called every small step in sparse or integer data an outlier
+
+- **Date:** 2026-11-28 · **Phase:** C05 · **Type:** engineering (detector design) · **Status:** new
+- **Statement:** a02-closeout's review of #506 found the fallback path of `outliers` (F-205) floods data where more than half the residuals are exactly 0.
+  - **The fallback:** when the residuals' MAD is zero, the mean absolute deviation times √(π/2) stands in for it (Iglewicz & Hoaglin 1993). With few nonzero residuals, that scale is tiny.
+  - **Sparse counts:** 60 days of incident counts, mostly 0 with seven 1s and a 2, gave 8 outliers (robust z 5.3 and 10.6).
+  - **A flat integer reading:** 20 °C with two 21s gave both 21s (z 16).
+  - **Fix:** on the fallback path only, a value is an outlier if its z exceeds 3.5 **and** its residual is at least `FALLBACK_SEPARATION` = 3 times the largest residual among the other values. Both cases above then give none, and a lone spike in a flat series (50 among 5s) is still found.
+- **Why not a share of the value range (the review's suggestion):** the range includes the value being judged, so a lone step is 100 % of it in every case. The 21 among 20s, the 2 among 0s and 1s, and the 50 among 5s all score the same, and no share can keep the third while dropping the first two. Separation from the other residuals does.
+- **Cost:** two equal spikes in a flat series do not stand apart from each other, so neither is reported (`f_208_two_equal_spikes_in_a_flat_series_are_not_separated`). The normal path (a nonzero MAD), which F-205 measured, is unchanged.
+- **Evidence:** the unit tests `f_208_a_flat_integer_series_with_small_steps_has_no_outliers`, `f_208_sparse_counts_have_no_outliers` and `a_zero_mad_falls_back_to_the_mean_absolute_deviation`. GEN-011's precision and recall are as before, since its noise never gives a zero MAD.
+- **Evidence level / confidence:** EV-D / Moderate: a review finding with constructed cases. The factor 3 is INFER (ADR-0031), not measured on real sparse data.
+- **Affects:** `detect/outliers.rs`; every `outliers` annotation's parameters (`fallbackSeparation`); ADR-0031's INFER list.
+
 ### F-206 · ECHOMETRIC's detectors read a field's whole column in table order, not the series each track plays
 
 - **Date:** 2026-11-26 · **Phase:** C05 · **Type:** engineering (correctness) · **Status:** new

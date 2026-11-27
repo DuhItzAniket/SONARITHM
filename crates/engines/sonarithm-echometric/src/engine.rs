@@ -21,8 +21,9 @@ use sonarithm_core::engine::{
     EngineManifest, Registrar, RegistryError,
 };
 use sonarithm_core::ids::{AnalyzerId, EngineId, RowRange, RuleId};
+use sonarithm_core::provenance::Confidence;
 use sonarithm_core::score::EngineVersion;
-use sonarithm_data::{DataBundle, Table};
+use sonarithm_data::{DataBundle, RowProvenance, Table};
 
 use crate::codes;
 use crate::detect::{self, Finding, Param, Params, Series};
@@ -131,6 +132,9 @@ impl Analyzer<DataBundle> for Detector {
             return Ok(Vec::new());
         };
         let mut annotations = Vec::new();
+        // Each row's provenance, so an insight on estimates says so (AGENTS rule 7); a table
+        // whose provenance columns cannot be read is treated as exact, as the encoder does.
+        let provenance = RowProvenance::read(table).ok();
         for analyzed in request.fields {
             let Some(series) = series_of(table, &analyzed.field, analyzed.rows.as_deref()) else {
                 cx.report(Diagnostic::new(
@@ -147,6 +151,7 @@ impl Analyzer<DataBundle> for Detector {
             for finding in self.findings(&series) {
                 let mut found = annotation(*self, table, &analyzed.field, &finding);
                 found.track = Some(analyzed.track.clone());
+                found.confidence = confidence_of(provenance.as_ref(), &series, &finding);
                 annotations.push(found);
             }
         }
@@ -186,6 +191,30 @@ fn annotation(detector: Detector, table: &Table, field: &str, finding: &Finding)
     }
     annotation.params = params;
     annotation
+}
+
+/// The lowest confidence among the rows `finding` covers: the series' rows from its first to
+/// its last, in the order the track plays them (03 §4 rule 2, AGENTS rule 7). A row with no
+/// confidence (exact data) counts as certain, so an insight on exact data stays certain.
+fn confidence_of(
+    provenance: Option<&RowProvenance>,
+    series: &Series,
+    finding: &Finding,
+) -> Confidence {
+    let Some(provenance) = provenance else {
+        return Confidence::CERTAIN;
+    };
+    let rows = series.rows();
+    let at = |row: u64| rows.iter().position(|&r| r == row);
+    let covered: Vec<u64> = match (at(finding.first), at(finding.last)) {
+        (Some(a), Some(b)) => rows[a.min(b)..=a.max(b)].to_vec(),
+        // A finding's rows are always the series' own; the endpoints are the fallback.
+        _ => vec![finding.first, finding.last],
+    };
+    provenance
+        .combine(covered.iter().filter_map(|&row| usize::try_from(row).ok()))
+        .confidence
+        .unwrap_or(Confidence::CERTAIN)
 }
 
 /// The finite numbers of `field` at `rows` of `table`, in that order (every row in table

@@ -17,6 +17,7 @@ use sonarithm_audaxis::Audaxis;
 use sonarithm_compiler::{Compiled, Compiler, Platform};
 use sonarithm_core::engine::{AnnotationParam, CancelToken};
 use sonarithm_core::nav::{NavKind, NavNodeId, NavTree};
+use sonarithm_core::provenance::Confidence;
 use sonarithm_data::DataBundle;
 use sonarithm_echometric::Echometric;
 use sonarithm_numisona::Numisona;
@@ -255,4 +256,47 @@ fn rfc_0009_analyzed_rows_are_the_rows_each_track_plays() {
             .collect();
         assert_eq!(played, expected, "track {id}");
     }
+}
+
+/// AGENTS rule 7 (#506 review): an annotation's confidence is the lowest among the rows it
+/// covers, so an insight on an estimate is not reported as certain.
+#[test]
+fn a11y_23_an_insight_on_an_estimate_carries_its_confidence() {
+    let rows: Vec<Value> = (0..20_u32)
+        .map(|i| {
+            let estimated = i == 12;
+            let y = if estimated {
+                95.0
+            } else {
+                40.0 + f64::from(i % 4) * 0.5
+            };
+            json!({
+                "t": i,
+                "y": y,
+                "__snr_prov": if estimated { "cv_estimate" } else { "exact" },
+                "__snr_conf": if estimated { json!(0.75) } else { Value::Null },
+            })
+        })
+        .collect();
+    let spec = json!({
+        "specVersion": "0.1",
+        "data": { "source": { "kind": "inline", "values": rows } },
+        "substrate": { "time": { "field": "t" } },
+        "tracks": [{ "id": "y", "mark": "tone", "channels": { "pitch": { "field": "y" } } }],
+        "analysis": { "detect": ["extrema", "outliers"] }
+    });
+    let compiled = compile(&spec);
+    let at = |label: &str| {
+        compiled
+            .annotations
+            .iter()
+            .find(|a| a.label == label)
+            .unwrap_or_else(|| panic!("no {label}"))
+    };
+    let estimate = Confidence::new(0.75).unwrap();
+    for label in ["maximum", "outlier"] {
+        assert_eq!(at(label).range.start, 12, "{label}");
+        assert_eq!(at(label).confidence, estimate, "{label}");
+    }
+    assert_eq!(at("minimum").confidence, Confidence::CERTAIN);
 }

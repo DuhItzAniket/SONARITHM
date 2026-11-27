@@ -47,27 +47,6 @@ expression: json
   },
   {
     "source": "extrema",
-    "label": "local maximum",
-    "range": {
-      "table": 0,
-      "generation": 0,
-      "start": 2,
-      "end": 3
-    },
-    "field": "temp",
-    "track": "temp",
-    "value": 10.2,
-    "confidence": 1.0,
-    "rules": [
-      "A11Y-23"
-    ],
-    "params": {
-      "hysteresis": 0.1,
-      "method": "reversal-hysteresis"
-    }
-  },
-  {
-    "source": "extrema",
     "label": "local minimum",
     "range": {
       "table": 0,
@@ -340,27 +319,6 @@ expression: json
     }
   },
   {
-    "source": "extrema",
-    "label": "local maximum",
-    "range": {
-      "table": 0,
-      "generation": 0,
-      "start": 12,
-      "end": 13
-    },
-    "field": "humidity",
-    "track": "humidity",
-    "value": 95.0,
-    "confidence": 1.0,
-    "rules": [
-      "A11Y-23"
-    ],
-    "params": {
-      "hysteresis": 0.1,
-      "method": "reversal-hysteresis"
-    }
-  },
-  {
     "source": "outliers",
     "label": "outlier",
     "range": {
@@ -377,6 +335,7 @@ expression: json
       "A11Y-23"
     ],
     "params": {
+      "fallbackSeparation": 3.0,
       "method": "moving-median-robust-z",
       "minValues": 5.0,
       "robustZ": 72.846,

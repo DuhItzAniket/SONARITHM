@@ -97,7 +97,8 @@ pub fn turns(series: &Series, hysteresis: f64) -> Vec<Turn> {
 }
 
 /// The global minimum and maximum of `series` (the first row of each, on ties), then the
-/// local extrema at its turns, in row order. Empty for an empty series; a constant series
+/// local extrema at its turns, in row order. A turn at the global extreme's own row is not
+/// listed again as a local one (#506 review). Empty for an empty series; a constant series
 /// has its one value as both minimum and maximum.
 #[must_use]
 pub fn detect(series: &Series) -> Vec<Finding> {
@@ -125,7 +126,11 @@ pub fn detect(series: &Series) -> Vec<Finding> {
     };
     found.extend(lowest.and_then(|(i, v)| point("minimum", i, v)));
     found.extend(highest.and_then(|(i, v)| point("maximum", i, v)));
+    let global = [lowest, highest].map(|extreme| extreme.map(|(index, _)| index));
     for turn in turns(series, HYSTERESIS) {
+        if global.contains(&Some(turn.index)) {
+            continue;
+        }
         let label = if turn.maximum {
             "local maximum"
         } else {
@@ -177,6 +182,25 @@ mod tests {
             .map(|t| (t.index, t.maximum))
             .collect();
         assert_eq!(found, [(1, true), (2, false), (3, true)]);
+    }
+
+    /// #506 review: the global maximum's own turn is not listed again as a local maximum,
+    /// and the other peak still is.
+    #[test]
+    fn a_global_extreme_is_listed_once() {
+        let found: Vec<(&str, u64)> = detect(&series(&[0.0, 10.0, 0.0, 8.0, 0.0]))
+            .iter()
+            .map(|f| (f.label, f.first))
+            .collect();
+        assert_eq!(
+            found,
+            [
+                ("minimum", 0),
+                ("maximum", 1),
+                ("local minimum", 2),
+                ("local maximum", 3)
+            ]
+        );
     }
 
     #[test]
