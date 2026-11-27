@@ -96,6 +96,8 @@ The app core computes it on the control thread when it builds the anchor, never 
 | 2026-11-01 | `modality_toggle` and `choices_reset` added (B03-T09), with `Settings.choices`, `AnnouncementInfo.muted` and `TransportState.muted`; speech, sonification and braille are never all off (`SNR-APP-094`), and errors and alarms are never muted (both INFER, OD-30); approved by the coordinator, additive |
 | 2026-11-01 | `braille_route`, `CursorOrigin::braille` and `CursorState.braille` (a `BrailleState`) added, and the settings gain `braille` (`mode`, `cells`) (B03-T10); approved by the coordinator, additive |
 | 2026-11-26 | Functions, Projects: project format 1.1 stores a function dataset as its definition, so `SNR-APP-089` and the autosave notice are retired (C03-T08, RFC-0002 §12); no command or reply changes |
+| 2026-11-28 | `nav_query` and `NavQuery` added (B03-T09): the query menu's summary, minimum, maximum, range and value at x, answered as a response announcement without moving the cursor; `NavQuery` is non-exhaustive for ECHOMETRIC's statistics (C05-T06). `NavResult.cue` added: whether the move played the point's cue. Designed and approved 2026-11-01, additive |
+| 2026-11-28 | The settings gain `keyboard.singleKeyCommands` (KB-02's group switch) beside the existing `keymap` (B03-T09). `settings_set` refuses a reserved combination with `SNR-APP-091`; keys in a project's profile are ignored with the settings notice `SNR-APP-092` (ADR-0020, amended the same day). Designed and approved 2026-11-01, additive |
 
 #### Cursor
 

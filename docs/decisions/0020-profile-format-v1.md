@@ -90,7 +90,7 @@ A profile is a UTF-8 JSON object:
 
 **built-in defaults < user settings < active profile < project profile < spec < explicit UI action**
 
-* **Interaction preferences** (verbosity, part order, modalities, speech, keymap) are resolved field by field in the app core. A UI action is a session override: it applies at once and persists only if the listener saves it to a profile.
+* **Interaction preferences** (verbosity, part order, modalities, speech, keymap) are resolved field by field in the app core. **Amended 2026-11-28 (B03-T09):** the keymap skips the project-profile layer. Keys are the listener's (keyboard §13): a shared project must not rebind someone's keyboard, so a project profile's `keymap` is ignored and the app core sends the settings notice `SNR-APP-092`. Every other interaction preference still takes the project profile's value. A UI action is a session override: it applies at once and persists only if the listener saves it to a profile.
 * **Sound preferences reach the compiler only through the spec.**
   * Before compiling, the app core fills spec fields that the spec leaves unset with the profile's values: pitch range, pace, instrument, context cues, and polarity (below). This produces the effective spec, which is what gets compiled, and its canonical form is what the render manifest records. The compile receives no profile of any kind, so the compiler and the Score IR do not change, and a Score is reproducible from its manifest without the profile (rule 1, ADR-0013).
   * A spec value always wins.
