@@ -461,6 +461,7 @@ Reserved for the C02 experiment: `E-ESTIMATE` (low-confidence region).
 8. **Layouts.** Letter bindings match the produced character; punctuation and digits match the physical key and show the localised label (KB-08).
 9. **Presets.** "Default" and "No single-key commands". More presets only with evidence from B07.
 10. **Change control.** A change to a default binding needs a finding in the [findings log](../research-paper/findings-log.md) and a row in this document's change log.
+11. **Projects never set keys (B03-T09; ADR-0020, amended 2026-11-28).** A shared project file must never rebind a screen-reader user's keys, so the keymap skips the project-profile layer. Opening a project whose profile sets keys ignores them, applies the rest of that profile, and says once, in a notice that lists no bindings, that the project's key bindings were ignored (`SNR-APP-092`). This is the only exception to ADR-0020's layer order: any other preference that needs one needs its own amendment.
 
 ## 14. Discrete-step input beyond the keyboard (A11Y-27)
 

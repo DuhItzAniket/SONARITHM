@@ -360,15 +360,30 @@ fn keyboard_13_a_projects_keys_are_ignored_with_a_notice() {
     let mut app = App::new(config, Arc::new(sink.clone())).unwrap();
     let open = json!({ "command": "project_open", "args": { "path": bundle } });
     app.dispatch_json(&open.to_string()).unwrap();
-    let notices: Vec<String> = sink
+    let notices: Vec<(String, String)> = sink
         .events()
         .into_iter()
         .filter_map(|event| match event {
-            sonarithm_app::ipc::Event::SettingsNotice { error } => Some(error.code),
+            sonarithm_app::ipc::Event::SettingsNotice { error } => {
+                Some((error.code, error.message))
+            }
             _ => None,
         })
         .collect();
-    assert_eq!(notices, ["SNR-APP-092"]);
+    // A notice, once, and the project still opened (ADR-0020's one layer exception).
+    let codes: Vec<&str> = notices.iter().map(|(code, _)| code.as_str()).collect();
+    assert_eq!(codes, ["SNR-APP-092"]);
+    // It says the keys were ignored without listing them.
+    let message = &notices[0].1;
+    assert!(
+        !message.contains("nav.next") && !message.contains("\"L\""),
+        "{message}"
+    );
+    // The listener's own keys are unchanged.
+    let settings = app
+        .dispatch_json(&json!({ "command": "settings_get" }).to_string())
+        .unwrap();
+    assert_eq!(settings["keymap"], json!({}), "{settings}");
     let effective = app
         .dispatch_json(&json!({ "command": "settings_effective" }).to_string())
         .unwrap();
