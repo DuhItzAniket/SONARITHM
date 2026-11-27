@@ -55,6 +55,7 @@ Owner: `sonarithm-app`.
 | `SNR-APP-093` | warning | A dataset was fingerprinted again | Another SONARITHM build computed the dataset's fingerprint differently. Embedded data matches the project's own checksum, and linked data the size and checksum the project recorded, so it opens unchanged; a function opens sampled again from its definition. Save the project to record the new fingerprint. | — |
 | `SNR-APP-094` | error | That would silence every output | Speech, sonification and braille cannot all be off: nothing would tell you what the app is doing. Turn another one on first, or reset the toggles to your profile's defaults. Nothing was changed. | — |
 | `SNR-APP-095` | error | There is nothing to relink | Only a linked dataset that the project could not verify, which shows as unavailable, can be checked and relinked. Nothing was changed. | — |
+| `SNR-APP-096` | error | That chart image is no longer open for calibration | Open the image again with Open chart image. A session ends when its chart is applied or cancelled, and the oldest of four ends when a fifth image opens. Nothing was changed. | — |
 
 ## SNR-COMP
 

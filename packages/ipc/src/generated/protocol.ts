@@ -75,6 +75,10 @@ export const REPLY_KINDS = {
   function_check: "function_check",
   function_open: "function",
   audify_calculate: "audify_readout",
+  chart_raster_open: "raster_chart",
+  chart_calibration_check: "calibration_check",
+  chart_calibration_apply: "dataset",
+  chart_raster_close: "raster_closed",
   nav_move: "nav",
   nav_where: "announce",
   modality_toggle: "effective",
@@ -461,7 +465,35 @@ k: number | null,
 /**
  * Where the top of the band should land, in Hz.
  */
-topHz: number | null, } } | { "command": "nav_move", "args": { 
+topHz: number | null, } } | { "command": "chart_raster_open", "args": { 
+/**
+ * The file the user chose. Only its name is kept or reported.
+ */
+path: string, } } | { "command": "chart_calibration_check", "args": { 
+/**
+ * The session from `chart_raster_open`.
+ */
+id: number, 
+/**
+ * The anchors so far.
+ */
+calibration: RasterCalibration, 
+/**
+ * A pixel position to read the values at (a pixel's centre is `i + 0.5`).
+ */
+at: [number, number] | null, } } | { "command": "chart_calibration_apply", "args": { 
+/**
+ * The session from `chart_raster_open`.
+ */
+id: number, 
+/**
+ * The calibration: two anchors or more on each axis.
+ */
+calibration: RasterCalibration, } } | { "command": "chart_raster_close", "args": { 
+/**
+ * The session from `chart_raster_open`.
+ */
+id: number, } } | { "command": "nav_move", "args": { 
 /**
  * The verb.
  */
@@ -595,7 +627,51 @@ audibleHz: [number, number] | null,
 /**
  * `SNR-ENG-461` when part of the band is inaudible, `462` when all of it is.
  */
-codes: Array<string>, } | { "reply": "nav" } & NavResult | { "reply": "job" } & JobInfo | { "reply": "jobs", 
+codes: Array<string>, } | { "reply": "raster_chart", 
+/**
+ * The session, for the calibration commands.
+ */
+id: number, 
+/**
+ * The file name alone.
+ */
+name: string, 
+/**
+ * The image's width in pixels.
+ */
+widthPx: number, 
+/**
+ * The image's height in pixels.
+ */
+heightPx: number, 
+/**
+ * The image as a `data:` URL, its media type from the bytes' signature.
+ */
+image: string, 
+/**
+ * The plot area the axis lines bound, in pixels, when both lines are found.
+ */
+plotArea: PlotAreaInfo | null, } | { "reply": "calibration_check", 
+/**
+ * Why an axis does not fit, and the warnings of one that does, x first.
+ */
+diagnostics: Array<DiagnosticInfo>, 
+/**
+ * The x axis's fit, once it has two anchors that fit.
+ */
+x: AxisFitInfo | null, 
+/**
+ * The y axis's fit.
+ */
+y: AxisFitInfo | null, 
+/**
+ * The values at `at`, when it was given and each axis fits.
+ */
+valueAt: ValueAt | null, } | { "reply": "raster_closed", 
+/**
+ * The session that ended.
+ */
+id: number, } | { "reply": "nav" } & NavResult | { "reply": "job" } & JobInfo | { "reply": "jobs", 
 /**
  * The jobs, oldest first.
  */
@@ -1619,6 +1695,104 @@ available: boolean, };
  * Why a linked dataset could not be verified against its project (RFC-0008 §6).
  */
 export type RelinkReason = "olderBuild" | "changed";
+
+/**
+ * A raster calibration as the dialog enters it (C02-T10): the spec's
+ * `data.source.calibration` (RFC-0004 §5), with each axis allowed fewer than two anchors
+ * while it is being entered.
+ */
+export type RasterCalibration = { 
+/**
+ * The plot area, in pixels; the one the axis lines bound when absent.
+ */
+plotArea: PlotAreaInfo | null, 
+/**
+ * The horizontal axis.
+ */
+x: RasterAxis, 
+/**
+ * The vertical axis.
+ */
+y: RasterAxis, };
+
+/**
+ * One axis of a [`RasterCalibration`].
+ */
+export type RasterAxis = { 
+/**
+ * The scale kind.
+ */
+kind: RasterAxisKind, 
+/**
+ * The anchors, in the order they were entered.
+ */
+anchors: Array<RasterAnchor>, };
+
+/**
+ * A raster axis's scale kind (RFC-0004 §5).
+ */
+export type RasterAxisKind = "linear" | "log" | "date" | "category";
+
+/**
+ * A pixel position and the value it stands for.
+ */
+export type RasterAnchor = { 
+/**
+ * The pixel position (y down; a pixel's centre is `i + 0.5`).
+ */
+at: [number, number], 
+/**
+ * A number (linear, log), or the text of a date or label, read by the app core.
+ */
+value: AnchorText, };
+
+/**
+ * An anchor's value: a number, or text the app core reads (a date, a label).
+ */
+export type AnchorText = number | string;
+
+/**
+ * A rectangle in pixels.
+ */
+export type PlotAreaInfo = { 
+/**
+ * The corner with the smaller coordinates.
+ */
+min: [number, number], 
+/**
+ * The corner with the larger coordinates.
+ */
+max: [number, number], };
+
+/**
+ * How well one axis's anchors fit (C02-T10).
+ */
+export type AxisFitInfo = { 
+/**
+ * The anchors fitted.
+ */
+anchors: number, 
+/**
+ * The anchors' root-mean-square distance from the fit, as a share of their span.
+ */
+residual: number, 
+/**
+ * The confidence values read through the axis get.
+ */
+confidence: number, };
+
+/**
+ * The values at a pixel, each once its axis fits (C02-T10).
+ */
+export type ValueAt = { 
+/**
+ * The x value: a number, or a date (ISO 8601) or label as text.
+ */
+x: AnchorText | null, 
+/**
+ * The y value.
+ */
+y: AnchorText | null, };
 
 /**
  * A recent project.
