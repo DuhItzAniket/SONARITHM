@@ -1402,3 +1402,13 @@ A05 (render engine, audio backends, export) uses F-050 to F-069.
 - **Evidence level / confidence:** EV-B / Strong for the licences (primary sources); Moderate for the CC0 scope of S2
 - **Affects:** OD-29; design-language §6; supply-chain-and-licensing (colormaps); `packages/viz/src/colormaps.ts`; B04-T02
 - **Papers:** none
+
+### F-251 · glib 0.18's unsound `VariantStrIter` has no fix reachable from Tauri 2 on Linux, and nothing in the tree calls it
+
+- **Date:** 2026-11-28 · **Phase:** maintenance (Dependabot alerts 1 and 3) · **Type:** engineering (supply chain) · **Status:** alerts dismissed as tolerable risk (coordinator, 2026-11-28); tracked in [#514](https://github.com/DuhItzAniket/SONARITHM/issues/514)
+- **Statement:** GHSA-wrw7-89jp-8q8g (glib ≥ 0.15, < 0.20: unsound `Iterator` and `DoubleEndedIterator` impls of `glib::VariantStrIter`) matches glib 0.18.5 in `Cargo.lock` and in the A02 spike's lock. `cargo tree -i glib --target all` shows that only the Linux GTK stack pulls it in: tauri 2.12.7, wry 0.57.1, tao 0.37.2, muda 0.20.0 and webkit2gtk 2.0.2 all go through gtk 0.18.2, the last gtk3-rs release, which pins glib 0.18. No compatible bump exists. The only way in is `glib::Variant::array_iter_str`. A search of every crate in the tree that depends on glib (atk, cairo-rs, gdk, gdk-pixbuf, gdkx11, gio, gtk, javascriptcore-rs, muda, pango, soup3, tao, tauri, tauri-runtime, tauri-runtime-wry, webkit2gtk, wry) finds no call to it, and SONARITHM's code never uses glib.
+- **Reading:** this is tolerable until Tauri moves its Linux backend to GTK 4, or a crate in the tree starts calling `array_iter_str` (#514 holds the grep to re-run on every Tauri, wry, tao or muda bump). The spike's lock cannot be retired yet: the Narrator, Orca and VoiceOver walkthroughs (HP-01 to HP-03) still build `spikes/tauri-webview`.
+- **Evidence:** `cargo tree -i glib@0.18.5 --target all -e normal`; a grep for `array_iter_str` and `VariantStrIter` in the registry sources of the crates above (2026-11-28); Dependabot alerts 1 and 3
+- **Evidence level / confidence:** EV-C / Strong for the current lock; re-check on every Tauri bump
+- **Affects:** `Cargo.lock`, `spikes/tauri-webview/src-tauri/Cargo.lock`; supply-chain-and-licensing
+- **Papers:** none
