@@ -11,6 +11,10 @@
 //! values let the base inflate the MAD and missed spikes that ran against it (recall 0.66);
 //! a robust z inside each small window estimated the MAD from too few values and called
 //! noise an outlier (precision 0.87). Residuals keep the base out and use every value.
+//!
+//! **Limitation:** the windows are symmetric and shrink toward the ends, so the first and
+//! last values of a series are never judged; a spike in either is not reported (F-205,
+//! #507). Descriptions say so (C05-T05).
 
 use super::{Finding, Param, Params, Series, median};
 

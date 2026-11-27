@@ -15,6 +15,11 @@ publish = false
 [dev-dependencies]
 proptest.workspace = true
 sonarithm-echometric.workspace = true
+# augurs-changepoint's results are pinned in tests/fixtures (ADR-0031's fallback): its
+# dependencies (argmin through rv) carry unmaintained-crate advisories that `cargo deny`
+# refuses, and the advisory policy is not this crate's to change.
+augurs-seasons = "0.10.3"
+serde_json.workspace = true
 statrs = { version = "0.19.1", default-features = false }
 
 [lints]

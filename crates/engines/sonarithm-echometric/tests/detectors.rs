@@ -17,9 +17,10 @@
 use std::collections::BTreeSet;
 
 use proptest::prelude::*;
-use sonarithm_echometric::detect::{Series, extrema, outliers};
+use sonarithm_echometric::detect::{Series, changepoints, extrema, outliers, periodicity, trends};
 use sonarithm_echometric::harness::generators::outliers::OutlierParams;
 use sonarithm_echometric::harness::generators::reversals::{ReversalParams, STUDIED_RATES};
+use sonarithm_echometric::harness::generators::shifts::ShiftParams;
 use sonarithm_echometric::harness::{Params, Stimulus, Truth, generate};
 
 fn series(stimulus: &Stimulus, column: &str) -> Series {
@@ -111,9 +112,119 @@ fn c05_t01_detector_parameters_are_pinned() {
     };
     insta::assert_debug_snapshot!("extrema_params", shown(extrema::params()));
     insta::assert_debug_snapshot!("outliers_params", shown(outliers::params()));
+    insta::assert_debug_snapshot!("changepoints_params", shown(changepoints::params()));
+    insta::assert_debug_snapshot!("periodicity_params", shown(periodicity::params()));
+    insta::assert_debug_snapshot!("trend_segments_params", shown(trends::params()));
+}
+
+/// GEN-012's level shifts over 100 seeds: a change point within one minimum segment of a true
+/// shift is a hit, each truth matched once. The measured rates are printed for C05-T03's
+/// record; the floors catch a regression.
+#[test]
+fn c05_t03_changepoints_precision_and_recall_on_gen_012() {
+    let (mut hits, mut found_all, mut truth_all) = (0usize, 0usize, 0usize);
+    for seed in 0..100 {
+        let stimulus = generate(&Params::Shifts(ShiftParams::default()), seed).unwrap();
+        let Truth::Shifts(truth) = &stimulus.truth else {
+            panic!("GEN-012 has shift truth");
+        };
+        let found: Vec<u64> = changepoints::detect(&series(&stimulus, "value"))
+            .iter()
+            .map(|f| f.first)
+            .collect();
+        let mut unmatched: Vec<u64> = truth.change_rows.iter().map(|&r| r as u64).collect();
+        for row in &found {
+            if let Some(at) = unmatched
+                .iter()
+                .position(|t| t.abs_diff(*row) <= changepoints::MIN_SEGMENT as u64)
+            {
+                unmatched.remove(at);
+                hits += 1;
+            }
+        }
+        found_all += found.len();
+        truth_all += truth.change_rows.len();
+    }
+    let precision = hits as f64 / found_all.max(1) as f64;
+    let recall = hits as f64 / truth_all.max(1) as f64;
+    println!(
+        "changepoints on GEN-012 (100 seeds, defaults): precision {precision:.4}, recall {recall:.4}"
+    );
+    assert!(precision >= 0.9, "precision {precision}");
+    assert!(recall >= 0.9, "recall {recall}");
+}
+
+/// GEN-012 with a 25-point sine and no shifts: the period is found within a point; with
+/// noise alone, none is reported.
+#[test]
+fn c05_t03_periodicity_on_gen_012() {
+    let periodic = ShiftParams {
+        shifts: 0,
+        period: Some(25),
+        ..ShiftParams::default()
+    };
+    let noise = ShiftParams {
+        shifts: 0,
+        ..ShiftParams::default()
+    };
+    let (mut right, mut false_alarms) = (0usize, 0usize);
+    for seed in 0..100 {
+        let stimulus = generate(&Params::Shifts(periodic.clone()), seed).unwrap();
+        let found = periodicity::period(series(&stimulus, "value").values());
+        if found.is_some_and(|(lag, _)| lag.abs_diff(25) <= 1) {
+            right += 1;
+        }
+        let stimulus = generate(&Params::Shifts(noise.clone()), seed).unwrap();
+        if periodicity::period(series(&stimulus, "value").values()).is_some() {
+            false_alarms += 1;
+        }
+    }
+    println!(
+        "periodicity on GEN-012 (100 seeds): period found {right}/100, false alarms {false_alarms}/100"
+    );
+    assert!(right >= 95, "{right}/100");
+    assert!(false_alarms <= 5, "{false_alarms}/100");
+}
+
+/// SDR-21: trend segments are the reversals plus one, and the reversal count is GEN-001's.
+#[test]
+fn sdr_21_trend_segments_follow_the_reversals_of_gen_001() {
+    for rate in STUDIED_RATES {
+        for reversals in 0..=3 {
+            for seed in 0..10 {
+                let params = ReversalParams::cell(rate, reversals);
+                let stimulus = generate(&Params::TrendReversals(params), seed).unwrap();
+                let s = series(&stimulus, "price");
+                assert_eq!(
+                    trends::reversals(&s),
+                    reversals as usize,
+                    "rate {rate}, seed {seed}"
+                );
+                let segments = trends::detect(&s);
+                assert_eq!(segments.len(), reversals as usize + 1);
+                for pair in segments.windows(2) {
+                    assert_ne!(pair[0].label, pair[1].label, "directions alternate");
+                }
+            }
+        }
+    }
 }
 
 proptest! {
+    /// Change points never make a segment shorter than the minimum, and the same series gives
+    /// the same ones (ADR-0013).
+    #[test]
+    fn changepoints_keep_the_minimum_segment(values in prop::collection::vec(-100.0f64..100.0, 0..150)) {
+        let found = changepoints::starts(&values);
+        prop_assert_eq!(&found, &changepoints::starts(&values));
+        let mut bounds = vec![0];
+        bounds.extend(&found);
+        bounds.push(values.len());
+        for pair in bounds.windows(2) {
+            prop_assert!(found.is_empty() || pair[1] - pair[0] >= changepoints::MIN_SEGMENT);
+        }
+    }
+
     /// The robust z-score is unchanged by shifting and by positive scaling, so the outliers
     /// do not depend on units (ADR-0031).
     #[test]

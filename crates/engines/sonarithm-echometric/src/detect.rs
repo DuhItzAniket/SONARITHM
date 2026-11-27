@@ -1,8 +1,8 @@
 // SPDX-FileCopyrightText: 2026 SONARITHM contributors
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
-//! ECHOMETRIC's detectors (C05-T01 to T03; 07 ECHOMETRIC, ADR-0031): extrema and outliers
-//! so far; change points, periodicity and trend segments follow in C05-T03.
+//! ECHOMETRIC's detectors (C05-T01 to T03; 07 ECHOMETRIC, ADR-0031): extrema, outliers,
+//! change points, periodicity and trend segments.
 //!
 //! Each detector is a pure function of a [`Series`]: the finite values of one field, in row
 //! order, with the rows they came from. It uses IEEE arithmetic and [`sonarithm_core::math`]
@@ -10,8 +10,11 @@
 //! platform (ADR-0013, ADR-0031). Every threshold is recorded in the finding's parameters
 //! (RFC-0009 §1) and is INFER: no design rule sets it (ADR-0031).
 
+pub mod changepoints;
 pub mod extrema;
 pub mod outliers;
+pub mod periodicity;
+pub mod trends;
 
 use std::collections::BTreeMap;
 

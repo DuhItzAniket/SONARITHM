@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: 2026 SONARITHM contributors
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
-//! Stimulus generators GEN-001 to GEN-004 and GEN-011 (docs/research-paper/datasets.md).
+//! Stimulus generators GEN-001 to GEN-004, GEN-011 and GEN-012 (docs/research-paper/datasets.md).
 //!
 //! Each generator re-implements a published stimulus design from the paper's description,
 //! never from the authors' code. Its module documents the published parameters next to
@@ -15,6 +15,7 @@
 //! | GEN-003 | [`transits`] | Tucker Brown et al. 2022 (`tuckerbrown2022evaluating`) |
 //! | GEN-004 | [`correlation`] | Elmquist et al. 2024 (`elmquist2024parallel`) |
 //! | GEN-011 | [`outliers`] | A labelled detector test set (DS-010; Iglewicz & Hoaglin 1993, `iglewicz1993detect`) |
+//! | GEN-012 | [`shifts`] | A labelled detector test set (DS-010; Killick et al. 2012, `killick2012optimal`) |
 //!
 //! **Determinism (ADR-0013, SDR-02).** A generator draws from one `ChaCha8` stream keyed
 //! by the seed and its ID ([`TrackRng`]), in a fixed order, and computes with
@@ -25,6 +26,7 @@ pub mod correlation;
 pub mod outliers;
 pub mod prices;
 pub mod reversals;
+pub mod shifts;
 pub mod transits;
 
 use serde::{Deserialize, Serialize};
@@ -54,6 +56,9 @@ pub enum Params {
     /// GEN-011.
     #[serde(rename = "GEN-011")]
     Outliers(outliers::OutlierParams),
+    /// GEN-012.
+    #[serde(rename = "GEN-012")]
+    Shifts(shifts::ShiftParams),
 }
 
 impl Params {
@@ -66,6 +71,7 @@ impl Params {
             Self::Transits(_) => GeneratorId::Transits,
             Self::CorrelationTriplets(_) => GeneratorId::CorrelationTriplets,
             Self::Outliers(_) => GeneratorId::Outliers,
+            Self::Shifts(_) => GeneratorId::Shifts,
         }
     }
 }
@@ -98,6 +104,7 @@ pub fn generate(params: &Params, seed: u64) -> Result<Stimulus, GeneratorError> 
         Params::Transits(params) => transits::generate(params, seed),
         Params::CorrelationTriplets(params) => correlation::generate(params, seed),
         Params::Outliers(params) => outliers::generate(params, seed),
+        Params::Shifts(params) => shifts::generate(params, seed),
     }
 }
 
