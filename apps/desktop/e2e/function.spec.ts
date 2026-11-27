@@ -8,7 +8,7 @@
 import type { Page } from "@playwright/test";
 import { expect, test } from "@playwright/test";
 
-import { seriousViolations } from "./axe.ts";
+import { expectNoSeriousViolations, seriousViolations } from "./axe.ts";
 
 interface Mock {
   commands(): string[];
@@ -66,6 +66,7 @@ test.beforeEach(async ({ page }) => {
 
 test("c03_t08b_the_expression_is_checked_after_a_pause_and_marks_where_it_stops", async ({
   page,
+  browserName,
 }) => {
   await newFunction(page);
   await page.keyboard.type("x^2 +");
@@ -76,7 +77,8 @@ test("c03_t08b_the_expression_is_checked_after_a_pause_and_marks_where_it_stops"
     /The expression does not read here\. \(at character 6\)/,
   );
   await expect(dialog(page).getByRole("alert")).toHaveCount(0);
-  expect(await seriousViolations(page)).toEqual([]);
+  // Named lookups precede this scan: F-226 (Firefox skips it).
+  await expectNoSeriousViolations(page, browserName);
   // Enter with the mark says it and opens nothing.
   await page.keyboard.press("Enter");
   await expect(dialog(page)).toBeVisible();
@@ -217,6 +219,7 @@ test("a11y_10_enter_on_a_point_moves_the_one_cursor_and_the_list_marks_it", asyn
 
 test("sdr_31_the_calculator_reads_out_and_an_inaudible_band_will_not_compile", async ({
   page,
+  browserName,
 }) => {
   await openCubic(page);
   const inspector = page.getByRole("complementary", { name: "Inspector" });
@@ -248,5 +251,6 @@ test("sdr_31_the_calculator_reads_out_and_an_inaudible_band_will_not_compile", a
   await expect(readout.nth(2)).toHaveText("None");
   // Small band edges keep their digits (0.0001 Hz to 0.05 Hz, not 0 to 0.1).
   await expect(readout.nth(1)).toHaveText("0.0001 to 0.05 Hz");
-  expect(await seriousViolations(page)).toEqual([]);
+  // Named lookups precede this scan: F-226 (Firefox skips it).
+  await expectNoSeriousViolations(page, browserName);
 });
