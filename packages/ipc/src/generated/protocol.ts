@@ -813,7 +813,8 @@ export type SpecState = {
  */
 text: string | null, 
 /**
- * The undo token of the edit that produced it, when the request was an edit.
+ * The undo token of the edit that produced it, when the request was an edit. `null` when
+ * `spec_set` received the text the spec already had: nothing was recorded.
  */
 undoToken: number | null, };
 
