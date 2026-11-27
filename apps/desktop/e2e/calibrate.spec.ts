@@ -22,6 +22,9 @@ async function primary(page: Page): Promise<"Meta" | "Control"> {
  * next lookup after the scan crashed. Firefox skips only this scan, with a fixme note in the
  * report; every other step still runs in Firefox, and Chromium and WebKit run the scan, as
  * `audio.spec.ts` does. Remove the skip with #487.
+ *
+ * TODO(#487): use the shared `expectNoSeriousViolations` from `./axe.ts` once #498 lands, so
+ * the workaround is removed in one place.
  */
 async function expectNoSeriousViolations(page: Page, browserName: string) {
   if (browserName === "firefox") {

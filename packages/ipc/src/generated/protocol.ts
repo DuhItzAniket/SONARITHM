@@ -667,7 +667,14 @@ y: AxisFitInfo | null,
 /**
  * The values at `at`, when it was given and each axis fits.
  */
-valueAt: ValueAt | null, } | { "reply": "raster_closed", 
+valueAt: ValueAt | null, 
+/**
+ * Each fitted axis's value at every pixel column (x) or row (y), so the dialog says
+ * a crosshair step's value in the same moment as its pixel. The values come once
+ * per fit: a check whose fit this session was already sent gives the fit's key
+ * without them.
+ */
+values: AxisValues, } | { "reply": "raster_closed", 
 /**
  * The session that ended.
  */
@@ -1703,9 +1710,13 @@ export type RelinkReason = "olderBuild" | "changed";
  */
 export type RasterCalibration = { 
 /**
- * The plot area, in pixels; the one the axis lines bound when absent.
+ * The plot area, in pixels. When absent, `area` says which area is read.
  */
 plotArea: PlotAreaInfo | null, 
+/**
+ * The area read when `plotArea` is absent: the anchors' box by default (#516).
+ */
+area: ReadArea, 
 /**
  * The horizontal axis.
  */
@@ -1793,6 +1804,39 @@ x: AnchorText | null,
  * The y value.
  */
 y: AnchorText | null, };
+
+/**
+ * Each axis's value at every pixel along it, once the axis fits (C02-T10).
+ */
+export type AxisValues = { 
+/**
+ * The x axis's values at each pixel column; `null` while it does not fit, or when the
+ * image is over 10 000 pixels wide.
+ */
+x: AxisTable | null, 
+/**
+ * The y axis's values at each pixel row; `null` likewise.
+ */
+y: AxisTable | null, };
+
+/**
+ * One fitted axis's values at every pixel along it (C02-T10).
+ */
+export type AxisTable = { 
+/**
+ * The fit's key: the same while the axis's scale and anchors are the same.
+ */
+fit: string, 
+/**
+ * The values, numbers or dates (ISO 8601) or labels; `null` when this session was
+ * already sent this fit's values.
+ */
+values: Array<AnchorText> | null, };
+
+/**
+ * The area of a chart image that is read (C02-T10, #516).
+ */
+export type ReadArea = "anchors" | "detected" | "image";
 
 /**
  * A recent project.

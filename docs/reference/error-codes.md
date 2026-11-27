@@ -223,6 +223,7 @@ Owner: `sonarithm-plotsona`. Numbers SNR-ENG-300 to SNR-ENG-399.
 | `SNR-ENG-327` | error | The image cannot be decoded | The PNG or JPEG file is damaged or uses a feature the decoder does not support. Export the chart again, or use its source file if you have one. | — |
 | `SNR-ENG-328` | error | A raster chart needs an axis calibration | Add `data.source.calibration` with two anchors on each axis: the pixel position of a tick and its value. SONARITHM does not read tick labels from images yet. | — |
 | `SNR-ENG-329` | warning | The series found differ from the legend | Series are told apart by colour. Two series in similar colours may have merged, or a marked line split; check the extracted series against the chart (10 §3.1). | — |
+| `SNR-ENG-330` | warning | Anchors lie outside the detected plot area | The plot area found from the axis lines may be wrong, as on an area chart's fill. Read the area the anchors span, or the whole image, instead of the detected one. | — |
 | `SNR-ENG-340` | warning | Only the first of several charts was read | A chart source reads one chart. Save the chart you want in a file of its own. | — |
 | `SNR-ENG-341` | error | A chart series has no stored values | Office charts keep a cache of the values they show. Open the file in the program that made it and save it again to rebuild the cache. | — |
 | `SNR-ENG-342` | warning | An external data link was not followed | PLOTSONA never opens files or addresses a document points to (12 §6). The values cached in the chart are used. | — |
