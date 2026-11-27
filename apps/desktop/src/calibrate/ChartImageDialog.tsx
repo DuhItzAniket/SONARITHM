@@ -268,7 +268,9 @@ function Calibrate({
     latest.push({ state, at });
   }, [latest, state, at]);
 
-  // The checks in words; said only when they change, never on every crosshair step.
+  // The checks in words; said only when a new check changes them, never on every crosshair
+  // step. The live region speaks only the latest polite message, so an anchor added or
+  // deleted since the last check is said again at the start of the checks it changed.
   const lines = checkLines(
     t,
     state,
@@ -277,13 +279,26 @@ function Calibrate({
   );
   const summary = lines.join(" ");
   const said = useRef<string | null>(null);
+  const seen = useRef<typeof checked>(null);
+  const acted = useRef<string | null>(null);
   useEffect(() => {
-    if (checked === null) return;
+    if (checked === null || checked === seen.current) return;
+    seen.current = checked;
     if (said.current !== null && said.current !== summary) {
-      announcer.announce({ text: summary, assertive: false });
+      const action = acted.current;
+      announcer.announce({
+        text: action === null ? summary : `${action} ${summary}`,
+        assertive: false,
+      });
     }
     said.current = summary;
+    acted.current = null;
   }, [checked, summary, announcer]);
+  /** Says an anchor action now, and keeps it for the checks it changes. */
+  const sayAction = (text: string) => {
+    acted.current = text;
+    announcer.announce({ text, assertive: false });
+  };
 
   const current = (which: Axis): string | null => {
     if (checked?.at[0] !== at[0] || checked.at[1] !== at[1]) {
@@ -314,12 +329,9 @@ function Calibrate({
     nextId.current += 1;
     const next = { ...state, anchors: [...state.anchors, anchor] };
     setState(next);
-    announcer.announce({
-      text: t.format("ui-calibrate-anchor-added", {
-        label: labelOf(next, anchor),
-      }),
-      assertive: false,
-    });
+    sayAction(
+      t.format("ui-calibrate-anchor-added", { label: labelOf(next, anchor) }),
+    );
   };
 
   const read = () => {
@@ -500,12 +512,9 @@ function Calibrate({
                               (a) => a.id !== anchor.id,
                             ),
                           });
-                          announcer.announce({
-                            text: t.format("ui-calibrate-anchor-deleted", {
-                              label,
-                            }),
-                            assertive: false,
-                          });
+                          sayAction(
+                            t.format("ui-calibrate-anchor-deleted", { label }),
+                          );
                         }}
                       >
                         {t.format("ui-calibrate-anchor-delete", { label })}

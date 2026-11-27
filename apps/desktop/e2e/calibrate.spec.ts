@@ -28,6 +28,10 @@ const commands = (page: Page) =>
 /** Opens "Open chart image…" from the palette and names the file. */
 async function openImage(page: Page): Promise<void> {
   await page.keyboard.press(`${await primary(page)}+Shift+P`);
+  // WebKit drops keys typed before the palette is open (as palette.spec.ts waits).
+  await expect(
+    page.getByRole("dialog", { name: "Command palette" }),
+  ).toBeVisible();
   await page.keyboard.type("Open chart image");
   await page.keyboard.press("Enter");
   const field = page.getByRole("textbox", { name: "Chart image file" });
@@ -49,7 +53,8 @@ async function setNumber(
     .getByRole("textbox", { name, exact: true })
     .or(page.getByRole("spinbutton", { name, exact: true }));
   await field.focus();
-  await page.keyboard.press(`${await primary(page)}+A`);
+  // WebKit ignores Primary+A in these fields; select the old text, then type over it.
+  await field.selectText();
   await page.keyboard.type(value);
   await page.keyboard.press("Tab");
 }
@@ -58,7 +63,8 @@ async function setNumber(
 async function choose(page: Page, name: string, option: string): Promise<void> {
   await page.getByRole("button", { name: new RegExp(name) }).focus();
   await page.keyboard.press("Enter");
-  await page.getByRole("option", { name: option, exact: true }).focus();
+  // The selected option's name also carries its check mark, as in audio.spec.ts.
+  await page.getByRole("option", { name: option }).focus();
   await page.keyboard.press("Enter");
 }
 
@@ -83,6 +89,10 @@ test.beforeEach(async ({ page }) => {
     Reflect.set(window, "__SONARITHM_MOCK_DATASET__", { rows: 36 });
   });
   await page.goto("/e2e.html");
+  // Keys pressed before the app has loaded its dataset are lost (WebKit).
+  await expect(
+    page.getByRole("application", { name: /^Chart explorer/ }),
+  ).toBeVisible();
 });
 
 test("c02_t10_a_chart_image_is_calibrated_and_read_by_keyboard_alone", async ({
