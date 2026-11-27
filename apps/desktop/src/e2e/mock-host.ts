@@ -450,12 +450,23 @@ const handlers: MockHandlers = {
         ? null
         : Math.round(fitted.fit(at[index]) * 1000) / 1000;
     };
+    // Every pixel's value along each fitted axis (the mock image is 200 by 120).
+    const along = (index: 0 | 1, length: number) => {
+      const fitted = axes[index];
+      return fitted === null || fitted === undefined || !("fit" in fitted)
+        ? null
+        : Array.from(
+            { length },
+            (_, i) => Math.round(fitted.fit(i + 0.5) * 1000) / 1000,
+          );
+    };
     return {
       reply: "calibration_check" as const,
       diagnostics,
       x: info(0),
       y: info(1),
       valueAt: at === null ? null : { x: read(0), y: read(1) },
+      values: { x: along(0, 200), y: along(1, 120) },
     };
   },
   chart_calibration_apply: () => ({

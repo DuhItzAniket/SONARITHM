@@ -290,17 +290,18 @@ The Spec tab uses CodeMirror 6 with its standard editing keys.
       * **The image:** not focusable. Its text alternative names it and gives its size, and a click on it moves the crosshair there (A11Y-26).
    2. **Pixel x and Pixel y:** number fields bound to the same position, for typed coordinates.
    3. **The scale of each axis:** selects. Linear, Logarithmic, Date, and Category for the x axis only.
-   4. **The new anchor:**
+   4. **Area to read:** radio buttons (APG Radio Group; the arrows move the choice): the anchors' area (the default), the plot area found from the axis lines (disabled when none was found), or the whole image (#516).
+   5. **The new anchor:**
       * its axis (a select);
       * its value: a number, or the text of a date or label, which the app core reads;
-      * Add anchor at the crosshair, which says "x1 added."
-   5. **Each axis's anchors:** a list, each row named "x1: pixel 20, 100, value 0", with Delete, which says "x1 deleted."
-   6. **The checks:**
+      * Add anchor at the crosshair, which says "x1 added." and empties the value field.
+   6. **Each axis's anchors:** a list, each row named "x1: pixel 20, 100, value 0", with Delete, which says "x1 deleted." The focus then moves to the next anchor's Delete, else the previous one's, else Add anchor (or the value field while Add is disabled).
+   7. **The checks:**
       * each axis's state ("x axis: 2 anchors fit within 0.1%") and any refusal;
       * said politely only when they change.
-   7. **Cancel, then Read the chart.**
+   8. **Cancel, then Read the chart.**
       * **Read the chart** says the extraction summary once the chart opens.
-      * **With too few anchors** it says why instead.
+      * **With too few anchors** it says why instead, once, as an alert.
    * **Escape** cancels at either step and returns the focus to where the dialog was opened from.
    * **Marks** on the image tell axes apart by shape and label (squares and "x1", circles and "y1") as well as colour.
 

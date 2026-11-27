@@ -16,7 +16,7 @@ use std::collections::BTreeMap;
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
 
-use sonarithm::raster::{CalibrationCheck, ReadValue};
+use sonarithm::raster::{CalibrationCheck, PixelRect, ReadValue};
 use sonarithm_core::TableId;
 use sonarithm_data::BundleId;
 use sonarithm_spec::v02::Calibration;
@@ -25,8 +25,8 @@ use super::corrections::ChartState;
 use super::{App, Open, file_name, summarize};
 use crate::codes;
 use crate::ipc::{
-    AnchorText, AxisFitInfo, DiagnosticInfo, IpcError, PlotAreaInfo, RasterCalibration, Reply,
-    Request, ValueAt,
+    AnchorText, AxisFitInfo, AxisValues, DiagnosticInfo, IpcError, PlotAreaInfo,
+    RasterCalibration, ReadArea, Reply, Request, ValueAt,
 };
 
 /// The most calibration sessions open at once; a fifth drops the oldest.
@@ -45,6 +45,10 @@ struct Pending {
     /// The file name alone.
     name: String,
     bytes: Arc<Vec<u8>>,
+    /// The image's width and height in pixels.
+    size: [u32; 2],
+    /// The plot area the axis lines bound, when one was found.
+    detected: Option<PixelRect>,
 }
 
 /// The open calibration sessions, by ID, oldest first.
@@ -99,8 +103,34 @@ fn raster_file(path: &Path) -> Result<PathBuf, IpcError> {
     Ok(canonical)
 }
 
+/// Reads at most [`MAX_IMAGE_BYTES`] of `path`, refusing a file that holds more: the size
+/// [`raster_file`] checked may have grown since, and the read itself is the bound.
+fn read_bounded(path: &Path, name: &str) -> Result<Vec<u8>, IpcError> {
+    use std::io::Read as _;
+
+    let unreadable = || {
+        IpcError::new(
+            &codes::FILE_REFUSED,
+            format!("`{name}` cannot be opened: it does not exist or cannot be read."),
+        )
+    };
+    let file = std::fs::File::open(path).map_err(|_| unreadable())?;
+    let mut bytes = Vec::new();
+    file.take(MAX_IMAGE_BYTES + 1)
+        .read_to_end(&mut bytes)
+        .map_err(|_| unreadable())?;
+    if u64::try_from(bytes.len()).unwrap_or(u64::MAX) > MAX_IMAGE_BYTES {
+        return Err(IpcError::new(
+            &codes::FILE_REFUSED,
+            format!("`{name}` is larger than 20 MB, the most a chart image may be."),
+        ));
+    }
+    Ok(bytes)
+}
+
 /// The spec's calibration for what the dialog entered: the same JSON, which the spec type
-/// reads (RFC-0004 §5).
+/// reads (RFC-0004 §5). Its plot area is the one the dialog gave; [`read_area`] resolves the
+/// dialog's choice before a read.
 fn spec_calibration(calibration: &RasterCalibration) -> Result<Calibration, IpcError> {
     let mut value = serde_json::json!({
         "axes": { "x": calibration.x, "y": calibration.y },
@@ -114,6 +144,37 @@ fn spec_calibration(calibration: &RasterCalibration) -> Result<Calibration, IpcE
             format!("The calibration is not valid: {err}."),
         )
     })
+}
+
+/// The area to read, as a box: the one given, else the dialog's choice (#516). The anchors'
+/// box is the default, because a detected plot area can be wrong; the detected area is used
+/// only when asked for and found.
+fn read_area(
+    calibration: &RasterCalibration,
+    spec: &Calibration,
+    pending: &Pending,
+) -> Result<PixelRect, IpcError> {
+    if let Some(area) = calibration.plot_area {
+        return Ok(PixelRect {
+            min: area.min,
+            max: area.max,
+        });
+    }
+    let image = PixelRect {
+        min: [0.0, 0.0],
+        max: [f64::from(pending.size[0]), f64::from(pending.size[1])],
+    };
+    match calibration.area {
+        ReadArea::Image => Ok(image),
+        ReadArea::Detected => pending.detected.ok_or_else(|| {
+            IpcError::new(
+                &codes::BAD_REQUEST,
+                "No plot area was found from the axis lines; read the anchors' area or the whole image.",
+            )
+        }),
+        _ => sonarithm::raster::anchor_area(spec)
+            .map_err(|diagnostic| IpcError::from_diagnostic(&diagnostic)),
+    }
 }
 
 fn read_value(value: Option<&ReadValue>) -> Option<AnchorText> {
@@ -144,6 +205,14 @@ fn check_reply(checked: &CalibrationCheck, at: bool) -> Reply {
             x: read_value(checked.value_at[0].as_ref()),
             y: read_value(checked.value_at[1].as_ref()),
         }),
+        values: AxisValues {
+            x: checked.values[0]
+                .as_ref()
+                .map(|values| values.iter().filter_map(|v| read_value(Some(v))).collect()),
+            y: checked.values[1]
+                .as_ref()
+                .map(|values| values.iter().filter_map(|v| read_value(Some(v))).collect()),
+        },
     }
 }
 
@@ -191,12 +260,7 @@ impl App {
     fn raster_open(&mut self, path: &Path) -> Result<Reply, IpcError> {
         let canonical = raster_file(path)?;
         let name = file_name(&canonical);
-        let bytes = std::fs::read(&canonical).map_err(|_| {
-            IpcError::new(
-                &codes::FILE_REFUSED,
-                format!("`{name}` cannot be opened: it does not exist or cannot be read."),
-            )
-        })?;
+        let bytes = read_bounded(&canonical, &name)?;
         // Decoded under the budgets before anything is encoded or kept.
         let info = sonarithm::raster::inspect(&bytes, &sonarithm::Budgets::DEFAULT)
             .map_err(|diagnostic| IpcError::from_diagnostic(&diagnostic))?;
@@ -209,6 +273,8 @@ impl App {
             Pending {
                 name: name.clone(),
                 bytes: Arc::new(bytes),
+                size: [info.width, info.height],
+                detected: info.plot,
             },
         );
         while sessions.open.len() > MAX_SESSIONS {
@@ -233,11 +299,17 @@ impl App {
         calibration: &RasterCalibration,
         at: Option<[f64; 2]>,
     ) -> Result<Reply, IpcError> {
-        if !self.raster.open.contains_key(&id) {
-            return Err(no_session(id));
+        let pending = self.raster.open.get(&id).ok_or_else(|| no_session(id))?;
+        let spec = spec_calibration(calibration)?;
+        let mut checked = sonarithm::raster::check(&spec, at, Some(pending.size));
+        // Reading the detected area while anchors lie outside it is likely wrong (#516).
+        if calibration.plot_area.is_none()
+            && calibration.area == ReadArea::Detected
+            && let Some(detected) = pending.detected
+            && let Some(warning) = sonarithm::raster::anchors_outside(&spec, detected)
+        {
+            checked.diagnostics.push(warning);
         }
-        let calibration = spec_calibration(calibration)?;
-        let checked = sonarithm::raster::check(&calibration, at);
         Ok(check_reply(&checked, at.is_some()))
     }
 
@@ -247,7 +319,21 @@ impl App {
         calibration: &RasterCalibration,
     ) -> Result<Reply, IpcError> {
         let pending = self.raster.open.get(&id).ok_or_else(|| no_session(id))?;
-        let calibration = spec_calibration(calibration)?;
+        let mut spec = spec_calibration(calibration)?;
+        // The area to read is always given to the extraction, never left to detection.
+        let area = read_area(calibration, &spec, pending)?;
+        let plot = serde_json::from_value(serde_json::json!({
+            "min": area.min,
+            "max": area.max,
+        }))
+        .map_err(|err| {
+            IpcError::new(
+                &codes::BAD_REQUEST,
+                format!("The area to read is not valid: {err}."),
+            )
+        })?;
+        spec.plot_area = Some(plot);
+        let calibration = spec;
         let number = self.next_dataset;
         let ids = u32::try_from(number).unwrap_or(u32::MAX);
         let options = sonarithm::ExtractOptions::new()
@@ -310,6 +396,22 @@ impl App {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    /// The read is the bound: a file that holds more than the limit when it is read is
+    /// refused, whatever its size was when it was checked.
+    #[test]
+    fn c02_t10_an_image_is_read_up_to_its_limit_and_no_further() {
+        let dir = crate::testing::TempDir::new("raster-bounded");
+        let limit = usize::try_from(MAX_IMAGE_BYTES).unwrap();
+        let at_limit = dir.path().join("full.png");
+        std::fs::write(&at_limit, vec![0_u8; limit]).unwrap();
+        assert_eq!(read_bounded(&at_limit, "full.png").unwrap().len(), limit);
+        let over = dir.path().join("grown.png");
+        std::fs::write(&over, vec![0_u8; limit + 1]).unwrap();
+        let err = read_bounded(&over, "grown.png").unwrap_err();
+        assert_eq!(err.code, "SNR-APP-060", "{err}");
+        assert!(err.message.contains("`grown.png`"), "{err}");
+    }
 
     #[test]
     fn base64_matches_rfc_4648_test_vectors() {

@@ -83,6 +83,12 @@ export {
   type ReorderLabels,
 } from "./components/ReorderableList.tsx";
 export { Slider, type SliderProps } from "./components/Slider.tsx";
+export {
+  Radio,
+  RadioGroup,
+  type RadioGroupProps,
+  type RadioProps,
+} from "./components/RadioGroup.tsx";
 export { Splitter, type SplitterProps } from "./components/Splitter.tsx";
 export { Switch, type SwitchProps } from "./components/Switch.tsx";
 export {

@@ -245,21 +245,28 @@ The UI shows `text` in a read-only text field, with the caret at `caret` (keyboa
   * **`image`:** a `data:` URL of the bytes as they are. The CSP's `img-src data:` allows it. Its media type comes from the bytes' signature, never from the extension. Base64 makes a 20 MiB image a reply of about 27 MB.
   * **`plotArea`:** the area the axis lines bound (C02-T02), or `null`.
   * Nothing is extracted yet.
-* `chart_calibration_check { id, calibration, at? }` replies `calibration_check { diagnostics, x, y, valueAt }`.
+* `chart_calibration_check { id, calibration, at? }` replies `calibration_check { diagnostics, x, y, valueAt, values }`.
   * **The fit:** each axis with two anchors or more is fitted with C01-T04's core and checked (10 §3.1).
   * **`x` and `y`:** `{ anchors, residual, confidence }`, or `null` while an axis has fewer than two anchors or is refused.
-  * **`diagnostics`:** say why an axis is refused (`SNR-ENG-320` to `322`) and give a fitting axis's warnings (`SNR-ENG-323`, `325`).
+  * **`diagnostics`:** say why an axis is refused (`SNR-ENG-320` to `322`) and give a fitting axis's warnings (`SNR-ENG-323`, `325`). With `area: "detected"`, `SNR-ENG-330` warns when anchors lie outside the detected plot area (#516).
   * **`valueAt`:** the values at pixel position `at`, each once its axis fits: a number, or the ISO date or category label as text.
+  * **`values`:** `{ x, y }`, each fitted axis's value at every pixel column (x) or row (y), at the pixel's centre, or `null` for an axis that does not fit or is over 10 000 pixels long. The dialog looks a crosshair step's value up in it, so the slider says the step and its value together and never changes its text afterwards (#517 review).
   * **Dates and labels are read in Rust.** The UI sends an anchor's text as typed and never parses a date.
-  * Nothing is extracted, so this is cheap enough to ask as the crosshair moves.
+  * Nothing is extracted.
 * `chart_calibration_apply { id, calibration }` replies `dataset`, as `dataset_open` does.
   * **The read:** the chart is read through the calibration (both axes need two anchors). The extraction summary (`SNR-ENG-385`) and its checks come back in the diagnostics, as for any chart.
+  * **The area read** is always a box the app core gives the extraction, never left to detection: `plotArea` when the dialog sends one, else the `area` chosen. A detected area the anchors contradict is never used silently (#516).
   * **The correction document** keeps the calibration, so `corrections_apply` reads the chart again through it (C02-T11), and `corrections_export` carries it.
   * **Projects:** the dataset is embedded, not linked.
   * **A refused read** is an `IpcError` with PLOTSONA's code.
   * The session ends.
 * `chart_raster_close { id }` replies `raster_closed { id }` and ends a session the user cancelled.
-* `calibration` is `{ plotArea?, x: { kind, anchors }, y: { kind, anchors } }`.
+* `calibration` is `{ plotArea?, area?, x: { kind, anchors }, y: { kind, anchors } }`.
+  * `area` is the area read when `plotArea` is absent:
+    * `anchors` (the default): the box the anchors span, widened as the extraction widens it;
+    * `detected`: the plot area the axis lines bound (refused when none was found);
+    * `image`: the whole image.
+  * The correction document keeps the box that was read, so a re-read reads the same area.
   * `kind` is `linear`, `log`, `date` or `category` (x only).
   * An anchor is `{ at: [x, y], value }`, in pixels with y down and a pixel's centre at `i + 0.5`.
   * It is the spec's `data.source.calibration` without `axes`, and an axis may have fewer than two anchors while it is being entered.
@@ -268,7 +275,9 @@ The UI shows `text` in a read-only text field, with the caret at `caret` (keyboa
 
 **Errors.** Errors, diagnostics and logs name the file alone, never its folder (rule 9).
 
-**Crosshair traffic.** The UI sends `chart_calibration_check` for the newest crosshair position only: at most once per animation frame, with no queue, and never while one is in flight. It says the checks only when their text changes, never on every crosshair step.
+**Check traffic.** The UI sends `chart_calibration_check` when the anchors, scales or area change, never for a crosshair step: `values` gives every pixel's value. It sends the newest state only: at most once per animation frame, with no queue, and never while one is in flight. A failed check is shown and said; an ended session (`SNR-APP-096`) says the image has to be opened again. The UI says the checks only when a new check changes them.
+
+**The file's size** is checked before the read, and the read itself stops one byte past 20 MiB, so a file that grew after the check is still refused.
 
 **The dialog (UI; keyboard-and-navigation §5.11).**
 

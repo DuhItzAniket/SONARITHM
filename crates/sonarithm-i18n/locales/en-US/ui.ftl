@@ -311,3 +311,12 @@ ui-calibrate-axis-pending =
 ui-calibrate-axis-fits = { $axisLabel }: { $count } anchors fit within { $value }
 ui-calibrate-apply = Read the chart
 ui-calibrate-not-ready = Add at least two anchors on each axis, then read the chart.
+# The area of the image that is read (#516).
+ui-calibrate-area = Area to read
+ui-calibrate-area-anchors = The anchors' area
+ui-calibrate-area-detected = The plot area found from the axis lines
+ui-calibrate-area-image = The whole image
+ui-calibrate-area-hint = The anchors' area spans the outermost anchors on each axis.
+ui-calibrate-area-none-hint = The anchors' area spans the outermost anchors on each axis. No plot area was found from the axis lines.
+# A check or read whose image session has ended (SNR-APP-096).
+ui-calibrate-session-ended = The image is no longer open. Cancel, then open the image again.

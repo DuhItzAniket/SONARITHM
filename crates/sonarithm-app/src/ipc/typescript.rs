@@ -153,6 +153,8 @@ pub fn typescript() -> String {
     declare::<crate::ipc::PlotAreaInfo>(&mut out, &cfg);
     declare::<crate::ipc::AxisFitInfo>(&mut out, &cfg);
     declare::<crate::ipc::ValueAt>(&mut out, &cfg);
+    declare::<crate::ipc::AxisValues>(&mut out, &cfg);
+    declare::<crate::ipc::ReadArea>(&mut out, &cfg);
     declare::<crate::ipc::RecentProject>(&mut out, &cfg);
     declare::<crate::ipc::AutosaveInfo>(&mut out, &cfg);
     declare::<ViewRange>(&mut out, &cfg);

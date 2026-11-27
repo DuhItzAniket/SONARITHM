@@ -4,12 +4,14 @@
 import type {
   AnchorText,
   AxisFitInfo,
+  AxisValues,
   Client,
   DatasetSummary,
   RasterAxisKind,
+  ReadArea,
   ReplyFor,
-  ValueAt,
 } from "@sonarithm/ipc";
+import { IpcFailure } from "@sonarithm/ipc";
 import {
   Button,
   DialogActions,
@@ -17,10 +19,12 @@ import {
   ModalDialog,
   NumberField,
   Option,
+  Radio,
+  RadioGroup,
   Select,
   TextField,
 } from "@sonarithm/ui";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import type { Announcer } from "../announcer/announcer.ts";
 import { useLocalizer } from "../i18n.ts";
@@ -34,6 +38,7 @@ import {
   labelOf,
   takesNumbers,
   toCalibration,
+  valueAtPixel,
   valueText,
 } from "./model.ts";
 
@@ -41,6 +46,37 @@ type RasterChart = ReplyFor<"chart_raster_open">;
 
 /** The code of the extraction summary, which is said when the chart opens (10 §5). */
 const SUMMARY_CODE = "SNR-ENG-385";
+/** The code of a raster session that has ended (ADR-0017 "Raster calibration"). */
+const SESSION_ENDED = "SNR-APP-096";
+
+/** A failure, shown once in a `role="alert"` paragraph: its one route to speech. */
+interface Failure {
+  readonly text: string;
+  /** Changes with every failure, so the same text said twice is announced twice. */
+  readonly key: number;
+}
+
+/** A failure's text: an ended session says the image must be opened again. */
+function failureText(
+  t: ReturnType<typeof useLocalizer>,
+  error: unknown,
+): string {
+  if (error instanceof IpcFailure && error.code === SESSION_ENDED) {
+    return t.format("ui-calibrate-session-ended");
+  }
+  return error instanceof Error ? error.message : String(error);
+}
+
+/** A failure's state: the text, and a key that tells repeated failures apart. */
+function useFailure(): [Failure | null, (text: string | null) => void] {
+  const [failure, setFailure] = useState<Failure | null>(null);
+  const count = useRef(0);
+  const set = useCallback((text: string | null) => {
+    count.current += 1;
+    setFailure(text === null ? null : { text, key: count.current });
+  }, []);
+  return [failure, set];
+}
 
 const KINDS: Readonly<Record<RasterAxisKind, string>> = {
   linear: "ui-calibrate-scale-linear",
@@ -147,19 +183,42 @@ function PickImage({
 }) {
   const t = useLocalizer();
   const [path, setPath] = useState("");
-  const [failure, setFailure] = useState<string | null>(null);
+  const [failure, setFailure] = useFailure();
+  const [busy, setBusy] = useState(false);
+  // A reply that arrives after Cancel closes the session it opened, so none is left behind.
+  const gone = useRef(false);
+  useEffect(
+    () => () => {
+      gone.current = true;
+    },
+    [],
+  );
   return (
     <form
       className={styles.form}
       onSubmit={(event) => {
         event.preventDefault();
+        if (busy) return;
+        setBusy(true);
         client.call({ command: "chart_raster_open", args: { path } }).then(
           (opened) => {
+            if (gone.current) {
+              void client
+                .call({
+                  command: "chart_raster_close",
+                  args: { id: opened.id },
+                })
+                .catch(() => undefined);
+              return;
+            }
+            setBusy(false);
             setFailure(null);
             onOpen(opened);
           },
           (error: unknown) => {
-            setFailure(error instanceof Error ? error.message : String(error));
+            if (gone.current) return;
+            setBusy(false);
+            setFailure(failureText(t, error));
           },
         );
       }}
@@ -177,24 +236,27 @@ function PickImage({
         autoComplete="off"
       />
       {failure !== null && (
-        <p role="alert" className={styles.failure}>
-          {failure}
+        <p key={failure.key} role="alert" className={styles.failure}>
+          {failure.text}
         </p>
       )}
       <DialogActions>
         <Button onPress={onCancel}>{t.format("ui-cancel")}</Button>
-        <Button type="submit">{t.format("ui-chart-image-open")}</Button>
+        <Button type="submit" isDisabled={busy}>
+          {t.format("ui-chart-image-open")}
+        </Button>
       </DialogActions>
     </form>
   );
 }
 
-/** What the last check said, and the crosshair position it was made at. */
+/** What the last check said, and the anchors it was asked about. */
 interface Checked {
-  readonly at: readonly [number, number];
+  readonly state: DialogState;
   readonly x: AxisFitInfo | null;
   readonly y: AxisFitInfo | null;
-  readonly valueAt: ValueAt | null;
+  /** Each fitted axis's value at every pixel along it. */
+  readonly values: AxisValues;
   readonly messages: readonly string[];
 }
 
@@ -226,8 +288,11 @@ function Calibrate({
   const [number, setNumber] = useState(Number.NaN);
   const [text, setText] = useState("");
   const [checked, setChecked] = useState<Checked | null>(null);
-  const [failure, setFailure] = useState<string | null>(null);
+  const [failure, setFailure] = useFailure();
+  const [reading, setReading] = useState(false);
   const nextId = useRef(1);
+  // Where the focus goes once a deleted anchor's button is gone (APG: never lose it).
+  const refocus = useRef<number | "add" | null>(null);
   // The file step's field is gone; the focus moves to the crosshair's first slider, the
   // first control of this step (APG Dialog), so it never falls out of the dialog.
   const root = useRef<HTMLDivElement>(null);
@@ -237,43 +302,61 @@ function Calibrate({
       ?.focus();
   }, []);
 
-  // Ask the app core about the anchors and the crosshair: the newest only, once per frame.
+  // Ask the app core about the anchors: the newest only, once per frame. The crosshair
+  // asks nothing: the check gives every pixel's value, which the sliders look up.
   const latest = useMemo(
     () =>
-      new Latest<{ state: DialogState; at: readonly [number, number] }>(
-        async ({ state: asked, at: where }) => {
+      new Latest<DialogState>(
+        async (asked) => {
           const reply = await client.call({
             command: "chart_calibration_check",
-            args: {
-              id: image.id,
-              calibration: toCalibration(asked),
-              at: [where[0] + 0.5, where[1] + 0.5],
-            },
+            args: { id: image.id, calibration: toCalibration(asked), at: null },
           });
           setChecked({
-            at: where,
+            state: asked,
             x: reply.x,
             y: reply.y,
-            valueAt: reply.valueAt,
+            values: reply.values,
             messages: reply.diagnostics.map((d) => d.message),
           });
         },
         (run) => {
           window.requestAnimationFrame(run);
         },
+        (error) => {
+          setFailure(failureText(t, error));
+        },
       ),
-    [client, image.id],
+    [client, image.id, setFailure, t],
   );
   useEffect(() => {
-    latest.push({ state, at });
-  }, [latest, state, at]);
+    latest.push(state);
+  }, [latest, state]);
+  useEffect(() => {
+    const target = refocus.current;
+    if (target === null) return;
+    refocus.current = null;
+    const scope = root.current;
+    const button =
+      target === "add"
+        ? scope?.querySelector<HTMLElement>("[data-add-anchor]:not([disabled])")
+        : scope?.querySelector<HTMLElement>(
+            `[data-anchor-delete="${String(target)}"]`,
+          );
+    // Add anchor is disabled while the value field is empty; the field comes before it.
+    (
+      button ?? scope?.querySelector<HTMLElement>("[data-anchor-value] input")
+    )?.focus();
+  }, [state.anchors]);
 
   // The checks in words; said only when a new check changes them, never on every crosshair
   // step. The live region speaks only the latest polite message, so an anchor added or
   // deleted since the last check is said again at the start of the checks it changed.
+  // The lines describe one state: the anchors the last check was asked about, not ones
+  // entered since, which the next check describes.
   const lines = checkLines(
     t,
-    state,
+    checked?.state ?? state,
     { x: checked?.x ?? null, y: checked?.y ?? null },
     checked?.messages ?? [],
   );
@@ -300,12 +383,10 @@ function Calibrate({
     announcer.announce({ text, assertive: false });
   };
 
-  const current = (which: Axis): string | null => {
-    if (checked?.at[0] !== at[0] || checked.at[1] !== at[1]) {
-      return null;
-    }
-    return valueText(t, checked.valueAt?.[which] ?? null);
-  };
+  // The value under the crosshair, looked up from the last check in the same render as
+  // the step, so a slider's text never changes after it (the #517 review).
+  const current = (which: Axis, pixel: number): string | null =>
+    valueText(t, valueAtPixel(checked?.values[which], pixel));
   const pixelText = (pixel: number, value: string | null) =>
     value === null
       ? t.format("ui-calibrate-pixel", { index: { number: pixel } })
@@ -329,18 +410,21 @@ function Calibrate({
     nextId.current += 1;
     const next = { ...state, anchors: [...state.anchors, anchor] };
     setState(next);
+    setNumber(Number.NaN);
+    setText("");
     sayAction(
       t.format("ui-calibrate-anchor-added", { label: labelOf(next, anchor) }),
     );
   };
 
+  // A failure is said once, by its alert.
   const read = () => {
+    if (reading) return;
     if (anchorsOf(state, "x").length < 2 || anchorsOf(state, "y").length < 2) {
-      const message = t.format("ui-calibrate-not-ready");
-      setFailure(message);
-      announcer.announce({ text: message, assertive: false });
+      setFailure(t.format("ui-calibrate-not-ready"));
       return;
     }
+    setReading(true);
     client
       .call({
         command: "chart_calibration_apply",
@@ -352,10 +436,8 @@ function Calibrate({
           onRead(dataset);
         },
         (error: unknown) => {
-          const message =
-            error instanceof Error ? error.message : String(error);
-          setFailure(message);
-          announcer.announce({ text: message, assertive: true });
+          setReading(false);
+          setFailure(failureText(t, error));
         },
       );
   };
@@ -378,9 +460,9 @@ function Calibrate({
         }}
         xLabel={t.format("ui-calibrate-crosshair-x")}
         yLabel={t.format("ui-calibrate-crosshair-y")}
-        formatX={(x) => pixelText(x, x === at[0] ? current("x") : null)}
-        formatY={(y) => pixelText(y, y === at[1] ? current("y") : null)}
-        plotArea={image.plotArea}
+        formatX={(x) => pixelText(x, current("x", x))}
+        formatY={(y) => pixelText(y, current("y", y))}
+        plotArea={state.area === "detected" ? image.plotArea : null}
         marks={state.anchors.map((anchor) => ({
           id: String(anchor.id),
           axis: anchor.axis,
@@ -438,6 +520,24 @@ function Calibrate({
           </Select>
         ))}
       </div>
+      <RadioGroup
+        label={t.format("ui-calibrate-area")}
+        description={t.format(
+          image.plotArea === null
+            ? "ui-calibrate-area-none-hint"
+            : "ui-calibrate-area-hint",
+        )}
+        value={state.area}
+        onChange={(area) => {
+          setState({ ...state, area: area as ReadArea });
+        }}
+      >
+        <Radio value="anchors">{t.format("ui-calibrate-area-anchors")}</Radio>
+        <Radio value="detected" isDisabled={image.plotArea === null}>
+          {t.format("ui-calibrate-area-detected")}
+        </Radio>
+        <Radio value="image">{t.format("ui-calibrate-area-image")}</Radio>
+      </RadioGroup>
       <form
         className={styles.row}
         onSubmit={(event) => {
@@ -455,26 +555,28 @@ function Calibrate({
           <Option id="x">{t.format("ui-calibrate-axis-x")}</Option>
           <Option id="y">{t.format("ui-calibrate-axis-y")}</Option>
         </Select>
-        {takesNumbers(kind) ? (
-          <NumberField
-            label={t.format("ui-calibrate-value")}
-            description={t.format("ui-calibrate-value-number-hint")}
-            value={number}
-            onChange={setNumber}
-          />
-        ) : (
-          <TextField
-            label={t.format("ui-calibrate-value")}
-            description={t.format(
-              kind === "date"
-                ? "ui-calibrate-value-date-hint"
-                : "ui-calibrate-value-category-hint",
-            )}
-            value={text}
-            onChange={setText}
-          />
-        )}
-        <Button type="submit" isDisabled={value === null}>
+        <div data-anchor-value className={styles.value}>
+          {takesNumbers(kind) ? (
+            <NumberField
+              label={t.format("ui-calibrate-value")}
+              description={t.format("ui-calibrate-value-number-hint")}
+              value={number}
+              onChange={setNumber}
+            />
+          ) : (
+            <TextField
+              label={t.format("ui-calibrate-value")}
+              description={t.format(
+                kind === "date"
+                  ? "ui-calibrate-value-date-hint"
+                  : "ui-calibrate-value-category-hint",
+              )}
+              value={text}
+              onChange={setText}
+            />
+          )}
+        </div>
+        <Button type="submit" isDisabled={value === null} data-add-anchor>
           {t.format("ui-calibrate-add")}
         </Button>
       </form>
@@ -505,7 +607,14 @@ function Calibrate({
                         })}
                       </span>
                       <Button
+                        data-anchor-delete={anchor.id}
                         onPress={() => {
+                          // The next anchor's Delete, else the previous one's, else Add.
+                          const place = anchors.indexOf(anchor);
+                          refocus.current =
+                            anchors[place + 1]?.id ??
+                            anchors[place - 1]?.id ??
+                            "add";
                           setState({
                             ...state,
                             anchors: state.anchors.filter(
@@ -539,13 +648,15 @@ function Calibrate({
         </ul>
       </section>
       {failure !== null && (
-        <p role="alert" className={styles.failure}>
-          {failure}
+        <p key={failure.key} role="alert" className={styles.failure}>
+          {failure.text}
         </p>
       )}
       <DialogActions>
         <Button onPress={onCancel}>{t.format("ui-cancel")}</Button>
-        <Button onPress={read}>{t.format("ui-calibrate-apply")}</Button>
+        <Button onPress={read} isDisabled={reading}>
+          {t.format("ui-calibrate-apply")}
+        </Button>
       </DialogActions>
     </div>
   );

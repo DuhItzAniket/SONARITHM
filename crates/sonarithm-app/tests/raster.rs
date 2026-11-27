@@ -73,6 +73,16 @@ fn calibration() -> Value {
     serde_json::from_str(&text).unwrap()
 }
 
+/// The hand calibration of a DS-007 raster chart (`fixtures/raster/<stem>.calibration.json`).
+fn calibration_of(stem: &str) -> Value {
+    let text = std::fs::read_to_string(
+        Path::new(env!("CARGO_MANIFEST_DIR"))
+            .join(format!("tests/fixtures/raster/{stem}.calibration.json")),
+    )
+    .unwrap();
+    serde_json::from_str(&text).unwrap()
+}
+
 /// The dialog's form of a spec calibration: `{ x, y, plotArea? }` without `axes`.
 fn entered(calibration: &Value) -> Value {
     json!({ "x": calibration["axes"]["x"], "y": calibration["axes"]["y"] })
@@ -251,4 +261,65 @@ fn c02_t10_a_fifth_image_ends_the_oldest_session() {
     let closed = h.ok(&json!({ "command": "chart_raster_close", "args": { "id": ids[4] } }));
     assert_eq!(closed, json!({ "reply": "raster_closed", "id": ids[4] }));
     assert_eq!(check(&mut h, &ids[4]).unwrap_err().code, "SNR-APP-096");
+}
+
+/// Item 2 of the #517 review: the check gives each fitted axis's value at every pixel, so
+/// the crosshair's slider says a step's value at once, from the same fit as the extraction.
+#[test]
+fn c02_t10_a_check_gives_every_pixels_value_on_a_fitted_axis() {
+    let mut h = Harness::new("raster-values");
+    let png = h.chart("rain.png");
+    let opened = h.open(&png);
+    let checked = h.ok(&json!({ "command": "chart_calibration_check", "args": {
+        "id": opened["id"], "calibration": entered(&calibration()) } }));
+    let xs = checked["values"]["x"].as_array().unwrap();
+    let ys = checked["values"]["y"].as_array().unwrap();
+    assert_eq!(xs.len() as u64, opened["widthPx"].as_u64().unwrap());
+    assert_eq!(ys.len() as u64, opened["heightPx"].as_u64().unwrap());
+    // A category axis gives labels; the y axis numbers.
+    assert!(xs.iter().all(Value::is_string), "{}", xs[0]);
+    assert!(ys.iter().all(Value::is_number), "{}", ys[0]);
+    assert_eq!(checked["valueAt"], Value::Null, "no `at`, no single value");
+}
+
+/// Item 3 of the #517 review (#516): the area read is the one chosen, the anchors' box by
+/// default, never the detected plot area unless asked for. On vl-area@1x the detected area is
+/// the fill's, so asking for it warns (`SNR-ENG-330`), and the default reads the anchors' box.
+#[test]
+fn c02_t10_the_area_read_is_the_one_chosen_and_the_anchors_box_by_default() {
+    let mut h = Harness::new("raster-area");
+    let png = h.corpus("vl-area@1x.png", "area.png");
+    let opened = h.open(&png);
+    let mut chosen = entered(&calibration_of("vl-area@1x"));
+    chosen["area"] = json!("detected");
+    let checked = h.ok(&json!({ "command": "chart_calibration_check", "args": {
+        "id": opened["id"], "calibration": chosen } }));
+    let codes: Vec<&str> = checked["diagnostics"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .filter_map(|d| d["code"].as_str())
+        .collect();
+    if opened["plotArea"].is_object() {
+        assert!(codes.contains(&"SNR-ENG-330"), "{checked}");
+    }
+    let applied = h.ok(&json!({ "command": "chart_calibration_apply", "args": {
+        "id": opened["id"], "calibration": entered(&calibration_of("vl-area@1x")) } }));
+    assert!(applied["rows"].as_u64().unwrap() > 0, "{applied}");
+    // The box read is kept with the calibration: the anchors', not the detected one.
+    let state = h.ok(&json!({ "command": "corrections_get", "args": { "dataset": applied["id"] } }));
+    let file: Value = serde_json::from_str(state["text"].as_str().unwrap()).unwrap();
+    let area = &file["calibration"]["plotArea"];
+    assert!(area["min"].is_array(), "{file}");
+    if let Some(detected) = opened["plotArea"].as_object() {
+        assert_ne!(area["min"], detected["min"], "not the detected area");
+    }
+    let anchors = &calibration_of("vl-area@1x")["axes"]["x"]["anchors"];
+    let leftmost = anchors
+        .as_array()
+        .unwrap()
+        .iter()
+        .filter_map(|a| a["at"][0].as_f64())
+        .fold(f64::INFINITY, f64::min);
+    assert!(area["min"][0].as_f64().unwrap() < leftmost, "{area}");
 }

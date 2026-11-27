@@ -5,7 +5,7 @@
 // ADR-0017 "Raster calibration", keyboard-and-navigation §5.11): the crosshair's sliders
 // say where they are, anchors are added at the crosshair, the checks are said when they
 // change, and reading the chart says its extraction summary.
-import type { Page } from "@playwright/test";
+import type { Locator, Page } from "@playwright/test";
 import { expect, test } from "@playwright/test";
 
 import { seriousViolations } from "./axe.ts";
@@ -68,6 +68,12 @@ async function choose(page: Page, name: string, option: string): Promise<void> {
   await page.keyboard.press("Enter");
 }
 
+/** The new anchor's value field: a number field or, for dates and labels, a text field. */
+const valueField = (scope: Locator) =>
+  scope
+    .getByRole("textbox", { name: "Value at the crosshair", exact: true })
+    .or(scope.getByRole("spinbutton", { name: "Value at the crosshair" }));
+
 async function addAnchor(
   page: Page,
   axis: "x axis" | "y axis",
@@ -116,6 +122,8 @@ test("c02_t10_a_chart_image_is_calibrated_and_read_by_keyboard_alone", async ({
   await expect(x).toHaveAttribute("aria-valuetext", "Pixel 1");
 
   await addAnchor(page, "x axis", [20, 100], "0");
+  // Add clears the value field for the next anchor (the #517 review).
+  await expect(valueField(dialog)).toHaveValue("");
   await addAnchor(page, "x axis", [180, 100], "10");
   await addAnchor(page, "y axis", [20, 100], "0");
   await addAnchor(page, "y axis", [20, 10], "100");
@@ -126,10 +134,38 @@ test("c02_t10_a_chart_image_is_calibrated_and_read_by_keyboard_alone", async ({
     dialog.getByText("x axis: 2 anchors fit within 0%"),
   ).toBeVisible();
   await expect(polite(page)).toContainText("y axis: 2 anchors fit within 0%");
-  // Once calibrated, the crosshair's slider says the value it is over too.
+  // Once calibrated, the crosshair's slider says the value it is over too, in the same
+  // moment as the step, and its text does not change afterwards (the #517 review).
   await setNumber(page, "Pixel x", "100");
   await x.focus();
   await expect(x).toHaveAttribute("aria-valuetext", /^Pixel 100, value 5/);
+  await page.keyboard.press("ArrowRight");
+  const stepped = await x.getAttribute("aria-valuetext");
+  expect(stepped).toMatch(/^Pixel 101, value 5\.0/);
+  await page.evaluate(
+    () =>
+      new Promise((resolve) => {
+        requestAnimationFrame(() => requestAnimationFrame(resolve));
+      }),
+  );
+  await expect(x).toHaveAttribute("aria-valuetext", stepped ?? "");
+  expect(
+    (await commands(page)).filter((c) => c === "chart_calibration_check")
+      .length,
+  ).toBeLessThanOrEqual(8);
+
+  // The area to read: the anchors' area by default, the others by keyboard.
+  const anchorsArea = dialog.getByRole("radio", { name: "The anchors' area" });
+  await expect(anchorsArea).toBeChecked();
+  await anchorsArea.focus();
+  await page.keyboard.press("ArrowDown");
+  await expect(
+    dialog.getByRole("radio", {
+      name: "The plot area found from the axis lines",
+    }),
+  ).toBeChecked();
+  await page.keyboard.press("ArrowUp");
+  await expect(anchorsArea).toBeChecked();
 
   await dialog.getByRole("button", { name: "Read the chart" }).focus();
   await page.keyboard.press("Enter");
@@ -150,16 +186,24 @@ test("c02_t10_ticks_out_of_order_are_said_and_reading_waits_for_two_anchors", as
   await expect(dialog.getByRole("alert")).toHaveText(
     "Add at least two anchors on each axis, then read the chart.",
   );
+  // Said once, by the alert, not also by the live region (the #517 review).
+  await expect(polite(page)).not.toContainText("Add at least two anchors");
   await addAnchor(page, "y axis", [20, 100], "0");
   await addAnchor(page, "y axis", [20, 50], "100");
   await addAnchor(page, "y axis", [20, 10], "50");
   await expect(polite(page)).toContainText(
     "The y axis cannot be calibrated: The tick values do not change in one direction",
   );
-  // A deleted anchor is said, and the axis is checked again.
-  await dialog.getByRole("button", { name: "Delete y3" }).focus();
+  // A deleted anchor is said, and the axis is checked again. The focus goes to the next
+  // anchor's Delete, else the previous one's, else Add anchor (the #517 review).
+  await dialog.getByRole("button", { name: "Delete y2" }).focus();
   await page.keyboard.press("Enter");
-  await expect(polite(page)).toContainText("y3 deleted.");
+  await expect(polite(page)).toContainText("y2 deleted.");
+  await expect(dialog.getByRole("button", { name: "Delete y2" })).toBeFocused();
+  await page.keyboard.press("Enter");
+  await expect(dialog.getByRole("button", { name: "Delete y1" })).toBeFocused();
+  await page.keyboard.press("Enter");
+  await expect(valueField(dialog)).toBeFocused();
 });
 
 test("c02_t10_escape_ends_the_session_and_returns_the_focus", async ({

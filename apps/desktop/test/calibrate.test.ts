@@ -98,6 +98,9 @@ test("c02_t10 only the latest crosshair position is sent, once per frame, never 
     (run) => {
       frames.push(run);
     },
+    () => {
+      assert.fail("no send fails here");
+    },
   );
   latest.push(1);
   latest.push(2);
@@ -117,4 +120,33 @@ test("c02_t10 only the latest crosshair position is sent, once per frame, never 
     [3, 5],
     "the newest value waiting is sent next; 4 never is",
   );
+});
+
+test("c02_t10 a failed check is handed on, never swallowed, and the next value still goes", async () => {
+  const frames: (() => void)[] = [];
+  const failures: unknown[] = [];
+  const sent: number[] = [];
+  const latest = new Latest<number>(
+    (value) => {
+      sent.push(value);
+      return value === 1
+        ? Promise.reject(new Error("SNR-APP-096"))
+        : Promise.resolve();
+    },
+    (run) => {
+      frames.push(run);
+    },
+    (error) => {
+      failures.push(error);
+    },
+  );
+  latest.push(1);
+  frames.shift()?.();
+  await new Promise((resolve) => setImmediate(resolve));
+  assert.equal(failures.length, 1);
+  latest.push(2);
+  frames.shift()?.();
+  await new Promise((resolve) => setImmediate(resolve));
+  assert.deepEqual(sent, [1, 2]);
+  assert.equal(failures.length, 1);
 });

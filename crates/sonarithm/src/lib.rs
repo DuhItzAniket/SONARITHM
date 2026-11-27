@@ -101,7 +101,8 @@ pub use sonarithm_plotsona::{
 pub mod raster {
     pub use sonarithm_plotsona::raster::PixelRect;
     pub use sonarithm_plotsona::raster::preview::{
-        AxisFit, CalibrationCheck, RasterInfo, ReadValue, check, inspect,
+        AxisFit, CalibrationCheck, MAX_VALUES, RasterInfo, ReadValue, anchor_area,
+        anchors_outside, check, inspect,
     };
 }
 pub use spec::{Migration, Spec};

@@ -6,6 +6,7 @@ import type {
   AxisFitInfo,
   RasterAxisKind,
   RasterCalibration,
+  ReadArea,
 } from "@sonarithm/ipc";
 import type { Localizer } from "@sonarithm/i18n";
 
@@ -21,16 +22,24 @@ export interface DialogAnchor {
   readonly value: AnchorText;
 }
 
-/** What the dialog has entered: each axis's scale and every anchor in entry order. */
+/**
+ * What the dialog has entered: each axis's scale, every anchor in entry order, and the area
+ * of the image to read.
+ */
 export interface DialogState {
   readonly kinds: Readonly<Record<Axis, RasterAxisKind>>;
   readonly anchors: readonly DialogAnchor[];
+  readonly area: ReadArea;
 }
 
-/** The axes' scales a calibration starts with. */
+/**
+ * The axes' scales a calibration starts with, and the anchors' area: a detected plot area
+ * can be wrong (an area chart's fill, #516), so it is read only when chosen.
+ */
 export const START: DialogState = {
   kinds: { x: "linear", y: "linear" },
   anchors: [],
+  area: "anchors",
 };
 
 /** Whether an axis's values are numbers (linear, log) or text that Rust reads (date, label). */
@@ -68,7 +77,18 @@ export function toCalibration(state: DialogState): RasterCalibration {
       value: anchor.value,
     })),
   });
-  return { plotArea: null, x: axis("x"), y: axis("y") };
+  return { plotArea: null, area: state.area, x: axis("x"), y: axis("y") };
+}
+
+/**
+ * The value at pixel `index` along an axis, from the values the last check gave for every
+ * pixel: looked up, not asked for, so a crosshair step and its value are said together.
+ */
+export function valueAtPixel(
+  values: readonly AnchorText[] | null | undefined,
+  index: number,
+): AnchorText | null {
+  return values?.[index] ?? null;
 }
 
 /** A value read back from the app core, for speech and display. */
@@ -128,7 +148,8 @@ export function checkLines(
  * Runs `send` with the latest value it was given, at most once per frame and never while a
  * send is in flight: values given meanwhile replace each other, and only the newest is sent
  * when the previous send ends. A crosshair held on an arrow key so asks the app core about
- * where it is now, not about every pixel it passed (ADR-0017 "Raster calibration").
+ * where it is now, not about every pixel it passed (ADR-0017 "Raster calibration"). A send
+ * that fails is handed to `failed`, never swallowed.
  */
 export class Latest<T> {
   private pending: { readonly value: T } | null = null;
@@ -136,13 +157,16 @@ export class Latest<T> {
   private scheduled = false;
   private readonly send: (value: T) => Promise<void>;
   private readonly schedule: (run: () => void) => void;
+  private readonly failed: (error: unknown) => void;
 
   constructor(
     send: (value: T) => Promise<void>,
     schedule: (run: () => void) => void,
+    failed: (error: unknown) => void,
   ) {
     this.send = send;
     this.schedule = schedule;
+    this.failed = failed;
   }
 
   /** Asks for `value` to be sent; replaces any value not yet sent. */
@@ -161,7 +185,9 @@ export class Latest<T> {
       this.pending = null;
       this.busy = true;
       void this.send(next.value)
-        .catch(() => undefined)
+        .catch((error: unknown) => {
+          this.failed(error);
+        })
         .finally(() => {
           this.busy = false;
           this.kick();

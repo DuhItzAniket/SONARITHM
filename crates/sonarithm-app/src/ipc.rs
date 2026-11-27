@@ -824,6 +824,10 @@ pub enum Reply {
         y: Option<AxisFitInfo>,
         /// The values at `at`, when it was given and each axis fits.
         value_at: Option<ValueAt>,
+        /// Each fitted axis's value at every pixel column (x) or row (y), at the pixel's
+        /// centre, so the dialog says a crosshair step's value in the same moment as its
+        /// pixel. `null` for an axis that does not fit or is over 10 000 pixels long.
+        values: AxisValues,
     },
     /// A calibration session ended (C02-T10).
     RasterClosed {
@@ -1541,13 +1545,31 @@ pub struct DatasetSummary {
 #[serde(rename_all = "camelCase")]
 #[non_exhaustive]
 pub struct RasterCalibration {
-    /// The plot area, in pixels; the one the axis lines bound when absent.
+    /// The plot area, in pixels. When absent, `area` says which area is read.
     #[serde(default)]
     pub plot_area: Option<PlotAreaInfo>,
+    /// The area read when `plotArea` is absent: the anchors' box by default (#516).
+    #[serde(default)]
+    pub area: ReadArea,
     /// The horizontal axis.
     pub x: RasterAxis,
     /// The vertical axis.
     pub y: RasterAxis,
+}
+
+/// The area of a chart image that is read (C02-T10, #516).
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Serialize, Deserialize, TS)]
+#[serde(rename_all = "camelCase")]
+#[non_exhaustive]
+pub enum ReadArea {
+    /// The box the anchors span, widened as the extraction widens it: the default, because
+    /// a detected plot area can be wrong (an area chart's fill).
+    #[default]
+    Anchors,
+    /// The plot area the axis lines bound, when one was found.
+    Detected,
+    /// The whole image.
+    Image,
 }
 
 /// One axis of a [`RasterCalibration`].
@@ -1620,6 +1642,17 @@ pub struct AxisFitInfo {
     pub residual: f64,
     /// The confidence values read through the axis get.
     pub confidence: f64,
+}
+
+/// Each axis's value at every pixel along it, once the axis fits (C02-T10).
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize, TS)]
+#[serde(rename_all = "camelCase")]
+#[non_exhaustive]
+pub struct AxisValues {
+    /// The x axis's value at each pixel column: numbers, or dates (ISO 8601) or labels.
+    pub x: Option<Vec<AnchorText>>,
+    /// The y axis's value at each pixel row.
+    pub y: Option<Vec<AnchorText>>,
 }
 
 /// The values at a pixel, each once its axis fits (C02-T10).

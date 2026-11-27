@@ -67,3 +67,8 @@
   font-size: var(--type-13-size);
   line-height: var(--type-13-line);
 }
+
+/* The value field's wrapper, for focus only; it takes no part in the layout. */
+.value {
+  display: contents;
+}
