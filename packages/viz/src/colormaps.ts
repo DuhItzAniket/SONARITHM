@@ -10,7 +10,9 @@
  * (for viridis) Eric Firing, released under the CC0 1.0 public domain dedication; the
  * authors ask for credit, given here and in the third-party notices. Source:
  * https://github.com/BIDS/colormap (`colormaps.py`), each value rounded to 8 bits.
- * cividis waits on a licence check (open-decisions).
+ * cividis (B04-T02) will come from its paper's own table: Nuñez, Anderton and Renslow, PLOS ONE
+ * 13(8): e0199239, 2018, https://doi.org/10.1371/journal.pone.0199239, supporting information S2
+ * (CC0 1.0, as the article; OD-29). Not from matplotlib, whose table differs and is under its own licence.
  */
 
 /** The colormaps available. */
