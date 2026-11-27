@@ -129,6 +129,7 @@ class Scope(unittest.TestCase):
         text = ci_scope._format(pr("crates/sonarithm-spec/src/lib.rs"))
         self.assertIn("rust=true\n", text)
         self.assertIn('fuzz=[{"crate":"sonarithm-spec","target":"spec_parse"}', text)
+        self.assertIn("fuzzing=true\n", text)
         self.assertIn("\nkind=rust\n", "\n" + text)
 
 
@@ -150,7 +151,9 @@ class Fuzz(unittest.TestCase):
     def test_crates_without_targets_and_other_changes_fuzz_nothing(self):
         self.assertEqual(fuzzed("crates/sonarithm-render/src/lib.rs"), set())
         self.assertEqual(fuzzed("crates/sonarithm-data-extra/src/lib.rs"), set())
-        self.assertEqual(fuzzed(".github/workflows/ci.yml", "docs/x.md"), set())
+        self.assertEqual(fuzzed(".github/workflows/docs.yml", "docs/x.md"), set())
+        # nightly.yml no longer runs on pull requests, so editing it fuzzes nothing.
+        self.assertEqual(fuzzed(".github/workflows/nightly.yml"), set())
         self.assertEqual(fuzzed("apps/desktop/src/app/App.tsx"), set())
 
     def test_a_cargo_lock_only_pull_request_fuzzes_every_target(self):
@@ -170,8 +173,19 @@ class Fuzz(unittest.TestCase):
         self.assertEqual(pr("crates/sonarithm-core/src/lib.rs")["fuzz"], TARGETS)
 
     def test_changing_the_fuzz_workflow_or_this_script_fuzzes_every_target(self):
+        self.assertIn(".github/workflows/ci.yml", ci_scope.FUZZ_EVERYTHING)
         for path in ci_scope.FUZZ_EVERYTHING:
             self.assertEqual(pr(path)["fuzz"], TARGETS, path)
+
+    def test_the_smoke_fuzz_runs_only_on_a_pull_request_with_targets(self):
+        self.assertTrue(pr("crates/sonarithm-spec/src/lib.rs")["fuzzing"])
+        self.assertFalse(pr("crates/sonarithm-render/src/lib.rs")["fuzzing"])
+        self.assertFalse(pr("docs/x.md")["fuzzing"])
+        # Other events list every target for nightly.yml, but ci.yml's `fuzz` job skips.
+        for event in ("push", "merge_group", "schedule", "workflow_dispatch"):
+            out = scope(event, ["crates/sonarithm-spec/src/lib.rs"], INCLUDED, TARGETS)
+            self.assertEqual(out["fuzz"], TARGETS, event)
+            self.assertFalse(out["fuzzing"], event)
 
 
 def needs(changes: dict, **results: str) -> dict:
@@ -180,9 +194,11 @@ def needs(changes: dict, **results: str) -> dict:
     return out
 
 
-DOCS_ONLY = {"rust": "false", "code": "false"}
-FRONTEND_ONLY = {"rust": "false", "code": "true"}
-EVERYTHING = {"rust": "true", "code": "true"}
+DOCS_ONLY = {"rust": "false", "code": "false", "fuzzing": "false"}
+FRONTEND_ONLY = {"rust": "false", "code": "true", "fuzzing": "false"}
+EVERYTHING = {"rust": "true", "code": "true", "fuzzing": "true"}
+#: A push to main: every job runs except the smoke fuzz.
+MAIN = {"rust": "true", "code": "true", "fuzzing": "false"}
 
 
 class Gate(unittest.TestCase):
@@ -231,6 +247,20 @@ class Gate(unittest.TestCase):
         )
         self.assertTrue(pr("pnpm-lock.yaml")["code"])
 
+    def test_a_failing_smoke_fuzz_fails_the_gate(self):
+        # #503 merged while `fuzz (columnar_read)` crashed, because the fuzz ran outside ci.yml.
+        self.assertEqual(SCOPED_JOBS["fuzz"], "fuzzing")
+        self.assertEqual(gate(needs(EVERYTHING, fuzz="failure")), ["fuzz: failure"])
+        self.assertEqual(gate(needs(EVERYTHING, fuzz="cancelled")), ["fuzz: cancelled"])
+        self.assertEqual(gate(needs(EVERYTHING, fuzz="success")), [])
+
+    def test_the_smoke_fuzz_may_be_skipped_only_when_it_has_nothing_to_run(self):
+        self.assertEqual(gate(needs(MAIN, fuzz="skipped")), [])
+        self.assertEqual(gate(needs(DOCS_ONLY, fuzz="skipped")), [])
+        self.assertEqual(
+            gate(needs(EVERYTHING, fuzz="skipped")), ["fuzz: skipped (not skipped by design)"]
+        )
+
     def test_a_job_outside_the_scope_table_may_not_be_skipped(self):
         self.assertEqual(
             gate(needs(DOCS_ONLY, **{"new-job": "skipped"})),
@@ -261,7 +291,8 @@ class Workflows(unittest.TestCase):
             self.assertRegex(block, r"(?m)^    needs: (changes|\[changes, .*\])$", job)
             self.assertIn(f"\n    if: needs.changes.outputs.{key} == 'true'\n", "\n" + block, job)
         outputs = re.findall(r"(?m)^      ([a-z]+): \$\{\{ steps\.scope", ci["changes"])
-        self.assertEqual(set(outputs), set(SCOPED_JOBS.values()))
+        # `fuzz` is the smoke fuzz's matrix, not a job's switch.
+        self.assertEqual(set(outputs), set(SCOPED_JOBS.values()) | {"fuzz"})
 
     def test_the_gate_needs_every_job_and_always_runs(self):
         ci = jobs("ci.yml")
@@ -273,9 +304,21 @@ class Workflows(unittest.TestCase):
 
     def test_schema_diff_and_fuzz_read_their_scope_outputs(self):
         self.assertIn("steps.scope.outputs.codegen == 'true'", jobs("docs.yml")["schema-diff"])
+        smoke = jobs("ci.yml")["fuzz"]
+        self.assertIn("fromJSON(needs.changes.outputs.fuzz)", smoke)
+        self.assertIn('FUZZ_SECONDS: "120"', smoke)
+        self.assertIn("name: fuzz-artifacts-", smoke)
         nightly = jobs("nightly.yml")
         self.assertIn("fromJSON(needs.plan.outputs.fuzz)", nightly["fuzz"])
         self.assertIn("if: needs.plan.outputs.fuzz != '[]'", nightly["fuzz"])
+
+    def test_nightly_does_not_run_on_pull_requests(self):
+        # The smoke fuzz is ci.yml's, so a pull request never fuzzes twice.
+        text = (ROOT / ".github/workflows/nightly.yml").read_text(encoding="utf-8")
+        triggers = text[text.index("\non:\n") : text.index("\npermissions:")]
+        self.assertNotIn("pull_request", triggers)
+        self.assertIn("schedule:", triggers)
+        self.assertIn("workflow_dispatch:", triggers)
 
 
 if __name__ == "__main__":
