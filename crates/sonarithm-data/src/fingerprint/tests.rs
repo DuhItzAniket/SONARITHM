@@ -7,7 +7,7 @@ use std::collections::HashMap;
 
 use arrow_array::{
     Float64Array, Int32Array, Int64Array, IntervalYearMonthArray, LargeListArray, ListArray,
-    RunArray, StringViewArray,
+    RunArray, StringViewArray, UInt8Array,
 };
 use proptest::prelude::*;
 use sonarithm_core::TableId;
@@ -187,6 +187,52 @@ fn dictionary_key_width_does_not_matter_but_the_dictionary_does() {
     let base = fingerprint(Arc::new(dictionary));
     assert_ne!(fingerprint(Arc::new(reordered)), base);
     assert_ne!(fingerprint(Arc::new(unused)), base);
+}
+
+/// A dictionary with no values is valid Arrow when every key is null or there are no rows.
+/// arrow-array's `normalized_keys` panics on one, which the `columnar_read` fuzz target found
+/// through an IPC file whose `_snr_prov` column was all null (F-241).
+#[test]
+fn an_empty_dictionary_fingerprints_without_panicking() {
+    let empty = || -> ArrayRef { Arc::new(StringArray::from(Vec::<&str>::new())) };
+    let all_null =
+        DictionaryArray::<UInt8Type>::try_new(UInt8Array::from(vec![None, None, None]), empty())
+            .unwrap();
+    let no_rows =
+        DictionaryArray::<Int32Type>::try_new(Int32Array::from(Vec::<i32>::new()), empty())
+            .unwrap();
+    let all_null = fingerprint(Arc::new(all_null));
+    assert_eq!(
+        fingerprint(Arc::new(
+            DictionaryArray::<Int32Type>::try_new(
+                Int32Array::from(vec![None, None, None]),
+                empty(),
+            )
+            .unwrap()
+        )),
+        all_null,
+        "the key width still does not matter"
+    );
+    assert_ne!(fingerprint(Arc::new(no_rows)), all_null);
+
+    // Inside a list, each row's key is resolved without `normalized_keys` too.
+    let mut list =
+        arrow_array::builder::ListBuilder::new(arrow_array::builder::StringDictionaryBuilder::<
+            Int32Type,
+        >::new());
+    list.values().append_null();
+    list.values().append_null();
+    list.append(true);
+    list.values().append_null();
+    list.append(true);
+    let list = list.finish();
+    let child = list.values().as_any_dictionary();
+    assert!(
+        child.values().is_empty(),
+        "the nested dictionary has no values"
+    );
+    let nested = fingerprint(Arc::new(list));
+    assert_ne!(nested, all_null);
 }
 
 #[test]
