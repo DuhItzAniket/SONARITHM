@@ -179,3 +179,22 @@ fn a11y_10_braille_off_sends_no_line_and_zero_cells_are_refused() {
         .unwrap_err();
     assert_eq!(err.code, "SNR-APP-013");
 }
+
+/// #513 review: turning braille off (B) or switching its mode (Shift+B, a setting) sends
+/// the cursor again at once, so the braille field never shows a line that is off or stale.
+#[test]
+fn a11y_21_the_line_follows_braille_off_and_the_mode_at_once() {
+    let mut h = Harness::new("braille-follow");
+    h.set_row(1);
+    assert!(h.last_cursor().braille.is_some());
+    h.ok(&json!({ "command": "modality_toggle", "args": { "modality": "braille" } }));
+    assert_eq!(h.last_cursor().braille, None, "off at once");
+    h.ok(&json!({ "command": "modality_toggle", "args": { "modality": "braille" } }));
+    let review = h.last_cursor().braille.unwrap();
+    h.settings(|s| {
+        s.get_mut("braille").unwrap()["mode"] = json!("sparkline");
+    })
+    .unwrap();
+    let sparkline = h.last_cursor().braille.unwrap();
+    assert_ne!(sparkline.text, review.text, "the mode changed the line at once");
+}

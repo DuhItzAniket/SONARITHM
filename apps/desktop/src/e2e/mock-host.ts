@@ -166,6 +166,8 @@ function toggle(target: ToggleTarget) {
   if (target === "sonification") {
     transport = { ...transport, muted: !on };
   }
+  // The braille line follows the modality at once, as the app core's does.
+  if (cursor.row !== null) moveCursor(cursor.row, cursor.origin ?? "nav");
   const name = {
     speech: "Speech",
     sonification: "Sonification",

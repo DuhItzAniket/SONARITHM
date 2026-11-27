@@ -148,6 +148,10 @@ ui-braille-hint =
        *[review] The cursor's value and position. Shift+B in the chart explorer shows a sparkline of the segment.
     }
 # Said after Shift+B.
+# The braille field with no line (#513 review): it stays, so the focus never falls to the
+# page.
+ui-braille-off = Braille output is off. Press B in the chart explorer to turn it on.
+ui-braille-waiting = The braille line shows the cursor's point once the cursor is on the chart.
 ui-braille-mode-changed =
     { $mode ->
         [sparkline] Braille sparkline

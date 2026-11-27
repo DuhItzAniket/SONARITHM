@@ -48,7 +48,12 @@ test("b03_t10_b_shows_the_braille_line_and_it_follows_the_cursor", async ({
   page,
 }) => {
   const line = page.getByRole("textbox", { name: "Braille line" });
-  await expect(line).toHaveCount(0);
+  // Braille is off in the mock host: the field is there, empty and says so, and it is
+  // not a Tab stop (#513 review).
+  await expect(line).toHaveValue("");
+  await expect(line).toHaveAttribute("aria-disabled", "true");
+  await expect(line).toHaveAttribute("tabindex", "-1");
+  await expect(line).toHaveAccessibleDescription(/Braille output is off/);
   await explorer(page).focus();
   await page.keyboard.press("b");
   await page.keyboard.press("ArrowRight");
@@ -124,4 +129,63 @@ test("b03_t10_preferences_hold_the_braille_cell_count", async ({ page }) => {
       ),
     )
     .toBe(null);
+});
+
+const routes = async (page: Page) =>
+  (await (await host(page)).evaluate((mock) => mock.commands())).filter(
+    (command) => command === "braille_route",
+  ).length;
+
+test("b03_t10_arrow_keys_in_the_field_review_and_do_not_route", async ({
+  page,
+}) => {
+  // Keyboard §14 (#513 review): arrows, Home and End move the caret to read the line; only
+  // a caret change with no such key, a routing key, moves the cursor. TODO(verify) with a
+  // real display.
+  await explorer(page).focus();
+  await page.keyboard.press("b");
+  await page.keyboard.press("Shift+B");
+  await page.keyboard.press("ArrowRight");
+  const sparkline = page.getByRole("textbox", { name: "Braille sparkline" });
+  await expect(sparkline).toBeVisible();
+  await sparkline.focus();
+  // Chromium moves the caret in a read-only field with these keys; WebKit (with a Mac's
+  // keys here) may not move it at all, which sends nothing either.
+  for (const key of ["ArrowLeft", "Home", "End", "ArrowLeft"]) {
+    await page.keyboard.press(key);
+  }
+  // Past the review keys' 150 ms window, any route they caused would have been sent.
+  await page.waitForTimeout(200);
+  expect(await routes(page)).toBe(0);
+  // A routing key still routes.
+  await sparkline.evaluate((field: HTMLInputElement) => {
+    field.setSelectionRange(0, 0);
+  });
+  await expect.poll(() => routes(page)).toBe(1);
+});
+
+test("b03_t10_turning_braille_off_from_the_field_keeps_the_focus", async ({
+  page,
+}) => {
+  // #513 review: the palette returns the focus to the braille field it opened from, which
+  // stays mounted when braille goes off, so the focus never falls to the page.
+  await explorer(page).focus();
+  await page.keyboard.press("b");
+  await page.keyboard.press("ArrowRight");
+  const line = page.getByRole("textbox", { name: "Braille line" });
+  await expect(line).toHaveValue("15.1 °C day 2");
+  await line.focus();
+  const mac = await page.evaluate(() => navigator.userAgent.includes("Mac"));
+  await page.keyboard.press(`${mac ? "Meta" : "Control"}+Shift+P`);
+  const palette = page.getByRole("dialog", { name: "Command palette" });
+  await expect(palette).toBeVisible();
+  await page.keyboard.type("Braille on or off");
+  await page.keyboard.press("Enter");
+  await expect(palette).toBeHidden();
+  await expect(line).toHaveValue("");
+  await expect(line).toHaveAttribute("aria-disabled", "true");
+  await expect
+    .poll(() => page.evaluate(() => document.activeElement?.tagName))
+    .not.toBe("BODY");
+  await expect(line).toBeFocused();
 });

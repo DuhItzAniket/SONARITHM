@@ -23,7 +23,7 @@ import { TransportBar } from "../transport/TransportBar.tsx";
 import { CursorReadout } from "../cursor/CursorReadout.tsx";
 import { BrailleField } from "../braille/BrailleField.tsx";
 import { Explorer } from "../explorer/Explorer.tsx";
-import { visualOn } from "../explorer/effective.ts";
+import { brailleOn, visualOn } from "../explorer/effective.ts";
 import { ExplorerCommands } from "../explorer/ExplorerCommands.tsx";
 import { DatasetPlot } from "../plot/DatasetPlot.tsx";
 import { useCursor } from "../cursor/useCursor.ts";
@@ -124,6 +124,8 @@ export function App({
   const cursor = useCursor(client);
   // The visual highlight (V, B03-T09): the plot shows the cursor only while it is on.
   const [visual, setVisual] = useState(true);
+  // Braille output (B, B03-T10): the braille field says when it is off.
+  const [braille, setBraille] = useState(false);
   useEffect(() => {
     if (client === null) {
       return;
@@ -131,7 +133,10 @@ export function App({
     let live = true;
     client.call({ command: "settings_effective" }).then(
       (reply) => {
-        if (live) setVisual(visualOn(reply.settings));
+        if (live) {
+          setVisual(visualOn(reply.settings));
+          setBraille(brailleOn(reply.settings));
+        }
       },
       () => undefined,
     );
@@ -221,10 +226,13 @@ export function App({
                     queryOpen={queryOpen}
                     onQueryOpenChange={setQueryOpen}
                   />
-                  {/* With braille on, the one cursor's braille line (B03-T10). */}
-                  {cursor?.braille != null && (
-                    <BrailleField client={client} braille={cursor.braille} />
-                  )}
+                  {/* The one cursor's braille line (B03-T10). It stays mounted when
+                      braille is off, so the focus never falls to the page (#513 review). */}
+                  <BrailleField
+                    client={client}
+                    braille={cursor?.braille ?? null}
+                    on={braille}
+                  />
                   <DatasetPlot
                     client={client}
                     dataset={dataset}
@@ -281,6 +289,7 @@ export function App({
         announcer={announcer}
         onEffective={(settings) => {
           setVisual(visualOn(settings));
+          setBraille(brailleOn(settings));
         }}
         onQueryMenu={openQueryMenu}
       />

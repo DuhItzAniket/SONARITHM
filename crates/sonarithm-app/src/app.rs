@@ -860,6 +860,8 @@ impl App {
         self.settings = settings;
         self.session_prefs = crate::profile::choices_layer(&self.settings.choices);
         self.transport.configure(self.output_config())?;
+        // The braille line follows its mode, cell count and modality at once (B03-T10).
+        self.send_cursor(None, false);
         Ok(Reply::Settings(self.settings.clone()))
     }
 

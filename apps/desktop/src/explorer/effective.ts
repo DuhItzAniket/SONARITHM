@@ -13,3 +13,14 @@ export function visualOn(settings: readonly EffectiveSetting[]): boolean {
   );
   return visual?.value !== false;
 }
+
+/**
+ * Whether braille output is on in the app core's effective settings (B, keyboard §5.5,
+ * B03-T10). Missing means off: the braille field then says so instead of waiting.
+ */
+export function brailleOn(settings: readonly EffectiveSetting[]): boolean {
+  const braille = settings.find(
+    (setting) => setting.key === "interaction.modalities.braille",
+  );
+  return braille?.value === true;
+}
