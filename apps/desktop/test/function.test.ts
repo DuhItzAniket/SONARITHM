@@ -10,6 +10,7 @@ import { test } from "node:test";
 import type { CriticalPointInfo, CursorState } from "@sonarithm/ipc";
 
 import {
+  audifySummary,
   bandState,
   currentPoint,
   expressionReason,
@@ -79,11 +80,14 @@ test("a11y_10_when_two_points_share_a_row_the_entered_one_is_current", () => {
   );
 });
 
-test("c03_t08b_an_expression_error_says_where_only_when_it_has_a_place", () => {
-  assert.deepEqual(expressionReason("Unexpected end.", [4, 1]), {
-    id: "ui-function-expression-error",
-    args: { detail: "Unexpected end.", index: { number: 5 } },
-  });
+test("c03_t08b_an_expression_error_says_where_once", () => {
+  // The host's message already carries the place, counted from 1, and its span is that
+  // same place: the reason is the message as it is (#498 review: `sin(x))` read
+  // "(at character 7). (at character 8)").
+  assert.deepEqual(
+    expressionReason("Unexpected `)` (at character 7).", [7, 1]),
+    { text: "Unexpected `)` (at character 7)." },
+  );
   assert.deepEqual(expressionReason("Too many variables.", null), {
     id: "ui-function-expression-refused",
     args: { detail: "Too many variables." },
@@ -92,10 +96,10 @@ test("c03_t08b_an_expression_error_says_where_only_when_it_has_a_place", () => {
     id: "ui-function-expression-unreadable",
     args: {},
   });
-  assert.deepEqual(
-    expressionReason("", null).id,
-    "ui-function-expression-unreadable",
-  );
+  assert.deepEqual(expressionReason("", null), {
+    id: "ui-function-expression-unreadable",
+    args: {},
+  });
 });
 
 test("sdr_31_band_edges_keep_three_significant_digits", () => {
@@ -111,4 +115,35 @@ test("sdr_31_band_edges_keep_three_significant_digits", () => {
   assert.equal(shown(12.345), "12.3");
   assert.equal(shown(20_000), "20,000");
   assert.equal(shown(0), "0");
+});
+
+test("c03_t08b_a_committed_k_is_summarised_with_the_readouts_digits", () => {
+  assert.deepEqual(
+    audifySummary({
+      k: 2200,
+      durationS: 0.0045,
+      bandHz: [40, 1_100_000],
+      audibleHz: [40, 20_000],
+    }),
+    {
+      id: "ui-audify-summary",
+      args: {
+        k: { number: 2200, maximumFractionDigits: 3 },
+        seconds: { number: 0.0045, maximumFractionDigits: 3 },
+        low: significant(40),
+        high: significant(1_100_000),
+        audibleLow: significant(40),
+        audibleHigh: significant(20_000),
+      },
+    },
+  );
+  assert.equal(
+    audifySummary({
+      k: 0.001,
+      durationS: 10,
+      bandHz: [0.0001, 0.05],
+      audibleHz: null,
+    }).id,
+    "ui-audify-summary-inaudible",
+  );
 });

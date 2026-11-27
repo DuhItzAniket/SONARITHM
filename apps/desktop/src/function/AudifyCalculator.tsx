@@ -8,7 +8,7 @@ import { useEffect, useRef, useState } from "react";
 import type { Announcer } from "../announcer/announcer.ts";
 import { useLocalizer } from "../i18n.ts";
 import styles from "./function.module.css";
-import { bandState, significant } from "./readout.ts";
+import { audifySummary, bandState, significant } from "./readout.ts";
 
 type Readout = ReplyFor<"audify_calculate">;
 
@@ -70,6 +70,24 @@ export function AudifyCalculator({
     };
   }, [client, dataset, k]);
 
+  // Set when the listener commits a k (the field commits on Enter or leaving it, not per
+  // keystroke, and the seismic button commits at once), so the readout that k produces is
+  // summarised once, politely; the first readout, for the default k, is not (#498 review).
+  const summarise = useRef(false);
+  const commit = (next: number) => {
+    summarise.current = true;
+    setK(next);
+  };
+  useEffect(() => {
+    if (readout === null || !summarise.current) return;
+    summarise.current = false;
+    const summary = audifySummary(readout);
+    announcer.announce({
+      text: t.format(summary.id, summary.args),
+      assertive: false,
+    });
+  }, [readout, announcer, t]);
+
   const state = readout === null ? null : bandState(readout.codes);
   // Said once each time the readout becomes "will not compile", not on every change.
   const wasBlocked = useRef(false);
@@ -100,11 +118,11 @@ export function AudifyCalculator({
           minValue={K_RANGE.min}
           maxValue={K_RANGE.max}
           formatOptions={{ maximumFractionDigits: 3 }}
-          onChange={setK}
+          onChange={commit}
         />
         <Button
           onPress={() => {
-            setK(SEISMIC_K);
+            commit(SEISMIC_K);
           }}
         >
           {t.format("ui-audify-seismic")}

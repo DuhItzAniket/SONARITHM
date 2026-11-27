@@ -195,10 +195,9 @@ ui-function-expression = Expression in x
 ui-function-expression-hint = For example x^2 - 1 or sin(x) / x.
 # $text is the expression as the app core reads it (its canonical form).
 ui-function-reads-as = Reads as: { $text }
-# Why the expression does not read, and where reading stopped: $detail is the app core's
-# message and $index the character position, from 1.
-ui-function-expression-error = { $detail } (at character { $index })
-# The same, for an error with no place in the text, such as a budget or a variable count.
+# Why the expression cannot be used, for an error with no place in the text, such as a
+# budget or a variable count. (An error with a place is the app core's own message, which
+# already says where reading stopped.)
 ui-function-expression-refused = The expression cannot be used: { $detail }
 # When the app core gives no reason.
 ui-function-expression-unreadable = The expression does not read.
@@ -228,6 +227,11 @@ ui-audify-seconds = { $value } s
 # $low and $high are frequencies in hertz.
 ui-audify-hertz-range = { $low } to { $high } Hz
 ui-audify-audible-none = None
+# Said once when k is committed, not while typing: $k the speed-up, $seconds how long the
+# series plays, $low to $high its band, and $audibleLow to $audibleHigh the audible part.
+ui-audify-summary = k { $k }: { $seconds } s, { $low } to { $high } Hz, audible { $audibleLow } to { $audibleHigh } Hz
+# The same when none of the band is audible.
+ui-audify-summary-inaudible = k { $k }: { $seconds } s, { $low } to { $high } Hz, none of it audible
 ui-audify-partly = Part of the band is outside 20 Hz to 20 kHz, so not all of it will be heard.
 ui-audify-will-not-compile = Will not compile: the whole band is outside 20 Hz to 20 kHz. Choose another speed-up.
 # $detail is the app core's message.

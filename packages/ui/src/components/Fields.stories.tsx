@@ -142,6 +142,9 @@ export const ScaleListBox: StoryObj<typeof ListBox> = {
   },
 };
 
+/** An error as the app core words it, with its place (C03-T08b). */
+const EXPRESSION_ERROR = "The expression does not read here (at character 6).";
+
 /**
  * A text field with help text; when invalid, its error is text linked to the field, never
  * colour alone (DL-X08), and it is not a live region.
@@ -153,10 +156,7 @@ export const TextWithError: StoryObj<typeof TextField> = {
       description={t.format("ui-function-expression-hint")}
       defaultValue="x^2 +"
       isInvalid
-      errorMessage={t.format("ui-function-expression-error", {
-        detail: "SNR-ENG-400",
-        index: { number: 5 },
-      })}
+      errorMessage={EXPRESSION_ERROR}
     />
   ),
   play: async ({ canvasElement }) => {
@@ -168,12 +168,7 @@ export const TextWithError: StoryObj<typeof TextField> = {
     await expect(input).toHaveFocus();
     await expect(input).toHaveAttribute("aria-invalid", "true");
     await expect(input).toHaveAccessibleDescription(
-      expect.stringContaining(
-        t.format("ui-function-expression-error", {
-          detail: "SNR-ENG-400",
-          index: { number: 5 },
-        }),
-      ),
+      expect.stringContaining(EXPRESSION_ERROR),
     );
     await expect(canvas.queryByRole("alert")).toBeNull();
   },

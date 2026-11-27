@@ -389,7 +389,7 @@ function checkExpression(expr: string): {
     };
   }
   if (text.includes("#")) {
-    return { ok: false, canonical: null, diagnostics: [], span: [0, 1] };
+    return { ok: false, canonical: null, diagnostics: [], span: [1, 1] };
   }
   let depth = 0;
   let stop: number | null = null;
@@ -415,11 +415,13 @@ function checkExpression(expr: string): {
         severity: "error",
         code: "SNR-ENG-400",
         rules: [],
-        message: "The expression does not read here.",
+        // As the host words it: the place is part of the message, counted from 1.
+        message: `The expression does not read here (at character ${String(stop + 1)}).`,
         pointer: null,
       },
     ],
-    span: [stop, 1],
+    // Like the host's span: in characters as the message counts them, from 1.
+    span: [stop + 1, 1],
   };
 }
 

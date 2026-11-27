@@ -54,24 +54,61 @@ export interface Message {
 }
 
 /**
- * Why an expression does not read, from `function_check`'s first diagnostic and span: with
- * the character where reading stopped when the error has a place, without it when it has
- * none (a budget or a variable count), and a plain sentence when the app core gave no
+ * Why an expression does not read: a catalogue message, or the app core's own message as
+ * it is.
+ */
+export type Reason = Message | { readonly text: string };
+
+/**
+ * Why an expression does not read, from `function_check`'s first diagnostic and span. An
+ * error with a place is the app core's message alone: it already says where reading
+ * stopped, counted from 1 ("(at character 7)"), and the span is that same place, so the
+ * place is not added again (#498 review). An error with no place (a budget or a variable
+ * count) says it cannot be used, and a plain sentence stands in when the app core gave no
  * reason.
  */
 export function expressionReason(
   detail: string | undefined,
   span: readonly [number, number] | null,
-): Message {
+): Reason {
   if (detail === undefined || detail === "") {
     return { id: "ui-function-expression-unreadable", args: {} };
   }
   if (span === null) {
     return { id: "ui-function-expression-refused", args: { detail } };
   }
+  return { text: detail };
+}
+
+/** The readout fields the spoken summary uses. */
+export interface AudifyFigures {
+  readonly k: number;
+  readonly durationS: number;
+  readonly bandHz: readonly [number, number];
+  readonly audibleHz: readonly [number, number] | null;
+}
+
+/**
+ * The one polite summary said when k is committed (#498 review): k, how long the series
+ * plays, its band and the audible part, with the same digits the readout shows.
+ */
+export function audifySummary(readout: AudifyFigures): Message {
+  const common = {
+    k: { number: readout.k, maximumFractionDigits: 3 },
+    seconds: { number: readout.durationS, maximumFractionDigits: 3 },
+    low: significant(readout.bandHz[0]),
+    high: significant(readout.bandHz[1]),
+  };
+  if (readout.audibleHz === null) {
+    return { id: "ui-audify-summary-inaudible", args: common };
+  }
   return {
-    id: "ui-function-expression-error",
-    args: { detail, index: { number: span[0] + 1 } },
+    id: "ui-audify-summary",
+    args: {
+      ...common,
+      audibleLow: significant(readout.audibleHz[0]),
+      audibleHigh: significant(readout.audibleHz[1]),
+    },
   };
 }
 

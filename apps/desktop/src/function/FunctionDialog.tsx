@@ -14,8 +14,8 @@ import { useEffect, useRef, useState } from "react";
 import type { Announcer } from "../announcer/announcer.ts";
 import { useLocalizer } from "../i18n.ts";
 import styles from "./function.module.css";
-import type { Message } from "./readout.ts";
 import { expressionReason } from "./readout.ts";
+import type { Reason } from "./readout.ts";
 
 /** A function the app core opened as a dataset (`function_open`). */
 export interface OpenedFunction {
@@ -26,7 +26,7 @@ export interface OpenedFunction {
 /** How the expression reads, from `function_check`. */
 type Check =
   | { readonly ok: true; readonly canonical: string }
-  | { readonly ok: false; readonly reason: Message };
+  | { readonly ok: false; readonly reason: Reason };
 
 /** The number fields, which must hold a finite number before Open samples anything. */
 type NumberKey = "from" | "to" | "samples";
@@ -114,7 +114,9 @@ export function FunctionDialog({
   const invalid = check !== null && !check.ok;
   const reason =
     check !== null && !check.ok
-      ? t.format(check.reason.id, check.reason.args)
+      ? "text" in check.reason
+        ? check.reason.text
+        : t.format(check.reason.id, check.reason.args)
       : undefined;
   // The number fields Open found empty: each says so in words until it is edited.
   const [missing, setMissing] = useState<ReadonlySet<NumberKey>>(new Set());
@@ -209,7 +211,11 @@ export function FunctionDialog({
                 : t.format("ui-function-expression-hint")
             }
             value={expr}
-            onChange={setExpr}
+            onChange={(next) => {
+              // An earlier Open's failure no longer describes what is typed (#498 review).
+              setFailure(null);
+              setExpr(next);
+            }}
             isInvalid={invalid}
             // The app core judges the expression; the browser's own validation would
             // stop Enter from reaching the form, so the reason could not be announced.
@@ -230,6 +236,7 @@ export function FunctionDialog({
               validationBehavior="aria"
               {...needed("from")}
               onChange={(next) => {
+                setFailure(null);
                 latest.current = { ...latest.current, from: next };
                 setFrom(next);
                 edited("from");
@@ -241,6 +248,7 @@ export function FunctionDialog({
               validationBehavior="aria"
               {...needed("to")}
               onChange={(next) => {
+                setFailure(null);
                 latest.current = { ...latest.current, to: next };
                 setTo(next);
                 edited("to");
@@ -256,6 +264,7 @@ export function FunctionDialog({
             validationBehavior="aria"
             {...needed("samples")}
             onChange={(next) => {
+              setFailure(null);
               latest.current = { ...latest.current, samples: next };
               setSamples(next);
               edited("samples");

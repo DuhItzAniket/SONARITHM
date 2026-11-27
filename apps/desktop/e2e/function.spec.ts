@@ -74,7 +74,11 @@ test("c03_t08b_the_expression_is_checked_after_a_pause_and_marks_where_it_stops"
   // region, so typing is never interrupted (keyboard §9).
   await expect(expression(page)).toHaveAttribute("aria-invalid", "true");
   await expect(expression(page)).toHaveAccessibleDescription(
-    /The expression does not read here\. \(at character 6\)/,
+    /The expression does not read here \(at character 6\)\./,
+  );
+  // The place is said once: the app core's message carries it (#498 review).
+  await expect(expression(page)).not.toHaveAccessibleDescription(
+    /at character.*at character/,
   );
   await expect(dialog(page).getByRole("alert")).toHaveCount(0);
   // Named lookups precede this scan: F-226 (Firefox skips it).
@@ -84,7 +88,7 @@ test("c03_t08b_the_expression_is_checked_after_a_pause_and_marks_where_it_stops"
   await expect(dialog(page)).toBeVisible();
   await expect(
     page.locator('[data-announcer] [aria-live="polite"]'),
-  ).toHaveText(/The expression does not read here\. \(at character 6\)/);
+  ).toHaveText(/The expression does not read here \(at character 6\)\.$/);
   expect(
     (await (await host(page)).evaluate((mock) => mock.commands())).filter(
       (command) => command === "function_open",
@@ -239,6 +243,12 @@ test("sdr_31_the_calculator_reads_out_and_an_inaudible_band_will_not_compile", a
     .getByRole("button", { name: "Use the seismic speed-up (k = 2200)" })
     .press("Enter");
   await expect(k).toHaveValue("2,200");
+  // The committed k is summarised once, politely (#498 review).
+  await expect(
+    page.locator('[data-announcer] [aria-live="polite"]'),
+  ).toHaveText(
+    /^k 2,200: [\d.,]+ s, [\d.,]+ to [\d.,]+ Hz, audible [\d.,]+ to [\d.,]+ Hz$/,
+  );
   await expect(
     inspector.getByText(/^Part of the band is outside 20 Hz to 20 kHz/),
   ).toBeVisible();
