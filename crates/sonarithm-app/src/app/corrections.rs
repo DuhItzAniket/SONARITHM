@@ -193,8 +193,10 @@ impl App {
             .with_corrections(CorrectionSet::File(Box::new(file.clone())));
         // A raster chart is read only through its calibration (C02-T10), which the
         // correction document keeps.
+        // A calibration with no plot area, as an older document or an imported file may
+        // have, reads the anchors' area, never a detected one (#516, the #517 review).
         if let Some(calibration) = &file.calibration {
-            options = options.with_calibration(calibration.clone());
+            options = options.with_calibration(super::raster::with_anchors_area(calibration));
         }
         let chart =
             sonarithm::read_chart_bytes(&bytes, &open.summary.name, &options).map_err(|err| {

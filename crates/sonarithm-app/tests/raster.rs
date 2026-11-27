@@ -270,16 +270,30 @@ fn c02_t10_a_check_gives_every_pixels_value_on_a_fitted_axis() {
     let mut h = Harness::new("raster-values");
     let png = h.chart("rain.png");
     let opened = h.open(&png);
-    let checked = h.ok(&json!({ "command": "chart_calibration_check", "args": {
-        "id": opened["id"], "calibration": entered(&calibration()) } }));
-    let xs = checked["values"]["x"].as_array().unwrap();
-    let ys = checked["values"]["y"].as_array().unwrap();
+    let ask = json!({ "command": "chart_calibration_check", "args": {
+        "id": opened["id"], "calibration": entered(&calibration()) } });
+    let checked = h.ok(&ask);
+    let xs = checked["values"]["x"]["values"].as_array().unwrap();
+    let ys = checked["values"]["y"]["values"].as_array().unwrap();
     assert_eq!(xs.len() as u64, opened["widthPx"].as_u64().unwrap());
     assert_eq!(ys.len() as u64, opened["heightPx"].as_u64().unwrap());
     // A category axis gives labels; the y axis numbers.
     assert!(xs.iter().all(Value::is_string), "{}", xs[0]);
     assert!(ys.iter().all(Value::is_number), "{}", ys[0]);
     assert_eq!(checked["valueAt"], Value::Null, "no `at`, no single value");
+    // The values come once per fit: the same anchors again give the fit's key alone.
+    let again = h.ok(&ask);
+    assert_eq!(again["values"]["x"]["fit"], checked["values"]["x"]["fit"]);
+    assert_eq!(again["values"]["x"]["values"], Value::Null);
+    assert_eq!(again["values"]["y"]["values"], Value::Null);
+    // A changed y axis sends its values again; x, unchanged, does not.
+    let mut moved = entered(&calibration());
+    moved["y"]["anchors"][0]["value"] = json!(moved["y"]["anchors"][0]["value"].as_f64().unwrap() + 1.0);
+    let changed = h.ok(&json!({ "command": "chart_calibration_check", "args": {
+        "id": opened["id"], "calibration": moved } }));
+    assert_ne!(changed["values"]["y"]["fit"], checked["values"]["y"]["fit"]);
+    assert!(changed["values"]["y"]["values"].is_array());
+    assert_eq!(changed["values"]["x"]["values"], Value::Null);
 }
 
 /// Item 3 of the #517 review (#516): the area read is the one chosen, the anchors' box by
@@ -322,4 +336,24 @@ fn c02_t10_the_area_read_is_the_one_chosen_and_the_anchors_box_by_default() {
         .filter_map(|a| a["at"][0].as_f64())
         .fold(f64::INFINITY, f64::min);
     assert!(area["min"][0].as_f64().unwrap() < leftmost, "{area}");
+}
+
+/// The #517 review: a calibration with no area means the anchors'. A correction document
+/// whose calibration has no plot area (an older one, or an imported file) is read again
+/// through the anchors' area, not a detected one, so it gives the same rows.
+#[test]
+fn c02_t10_a_stored_calibration_without_an_area_reads_the_anchors_area() {
+    let mut h = Harness::new("raster-no-area");
+    let png = h.corpus("vl-area@1x.png", "area.png");
+    let id = h.open(&png)["id"].clone();
+    let applied = h.ok(&json!({ "command": "chart_calibration_apply", "args": {
+        "id": id, "calibration": entered(&calibration_of("vl-area@1x")) } }));
+    let dataset = applied["id"].clone();
+    let removed = h.ok(&json!({ "command": "corrections_apply", "args": {
+        "dataset": dataset, "label": "Forget the area",
+        "patch": [{ "op": "remove", "path": "/calibration/plotArea" }] } }));
+    assert_eq!(removed["summary"]["rows"], applied["rows"], "{removed}");
+    let state = h.ok(&json!({ "command": "corrections_get", "args": { "dataset": dataset } }));
+    let file: Value = serde_json::from_str(state["text"].as_str().unwrap()).unwrap();
+    assert_eq!(file["calibration"]["plotArea"], Value::Null, "the document keeps no area");
 }

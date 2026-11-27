@@ -250,7 +250,11 @@ The UI shows `text` in a read-only text field, with the caret at `caret` (keyboa
   * **`x` and `y`:** `{ anchors, residual, confidence }`, or `null` while an axis has fewer than two anchors or is refused.
   * **`diagnostics`:** say why an axis is refused (`SNR-ENG-320` to `322`) and give a fitting axis's warnings (`SNR-ENG-323`, `325`). With `area: "detected"`, `SNR-ENG-330` warns when anchors lie outside the detected plot area (#516).
   * **`valueAt`:** the values at pixel position `at`, each once its axis fits: a number, or the ISO date or category label as text.
-  * **`values`:** `{ x, y }`, each fitted axis's value at every pixel column (x) or row (y), at the pixel's centre, or `null` for an axis that does not fit or is over 10 000 pixels long. The dialog looks a crosshair step's value up in it, so the slider says the step and its value together and never changes its text afterwards (#517 review).
+  * **`values`:** `{ x, y }`. Each fitted axis gives `{ fit, values }`, or `null` while it does not fit.
+    * **What it holds:** the axis's value at every pixel column (x) or row (y), at the pixel's centre.
+    * **Why:** the dialog looks a crosshair step's value up in it, so the slider says the step and its value together and never changes its text afterwards (#517 review).
+    * **Once per fit:** `fit` is a key of the axis's scale and anchors. `values` comes only when the session was not already sent that fit, and is otherwise `null`, so a check that changes one axis resends only that axis.
+    * **The cap:** at most 10 000 pixels along an axis, the image's width for x and its height for y. A longer axis gives `null`, and the slider then says the pixel alone. At the cap, one axis is 10 000 numbers (about 200 kB of JSON) or 10 000 ISO dates or labels (about 260 kB for dates).
   * **Dates and labels are read in Rust.** The UI sends an anchor's text as typed and never parses a date.
   * Nothing is extracted.
 * `chart_calibration_apply { id, calibration }` replies `dataset`, as `dataset_open` does.
@@ -262,11 +266,11 @@ The UI shows `text` in a read-only text field, with the caret at `caret` (keyboa
   * The session ends.
 * `chart_raster_close { id }` replies `raster_closed { id }` and ends a session the user cancelled.
 * `calibration` is `{ plotArea?, area?, x: { kind, anchors }, y: { kind, anchors } }`.
-  * `area` is the area read when `plotArea` is absent:
+  * `area` is the area read when `plotArea` is absent, and an absent `area` means `anchors`:
     * `anchors` (the default): the box the anchors span, widened as the extraction widens it;
     * `detected`: the plot area the axis lines bound (refused when none was found);
     * `image`: the whole image.
-  * The correction document keeps the box that was read, so a re-read reads the same area.
+  * The correction document keeps the box that was read, so a re-read reads the same area. A stored calibration with no plot area (an older document, or an imported file) is read through the anchors' area (RFC-0005 §2 note).
   * `kind` is `linear`, `log`, `date` or `category` (x only).
   * An anchor is `{ at: [x, y], value }`, in pixels with y down and a pixel's centre at `i + 0.5`.
   * It is the spec's `data.source.calibration` without `axes`, and an axis may have fewer than two anchors while it is being entered.

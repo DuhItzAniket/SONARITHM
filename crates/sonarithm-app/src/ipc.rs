@@ -824,9 +824,10 @@ pub enum Reply {
         y: Option<AxisFitInfo>,
         /// The values at `at`, when it was given and each axis fits.
         value_at: Option<ValueAt>,
-        /// Each fitted axis's value at every pixel column (x) or row (y), at the pixel's
-        /// centre, so the dialog says a crosshair step's value in the same moment as its
-        /// pixel. `null` for an axis that does not fit or is over 10 000 pixels long.
+        /// Each fitted axis's value at every pixel column (x) or row (y), so the dialog says
+        /// a crosshair step's value in the same moment as its pixel. The values come once
+        /// per fit: a check whose fit this session was already sent gives the fit's key
+        /// without them.
         values: AxisValues,
     },
     /// A calibration session ended (C02-T10).
@@ -1649,10 +1650,23 @@ pub struct AxisFitInfo {
 #[serde(rename_all = "camelCase")]
 #[non_exhaustive]
 pub struct AxisValues {
-    /// The x axis's value at each pixel column: numbers, or dates (ISO 8601) or labels.
-    pub x: Option<Vec<AnchorText>>,
-    /// The y axis's value at each pixel row.
-    pub y: Option<Vec<AnchorText>>,
+    /// The x axis's values at each pixel column; `null` while it does not fit, or when the
+    /// image is over 10 000 pixels wide.
+    pub x: Option<AxisTable>,
+    /// The y axis's values at each pixel row; `null` likewise.
+    pub y: Option<AxisTable>,
+}
+
+/// One fitted axis's values at every pixel along it (C02-T10).
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize, TS)]
+#[serde(rename_all = "camelCase")]
+#[non_exhaustive]
+pub struct AxisTable {
+    /// The fit's key: the same while the axis's scale and anchors are the same.
+    pub fit: String,
+    /// The values, numbers or dates (ISO 8601) or labels; `null` when this session was
+    /// already sent this fit's values.
+    pub values: Option<Vec<AnchorText>>,
 }
 
 /// The values at a pixel, each once its axis fits (C02-T10).

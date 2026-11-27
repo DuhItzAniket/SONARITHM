@@ -25,7 +25,7 @@ use super::corrections::ChartState;
 use super::{App, Open, file_name, summarize};
 use crate::codes;
 use crate::ipc::{
-    AnchorText, AxisFitInfo, AxisValues, DiagnosticInfo, IpcError, PlotAreaInfo,
+    AnchorText, AxisFitInfo, AxisTable, AxisValues, DiagnosticInfo, IpcError, PlotAreaInfo,
     RasterCalibration, ReadArea, Reply, Request, ValueAt,
 };
 
@@ -49,6 +49,8 @@ struct Pending {
     size: [u32; 2],
     /// The plot area the axis lines bound, when one was found.
     detected: Option<PixelRect>,
+    /// The key of the fit whose values each axis was last sent: values go once per fit.
+    sent: [Option<String>; 2],
 }
 
 /// The open calibration sessions, by ID, oldest first.
@@ -177,6 +179,24 @@ fn read_area(
     }
 }
 
+/// `calibration` with a plot area: its own, else the anchors' area. A calibration saved
+/// without one (an `area` of none means the anchors') never falls back to detection, which
+/// an area chart's fill can mislead (#516). One whose axes do not fit is kept as it is, and
+/// the read reports why.
+pub(super) fn with_anchors_area(calibration: &Calibration) -> Calibration {
+    let mut calibration = calibration.clone();
+    if calibration.plot_area.is_none()
+        && let Ok(area) = sonarithm::raster::anchor_area(&calibration)
+    {
+        calibration.plot_area = serde_json::from_value(serde_json::json!({
+            "min": area.min,
+            "max": area.max,
+        }))
+        .ok();
+    }
+    calibration
+}
+
 fn read_value(value: Option<&ReadValue>) -> Option<AnchorText> {
     match value? {
         ReadValue::Number(n) => Some(AnchorText::Number(*n)),
@@ -185,7 +205,42 @@ fn read_value(value: Option<&ReadValue>) -> Option<AnchorText> {
     }
 }
 
-fn check_reply(checked: &CalibrationCheck, at: bool) -> Reply {
+/// A fitted axis's key: a digest of its scale and anchors, the same while they are.
+fn fit_key(axis: &crate::ipc::RasterAxis) -> String {
+    let json = serde_json::to_vec(axis).unwrap_or_default();
+    let digest = sonarithm_core::Sha256Digest::of(&json).to_string();
+    digest.chars().take(16).collect()
+}
+
+/// Each fitted axis's table: its key, and its values unless `sent` already has that key.
+/// `sent` is updated to what this reply carries.
+fn axis_tables(
+    checked: &CalibrationCheck,
+    calibration: &RasterCalibration,
+    sent: &mut [Option<String>; 2],
+) -> AxisValues {
+    let mut table = |index: usize, axis: &crate::ipc::RasterAxis| {
+        let values = checked.values[index].as_ref()?;
+        let fit = fit_key(axis);
+        let fresh = sent[index].as_deref() != Some(fit.as_str());
+        sent[index] = Some(fit.clone());
+        Some(AxisTable {
+            fit,
+            values: fresh.then(|| values.iter().filter_map(|v| read_value(Some(v))).collect()),
+        })
+    };
+    let x = table(0, &calibration.x);
+    let y = table(1, &calibration.y);
+    if x.is_none() {
+        sent[0] = None;
+    }
+    if y.is_none() {
+        sent[1] = None;
+    }
+    AxisValues { x, y }
+}
+
+fn check_reply(checked: &CalibrationCheck, at: bool, values: AxisValues) -> Reply {
     let fit = |axis: &Option<sonarithm::raster::AxisFit>| {
         axis.map(|fit| AxisFitInfo {
             anchors: u32::try_from(fit.anchors).unwrap_or(u32::MAX),
@@ -205,14 +260,7 @@ fn check_reply(checked: &CalibrationCheck, at: bool) -> Reply {
             x: read_value(checked.value_at[0].as_ref()),
             y: read_value(checked.value_at[1].as_ref()),
         }),
-        values: AxisValues {
-            x: checked.values[0]
-                .as_ref()
-                .map(|values| values.iter().filter_map(|v| read_value(Some(v))).collect()),
-            y: checked.values[1]
-                .as_ref()
-                .map(|values| values.iter().filter_map(|v| read_value(Some(v))).collect()),
-        },
+        values,
     }
 }
 
@@ -275,6 +323,7 @@ impl App {
                 bytes: Arc::new(bytes),
                 size: [info.width, info.height],
                 detected: info.plot,
+                sent: [None, None],
             },
         );
         while sessions.open.len() > MAX_SESSIONS {
@@ -294,12 +343,12 @@ impl App {
     }
 
     fn calibration_check(
-        &self,
+        &mut self,
         id: u64,
         calibration: &RasterCalibration,
         at: Option<[f64; 2]>,
     ) -> Result<Reply, IpcError> {
-        let pending = self.raster.open.get(&id).ok_or_else(|| no_session(id))?;
+        let pending = self.raster.open.get_mut(&id).ok_or_else(|| no_session(id))?;
         let spec = spec_calibration(calibration)?;
         let mut checked = sonarithm::raster::check(&spec, at, Some(pending.size));
         // Reading the detected area while anchors lie outside it is likely wrong (#516).
@@ -310,7 +359,8 @@ impl App {
         {
             checked.diagnostics.push(warning);
         }
-        Ok(check_reply(&checked, at.is_some()))
+        let values = axis_tables(&checked, calibration, &mut pending.sent);
+        Ok(check_reply(&checked, at.is_some(), values))
     }
 
     fn calibration_apply(

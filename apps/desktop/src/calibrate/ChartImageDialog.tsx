@@ -4,7 +4,7 @@
 import type {
   AnchorText,
   AxisFitInfo,
-  AxisValues,
+  AxisTable,
   Client,
   DatasetSummary,
   RasterAxisKind,
@@ -255,8 +255,8 @@ interface Checked {
   readonly state: DialogState;
   readonly x: AxisFitInfo | null;
   readonly y: AxisFitInfo | null;
-  /** Each fitted axis's value at every pixel along it. */
-  readonly values: AxisValues;
+  /** Each fitted axis's value at every pixel along it, or `null` while it does not fit. */
+  readonly values: Readonly<Record<Axis, readonly AnchorText[] | null>>;
   readonly messages: readonly string[];
 }
 
@@ -304,31 +304,44 @@ function Calibrate({
 
   // Ask the app core about the anchors: the newest only, once per frame. The crosshair
   // asks nothing: the check gives every pixel's value, which the sliders look up.
-  const latest = useMemo(
-    () =>
-      new Latest<DialogState>(
-        async (asked) => {
-          const reply = await client.call({
-            command: "chart_calibration_check",
-            args: { id: image.id, calibration: toCalibration(asked), at: null },
-          });
-          setChecked({
-            state: asked,
-            x: reply.x,
-            y: reply.y,
-            values: reply.values,
-            messages: reply.diagnostics.map((d) => d.message),
-          });
-        },
-        (run) => {
-          window.requestAnimationFrame(run);
-        },
-        (error) => {
-          setFailure(failureText(t, error));
-        },
-      ),
-    [client, image.id, setFailure, t],
-  );
+  const latest = useMemo(() => {
+    // Each axis's values by fit: the app core sends them once per fit, then the key alone.
+    const tables: Record<Axis, AxisTable | null> = { x: null, y: null };
+    const resolve = (axis: Axis, table: AxisTable | null) => {
+      if (table === null) {
+        tables[axis] = null;
+      } else if (table.values !== null) {
+        tables[axis] = table;
+      } else if (tables[axis]?.fit !== table.fit) {
+        tables[axis] = null;
+      }
+      return tables[axis]?.values ?? null;
+    };
+    return new Latest<DialogState>(
+      async (asked) => {
+        const reply = await client.call({
+          command: "chart_calibration_check",
+          args: { id: image.id, calibration: toCalibration(asked), at: null },
+        });
+        setChecked({
+          state: asked,
+          x: reply.x,
+          y: reply.y,
+          values: {
+            x: resolve("x", reply.values.x),
+            y: resolve("y", reply.values.y),
+          },
+          messages: reply.diagnostics.map((d) => d.message),
+        });
+      },
+      (run) => {
+        window.requestAnimationFrame(run);
+      },
+      (error) => {
+        setFailure(failureText(t, error));
+      },
+    );
+  }, [client, image.id, setFailure, t]);
   useEffect(() => {
     latest.push(state);
   }, [latest, state]);
