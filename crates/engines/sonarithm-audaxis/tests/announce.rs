@@ -600,3 +600,55 @@ fn keyboard_7_queries_answer_about_the_cursors_series() {
     assert!(summary.speech.contains("Temperature"), "{}", summary.speech);
     assert_eq!(cursor, before, "a query never moves the cursor");
 }
+
+/// AGENTS rule 7 (#513 review): a query answer never drops the qualifier. With every
+/// point estimated from a chart image (confidence 0.6), each query kind says so, at both
+/// verbosities and in both renderings.
+#[test]
+fn a11y_02_query_answers_keep_the_qualifier() {
+    use sonarithm_audaxis::announce::Query;
+    let base = weather();
+    let series = base.series().next().unwrap();
+    let mut tree = base.clone();
+    for point in base.points(series) {
+        tree = with_provenance(
+            &tree,
+            point,
+            Provenance {
+                class: ProvenanceClass::CvEstimate,
+                confidence: Confidence::new(0.6),
+            },
+        );
+    }
+    let cursor = Cursor::at(&tree, tree.points(series)[2]).unwrap();
+    let localizer = english();
+    for verbosity in [Verbosity::Terse, Verbosity::Verbose] {
+        let settings = Settings {
+            verbosity,
+            ..Settings::default()
+        };
+        let mut composer = Composer::new(&localizer, settings);
+        for query in [
+            Query::Summary,
+            Query::Minimum,
+            Query::Maximum,
+            Query::Range,
+            Query::ValueAt(XTarget::Number(5.0)),
+        ] {
+            let a = composer.query(&tree, &cursor, &query).unwrap();
+            assert!(
+                a.speech.contains("estimated"),
+                "{query:?} {verbosity:?}: {}",
+                a.speech
+            );
+            assert!(
+                a.display.contains("estimated"),
+                "{query:?} {verbosity:?}: {}",
+                a.display
+            );
+            if verbosity == Verbosity::Verbose && query != Query::Summary && query != Query::Range {
+                assert!(a.speech.contains("confidence 0.60"), "{query:?}: {}", a.speech);
+            }
+        }
+    }
+}

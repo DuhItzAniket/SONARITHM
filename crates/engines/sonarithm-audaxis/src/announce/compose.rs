@@ -672,11 +672,17 @@ impl<'l> Composer<'l> {
             .map(|label| self.text(label))
             .transpose()?
             .unwrap_or_default();
+        let verbose = self.settings.verbosity == Verbosity::Verbose;
         let mut out = Vec::with_capacity(2);
         for units in [UnitStyle::Verbose, UnitStyle::Symbol] {
             let text = match (query, target) {
                 (Query::Range, _) => match self.range_answer(tree, series, &name, units)? {
-                    Some(text) => text,
+                    // A range over estimated points says how many are estimates, as the
+                    // series' own announcement does (03 §4, A11Y-02).
+                    Some(text) => match self.estimates(tree, series, verbose, true)? {
+                        Some(qualifier) => self.join(&[text, qualifier])?,
+                        None => text,
+                    },
                     None => return self.invalid_query(cursor, Invalid::NoValues),
                 },
                 (_, Some(point)) => {
@@ -698,13 +704,19 @@ impl<'l> Composer<'l> {
                         Query::Maximum => "announce-query-maximum",
                         _ => "announce-query-value-at",
                     };
-                    self.message(
+                    let answer = self.message(
                         id,
                         &Args::new()
                             .text("series", name.as_str())
                             .text("value", value)
                             .text("x", x),
-                    )?
+                    )?;
+                    // An estimate is never stated as exact (03 §4, A11Y-02): the point's
+                    // qualifier follows its value, as in a navigation announcement.
+                    match self.provenance(p.provenance, verbose)? {
+                        Some(qualifier) => self.join(&[answer, qualifier])?,
+                        None => answer,
+                    }
                 }
                 _ => return self.invalid_query(cursor, Invalid::NotHere),
             };
