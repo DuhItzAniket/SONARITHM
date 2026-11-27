@@ -103,7 +103,7 @@ export function checkLines(
     const count = anchorsOf(state, axis).length;
     if (fit !== null) {
       return t.format("ui-calibrate-axis-fits", {
-        axis: name,
+        axisLabel: name,
         count: { number: fit.anchors },
         value: t.format("unit-percent", {
           style: "symbol",
@@ -113,7 +113,7 @@ export function checkLines(
     }
     return count < 2
       ? t.format("ui-calibrate-axis-pending", {
-          axis: name,
+          axisLabel: name,
           count: { number: count },
         })
       : null;

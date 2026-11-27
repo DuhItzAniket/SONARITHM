@@ -286,11 +286,7 @@ function Calibrate({
   }, [checked, summary, announcer]);
 
   const current = (which: Axis): string | null => {
-    if (
-      checked === null ||
-      checked.at[0] !== at[0] ||
-      checked.at[1] !== at[1]
-    ) {
+    if (checked?.at[0] !== at[0] || checked.at[1] !== at[1]) {
       return null;
     }
     return valueText(t, checked.valueAt?.[which] ?? null);
@@ -407,7 +403,7 @@ function Calibrate({
           <Select
             key={which}
             label={t.format("ui-calibrate-scale-of", {
-              axis: t.format(
+              axisLabel: t.format(
                 which === "x" ? "ui-calibrate-axis-x" : "ui-calibrate-axis-y",
               ),
             })}

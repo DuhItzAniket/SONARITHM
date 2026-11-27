@@ -6,6 +6,7 @@ import type {
   CursorOrigin,
   CursorState,
   DatasetSummary,
+  DiagnosticInfo,
   EffectiveSetting,
   Event,
   MockHandlers,
@@ -361,7 +362,10 @@ const CHART_IMAGE = `data:image/svg+xml;utf8,${encodeURIComponent(
     "</svg>",
 )}`;
 
-type MockAnchor = { readonly at: readonly number[]; readonly value: unknown };
+interface MockAnchor {
+  readonly at: readonly number[];
+  readonly value: unknown;
+}
 
 /** A least-squares line through numeric anchors along `coordinate`, or a refusal. */
 function mockFit(
@@ -413,7 +417,7 @@ const handlers: MockHandlers = {
   },
   chart_calibration_check: (request) => {
     const { calibration, at } = request.args;
-    const diagnostics = [];
+    const diagnostics: DiagnosticInfo[] = [];
     const axes = [calibration.x, calibration.y].map((axis, index) => {
       const fitted = mockFit(axis.anchors, index === 0 ? 0 : 1);
       if (fitted !== null && "refused" in fitted) {
@@ -432,7 +436,8 @@ const handlers: MockHandlers = {
       axes[index] === null || axes[index] === undefined
         ? null
         : {
-            anchors: [calibration.x, calibration.y][index]?.anchors.length ?? 0,
+            anchors: (index === 0 ? calibration.x : calibration.y).anchors
+              .length,
             residual: 0,
             confidence: 1,
           };
@@ -443,7 +448,7 @@ const handlers: MockHandlers = {
         fitted === undefined ||
         !("fit" in fitted)
         ? null
-        : Math.round(fitted.fit(at[index] ?? 0) * 1000) / 1000;
+        : Math.round(fitted.fit(at[index]) * 1000) / 1000;
     };
     return {
       reply: "calibration_check" as const,

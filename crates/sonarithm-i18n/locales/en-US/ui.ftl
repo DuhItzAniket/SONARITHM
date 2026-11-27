@@ -282,8 +282,8 @@ ui-calibrate-pixel-x = Pixel x
 ui-calibrate-pixel-y = Pixel y
 ui-calibrate-axis-x = x axis
 ui-calibrate-axis-y = y axis
-# An axis's scale picker. $axis is ui-calibrate-axis-x or ui-calibrate-axis-y.
-ui-calibrate-scale-of = { $axis } scale
+# An axis's scale picker. $axisLabel is ui-calibrate-axis-x or ui-calibrate-axis-y.
+ui-calibrate-scale-of = { $axisLabel } scale
 ui-calibrate-axis = Axis of the new anchor
 ui-calibrate-scale-linear = Linear
 ui-calibrate-scale-log = Logarithmic
@@ -301,13 +301,13 @@ ui-calibrate-anchors-none = No anchors yet. Add at least two.
 ui-calibrate-anchor-added = { $label } added.
 ui-calibrate-anchor-deleted = { $label } deleted.
 ui-calibrate-checks = Checks
-# How each axis stands. $axis is ui-calibrate-axis-x or ui-calibrate-axis-y; $count is a
+# How each axis stands. $axisLabel is ui-calibrate-axis-x or ui-calibrate-axis-y; $count is a
 # number of anchors; $value is the fit's residual as a percentage of the axis.
 ui-calibrate-axis-pending =
     { $count ->
-        [one] { $axis }: { $count } anchor, at least 2 needed
-       *[other] { $axis }: { $count } anchors, at least 2 needed
+        [one] { $axisLabel }: { $count } anchor, at least 2 needed
+       *[other] { $axisLabel }: { $count } anchors, at least 2 needed
     }
-ui-calibrate-axis-fits = { $axis }: { $count } anchors fit within { $value }
+ui-calibrate-axis-fits = { $axisLabel }: { $count } anchors fit within { $value }
 ui-calibrate-apply = Read the chart
 ui-calibrate-not-ready = Add at least two anchors on each axis, then read the chart.

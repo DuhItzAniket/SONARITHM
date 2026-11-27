@@ -118,7 +118,7 @@ export const ClickToPlace: Story = {
     const canvas = within(canvasElement);
     const image = canvas.getByRole("img");
     const box = image.getBoundingClientRect();
-    fireEvent.click(image, {
+    await fireEvent.click(image, {
       clientX: box.left + box.width / 4,
       clientY: box.top + box.height / 2,
     });
