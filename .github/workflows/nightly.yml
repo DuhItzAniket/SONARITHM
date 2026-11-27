@@ -5,11 +5,11 @@
 # OSC, lines), the chart parsers (from C01) and the function expressions (from C03). The
 # targets are the `[[bin]]` entries of every `crates/**/fuzz/Cargo.toml`, so a new one is
 # fuzzed without editing this file.
-# Manual dispatch takes the seconds per target; use 3600 for an exit run. A pull request
-# runs a two-minute smoke fuzz of each target in a crate it changes (the `plan` job,
-# .github/scripts/ci_scope.py), and of every target when it changes this workflow, that
-# script, `sonarithm-core`, or any `Cargo.toml` or `Cargo.lock`. From A05: the 10-minute allocation soak on the null device; from B06: the
-# 10-minute stream soak (PB-11) (testing-strategy §9.3). Not a required check.
+# Manual dispatch takes the seconds per target; use 3600 for an exit run. The two-minute
+# smoke fuzz of a pull request's changed crates is the `fuzz` job of ci.yml, which gates.
+# From A05: the 10-minute allocation soak on the null device; from B06: the 10-minute
+# stream soak (PB-11) (testing-strategy §9.3). Not a required check, and it does not run
+# on pull requests.
 name: nightly
 
 on:
@@ -21,30 +21,16 @@ on:
         description: Seconds of fuzzing per target (at most 4800)
         required: false
         default: "1800"
-  pull_request:
-    paths:
-      - "crates/sonarithm-core/**"
-      - "crates/sonarithm-spec/**"
-      - "crates/sonarithm-data/**"
-      - "crates/sonarithm-stream/**"
-      - "crates/sonarithm-app/**"
-      - "crates/engines/sonarithm-plotsona/**"
-      - "crates/engines/sonarithm-curvasona/**"
-      - ".github/workflows/nightly.yml"
-      - ".github/scripts/ci_scope.py"
-      # A dependency change smoke-fuzzes every target (ci_scope.py FUZZ_EVERYTHING_NAMES).
-      - "**/Cargo.toml"
-      - "**/Cargo.lock"
 
 permissions: {}
 
 concurrency:
   group: nightly-${{ github.ref }}
-  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+  cancel-in-progress: false
 
 jobs:
-  # The fuzz targets to run: all of them off pull requests, and on a pull request those of
-  # the crates it changes (`git diff --name-only` of the merge commit against the base).
+  # The fuzz targets to run: all of them (ci_scope.py lists every target for any event but
+  # `pull_request`).
   plan:
     runs-on: ubuntu-latest
     permissions:
@@ -84,7 +70,7 @@ jobs:
       matrix:
         include: ${{ fromJSON(needs.plan.outputs.fuzz) }}
     env:
-      FUZZ_SECONDS: ${{ github.event_name == 'pull_request' && '120' || inputs.seconds || '1800' }}
+      FUZZ_SECONDS: ${{ inputs.seconds || '1800' }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -123,8 +109,7 @@ jobs:
 
   # No allocation on the audio thread over 10 minutes of the benchmark Score on the
   # timer-driven null device, in a debug build (A05-T10, coding-standards §11.5). The
-  # `no-alloc` job in ci.yml runs the same soak for 60 s on every PR; here a PR that edits
-  # this workflow runs 60 s too.
+  # `no-alloc` job in ci.yml runs the same soak for 60 s on every PR.
   alloc-soak:
     name: alloc-soak (${{ matrix.os }})
     strategy:
@@ -136,7 +121,7 @@ jobs:
       contents: read
     timeout-minutes: 45
     env:
-      SOAK_SECONDS: ${{ github.event_name == 'pull_request' && '60' || '600' }}
+      SOAK_SECONDS: "600"
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -154,8 +139,7 @@ jobs:
   # PB-11 (B06-T07, testing-strategy §9.3): a 1 kHz synthetic stream played live through
   # the app core for 10 minutes on the timer-driven null device. Memory stays bounded, no
   # rows are lost and playback keeps up with the data; underruns are reported, not gated
-  # (the xrun check runs on reference hardware before releases). A PR that edits this
-  # workflow or the app core runs 60 s, too short to judge memory.
+  # (the xrun check runs on reference hardware before releases).
   stream-soak:
     name: stream-soak (${{ matrix.os }})
     strategy:
@@ -167,7 +151,7 @@ jobs:
       contents: read
     timeout-minutes: 60
     env:
-      SOAK_SECONDS: ${{ github.event_name == 'pull_request' && '60' || '600' }}
+      SOAK_SECONDS: "600"
       SONARITHM_BACKEND: "null"
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
