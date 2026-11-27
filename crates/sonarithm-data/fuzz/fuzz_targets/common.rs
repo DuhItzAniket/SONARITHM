@@ -4,7 +4,9 @@
 //! Checks shared by the sonarithm-data fuzz targets.
 
 use sonarithm_data::source::write_ipc;
-use sonarithm_data::{Format, Limits, Loaded, ReadOptions, read_bytes, table_fingerprint};
+use sonarithm_data::{
+    DataError, Format, Limits, Loaded, ReadOptions, Table, read_bytes, table_fingerprint,
+};
 
 /// Lets the data layer contain panics of third-party decoders (arrow-ipc, parquet,
 /// calamine) as it does in production: libfuzzer-sys installs a hook that aborts on every
@@ -26,13 +28,23 @@ pub fn options() -> ReadOptions {
     ReadOptions::new().with_limits(limits)
 }
 
+/// A table's fingerprint, or `None` for a type RFC-0008 §3 does not encode (an interval:
+/// `SNR-DATA-007`, as designed). Any other error is a finding.
+fn fingerprint(table: &Table) -> Option<String> {
+    match table_fingerprint(table) {
+        Ok(digest) => Some(digest.to_string()),
+        Err(DataError::Unfingerprintable { .. }) => None,
+        Err(error) => panic!("a loaded table has a fingerprint: {error}"),
+    }
+}
+
 /// What every successful read must satisfy: the table survives an Arrow IPC round trip
-/// unchanged, and its fingerprint is stable.
+/// unchanged, and its fingerprint (or its refusal, for a type with no encoding) is stable.
 pub fn check(loaded: &Loaded) {
     let Some(table) = loaded.bundle.primary() else {
         return;
     };
-    let before = table_fingerprint(table).expect("a loaded table has a fingerprint");
+    let before = fingerprint(table);
     let bytes = write_ipc(table).expect("a loaded table can be written");
     let again = read_bytes(
         &bytes,
@@ -48,9 +60,5 @@ pub fn check(loaded: &Loaded) {
         table.to_batch().expect("batch"),
         "the data round-trips"
     );
-    assert_eq!(
-        table_fingerprint(reread).expect("fingerprint"),
-        before,
-        "the fingerprint is stable"
-    );
+    assert_eq!(fingerprint(reread), before, "the fingerprint is stable");
 }
