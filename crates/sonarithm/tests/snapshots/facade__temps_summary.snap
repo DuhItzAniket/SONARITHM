@@ -5,12 +5,12 @@ expression: summary
 {
   "spec": "temps.spec.json",
   "spec_version": "0.1",
-  "ir_version": 1,
+  "ir_version": 3,
   "mode": "analysis",
   "seed": 0,
   "duration_s": 0.916667,
   "spec_hash": "27445d2a080a766fc84459d73ad8014a2f7459e6da28395752fe5fbe80e74dba",
-  "data_fingerprint": "6c34912c4a7cb79971a839d227a73b7ba4619eac689cdbcd0026259585d83f54",
+  "data_fingerprint": "aa1cedcf1d561b54cb8efed1b9158dca6373eb0f5975d5b6b5552224adda7009",
   "score_hash": "[score hash]",
   "engines": {
     "numisona": "[version]",

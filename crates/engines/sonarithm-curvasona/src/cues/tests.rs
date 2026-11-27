@@ -327,11 +327,18 @@ fn a11y_14_cues_carry_nothing_in_pan() {
     );
 }
 
-/// RFC-0007 §4: a Score with the new earcons records IR version 2; one without keeps 1.
+/// RFC-0007 §4: a Score with the new earcons needs IR version 2; one without needs only 1.
+/// Since RFC-0008 every compiled header names fingerprint scheme 2, which needs 3, so the
+/// events' own requirement is checked with the header's scheme set back to 1.
 #[test]
 fn rfc_0007_scores_record_the_lowest_ir_version_that_reads_them() {
+    let events_need = |mut score: sonarithm_core::Score| {
+        assert_eq!(score.header.ir_version, 3, "RFC-0008 §6");
+        score.header.data_fingerprint_scheme = 1;
+        score.required_ir_version()
+    };
     let cued_score = compile(&cued("1/(x^2 - 4)", [-5.0, 5.0])).score;
-    assert_eq!(cued_score.header.ir_version, 2);
+    assert_eq!(events_need(cued_score), 2);
     let landmarks_only = compile(&cued("x^2 + 1", [-1.0, 1.0])).score;
-    assert_eq!(landmarks_only.header.ir_version, 1);
+    assert_eq!(events_need(landmarks_only), 1);
 }
