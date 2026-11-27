@@ -273,7 +273,7 @@ Gate B's date stays TODO(verify) until HP-09's lead time is known. The HP items 
 | Phase | Tasks | Lane R (no Gate U) | Agent estimate | Owner and human-paced items |
 |---|---|---|---|---|
 | C01 | 13 | T01–T12 | ≈ 3–4 session-days | Gate U (T13); HP-22; RFC-0004 accepted by the coordinator |
-| C02 | 11 | T01–T06, T08, T09 | ≈ 3 | Gate U (T10, T11); HP-18 (OD-23, T07); HP-22; RFC-0005 |
+| C02 | 11 | T01–T06, T08, T09 | ≈ 3 | Gate U (T10, T11); HP-22; RFC-0005. T07 deferred to D04 (OD-23, 2026-11-28) |
 | C03 | 9 | T01–T07 | ≈ 2 | Gate U (T08, T09); HP-19 (teacher pilot, C03 exit); HP-21 |
 | C04 | 10 | T01–T04, T06–T08 | ≈ 2 | HP-18 (OD-21, T05; OD-22); HP-20 (DAW check, C04 exit); Gate U (T09); HP-21 |
 | C05 | 12 | T01–T10 | ≈ 3 | Gate U (T11); HP-27 (P05, T12) |
@@ -296,7 +296,7 @@ Extract data **exactly** where possible: Office chart XML (`c:numCache`/`c:numLi
 
 Axis calibration (linear, log, date) with an accessible point-entry alternative; colour-mask curve extraction; bar and point detection; a correction UI; per-point `cv_estimate` provenance with confidence. Low-confidence regions are flagged in speech and text (and optionally in timbre, as an experiment). **Exit:** median relative error ≤ 2% on a raster corpus of clean line and bar charts. Every estimate is labelled in the description and the table.
 
-**Size.** Re-estimate 2026-10-26: ≈ 3 agent session-days. Owner gates: Gate U (T10, T11), HP-18 (OD-23, optional OCR), HP-22.
+**Size.** Re-estimate 2026-10-26: ≈ 3 agent session-days. Owner gates: Gate U (T10, T11), HP-22. Optional OCR (C02-T07) is deferred to D04 (OD-23, owner decision 2026-11-28).
 
 ### C03 · CURVASONA: functions and audification
 
@@ -333,7 +333,7 @@ Code signing (Windows Artifact Signing or alternative; Apple Developer ID + nota
 | **D01** | TONALENS | Interactive lens over scatter, heat map and table; linked selection across modalities (A11Y-11); multi-stream separation (SDR-26); PCA → partials quick-look (SDR-34); granular density (SDR-32). | H-04 (stream cap) experiment run; lens usable by keyboard and pointer. |
 | **D02** | RESONUM | Model-based sonification: data sonogram, crystallization, modal resonator banks; excitation via keyboard, pointer and gamepad (SDR-33). | Two MBS models published as reusable templates; pilot study on cluster detection. |
 | **D03** | Spatial and multichannel | Binaural rendering via SOFA HRTFs (sofar); 5.1/7.1 and ambisonic export; a front–back confusion warning (SDR-30). | Spatial renders pass golden tests; user-selectable HRTF. |
-| **D04** | ML extraction and AI assist | `sonarithm-plotsona-ml` (tract default, ort opt-in), a local VLM sidecar (llama.cpp, Apache/MIT-licensed models only), self-consistency confidence, uncertainty in sound (H-06), LLM-phrased L3 descriptions with numeric verification, NL Q&A via generated queries, **opt-in** cloud extraction per chart. | Extraction benchmark published; zero unverified numbers in generated descriptions (test). |
+| **D04** | ML extraction and AI assist | `sonarithm-plotsona-ml` (tract default, ort opt-in), a local VLM sidecar (llama.cpp, Apache/MIT-licensed models only), self-consistency confidence, OCR of raster tick labels (deferred from C02-T07, OD-23), uncertainty in sound (H-06), LLM-phrased L3 descriptions with numeric verification, NL Q&A via generated queries, **opt-in** cloud extraction per chart. | Extraction benchmark published; zero unverified numbers in generated descriptions (test). |
 | **D05** | Plugins and WebAssembly | WIT world for engine plugins (wasmtime, compile-time only, fuel and epoch limits); `sonarithm-wasm` with the WebAudio host; npm package; MAIDR/Erie interop demos. | A third-party sample plugin builds and runs; the web demo renders identical Score IR. |
 | **D06** | Research studies programme | Graph-concept polarity (P04), LLM vs empirical mappings (P06), accessible uncertainty (P08), pacing × range × context factorial (P03 extension). | Each study preregistered, run, and logged in the [findings log](../research-paper/findings-log.md). |
 

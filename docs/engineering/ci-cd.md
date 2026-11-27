@@ -25,7 +25,7 @@ This document plans the GitHub Actions workflows, the rules that harden them, th
 | `codeql.yml` | `pull_request`, push to `main`, weekly schedule | CodeQL static analysis for Rust, JavaScript/TypeScript and Python as each language appears; confirm CodeQL's Rust support level when enabling | A01 |
 | `label-sync.yml` | Push to `main` touching `.github/labels.yml` | Apply the [label taxonomy](../../.github/labels.yml) | A01 |
 | `.github/dependabot.yml` (configuration, not a workflow) | Weekly schedule | Version updates for cargo, npm, pip and github-actions, including SHA-pinned actions | A01 |
-| `nightly.yml` | Daily schedule, manual dispatch; pull requests touching a fuzzed crate, `sonarithm-core`, any `Cargo.toml` or `Cargo.lock`, the workflow or `.github/scripts/ci_scope.py` (a two-minute fuzz smoke run of the targets of each changed crate, or of every target when the PR changes `sonarithm-core`, a Cargo manifest or lockfile, the workflow or the script) | Fuzzing (spec from A03, data importers from A04), benchmarks and soak tests (allocation soak from A05; the PB-11 stream soak from B06), external link check, cargo-deny advisories on `main` | A03, growing |
+| `nightly.yml` | Daily schedule, manual dispatch. Not on pull requests: their two-minute smoke fuzz is the `fuzz` job of `ci.yml`, inside the required gate (since 2026-11-26, after #503 merged with a failing smoke fuzz) | Fuzzing every target for 30 minutes (spec from A03, data importers from A04), benchmarks and soak tests (allocation soak from A05; the PB-11 stream soak from B06), external link check, cargo-deny advisories on `main` | A03, growing |
 | `desktop-nightly.yml` | Daily schedule, manual dispatch; pull requests touching the workflow, `tauri.nightly.conf.json` or the network-deny harness (dry run) | Unsigned desktop bundles for testers (NSIS, DMG ad-hoc signed, AppImage) from `main`. On each OS it installs the bundle, launches it with `--smoke`, and runs `cargo xtask network-deny --app` on the installed app. The bundles are artifacts named `sonarithm-desktop-nightly-<commit>-<OS>`, with SLSA provenance off pull requests. Uses no signing secret or updater key. Kept apart from `nightly.yml`, so app-core pull requests do not build three release bundles | B01-T09 |
 | `cache-prune.yml` | Completed `ci`, `docs` or `nightly` run on `main`; manual dispatch | Keeps only the newest Actions cache of each job on `main` and deletes superseded copies, so the cache stays well under the 10 GB repository limit (on 2026-10-19 it reached 10.7 GB with 3–4 copies per job) | A05 |
 | `ci.yml` `gallery` job | Pull requests, push to `main` | Checks that `examples/data` regenerates from its seeded generators (`cargo xtask gallery --check`) and renders every gallery spec to FLAC with the CLI (artifact `gallery-renders`) | A07 |
@@ -58,6 +58,7 @@ This table lists CI jobs. The authoritative list of test types per phase is [tes
 | `frontend` | ubuntu, windows, macos | `pnpm install --frozen-lockfile`, lint, typecheck, Vitest browser-mode tests, Storybook axe checks and Playwright with Tauri IPC mocking (both from B02) | B01 |
 | `licenses-npm` | ubuntu | `pnpm -r licenses list --json` (and `--prod` for the shipped packages) checked by `.github/scripts/npm_licences.py` against the allowlist, with the development-only licences only for packages that do not ship ([supply chain](supply-chain-and-licensing.md#npm-licence-checking)). Runs whenever the frontend jobs do | 2026-11 (planned for B01) |
 | `reuse` | ubuntu | `reuse lint` ([supply chain](supply-chain-and-licensing.md#reuse-and-spdx-headers)); runs in `docs.yml` | A01 |
+| `fuzz` | ubuntu | Pull requests only: `cargo +nightly fuzz run <target>` for 120 s, one matrix entry per target of a changed crate (the `fuzz` output of `changes`), with a crash's input uploaded as `fuzz-artifacts-<target>`. See [Fuzzing on PRs](#change-scoped-jobs) | A03 (moved from `nightly.yml` 2026-11-26) |
 | `all-checks-pass` | ubuntu | Fails if any job above failed or was cancelled, or was skipped when its change scope said it should run (`ci_scope.py gate`) | A01 |
 
 Golden-audio and soak tests on GitHub-hosted runners have no audio device; they exercise the offline renderer and the timer-driven null device. Real-device soak tests (the A05 "0 xruns in a 10-min soak" criterion) run on reference hardware, started manually by a maintainer on a trusted ref. Self-hosted runners are never used for untrusted PR code.
@@ -79,9 +80,9 @@ The PR takes the widest class among its paths. `docs.yml` always runs all its jo
 
 A file that code reads at run time, not through `include_str!` or `include_bytes!`, is not found by the scan. Code that starts reading one under `docs/` or the frontend trees must add it to `ci_scope.py`.
 
-**Fuzzing on PRs.** `nightly / plan` lists the targets from every `crates/**/fuzz/Cargo.toml` and keeps those under a crate the PR changes, so a parser or importer change still gets its two-minute smoke run. A PR that changes `sonarithm-core` (its types flow into every parser), any `Cargo.toml` or `Cargo.lock` (a dependency bump is when a parser's behaviour changes under it), `nightly.yml` or `ci_scope.py` fuzzes every target. A change to another crate without targets is not fuzzed on the PR. Pushes to `main` run no fuzzing; the nightly run fuzzes every target for 30 minutes. The workflow's `paths` filter adds `**/Cargo.toml` and `**/Cargo.lock` for this, so its two soak jobs (6 jobs) now also run on dependency PRs.
+**Fuzzing on PRs.** The `changes` job lists the targets from every `crates/**/fuzz/Cargo.toml` and keeps those under a crate the PR changes (output `fuzz`), so a parser or importer change still gets its two-minute smoke run in `ci / fuzz`. A PR that changes `sonarithm-core` (its types flow into every parser), any `Cargo.toml` or `Cargo.lock` (a dependency bump is when a parser's behaviour changes under it), `ci.yml` or `ci_scope.py` fuzzes every target. A change to another crate without targets is not fuzzed on the PR. The output `fuzzing` is `true` only on a pull request with targets, so pushes to `main` and the merge queue skip the job by design; the nightly run fuzzes every target for 30 minutes. A failing or cancelled fuzz target fails `all-checks-pass` like any other job. Until 2026-11-26 the smoke fuzz ran in `nightly.yml`, outside the gate, and #503 merged while `fuzz (columnar_read)` was failing. Moving it also ended the 60-second soak runs that `nightly.yml` made on those PRs (6 jobs): the allocation soak duplicated `no-alloc`, and the stream soak at 60 s was too short to judge memory.
 
-**The gate.** `all-checks-pass` needs every job, runs even when they fail (`if: always()`) and runs `ci_scope.py gate` on `toJSON(needs)`. Each scoped job has `needs: changes` and an `if:` on one output, and the script's `SCOPED_JOBS` table records which. The tests in `.github/scripts/test_ci_scope.py` check that the workflow and the table agree, and run in `changes`, so a mismatch fails the gate.
+**The gate.** `all-checks-pass` needs every job, runs even when they fail (`if: always()`) and runs `ci_scope.py gate` on `toJSON(needs)`. Each scoped job has `needs: changes` and an `if:` on one output (`rust`, `code` or, for `fuzz`, `fuzzing`), and the script's `SCOPED_JOBS` table records which. The tests in `.github/scripts/test_ci_scope.py` check that the workflow and the table agree, and run in `changes`, so a mismatch fails the gate.
 
 | Job result | Change scope | Gate |
 |---|---|---|
@@ -92,19 +93,20 @@ A file that code reads at run time, not through `include_str!` or `include_bytes
 | `cancelled` | any | Fails |
 | `changes` itself not `success` | — | Fails |
 
-**Jobs per PR**, counted from the workflows. A matrix job counts once per entry, and a job skipped by `if:` takes no runner. Rows marked "with `wheels`" include the 10 jobs of `wheels.yml`, which runs on every PR under `crates/**`.
+**Jobs per PR**, counted from the workflows. A matrix job counts once per entry, and a job skipped by `if:` takes no runner. Rows marked "with `wheels`" include the 10 jobs of `wheels.yml`, which runs on every PR under `crates/**`. "Before" is before change scoping (#491); "after" is today, with the smoke fuzz in `ci` and no `nightly` jobs on PRs (2026-11-26).
 
 | PR changes | `ci` | `docs` | `codeql` + `dco` + `pr-title` | `nightly` | Total before | Total after |
 |---|---|---|---|---|---|---|
 | Docs only | 2 | 5 | 5 | 0 | 37 | 12 |
 | Frontend only | 8 | 5 | 5 | 0 | 37 | 18 |
 | Rust, no fuzzed crate (with `wheels`) | 29 | 5 | 5 | 0 | 47 | 49 |
-| Rust in `sonarithm-data` (with `wheels`) | 29 | 5 | 5 | 1 + 4 fuzz + 6 soak | 74 | 60 |
-| Rust in PLOTSONA (with `wheels`) | 29 | 5 | 5 | 1 + 9 fuzz + 6 soak | 74 | 65 |
-| Rust in `sonarithm-core` only (with `wheels`) | 29 | 5 | 5 | 1 + 21 fuzz + 6 soak | 74 | 77 |
-| `Cargo.lock` only (with `wheels`) | 29 | 5 | 5 | 1 + 21 fuzz + 6 soak | 47 | 77 |
-| Dependency bump, root `Cargo.toml` and `Cargo.lock` (with `wheels` and the `release-plz` dry run) | 29 | 5 | 5 | 1 + 21 fuzz + 6 soak | 48 | 78 |
-| `.github/**` only, not `nightly.yml` or `ci_scope.py` | 29 | 5 | 5 | 0 | 37 | 39 |
+| Rust in `sonarithm-data` (with `wheels`) | 29 + 4 fuzz | 5 | 5 | 0 | 74 | 53 |
+| Rust in PLOTSONA (with `wheels`) | 29 + 9 fuzz | 5 | 5 | 0 | 74 | 58 |
+| Rust in `sonarithm-core` only (with `wheels`) | 29 + 21 fuzz | 5 | 5 | 0 | 74 | 70 |
+| `Cargo.lock` only (with `wheels`) | 29 + 21 fuzz | 5 | 5 | 0 | 47 | 70 |
+| Dependency bump, root `Cargo.toml` and `Cargo.lock` (with `wheels` and the `release-plz` dry run) | 29 + 21 fuzz | 5 | 5 | 0 | 48 | 71 |
+| `ci.yml` or `ci_scope.py` | 29 + 21 fuzz | 5 | 5 | 0 | 37 | 60 |
+| Other `.github/**` only | 29 | 5 | 5 | 0 | 37 | 39 |
 
 ## Required status checks
 
