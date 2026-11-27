@@ -74,6 +74,13 @@ test("line and column count from one", () => {
   assert.deepEqual(lineColumn("ab\ncd", 4), { line: 2, column: 2 });
 });
 
+test("the column counts characters, not UTF-16 units", () => {
+  // The emoji is two UTF-16 units and one character; the "x" after it is column 3.
+  const text = '"\u{1F3B5}x"';
+  assert.equal(text.length, 5);
+  assert.deepEqual(lineColumn(text, 3), { line: 1, column: 3 });
+});
+
 const schema = JSON.parse(
   readFileSync(
     new URL(`../../../schemas/${SPEC_SCHEMA_FILE}`, import.meta.url),

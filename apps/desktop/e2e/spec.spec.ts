@@ -42,6 +42,8 @@ const sent = async (page: Page, command: string) =>
 
 const polite = (page: Page) =>
   page.locator('[data-announcer] [aria-live="polite"]');
+const assertive = (page: Page) =>
+  page.locator('[data-announcer] [aria-live="assertive"]');
 const editor = (page: Page) =>
   page.getByRole("textbox", { name: "Spec (JSON)" });
 const summary = (page: Page) => page.locator("#spec-summary");
@@ -245,6 +247,7 @@ test("a_change_outside_the_editor_shows_in_it_and_keeps_unapplied_edits", async 
       "The spec changed outside the editor. Your unapplied edits are kept.",
     ),
   ).toBeVisible();
+  const edited = await editor(page).textContent();
   const load = page.getByRole("button", { name: "Load the current spec" });
   await load.focus();
   await page.keyboard.press("Enter");
@@ -252,6 +255,77 @@ test("a_change_outside_the_editor_shows_in_it_and_keeps_unapplied_edits", async 
   expect(await editor(page).textContent()).toBe(
     (await specText(page))?.replaceAll("\n", ""),
   );
+  // The button is gone, so the focus moves to the editor rather than the page, and the
+  // load is one edit there: Undo brings the unapplied edits back (#505 review).
+  await expect(editor(page)).toBeFocused();
+  await expect(polite(page)).toHaveText(
+    "Loaded the current spec. Undo in the editor brings your edits back.",
+  );
+  await page.keyboard.press(`${await textPrimary(page)}+z`);
+  await expect(editor(page)).toHaveText(edited ?? "");
+});
+
+test("typing_while_apply_compiles_keeps_the_typing_and_checks_it", async ({
+  page,
+}) => {
+  const mod = await primary(page);
+  await openSpecTab(page);
+  await page.keyboard.press("Tab");
+  await expect(editor(page)).toBeFocused();
+  await page.evaluate(() => {
+    Reflect.set(window, "__SONARITHM_MOCK_COMPILE_MS__", 1500);
+  });
+  await page.keyboard.press(`${mod}+End`);
+  await page.keyboard.type("\n");
+  await page.keyboard.press(`${mod}+Enter`);
+  // The spec is set; the compile is still running. Text typed now is a new edit.
+  await expect.poll(() => sent(page, "spec_set")).toBe(1);
+  await page.keyboard.type("x");
+  await expect(polite(page)).toHaveText(
+    /^Spec applied, not compiled: 1 error\./,
+  );
+  // The check that counts is of the text in the editor (a syntax error now), not of the
+  // applied spec the compile reported.
+  await expect(summary(page)).toHaveText("1 error, 0 warnings, 0 notes.");
+  await page.keyboard.press("F8");
+  await expect(polite(page)).toHaveText(/SNR-SPEC-001/);
+  // The typing survived the reset of the text history: one text undo, then the spec's.
+  const textMod = await textPrimary(page);
+  await page.keyboard.press(`${textMod}+z`);
+  await expect(polite(page)).toHaveText("Undid a text edit.");
+  await page.keyboard.press(`${mod}+z`);
+  await expect(polite(page)).toHaveText("Undid spec change: Set spec");
+});
+
+test("a_check_that_fails_says_so_and_the_next_change_checks_again", async ({
+  page,
+}) => {
+  await openSpecTab(page);
+  await page.keyboard.press("Tab");
+  await expect(summary(page)).toHaveText("1 error, 0 warnings, 0 notes.");
+  await page.evaluate(() => {
+    Reflect.set(window, "__SONARITHM_MOCK_VALIDATE_FAILURES__", 1);
+  });
+  await page.keyboard.press(`${await textPrimary(page)}+End`);
+  await page.keyboard.type(" ");
+  await expect(summary(page)).toHaveText(
+    "Could not check the spec. It is checked again at your next change.",
+  );
+  await page.keyboard.type(" ");
+  await expect(summary(page)).toHaveText("1 error, 0 warnings, 0 notes.");
+});
+
+test("apply_with_no_change_adds_no_history_entry", async ({ page }) => {
+  const mod = await primary(page);
+  await openSpecTab(page);
+  await page.keyboard.press("Tab");
+  await page.keyboard.press(`${mod}+Enter`);
+  await expect(polite(page)).toHaveText(/^Spec applied/);
+  expect(await sent(page, "spec_set")).toBe(1);
+  // The spec was already this text: there is nothing to undo.
+  await page.getByRole("tab", { name: "Spec" }).focus();
+  await page.keyboard.press(`${mod}+z`);
+  await expect(polite(page)).toHaveText("Nothing to undo.");
 });
 
 test("b05_t03_preferences_turn_on_completion_while_typing_by_keyboard", async ({
@@ -384,4 +458,11 @@ test("a_part_that_fails_to_load_says_so_in_its_tab", async ({ page }) => {
   );
   // The rest of the app still works.
   await expect(page.getByRole("tab", { name: "Table" })).toBeVisible();
+  // A command that needs the editor says it is not there, rather than waiting for it.
+  await page.keyboard.press(`${await primary(page)}+Shift+P`);
+  await page.keyboard.type("Edit the spec");
+  await page.keyboard.press("Enter");
+  await expect(assertive(page)).toHaveText(
+    "The spec editor is not available: it could not load. Close SONARITHM and start it again to retry.",
+  );
 });

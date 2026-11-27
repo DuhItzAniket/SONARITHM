@@ -285,6 +285,9 @@ export function App({
               {client !== null ? (
                 <ChunkBoundary
                   fallback={chunkFailed(t.format("ui-spec-editor"))}
+                  onError={() => {
+                    spec?.bridge.markUnavailable();
+                  }}
                 >
                   <Suspense
                     fallback={

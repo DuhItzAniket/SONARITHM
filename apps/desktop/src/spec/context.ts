@@ -70,9 +70,24 @@ export class EditorBridge {
     }
   }
 
-  /** Runs `action` with the editor now, or once it mounts. */
-  withEditor(action: (handle: CodeEditorHandle) => void): void {
+  private failed = false;
+
+  /** Called when the editor's code could not load: nothing queued will ever run. */
+  markUnavailable(): void {
+    this.failed = true;
+    this.pending = [];
+  }
+
+  /**
+   * Runs `action` with the editor now, or once it mounts. If the editor could not load,
+   * `unavailable` runs instead, so a command says why it did nothing.
+   */
+  withEditor(
+    action: (handle: CodeEditorHandle) => void,
+    unavailable?: () => void,
+  ): void {
     if (this.handle !== null) action(this.handle);
+    else if (this.failed) unavailable?.();
     else this.pending.push(action);
   }
 }
@@ -95,6 +110,7 @@ const NO_SPEC: SpecSnapshot = {
   revision: 0,
   checked: null,
   checking: false,
+  failed: null,
 };
 const noop = () => () => undefined;
 

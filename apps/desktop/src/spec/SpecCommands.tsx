@@ -87,7 +87,9 @@ export function SpecCommands({
   ) => {
     if (context === null) return;
     showSpec();
-    context.bridge.withEditor(action);
+    context.bridge.withEditor(action, () => {
+      say(t.format("ui-spec-editor-unavailable"), true);
+    });
   };
   const goTo = (direction: "next" | "previous") => {
     withEditor((editor) => {
@@ -122,14 +124,16 @@ export function SpecCommands({
     withEditor((editor) => {
       const store = context?.store;
       if (store === undefined) return;
-      void store.apply(editor.text()).then((outcome) => {
-        if (outcome.kind !== "notApplied") {
+      void store
+        .apply(editor.text(), () => {
           // The applied text is now a spec change: Undo outside steps it back, and the
-          // editor's own undo starts again from here.
+          // editor's own undo starts again from here, as soon as the spec is set, so what
+          // is typed while the compile runs keeps its own undo.
           editor.resetHistory();
-        }
-        say(applySpeech(t, outcome), outcome.kind !== "applied");
-      });
+        })
+        .then((outcome) => {
+          say(applySpeech(t, outcome), outcome.kind !== "applied");
+        });
     });
   });
   useCommand("spec.nextDiagnostic", () => {

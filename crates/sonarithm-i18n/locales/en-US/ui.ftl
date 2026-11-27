@@ -323,6 +323,12 @@ ui-spec-no-completions = No completions here.
 # The spec changed outside the editor (the inspector, undo) while the editor has unapplied edits.
 ui-spec-changed-outside = The spec changed outside the editor. Your unapplied edits are kept.
 ui-spec-load-current = Load the current spec
+# Load the current spec replaces unapplied edits as one edit that undo brings back.
+ui-spec-loaded-current = Loaded the current spec. Undo in the editor brings your edits back.
+# A check whose request failed; the next change checks again.
+ui-spec-check-failed = Could not check the spec. It is checked again at your next change.
+# A command needs the spec editor, which could not load.
+ui-spec-editor-unavailable = The spec editor is not available: it could not load. Close SONARITHM and start it again to retry.
 # Preferences (B05-T03): whether completion opens while typing; off by default.
 ui-spec-editor-section = Spec editor
 ui-auto-complete = Show completions while typing

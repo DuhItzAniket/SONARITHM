@@ -17,6 +17,7 @@ import { useCommands } from "../commands/context.tsx";
 import { useLocalizer } from "../i18n.ts";
 import type { Schema } from "./completion.ts";
 import type { Coalescer } from "./coalesce.ts";
+import { needsCheck } from "./store.ts";
 import { coalesce } from "./coalesce.ts";
 import { completeAt } from "./completion.ts";
 import { useSpecContext, useSpecSnapshot } from "./context.ts";
@@ -141,6 +142,12 @@ export default function SpecEditor({
       if (timer.current !== null) clearTimeout(timer.current);
     };
   }, [draft, store]);
+  // Check again when the latest check is of another text and typing has paused: an Apply
+  // or an inspector patch checked the applied text while this draft moved on (B05-T03).
+  useEffect(() => {
+    if (store === null || timer.current !== null) return;
+    if (needsCheck(snapshot, draft)) void store.validate(draft);
+  }, [snapshot, draft, store]);
 
   // Diagnostics belong to the text they were found in; older ones are not shown.
   const checked = snapshot.checked?.text === draft ? snapshot.checked : null;
@@ -208,13 +215,15 @@ export default function SpecEditor({
 
   const counts = checked?.counts;
   const summary =
-    snapshot.checking || (counts === undefined && draft.trim() !== "")
-      ? t.format("ui-spec-checking")
-      : t.format("ui-spec-summary", {
-          errors: { number: counts?.errors ?? 0 },
-          warnings: { number: counts?.warnings ?? 0 },
-          notes: { number: counts?.info ?? 0 },
-        });
+    snapshot.failed === draft && draft.trim() !== ""
+      ? t.format("ui-spec-check-failed")
+      : snapshot.checking || (counts === undefined && draft.trim() !== "")
+        ? t.format("ui-spec-checking")
+        : t.format("ui-spec-summary", {
+            errors: { number: counts?.errors ?? 0 },
+            warnings: { number: counts?.warnings ?? 0 },
+            notes: { number: counts?.info ?? 0 },
+          });
   const applyKey = registry.bindings("spec.apply")[0];
   const nonce = styleNonce();
   const nonceProp = nonce === undefined ? {} : { nonce };
@@ -236,10 +245,19 @@ export default function SpecEditor({
           <p>{t.format("ui-spec-changed-outside")}</p>
           <Button
             onPress={() => {
+              // An ordinary edit, so Primary+Z in the editor brings the unapplied edits
+              // back; the focus moves into the editor before this notice goes away.
               const text = snapshot.text ?? "";
-              setDraft(text);
+              const editor = handle.current;
+              if (editor === null) return;
+              editor.replaceAll(text);
+              editor.focus();
               setBase(text);
               setOutsideChanges(0);
+              announcer.announce({
+                text: t.format("ui-spec-loaded-current"),
+                assertive: false,
+              });
             }}
           >
             {t.format("ui-spec-load-current")}

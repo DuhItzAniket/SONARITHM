@@ -1559,7 +1559,8 @@ impl From<&Diagnostic> for DiagnosticInfo {
 pub struct SpecState {
     /// The spec text, or `null` before one is set.
     pub text: Option<String>,
-    /// The undo token of the edit that produced it, when the request was an edit.
+    /// The undo token of the edit that produced it, when the request was an edit. `null` when
+    /// `spec_set` received the text the spec already had: nothing was recorded.
     pub undo_token: Option<u64>,
 }
 

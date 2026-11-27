@@ -30,6 +30,25 @@ export interface SpecSnapshot {
   readonly checked: Checked | null;
   /** Whether a newer text is being validated. */
   readonly checking: boolean;
+  /**
+   * The text whose check could not run (the transport failed), so views say so instead of
+   * "Checking"; the next change checks again.
+   */
+  readonly failed: string | null;
+}
+
+/**
+ * Whether the editor's `draft` needs checking now (B05-T03): it has text, nothing is being
+ * checked, the latest check is of another text (typing during an Apply, an inspector patch,
+ * a compile), and its own check has not just failed.
+ */
+export function needsCheck(snapshot: SpecSnapshot, draft: string): boolean {
+  return (
+    draft.trim() !== "" &&
+    !snapshot.checking &&
+    snapshot.checked?.text !== draft &&
+    snapshot.failed !== draft
+  );
 }
 
 /** What Apply did (B05-T03). */
@@ -50,6 +69,7 @@ const EMPTY: SpecSnapshot = {
   revision: 0,
   checked: null,
   checking: false,
+  failed: null,
 };
 
 function ipcError(error: unknown): IpcError {
@@ -100,15 +120,18 @@ export class SpecStore {
   /**
    * Apply: sets the spec to `text` (`spec_set`, one undoable edit), then compiles it. A text
    * that is not a spec is refused and nothing changes; a spec that does not compile is kept,
-   * and the compile's diagnostics are the latest.
+   * and the compile's diagnostics are the latest. `onSet` runs as soon as the spec is set,
+   * before the compile, so the editor's own undo history starts again from the applied text
+   * and keeps what is typed while the compile runs.
    */
-  async apply(text: string): Promise<ApplyOutcome> {
+  async apply(text: string, onSet?: () => void): Promise<ApplyOutcome> {
     try {
       const reply = await this.client.call({
         command: "spec_set",
         args: { text },
       });
       this.setText(reply.text);
+      onSet?.();
     } catch (error) {
       return { kind: "notApplied", error: ipcError(error) };
     }
@@ -179,7 +202,7 @@ export class SpecStore {
    */
   async validate(text: string): Promise<void> {
     const ticket = ++this.validation;
-    this.update({ checking: true });
+    this.update({ checking: true, failed: null });
     try {
       const reply = await this.client.call({
         command: "spec_validate",
@@ -196,7 +219,9 @@ export class SpecStore {
         });
       }
     } catch {
-      if (ticket === this.validation) this.update({ checking: false });
+      if (ticket === this.validation) {
+        this.update({ checking: false, failed: text });
+      }
     }
   }
 

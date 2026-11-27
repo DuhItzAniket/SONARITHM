@@ -69,13 +69,21 @@ export default function DiagnosticsPanel({
         const target = placed.find((d) => d.id === id);
         if (target === undefined || context === null) return;
         showSpec();
-        context.bridge.withEditor((editor) => {
-          editor.select(target.span?.from ?? 0);
-          announcer.announce({
-            text: diagnosticSpeech(t, target),
-            assertive: false,
-          });
-        });
+        context.bridge.withEditor(
+          (editor) => {
+            editor.select(target.span?.from ?? 0);
+            announcer.announce({
+              text: diagnosticSpeech(t, target),
+              assertive: false,
+            });
+          },
+          () => {
+            announcer.announce({
+              text: t.format("ui-spec-editor-unavailable"),
+              assertive: true,
+            });
+          },
+        );
       }}
     />
   );

@@ -356,7 +356,10 @@ impl App {
         run: impl FnOnce(&mut Self) -> Result<Reply, IpcError>,
     ) -> Result<Reply, IpcError> {
         let reply = run(self)?;
-        let changed = !matches!(&reply, Reply::History(state) if state.token.is_none());
+        // An undo with nothing to undo, or a spec set to the text it already had, changes
+        // nothing: no unsaved mark and no autosave.
+        let changed = !matches!(&reply, Reply::History(state) if state.token.is_none())
+            && !matches!(&reply, Reply::Spec(state) if state.undo_token.is_none());
         if changed {
             self.changed();
         }
@@ -662,6 +665,14 @@ impl App {
     fn spec_set(&mut self, text: String) -> Result<Reply, IpcError> {
         if let Err(err) = Spec::from_json_str(text.as_str()) {
             return Err(first_error(&err));
+        }
+        // The same text again changes nothing: no history entry, so Undo never steps over
+        // an edit that did nothing (B05-T03), and the session stays saved.
+        if self.spec.as_deref() == Some(text.as_str()) {
+            return Ok(Reply::Spec(SpecState {
+                text: Some(text),
+                undo_token: None,
+            }));
         }
         let before = self.spec.replace(text.clone());
         let token = self.history.record(

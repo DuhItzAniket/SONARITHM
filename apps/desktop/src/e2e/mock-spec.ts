@@ -15,7 +15,9 @@ import { IpcFailure } from "@sonarithm/ipc";
  * (JSON syntax, an unknown field). The app core's own tests cover the real validator.
  *
  * A test sets `window.__SONARITHM_MOCK_SPEC__ = "<text>"` before the page loads to start
- * with a spec.
+ * with a spec. At any time it may set `window.__SONARITHM_MOCK_COMPILE_MS__` to delay each
+ * compile, and `window.__SONARITHM_MOCK_VALIDATE_FAILURES__` to a count of `spec_validate`
+ * calls that fail as a broken transport would.
  */
 export interface MockSpec {
   readonly handlers: MockHandlers;
@@ -107,6 +109,12 @@ export function validate(text: string): DiagnosticInfo[] {
   return out;
 }
 
+/** A number a test set on `window`, or 0. */
+function knob(name: string): number {
+  const value: unknown = Reflect.get(window, name);
+  return typeof value === "number" ? value : 0;
+}
+
 interface Edit {
   readonly label: string;
   readonly before: string | null;
@@ -140,10 +148,23 @@ export function mockSpec(): MockSpec {
           pointer: null,
         });
       }
+      // As the app core: the same text again records nothing.
+      if (request.args.text === text) {
+        return { reply: "spec" as const, text, undoToken: null };
+      }
       const undoToken = record("Set spec", request.args.text);
       return { reply: "spec" as const, text, undoToken };
     },
     spec_validate: (request) => {
+      const failures = knob("__SONARITHM_MOCK_VALIDATE_FAILURES__");
+      if (failures > 0) {
+        Reflect.set(
+          window,
+          "__SONARITHM_MOCK_VALIDATE_FAILURES__",
+          failures - 1,
+        );
+        throw new Error("The mock transport is down.");
+      }
       const diagnostics = validate(request.args.text);
       return {
         reply: "validation" as const,
@@ -178,7 +199,11 @@ export function mockSpec(): MockSpec {
         counts: counts(diagnostics),
       };
     },
-    compile: (): CompileReport & { reply: "compile" } => {
+    compile: async (): Promise<CompileReport & { reply: "compile" }> => {
+      const delay = knob("__SONARITHM_MOCK_COMPILE_MS__");
+      if (delay > 0) {
+        await new Promise((resolve) => setTimeout(resolve, delay));
+      }
       const diagnostics = text === null ? [] : validate(text);
       const ok =
         text !== null && !diagnostics.some((d) => d.severity === "error");

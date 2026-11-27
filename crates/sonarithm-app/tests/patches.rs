@@ -102,6 +102,24 @@ fn a_patch_that_does_not_apply_changes_nothing() {
 }
 
 #[test]
+fn setting_the_same_spec_text_records_no_history() {
+    let dir = TempDir::new("same");
+    let mut app = app(&dir);
+    let again = send(
+        &mut app,
+        &json!({ "command": "spec_set", "args": { "text": SPEC } }),
+    )
+    .unwrap();
+    assert_eq!(again["text"], SPEC);
+    assert_eq!(again["undoToken"], Value::Null);
+    // The only entry is the first spec_set; undoing it leaves nothing to undo.
+    let undone = send(&mut app, &json!({ "command": "history_undo" })).unwrap();
+    assert_eq!(undone["label"], "Set spec");
+    let nothing = send(&mut app, &json!({ "command": "history_undo" })).unwrap();
+    assert_eq!(nothing["token"], Value::Null);
+}
+
+#[test]
 fn every_patch_reports_the_validation_of_its_result() {
     let dir = TempDir::new("validate");
     let mut app = app(&dir);

@@ -11,7 +11,7 @@ import { IpcFailure, connect, createMockTransport } from "@sonarithm/ipc";
 import { coalesce } from "../src/spec/coalesce.ts";
 import { formatJson } from "../src/spec/format.ts";
 import { stepDiagnostic } from "../src/spec/speech.ts";
-import { SpecStore } from "../src/spec/store.ts";
+import { SpecStore, needsCheck } from "../src/spec/store.ts";
 
 test("f8 reaches every diagnostic at one offset, then follows the caret once it moves", () => {
   // Two at the whole spec (offset 0), two at one pointer (offset 40), one later.
@@ -162,4 +162,95 @@ test("outside changes are each said, and a burst is said once more", () => {
   } finally {
     mock.timers.reset();
   }
+});
+
+const CHECK = {
+  reply: "validation" as const,
+  diagnostics: [],
+  counts: COUNTS,
+};
+
+test("a patch while edits are unapplied leaves the draft to be checked again", async () => {
+  const draft = '{"specVersion":"0.4","tracks":[],"name":"draft"}';
+  const client = await connect(
+    createMockTransport({
+      spec_validate: () => CHECK,
+      spec_apply: () => ({
+        reply: "spec_patch" as const,
+        undoToken: 2,
+        text: SPEC,
+        diagnostics: [],
+        counts: COUNTS,
+      }),
+    }),
+  );
+  const store = new SpecStore(client);
+  await store.validate(draft);
+  assert.equal(needsCheck(store.snapshot(), draft), false);
+  // The inspector's patch replaces the check with one of the patched spec …
+  await store.patch([{ op: "replace", path: "/name", value: "T" }], null);
+  assert.equal(store.snapshot().checked?.text, SPEC);
+  // … so the editor's draft needs a check of its own.
+  assert.equal(needsCheck(store.snapshot(), draft), true);
+  await store.validate(draft);
+  assert.equal(needsCheck(store.snapshot(), draft), false);
+});
+
+test("a check that fails is said, and the next change checks again", async () => {
+  let down = true;
+  const client = await connect(
+    createMockTransport({
+      spec_validate: () => {
+        if (down) throw new Error("The transport is down.");
+        return CHECK;
+      },
+    }),
+  );
+  const store = new SpecStore(client);
+  await store.validate(SPEC);
+  assert.equal(store.snapshot().checking, false);
+  assert.equal(store.snapshot().failed, SPEC);
+  // Not again for the same text: that would loop while the host is down.
+  assert.equal(needsCheck(store.snapshot(), SPEC), false);
+  const changed = `${SPEC} `;
+  assert.equal(needsCheck(store.snapshot(), changed), true);
+  down = false;
+  await store.validate(changed);
+  assert.equal(store.snapshot().failed, null);
+  assert.equal(store.snapshot().checked?.text, changed);
+});
+
+test("apply resets the text history as soon as the spec is set, before the compile", async () => {
+  let release = (): void => undefined;
+  const compiled = new Promise<void>((resolve) => {
+    release = resolve;
+  });
+  const order: string[] = [];
+  const client = await connect(
+    createMockTransport({
+      spec_set: (request) => ({
+        reply: "spec" as const,
+        text: request.args.text,
+        undoToken: 1,
+      }),
+      compile: async () => {
+        await compiled;
+        order.push("compiled");
+        return {
+          reply: "compile" as const,
+          ok: true,
+          diagnostics: [],
+          counts: COUNTS,
+          score: null,
+        };
+      },
+    }),
+  );
+  const store = new SpecStore(client);
+  const outcome = store.apply(SPEC, () => order.push("reset"));
+  await new Promise((resolve) => setTimeout(resolve, 0));
+  assert.deepEqual(order, ["reset"]);
+  release();
+  assert.equal((await outcome).kind, "applied");
+  assert.deepEqual(order, ["reset", "compiled"]);
 });

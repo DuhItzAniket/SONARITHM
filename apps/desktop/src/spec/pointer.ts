@@ -165,7 +165,11 @@ export function firstSyntaxError(spec: ParsedSpec): Span | null {
   return found;
 }
 
-/** The line and column of `offset` in `text`. */
+/**
+ * The line and column of `offset` (a UTF-16 offset, as CodeMirror and the parser give) in
+ * `text`. The column counts characters as people see them, by code point, so an emoji
+ * before the place counts once, not twice.
+ */
 export function lineColumn(text: string, offset: number): LineColumn {
   let line = 1;
   let start = 0;
@@ -176,7 +180,7 @@ export function lineColumn(text: string, offset: number): LineColumn {
       start = i + 1;
     }
   }
-  return { line, column: end - start + 1 };
+  return { line, column: Array.from(text.slice(start, end)).length + 1 };
 }
 
 /** The path from the root to `node` (a value, or a property's key), as pointer segments. */
