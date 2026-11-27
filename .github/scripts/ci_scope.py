@@ -13,7 +13,9 @@ Two commands, standard library only (Python 3.11 or later, for tomllib):
     - ``rust``: ``true`` when the Rust jobs run;
     - ``code``: ``true`` when the frontend and desktop jobs run (everything but docs-only);
     - ``codegen``: ``true`` when ``docs / schema-diff`` regenerates the generated files;
-    - ``fuzz``: the JSON matrix of fuzz targets to run, ``[]`` for none.
+    - ``fuzz``: the JSON matrix of fuzz targets to run, ``[]`` for none;
+    - ``fuzzing``: ``true`` when ``ci / fuzz`` runs: a pull request with targets to fuzz.
+      Other events list every target in ``fuzz`` for ``nightly.yml``, and skip that job.
 
     Every event other than ``pull_request`` (pushes to ``main``, the merge queue, schedules,
     manual runs) runs everything, and so does a pull request with no changed paths.
@@ -63,10 +65,11 @@ DOCS_FILES = ("REUSE.toml", "lychee.toml", ".markdownlint-cli2.jsonc")
 #: a change to one runs it even in a docs-only pull request. The others count as everything.
 CODEGEN_OUTPUTS = ("docs/reference/error-codes.md",)
 
-#: Changes that smoke-fuzz every target on a pull request: the fuzz workflow and this
-#: script; any `Cargo.toml` or `Cargo.lock`, because a dependency bump is when a parser's
-#: behaviour changes under it; and `sonarithm-core`, whose types flow into every parser.
-FUZZ_EVERYTHING = (".github/workflows/nightly.yml", ".github/scripts/ci_scope.py")
+#: Changes that smoke-fuzz every target on a pull request: the workflow that holds the
+#: smoke fuzz (ci.yml's `fuzz` job) and this script; any `Cargo.toml` or `Cargo.lock`,
+#: because a dependency bump is when a parser's behaviour changes under it; and
+#: `sonarithm-core`, whose types flow into every parser.
+FUZZ_EVERYTHING = (".github/workflows/ci.yml", ".github/scripts/ci_scope.py")
 FUZZ_EVERYTHING_NAMES = ("Cargo.toml", "Cargo.lock")
 FUZZ_EVERYTHING_PREFIXES = ("crates/sonarithm-core/",)
 
@@ -90,6 +93,7 @@ SCOPED_JOBS = {
     "licenses-npm": "code",
     "frontend-browser": "code",
     "desktop": "code",
+    "fuzz": "fuzzing",
 }
 
 _INCLUDE = re.compile(r'include_(?:str|bytes)!\(\s*"([^"]+)"\s*\)')
@@ -185,6 +189,7 @@ def scope(event: str, paths: list[str], included: set[str], targets: list[dict[s
         "code": kind != "docs",
         "codegen": rust or any(p in CODEGEN_OUTPUTS for p in paths),
         "fuzz": fuzz,
+        "fuzzing": event == "pull_request" and bool(fuzz),
     }
 
 
@@ -238,7 +243,7 @@ def main(argv: list[str]) -> int:
                     f"### Change scope: {result['kind']}\n\n"
                     f"{len(paths)} changed path(s); Rust jobs: {result['rust']}, frontend and "
                     f"desktop jobs: {result['code']}, schema-diff: {result['codegen']}, "
-                    f"fuzz targets: {len(result['fuzz'])}.\n"
+                    f"fuzz targets: {len(result['fuzz'])} (smoke fuzz: {result['fuzzing']}).\n"
                 )
         return 0
 

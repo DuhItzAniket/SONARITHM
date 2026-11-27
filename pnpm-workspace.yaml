@@ -59,8 +59,16 @@ catalog:
   # anti-patterns (coding-standards §12.6; B02-T01).
   stylelint: ^17.16.0
   # TypeScript stays on 6.0.x while typescript-eslint supports only TypeScript < 6.1.
+  # typescript-eslint 8.73 takes minimatch ^11.0.1 (Dependabot alert 5, GHSA-g3hv-75wg-m249).
   typescript: ~6.0.3
-  typescript-eslint: ^8.72.2
+  typescript-eslint: ^8.73.0
+
+# Security overrides for transitive packages, each with its advisory; drop one once its parent
+# moves on. Storybook 10.6 still asks for @joshwooding/vite-plugin-react-docgen-typescript ^0.7,
+# which asks for glob ^13 (GHSA-3g3m-2fjr-6pw4, Dependabot alert 4); the plugin only calls
+# globSync with options glob 14 keeps (absolute, cwd, ignore, nodir). Development only.
+overrides:
+  "@joshwooding/vite-plugin-react-docgen-typescript>glob": ^14.0.2
 
 # Dependency install scripts, reviewed one by one (pnpm 12 fails the install on an unreviewed
 # one, F-133). esbuild (Storybook) gets its binary from an optional per-platform package;
