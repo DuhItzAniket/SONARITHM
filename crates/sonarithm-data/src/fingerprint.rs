@@ -375,12 +375,10 @@ fn encode_column<S: Sink>(parts: &[ArrayRef], out: &mut S) {
                     out.skip((keys.len() + 8 * valid) as u64);
                     continue;
                 }
-                let nulls = keys.nulls();
-                for (row, key) in dictionary.normalized_keys().into_iter().enumerate() {
-                    let valid = nulls.is_none_or(|nulls| nulls.is_valid(row));
-                    out.tag(valid);
-                    if valid {
-                        out.put(&(key as u64).to_le_bytes());
+                for key in keys_of(keys) {
+                    out.tag(key.is_some());
+                    if let Some(key) = key {
+                        out.put(&key.to_le_bytes());
                     }
                 }
             }
@@ -389,6 +387,71 @@ fn encode_column<S: Sink>(parts: &[ArrayRef], out: &mut S) {
     }
     for part in parts {
         encode_rows(part.as_ref(), out);
+    }
+}
+
+/// A dictionary's keys as indices, `None` for a null key, read with one type dispatch.
+/// `AnyDictionaryArray::normalized_keys` is not used: it panics on an empty dictionary,
+/// which a valid column whose keys are all null, or which has no rows, may have (found by the
+/// `columnar_read` fuzz target).
+fn keys_of(keys: &dyn Array) -> Vec<Option<u64>> {
+    // A valid key is always `Some`, so the row widths match the counting pass. Arrow's
+    // validation keeps keys in range; a negative one (invalid Arrow) reads as `u64::MAX`.
+    macro_rules! signed {
+        ($t:ty) => {
+            keys.as_primitive::<$t>()
+                .iter()
+                .map(|key| key.map(|key| u64::try_from(key).unwrap_or(u64::MAX)))
+                .collect()
+        };
+    }
+    macro_rules! unsigned {
+        ($t:ty) => {
+            keys.as_primitive::<$t>()
+                .iter()
+                .map(|key| key.map(u64::from))
+                .collect()
+        };
+    }
+    match keys.data_type() {
+        DataType::Int8 => signed!(Int8Type),
+        DataType::Int16 => signed!(Int16Type),
+        DataType::Int32 => signed!(Int32Type),
+        DataType::Int64 => signed!(Int64Type),
+        DataType::UInt8 => unsigned!(UInt8Type),
+        DataType::UInt16 => unsigned!(UInt16Type),
+        DataType::UInt32 => unsigned!(UInt32Type),
+        DataType::UInt64 => unsigned!(UInt64Type),
+        // Arrow allows only integer keys.
+        _ => vec![None; keys.len()],
+    }
+}
+
+/// The key of `row` in a dictionary's keys, as an index, or `None` for a null key.
+fn key_at(keys: &dyn Array, row: usize) -> Option<u64> {
+    if row >= keys.len() || keys.is_null(row) {
+        return None;
+    }
+    macro_rules! signed {
+        ($t:ty) => {
+            u64::try_from(keys.as_primitive::<$t>().value(row)).ok()
+        };
+    }
+    macro_rules! unsigned {
+        ($t:ty) => {
+            Some(u64::from(keys.as_primitive::<$t>().value(row)))
+        };
+    }
+    match keys.data_type() {
+        DataType::Int8 => signed!(Int8Type),
+        DataType::Int16 => signed!(Int16Type),
+        DataType::Int32 => signed!(Int32Type),
+        DataType::Int64 => signed!(Int64Type),
+        DataType::UInt8 => unsigned!(UInt8Type),
+        DataType::UInt16 => unsigned!(UInt16Type),
+        DataType::UInt32 => unsigned!(UInt32Type),
+        DataType::UInt64 => unsigned!(UInt64Type),
+        _ => None,
     }
 }
 
@@ -474,13 +537,19 @@ fn encode_row<S: Sink>(array: &dyn Array, row: usize, out: &mut S) {
             }
         }
         // Inside a nested value a dictionary is resolved: its key selects a value row.
-        DataType::Dictionary(..) => match array.as_any_dictionary_opt() {
-            Some(dictionary) if dictionary.keys().is_valid(row) => {
-                let key = dictionary.normalized_keys()[row];
-                encode_row(dictionary.values().as_ref(), key, out);
+        DataType::Dictionary(..) => {
+            let found = array.as_any_dictionary_opt().and_then(|dictionary| {
+                let values = dictionary.values();
+                key_at(dictionary.keys(), row)
+                    .and_then(|key| usize::try_from(key).ok())
+                    .filter(|&key| key < values.len())
+                    .map(|key| (values, key))
+            });
+            match found {
+                Some((values, key)) => encode_row(values.as_ref(), key, out),
+                None => out.tag(false),
             }
-            _ => out.tag(false),
-        },
+        }
         // A union slot is always present: the type ID, then the selected child's row.
         DataType::Union(_, mode) => {
             let union = array.as_union();
