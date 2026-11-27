@@ -613,7 +613,11 @@ fn a11y_20_speech_waits_for_the_cue_through_the_output_latency() {
     std::thread::sleep(Duration::from_millis(800));
     let before = announcements(&h);
     let start = Instant::now();
-    assert_eq!(h.step("into")["cue"], true, "a move onto a point plays its cue");
+    assert_eq!(
+        h.step("into")["cue"],
+        true,
+        "a move onto a point plays its cue"
+    );
     while announcements(&h) == before {
         assert!(start.elapsed() < Duration::from_secs(5), "no announcement");
         std::thread::sleep(Duration::from_millis(5));
@@ -634,7 +638,7 @@ fn b03_t09_cue_is_false_when_playback_drops_it() {
     h.compile(&["temp"]);
     h.step("into");
     h.step("into");
-    h.ok(&json!({ "command": "transport_set_loop", "args": { "range": { "startS": 0.0, "endS": 1.0 } } }));
+    h.ok(&json!({ "command": "transport_set_loop", "args": { "range": { "startS": 0.0, "endS": 0.5 } } }));
     h.ok(&json!({ "command": "transport_play" }));
     assert_eq!(h.step("next")["cue"], false);
 }

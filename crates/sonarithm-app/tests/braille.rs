@@ -196,5 +196,8 @@ fn a11y_21_the_line_follows_braille_off_and_the_mode_at_once() {
     })
     .unwrap();
     let sparkline = h.last_cursor().braille.unwrap();
-    assert_ne!(sparkline.text, review.text, "the mode changed the line at once");
+    assert_ne!(
+        sparkline.text, review.text,
+        "the mode changed the line at once"
+    );
 }

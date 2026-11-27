@@ -649,8 +649,10 @@ pub fn effective(layers: &Layers<'_>) -> Interaction {
     // sends `SNR-APP-092` as a settings notice.
     // A binding with a reserved chord is dropped from every layer (keyboard §13 rule 6), so
     // a hand-edited settings or profile file cannot trap Tab or F6 either; the checks on
-    // the way in (`settings_set`, `profile::validate`) refuse them with `SNR-APP-091`.
-    let allowed = |command: &str, keys: &str| crate::keymap::reserved_chord(command, keys).is_none();
+    // the way in (`settings_set`, and `check_keys` on save and import) refuse them with
+    // `SNR-APP-091`.
+    let allowed =
+        |command: &str, keys: &str| crate::keymap::reserved_chord(command, keys).is_none();
     let mut keymap: BTreeMap<String, (String, Layer)> = layers
         .settings
         .keymap

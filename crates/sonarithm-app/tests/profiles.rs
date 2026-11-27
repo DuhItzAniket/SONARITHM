@@ -460,7 +460,10 @@ fn adr_0020_a_score_re_renders_from_its_manifest_without_the_profile() {
 #[test]
 fn keyboard_13_rule_6_a_profile_cannot_bind_a_reserved_key() {
     let mut h = Harness::new("reserved");
-    let trap = profile(&json!({}), &json!({ "keymap": { "app.preferences": "Tab" } }));
+    let trap = profile(
+        &json!({}),
+        &json!({ "keymap": { "app.preferences": "Tab" } }),
+    );
     let saved = h.send(&json!({ "command": "profile_save", "args": { "profile": trap } }));
     assert_eq!(saved.unwrap_err().code, "SNR-APP-091");
     let file = h.dir.path().join("trap.json");
@@ -468,8 +471,8 @@ fn keyboard_13_rule_6_a_profile_cannot_bind_a_reserved_key() {
     let imported = h.send(&json!({ "command": "profile_import", "args": { "path": file } }));
     assert_eq!(imported.unwrap_err().code, "SNR-APP-091");
     // Other keys are the listener's to set in a profile they activate (ADR-0020).
-    let fine = profile(&json!({}), &json!({ "keymap": { "nav.next": "L" } }));
-    h.ok(&json!({ "command": "profile_save", "args": { "profile": fine } }));
+    let other_keys = profile(&json!({}), &json!({ "keymap": { "nav.next": "L" } }));
+    h.ok(&json!({ "command": "profile_save", "args": { "profile": other_keys } }));
 }
 
 /// Keyboard §13 rule 6: a profile file edited by hand to bind Tab is still read, but the
@@ -490,7 +493,10 @@ fn keyboard_13_rule_6_a_hand_edited_profile_never_binds_tab() {
         .join(format!("{id}.json"));
     assert!(path.is_file(), "{}", path.display());
     std::fs::write(&path, serde_json::to_vec_pretty(&edited).unwrap()).unwrap();
-    assert_eq!(h.effective("interaction.keymap.app.preferences").1, "default");
+    assert_eq!(
+        h.effective("interaction.keymap.app.preferences").1,
+        "default"
+    );
     assert_eq!(
         h.effective("interaction.keymap.nav.next"),
         (json!("L"), "profile".to_owned())

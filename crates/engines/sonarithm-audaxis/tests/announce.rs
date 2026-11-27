@@ -647,7 +647,11 @@ fn a11y_02_query_answers_keep_the_qualifier() {
                 a.display
             );
             if verbosity == Verbosity::Verbose && query != Query::Summary && query != Query::Range {
-                assert!(a.speech.contains("confidence 0.60"), "{query:?}: {}", a.speech);
+                assert!(
+                    a.speech.contains("confidence 0.60"),
+                    "{query:?}: {}",
+                    a.speech
+                );
             }
         }
     }
