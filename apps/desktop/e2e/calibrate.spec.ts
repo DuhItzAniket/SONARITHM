@@ -15,6 +15,26 @@ async function primary(page: Page): Promise<"Meta" | "Control"> {
   return mac ? "Meta" : "Control";
 }
 
+/**
+ * The axe check of the calibration dialog. Playwright 1.65's Firefox (build 1572) crashes the
+ * page when axe reads `ariaLabelledByElements` after a named lookup has read it in
+ * Playwright's own world (microsoft/playwright#43967, Mozilla bug 2090055; F-226): here the
+ * next lookup after the scan crashed. Firefox skips only this scan, with a fixme note in the
+ * report; every other step still runs in Firefox, and Chromium and WebKit run the scan, as
+ * `audio.spec.ts` does. Remove the skip with #487.
+ */
+async function expectNoSeriousViolations(page: Page, browserName: string) {
+  if (browserName === "firefox") {
+    test.info().annotations.push({
+      type: "fixme",
+      description:
+        "axe scan skipped in Firefox (F-226): microsoft/playwright#43967 (Mozilla bug 2090055); remove with #487",
+    });
+    return;
+  }
+  expect(await seriousViolations(page)).toEqual([]);
+}
+
 const polite = (page: Page) =>
   page.locator('[data-announcer] [aria-live="polite"]');
 
@@ -103,6 +123,7 @@ test.beforeEach(async ({ page }) => {
 
 test("c02_t10_a_chart_image_is_calibrated_and_read_by_keyboard_alone", async ({
   page,
+  browserName,
 }) => {
   await openImage(page);
   const dialog = page.getByRole("dialog", { name: "Calibrate rain.png" });
@@ -111,7 +132,7 @@ test("c02_t10_a_chart_image_is_calibrated_and_read_by_keyboard_alone", async ({
       name: "rain.png, a chart image of 200 by 120 pixels",
     }),
   ).toBeVisible();
-  expect(await seriousViolations(page)).toEqual([]);
+  await expectNoSeriousViolations(page, browserName);
 
   // The crosshair's sliders: arrows step a pixel, and each says where it is.
   const x = dialog.getByRole("slider", { name: "Crosshair x (pixels)" });
