@@ -34,7 +34,12 @@ use crate::template;
 /// What the compiler needs from its data type beyond what engines use.
 pub trait CompilerData {
     /// SHA-256 fingerprint of the data (03 §2), recorded in the Score header.
-    fn fingerprint(&self) -> Sha256Digest;
+    ///
+    /// # Errors
+    ///
+    /// A diagnostic when the data has no fingerprint; the compile stops with it rather than
+    /// record a Score whose data cannot be identified (rule 7, ADR-0013; #511).
+    fn fingerprint(&self) -> Result<Sha256Digest, Box<Diagnostic>>;
 
     /// The scheme that computes [`fingerprint`](Self::fingerprint) (RFC-0008 §6), recorded
     /// beside it. The default, 1, leaves the header as it was before RFC-0008.
@@ -254,7 +259,7 @@ impl<D: CompilerData> Run<'_, D> {
             spec.seed.unwrap_or(0),
         );
         header.spec_hash = spec_hash;
-        header.data_fingerprint = data.fingerprint();
+        header.data_fingerprint = data.fingerprint().map_err(Stop::Error)?;
         header.data_fingerprint_scheme = data.fingerprint_scheme();
         let mut score = Score::new(header);
         self.encode(spec, &data, &annotations, &mut score)?;

@@ -16,6 +16,9 @@ sonarithm-data.workspace = true
 sonarithm-spec.workspace = true
 
 [dev-dependencies]
+# A bundle built by hand with a column the data layer would not load (#511).
+arrow-array.workspace = true
+arrow-schema.workspace = true
 insta.workspace = true
 proptest.workspace = true
 # Core's Score strategies (testing-strategy §3); allowed by check-deps since #121.

@@ -189,6 +189,12 @@ impl Sink for Hashing {
     }
 }
 
+/// Whether the fingerprint encodes `data_type` (RFC-0008 §3). The data layer loads only
+/// columns it does (#511), so every loaded table has a fingerprint.
+pub(crate) fn encodes(data_type: &DataType) -> bool {
+    logical_type(data_type).is_some()
+}
+
 /// The logical type of RFC-0008 §3, or `None` for a type with no encoding. Layouts that
 /// hold the same values share one name: the string, binary and list layouts, key widths of
 /// dictionaries, sparse and dense unions, and run-end encoding (the values' type).
