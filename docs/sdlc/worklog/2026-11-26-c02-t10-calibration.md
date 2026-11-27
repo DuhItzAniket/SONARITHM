@@ -1,12 +1,12 @@
-# 2026-11-26: C02-T10 chart image calibration, paused mid slot run
+# 2026-11-26 to 2026-11-28: C02-T10 chart image calibration, and #511
 
-> **Date(s):** 2026-11-26. **Phase:** C02 (C02-T10). **Author:** AI agent (Claude Code, Claude Opus 5.5) in the PLOTSONA session started by the coordinator session, to be reviewed by @DuhItzAniket.
+> **Date(s):** 2026-11-26 to 2026-11-28. **Phase:** C02 (C02-T10), plus maintenance (#511). **Author:** AI agent (Claude Code, Claude Opus 5.5) in the PLOTSONA session started by the coordinator session, to be reviewed by @DuhItzAniket.
 > **Related:** [worklog conventions](README.md) · [ADR-0017 "Raster calibration"](../../decisions/0017-ipc-protocol-v1.md) · [keyboard §5.11](../../design/keyboard-and-navigation.md) · [F-241](../../research-paper/findings-log.md)
 
 ## Context and phase
 
 - **Phase:** C02, task C02-T10, the accessible calibration and point-entry dialog ([roadmap](../../planning/roadmap.md)).
-- **Branch:** `feat/c02-t10-calibration`, local only. Nothing is pushed and there is no PR yet.
+- **Branch:** `feat/c02-t10-calibration`. One PR carries T10 and the #511 fix, following the owner's rule to build big parts locally and push rarely.
 - **Starting point:** the app core could not open PNG or JPEG charts, and nothing in the app set a calibration. The coordinator approved the design (ADR-0017 amendment) under the owner's delegation earlier the same day.
 
 ## Goals
@@ -42,10 +42,30 @@
 | The refusal test expected `SNR-ENG-327` for text bytes | `sniff` refuses bytes no chart format starts with as `SNR-ENG-300` | Test and docs say 300 |
 | The refusal test expected `SNR-ENG-327` for `chart.svg` | The app core checks the extension first | Test expects `SNR-APP-060` |
 
+## Resumed 2026-11-28
+
+- **Codes and codegen:** done; the generated TS protocol gains the raster types.
+- **Frontend fixes:**
+  - lint and type errors in the mock host and the dialog;
+  - the axis name in three messages is now `$axisLabel`, because `$axis` is raw data in other messages and the pseudo-locale check caught a Latin letter;
+  - the crosshair's click story now expects the pixel under the whole-pixel coordinate it sends.
+- **A real announcement bug:** the live region speaks only the latest polite message, so the checks that followed "y3 deleted." replaced it. The checks are now said when a new check result changes them, after the anchor action that caused it.
+- **WebKit E2E:** keys were pressed before the app and the palette were ready, and WebKit ignores Primary+A in these fields. The spec now waits for both, and selects a field's text before typing over it.
+- **#511 (approved by the coordinator):**
+  - the readers drop columns the data fingerprint cannot encode, with an `SNR-DATA-016` warning; a file with nothing else is refused with `SNR-DATA-007`;
+  - the compiler stops instead of recording a zero fingerprint;
+  - the fuzz check is strict again;
+  - 03 §3.1, the CHANGELOG and F-241 are updated.
+- **Local checks, all passing:**
+  - fmt, check-deps, clippy and the workspace tests;
+  - rustdoc, wasm32, cargo deny, golden and replication (91 specs);
+  - the fuzz crate builds;
+  - frontend lint, typecheck and tests;
+  - the crosshair stories with axe in four themes;
+  - E2E in Chromium and in WebKit, 61 tests each.
+
 ## Next steps
 
-- [ ] `cargo xtask codes` and `cargo xtask codegen`. Commit the generated error-code reference, schemas and TS types (PLOTSONA).
-- [ ] Frontend: `pnpm -r lint`, typecheck, `pnpm -r test`, Storybook with axe (PLOTSONA).
-- [ ] E2E: `calibrate.spec.ts` against the mock host, `SONARITHM_E2E_PORT=1433`, Chromium and WebKit with `--workers=2` (PLOTSONA).
-- [ ] Open the PR, with an NVDA note, and name the re-extract behaviour change and its test (PLOTSONA).
+- [ ] An NVDA pass over the dialog on the real host (owner, HP-22); the PR lists what to listen for.
+- [ ] C02-T11, the correction view (PLOTSONA, next batch).
 - [ ] After T05 merges: the `dialog:allow-open` follow-up (design note in the shared notes).
