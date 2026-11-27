@@ -586,3 +586,55 @@ fn b03_t09_closing_the_dataset_clears_the_explorer_node() {
         (None, None, None)
     );
 }
+
+/// A11Y-20, keyboard §9.2 item 1 (#513 review): speech waits for the cue as it is heard,
+/// one output latency after it is sent, plus the cue's own length. The null device stands
+/// in for a slow one through a calibrated latency of 0.4 s (ADR-0016); by ear on HW-01 is
+/// TODO(verify).
+#[test]
+fn a11y_20_speech_waits_for_the_cue_through_the_output_latency() {
+    let mut h = Harness::new("cue-latency");
+    let mut settings = h.ok(&json!({ "command": "settings_get" }));
+    let settings = settings.as_object_mut().unwrap();
+    settings.remove("reply");
+    settings.get_mut("audio").unwrap()["calibratedLatencyS"] = json!({ "null": 0.4 });
+    h.ok(&json!({ "command": "settings_set", "args": { "settings": settings } }));
+    h.compile(&["temp"]);
+    let announcements = |h: &Harness| {
+        h.sink
+            .events()
+            .into_iter()
+            .filter(|event| matches!(event, Event::Announcement(_)))
+            .count()
+    };
+    h.step("into");
+    h.step("into");
+    // Let the earlier announcements out, so the next one is the point's.
+    std::thread::sleep(Duration::from_millis(800));
+    let before = announcements(&h);
+    let start = Instant::now();
+    assert_eq!(h.step("into")["cue"], true, "a move onto a point plays its cue");
+    while announcements(&h) == before {
+        assert!(start.elapsed() < Duration::from_secs(5), "no announcement");
+        std::thread::sleep(Duration::from_millis(5));
+    }
+    // 0.4 s of latency and the 0.12 s cue, less a little for timer resolution.
+    assert!(
+        start.elapsed() >= Duration::from_millis(500),
+        "spoke after {:?}",
+        start.elapsed()
+    );
+}
+
+/// Keyboard §9.2 item 3 (#513 review): during playback the transport drops the cue, and
+/// `NavResult.cue` says so.
+#[test]
+fn b03_t09_cue_is_false_when_playback_drops_it() {
+    let mut h = Harness::new("cue-playing");
+    h.compile(&["temp"]);
+    h.step("into");
+    h.step("into");
+    h.ok(&json!({ "command": "transport_set_loop", "args": { "range": { "startS": 0.0, "endS": 1.0 } } }));
+    h.ok(&json!({ "command": "transport_play" }));
+    assert_eq!(h.step("next")["cue"], false);
+}

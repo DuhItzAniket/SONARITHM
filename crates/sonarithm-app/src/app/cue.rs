@@ -28,8 +28,8 @@ const ONSET_TOLERANCE_S: f64 = 1e-9;
 
 impl App {
     /// Plays the point cue of `node` if it is a point and sonification is on. Returns
-    /// whether a cue went to the transport (which drops it during playback, keyboard §9.2
-    /// item 3).
+    /// whether the cue played: `false` too when the transport dropped it during playback
+    /// (keyboard §9.2 item 3) or no output could open, so `NavResult.cue` is exact.
     pub(super) fn play_cue(&self, node: NavNodeId) -> bool {
         // Sonification off silences cues and playback together (sound-design §3.2).
         if !self.interaction().modalities[0] {
@@ -44,8 +44,7 @@ impl App {
         else {
             return false;
         };
-        self.transport.cue(cue);
-        true
+        self.transport.cue(cue)
     }
 }
 

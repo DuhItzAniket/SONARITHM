@@ -157,12 +157,13 @@ No event is added. A `cursor` event follows only under the rules above (Cursor).
 * `nav_query { query }` answers a question of the query menu about the cursor's series (keyboard §7), as a response announcement, and replies `announce`. `query` is tagged by `query`: `summary`, `minimum`, `maximum`, `range` or `{ query: "valueAt", x }` (the B03 subset; the statistics join with ECHOMETRIC). The targets are found on a copy of the cursor, so it does not move, and no `cursor` event is sent. Added 2026-11-01, additive.
 * Each fails with `SNR-APP-090` when no compiled Score has a navigation tree.
 
-**`NavResult`.** `{ cursor, outcome, edge, reason, included, earcon, highlight, announced }`:
+**`NavResult`.** `{ cursor, outcome, edge, reason, included, earcon, highlight, cue, announced }`:
 
 * `cursor` is the `CursorState` the `cursor` event carried.
 * `outcome` is `moved`, `boundary`, `invalid`, `describe` (Enter on a point) or `toggled` (Enter on a filter).
 * `edge` (`first`, `last`, `top`, `bottom`), `reason` (such as `oneSeries`, `noInsights`, `notHere`) and `included` belong to a boundary, an invalid verb and a toggle.
 * `earcon` is the outcome's earcon ID, such as `E-BOUNDARY` (A11Y-08). `highlight` is the node's x span.
+* `cue` says whether the move played the point's cue: `false` off a point, with sonification off, during playback (the transport drops the cue) or when no output could open.
 * `announced` says whether an announcement was queued. Its text goes out on the `announcements` channel only, never in the reply, so nothing is spoken twice. Explorer moves are announced, as plot moves are (INFER, OD-30).
 
 **`CursorState`, widened.** `node` may be any node of the navigation tree, not only a point. `path` levels add `axes`, `axis`, `insights`, `insightGroup`, `insight`, `filters` and `filter`; a group's label is empty. A reader that meets a level it does not know shows the label alone. `excluded` lists `{ node, label }` for each series a filter took out.
@@ -174,7 +175,7 @@ No event is added. A `cursor` event follows only under the rules above (Cursor).
 * The exclusion is recorded where it applies, so what is playing is never taken for the canonical Score: `CursorState.excluded` in the session, and `TransportState.excludedTracks` (the removed track IDs, empty when the compiled Score plays as it is) in the transport. Live windows keep the exclusions made before monitoring started. While a live stream is monitored a filter cannot change, because reloading playback would end monitoring: Enter on a filter is invalid (`reason: "liveMonitoring"`, `E-INVALID`) and announced.
 * Exports render the whole compiled Score: the filter is session state, not part of the spec or the project. While a series is excluded, starting an export announces "Export includes all series; exclusions apply to playback only" (`announce-export-all-series`), until the export dialog (B05-T05) says it. A spec-level filter can follow with `spec_apply` (B05-T01).
 
-**Point cue (A11Y-10, A11Y-20).** A move onto a point plays the point's cue, then speaks: from the table, the plot or the explorer. The cue is the point's own note in the compiled Score (pitch, level, pan and the track's instrument; sound-design §3.2), played on the render graph's live cue voices. It is not played during playback (keyboard §9.2 item 3) or with sonification off. The output opens on the first cue and stays open until a load or a device change. `NavResult.cue` (added 2026-11-01, additive) says whether a cue was sent. The key-to-onset budget of 50 ms p95 is TODO(verify) on HW-01.
+**Point cue (A11Y-10, A11Y-20).** A move onto a point plays the point's cue, then speaks: from the table, the plot or the explorer. The cue is the point's own note in the compiled Score (pitch, level, pan and the track's instrument; sound-design §3.2), played on the render graph's live cue voices. It is not played during playback (keyboard §9.2 item 3) or with sonification off. The output opens on the first cue and stays open until a load or a device change. `NavResult.cue` (added 2026-11-01, additive) says whether the cue played. Speech waits for the cue as heard: the output latency (the device's calibrated one, else the backend's report) plus the cue's length (#513 review; by ear on HW-01 is TODO(verify)). The key-to-onset budget of 50 ms p95 is TODO(verify) on HW-01.
 
 #### Modality toggles
 

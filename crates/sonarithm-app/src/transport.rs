@@ -151,7 +151,8 @@ enum Message {
     Configure(OutputConfig, Reply<TransportState>),
     Devices(Reply<Vec<DeviceInfo>>),
     Announce(Box<Announcement>),
-    Cue(Cue),
+    /// A point cue; the reply says whether it played (it is dropped during playback).
+    Cue(Cue, Reply<bool>),
     Repeat(Reply<bool>),
     StreamOpen(
         Box<(
@@ -232,9 +233,11 @@ impl Transport {
     /// Plays a point cue now (B03-T09). Dropped while playback plays (keyboard §9.2 item
     /// 3). The output opens on the first cue and stays open until a load or a device change
     /// closes it, so later cues start within one block (sound-design §3.2's 50 ms budget,
-    /// TODO(verify) on HW-01). Speech waits for the cue's end (A11Y-20).
-    pub(crate) fn cue(&self, cue: Cue) {
-        let _ = self.sender.send(Message::Cue(cue));
+    /// TODO(verify) on HW-01). Speech waits for the cue's end as heard (A11Y-20). Returns
+    /// whether the cue played, so `NavResult.cue` is exact: `false` during playback, or
+    /// when no output can open.
+    pub(crate) fn cue(&self, cue: Cue) -> bool {
+        self.ask(|reply| Message::Cue(cue, reply)).unwrap_or(false)
     }
 
     /// Queues the last announcement again; `false` when there is none.
@@ -501,7 +504,10 @@ impl<B: AudioBackend, F: Fn() -> B> Control<B, F> {
                 });
                 let _ = reply.send(devices);
             }
-            Message::Cue(cue) => self.cue(cue),
+            Message::Cue(cue, reply) => {
+                let played = self.cue(cue);
+                let _ = reply.send(Ok(played));
+            }
             Message::Announce(announcement) => {
                 let now = self.now_ms();
                 // Muted when it is queued, not when it would be spoken, so "Speech off",
@@ -806,18 +812,43 @@ impl<B: AudioBackend, F: Fn() -> B> Control<B, F> {
 
     /// A point cue (B03-T09): not during playback, where the cursor follows the playhead
     /// silently (keyboard §9.2 item 3); otherwise on an open output, then the sequencer
-    /// holds speech until it ends (A11Y-20, §9.2 item 1).
-    fn cue(&mut self, cue: Cue) {
+    /// holds speech until it ends (A11Y-20, §9.2 item 1). Returns whether it played.
+    ///
+    /// The cue is heard one output latency after it is sent (about 117 ms p95 on HW-01,
+    /// F-031), so speech waits for that latency plus the cue's own length: the calibrated
+    /// latency of the device, else the backend's reported one, else none (#513 review;
+    /// "by ear on HW-01" is TODO(verify)).
+    fn cue(&mut self, cue: Cue) -> bool {
         if self.model.status == PlaybackStatus::Playing {
-            return;
+            return false;
         }
         // An output that cannot open plays no cue; the announcement still follows.
         if self.player.is_none() && self.open().is_err() {
-            return;
+            return false;
         }
         self.send(Command::Cue(cue));
         let now = self.now_ms();
-        self.sequencer.cue(now, cue.duration);
+        let latency = self.output_latency_s().unwrap_or(0.0);
+        self.sequencer.cue(now, Seconds(latency + cue.duration.0));
+        true
+    }
+
+    /// The open output's latency in seconds: the device's calibrated latency (ADR-0016),
+    /// else the backend's reported latency, else `None` (ADR-0017 "Clock anchors").
+    fn output_latency_s(&self) -> Option<f64> {
+        let calibrated = self
+            .opened_device
+            .as_ref()
+            .and_then(|id| self.config.calibrated_latency_s.get(id))
+            .copied()
+            .filter(|_| self.player.is_some());
+        calibrated.or_else(|| {
+            self.player
+                .as_ref()
+                .and_then(|player| player.stream())
+                .and_then(|stream| stream.latency().reported)
+                .map(|latency| latency.as_secs_f64())
+        })
     }
 
     fn mark_stale(&mut self) {
@@ -1132,21 +1163,7 @@ impl<B: AudioBackend, F: Fn() -> B> Control<B, F> {
             .as_mut()
             .and_then(|player| player.state().host_time)
             .map(|time| time.as_secs_f64());
-        // The open device's calibrated latency (ADR-0016), else the backend's reported
-        // latency, else none (ADR-0017 "Clock anchors").
-        let calibrated = self
-            .opened_device
-            .as_ref()
-            .and_then(|id| self.config.calibrated_latency_s.get(id))
-            .copied()
-            .filter(|_| self.player.is_some());
-        let output_latency_s = calibrated.or_else(|| {
-            self.player
-                .as_ref()
-                .and_then(|player| player.stream())
-                .and_then(|stream| stream.latency().reported)
-                .map(|latency| latency.as_secs_f64())
-        });
+        let output_latency_s = self.output_latency_s();
         self.sink.emit(Event::Clock(ClockAnchor {
             transport: self.state(),
             host_time_s,

@@ -1365,7 +1365,8 @@ pub struct NavResult {
     /// The x span to highlight: the node's, when it has one.
     pub highlight: Option<NavSpan>,
     /// Whether the move played the point's cue (A11Y-10, A11Y-20): a move onto a point with
-    /// sonification on. The transport drops it during playback (keyboard §9.2 item 3).
+    /// sonification on, while playback is not playing (the transport drops the cue then,
+    /// keyboard §9.2 item 3) and an output could open. `false` otherwise.
     pub cue: bool,
     /// Whether the outcome was announced (on the `announcements` channel, never here).
     pub announced: bool,
