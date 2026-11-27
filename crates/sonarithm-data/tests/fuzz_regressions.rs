@@ -12,8 +12,11 @@
     reason = "integration test; clippy treats its helpers as non-test code"
 )]
 
+use sonarithm_core::Sha256Digest;
 use sonarithm_data::source::write_ipc;
-use sonarithm_data::{Format, Limits, ReadOptions, read_bytes, table_fingerprint};
+use sonarithm_data::{
+    DataError, Format, Limits, ReadOptions, Table, read_bytes, table_fingerprint,
+};
 
 /// The fuzz target's options: limits small enough that no input exhausts memory.
 fn options() -> ReadOptions {
@@ -58,15 +61,26 @@ fn columnar_regression_seeds_are_refused_without_running_away() {
     }
 }
 
-/// The fuzz target's `check`: a loaded table has a fingerprint, survives an Arrow IPC round
-/// trip unchanged, and keeps its fingerprint.
+/// A table's fingerprint, or `None` for a type RFC-0008 §3 does not encode (an interval:
+/// `SNR-DATA-007`, as designed). Any other error fails the test.
+fn fingerprint(name: &str, table: &Table) -> Option<Sha256Digest> {
+    match table_fingerprint(table) {
+        Ok(digest) => Some(digest),
+        Err(DataError::Unfingerprintable { .. }) => None,
+        Err(error) => panic!("{name}: no fingerprint: {error}"),
+    }
+}
+
+/// The fuzz target's `check`: a loaded table has a fingerprint unless one of its types has no
+/// encoding, survives an Arrow IPC round trip unchanged, and keeps its fingerprint (or its
+/// refusal).
 #[test]
 fn columnar_check_seeds_read_round_trip_and_keep_their_fingerprint() {
     for (name, format, file) in seeds("seed-check-") {
         let loaded = read_bytes(&file, format, "fuzz.bin", &options())
             .unwrap_or_else(|error| panic!("{name} should read: {error}"));
         let table = loaded.bundle.primary().unwrap();
-        let before = table_fingerprint(table).unwrap();
+        let before = fingerprint(&name, table);
         let bytes = write_ipc(table).unwrap();
         let again = read_bytes(
             &bytes,
@@ -87,7 +101,7 @@ fn columnar_check_seeds_read_round_trip_and_keep_their_fingerprint() {
             "{name}: the data round-trips"
         );
         assert_eq!(
-            table_fingerprint(reread).unwrap(),
+            fingerprint(&name, reread),
             before,
             "{name}: the fingerprint is stable"
         );
