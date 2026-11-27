@@ -224,6 +224,8 @@ impl App {
         };
         // The active profile's speech preferences (ADR-0020 §3).
         app.transport.configure(app.output_config())?;
+        // A reserved binding edited into the active profile's file is said once (#513).
+        app.notice_reserved_profile_keys();
         Ok(app)
     }
 

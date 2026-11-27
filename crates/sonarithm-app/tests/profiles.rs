@@ -499,4 +499,25 @@ fn keyboard_13_rule_6_a_hand_edited_profile_never_binds_tab() {
         h.effective("interaction.verbosity"),
         (json!("verbose"), "profile".to_owned())
     );
+    // At the next start the dropped binding is said once, by command, never by the chord
+    // the file holds (#513 review).
+    let dir = Arc::clone(&h.dir);
+    drop(h);
+    let sink = sonarithm_app::CollectingSink::new();
+    let config = AppConfig::new(dir.path().join("config")).with_audio(AudioOutput::null());
+    let _app = App::new(config, Arc::new(sink.clone())).unwrap();
+    let notices: Vec<(String, String)> = sink
+        .events()
+        .into_iter()
+        .filter_map(|event| match event {
+            sonarithm_app::ipc::Event::SettingsNotice { error } => {
+                Some((error.code, error.message))
+            }
+            _ => None,
+        })
+        .collect();
+    assert_eq!(notices.len(), 1, "{notices:?}");
+    assert_eq!(notices[0].0, "SNR-APP-091");
+    assert!(notices[0].1.contains("app.preferences"), "{}", notices[0].1);
+    assert!(!notices[0].1.contains("Tab"), "{}", notices[0].1);
 }

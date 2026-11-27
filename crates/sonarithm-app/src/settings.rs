@@ -497,12 +497,13 @@ impl SettingsStore {
         let settings = migrated
             .and_then(|value| serde_json::from_value::<Settings>(value).ok())
             .map(|mut settings| {
-                while let Some((command, chord)) = crate::keymap::first_reserved(&settings.keymap) {
+                // Named by command, not by the chord the file holds (#513 review).
+                while let Some((command, _)) = crate::keymap::first_reserved(&settings.keymap) {
                     notices.push(IpcError::new(
                         &codes::KEYMAP_RESERVED,
                         format!(
-                            "{chord} is reserved, so the settings file's binding for {command} \
-                             was left out (keyboard §13 rule 6)."
+                            "The settings file binds {command} to a reserved combination, so \
+                             that binding was left out. Set its keys in Preferences › Keyboard."
                         ),
                     ));
                     let command = command.to_owned();
