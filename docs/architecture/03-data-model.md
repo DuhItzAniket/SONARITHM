@@ -82,6 +82,14 @@ classDiagram
 
 Inference is a **suggestion**. Users or specs override it, and every inference is reported as an `Info` diagnostic so screen-reader users hear what was assumed.
 
+**Columns that are not loaded (#511).** Every reader, file or memory, leaves out a column whose Arrow type the data fingerprint does not encode (RFC-0008 §3): intervals, 32- and 64-bit decimals and the rarer Arrow types. The rule is keyed on the fingerprint's own type table, so it follows RFC-0008 §3 as that changes.
+
+- **The warning:** each column left out gets an `SNR-DATA-016` warning that names it and its type, so the user hears which column was not loaded and why.
+- **The other columns** load as usual. A file with no other column is refused with `SNR-DATA-007`, which names its first column.
+- **Why:** with this rule every table that loads has a fingerprint. It can then be saved in a project, and a Score compiled from it records which data it came from.
+- **The compiler:** if data built by hand still has no fingerprint, the compile stops with `SNR-DATA-007` instead of recording a zero digest.
+- **Other unusual columns** load as they are: binary, map, union, list and struct columns all have a fingerprint encoding. A spec that maps one to a channel is refused at compile (`SNR-ENG-042`).
+
 Implementation notes (A04): declarations in the spec's `data.fields` are merged before inference, which fills only what is left and reports each part it fills (`SNR-DATA-030` type, `031` role, `032` concept). Text whose values all belong to one ordered label set (months, weekdays, low–medium–high, Likert scales and similar) becomes `ordinal` and is stored as `Dictionary<UInt8, Utf8>` with the labels in rank order, so a key is the rank. An integer field is `ordinal` when it has at most 12 levels in a contiguous range and each level occurs about twice on average. Roles come from names first (`x`, `y`, `lower`, `upper`, `id`, `label`, `weight`), then `x` goes to the first temporal field, a field named like an axis, or the first strictly increasing number field (four rows or more); `y` goes to the first quantitative field. Concepts come from units first, then name tokens. The precision on the inference corpus (`crates/sonarithm-data/tests/corpus/csv`) is checked by a test (A04-T05: at least 95% for each of type, role and concept).
 
 ### 3.2 Units

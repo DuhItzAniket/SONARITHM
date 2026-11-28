@@ -45,6 +45,8 @@ fn sample_args(style: UnitStyle) -> Args {
         .text("mix", "8")
         .text("x", "9")
         .text("axis", "x")
+        // A translated axis name (the calibration dialog, C02-T10).
+        .text("axisLabel", "28")
         .text("included", "yes")
         .text("edge", "last")
         .text("reason", "one-series")

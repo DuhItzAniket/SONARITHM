@@ -40,6 +40,7 @@ mod modalities;
 mod nav;
 mod profiles;
 mod projects;
+mod raster;
 mod relink;
 
 /// How the app core starts.
@@ -135,6 +136,8 @@ pub struct App {
     settings: Settings,
     datasets: BTreeMap<u64, Open>,
     next_dataset: u64,
+    /// Chart images open for calibration (C02-T10).
+    raster: raster::Sessions,
     spec: Option<String>,
     compiled: Option<Compiled>,
     history: History<Snapshot>,
@@ -208,6 +211,7 @@ impl App {
             settings,
             datasets: BTreeMap::new(),
             next_dataset: 1,
+            raster: raster::Sessions::default(),
             spec: None,
             compiled: None,
             history: History::default(),
@@ -261,10 +265,7 @@ impl App {
             | Request::DatasetRelink { .. }
             | Request::ViewGet { .. }
             | Request::TablePage { .. }) => self.datasets_request(request),
-            Request::SpecGet => Ok(Reply::Spec(SpecState {
-                text: self.spec.clone(),
-                undo_token: None,
-            })),
+            Request::SpecGet => Ok(self.spec_get()),
             Request::SpecSet { text } => self.edit(|app| app.spec_set(text)),
             Request::SpecApply { patch, label } => self.edit(|app| app.spec_apply(&patch, label)),
             Request::SpecValidate { text } => Ok(validation(&text)),
@@ -280,9 +281,7 @@ impl App {
             Request::ExportRender { options } => self.export(&options),
             Request::JobStatus { id } => self.jobs.status(id).map(Reply::Job),
             Request::JobCancel { id } => self.jobs.cancel(id, &*self.sink).map(Reply::Job),
-            Request::JobList => Ok(Reply::Jobs {
-                jobs: self.jobs.list(),
-            }),
+            Request::JobList => Ok(self.job_list()),
             Request::HistoryUndo => self.edit(|app| Ok(app.step(true))),
             Request::HistoryRedo => self.edit(|app| Ok(app.step(false))),
             Request::SettingsGet => Ok(Reply::Settings(self.settings.clone())),
@@ -344,6 +343,10 @@ impl App {
             request @ (Request::FunctionCheck { .. }
             | Request::FunctionOpen { .. }
             | Request::AudifyCalculate { .. }) => self.functions(request),
+            request @ (Request::ChartRasterOpen { .. }
+            | Request::ChartCalibrationCheck { .. }
+            | Request::ChartCalibrationApply { .. }
+            | Request::ChartRasterClose { .. }) => self.raster_request(request),
             Request::NavMove { verb } => self.nav_move(&verb),
             Request::NavWhere => self.nav_where(),
             Request::ModalityToggle { modality } => self.modality_toggle(modality),
@@ -596,6 +599,21 @@ impl App {
                 &codes::BAD_REQUEST,
                 "This command returns a binary view; send it with dispatch_binary.",
             )),
+        }
+    }
+
+    /// The session's spec, with no undo token (`spec_get`).
+    fn spec_get(&self) -> Reply {
+        Reply::Spec(SpecState {
+            text: self.spec.clone(),
+            undo_token: None,
+        })
+    }
+
+    /// Every job (`job_list`).
+    fn job_list(&self) -> Reply {
+        Reply::Jobs {
+            jobs: self.jobs.list(),
         }
     }
 

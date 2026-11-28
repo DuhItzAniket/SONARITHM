@@ -57,6 +57,7 @@ Owner: `sonarithm-app`.
 | `SNR-APP-093` | warning | A dataset was fingerprinted again | Another SONARITHM build computed the dataset's fingerprint differently. Embedded data matches the project's own checksum, and linked data the size and checksum the project recorded, so it opens unchanged; a function opens sampled again from its definition. Save the project to record the new fingerprint. | — |
 | `SNR-APP-094` | error | That would silence every output | Speech, sonification and braille cannot all be off: nothing would tell you what the app is doing. Turn another one on first, or reset the toggles to your profile's defaults. Nothing was changed. | — |
 | `SNR-APP-095` | error | There is nothing to relink | Only a linked dataset that the project could not verify, which shows as unavailable, can be checked and relinked. Nothing was changed. | — |
+| `SNR-APP-096` | error | That chart image is no longer open for calibration | Open the image again with Open chart image. A session ends when its chart is applied or cancelled, and the oldest of four ends when a fifth image opens. Nothing was changed. | — |
 
 ## SNR-COMP
 
@@ -105,6 +106,7 @@ Owner: `sonarithm-data`.
 | `SNR-DATA-013` | info | Blank or repeated field names were replaced | Give every column a unique name in the header row. | — |
 | `SNR-DATA-014` | warning | Invalid bytes were replaced | Check the file's encoding and set `encoding` if it was guessed wrong. | — |
 | `SNR-DATA-015` | info | Lines above the header were skipped | Remove title lines above the header, or set `header` explicitly. | — |
+| `SNR-DATA-016` | warning | A column of a type that cannot be used was not loaded | Convert the column to numbers, text, dates or times before loading the file if you need it. | — |
 | `SNR-DATA-020` | info | The JSON shape was detected | Set `pointer` in the source options if the wrong part of the document was read. | — |
 | `SNR-DATA-021` | error | The JSON is not a table | Point `pointer` at an array of records, an array of rows or an object of equal-length arrays. | — |
 | `SNR-DATA-022` | info | A spreadsheet sheet was read | Set `sheet` and `range` in the source if the wrong cells were read. | — |
@@ -223,6 +225,7 @@ Owner: `sonarithm-plotsona`. Numbers SNR-ENG-300 to SNR-ENG-399.
 | `SNR-ENG-327` | error | The image cannot be decoded | The PNG or JPEG file is damaged or uses a feature the decoder does not support. Export the chart again, or use its source file if you have one. | — |
 | `SNR-ENG-328` | error | A raster chart needs an axis calibration | Add `data.source.calibration` with two anchors on each axis: the pixel position of a tick and its value. SONARITHM does not read tick labels from images yet. | — |
 | `SNR-ENG-329` | warning | The series found differ from the legend | Series are told apart by colour. Two series in similar colours may have merged, or a marked line split; check the extracted series against the chart (10 §3.1). | — |
+| `SNR-ENG-330` | warning | Anchors lie outside the detected plot area | The plot area found from the axis lines may be wrong, as on an area chart's fill. Read the area the anchors span, or the whole image, instead of the detected one. | — |
 | `SNR-ENG-340` | warning | Only the first of several charts was read | A chart source reads one chart. Save the chart you want in a file of its own. | — |
 | `SNR-ENG-341` | error | A chart series has no stored values | Office charts keep a cache of the values they show. Open the file in the program that made it and save it again to rebuild the cache. | — |
 | `SNR-ENG-342` | warning | An external data link was not followed | PLOTSONA never opens files or addresses a document points to (12 §6). The values cached in the chart are used. | — |

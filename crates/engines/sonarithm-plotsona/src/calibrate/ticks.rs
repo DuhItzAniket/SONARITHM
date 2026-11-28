@@ -311,6 +311,35 @@ pub fn civil_ms(year: i64, month: i64, day: i64) -> i64 {
     (era * 146_097 + doe - 719_468) * DAY_MS
 }
 
+/// A time in milliseconds since the epoch as ISO 8601 (UTC): the date alone at midnight,
+/// else the date and the time to the minute (or to the millisecond when it has one).
+/// Howard Hinnant's `civil_from_days`.
+#[must_use]
+pub(crate) fn iso_from_ms(ms: i64) -> String {
+    let days = ms.div_euclid(DAY_MS);
+    let of_day = ms.rem_euclid(DAY_MS);
+    let z = days + 719_468;
+    let era = z.div_euclid(146_097);
+    let doe = z - era * 146_097;
+    let yoe = (doe - doe / 1460 + doe / 36_524 - doe / 146_096) / 365;
+    let doy = doe - (365 * yoe + yoe / 4 - yoe / 100);
+    let mp = (5 * doy + 2) / 153;
+    let day = doy - (153 * mp + 2) / 5 + 1;
+    let month = if mp < 10 { mp + 3 } else { mp - 9 };
+    let year = yoe + era * 400 + i64::from(month <= 2);
+    let date = format!("{year:04}-{month:02}-{day:02}");
+    if of_day == 0 {
+        return date;
+    }
+    let (hours, minutes) = (of_day / 3_600_000, of_day / 60_000 % 60);
+    let (seconds, millis) = (of_day / 1000 % 60, of_day % 1000);
+    if seconds == 0 && millis == 0 {
+        format!("{date}T{hours:02}:{minutes:02}Z")
+    } else {
+        format!("{date}T{hours:02}:{minutes:02}:{seconds:02}.{millis:03}Z")
+    }
+}
+
 /// The civil year of a time in milliseconds since the epoch (UTC).
 fn year_of(ms: i64) -> i64 {
     let days = ms.div_euclid(DAY_MS) + 719_468;
@@ -380,6 +409,28 @@ mod tests {
             let back = year_of(ms);
             assert!(civil_ms(back, 1, 1) <= ms);
             assert!(civil_ms(back + 1, 1, 1) > ms);
+        }
+    }
+
+    #[test]
+    fn c02_t10_iso_text_round_trips_through_civil_days() {
+        assert_eq!(iso_from_ms(0), "1970-01-01");
+        assert_eq!(iso_from_ms(civil_ms(2000, 3, 1)), "2000-03-01");
+        assert_eq!(iso_from_ms(civil_ms(1969, 12, 31)), "1969-12-31");
+        assert_eq!(
+            iso_from_ms(civil_ms(2024, 2, 29) + 90 * 60_000),
+            "2024-02-29T01:30Z"
+        );
+        assert_eq!(
+            iso_from_ms(civil_ms(2024, 1, 1) + 1_500),
+            "2024-01-01T00:00:01.500Z"
+        );
+        for ms in [
+            civil_ms(1600, 1, 1),
+            civil_ms(2400, 12, 31),
+            civil_ms(1900, 2, 28),
+        ] {
+            assert_eq!(parse_date(&iso_from_ms(ms)), Some(ms));
         }
     }
 

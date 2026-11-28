@@ -497,6 +497,17 @@ pub const RASTER_SERIES_COUNT: CodeInfo = CodeInfo {
     status: CodeStatus::Active,
 };
 
+/// Anchors lie outside the plot area the axis lines bound (C02-T10).
+pub const ANCHORS_OUTSIDE_PLOT: CodeInfo = CodeInfo {
+    code: "SNR-ENG-330",
+    severity: Severity::Warning,
+    summary: "Anchors lie outside the detected plot area",
+    help: "The plot area found from the axis lines may be wrong, as on an area chart's fill. \
+           Read the area the anchors span, or the whole image, instead of the detected one.",
+    rules: &[],
+    status: CodeStatus::Active,
+};
+
 /// Every PLOTSONA code, in ascending order.
 pub const CODES: CodeTable = CodeTable {
     area: Area::Eng,
@@ -525,6 +536,7 @@ pub const CODES: CodeTable = CodeTable {
         RASTER_UNREADABLE,
         RASTER_NEEDS_CALIBRATION,
         RASTER_SERIES_COUNT,
+        ANCHORS_OUTSIDE_PLOT,
         OTHER_CHARTS,
         NO_CACHE,
         EXTERNAL_LINK,

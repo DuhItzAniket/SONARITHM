@@ -523,6 +523,7 @@ fn finish(
         diagnostics.extend(invalid.iter().map(InvalidMetadata::to_diagnostic));
     }
     let table = crate::provenance::normalize(table)?;
+    let table = drop_unencodable(&table, &mut diagnostics)?;
     let table = if options.inference {
         crate::infer::semantic::infer_table(&table, &options.fields, &mut diagnostics)?
     } else {
@@ -532,6 +533,66 @@ fn finish(
         bundle: DataBundle::single(options.bundle, source, table),
         diagnostics,
     })
+}
+
+/// `table` without the columns whose type the data fingerprint does not encode (RFC-0008 §3:
+/// intervals, 32- and 64-bit decimals and the rarer Arrow types), each named in a warning
+/// (`SNR-DATA-016`, #511). Every table that loads then has a fingerprint, so it can be saved
+/// in a project and compiled with its provenance. The other columns are kept as they are, as
+/// columns of other types no channel takes (binary, maps, unions) are.
+///
+/// # Errors
+///
+/// [`DataError::Unfingerprintable`], naming the first column, when no column would be left.
+fn drop_unencodable(table: &Table, diagnostics: &mut Diagnostics) -> Result<Table, DataError> {
+    use std::sync::Arc;
+
+    let schema = table.schema();
+    let kept: Vec<usize> = (0..schema.fields().len())
+        .filter(|&index| crate::fingerprint::encodes(schema.field(index).data_type()))
+        .collect();
+    if kept.len() == schema.fields().len() {
+        return Ok(table.clone());
+    }
+    if kept.is_empty() {
+        let field = schema.field(0);
+        return Err(DataError::Unfingerprintable {
+            field: field.name().clone(),
+            data_type: field.data_type().to_string(),
+        });
+    }
+    for field in schema.fields() {
+        if !crate::fingerprint::encodes(field.data_type()) {
+            diagnostics.push(sonarithm_core::Diagnostic::new(
+                &crate::codes::COLUMN_DROPPED,
+                format!(
+                    "Column `{}` was not loaded: its type, {}, has no sound mapping and no \
+                     data fingerprint.",
+                    field.name(),
+                    field.data_type()
+                ),
+            ));
+        }
+    }
+    let projected =
+        Arc::new(
+            schema
+                .project(&kept)
+                .map_err(|source| DataError::MalformedTable {
+                    table: table.name().to_owned(),
+                    source,
+                })?,
+        );
+    let batches = table
+        .batches()
+        .iter()
+        .map(|batch| batch.project(&kept))
+        .collect::<Result<Vec<_>, _>>()
+        .map_err(|source| DataError::MalformedTable {
+            table: table.name().to_owned(),
+            source,
+        })?;
+    Table::new(table.id(), table.name(), projected, batches)
 }
 
 #[cfg(test)]
@@ -780,5 +841,75 @@ mod tests {
         let err =
             read_bytes(b"a,b\n1,2\n", Format::Ods, "x.ods", &ReadOptions::default()).unwrap_err();
         assert_eq!(err.to_diagnostic().code.as_str(), "SNR-DATA-002");
+    }
+
+    /// #511: a column the data fingerprint cannot encode (an interval) is left out with a
+    /// warning that names it, from a file and from memory alike; the other columns load, and
+    /// the table has a fingerprint.
+    #[test]
+    fn columns_the_fingerprint_cannot_encode_are_dropped_with_a_warning() {
+        use std::sync::Arc;
+
+        use arrow_array::{Float64Array, IntervalYearMonthArray, RecordBatch};
+        use arrow_schema::{DataType, Field, IntervalUnit, Schema};
+
+        let schema = Arc::new(Schema::new(vec![
+            Field::new("span", DataType::Interval(IntervalUnit::YearMonth), true),
+            Field::new("temp", DataType::Float64, true),
+        ]));
+        let batch = RecordBatch::try_new(
+            Arc::clone(&schema),
+            vec![
+                Arc::new(IntervalYearMonthArray::from(vec![Some(14), None])),
+                Arc::new(Float64Array::from(vec![8.5, 9.25])),
+            ],
+        )
+        .unwrap();
+        let ipc = write_ipc(&Table::from_batch(TableId(0), "t", batch.clone())).unwrap();
+        let from_file = read_bytes(&ipc, Format::Arrow, "t.arrow", &ReadOptions::new()).unwrap();
+        let from_memory = read_batches(&schema, vec![batch], "frame", &ReadOptions::new()).unwrap();
+        for loaded in [from_file, from_memory] {
+            let table = loaded.bundle.primary().unwrap();
+            let names: Vec<_> = table
+                .schema()
+                .fields()
+                .iter()
+                .map(|f| f.name().clone())
+                .collect();
+            assert_eq!(names, ["temp"]);
+            assert_eq!(table.num_rows(), 2);
+            assert!(crate::table_fingerprint(table).is_ok());
+            let dropped: Vec<_> = loaded
+                .diagnostics
+                .iter()
+                .filter(|d| d.code.as_str() == "SNR-DATA-016")
+                .collect();
+            assert_eq!(dropped.len(), 1, "{:?}", loaded.diagnostics);
+            assert!(
+                dropped[0].message.contains("`span`"),
+                "{}",
+                dropped[0].message
+            );
+        }
+
+        // A table of such columns alone is refused, naming the column.
+        let only = Arc::new(Schema::new(vec![Field::new(
+            "span",
+            DataType::Interval(IntervalUnit::YearMonth),
+            true,
+        )]));
+        let batch = RecordBatch::try_new(
+            Arc::clone(&only),
+            vec![Arc::new(IntervalYearMonthArray::from(vec![1, 2, 3]))],
+        )
+        .unwrap();
+        let err = read_batches(&only, vec![batch], "frame", &ReadOptions::new()).unwrap_err();
+        let diagnostic = err.to_diagnostic();
+        assert_eq!(diagnostic.code.as_str(), "SNR-DATA-007");
+        assert!(
+            diagnostic.message.contains("`span`"),
+            "{}",
+            diagnostic.message
+        );
     }
 }

@@ -504,6 +504,20 @@ pub const MODALITY_LOCKOUT: CodeInfo = CodeInfo {
     status: CodeStatus::Active,
 };
 
+/// A calibration command named a raster session that is not open (C02-T10, ADR-0017
+/// "Raster calibration"): never opened, already applied or closed, or dropped as the oldest
+/// when a fifth image opened.
+pub const RASTER_SESSION: CodeInfo = CodeInfo {
+    code: "SNR-APP-096",
+    severity: Severity::Error,
+    summary: "That chart image is no longer open for calibration",
+    help: "Open the image again with Open chart image. A session ends when its chart is \
+           applied or cancelled, and the oldest of four ends when a fifth image opens. \
+           Nothing was changed.",
+    rules: &[],
+    status: CodeStatus::Active,
+};
+
 /// Every `SNR-APP` code, in ascending order.
 pub const CODES: CodeTable = CodeTable {
     area: Area::App,
@@ -555,6 +569,7 @@ pub const CODES: CodeTable = CodeTable {
         DATASET_REFINGERPRINTED,
         MODALITY_LOCKOUT,
         NOTHING_TO_RELINK,
+        RASTER_SESSION,
     ],
 };
 

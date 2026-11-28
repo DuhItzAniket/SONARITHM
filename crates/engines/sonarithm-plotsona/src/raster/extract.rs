@@ -40,6 +40,13 @@ fn plot_area(
     if let Some(plot) = find_axes(raster, work)?.plot {
         return Ok(plot);
     }
+    Ok(anchor_box(calibration, axes))
+}
+
+/// The box the anchors span (anchors sit on the outermost ticks a person can read), widened
+/// by half a category on a category axis and by 2 % of the span (at least 4 pixels)
+/// otherwise, so the outer bars and markers stay whole.
+pub(crate) fn anchor_box(calibration: &SpecCalibration, axes: &RasterCalibration) -> PixelRect {
     let xs = calibration.axes.x.anchors.iter().map(|a| a.at[0]);
     let ys = calibration.axes.y.anchors.iter().map(|a| a.at[1]);
     let span = |v: Vec<f64>| {
@@ -60,10 +67,10 @@ fn plot_area(
         _ => pad(x0, x1),
     };
     let y_pad = pad(y0, y1);
-    Ok(PixelRect {
+    PixelRect {
         min: [x0 - x_pad, y0 - y_pad],
         max: [x1 + x_pad, y1 + y_pad],
-    })
+    }
 }
 
 /// What one series colour draws.

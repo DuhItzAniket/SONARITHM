@@ -105,6 +105,10 @@ pub const COMMANDS: &[(&str, &str)] = &[
     ("function_check", "function_check"),
     ("function_open", "function"),
     ("audify_calculate", "audify_readout"),
+    ("chart_raster_open", "raster_chart"),
+    ("chart_calibration_check", "calibration_check"),
+    ("chart_calibration_apply", "dataset"),
+    ("chart_raster_close", "raster_closed"),
     ("nav_move", "nav"),
     ("nav_where", "announce"),
     ("modality_toggle", "effective"),
@@ -509,6 +513,38 @@ pub enum Request {
         #[serde(default)]
         top_hz: Option<f64>,
     },
+    /// Opens a PNG or JPEG chart image to calibrate it (C02-T10, ADR-0017 "Raster
+    /// calibration"): decodes it under the raster budgets and keeps it in a session, reading
+    /// no data yet. Replies [`Reply::RasterChart`].
+    ChartRasterOpen {
+        /// The file the user chose. Only its name is kept or reported.
+        path: String,
+    },
+    /// Checks a calibration as it is entered: fits each axis with two anchors or more, runs
+    /// the 10 §3.1 checks and reads the values at `at`, without extracting. Replies
+    /// [`Reply::CalibrationCheck`].
+    ChartCalibrationCheck {
+        /// The session from `chart_raster_open`.
+        id: u64,
+        /// The anchors so far.
+        calibration: RasterCalibration,
+        /// A pixel position to read the values at (a pixel's centre is `i + 0.5`).
+        #[serde(default)]
+        at: Option<[f64; 2]>,
+    },
+    /// Reads the chart through `calibration` and opens it as a dataset, recording the
+    /// calibration in its correction document; the session ends. Replies [`Reply::Dataset`].
+    ChartCalibrationApply {
+        /// The session from `chart_raster_open`.
+        id: u64,
+        /// The calibration: two anchors or more on each axis.
+        calibration: RasterCalibration,
+    },
+    /// Ends a calibration session without reading the chart. Replies [`Reply::RasterClosed`].
+    ChartRasterClose {
+        /// The session from `chart_raster_open`.
+        id: u64,
+    },
     /// Moves the one cursor with a chart explorer verb (B03-T09, ADR-0017 "Navigation";
     /// keyboard-and-navigation §4.2). Replies [`Reply::Nav`], sends a `cursor` event with
     /// origin `nav` and announces the outcome.
@@ -677,6 +713,10 @@ impl Request {
             Self::FunctionCheck { .. } => "function_check",
             Self::FunctionOpen { .. } => "function_open",
             Self::AudifyCalculate { .. } => "audify_calculate",
+            Self::ChartRasterOpen { .. } => "chart_raster_open",
+            Self::ChartCalibrationCheck { .. } => "chart_calibration_check",
+            Self::ChartCalibrationApply { .. } => "chart_calibration_apply",
+            Self::ChartRasterClose { .. } => "chart_raster_close",
             Self::NavMove { .. } => "nav_move",
             Self::NavWhere => "nav_where",
             Self::ModalityToggle { .. } => "modality_toggle",
@@ -766,6 +806,42 @@ pub enum Reply {
         audible_hz: Option<[f64; 2]>,
         /// `SNR-ENG-461` when part of the band is inaudible, `462` when all of it is.
         codes: Vec<String>,
+    },
+    /// A chart image open for calibration (C02-T10).
+    RasterChart {
+        /// The session, for the calibration commands.
+        id: u64,
+        /// The file name alone.
+        name: String,
+        /// The image's width in pixels.
+        width_px: u32,
+        /// The image's height in pixels.
+        height_px: u32,
+        /// The image as a `data:` URL, its media type from the bytes' signature.
+        image: String,
+        /// The plot area the axis lines bound, in pixels, when both lines are found.
+        plot_area: Option<PlotAreaInfo>,
+    },
+    /// A calibration checked as it stands (C02-T10).
+    CalibrationCheck {
+        /// Why an axis does not fit, and the warnings of one that does, x first.
+        diagnostics: Vec<DiagnosticInfo>,
+        /// The x axis's fit, once it has two anchors that fit.
+        x: Option<AxisFitInfo>,
+        /// The y axis's fit.
+        y: Option<AxisFitInfo>,
+        /// The values at `at`, when it was given and each axis fits.
+        value_at: Option<ValueAt>,
+        /// Each fitted axis's value at every pixel column (x) or row (y), so the dialog says
+        /// a crosshair step's value in the same moment as its pixel. The values come once
+        /// per fit: a check whose fit this session was already sent gives the fit's key
+        /// without them.
+        values: AxisValues,
+    },
+    /// A calibration session ended (C02-T10).
+    RasterClosed {
+        /// The session that ended.
+        id: u64,
     },
     /// What a chart explorer verb did (B03-T09).
     Nav(NavResult),
@@ -1497,6 +1573,147 @@ pub struct DatasetSummary {
     pub fields: Vec<FieldSummary>,
     /// What the reader inferred or changed, as diagnostics.
     pub diagnostics: Vec<DiagnosticInfo>,
+}
+
+/// A raster calibration as the dialog enters it (C02-T10): the spec's
+/// `data.source.calibration` (RFC-0004 §5), with each axis allowed fewer than two anchors
+/// while it is being entered.
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize, TS)]
+#[serde(rename_all = "camelCase")]
+#[non_exhaustive]
+pub struct RasterCalibration {
+    /// The plot area, in pixels. When absent, `area` says which area is read.
+    #[serde(default)]
+    pub plot_area: Option<PlotAreaInfo>,
+    /// The area read when `plotArea` is absent: the anchors' box by default (#516).
+    #[serde(default)]
+    pub area: ReadArea,
+    /// The horizontal axis.
+    pub x: RasterAxis,
+    /// The vertical axis.
+    pub y: RasterAxis,
+}
+
+/// The area of a chart image that is read (C02-T10, #516).
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Serialize, Deserialize, TS)]
+#[serde(rename_all = "camelCase")]
+#[non_exhaustive]
+pub enum ReadArea {
+    /// The box the anchors span, widened as the extraction widens it: the default, because
+    /// a detected plot area can be wrong (an area chart's fill).
+    #[default]
+    Anchors,
+    /// The plot area the axis lines bound, when one was found.
+    Detected,
+    /// The whole image.
+    Image,
+}
+
+/// One axis of a [`RasterCalibration`].
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize, TS)]
+#[serde(rename_all = "camelCase")]
+#[non_exhaustive]
+pub struct RasterAxis {
+    /// The scale kind.
+    pub kind: RasterAxisKind,
+    /// The anchors, in the order they were entered.
+    pub anchors: Vec<RasterAnchor>,
+}
+
+/// A raster axis's scale kind (RFC-0004 §5).
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize, TS)]
+#[serde(rename_all = "camelCase")]
+#[non_exhaustive]
+pub enum RasterAxisKind {
+    /// Numbers at equal distances per equal step.
+    Linear,
+    /// Positive numbers at equal distances per equal ratio.
+    Log,
+    /// ISO 8601 dates.
+    Date,
+    /// Labels (the x axis only).
+    Category,
+}
+
+/// A pixel position and the value it stands for.
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize, TS)]
+#[serde(rename_all = "camelCase")]
+#[non_exhaustive]
+pub struct RasterAnchor {
+    /// The pixel position (y down; a pixel's centre is `i + 0.5`).
+    pub at: [f64; 2],
+    /// A number (linear, log), or the text of a date or label, read by the app core.
+    pub value: AnchorText,
+}
+
+/// An anchor's value: a number, or text the app core reads (a date, a label).
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize, TS)]
+#[serde(untagged)]
+#[non_exhaustive]
+pub enum AnchorText {
+    /// A number.
+    Number(f64),
+    /// A date (ISO 8601 and the forms tick labels use) or a label.
+    Text(String),
+}
+
+/// A rectangle in pixels.
+#[derive(Clone, Copy, Debug, PartialEq, Serialize, Deserialize, TS)]
+#[serde(rename_all = "camelCase")]
+#[non_exhaustive]
+pub struct PlotAreaInfo {
+    /// The corner with the smaller coordinates.
+    pub min: [f64; 2],
+    /// The corner with the larger coordinates.
+    pub max: [f64; 2],
+}
+
+/// How well one axis's anchors fit (C02-T10).
+#[derive(Clone, Copy, Debug, PartialEq, Serialize, Deserialize, TS)]
+#[serde(rename_all = "camelCase")]
+#[non_exhaustive]
+pub struct AxisFitInfo {
+    /// The anchors fitted.
+    pub anchors: u32,
+    /// The anchors' root-mean-square distance from the fit, as a share of their span.
+    pub residual: f64,
+    /// The confidence values read through the axis get.
+    pub confidence: f64,
+}
+
+/// Each axis's value at every pixel along it, once the axis fits (C02-T10).
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize, TS)]
+#[serde(rename_all = "camelCase")]
+#[non_exhaustive]
+pub struct AxisValues {
+    /// The x axis's values at each pixel column; `null` while it does not fit, or when the
+    /// image is over 10 000 pixels wide.
+    pub x: Option<AxisTable>,
+    /// The y axis's values at each pixel row; `null` likewise.
+    pub y: Option<AxisTable>,
+}
+
+/// One fitted axis's values at every pixel along it (C02-T10).
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize, TS)]
+#[serde(rename_all = "camelCase")]
+#[non_exhaustive]
+pub struct AxisTable {
+    /// The fit's key: the same while the axis's scale and anchors are the same.
+    pub fit: String,
+    /// The values, numbers or dates (ISO 8601) or labels; `null` when this session was
+    /// already sent this fit's values.
+    pub values: Option<Vec<AnchorText>>,
+}
+
+/// The values at a pixel, each once its axis fits (C02-T10).
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize, TS)]
+#[serde(rename_all = "camelCase")]
+#[non_exhaustive]
+pub struct ValueAt {
+    /// The x value: a number, or a date (ISO 8601) or label as text.
+    pub x: Option<AnchorText>,
+    /// The y value.
+    pub y: Option<AnchorText>,
 }
 
 /// A function opened as a dataset (C03-T08).

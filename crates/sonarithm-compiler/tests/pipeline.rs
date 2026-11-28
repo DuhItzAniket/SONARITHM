@@ -13,6 +13,7 @@
 use std::sync::Arc;
 
 use sonarithm_compiler::{Compiled, Compiler, CompilerData, Failure};
+use sonarithm_core::diagnostic::Diagnostic;
 use sonarithm_core::digest::Sha256Digest;
 use sonarithm_core::engine::{
     Annotation, Budget, CancelToken, CompileContext, CompileError, ContextProvider, Encoder,
@@ -32,8 +33,8 @@ struct InlineTable {
 }
 
 impl CompilerData for InlineTable {
-    fn fingerprint(&self) -> Sha256Digest {
-        self.fingerprint
+    fn fingerprint(&self) -> Result<Sha256Digest, Box<Diagnostic>> {
+        Ok(self.fingerprint)
     }
 }
 

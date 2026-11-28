@@ -129,6 +129,15 @@ code!(
 );
 
 code!(
+    /// A column of a type that has no data fingerprint encoding (RFC-0008 §3), such as an
+    /// interval, was left out of the table (#511).
+    COLUMN_DROPPED, "SNR-DATA-016", Warning,
+    "A column of a type that cannot be used was not loaded",
+    "Convert the column to numbers, text, dates or times before loading the file if you need it.",
+    []
+);
+
+code!(
     /// The JSON shape that was read.
     JSON_SHAPE, "SNR-DATA-020", Info,
     "The JSON shape was detected",
@@ -347,6 +356,7 @@ pub const CODES: CodeTable = CodeTable {
         COLUMN_NAMES_CHANGED,
         INVALID_BYTES,
         PREAMBLE_SKIPPED,
+        COLUMN_DROPPED,
         JSON_SHAPE,
         NOT_TABULAR,
         SHEET_READ,

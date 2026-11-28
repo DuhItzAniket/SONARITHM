@@ -92,9 +92,19 @@ pub use sonarithm_curvasona::audify::{
     readout as audify_readout,
 };
 pub use sonarithm_plotsona::{
-    ChartData, ChartType, ClassCounts, CorrectionRecord, CorrectionSet, ExtractOptions,
+    Budgets, ChartData, ChartType, ClassCounts, CorrectionRecord, CorrectionSet, ExtractOptions,
     ExtractionReport, SeriesReport,
 };
+
+/// A raster chart before it is read (C02-T10, ADR-0017 "Raster calibration"): inspect the
+/// image, and check a calibration as it is entered, without extracting.
+pub mod raster {
+    pub use sonarithm_plotsona::raster::PixelRect;
+    pub use sonarithm_plotsona::raster::preview::{
+        AxisFit, CalibrationCheck, MAX_VALUES, RasterInfo, ReadValue, anchor_area, anchors_outside,
+        check, inspect,
+    };
+}
 pub use spec::{Migration, Spec};
 
 pub use sonarithm_core::engine::{CancelToken, EngineManifest};

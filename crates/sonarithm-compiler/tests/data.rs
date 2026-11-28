@@ -275,3 +275,34 @@ fn v0_1_specs_compile_and_keep_their_version() {
         sonarithm_core::score::SpecVersion::V0_2
     );
 }
+
+/// #511: data with no fingerprint stops the compile with the data layer's error, instead of
+/// a Score whose header records a zero digest (rule 7, ADR-0013). The readers never load
+/// such a column, so only a bundle built by hand can get here.
+#[test]
+fn data_with_no_fingerprint_is_an_error_not_a_zero_digest() {
+    use arrow_array::{IntervalYearMonthArray, RecordBatch};
+    use arrow_schema::{DataType, Field, IntervalUnit, Schema};
+    use sonarithm_compiler::CompilerData;
+    use sonarithm_core::ids::TableId;
+    use sonarithm_data::{BundleId, SourceDescriptor, SourceKind, Table};
+
+    let schema = Arc::new(Schema::new(vec![Field::new(
+        "span",
+        DataType::Interval(IntervalUnit::YearMonth),
+        true,
+    )]));
+    let batch = RecordBatch::try_new(
+        schema,
+        vec![Arc::new(IntervalYearMonthArray::from(vec![14]))],
+    )
+    .unwrap();
+    let bundle = DataBundle::single(
+        BundleId(0),
+        SourceDescriptor::new(SourceKind::Memory, "by-hand", "arrow"),
+        Table::from_batch(TableId(0), "t", batch),
+    );
+    let err = bundle.fingerprint().unwrap_err();
+    assert_eq!(err.code.as_str(), "SNR-DATA-007", "{}", err.message);
+    assert!(err.message.contains("`span`"), "{}", err.message);
+}

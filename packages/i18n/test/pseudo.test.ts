@@ -43,6 +43,8 @@ function sampleArgs(style: string): MessageArgs {
     mix: "17",
     x: "18",
     axis: "x",
+    // A translated axis name (the calibration dialog, C02-T10).
+    axisLabel: "28",
     included: "yes",
     edge: "last",
     reason: "one-series",

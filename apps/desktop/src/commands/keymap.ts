@@ -105,6 +105,13 @@ export const DEFAULT_KEYMAP: readonly CommandSpec[] = [
     macKeys: ["Meta+F"],
   },
   {
+    // C02-T10, keyboard §5.11: unbound by default; reached from the palette.
+    id: "chart.openImage",
+    name: "command-chart-open-image",
+    scope: "global",
+    keys: [],
+  },
+  {
     id: "app.preferences",
     name: "command-app-preferences",
     scope: "global",

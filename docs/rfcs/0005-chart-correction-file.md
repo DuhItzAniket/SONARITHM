@@ -98,6 +98,11 @@ When the spec is compiled, PLOTSONA's chart source extracts the chart, checks th
 
 Unknown keys in a version the reader knows are `SNR-SPEC-091` (strict reading, as for specs); §8 covers newer versions.
 
+**A raster chart's area (note, C02-T10, #516).** The file has no `area` key, and none is added: the format is unchanged.
+- **Writing:** the app writes the box it read as the calibration's `plotArea`.
+- **Reading in the app:** a `calibration` without a `plotArea` (a file from an older build, or one written by hand) is read through the anchors' area, as the calibration dialog's default `area` is (ADR-0017 "Raster calibration"). It is never read through a plot area detected from the axis lines.
+- **Compiling a spec:** PLOTSONA's chart source still detects the plot area first when `plotArea` is absent (RFC-0004 §5). Moving the spec path to the same rule is an open question.
+
 ### 3. `chart`: binding by content
 
 | Key | Type | Required | Meaning |

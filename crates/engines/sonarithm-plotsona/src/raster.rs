@@ -22,6 +22,7 @@ pub mod components;
 pub(crate) mod extract;
 pub mod lines;
 pub mod marks;
+pub mod preview;
 
 use std::io::Cursor;
 

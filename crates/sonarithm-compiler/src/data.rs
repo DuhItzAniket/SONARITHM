@@ -37,10 +37,12 @@ pub const PLATFORM: EngineId = EngineId::from_static("platform");
 
 impl CompilerData for DataBundle {
     /// The data layer's value-based fingerprint (03 §2, RFC-0008). It fails only for a
-    /// field type the fingerprint does not encode (`SNR-DATA-007`); the zero digest then
-    /// marks the header as unfingerprinted.
-    fn fingerprint(&self) -> Sha256Digest {
-        sonarithm_data::bundle_fingerprint(self).unwrap_or(Sha256Digest::ZERO)
+    /// field type the fingerprint does not encode (`SNR-DATA-007`), which the data layer's
+    /// readers never load (#511), so only a bundle built by hand can fail. The compile then
+    /// stops with that error: a zero digest would record a Score whose data cannot be
+    /// identified or replicated (rule 7, ADR-0013).
+    fn fingerprint(&self) -> Result<Sha256Digest, Box<Diagnostic>> {
+        sonarithm_data::bundle_fingerprint(self).map_err(|err| Box::new(err.to_diagnostic()))
     }
 
     fn play_rows(&self, filter: Option<&str>, time: Option<&str>) -> Option<Vec<u64>> {

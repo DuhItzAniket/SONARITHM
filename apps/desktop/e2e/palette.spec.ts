@@ -80,7 +80,8 @@ test("kb_01_every_registered_command_runs_from_the_palette", async ({
       .toBe(id);
     // These open a dialog of their own, just after the palette closes: the palette again,
     // the key references (help.explorer is the explorer's, B03-T09), Preferences, and
-    // the explorer's value dialogs (G, Primary+F) and New function (C03-T08b).
+    // the explorer's value dialogs (G, Primary+F), Open chart image (C02-T10) and New
+    // function (C03-T08b).
     if (
       [
         "app.palette",
@@ -89,6 +90,7 @@ test("kb_01_every_registered_command_runs_from_the_palette", async ({
         "app.preferences",
         "nav.goTo",
         "nav.findValue",
+        "chart.openImage",
         "data.newFunction",
       ].includes(id)
     ) {

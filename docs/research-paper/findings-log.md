@@ -1422,7 +1422,7 @@ A05 (render engine, audio backends, export) uses F-050 to F-069.
 - **Statement:** the `columnar_read` fuzz target found a 2174-byte Arrow IPC file that `read_bytes` accepts but whose fingerprint panicked. Its `_snr_prov` column is `dictionary<uint8, utf8>` with every key null and no dictionary values. That is valid Arrow, but arrow-array 60.2's `AnyDictionaryArray::normalized_keys` asserts that the values are not empty. Scheme 1 hashed the IPC bytes and never resolved keys, so the panic came in with scheme 2 (F-240).
   - **The fix:** the encoder reads each key's index directly for its key type, both for whole columns and for dictionaries nested in other values. Valid data fingerprints exactly as before, because a valid key's index is the same number `normalized_keys` returned.
   - **Why the log showed no message:** the fuzz target installs an empty panic hook so that it can contain decoder panics (F-169). A panic outside the decoders therefore reached libFuzzer's entry point unexplained, as "non-unwinding panic". A plain test with no hook names the assert.
-  - **The second input (#509's own run):** a 2131-byte Arrow IPC file (crash-59f32039…) with an `Interval(YearMonth)` column. The fingerprint refuses that type with `SNR-DATA-007` (RFC-0008 §3 gives intervals no encoding), and the fuzz check's `expect` turned that refusal into a panic. The library was right and the check was too strict: the check now accepts that one refusal, provided the table still round-trips and the re-read table is refused the same way. A file like this still loads, but a project holding it cannot be saved.
+  - **The second input (#509's own run):** a 2131-byte Arrow IPC file (crash-59f32039…) with an `Interval(YearMonth)` column. The fingerprint refuses that type with `SNR-DATA-007` (RFC-0008 §3 gives intervals no encoding), and the fuzz check's `expect` turned that refusal into a panic. The library was right and the check was too strict: the check now accepts that one refusal, provided the table still round-trips and the re-read table is refused the same way. A file like this used to load, but a project holding it could not be saved, and a Score compiled from it recorded a zero data fingerprint without warning, which broke provenance and replication (rule 7, ADR-0013). #511 fixed both: the readers now drop such columns with an `SNR-DATA-016` warning, the compiler stops instead of writing a zero digest, and the fuzz check is strict again.
   - **The same trap elsewhere:** F-071 met this assert in `table.rs` and added `dictionary_indices`. NUMISONA, AUDAXIS and `view.rs` still call `normalized_keys`. Issue #508 moves them onto one helper and adds a disallowed-methods entry.
 - **Evidence:** `crates/sonarithm-data/fuzz/corpus/columnar_read/seed-check-empty-dictionary` (the CI artifact, SHA-1 b0c0f1cd…) and `seed-check-interval-column` (SHA-1 59f32039…); `crates/sonarithm-data/tests/fuzz_regressions.rs` (`columnar_check_seeds_*`); `crates/sonarithm-data/src/fingerprint/tests.rs` (`an_empty_dictionary_fingerprints_without_panicking`)
 - **Evidence level / confidence:** EV-C / Strong (the crash input reproduced and then passed)
@@ -1449,4 +1449,20 @@ A05 (render engine, audio backends, export) uses F-050 to F-069.
 - **Evidence:** `cargo tree -i glib@0.18.5 --target all -e normal`; a grep for `array_iter_str` and `VariantStrIter` in the registry sources of the crates above (2026-11-28); Dependabot alerts 1 and 3
 - **Evidence level / confidence:** EV-C / Strong for the current lock; re-check on every Tauri bump
 - **Affects:** `Cargo.lock`, `spikes/tauri-webview/src-tauri/Cargo.lock`; supply-chain-and-licensing
+- **Papers:** none
+
+### F-243 · A PDF font's widths could overflow `u32` from one huge CID, and a repeated range could keep the reader busy for billions of steps
+
+- **Date:** 2026-11-28 · **Phase:** C01 code (maintenance) · **Type:** engineering (robustness, fuzzing) · **Status:** resolved
+- **Statement:** the `pdf_chart` fuzz target, which gates CI since #510, found that the vector-PDF reader trusted three things a PDF's fonts say:
+  - **The CID overflow (the crash):** a CID font's `/W` array `c [w1 w2 …]` with a huge first CID `c`. `c` was saturated to `u32::MAX`, and `c + k` overflowed: a debug panic (`attempt to add with overflow`, `pdf/content.rs`), and a silent wrap in a release build.
+  - **The `/Widths` case:** a simple font's `/Widths` with a huge `/FirstChar` had the same pattern (`FirstChar + i`).
+  - **The repeated-range DoS:** a `/W` range `c_first c_last w` was capped at 65 536 codes per range, and so was a `ToUnicode` `bfrange`. But a file could repeat the same full range thousands of times, so one font could take billions of map inserts. That is a CPU denial of service, not a panic, and the fuzzer had not reached it.
+- **The fix:**
+  - **CIDs and character codes** past 65 535 (CIDs are 16-bit) are ignored, and the additions are `checked_add`.
+  - **A step budget:** every `/W` and `ToUnicode` parse may write at most 2^20 entries, counting repeats, which is far above any real font.
+  - **The rest of `pdf/` was scanned for the same pattern:** object streams use `saturating_add` and clamp counts to the data length, a stream's `Length` uses `checked_add`, ASCII85 uses `checked_mul` and `checked_add`, and octal escapes have at most three digits.
+- **Evidence:** the CI crash input (4437 bytes, SHA-1 500dcd70…), committed as `crates/engines/sonarithm-plotsona/fuzz/corpus/pdf_chart/seed-regression-cid-widths-overflow`; `tests/fuzz_regressions.rs` (no panic hook, every `seed-regression-*` PDF through the fuzz target's check); `pdf/content.rs` tests `cid_widths_never_overflow_or_run_away` and `a_repeated_cmap_range_is_bounded`.
+- **Evidence level / confidence:** EV-C / Strong (the crash input reproduced, then passed)
+- **Affects:** C01-T08 (the PDF tier), #510
 - **Papers:** none
