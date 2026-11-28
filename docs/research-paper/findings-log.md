@@ -1042,6 +1042,44 @@ A05 (render engine, audio backends, export) uses F-050 to F-069.
 - **Evidence level / confidence:** EV-D / Strong for the cause (the failing OS set, the zero-change local re-record, and exmex's operator source); cross-platform agreement after the fix is shown by #449's CI, not yet
 - **Affects:** ADR-0013 §1; every function spec's Score and manifest (C03-T02, C03-T06, C03-T07); the curvasona-suite records; any snapshot that holds a function's full-precision values
 
+### F-208 · The outlier detector's zero-MAD fallback called every small step in sparse or integer data an outlier
+
+- **Date:** 2026-11-28 · **Phase:** C05 · **Type:** engineering (detector design) · **Status:** new
+- **Statement:** a02-closeout's review of #506 found the fallback path of `outliers` (F-205) floods data where more than half the residuals are exactly 0.
+  - **The fallback:** when the residuals' MAD is zero, the mean absolute deviation times √(π/2) stands in for it (Iglewicz & Hoaglin 1993). With few nonzero residuals, that scale is tiny.
+  - **Sparse counts:** 60 days of incident counts, mostly 0 with seven 1s and a 2, gave 8 outliers (robust z 5.3 and 10.6).
+  - **A flat integer reading:** 20 °C with two 21s gave both 21s (z 16).
+  - **Fix:** on the fallback path only, a value is an outlier if its z exceeds 3.5 **and** its residual is at least `FALLBACK_SEPARATION` = 3 times the largest residual among the other values. Both cases above then give none, and a lone spike in a flat series (50 among 5s) is still found.
+- **Why not a share of the value range (the review's suggestion):** the range includes the value being judged, so a lone step is 100 % of it in every case. The 21 among 20s, the 2 among 0s and 1s, and the 50 among 5s all score the same, and no share can keep the third while dropping the first two. Separation from the other residuals does.
+- **Cost:** two equal spikes in a flat series do not stand apart from each other, so neither is reported (`f_208_two_equal_spikes_in_a_flat_series_are_not_separated`). The normal path (a nonzero MAD), which F-205 measured, is unchanged.
+- **Evidence:** the unit tests `f_208_a_flat_integer_series_with_small_steps_has_no_outliers`, `f_208_sparse_counts_have_no_outliers` and `a_zero_mad_falls_back_to_the_mean_absolute_deviation`. GEN-011's precision and recall are as before, since its noise never gives a zero MAD.
+- **Evidence level / confidence:** EV-D / Moderate: a review finding with constructed cases. The factor 3 is INFER (ADR-0031), not measured on real sparse data.
+- **Affects:** `detect/outliers.rs`; every `outliers` annotation's parameters (`fallbackSeparation`); ADR-0031's INFER list.
+
+### F-206 · ECHOMETRIC's detectors read a field's whole column in table order, not the series each track plays
+
+- **Date:** 2026-11-26 · **Phase:** C05 · **Type:** engineering (correctness) · **Status:** new
+- **Statement:** PLOTSONA's review of #506 found that the first version of RFC-0009's `AnalysisRequest` grouped tracks by field and that ECHOMETRIC read each field's whole column in table order. NUMISONA instead plays each track's filtered rows, ordered by the substrate's time field.
+  - **On DS-003:** three tracks each filter one region of a month-major table. The series the detectors saw zig-zagged between regions (99.2, 49.2, 38.8, 94.9, …), so `extrema` turned at almost every month, and the global maximum and minimum were found once across all three regions.
+  - **Effect on listeners:** AUDAXIS links by field and row to the region that holds the row, so a listener on "north" would hear insights that its own sound contradicts. Any table not in time order is affected, even with one track.
+  - **Fix:** one `AnalyzedField` per track, with the rows it plays in play order (`sonarithm_data::play_rows`: the filter's rows, stably sorted by the time field). Annotations carry their track, and AUDAXIS links by track first.
+- **Evidence:** `a11y_23_each_region_has_its_own_maximum_on_its_own_track` (DS-003: each region's maximum is its own, on its own track and series); `rfc_0009_analyzed_rows_are_the_rows_each_track_plays` (`play_rows` equals the source rows of every note NUMISONA encodes, in order).
+- **Evidence level / confidence:** EV-D / Strong: a review finding reproduced by a test on the gallery's own spec.
+- **Affects:** RFC-0009 §1 (amended again); ADR-0014's amendment row; `CompilerData`; every ECHOMETRIC analyzer; AUDAXIS's insight links.
+
+### F-205 · A robust z-score over a whole series misses spikes on a periodic base, and one inside small windows calls noise an outlier
+
+- **Date:** 2026-11-26 · **Phase:** C05 · **Type:** engineering (detector design) · **Status:** new
+- **Statement:** ECHOMETRIC's `outliers` detector (C05-T02) was planned as the robust z-score of Iglewicz and Hoaglin (1993), from the median and MAD of the whole series (ADR-0031). On GEN-011's labelled spikes (a sine of amplitude 2 over two periods, Gaussian noise σ = 1, five spikes of 8σ in 200 points; 100 seeds, 500 spikes), measured on HW-01:
+  - **Over the whole series:** precision 1.0000 and recall 0.6580. The sine inflates the MAD, so a spike that runs against the base stays under the 3.5 threshold.
+  - **Inside each 21-value window (the Hampel identifier):** precision 0.8657 and recall 0.9800, with 76 false positives. Twenty-one values estimate the MAD too loosely, and noise crosses 3.5.
+  - **Adopted: the residual from a 21-value moving median, then one robust z over all residuals:** precision 0.9579 and recall 1.0000, with 22 false positives. The moving median removes the base, and the MAD comes from every value.
+- **A second effect:** a window cut short at an end is not centred, so on a slope its median leaves every value near the end looking like an outlier. A unit test on a straight rise found it. Windows are therefore symmetric and shrink toward the ends, so the first and last values are never judged.
+- **Not a result:** the threshold (3.5) and the window (21) are INFER (ADR-0031). No sonification study sets them, and the rates above are for GEN-011's defaults only.
+- **Evidence:** `crates/engines/sonarithm-echometric/src/detect/outliers.rs`; `c05_t02_outliers_precision_and_recall_on_gen_011` (it asserts both rates ≥ 0.95 and prints the measured ones); `a_spike_against_a_slope_is_found`; the reference test `robust_z_scores_match_statrs` (statrs's medians, `crates/engines/sonarithm-echometric/reference`).
+- **Evidence level / confidence:** EV-D / Moderate: measured on one synthetic generator. Real series with level shifts or seasonality need C05-T03's change points before outliers are trusted on them.
+- **Affects:** ADR-0031's outlier method, which keeps the robust z but takes it over moving-median residuals; 07 ECHOMETRIC; the design-rules change log (2026-11-26).
+
 ### F-201 · A hole on a pole's steep slope was taken for a jump, because the sides were compared with a fixed tolerance
 
 - **Date:** 2026-11-01 · **Phase:** C03 · **Type:** engineering (robustness) · **Status:** new
@@ -1342,7 +1380,7 @@ A05 (render engine, audio backends, export) uses F-050 to F-069.
 - **Workaround:** in these two tests, Firefox skips only the axe scan (removal tracked by #487). The test records a `fixme` annotation naming the upstream issue, so the report shows it. All the other steps still run in Firefox, and Chromium and WebKit still run the scan. Remove the skip when a Playwright release ships Firefox build 1575 or later.
 - **Not reproduced locally:** Firefox does not launch on the Windows development machine. The evidence is CI job 139572491722 (1.65.1) against jobs 139562988096 and 139517563060 (1.64.1), and the upstream reproductions.
 - **Evidence level / confidence:** EV-C / Strong for the upstream match (same browser build, same axe-then-lookup trigger, same error). The crash's exact read inside axe was not traced in our tests.
-- **Affects:** `apps/desktop/e2e/audio.spec.ts`; any later E2E test that runs axe after a named lookup in Firefox until the upgrade
+- **Affects:** `apps/desktop/e2e/audio.spec.ts` and `function.spec.ts` (two tests each, through `expectNoSeriousViolations` in `e2e/axe.ts`; the function tests met it on #498, CI run 45773586383); any later E2E test that runs axe after a named lookup in Firefox until the upgrade
 - **Papers:** none yet
 
 ### F-227 · The installed release app meets PB-09 on all three CI runners, with one 84 ms outlier on macOS

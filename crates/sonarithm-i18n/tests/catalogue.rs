@@ -107,6 +107,10 @@ fn sample_args(style: UnitStyle) -> Args {
         .text("grid", "25")
         .text("counts", "26")
         .text("step", "27")
+        // The audification calculator's spoken summary (C03-T08b).
+        .number("k", 2200.0)
+        .number("audibleLow", 40.0)
+        .number("audibleHigh", 20000.0)
         // The chart explorer toggles (B03-T09).
         .text("modality", "speech")
         .text("on", "yes")

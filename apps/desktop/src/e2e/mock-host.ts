@@ -270,10 +270,14 @@ let cursor: CursorState = {
   braille: null,
 };
 
-function moveCursor(row: number, origin: CursorOrigin): CursorState {
+function moveCursor(
+  row: number,
+  origin: CursorOrigin,
+  datasetId: string | null = dataset?.id ?? null,
+): CursorState {
   cursor = {
     seq: cursor.seq + 1,
-    dataset: dataset?.id ?? null,
+    dataset: datasetId,
     row,
     x: null,
     node: null,
@@ -353,6 +357,172 @@ function navMove(verb: string): {
 /** The spec commands (B05-T03). */
 const spec = mockSpec();
 
+/**
+ * The function commands (C03-T08b), simplified: an expression reads unless its brackets
+ * do not balance or it ends with an operator, and every function opens with the same four
+ * critical points. The app core's own tests cover reading and sampling; the E2E checks
+ * what the UI does with the replies.
+ */
+function checkExpression(expr: string): {
+  ok: boolean;
+  canonical: string | null;
+  diagnostics: {
+    severity: string;
+    code: string;
+    rules: string[];
+    message: string;
+    pointer: string | null;
+  }[];
+  span: [number, number] | null;
+} {
+  const text = expr.trim().replace(/\s+/g, " ");
+  // `@` stands for an error with no place (a budget or a variable count), `#` for a reply
+  // with no diagnostic at all.
+  if (text.includes("@")) {
+    return {
+      ok: false,
+      canonical: null,
+      diagnostics: [
+        {
+          severity: "error",
+          code: "SNR-ENG-404",
+          rules: [],
+          message: "Too many variables.",
+          pointer: null,
+        },
+      ],
+      span: null,
+    };
+  }
+  if (text.includes("#")) {
+    return { ok: false, canonical: null, diagnostics: [], span: [1, 1] };
+  }
+  let depth = 0;
+  let stop: number | null = null;
+  for (let at = 0; at < expr.length; at++) {
+    const char = expr.charAt(at);
+    depth += char === "(" ? 1 : char === ")" ? -1 : 0;
+    if (depth < 0) {
+      stop = at;
+      break;
+    }
+  }
+  if (stop === null && (depth > 0 || /[-+*/^]$/.test(text))) {
+    stop = expr.length;
+  }
+  if (stop === null) {
+    return { ok: true, canonical: text, diagnostics: [], span: null };
+  }
+  return {
+    ok: false,
+    canonical: null,
+    diagnostics: [
+      {
+        severity: "error",
+        code: "SNR-ENG-400",
+        rules: [],
+        // As the host words it: the place is part of the message, counted from 1.
+        message: `The expression does not read here (at character ${String(stop + 1)}).`,
+        pointer: null,
+      },
+    ],
+    // Like the host's span: in characters as the message counts them, from 1.
+    span: [stop + 1, 1],
+  };
+}
+
+function openFunction(args: {
+  readonly expr: string;
+  readonly domain: readonly [number, number];
+  readonly samples: number | null;
+}) {
+  const canonical = checkExpression(args.expr).canonical ?? args.expr;
+  const rows = args.samples ?? 1000;
+  const field = (name: string) => ({
+    name,
+    dataType: "Float64",
+    fieldType: "quantitative",
+    role: name === "x" ? "x" : null,
+    unit: null,
+    concept: null,
+  });
+  const [min, max] = args.domain;
+  return {
+    reply: "function" as const,
+    dataset: {
+      id: "f1",
+      name: `f(x) = ${canonical}`,
+      rows,
+      fields: [field("x"), field("y"), field("dy")],
+      diagnostics: [],
+    },
+    function: {
+      canonical,
+      summary: `f(x) = ${canonical} from x = ${String(min)} to ${String(max)}: 2 zeros, 1 local maximum and 1 horizontal asymptote.`,
+      criticalPoints: [
+        {
+          kind: "zero",
+          x: -1,
+          end: null,
+          y: 0,
+          row: 10,
+          text: "zero at x = -1",
+        },
+        {
+          kind: "local maximum",
+          x: 0,
+          end: null,
+          y: 1,
+          row: 20,
+          text: "local maximum at x = 0, y = 1",
+        },
+        { kind: "zero", x: 1, end: null, y: 0, row: 30, text: "zero at x = 1" },
+        {
+          kind: "horizontal asymptote",
+          x: max,
+          end: null,
+          y: 0,
+          row: null,
+          text: "horizontal asymptote y = 0",
+        },
+      ],
+    },
+  };
+}
+
+/**
+ * The SDR-31 calculator over a series of 1000 samples at 100 Hz (10 s of data): T/k seconds
+ * in the band [k/T, k·fs/2], with 461 or 462 when part or all of it is outside hearing.
+ * The default k is 400, whose band, 40 Hz to 20 kHz, is all audible.
+ */
+function audifyReadout(wanted: number | null) {
+  const fsHz = 100;
+  const samples = 1000;
+  const seconds = samples / fsHz;
+  const k = wanted ?? 400;
+  const band: [number, number] = [k / seconds, (k * fsHz) / 2];
+  const low = Math.max(band[0], 20);
+  const high = Math.min(band[1], 20_000);
+  const audibleHz: [number, number] | null = low < high ? [low, high] : null;
+  const codes =
+    audibleHz === null
+      ? ["SNR-ENG-462"]
+      : band[0] < 20 || band[1] > 20_000
+        ? ["SNR-ENG-461"]
+        : [];
+  return {
+    reply: "audify_readout" as const,
+    k,
+    fsHz,
+    samples,
+    series: "y",
+    durationS: seconds / k,
+    bandHz: band,
+    audibleHz,
+    codes,
+  };
+}
+
 const handlers: MockHandlers = {
   ...spec.handlers,
   nav_move: (request) => {
@@ -384,8 +554,14 @@ const handlers: MockHandlers = {
   announce_repeat: () => ({ reply: "announce" as const, queued: true }),
   cursor_set: (request) => ({
     reply: "cursor" as const,
-    ...moveCursor(request.args.row, request.args.origin),
+    ...moveCursor(request.args.row, request.args.origin, request.args.dataset),
   }),
+  function_check: (request) => ({
+    reply: "function_check" as const,
+    ...checkExpression(request.args.expr),
+  }),
+  function_open: (request) => openFunction(request.args),
+  audify_calculate: (request) => audifyReadout(request.args.k),
   cursor_get: () => ({ reply: "cursor" as const, ...cursor }),
   dataset_list: () => ({
     reply: "datasets" as const,
@@ -526,6 +702,12 @@ Reflect.set(window, "__SONARITHM_MOCK__", {
   navVerbs(): string[] {
     return host.requests.flatMap((request) =>
       request.command === "nav_move" ? [JSON.stringify(request.args.verb)] : [],
+    );
+  },
+  /** The args of the UI's `cursor_set` requests, oldest first, as JSON. */
+  cursorSets(): string[] {
+    return host.requests.flatMap((request) =>
+      request.command === "cursor_set" ? [JSON.stringify(request.args)] : [],
     );
   },
   /** What the explorer's `modality_toggle` requests flipped, oldest first. */

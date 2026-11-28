@@ -22,6 +22,7 @@ use sonarithm_data::{
 
 use super::generators::Params;
 use super::generators::correlation::CorrelationTruth;
+use super::generators::outliers::OutlierTruth;
 use super::generators::prices::PriceTruth;
 use super::generators::reversals::ReversalTruth;
 use super::generators::transits::TransitTruth;
@@ -41,6 +42,9 @@ pub enum GeneratorId {
     /// GEN-004: correlation triplets (Elmquist et al. 2024).
     #[serde(rename = "GEN-004")]
     CorrelationTriplets,
+    /// GEN-011: labelled outliers, a detector test set (DS-010).
+    #[serde(rename = "GEN-011")]
+    Outliers,
 }
 
 impl GeneratorId {
@@ -52,6 +56,7 @@ impl GeneratorId {
             Self::PriceSeries => "GEN-002",
             Self::Transits => "GEN-003",
             Self::CorrelationTriplets => "GEN-004",
+            Self::Outliers => "GEN-011",
         }
     }
 
@@ -64,7 +69,8 @@ impl GeneratorId {
             Self::TrendReversals
             | Self::PriceSeries
             | Self::Transits
-            | Self::CorrelationTriplets => 1,
+            | Self::CorrelationTriplets
+            | Self::Outliers => 1,
         }
     }
 
@@ -76,6 +82,7 @@ impl GeneratorId {
             Self::PriceSeries => "smith2005effects",
             Self::Transits => "tuckerbrown2022evaluating",
             Self::CorrelationTriplets => "elmquist2024parallel",
+            Self::Outliers => "iglewicz1993detect",
         }
     }
 }
@@ -157,6 +164,8 @@ pub enum Truth {
     Transits(TransitTruth),
     /// GEN-004.
     Correlations(CorrelationTruth),
+    /// GEN-011.
+    Outliers(OutlierTruth),
 }
 
 /// Why a stimulus needs a second look: it leaves the published design or the evidence.

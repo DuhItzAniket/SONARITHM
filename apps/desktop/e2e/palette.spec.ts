@@ -145,7 +145,7 @@ test("kb_01_every_registered_command_runs_from_the_palette", async ({
       .toBe(id);
     // These open a dialog of their own, just after the palette closes: the palette again,
     // the key references (help.explorer is the explorer's, B03-T09), Preferences, and
-    // the explorer's value dialogs (G, Primary+F).
+    // the explorer's value dialogs (G, Primary+F) and New function (C03-T08b).
     if (
       [
         "app.palette",
@@ -154,6 +154,7 @@ test("kb_01_every_registered_command_runs_from_the_palette", async ({
         "app.preferences",
         "nav.goTo",
         "nav.findValue",
+        "data.newFunction",
       ].includes(id)
     ) {
       await expect(page.getByRole("dialog")).toHaveCount(1);

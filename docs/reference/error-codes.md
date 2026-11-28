@@ -279,6 +279,7 @@ Owner: `sonarithm-echometric`. Numbers SNR-ENG-600 to SNR-ENG-699.
 | `SNR-ENG-607` | error | The response does not fit the task | Point estimation and counting take a number range; trend identification takes three choices (increased, decreased, stayed the same); choice tasks take one option per answer. | SDR-40 |
 | `SNR-ENG-620` | error | The study log cannot be read | Resume from the log file the session wrote; the message names the first bad line. | — |
 | `SNR-ENG-621` | error | The study log does not match the protocol or the session | Resume with the protocol file and session ID the log was started with; start a new session for a changed protocol. | — |
+| `SNR-ENG-640` | info | A played field was not analyzed | Detectors read numeric fields; map a numeric field to the track's pitch, or leave the detector out of `analysis.detect`. | A11Y-23 |
 
 ## SNR-RENDER
 

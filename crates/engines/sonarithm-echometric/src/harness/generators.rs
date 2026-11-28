@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: 2026 SONARITHM contributors
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
-//! Stimulus generators GEN-001 to GEN-004 (docs/research-paper/datasets.md).
+//! Stimulus generators GEN-001 to GEN-004 and GEN-011 (docs/research-paper/datasets.md).
 //!
 //! Each generator re-implements a published stimulus design from the paper's description,
 //! never from the authors' code. Its module documents the published parameters next to
@@ -14,6 +14,7 @@
 //! | GEN-002 | [`prices`] | Smith & Walker 2005 (`smith2005effects`) |
 //! | GEN-003 | [`transits`] | Tucker Brown et al. 2022 (`tuckerbrown2022evaluating`) |
 //! | GEN-004 | [`correlation`] | Elmquist et al. 2024 (`elmquist2024parallel`) |
+//! | GEN-011 | [`outliers`] | A labelled detector test set (DS-010; Iglewicz & Hoaglin 1993, `iglewicz1993detect`) |
 //!
 //! **Determinism (ADR-0013, SDR-02).** A generator draws from one `ChaCha8` stream keyed
 //! by the seed and its ID ([`TrackRng`]), in a fixed order, and computes with
@@ -21,6 +22,7 @@
 //! [generator version](super::GeneratorId::version) give the same bytes on every platform.
 
 pub mod correlation;
+pub mod outliers;
 pub mod prices;
 pub mod reversals;
 pub mod transits;
@@ -49,6 +51,9 @@ pub enum Params {
     /// GEN-004.
     #[serde(rename = "GEN-004")]
     CorrelationTriplets(correlation::CorrelationParams),
+    /// GEN-011.
+    #[serde(rename = "GEN-011")]
+    Outliers(outliers::OutlierParams),
 }
 
 impl Params {
@@ -60,6 +65,7 @@ impl Params {
             Self::PriceSeries(_) => GeneratorId::PriceSeries,
             Self::Transits(_) => GeneratorId::Transits,
             Self::CorrelationTriplets(_) => GeneratorId::CorrelationTriplets,
+            Self::Outliers(_) => GeneratorId::Outliers,
         }
     }
 }
@@ -91,6 +97,7 @@ pub fn generate(params: &Params, seed: u64) -> Result<Stimulus, GeneratorError> 
         Params::PriceSeries(params) => prices::generate(params, seed),
         Params::Transits(params) => transits::generate(params, seed),
         Params::CorrelationTriplets(params) => correlation::generate(params, seed),
+        Params::Outliers(params) => outliers::generate(params, seed),
     }
 }
 
