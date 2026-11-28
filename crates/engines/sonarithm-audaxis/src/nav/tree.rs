@@ -750,22 +750,44 @@ fn add_insights(
 }
 
 /// The first point, in series order then x order, whose row the annotation covers.
+///
+/// An annotation about one track's series (RFC-0009 §1) looks only in that track's series,
+/// then one about a field only in the series that play it, so an outlier in a second series
+/// is never linked to the first. When it names neither, or none of those covers its rows,
+/// every series is searched, as before.
 fn target(
     all: &[Series],
     placed: &[(NavNodeId, Vec<NavNodeId>)],
     annotation: &Annotation,
 ) -> Option<(NavNodeId, f64)> {
     let range = annotation.range;
-    all.iter().zip(placed).find_map(|(series, (_, ids))| {
-        series
-            .points
-            .iter()
-            .zip(ids)
-            .find(|(p, _)| {
-                p.row.table == range.table
-                    && p.row.generation == range.generation
-                    && (range.start..range.end).contains(&p.row.row)
+    let first_point = |keep: &dyn Fn(&Series) -> bool| {
+        all.iter()
+            .zip(placed)
+            .filter(|(series, _)| keep(series))
+            .find_map(|(series, (_, ids))| {
+                series
+                    .points
+                    .iter()
+                    .zip(ids)
+                    .find(|(p, _)| {
+                        p.row.table == range.table
+                            && p.row.generation == range.generation
+                            && (range.start..range.end).contains(&p.row.row)
+                    })
+                    .map(|(p, &id)| (id, p.position))
             })
-            .map(|(p, &id)| (id, p.position))
-    })
+    };
+    let by_track = annotation
+        .track
+        .as_ref()
+        .and_then(|track| first_point(&|series: &Series| &series.track == track));
+    let by_field = || {
+        annotation.field.as_deref().and_then(|field| {
+            first_point(&|series: &Series| series.value_field.name.as_deref() == Some(field))
+        })
+    };
+    by_track
+        .or_else(by_field)
+        .or_else(|| first_point(&|_: &Series| true))
 }

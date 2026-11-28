@@ -36,7 +36,7 @@ ECHOMETRIC's detectors use IEEE arithmetic (`+ − × ÷`, `sqrt`, `abs`), `libm
 | Detector | Method | Parameters (recorded in each annotation, RFC-0009 §2) |
 |---|---|---|
 | `extrema` | Global minimum and maximum, plus local extrema between reversals | the hysteresis band (shared with `trend-segments`) |
-| `outliers` | Robust z-score from the median and the median absolute deviation (Iglewicz & Hoaglin 1993) | the threshold (3.5) |
+| `outliers` | Robust z-score from the median and the median absolute deviation (Iglewicz & Hoaglin 1993), of the residuals from a moving median (F-205, C05-T02) | the threshold (3.5); the window (21) |
 | `changepoints` | PELT (Killick et al. 2012) with an L2 (mean-shift) cost | the penalty; the minimum segment length |
 | `periodicity` | The peak of the normalized autocorrelation over candidate lags | the minimum correlation; the lag range |
 | `trend-segments` | Monotonic runs between reversals that exceed a hysteresis band of the value range, which gives SDR-21's reversal count | the band, as a fraction of the range |
@@ -99,3 +99,7 @@ The references never run in the compile path. C05-T01 confirms their licences, a
 - implementation plan C05-T01 to T03, whose "through augurs and statrs" this ADR replaces
 
 Revisit if statrs or augurs gains a `libm` mode or a deterministic build option.
+
+**Amendment (2026-11-26, C05-T02).** The outlier method's table row now reads the robust z-score of residuals from a 21-value moving median, not of the raw values. A robust z over the whole series missed spikes on GEN-011's periodic base (recall 0.66), and one inside each window called noise an outlier (precision 0.87); the residual form gave precision 0.96 and recall 1.0 ([F-205](../research-paper/findings-log.md)). The method is still a robust z-score on `libm` arithmetic, with statrs as its reference.
+
+**Amendment (2026-11-28, #506 review).** On the outlier detector's fallback path (a zero MAD), a value must also be at least `FALLBACK_SEPARATION` = 3 times the largest other residual, so sparse counts and integer readings that rarely change no longer flood with outliers. The factor is INFER, and annotations record it as `fallbackSeparation` ([F-208](../research-paper/findings-log.md)). The normal path is unchanged. Also from that review: an annotation's confidence is now the lowest among the rows it covers (AGENTS rule 7), and `extrema` no longer lists a global extreme a second time as a local one.

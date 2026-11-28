@@ -25,6 +25,9 @@ import { BrailleField } from "../braille/BrailleField.tsx";
 import { Explorer } from "../explorer/Explorer.tsx";
 import { brailleOn, visualOn } from "../explorer/effective.ts";
 import { ExplorerCommands } from "../explorer/ExplorerCommands.tsx";
+import { FunctionCommands } from "../function/FunctionCommands.tsx";
+import type { OpenedFunction } from "../function/FunctionDialog.tsx";
+import { FunctionInspector } from "../function/FunctionInspector.tsx";
 import { DatasetPlot } from "../plot/DatasetPlot.tsx";
 import { useCursor } from "../cursor/useCursor.ts";
 import { DatasetTable } from "../table/DatasetTable.tsx";
@@ -122,6 +125,9 @@ export function App({
   }, [client]);
   // The one cursor, Rust's (B04-T06): the table and the readout show it.
   const cursor = useCursor(client);
+  // A function opened with "New function…" (C03-T08b) becomes the shown dataset, and the
+  // Inspector lists its critical points.
+  const [opened, setOpened] = useState<OpenedFunction | null>(null);
   // The visual highlight (V, B03-T09): the plot shows the cursor only while it is on.
   const [visual, setVisual] = useState(true);
   // Braille output (B, B03-T10): the braille field says when it is off.
@@ -261,7 +267,17 @@ export function App({
           </Tabs>
         }
         inspector={
-          <p className={styles.status}>{t.format("ui-inspector-empty")}</p>
+          client !== null && dataset !== null ? (
+            <FunctionInspector
+              client={client}
+              dataset={dataset}
+              opened={opened}
+              cursor={cursor}
+              announcer={announcer}
+            />
+          ) : (
+            <p className={styles.status}>{t.format("ui-inspector-empty")}</p>
+          )
         }
         status={
           <>
@@ -292,6 +308,14 @@ export function App({
           setBraille(brailleOn(settings));
         }}
         onQueryMenu={openQueryMenu}
+      />
+      <FunctionCommands
+        client={client}
+        announcer={announcer}
+        onOpened={(next) => {
+          setOpened(next);
+          setDataset(next.dataset);
+        }}
       />
       <Preferences
         client={client}

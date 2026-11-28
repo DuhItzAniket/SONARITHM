@@ -1,0 +1,50 @@
+# 2026-11-26: C05 ECHOMETRIC, Lane R
+
+> **Date(s):** 2026-11-26. **Phase:** C05. **Author:** project lead, written by an AI agent (Claude Code), reviewed by @DuhItzAniket.
+> **Related:** [worklog conventions](README.md) · [07 ECHOMETRIC](../../architecture/07-engines.md) · [implementation plan C05](../../planning/implementation-plan.md#c05--echometric-v1-analytics-descriptions-and-lint) · [ADR-0031](../../decisions/0031-echometric-numerics.md) · [ADR-0032](../../decisions/0032-the-lint-pass.md) · [RFC-0009](../../rfcs/0009-echometric-insights-in-the-score.md)
+
+## Context and phase
+
+- Phase: C05, Lane R: tasks C05-T01 to T10, batched into about eight PRs, each finished locally before it opens (the owner's working rule of 2026-11-26).
+- Issue(s) / PR(s):
+  - [#499](https://github.com/DuhItzAniket/SONARITHM/pull/499): the contracts;
+  - [#500](https://github.com/DuhItzAniket/SONARITHM/issues/500): AUDAXIS's overlapping lint warnings, a follow-up outside C05;
+  - [#333](https://github.com/DuhItzAniket/SONARITHM/issues/333) and [#334](https://github.com/DuhItzAniket/SONARITHM/issues/334): C05-T01 and T02, in this PR.
+- Starting point: ECHOMETRIC held only A08's harness. The compiler already mapped five detector names to the `echometric` owner and reported them as unavailable.
+
+## What was done
+
+- **Contracts (#499), approved by the coordinator under the owner's delegation:**
+  - ADR-0031: the detectors run on `libm`, with statrs and augurs only as test references in a crate at Rust 1.89.
+  - ADR-0032: lint is a core `Linter` pass that writes nothing to the Score.
+  - RFC-0009: detector parameters and the analyzed field in annotations; insight markers only for ECHOMETRIC's detectors.
+- **C05-T01:**
+  - Core: `Annotation.field` and `params`, and `AnalysisRequest` with the fields the spec's tracks play (ADR-0014 amended).
+  - The compiler fills that request and returns the annotations; the facade exposes them as `Compiled::annotations()`.
+  - AUDAXIS links an insight to its field's series.
+  - The `Echometric` engine and `SNR-ENG-640`.
+  - The facade adds ECHOMETRIC only to specs that name its detectors.
+  - `reference/` compares the robust z-scores with statrs.
+- **C05-T02:**
+  - `extrema`: global extremes, and local extremes at reversals beyond a hysteresis band.
+  - `outliers`: a robust z over moving-median residuals (F-205).
+  - GEN-011, labelled outliers (DS-010), with precision and recall tests.
+
+## Decisions
+
+| Decision | Why | Record |
+|---|---|---|
+| Detectors on `libm`; statrs and augurs as test references in their own crate | Detector output reaches the Score, so it must be identical on every platform (F-204); statrs needs Rust 1.89, while engines build at 1.88 and the CI `msrv` job checks every crate's tests at its own `rust-version` | ADR-0031 |
+| Annotations name their field, and analyzers get the played fields | Without it, an outlier in a second series was linked to the first and announced as the wrong series | RFC-0009 §1 amendment |
+| GEN-011, not GEN-005 | GEN-005 to GEN-010 are planned for other studies (datasets.md) | `harness/generators/outliers.rs` |
+| Outliers from moving-median residuals | A robust z over the whole series missed spikes on a periodic base; one inside small windows called noise an outlier | F-205 |
+| A GEN-001 turn may sit one row from the generator's on a tie | At one point per hour, a sine peak falls between two equal rows; the count is exact | `tests/detectors.rs` |
+
+## Findings to log
+
+- F-205: a robust z over a whole series misses spikes on a periodic base, and one inside small windows calls noise an outlier — [findings log](../../research-paper/findings-log.md)
+
+## Next
+
+- C05-T03: change points (PELT), periodicity (autocorrelation) and trend segments, with a new labelled generator (change points and period) and the augurs references.
+- C05-T06 starts after Lane U's batched explorer PR, extending `nav_query` (c05-t06 proposal, approved).

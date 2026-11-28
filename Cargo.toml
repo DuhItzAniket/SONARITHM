@@ -21,6 +21,7 @@ members = [
     "crates/engines/sonarithm-numisona",
     "crates/engines/sonarithm-audaxis",
     "crates/engines/sonarithm-echometric",
+    "crates/engines/sonarithm-echometric/reference",
     "crates/engines/sonarithm-sonotrace",
     "crates/engines/sonarithm-plotsona",
     "crates/engines/sonarithm-curvasona",

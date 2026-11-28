@@ -1126,6 +1126,9 @@ impl<'l> Composer<'l> {
                         units,
                     )?);
                     pieces.x = self.x_label(tree, point.x.as_ref(), verbose)?;
+                    // An insight on an estimate says so, as the point itself does (AGENTS
+                    // rule 7, A11Y-23; #506 review).
+                    pieces.provenance = self.provenance(point.provenance, verbose)?;
                 }
                 pieces.position = Some(position_part);
                 pieces.hint = hint("announce-hint-insight", &keys.activate)?;

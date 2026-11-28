@@ -656,3 +656,28 @@ fn a11y_02_query_answers_keep_the_qualifier() {
         }
     }
 }
+
+/// AGENTS rule 7, A11Y-23 (#506 review): an insight on an estimated point says so at both
+/// verbosities, as the point does; an insight on exact data says nothing of the kind.
+#[test]
+fn a11y_23_an_insight_on_an_estimate_says_so() {
+    let insights = |tree: &NavTree| -> Vec<NavNodeId> {
+        tree.iter()
+            .filter(|(_, node)| matches!(node.kind, NavKind::Insight(_)))
+            .map(|(id, _)| id)
+            .collect()
+    };
+    let (tree, _) = estimated_series(usize::MAX);
+    assert_ne!(insights(&tree), [], "the weather tree has insights");
+    for insight in insights(&tree) {
+        for verbosity in [Verbosity::Terse, Verbosity::Verbose] {
+            let spoken = speak(&tree, insight, verbosity);
+            assert!(spoken.contains("estimated"), "{verbosity:?}: {spoken}");
+        }
+    }
+    let plain = weather();
+    for insight in insights(&plain) {
+        let spoken = speak(&plain, insight, Verbosity::Verbose);
+        assert!(!spoken.contains("estimated"), "{spoken}");
+    }
+}

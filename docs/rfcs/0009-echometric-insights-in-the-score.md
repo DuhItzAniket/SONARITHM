@@ -80,14 +80,21 @@ pub enum AnnotationParam { Number(f64), Text(String) }
    }
 
    #[non_exhaustive]
-   pub struct AnalyzedField { pub field: String, pub tracks: Vec<TrackId> }
+   pub struct AnalyzedField { pub field: String, pub track: TrackId, pub rows: Option<Vec<u64>> }
    ```
 
-   - The compiler fills `fields` with each data track's main value field: its pitch channel's field, else its first channel mapped to a quantitative field.
-   - A field played by several tracks appears once, with every track that plays it.
+   - The compiler fills `fields` with one entry per data track that maps a field: its pitch channel's field, else its first channel mapped to a field, timbre aside.
    - Context tracks add nothing.
-   - ECHOMETRIC's detectors analyze exactly these fields, so every insight belongs to a series that sounds.
-3. AUDAXIS links an annotation to the series whose field is the annotation's `field`. When `field` is `None`, or no series plays it, the old rule applies: the first series whose points cover the rows.
+   - `rows` are the rows the track plays, in the order it plays them. They are the rows its `filter` keeps, without those that have no time value, stably ordered by the time field. The time field is the substrate's, else the spec's field with role `x`, else the data's own role-`x` field.
+   - `sonarithm_data::play_rows` computes `rows`. A test holds them equal to the source rows of every note NUMISONA encodes, so what a detector reads is what the listener hears. `None` means every row in table order, for a data type that cannot tell.
+   - ECHOMETRIC's detectors analyze exactly these series, so every insight belongs to a series that sounds.
+3. Core `Annotation` also gains `track: Option<TrackId>`, set by an analyzer that read one track's series. AUDAXIS links an annotation to that track's series first, then to a series of its `field`, then by the old rule (the first series whose points cover the rows).
+   - A track's series may skip rows (its filter) and run out of table order (its time field). An annotation's `range` therefore spans its first and last rows in table order, whichever comes first, and `track` says which of those rows belong to it.
+   - `field` and `track` are `Option`s, serialised with `default` and `skip_serializing_if = "Option::is_none"`, as `params` is when empty. An annotation without them serialises exactly as before, and one written before them still reads. Annotations are not part of the Score (above), so no Score's bytes change either.
+   - The compiler gathers `rows` only when `analysis.detect` names at least one detector, so a large table carries no row list for a compile that analyzes nothing.
+   - `play_rows` sorts stably, so rows with equal time values keep their table order. A row with no time value is left out, as the encoders leave it out (`SNR-ENG` "rows without time" in NUMISONA). The function reads no clock and iterates no hash map.
+
+   *Amended again on 2026-11-26 (#506's review).* `AnalyzedField` was first one per field, listing every track that played it, and its series was the whole column in table order. On DS-003, whose three tracks each filter one region of a month-major table, the detectors then read a series that zig-zagged between regions. So `AnalyzedField` is now one per track, with the rows it plays, and annotations carry their track.
 
 ### 2. Insight markers
 

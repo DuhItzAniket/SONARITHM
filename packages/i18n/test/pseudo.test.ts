@@ -82,6 +82,10 @@ function sampleArgs(style: string): MessageArgs {
     grid: "25",
     counts: "26",
     step: "27",
+    // The audification calculator's spoken summary (C03-T08b).
+    k: { number: 2200 },
+    audibleLow: { number: 40 },
+    audibleHigh: { number: 20000 },
     // The chart explorer's toggles (B03-T09).
     modality: "speech",
     on: "yes",
