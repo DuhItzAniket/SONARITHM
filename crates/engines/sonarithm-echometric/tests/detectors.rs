@@ -268,6 +268,27 @@ fn f_207_outlier_ends_against_the_interior() {
             if ends == outliers::EndFit::Skip {
                 assert_eq!(end_found, 0, "skipped ends are never reported");
             }
+            // The other half: with spikes forced at both ends, an end finding is always a
+            // hit, so the precision above cannot show false alarms. The same bases and seeds
+            // with no end spikes give the false-alarm rate of the ordinary end values.
+            let mut false_alarms = 0usize;
+            for seed in 0..100 {
+                let params = OutlierParams {
+                    amplitude,
+                    slope,
+                    ..OutlierParams::default()
+                };
+                let stimulus = generate(&Params::Outliers(params), seed).unwrap();
+                let last = (stimulus.rows() - 1) as u64;
+                false_alarms += outliers::detect_with(&series(&stimulus, "value"), ends)
+                    .iter()
+                    .filter(|f| f.first == 0 || f.first == last)
+                    .count();
+            }
+            println!(
+                "F-207 {base:>8} {ends:?}: false alarms at ordinary ends {false_alarms} of 200 ({:.4})",
+                rate(false_alarms, 200),
+            );
         }
     }
 }
