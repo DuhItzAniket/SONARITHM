@@ -340,6 +340,7 @@ impl App {
             Request::CursorGet => Ok(self.cursor_get()),
             request @ (Request::FunctionCheck { .. }
             | Request::FunctionOpen { .. }
+            | Request::FunctionInfo { .. }
             | Request::AudifyCalculate { .. }) => self.functions(request),
             Request::NavMove { verb } => self.nav_move(&verb),
             Request::NavWhere => self.nav_where(),

@@ -104,6 +104,7 @@ pub const COMMANDS: &[(&str, &str)] = &[
     ("cursor_get", "cursor"),
     ("function_check", "function_check"),
     ("function_open", "function"),
+    ("function_info", "function_details"),
     ("audify_calculate", "audify_readout"),
     ("nav_move", "nav"),
     ("nav_where", "announce"),
@@ -492,6 +493,15 @@ pub enum Request {
         #[serde(default)]
         name: Option<String>,
     },
+    /// The function behind an open dataset, by its ID (C03-T08b; #498 review): its summary
+    /// and critical points, so the Inspector shows them for any function dataset, one opened
+    /// earlier or reopened from a project, not only the last one `function_open` returned.
+    /// Replies [`Reply::FunctionDetails`], whose `function` is `None` for a dataset that is
+    /// not a function.
+    FunctionInfo {
+        /// The dataset's ID.
+        dataset: String,
+    },
     /// The audification calculator (SDR-31) for the series a track with the `audify` mark
     /// would play from a dataset, on the encoder's own grid (C03-T08). Replies
     /// [`Reply::AudifyReadout`].
@@ -669,6 +679,7 @@ impl Request {
             Self::CursorGet => "cursor_get",
             Self::FunctionCheck { .. } => "function_check",
             Self::FunctionOpen { .. } => "function_open",
+            Self::FunctionInfo { .. } => "function_info",
             Self::AudifyCalculate { .. } => "audify_calculate",
             Self::NavMove { .. } => "nav_move",
             Self::NavWhere => "nav_where",
@@ -739,6 +750,13 @@ pub enum Reply {
         dataset: DatasetSummary,
         /// The function and its critical points.
         function: FunctionInfo,
+    },
+    /// The function behind a dataset (C03-T08b), for `function_info`.
+    FunctionDetails {
+        /// The dataset's ID.
+        dataset: String,
+        /// The function and its critical points; `None` when the dataset is not a function.
+        function: Option<FunctionInfo>,
     },
     /// The audification calculator (SDR-31, C03-T08).
     AudifyReadout {

@@ -8,6 +8,7 @@ import type {
   DatasetSummary,
   EffectiveSetting,
   Event,
+  FunctionInfo,
   MockHandlers,
   Request,
   Settings,
@@ -425,6 +426,9 @@ function checkExpression(expr: string): {
   };
 }
 
+/** The functions opened so far, by dataset ID, for `function_info`. */
+const functions = new Map<string, FunctionInfo>();
+
 function openFunction(args: {
   readonly expr: string;
   readonly domain: readonly [number, number];
@@ -441,10 +445,11 @@ function openFunction(args: {
     concept: null,
   });
   const [min, max] = args.domain;
-  return {
+  const opened = {
     reply: "function" as const,
     dataset: {
-      id: "f1",
+      // f1, f2, …: each function is its own dataset, as on the host.
+      id: `f${String(functions.size + 1)}`,
       name: `f(x) = ${canonical}`,
       rows,
       fields: [field("x"), field("y"), field("dy")],
@@ -482,6 +487,8 @@ function openFunction(args: {
       ],
     },
   };
+  functions.set(opened.dataset.id, opened.function);
+  return opened;
 }
 
 /**
@@ -554,6 +561,11 @@ const handlers: MockHandlers = {
     ...checkExpression(request.args.expr),
   }),
   function_open: (request) => openFunction(request.args),
+  function_info: (request) => ({
+    reply: "function_details" as const,
+    dataset: request.args.dataset,
+    function: functions.get(request.args.dataset) ?? null,
+  }),
   audify_calculate: (request) => audifyReadout(request.args.k),
   cursor_get: () => ({ reply: "cursor" as const, ...cursor }),
   dataset_list: () => ({
