@@ -64,6 +64,20 @@
   - the crosshair stories with axe in four themes;
   - E2E in Chromium and in WebKit, 61 tests each.
 
+## Review round (2026-11-28, maint-decisions on #517)
+
+Eight findings were fixed in one push, with the coordinator's decisions:
+- **Focus after a delete** goes to the next anchor's Delete, else the previous one's, else Add anchor.
+- **The value text** no longer changes after a crosshair step: the check gives every pixel's value, sent once per fit and looked up in the step's own render.
+- **"Area to read"** is a new RadioGroup in `@sonarithm/ui`. The anchors' area is the default and an absent area means it; a new warning, `SNR-ENG-330`, says when anchors fall outside the detected area.
+- **Failures** are said once, by the alert.
+- **The checks** are built from the state that was checked.
+- **No orphaned sessions.**
+- **Check errors** are shown, and an ended session says what to do.
+- **The image read** stops at its limit.
+
+The E2E also caught a bug the review's fix introduced: the late-reply guard was set by StrictMode's development cleanup, so no image could be calibrated in a dev build. It is now reset on mount. Firefox skips only the dialog's axe scan (F-226, #487). §5.11's lists use dashes (MD004).
+
 ## Next steps
 
 - [ ] An NVDA pass over the dialog on the real host (owner, HP-22); the PR lists what to listen for.
