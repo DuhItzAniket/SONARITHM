@@ -72,6 +72,13 @@ pub trait CompilerData {
     fn play_rows(&self, _filter: Option<&str>, _time: Option<&str>) -> Option<Vec<u64>> {
         None
     }
+
+    /// The field a track with no field channel plays (an `audify` track), with `time` the
+    /// time field: `sonarithm_data::default_series` for a data bundle. `None` when this data
+    /// type cannot tell; such a track is then not analyzed.
+    fn default_series(&self, _time: Option<&str>) -> Option<String> {
+        None
+    }
 }
 
 /// A successful compile.
@@ -761,13 +768,22 @@ fn analyzed_fields<D: CompilerData>(spec: &Spec, data: &D) -> Vec<AnalyzedField>
                 .filter(|(name, _)| *name != ChannelName::Timbre)
                 .find_map(|(_, channel)| channel.field.as_ref())
         });
-        let Some(field) = main else {
-            continue;
+        // An `audify` track has no field channel (only `loudness`); it plays the data's
+        // default series, which its encoder chooses the same way (#506 review).
+        let field = match main {
+            Some(field) => field.clone(),
+            None if track.mark == sonarithm_spec::track::Mark::Audify => {
+                let Some(field) = data.default_series(time.as_deref()) else {
+                    continue;
+                };
+                field
+            }
+            None => continue,
         };
         let filter = track.filter.as_ref().map(|f| f.expr.as_str());
         let rows = data.play_rows(filter, time.as_deref());
         fields.push(AnalyzedField::new(
-            field.clone(),
+            field,
             TrackId::new(track.id.clone()),
             rows,
         ));

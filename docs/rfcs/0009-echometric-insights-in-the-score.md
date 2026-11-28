@@ -96,6 +96,8 @@ pub enum AnnotationParam { Number(f64), Text(String) }
 
    *Amended again on 2026-11-26 (#506's review).* `AnalyzedField` was first one per field, listing every track that played it, and its series was the whole column in table order. On DS-003, whose three tracks each filter one region of a month-major table, the detectors then read a series that zig-zagged between regions. So `AnalyzedField` is now one per track, with the rows it plays, and annotations carry their track.
 
+*Amendment note (2026-11-28, #506 review, approved by the coordinator): one play order for every encoder.* Every encoder of data tracks selects and orders its rows through `sonarithm_data::play_rows`: the rows the track's `filter` keeps that have a time value, stably sorted by time. NUMISONA's encoders do, and since this batch CURVASONA's `audify` does too. Before, it ignored a track `filter` and played every timed row (a bug, now fixed; a filter it cannot apply is refused, `SNR-ENG-466`). An `audify` track has no field channel, so `analyzed_fields` gives it the field `audify` plays, `sonarithm_data::default_series` (the field with role `y`, else the first numeric field that is not the time field), and the detectors analyse exactly the series that sounds.
+
 ### 2. Insight markers
 
 When `analysis.detect` names at least one of ECHOMETRIC's detectors (`extrema`, `outliers`, `changepoints`, `periodicity`, `trend-segments`), the compiler appends one `Marker` per annotation from those detectors, after the shapers:

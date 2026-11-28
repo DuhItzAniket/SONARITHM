@@ -59,6 +59,41 @@ pub fn play_rows(
     Ok(rows)
 }
 
+/// The field a track with no field channel plays: CURVASONA's `audify`, whose only channel
+/// is `loudness`. It is the field with role `y` when that is numeric, else the first numeric
+/// field that is not the time field (`time`, else the field with role `x`) and not a provenance column (`__snr_…`). Numeric means
+/// `Float64`, `Int64` or `Int32`, the columns `audify` reads. The encoder and the compiler's
+/// analyzed fields both use this, so the detectors analyze the series that sounds
+/// (RFC-0009 §1; #506 review).
+#[must_use]
+pub fn default_series(table: &Table, time: Option<&str>) -> Option<String> {
+    // The time field, else the role-`x` field, as `play_rows` resolves it.
+    let time = time.map(str::to_owned).or_else(|| x_field(table));
+    let time = time.as_deref();
+    let numeric = |name: &str| {
+        table.column(name).is_ok_and(|column| {
+            matches!(
+                column.data_type(),
+                DataType::Float64 | DataType::Int64 | DataType::Int32
+            )
+        })
+    };
+    let names = || table.schema().fields().iter().map(|field| field.name());
+    names()
+        .find(|name| {
+            table
+                .field_meta(name)
+                .is_ok_and(|meta| meta.role == Some(Role::Y))
+        })
+        .filter(|name| numeric(name))
+        .or_else(|| {
+            names().find(|name| {
+                Some(name.as_str()) != time && !name.starts_with("__snr_") && numeric(name)
+            })
+        })
+        .cloned()
+}
+
 /// The field whose metadata gives it role `x`, if any.
 fn x_field(table: &Table) -> Option<String> {
     table

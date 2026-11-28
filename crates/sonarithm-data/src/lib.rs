@@ -36,7 +36,7 @@ pub use fingerprint::{
     FINGERPRINT_SCHEME, bundle_fingerprint, table_fingerprint, table_fingerprint_v1,
 };
 pub use meta::{Concept, FieldMeta, FieldType, Role, Unit};
-pub use play::play_rows;
+pub use play::{default_series, play_rows};
 pub use provenance::{ProvenanceMix, RowProvenance};
 pub use source::{CsvOptions, JsonOptions, Limits, Loaded, ReadOptions, read_batches, read_bytes};
 #[cfg(feature = "xlsx")]
