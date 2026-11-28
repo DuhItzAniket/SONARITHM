@@ -179,11 +179,28 @@ fn c05_t03_periodicity_on_gen_012() {
             false_alarms += 1;
         }
     }
+    // The realistic false alarm (#520 review, F-260): a noisy trend, 0.1 per row plus noise
+    // of σ 1 over 100 points (GEN-011 without spikes or sine).
+    let ramp = OutlierParams {
+        points: 100,
+        outliers: 0,
+        amplitude: 0.0,
+        slope: 0.1,
+        ..OutlierParams::default()
+    };
+    let mut trend_alarms = 0usize;
+    for seed in 0..100 {
+        let stimulus = generate(&Params::Outliers(ramp.clone()), seed).unwrap();
+        if periodicity::period(series(&stimulus, "value").values()).is_some() {
+            trend_alarms += 1;
+        }
+    }
     println!(
-        "periodicity on GEN-012 (100 seeds): period found {right}/100, false alarms {false_alarms}/100"
+        "periodicity on GEN-012 (100 seeds): period found {right}/100, false alarms {false_alarms}/100; noisy trend (GEN-011, slope 0.1): false alarms {trend_alarms}/100"
     );
     assert!(right >= 95, "{right}/100");
     assert!(false_alarms <= 5, "{false_alarms}/100");
+    assert!(trend_alarms <= 5, "{trend_alarms}/100 noisy trends called periodic");
 }
 
 /// SDR-21: trend segments are the reversals plus one, and the reversal count is GEN-001's.

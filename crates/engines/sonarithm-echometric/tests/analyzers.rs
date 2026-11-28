@@ -103,9 +103,23 @@ fn a11y_23_an_outlier_in_the_second_series_links_to_that_series() {
 /// every compile (ADR-0013).
 #[test]
 fn c05_t01_annotations_carry_their_field_and_parameters() {
-    let spec = two_series(&["extrema", "outliers"]);
+    let spec = two_series(&["extrema", "outliers", "trend-segments"]);
     let compiled = compile(&spec);
     let json = serde_json::to_string_pretty(&compiled.annotations).unwrap();
+    // #520 review: on humidity's sawtooth with one spike, the segments rise and fall; with
+    // the full range's band, the spike made every one "flat".
+    let humidity: Vec<&str> = compiled
+        .annotations
+        .iter()
+        .filter(|a| {
+            a.source.as_str() == "trend-segments" && a.field.as_deref() == Some("humidity")
+        })
+        .map(|a| a.label.as_str())
+        .collect();
+    assert!(
+        humidity.contains(&"rising") && humidity.contains(&"falling"),
+        "{humidity:?}"
+    );
     assert_eq!(
         json,
         serde_json::to_string_pretty(&compile(&spec).annotations).unwrap(),

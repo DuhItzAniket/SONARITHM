@@ -2,8 +2,10 @@
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
 //! The `periodicity` detector (C05-T03; FR-080, A11Y-23): whether a series repeats, and its
-//! period in rows. The normalised autocorrelation of the series (its mean removed) is computed
-//! for every lag up to half its length; the period is the lag of the first local peak that
+//! period in rows. The normalised autocorrelation of the series, with its least-squares line
+//! removed, is computed for every lag up to half its length. Removing only the mean left a
+//! trend's slow decay in the autocorrelation, whose noise peaks passed the threshold: a
+//! noisy ramp reported a period in about half of all seeds (#520 review, F-260). the period is the lag of the first local peak that
 //! reaches [`MIN_CORRELATION`] and is the highest such peak within a tolerance, so a period's
 //! multiples (which correlate as well) are not reported instead of it (ADR-0031).
 
@@ -26,25 +28,54 @@ const PEAK_TOLERANCE: f64 = 0.1;
 #[must_use]
 pub fn params() -> Params {
     Params::from([
-        ("method", Param::Text("autocorrelation")),
+        ("method", Param::Text("detrended-autocorrelation")),
         ("minCorrelation", Param::Number(MIN_CORRELATION)),
         ("minLag", Param::Number(MIN_LAG as f64)),
         ("minPeriods", Param::Number(MIN_PERIODS as f64)),
     ])
 }
 
-/// The normalised autocorrelation of `values` at lags 0 to `max_lag`, or `None` when the
-/// values have no variance.
+/// `values` less their least-squares line over the row index: a trend's slow rise or fall
+/// is removed, and a periodic series keeps its swings (a sine's line is nearly flat).
+#[must_use]
+pub fn detrended(values: &[f64]) -> Vec<f64> {
+    let n = values.len();
+    if n < 2 {
+        return values.to_vec();
+    }
+    let count = n as f64;
+    let x_mean = (count - 1.0) / 2.0;
+    let y_mean = values.iter().sum::<f64>() / count;
+    let (mut sxy, mut sxx) = (0.0, 0.0);
+    for (i, &y) in values.iter().enumerate() {
+        let dx = i as f64 - x_mean;
+        sxy += dx * (y - y_mean);
+        sxx += dx * dx;
+    }
+    let slope = if sxx > 0.0 { sxy / sxx } else { 0.0 };
+    values
+        .iter()
+        .enumerate()
+        .map(|(i, &y)| y - y_mean - slope * (i as f64 - x_mean))
+        .collect()
+}
+
+/// The normalised autocorrelation of `values`, with their least-squares line removed
+/// ([`detrended`]), at lags 0 to `max_lag`, or `None` when nothing is left once the line is
+/// removed (a constant or a straight line).
 #[must_use]
 pub fn autocorrelation(values: &[f64], max_lag: usize) -> Option<Vec<f64>> {
     let n = values.len();
     if n == 0 {
         return None;
     }
-    let mean = values.iter().sum::<f64>() / n as f64;
-    let centred: Vec<f64> = values.iter().map(|v| v - mean).collect();
+    let centred = detrended(values);
     let variance: f64 = centred.iter().map(|v| v * v).sum();
-    if !variance.is_finite() || variance <= 0.0 {
+    // What the line leaves of a straight series is rounding residue: below a 1e-12 share of
+    // the spread about the mean, there is nothing to correlate.
+    let mean = values.iter().sum::<f64>() / n as f64;
+    let spread: f64 = values.iter().map(|v| (v - mean) * (v - mean)).sum();
+    if !variance.is_finite() || variance <= 1e-12 * spread || variance <= 0.0 {
         return None;
     }
     Some(
@@ -139,7 +170,44 @@ mod tests {
     fn a_ramp_or_a_constant_is_not_periodic() {
         let ramp: Vec<f64> = (0..100).map(f64::from).collect();
         assert_eq!(period(&ramp), None);
+        // A straight line leaves only rounding residue once its line is removed, which
+        // must not read as a period.
         assert_eq!(period(&[4.0; 50]), None);
         assert_eq!(detect(&Series::new([])), []);
+    }
+
+    /// #520 review (F-260): a noisy trend, 0.1 per row plus noise of σ 1 over 100 points
+    /// (GEN-011 without spikes or sine), is not periodic. With only the mean removed, about
+    /// half the seeds reported a period.
+    #[test]
+    fn f_210_a_noisy_ramp_is_not_periodic() {
+        use crate::harness::generators::outliers::OutlierParams;
+        use crate::harness::{Params, generate};
+        let ramp = OutlierParams {
+            points: 100,
+            outliers: 0,
+            amplitude: 0.0,
+            slope: 0.1,
+            ..OutlierParams::default()
+        };
+        let mut false_alarms = 0;
+        for seed in 0..200 {
+            let stimulus = generate(&Params::Outliers(ramp.clone()), seed).unwrap();
+            let values = &stimulus.column("value").unwrap().values;
+            if period(values).is_some() {
+                false_alarms += 1;
+            }
+        }
+        assert!(false_alarms <= 10, "{false_alarms}/200 noisy ramps called periodic");
+    }
+
+    #[test]
+    fn detrending_keeps_a_sine_and_flattens_a_line() {
+        let line: Vec<f64> = (0..50).map(|i| 3.0 + 0.5 * f64::from(i)).collect();
+        assert!(detrended(&line).iter().all(|r| r.abs() < 1e-9));
+        let sine = wave(10.0, 100);
+        let kept = detrended(&sine);
+        let most = kept.iter().fold(0.0_f64, |m, v| m.max(v.abs()));
+        assert!(most > 0.9, "{most}");
     }
 }

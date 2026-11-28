@@ -97,8 +97,15 @@ fn an_unfiltered_audify_track_plays_every_row() {
     assert_eq!(maximum.range.start, 45);
 }
 
-/// A filter that cannot be applied is refused, never ignored (it used to be ignored).
+/// A filter that cannot be applied is refused with `SNR-ENG-466`, never ignored (it used to
+/// be ignored). It reads as an expression but names a field the data does not have, so only
+/// applying it fails.
 #[test]
 fn an_audify_filter_that_cannot_be_applied_is_refused() {
-    assert!(Sonarithm::new().compile(&spec(Some("t <"))).is_err());
+    let Err(err) = Sonarithm::new().compile(&spec(Some("missing > 3"))) else {
+        panic!("a filter on a missing field must be refused");
+    };
+    let diagnostics = err.diagnostics();
+    let codes: Vec<&str> = diagnostics.iter().map(|d| d.code.as_str()).collect();
+    assert!(codes.contains(&"SNR-ENG-466"), "{codes:?}");
 }

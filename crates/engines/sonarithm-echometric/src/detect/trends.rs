@@ -40,9 +40,9 @@ pub fn detect(series: &Series) -> Vec<Finding> {
     let mut bounds = vec![0usize];
     bounds.extend(extrema::turns(series, HYSTERESIS).iter().map(|t| t.index));
     bounds.push(values.len() - 1);
-    let band = series
-        .bounds()
-        .map_or(0.0, |(lo, hi)| HYSTERESIS * (hi - lo));
+    // The same band as the turns, on the robust range (F-209): with the full range, one
+    // spike made every rise and fall of the rest "flat" (#520 review).
+    let band = extrema::robust_range(series).map_or(0.0, |range| HYSTERESIS * range);
     let last_index = values.len() - 1;
     bounds
         .windows(2)

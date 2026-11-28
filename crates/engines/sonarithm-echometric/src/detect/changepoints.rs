@@ -31,26 +31,40 @@ pub fn params() -> Params {
     ])
 }
 
-/// Prefix sums of the values and their squares, for a segment's cost in constant time.
+/// Prefix sums of the values and their squares, for a segment's cost in constant time. The
+/// values are centred on their mean first: at a large offset (about 1e8) with small noise,
+/// `q − s²/n` on the raw values loses its digits and a flat series grew false changes
+/// (#520 review).
 struct Sums {
     sum: Vec<f64>,
     squares: Vec<f64>,
+    offset: f64,
 }
 
 impl Sums {
     fn new(values: &[f64]) -> Self {
+        let offset = if values.is_empty() {
+            0.0
+        } else {
+            values.iter().sum::<f64>() / values.len() as f64
+        };
         let mut sum = Vec::with_capacity(values.len() + 1);
         let mut squares = Vec::with_capacity(values.len() + 1);
         let (mut s, mut q) = (0.0, 0.0);
         sum.push(s);
         squares.push(q);
         for &v in values {
+            let v = v - offset;
             s += v;
             q += v * v;
             sum.push(s);
             squares.push(q);
         }
-        Self { sum, squares }
+        Self {
+            sum,
+            squares,
+            offset,
+        }
     }
 
     /// The squared deviations from the mean of `values[start..end]`.
@@ -67,7 +81,7 @@ impl Sums {
     fn mean(&self, start: usize, end: usize) -> f64 {
         let s =
             self.sum.get(end).copied().unwrap_or(0.0) - self.sum.get(start).copied().unwrap_or(0.0);
-        s / (end - start) as f64
+        self.offset + s / (end - start) as f64
     }
 }
 
@@ -87,12 +101,29 @@ fn noise_variance(values: &[f64]) -> f64 {
     let centre = median(&differences);
     let deviations: Vec<f64> = differences.iter().map(|d| (d - centre).abs()).collect();
     let sigma = median(&deviations) / MAD_SCALE;
-    sigma * sigma / 2.0
+    if sigma > 0.0 {
+        return sigma * sigma / 2.0;
+    }
+    // No noise to measure: a noise-free or integer-plateau series, whose differences are
+    // mostly exactly 0. The smallest step it takes stands in for the noise, so any sustained
+    // shift between segments of at least MIN_SEGMENT values is a change, and a series that
+    // never moves has none (#520 review). INFER (ADR-0031).
+    let smallest = differences
+        .iter()
+        .map(|d| d.abs())
+        .filter(|d| *d > 0.0)
+        .fold(f64::INFINITY, f64::min);
+    if smallest.is_finite() {
+        smallest * smallest / 2.0
+    } else {
+        0.0
+    }
 }
 
 /// The indices where a new segment starts, increasing: PELT over `values` with the
 /// penalty [`PENALTY`] · σ² · ln n and segments of at least [`MIN_SEGMENT`] values. Empty for
-/// a series too short to split or with no noise to scale the penalty.
+/// a series too short to split or that never changes. Without measurable noise (the
+/// differences' MAD is 0), σ² comes from the series' smallest step.
 #[must_use]
 pub fn starts(values: &[f64]) -> Vec<usize> {
     let n = values.len();
@@ -190,6 +221,32 @@ mod tests {
 
     fn series(values: &[f64]) -> Series {
         Series::new(values.iter().enumerate().map(|(i, &v)| (i as u64, Some(v))))
+    }
+
+    /// #520 review: a noise-free step and an integer plateau are changes, though the MAD of
+    /// their differences is 0; a constant series has none.
+    #[test]
+    fn a_noise_free_step_is_a_change() {
+        let step: Vec<f64> = [vec![0.0; 20], vec![10.0; 20]].concat();
+        assert_eq!(starts(&step), [20]);
+        let plateau: Vec<f64> = [vec![3.0; 15], vec![7.0; 15], vec![3.0; 15]].concat();
+        assert_eq!(starts(&plateau), [15, 30]);
+        assert_eq!(starts(&[5.0; 40]), Vec::<usize>::new());
+    }
+
+    /// #520 review: centring keeps the cost precise at a large offset, so a flat series has
+    /// no change and a step has exactly one, as without the offset.
+    #[test]
+    fn a_large_offset_changes_nothing() {
+        let offset = 1e8;
+        let flat: Vec<f64> = (0..60).map(|i| offset + wiggle(i) * 0.01).collect();
+        assert_eq!(starts(&flat), Vec::<usize>::new());
+        let step: Vec<f64> = (0..60)
+            .map(|i| offset + if i < 30 { 0.0 } else { 1.0 } + wiggle(i) * 0.01)
+            .collect();
+        assert_eq!(starts(&step), [30]);
+        let found = detect(&series(&step));
+        assert!((found[0].value - (offset + 1.0)).abs() < 0.01, "{:?}", found[0]);
     }
 
     /// A small deterministic wiggle, so the noise estimate is not zero.
