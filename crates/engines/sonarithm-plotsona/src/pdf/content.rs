@@ -844,14 +844,20 @@ mod tests {
     /// A `ToUnicode` map that repeats a 65 536-code range stops at the step budget.
     #[test]
     fn a_repeated_cmap_range_is_bounded() {
-        let mut map = String::from("1 beginbfrange
-");
+        let mut map = String::from(
+            "1 beginbfrange
+",
+        );
         for _ in 0..64 {
-            map.push_str("<0000> <FFFF> <0041>
-");
+            map.push_str(
+                "<0000> <FFFF> <0041>
+",
+            );
         }
-        map.push_str("endbfrange
-");
+        map.push_str(
+            "endbfrange
+",
+        );
         let parsed = parse_cmap(map.as_bytes());
         assert_eq!(parsed.len(), 65_536);
     }

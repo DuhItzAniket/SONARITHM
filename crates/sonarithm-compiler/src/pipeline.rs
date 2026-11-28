@@ -799,8 +799,11 @@ mod tests {
     struct NoRows;
 
     impl super::CompilerData for NoRows {
-        fn fingerprint(&self) -> sonarithm_core::digest::Sha256Digest {
-            sonarithm_core::digest::Sha256Digest::ZERO
+        fn fingerprint(
+            &self,
+        ) -> Result<sonarithm_core::digest::Sha256Digest, Box<sonarithm_core::diagnostic::Diagnostic>>
+        {
+            Ok(sonarithm_core::digest::Sha256Digest::ZERO)
         }
 
         fn transform(

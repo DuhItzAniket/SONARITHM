@@ -1450,3 +1450,19 @@ A05 (render engine, audio backends, export) uses F-050 to F-069.
 - **Evidence level / confidence:** EV-C / Strong for the current lock; re-check on every Tauri bump
 - **Affects:** `Cargo.lock`, `spikes/tauri-webview/src-tauri/Cargo.lock`; supply-chain-and-licensing
 - **Papers:** none
+
+### F-243 · A PDF font's widths could overflow `u32` from one huge CID, and a repeated range could keep the reader busy for billions of steps
+
+- **Date:** 2026-11-28 · **Phase:** C01 code (maintenance) · **Type:** engineering (robustness, fuzzing) · **Status:** resolved
+- **Statement:** the `pdf_chart` fuzz target, which gates CI since #510, found that the vector-PDF reader trusted three things a PDF's fonts say:
+  - **The CID overflow (the crash):** a CID font's `/W` array `c [w1 w2 …]` with a huge first CID `c`. `c` was saturated to `u32::MAX`, and `c + k` overflowed: a debug panic (`attempt to add with overflow`, `pdf/content.rs`), and a silent wrap in a release build.
+  - **The `/Widths` case:** a simple font's `/Widths` with a huge `/FirstChar` had the same pattern (`FirstChar + i`).
+  - **The repeated-range DoS:** a `/W` range `c_first c_last w` was capped at 65 536 codes per range, and so was a `ToUnicode` `bfrange`. But a file could repeat the same full range thousands of times, so one font could take billions of map inserts. That is a CPU denial of service, not a panic, and the fuzzer had not reached it.
+- **The fix:**
+  - **CIDs and character codes** past 65 535 (CIDs are 16-bit) are ignored, and the additions are `checked_add`.
+  - **A step budget:** every `/W` and `ToUnicode` parse may write at most 2^20 entries, counting repeats, which is far above any real font.
+  - **The rest of `pdf/` was scanned for the same pattern:** object streams use `saturating_add` and clamp counts to the data length, a stream's `Length` uses `checked_add`, ASCII85 uses `checked_mul` and `checked_add`, and octal escapes have at most three digits.
+- **Evidence:** the CI crash input (4437 bytes, SHA-1 500dcd70…), committed as `crates/engines/sonarithm-plotsona/fuzz/corpus/pdf_chart/seed-regression-cid-widths-overflow`; `tests/fuzz_regressions.rs` (no panic hook, every `seed-regression-*` PDF through the fuzz target's check); `pdf/content.rs` tests `cid_widths_never_overflow_or_run_away` and `a_repeated_cmap_range_is_bounded`.
+- **Evidence level / confidence:** EV-C / Strong (the crash input reproduced, then passed)
+- **Affects:** C01-T08 (the PDF tier), #510
+- **Papers:** none
