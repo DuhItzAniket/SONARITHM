@@ -1342,7 +1342,7 @@ A05 (render engine, audio backends, export) uses F-050 to F-069.
 - **Workaround:** in these two tests, Firefox skips only the axe scan (removal tracked by #487). The test records a `fixme` annotation naming the upstream issue, so the report shows it. All the other steps still run in Firefox, and Chromium and WebKit still run the scan. Remove the skip when a Playwright release ships Firefox build 1575 or later.
 - **Not reproduced locally:** Firefox does not launch on the Windows development machine. The evidence is CI job 139572491722 (1.65.1) against jobs 139562988096 and 139517563060 (1.64.1), and the upstream reproductions.
 - **Evidence level / confidence:** EV-C / Strong for the upstream match (same browser build, same axe-then-lookup trigger, same error). The crash's exact read inside axe was not traced in our tests.
-- **Affects:** `apps/desktop/e2e/audio.spec.ts`; any later E2E test that runs axe after a named lookup in Firefox until the upgrade
+- **Affects:** `apps/desktop/e2e/audio.spec.ts` and `function.spec.ts` (two tests each, through `expectNoSeriousViolations` in `e2e/axe.ts`; the function tests met it on #498, CI run 45773586383); any later E2E test that runs axe after a named lookup in Firefox until the upgrade
 - **Papers:** none yet
 
 ### F-227 · The installed release app meets PB-09 on all three CI runners, with one 84 ms outlier on macOS

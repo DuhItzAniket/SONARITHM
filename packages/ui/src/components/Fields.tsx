@@ -8,6 +8,7 @@ import type {
   ListBoxProps as AriaListBoxProps,
   NumberFieldProps as AriaNumberFieldProps,
   SelectProps as AriaSelectProps,
+  TextFieldProps as AriaTextFieldProps,
 } from "react-aria-components";
 import {
   Button as AriaButton,
@@ -23,6 +24,7 @@ import {
   Select as AriaSelect,
   SelectValue,
   Text,
+  TextField as AriaTextField,
 } from "react-aria-components";
 
 import { Chevron } from "../icons/Chevron.tsx";
@@ -80,6 +82,30 @@ export function NumberField({
       <Input className={cx(styles.input)} />
       <Messages description={description} errorMessage={errorMessage} />
     </AriaNumberField>
+  );
+}
+
+/** Props for {@link TextField}. */
+export interface TextFieldProps
+  extends FieldText, Omit<AriaTextFieldProps, "className" | "style"> {}
+
+/**
+ * A one-line text input: an expression, a name. The description and the error are linked
+ * with `aria-describedby`; the error shows only while `isInvalid`, as text beside the
+ * field, and is not a live region, so typing is never interrupted by it.
+ */
+export function TextField({
+  label,
+  description,
+  errorMessage,
+  ...props
+}: TextFieldProps) {
+  return (
+    <AriaTextField {...props} className={cx(styles.field)}>
+      <Label className={cx(styles.label)}>{label}</Label>
+      <Input className={cx(styles.input)} />
+      <Messages description={description} errorMessage={errorMessage} />
+    </AriaTextField>
   );
 }
 

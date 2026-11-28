@@ -76,6 +76,13 @@ export const DEFAULT_KEYMAP: readonly CommandSpec[] = [
     macKeys: ["Meta+E"],
   },
   {
+    // C03-T08b: from the palette; a default key waits for the keymap review.
+    id: "data.newFunction",
+    name: "command-data-new-function",
+    scope: "global",
+    keys: [],
+  },
+  {
     id: "edit.undo",
     name: "command-edit-undo",
     scope: "global",

@@ -5,7 +5,14 @@ import type { Meta, StoryObj } from "@storybook/react-vite";
 import { expect, userEvent, within } from "storybook/test";
 
 import { storyLocalizer } from "../../.storybook/localizer.ts";
-import { ComboBox, ListBox, NumberField, Option, Select } from "./Fields.tsx";
+import {
+  ComboBox,
+  ListBox,
+  NumberField,
+  Option,
+  Select,
+  TextField,
+} from "./Fields.tsx";
 
 const t = storyLocalizer();
 
@@ -132,5 +139,37 @@ export const ScaleListBox: StoryObj<typeof ListBox> = {
     await expect(
       canvas.getByRole("option", { name: t.format("ui-scale-log") }),
     ).toHaveFocus();
+  },
+};
+
+/** An error as the app core words it, with its place (C03-T08b). */
+const EXPRESSION_ERROR = "The expression does not read here (at character 6).";
+
+/**
+ * A text field with help text; when invalid, its error is text linked to the field, never
+ * colour alone (DL-X08), and it is not a live region.
+ */
+export const TextWithError: StoryObj<typeof TextField> = {
+  render: () => (
+    <TextField
+      label={t.format("ui-function-expression")}
+      description={t.format("ui-function-expression-hint")}
+      defaultValue="x^2 +"
+      isInvalid
+      errorMessage={EXPRESSION_ERROR}
+    />
+  ),
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    await userEvent.tab();
+    const input = canvas.getByRole("textbox", {
+      name: t.format("ui-function-expression"),
+    });
+    await expect(input).toHaveFocus();
+    await expect(input).toHaveAttribute("aria-invalid", "true");
+    await expect(input).toHaveAccessibleDescription(
+      expect.stringContaining(EXPRESSION_ERROR),
+    );
+    await expect(canvas.queryByRole("alert")).toBeNull();
   },
 };
