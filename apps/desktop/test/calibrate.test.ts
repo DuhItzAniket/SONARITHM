@@ -40,6 +40,7 @@ const STATE: DialogState = {
     { id: 2, axis: "y", at: [20, 100], value: 0 },
     { id: 3, axis: "x", at: [180, 100], value: "2024-12-31" },
   ],
+  area: "anchors",
 };
 
 test("c02_t10 anchors are sent at their pixel centres, with dates as text", () => {
@@ -53,6 +54,7 @@ test("c02_t10 anchors are sent at their pixel centres, with dates as text", () =
   });
   assert.deepEqual(calibration.y.anchors, [{ at: [20.5, 100.5], value: 0 }]);
   assert.equal(calibration.plotArea, null);
+  assert.equal(calibration.area, "anchors", "the anchors' area unless chosen");
   assert.equal(takesNumbers("log"), true);
   assert.equal(takesNumbers("category"), false);
 });

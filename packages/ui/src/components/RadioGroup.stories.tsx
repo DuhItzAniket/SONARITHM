@@ -52,7 +52,9 @@ export const Default: Story = {
     await expect(anchors).toBeChecked();
     await userEvent.keyboard("{ArrowDown}");
     await expect(
-      canvas.getByRole("radio", { name: t.format("ui-calibrate-area-detected") }),
+      canvas.getByRole("radio", {
+        name: t.format("ui-calibrate-area-detected"),
+      }),
     ).toBeChecked();
   },
 };
@@ -76,7 +78,9 @@ export const DisabledChoice: Story = {
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
     await expect(
-      canvas.getByRole("radio", { name: t.format("ui-calibrate-area-detected") }),
+      canvas.getByRole("radio", {
+        name: t.format("ui-calibrate-area-detected"),
+      }),
     ).toBeDisabled();
     await userEvent.tab();
     await userEvent.keyboard("{ArrowDown}");

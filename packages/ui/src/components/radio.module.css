@@ -1,10 +1,10 @@
 /* SPDX-FileCopyrightText: 2026 SONARITHM contributors */
 /* SPDX-License-Identifier: MIT OR Apache-2.0 */
 
-/* The radio group (C02-T10): a label, then each choice on a 28 px row with a round mark.
-   The chosen mark has a filled dot, so the choice is shape as well as colour (DL-X08);
-   the focus ring is the shared 2 px ring with an offset (DL-P05). The mark is round, as a
-   radio's is by convention; DL-X03's radius limit is about cards, not marks. */
+/* The radio group (C02-T10): a label, then each choice on a 28 px row with a mark. The
+   chosen mark has a filled centre, so the choice is shape as well as colour (DL-X08); the
+   focus ring is the shared 2 px ring with an offset (DL-P05). The mark's corners use
+   radius-2, the largest radius the design language allows (DL-X03), not a circle. */
 
 .group {
   display: flex;
@@ -16,7 +16,7 @@
   color: var(--text-1);
   font-family: var(--font-sans);
   font-size: var(--type-13-size);
-  font-weight: 600;
+  font-weight: var(--weight-semibold);
   line-height: var(--type-13-line);
 }
 
@@ -48,7 +48,7 @@
   inline-size: calc(var(--target-min) / 1.5);
   block-size: calc(var(--target-min) / 1.5);
   border: var(--border-width) solid var(--border-strong);
-  border-radius: 50%;
+  border-radius: var(--radius-2);
   background: var(--surface-2);
 }
 
@@ -69,7 +69,7 @@
   content: "";
   inline-size: 50%;
   block-size: 50%;
-  border-radius: 50%;
+  border-radius: var(--radius-1);
   background: var(--accent);
 }
 

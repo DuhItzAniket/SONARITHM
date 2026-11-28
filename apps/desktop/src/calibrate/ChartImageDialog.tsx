@@ -187,12 +187,13 @@ function PickImage({
   const [busy, setBusy] = useState(false);
   // A reply that arrives after Cancel closes the session it opened, so none is left behind.
   const gone = useRef(false);
-  useEffect(
-    () => () => {
+  // Set on each mount, as StrictMode mounts twice in development and runs the cleanup between.
+  useEffect(() => {
+    gone.current = false;
+    return () => {
       gone.current = true;
-    },
-    [],
-  );
+    };
+  }, []);
   return (
     <form
       className={styles.form}

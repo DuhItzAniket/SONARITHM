@@ -348,7 +348,11 @@ impl App {
         calibration: &RasterCalibration,
         at: Option<[f64; 2]>,
     ) -> Result<Reply, IpcError> {
-        let pending = self.raster.open.get_mut(&id).ok_or_else(|| no_session(id))?;
+        let pending = self
+            .raster
+            .open
+            .get_mut(&id)
+            .ok_or_else(|| no_session(id))?;
         let spec = spec_calibration(calibration)?;
         let mut checked = sonarithm::raster::check(&spec, at, Some(pending.size));
         // Reading the detected area while anchors lie outside it is likely wrong (#516).

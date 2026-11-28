@@ -4,7 +4,8 @@
 import type { RadioGroupProps as RACRadioGroupProps } from "react-aria-components";
 import {
   Label,
-  Radio as RACRadio,
+  RadioButton,
+  RadioField,
   RadioGroup as RACRadioGroup,
   Text,
 } from "react-aria-components";
@@ -59,12 +60,14 @@ export interface RadioProps {
   readonly isDisabled?: boolean;
 }
 
-/** One choice of a {@link RadioGroup}. */
-export function Radio({ value, children, isDisabled }: RadioProps) {
+/** One choice of a {@link RadioGroup} (React Aria `RadioField` and `RadioButton`). */
+export function Radio({ value, children, isDisabled = false }: RadioProps) {
   return (
-    <RACRadio value={value} isDisabled={isDisabled} className={cx(styles.radio)}>
-      <span className={cx(styles.dot)} aria-hidden="true" />
-      {children}
-    </RACRadio>
+    <RadioField value={value} isDisabled={isDisabled}>
+      <RadioButton className={cx(styles.radio)}>
+        <span className={cx(styles.dot)} aria-hidden="true" />
+        {children}
+      </RadioButton>
+    </RadioField>
   );
 }

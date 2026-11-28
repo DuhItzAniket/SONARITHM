@@ -288,7 +288,8 @@ fn c02_t10_a_check_gives_every_pixels_value_on_a_fitted_axis() {
     assert_eq!(again["values"]["y"]["values"], Value::Null);
     // A changed y axis sends its values again; x, unchanged, does not.
     let mut moved = entered(&calibration());
-    moved["y"]["anchors"][0]["value"] = json!(moved["y"]["anchors"][0]["value"].as_f64().unwrap() + 1.0);
+    moved["y"]["anchors"][0]["value"] =
+        json!(moved["y"]["anchors"][0]["value"].as_f64().unwrap() + 1.0);
     let changed = h.ok(&json!({ "command": "chart_calibration_check", "args": {
         "id": opened["id"], "calibration": moved } }));
     assert_ne!(changed["values"]["y"]["fit"], checked["values"]["y"]["fit"]);
@@ -321,7 +322,8 @@ fn c02_t10_the_area_read_is_the_one_chosen_and_the_anchors_box_by_default() {
         "id": opened["id"], "calibration": entered(&calibration_of("vl-area@1x")) } }));
     assert!(applied["rows"].as_u64().unwrap() > 0, "{applied}");
     // The box read is kept with the calibration: the anchors', not the detected one.
-    let state = h.ok(&json!({ "command": "corrections_get", "args": { "dataset": applied["id"] } }));
+    let state =
+        h.ok(&json!({ "command": "corrections_get", "args": { "dataset": applied["id"] } }));
     let file: Value = serde_json::from_str(state["text"].as_str().unwrap()).unwrap();
     let area = &file["calibration"]["plotArea"];
     assert!(area["min"].is_array(), "{file}");
@@ -355,5 +357,9 @@ fn c02_t10_a_stored_calibration_without_an_area_reads_the_anchors_area() {
     assert_eq!(removed["summary"]["rows"], applied["rows"], "{removed}");
     let state = h.ok(&json!({ "command": "corrections_get", "args": { "dataset": dataset } }));
     let file: Value = serde_json::from_str(state["text"].as_str().unwrap()).unwrap();
-    assert_eq!(file["calibration"]["plotArea"], Value::Null, "the document keeps no area");
+    assert_eq!(
+        file["calibration"]["plotArea"],
+        Value::Null,
+        "the document keeps no area"
+    );
 }
