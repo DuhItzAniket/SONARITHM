@@ -58,7 +58,10 @@ test("kb_01_every_registered_command_runs_from_the_palette", async ({
   expect(ids.length).toBeGreaterThan(0);
   // The results list the registered commands in this order; the explorer's commands are
   // the app's (B03-T09), so there are dozens, and the walk is checked once per command.
-  test.setTimeout(120_000);
+  // Reaching command n takes n arrow presses, so the walk grows with the square of the
+  // count: on CI it took 26 s to 1.6 min on main (2026-11-28), and the spec commands
+  // (B05-T03) took Firefox past two minutes on a slow runner.
+  test.setTimeout(240_000);
   for (const [index, id] of ids.entries()) {
     await openPalette(page);
     const input = palette(page).getByRole("searchbox");

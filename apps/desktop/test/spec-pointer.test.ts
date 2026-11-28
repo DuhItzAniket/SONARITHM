@@ -102,9 +102,17 @@ test("the editor uses the newest generated spec schema", () => {
   assert.ok(editor.includes(`schemas/${SPEC_SCHEMA_FILE}`));
 });
 
-const labels = (text: string, pos = text.indexOf("|")) =>
-  completeAt(schema, text.replace("|", ""), pos)?.options.map((o) => o.label) ??
-  [];
+/** The completion labels at the caret, marked by the one "|" in `marked`. */
+function labels(marked: string): string[] {
+  const parts = marked.split("|");
+  assert.equal(parts.length, 2, "exactly one caret marker");
+  const [before = "", after = ""] = parts;
+  return (
+    completeAt(schema, before + after, before.length)?.options.map(
+      (o) => o.label,
+    ) ?? []
+  );
+}
 
 test("completion offers the top-level keys not yet written", () => {
   const offered = labels('{ "specVersion": "0.4", | }');
