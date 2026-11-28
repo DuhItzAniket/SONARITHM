@@ -523,14 +523,22 @@ impl<'f> Interpreter<'f> {
         } else {
             let first = dict.get("FirstChar").and_then(Obj::as_f64).unwrap_or(0.0);
             if let Some(Obj::Array(w)) = dict.get("Widths").map(|w| self.file.resolve(w).clone()) {
+                #[expect(
+                    clippy::cast_possible_truncation,
+                    clippy::cast_sign_loss,
+                    reason = "char codes"
+                )]
+                let first = first.max(0.0) as u32;
                 for (i, v) in w.iter().enumerate() {
-                    if let (Some(v), Ok(i)) = (self.file.resolve(v).as_f64(), u32::try_from(i)) {
-                        #[expect(
-                            clippy::cast_possible_truncation,
-                            clippy::cast_sign_loss,
-                            reason = "char codes"
-                        )]
-                        let code = first.max(0.0) as u32 + i;
+                    // Checked as `/W` is: a huge `FirstChar` ends the array, never overflows.
+                    let code = u32::try_from(i)
+                        .ok()
+                        .and_then(|i| first.checked_add(i))
+                        .filter(|&code| code <= MAX_CID);
+                    let Some(code) = code else {
+                        break;
+                    };
+                    if let Some(v) = self.file.resolve(v).as_f64() {
                         font.widths.insert(code, v);
                     }
                 }
@@ -622,9 +630,21 @@ fn any_color(values: &[f64]) -> Option<Rgb> {
     }
 }
 
-/// `/W` arrays: `c [w1 w2 …]` or `c_first c_last w`.
+/// The largest CID a font has (CIDs are 16-bit, Adobe's CID limit): widths for any other
+/// are ignored, so a `/W` array can never describe more than 65 536 widths.
+const MAX_CID: u32 = 65_535;
+
+/// The most entries one `/W` array or `ToUnicode` map may write, counting ranges that repeat
+/// codes: far above any real font, so a hostile file that lists the same 65 536-code range
+/// many times stops here instead of running for billions of steps.
+const MAX_MAP_STEPS: u32 = 1 << 20;
+
+/// `/W` arrays: `c [w1 w2 …]` or `c_first c_last w`. CIDs beyond [`MAX_CID`] are ignored,
+/// and nothing a file holds can overflow the arithmetic (found by the `pdf_chart` fuzz
+/// target: a huge first CID plus its index overflowed).
 fn cid_widths(w: &[Obj]) -> BTreeMap<u32, f64> {
     let mut out = BTreeMap::new();
+    let mut steps = MAX_MAP_STEPS;
     let mut i = 0;
     while let Some(first) = w.get(i).and_then(Obj::as_f64) {
         #[expect(
@@ -636,8 +656,19 @@ fn cid_widths(w: &[Obj]) -> BTreeMap<u32, f64> {
         match w.get(i + 1) {
             Some(Obj::Array(list)) => {
                 for (k, v) in list.iter().enumerate() {
-                    if let (Some(v), Ok(k)) = (v.as_f64(), u32::try_from(k)) {
-                        out.insert(first + k, v);
+                    let cid = u32::try_from(k)
+                        .ok()
+                        .and_then(|k| first.checked_add(k))
+                        .filter(|&cid| cid <= MAX_CID);
+                    let Some(cid) = cid else {
+                        break;
+                    };
+                    let Some(left) = steps.checked_sub(1) else {
+                        return out;
+                    };
+                    steps = left;
+                    if let Some(v) = v.as_f64() {
+                        out.insert(cid, v);
                     }
                 }
                 i += 2;
@@ -652,8 +683,13 @@ fn cid_widths(w: &[Obj]) -> BTreeMap<u32, f64> {
                     clippy::cast_sign_loss,
                     reason = "CIDs"
                 )]
-                let last = (last.max(0.0) as u32).min(first.saturating_add(65_535));
+                let last = (last.max(0.0) as u32).min(MAX_CID);
+                // An empty range when `first` is past `last` or past `MAX_CID`.
                 for c in first..=last {
+                    let Some(left) = steps.checked_sub(1) else {
+                        return out;
+                    };
+                    steps = left;
                     out.insert(c, v);
                 }
                 i += 3;
@@ -696,6 +732,15 @@ fn parse_cmap(data: &[u8]) -> BTreeMap<u32, String> {
     };
     let mut i = 0;
     let mut mode = "";
+    // Every entry written, repeated codes included, counts against the budget.
+    let mut steps = MAX_MAP_STEPS;
+    let mut step = || match steps.checked_sub(1) {
+        Some(left) => {
+            steps = left;
+            true
+        }
+        None => false,
+    };
     while let Some(t) = tokens.get(i) {
         match t {
             Obj::Op(op) if op == "beginbfchar" => mode = "char",
@@ -703,6 +748,9 @@ fn parse_cmap(data: &[u8]) -> BTreeMap<u32, String> {
             Obj::Op(op) if op.starts_with("end") => mode = "",
             _ if mode == "char" => {
                 if let (Some(c), Some(u)) = (code(t), tokens.get(i + 1).and_then(utf16)) {
+                    if !step() {
+                        return out;
+                    }
                     out.insert(c, u);
                     i += 1;
                 }
@@ -713,6 +761,9 @@ fn parse_cmap(data: &[u8]) -> BTreeMap<u32, String> {
                     match tokens.get(i + 2) {
                         Some(Obj::Array(targets)) => {
                             for (k, target) in (lo..=hi).zip(targets) {
+                                if !step() {
+                                    return out;
+                                }
                                 if let Some(u) = utf16(target) {
                                     out.insert(k, u);
                                 }
@@ -722,6 +773,9 @@ fn parse_cmap(data: &[u8]) -> BTreeMap<u32, String> {
                             if let Some(base) = utf16(start) {
                                 let mut units: Vec<u16> = base.encode_utf16().collect();
                                 for k in lo..=hi {
+                                    if !step() {
+                                        return out;
+                                    }
                                     out.insert(k, String::from_utf16_lossy(&units));
                                     if let Some(last) = units.last_mut() {
                                         *last = last.wrapping_add(1);
@@ -760,5 +814,45 @@ mod tests {
         ]);
         assert_eq!(w.get(&17), Some(&363.0));
         assert_eq!(w.get(&22), Some(&635.0));
+    }
+
+    /// The `pdf_chart` fuzz target found a `/W` array starting at a huge CID: the first CID
+    /// plus an index overflowed `u32`. CIDs past 65 535 are ignored, and a range or a list
+    /// can never write more than [`MAX_CID`] + 1 widths, however it is repeated.
+    #[test]
+    fn cid_widths_never_overflow_or_run_away() {
+        let huge = cid_widths(&[
+            Obj::Real(4_294_967_295.0),
+            Obj::Array(vec![Obj::Int(500), Obj::Int(600)]),
+        ]);
+        assert!(huge.is_empty(), "{huge:?}");
+        let edge = cid_widths(&[
+            Obj::Int(65_534),
+            Obj::Array(vec![Obj::Int(1), Obj::Int(2), Obj::Int(3)]),
+        ]);
+        assert_eq!(edge.keys().copied().collect::<Vec<_>>(), [65_534, 65_535]);
+        let range = cid_widths(&[Obj::Int(0), Obj::Real(1e12), Obj::Int(7)]);
+        assert_eq!(range.len(), 65_536);
+        // The same full range many times stops at the step budget, not after billions.
+        let mut repeated = Vec::new();
+        for _ in 0..64 {
+            repeated.extend([Obj::Int(0), Obj::Int(65_535), Obj::Int(1)]);
+        }
+        assert_eq!(cid_widths(&repeated).len(), 65_536);
+    }
+
+    /// A `ToUnicode` map that repeats a 65 536-code range stops at the step budget.
+    #[test]
+    fn a_repeated_cmap_range_is_bounded() {
+        let mut map = String::from("1 beginbfrange
+");
+        for _ in 0..64 {
+            map.push_str("<0000> <FFFF> <0041>
+");
+        }
+        map.push_str("endbfrange
+");
+        let parsed = parse_cmap(map.as_bytes());
+        assert_eq!(parsed.len(), 65_536);
     }
 }
