@@ -216,20 +216,28 @@ export const Completion: StoryObj<typeof meta> = {
     await userEvent.keyboard("{Control>}{Home}{/Control}{ArrowRight}");
     await userEvent.keyboard("{Enter}");
     await userEvent.keyboard('"n');
+    // The typed text is in the editor before completion is asked for. On a cold first run
+    // in CI the request once came before it, and the list held both names (#505).
+    await waitFor(() => expect(editor).toHaveTextContent('"n'));
     // Typing alone opens nothing (INFER, OD-30).
-    await expect(document.querySelector(".cm-tooltip-autocomplete")).toBeNull();
+    await expect(
+      canvasElement.querySelector(".cm-tooltip-autocomplete"),
+    ).toBeNull();
     await userEvent.keyboard("{Control>}i{/Control}");
-    const list = await within(document.body).findByRole("listbox");
+    // CodeMirror draws its tooltips inside the editor, so the story's canvas holds the one list.
+    const list = await within(canvasElement).findByRole("listbox");
     await expect(editor).toHaveAttribute("aria-autocomplete", "list");
     await expect(editor).toHaveAttribute("aria-activedescendant");
     // Filtered by what was typed: only "name" starts with n.
-    // The list filters by what was typed once it has read it; wait for that.
-    await waitFor(() =>
-      expect(within(list).getAllByRole("option")).toHaveLength(1),
+    await waitFor(
+      () => expect(within(list).getAllByRole("option")).toHaveLength(1),
+      { timeout: 3000 },
     );
     await expect(within(list).getByRole("option")).toHaveTextContent('"name"');
     await userEvent.keyboard("{Escape}");
-    await expect(document.querySelector(".cm-tooltip-autocomplete")).toBeNull();
+    await expect(
+      canvasElement.querySelector(".cm-tooltip-autocomplete"),
+    ).toBeNull();
     await expect(editor).toHaveFocus();
   },
 };
