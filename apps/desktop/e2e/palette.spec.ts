@@ -49,6 +49,45 @@ test.beforeEach(async ({ page }) => {
   ).toBeVisible();
 });
 
+/**
+ * Poll every 20 ms: a command runs a tick after Enter, and the default back-off (100, 250,
+ * 500 ms…) made each step of the walks wait most of a second.
+ */
+const STEP_POLL = [20];
+
+/** The id of the palette's active result. */
+async function activeKey(page: Page): Promise<string | null> {
+  const input = palette(page).getByRole("searchbox");
+  const active = await input.getAttribute("aria-activedescendant");
+  if (active === null || active === "") return null;
+  return page.locator(`[id="${active}"]`).getAttribute("data-key");
+}
+
+/** Each command's id and its name in the palette, in the palette's order. */
+async function commandNames(
+  page: Page,
+): Promise<{ readonly id: string; readonly name: string }[]> {
+  await openPalette(page);
+  const names = await palette(page)
+    .getByRole("menuitem")
+    .evaluateAll((items) =>
+      items.map((item) => {
+        // The name is the item's content without its key binding, which is hidden.
+        const copy = item.cloneNode(true) as HTMLElement;
+        for (const hidden of copy.querySelectorAll('[aria-hidden="true"]')) {
+          hidden.remove();
+        }
+        return {
+          id: item.getAttribute("data-key") ?? "",
+          name: copy.textContent.trim(),
+        };
+      }),
+    );
+  await page.keyboard.press("Escape");
+  await expect(palette(page)).toBeHidden();
+  return names;
+}
+
 test("kb_01_every_registered_command_runs_from_the_palette", async ({
   page,
 }) => {
@@ -56,38 +95,52 @@ test("kb_01_every_registered_command_runs_from_the_palette", async ({
     (Reflect.get(window, "__SONARITHM_COMMANDS__") as () => string[])(),
   );
   expect(ids.length).toBeGreaterThan(0);
-  // The results list the registered commands in this order; the explorer's commands are
-  // the app's (B03-T09), so there are dozens, and the walk is checked once per command.
-  // Reaching command n takes n arrow presses, so the walk grows with the square of the
-  // count. On CI (2026-11-28, about 46 commands) it took 26 s to 1.6 min on main, that is
-  // up to about 47 ms per count squared in Firefox, and with the spec commands (B05-T03)
-  // a slow Firefox runner passed the old fixed two minutes. The budget scales with the
-  // count at 60 ms per count squared, plus 30 s to start.
-  test.setTimeout(30_000 + ids.length * ids.length * 60);
-  for (const [index, id] of ids.entries()) {
+  const commands = await commandNames(page);
+  // The palette lists every registered command, in the registry's order.
+  expect(commands.map((c) => c.id)).toEqual(ids);
+  // Each command is reached as users mostly do: type its name, take the match, Enter. The
+  // walk is linear in the count (the arrow walk is its own test, below), so a fixed second
+  // per command is ample.
+  test.setTimeout(30_000 + ids.length * 1_000);
+  for (const { id, name } of commands) {
     await openPalette(page);
-    const input = palette(page).getByRole("searchbox");
-    // Keyboard only: the arrows move the active result down to this command.
-    for (let i = 0; i <= index; i++) {
-      await page.keyboard.press("ArrowDown");
-    }
-    // A command that hangs fails here, by name, long before the walk's budget runs out.
+    // The name arrives as one input, as from a paste or dictation: key by key, each
+    // character re-filters the list, which tests the filter, not the command.
+    await page.keyboard.insertText(name);
+    // The filter leaves this command and any whose name contains its name (Stop, Stop all
+    // sound), in the palette's order. Wait for exactly those, then arrow to this one.
+    const matching = commands.filter((c) =>
+      c.name.toLowerCase().includes(name.toLowerCase()),
+    );
     await expect
-      .poll(
-        async () => {
-          const active = await input.getAttribute("aria-activedescendant");
-          return page
-            .locator(`[id="${active ?? ""}"]`)
-            .getAttribute("data-key");
-        },
-        { message: `the arrows reach ${id}`, timeout: 10_000 },
-      )
-      .toBe(id);
+      .poll(() => palette(page).getByRole("menuitem").count(), {
+        message: `typing "${name}" leaves ${String(matching.length)} results`,
+        intervals: STEP_POLL,
+      })
+      .toBe(matching.length);
+    // Typing makes the first match active, 500 ms later: React Aria's Autocomplete waits
+    // so a screen reader can say the typed text first. That wait is most of each step.
+    // Each arrow then moves one down, so wait for each step.
+    const place = matching.findIndex((c) => c.id === id);
+    for (let i = 0; i <= place; i++) {
+      if (i > 0) await page.keyboard.press("ArrowDown");
+      await expect
+        .poll(() => activeKey(page), {
+          message: `typing "${name}" reaches ${id}`,
+          timeout: 10_000,
+          intervals: STEP_POLL,
+        })
+        .toBe(matching[i]?.id);
+    }
     await page.keyboard.press("Enter");
     await expect
       .poll(
         () => page.evaluate(() => document.documentElement.dataset.lastCommand),
-        { message: `${id} runs from the palette`, timeout: 10_000 },
+        {
+          message: `${id} runs from the palette`,
+          timeout: 10_000,
+          intervals: STEP_POLL,
+        },
       )
       .toBe(id);
     // These open a dialog of their own, just after the palette closes: the palette again,
@@ -110,6 +163,28 @@ test("kb_01_every_registered_command_runs_from_the_palette", async ({
       delete document.documentElement.dataset.lastCommand;
     });
   }
+});
+
+test("kb_01_the_arrows_walk_the_whole_palette_list", async ({ page }) => {
+  const ids = await page.evaluate(() =>
+    (Reflect.get(window, "__SONARITHM_COMMANDS__") as () => string[])(),
+  );
+  test.setTimeout(30_000 + ids.length * 500);
+  await openPalette(page);
+  // Keyboard only, once down the list: each arrow makes the next command active, and the
+  // focus stays in the search field.
+  for (const id of ids) {
+    await page.keyboard.press("ArrowDown");
+    await expect
+      .poll(() => activeKey(page), {
+        message: `the arrows reach ${id}`,
+        intervals: STEP_POLL,
+      })
+      .toBe(id);
+  }
+  await expect(palette(page).getByRole("searchbox")).toBeFocused();
+  await page.keyboard.press("Escape");
+  await expect(palette(page)).toBeHidden();
 });
 
 test("a11y_30_palette_results_are_announced", async ({ page }) => {
