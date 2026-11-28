@@ -117,6 +117,15 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "e149dc73cd30538307e7ffa2acd3d2221148eaeed4871f246657b1c3eaa1cbd2"
 
 [[package]]
+name = "approx"
+version = "0.5.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "cab112f0a86d568ea0e627cc1d6be74a1e9cd55214684db5561995f6dad897c6"
+dependencies = [
+ "num-traits",
+]
+
+[[package]]
 name = "arrayvec"
 version = "0.7.8"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1737,7 +1746,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "39cab71617ae0d63f51a36d69f866391735b51691dbda63cf6f96d042b63efeb"
 dependencies = [
  "libc",
- "windows-sys 0.52.0",
+ "windows-sys 0.61.2",
 ]
 
 [[package]]
@@ -2505,7 +2514,7 @@ dependencies = [
  "js-sys",
  "log",
  "wasm-bindgen",
- "windows-core 0.58.0",
+ "windows-core 0.62.2",
 ]
 
 [[package]]
@@ -4603,7 +4612,7 @@ dependencies = [
  "errno",
  "libc",
  "linux-raw-sys",
- "windows-sys 0.52.0",
+ "windows-sys 0.61.2",
 ]
 
 [[package]]
@@ -5193,6 +5202,7 @@ dependencies = [
  "sonarithm-curvasona",
  "sonarithm-data",
  "sonarithm-dsp",
+ "sonarithm-echometric",
  "sonarithm-export",
  "sonarithm-i18n",
  "sonarithm-numisona",
@@ -5387,14 +5397,28 @@ dependencies = [
 name = "sonarithm-echometric"
 version = "0.1.0-alpha"
 dependencies = [
+ "arrow-array",
+ "arrow-schema",
  "insta",
  "proptest",
  "serde",
  "serde_json",
+ "sonarithm-audaxis",
+ "sonarithm-compiler",
  "sonarithm-core",
  "sonarithm-data",
+ "sonarithm-numisona",
  "thiserror 2.0.21",
  "toml 1.2.1+spec-1.1.0",
+]
+
+[[package]]
+name = "sonarithm-echometric-reference"
+version = "0.1.0-alpha"
+dependencies = [
+ "proptest",
+ "sonarithm-echometric",
+ "statrs",
 ]
 
 [[package]]
@@ -5637,6 +5661,17 @@ name = "static_vcruntime"
 version = "3.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "ff7589a1859b09232522bb9edf076ca7fcf14ded96685d3fa629db73023ffbb7"
+
+[[package]]
+name = "statrs"
+version = "0.19.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "c1837f9a1bd13dabbdbb04489c39451482d3cdd35a6e1a0d0f3570dea2b8c8be"
+dependencies = [
+ "approx",
+ "num-traits",
+ "thiserror 2.0.21",
+]
 
 [[package]]
 name = "string_cache"
@@ -6056,7 +6091,7 @@ dependencies = [
  "getrandom 0.4.3",
  "once_cell",
  "rustix",
- "windows-sys 0.52.0",
+ "windows-sys 0.61.2",
 ]
 
 [[package]]
@@ -6946,7 +6981,7 @@ version = "0.1.11"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "c2a7b1c03c876122aa43f3020e6c3c3ee5c05081c9a00739faf7503aeba10d22"
 dependencies = [
- "windows-sys 0.52.0",
+ "windows-sys 0.61.2",
 ]
 
 [[package]]

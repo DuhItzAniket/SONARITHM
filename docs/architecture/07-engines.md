@@ -184,6 +184,15 @@ The `function` source adds a row at each zero, extremum and inflection (as at po
 - **Privacy (ADR-0012):** session IDs and participant codes must be short codes, never names; specs are named relative to the protocol; audio context is recorded only as entered.
 - **Research use (OD-04):** no participant data is collected as research until an ethics route exists; the pilot runs with scripted responses.
 
+**As built (C05-T01, T02).** `Echometric` registers the `extrema` and `outliers` analyzers; the facade adds it only to compiles whose `analysis.detect` names one of its detectors (as for CURVASONA, F-197). Each analyzer reads each data track's series: its field over the rows it plays, in the order it plays them (`AnalysisRequest`, `sonarithm_data::play_rows`, [RFC-0009](../rfcs/0009-echometric-insights-in-the-score.md) §1, F-206). It writes annotations that carry the track, the field and the parameters below, on `libm` only ([ADR-0031](../decisions/0031-echometric-numerics.md)). A played field that is not numeric is reported (`SNR-ENG-640`, Info). The parameters are INFER (design-rules change log, 2026-11-26):
+
+| Detector | Method | Parameters |
+|---|---|---|
+| `extrema` | the global minimum and maximum (first row on ties); local extrema at reversals beyond a hysteresis band | `hysteresis` 0.1 of the value range |
+| `outliers` | each value's residual from a 21-value moving median (symmetric, so the first and last values are not judged), then the robust z-score of the residuals from their median and MAD (Iglewicz & Hoaglin 1993), with the scaled mean absolute deviation when the MAD is 0 ([F-205](../research-paper/findings-log.md)) | `threshold` 3.5; `window` 21; `minValues` 5; each annotation adds its `robustZ` |
+
+GEN-011 (labelled outliers, DS-010) joins the harness for the precision and recall tests; `crates/engines/sonarithm-echometric/reference` checks the robust z-scores against statrs.
+
 **Tests:** detector precision/recall on labelled synthetic sets; positive and negative tests for each lint rule; generators are deterministic given a seed; scripted study sessions with a pinned log.
 
 ## TONALENS (`sonarithm-tonalens`), D01
