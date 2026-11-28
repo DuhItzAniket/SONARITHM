@@ -7,6 +7,8 @@
   "type": "module",
   "exports": {
     ".": "./src/index.ts",
+    "./code-editor": "./src/editor/index.ts",
+    "./diagnostic-list": "./src/components/DiagnosticList.tsx",
     "./tokens.css": "./src/generated/tokens.css",
     "./fonts.css": "./src/generated/fonts.css",
     "./licenses.json": "./src/generated/licenses.json",
@@ -48,6 +50,17 @@
     "vitest-browser-react": "catalog:"
   },
   "dependencies": {
+    "@codemirror/autocomplete": "catalog:",
+    "@codemirror/commands": "catalog:",
+    "@codemirror/lang-json": "catalog:",
+    "@codemirror/language": "catalog:",
+    "@codemirror/lint": "catalog:",
+    "@codemirror/search": "catalog:",
+    "@codemirror/state": "catalog:",
+    "@codemirror/view": "catalog:",
+    "@lezer/common": "catalog:",
+    "@lezer/highlight": "catalog:",
+    "@lezer/json": "catalog:",
     "react": "catalog:",
     "react-aria": "catalog:",
     "react-aria-components": "catalog:",

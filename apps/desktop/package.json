@@ -15,6 +15,11 @@
     "test:e2e": "playwright test"
   },
   "dependencies": {
+    "@codemirror/autocomplete": "catalog:",
+    "@codemirror/state": "catalog:",
+    "@codemirror/view": "catalog:",
+    "@lezer/common": "catalog:",
+    "@lezer/json": "catalog:",
     "@sonarithm/i18n": "workspace:*",
     "@sonarithm/ipc": "workspace:*",
     "@sonarithm/ui": "workspace:*",

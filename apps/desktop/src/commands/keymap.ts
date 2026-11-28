@@ -429,6 +429,55 @@ export const DEFAULT_KEYMAP: readonly CommandSpec[] = [
     scope: "table",
     keys: [],
   },
+  // The spec editor (B05-T03; keyboard-and-navigation §5.9). CodeMirror keeps its editing,
+  // selection, search-panel and text-undo keys; these are the app's, so the palette lists
+  // them and users can remap them. Completion is Primary+I, never Ctrl+Space (KB-04).
+  {
+    id: "spec.edit",
+    name: "command-spec-edit",
+    scope: "global",
+    keys: [],
+  },
+  {
+    id: "spec.apply",
+    name: "command-spec-apply",
+    scope: "editor",
+    keys: ["Ctrl+Enter"],
+    macKeys: ["Meta+Enter"],
+  },
+  {
+    id: "spec.nextDiagnostic",
+    name: "command-spec-next-diagnostic",
+    scope: "editor",
+    keys: ["F8"],
+  },
+  {
+    id: "spec.previousDiagnostic",
+    name: "command-spec-previous-diagnostic",
+    scope: "editor",
+    keys: ["Shift+F8"],
+  },
+  {
+    id: "spec.format",
+    name: "command-spec-format",
+    scope: "editor",
+    keys: ["Alt+Shift+F"],
+  },
+  {
+    id: "spec.complete",
+    name: "command-spec-complete",
+    scope: "editor",
+    keys: ["Ctrl+I"],
+    macKeys: ["Meta+I"],
+  },
+  {
+    // Primary+F in the editor: its search panel, before the global "Find in this region".
+    id: "spec.find",
+    name: "command-spec-find",
+    scope: "editor",
+    keys: ["Ctrl+F"],
+    macKeys: ["Meta+F"],
+  },
 ];
 
 /** A command's default bindings on `platform`. */

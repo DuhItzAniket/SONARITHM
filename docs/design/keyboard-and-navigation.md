@@ -260,14 +260,17 @@ Slider announcements always include value, unit and range ("Pitch range maximum,
 
 The Spec tab uses CodeMirror 6 with its standard editing keys.
 
-| Key | Action |
-|---|---|
-| Primary+Enter | Apply the spec (validate and compile) |
-| F8 / Shift+F8 | Next / previous diagnostic (CodeMirror lint default; verify in B05) |
-| Primary+F | Search panel |
-| Shift+Alt+F (macOS Shift+Option+F) | Format document |
-| Completion | CodeMirror default; on macOS Ctrl+Space switches input source, so an alternative binding is used (verify in B05) |
-| Tab | Moves focus out of the editor by default. Tab indentation is an opt-in preference; when it is on, Escape followed by Tab leaves the editor (CodeMirror behaviour; verify in B05) |
+| Key | Command | Action |
+|---|---|---|
+| Primary+Enter | `spec.apply` | Apply the spec (set it, then compile), and say the outcome |
+| F8 / Shift+F8 | `spec.nextDiagnostic` / `spec.previousDiagnostic` | Next / previous diagnostic, said with its severity, line, column, code and message |
+| Primary+F | `spec.find` | Search panel (CodeMirror's); F3 and Shift+F3 find next and previous; Escape closes it |
+| Shift+Alt+F (macOS Shift+Option+F) | `spec.format` | Format document (one undoable edit) |
+| Primary+I | `spec.complete` | Show completions from the spec schema. Ctrl+Space is never bound (KB-04, input methods) |
+| Primary+Z / Primary+Y, Primary+Shift+Z | CodeMirror | Undo and redo typing, said as "Undid a text edit."; with no typing left to undo, the key reaches the app's `edit.undo` and steps the spec history |
+| Tab | — | Moves focus out of the editor. Tab is not indentation (no opt-in yet) |
+
+**As built (B05-T03).** The bindings above are registry commands in the `editor` scope, so the palette lists them and they can be remapped; CodeMirror keeps its editing and selection keys, and a key it handled never also runs a global command. Completion opens only on request: a list that opens while typing interrupts speech, so opening while typing is off by default (INFER; checked in the OD-30 walkthrough); Preferences › Spec editor turns it on (`editor.autoComplete`). "Edit the spec" (`spec.edit`, unbound) selects the Spec tab and focuses the editor from anywhere. [CHECK] in B07: Primary+I and Shift+Alt+F against NVDA, JAWS and Narrator in focus mode, and Cmd+I and Shift+Option+F with VoiceOver; no default conflict is known.
 
 ### 5.10 Status region
 
@@ -484,5 +487,6 @@ Navigation is built on discrete commands (`nav.move(verb, direction)`), not on c
 | Date | Change | By |
 |---|---|---|
 | 2026-10-18 | v0 keymap, NavTree verb mapping, announcement templates, queue policy and earcon catalogue created. Not yet validated. | Kickoff |
+| 2026-11-26 | §5.9 as built (B05-T03): completion is Primary+I (Ctrl+Space breaks KB-04), opening only on request (INFER, OD-30); F8, Shift+F8, Primary+F and Shift+Alt+F are app commands in the `editor` scope; Tab leaves the editor (no Tab-indentation preference yet). An Alt chord on macOS keeps the letter key it was pressed on (Option+Shift+F types "Ï"). Approved by the coordinator. | B05 UI session |
 | 2026-11-01 | §5.5: the toggles' choices are saved over the profile, `mod.reset` added (palette only), the order of "Speech off" and "Speech on" fixed, the no-lockout rule added, and errors and alarms kept audible with speech off (both INFER, OD-30). Approved by the coordinator (B03-T09). | Lane U |
 | 2026-11-01 | KB-04's "no Alt+arrows" scoped to Windows and Linux: Alt+arrows are webview history in WebView2 and WebKitGTK only (WKWebView uses Cmd), and on macOS Option+arrows are Jump (KB-07). The keymap lint follows. Option+arrows with VoiceOver added to the B07 [CHECK] items. No default binding changed. Approved by the coordinator (B03-T09). | Lane U |

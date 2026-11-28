@@ -52,6 +52,10 @@ export function chordOf(input: KeyInput): Chord | null {
   let name: string;
   if (/^[a-z]$/i.test(key)) {
     name = key.toUpperCase();
+  } else if (input.altKey && /^Key[A-Z]$/.test(code)) {
+    // Option on macOS turns a letter into another character (Option+Shift+F types "Ï"),
+    // so an Alt chord falls back to the letter key it was pressed on.
+    name = code.slice(3);
   } else if (code.startsWith("Digit")) {
     name = code.slice(5);
   } else if (code in CODE_NAMES) {

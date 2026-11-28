@@ -113,3 +113,4 @@ export {
   type TreeProps,
 } from "./components/Tree.tsx";
 export { THEMES, type Theme } from "./foundations/themes.ts";
+export { type Severity, SeverityIcon } from "./icons/Severity.tsx";

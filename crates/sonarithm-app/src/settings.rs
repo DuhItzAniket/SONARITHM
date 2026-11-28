@@ -87,6 +87,22 @@ pub struct Settings {
     /// settings version 1 was written, so files without it read the default.
     #[serde(default)]
     pub braille: BrailleSettings,
+    /// The spec editor's behaviour (B05-T03). Added after settings version 1 was written,
+    /// so files without it read the default.
+    #[serde(default)]
+    pub editor: EditorSettings,
+}
+
+/// Spec editor settings (B05-T03, keyboard-and-navigation §5.9).
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Serialize, Deserialize, TS)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+#[non_exhaustive]
+pub struct EditorSettings {
+    /// Whether the completion list opens on its own while typing. Off by default: a list
+    /// that opens while typing interrupts the screen reader's speech, so completion opens on
+    /// request (Primary+I). INFER: to be checked in the OD-30 walkthrough with NVDA.
+    #[serde(default)]
+    pub auto_complete: bool,
 }
 
 /// Braille output settings (B03-T10, keyboard §10). They belong to the user's device, not to
@@ -118,6 +134,7 @@ impl Default for Settings {
             gpu: GpuPreference::default(),
             choices: UiChoices::default(),
             braille: BrailleSettings::default(),
+            editor: EditorSettings::default(),
         }
     }
 }
@@ -764,6 +781,34 @@ mod tests {
             .remove("calibratedLatencyS");
         let settings: Settings = serde_json::from_value(value).unwrap();
         assert!(settings.audio.calibrated_latency_s.is_empty());
+    }
+
+    #[test]
+    fn b05_t03_settings_without_the_editor_section_load_with_completion_on_request() {
+        // A file written before B05-T03 has no `editor`.
+        let mut value = serde_json::to_value(Settings::default()).unwrap();
+        value.as_object_mut().unwrap().remove("editor");
+        let settings: Settings = serde_json::from_value(value).unwrap();
+        assert!(!settings.editor.auto_complete);
+        assert_eq!(settings.settings_version, SETTINGS_VERSION);
+        // And through the store, as a file on disk.
+        let dir = TempDir::new("settings-no-editor");
+        let mut value = serde_json::to_value(Settings::default()).unwrap();
+        value.as_object_mut().unwrap().remove("editor");
+        std::fs::write(dir.path().join(FILE), value.to_string()).unwrap();
+        let loaded = SettingsStore::new(dir.path()).load();
+        assert_eq!(loaded.settings.editor, EditorSettings::default());
+        assert_eq!(loaded.notices, Vec::new());
+    }
+
+    #[test]
+    fn b05_t03_the_editor_setting_round_trips() {
+        let mut settings = Settings::default();
+        settings.editor.auto_complete = true;
+        let text = serde_json::to_string(&settings).unwrap();
+        assert!(text.contains(r#""editor":{"autoComplete":true}"#));
+        let back: Settings = serde_json::from_str(&text).unwrap();
+        assert_eq!(back, settings);
     }
 
     #[test]

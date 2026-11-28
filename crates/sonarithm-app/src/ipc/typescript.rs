@@ -160,6 +160,7 @@ pub fn typescript() -> String {
     declare::<crate::settings::AnnouncerRoute>(&mut out, &cfg);
     declare::<crate::settings::GpuPreference>(&mut out, &cfg);
     declare::<crate::settings::BrailleSettings>(&mut out, &cfg);
+    declare::<crate::settings::EditorSettings>(&mut out, &cfg);
     declare::<crate::speech::SpeechRoute>(&mut out, &cfg);
     declare::<crate::ipc::AnnouncementInfo>(&mut out, &cfg);
     declare::<crate::ipc::AnnouncementClass>(&mut out, &cfg);

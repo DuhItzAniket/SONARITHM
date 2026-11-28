@@ -1,0 +1,46 @@
+/* SPDX-FileCopyrightText: 2026 SONARITHM contributors */
+/* SPDX-License-Identifier: MIT OR Apache-2.0 */
+
+.spec {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  block-size: 100%;
+  min-block-size: 0;
+  padding: var(--space-2);
+}
+
+.summary,
+.hint {
+  margin: 0;
+  color: var(--text-2);
+  font-size: var(--type-13-size);
+  line-height: var(--type-13-line);
+}
+
+.notice {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  align-items: center;
+  padding: var(--space-2);
+  border: var(--border-width) solid var(--border-strong);
+  border-radius: var(--radius-1);
+  background: var(--surface-2);
+  color: var(--text-1);
+}
+
+.notice p {
+  margin: 0;
+}
+
+.editor {
+  flex: 1;
+  min-block-size: 0;
+}
+
+.loading {
+  margin: 0;
+  padding: var(--space-2);
+  color: var(--text-2);
+}

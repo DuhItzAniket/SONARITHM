@@ -1,0 +1,256 @@
+/* SPDX-FileCopyrightText: 2026 SONARITHM contributors */
+/* SPDX-License-Identifier: MIT OR Apache-2.0 */
+
+/*
+ * The CodeMirror editor (B05-T03). CodeMirror's base theme comes first in the page, so these
+ * rules, of the same weight, replace its colours with the design tokens. Diagnostics are
+ * never colour alone (DL-X08): an error is a solid underline and a round mark with a cross,
+ * a warning a dashed underline and a triangle with a bar, a note a dotted underline and a
+ * square with a dot.
+ */
+
+.editor {
+  display: flex;
+  min-block-size: 0;
+  border: var(--border-width) solid var(--border);
+  border-radius: var(--radius-1);
+  background: var(--surface-1);
+  color: var(--text-1);
+}
+
+.editor :global(.cm-editor) {
+  flex: 1;
+  min-block-size: 0;
+  background: var(--surface-1);
+  color: var(--text-1);
+  font-family: var(--font-mono);
+  font-size: var(--type-13-size);
+  line-height: var(--type-13-line);
+}
+
+.editor :global(.cm-editor.cm-focused) {
+  outline: var(--focus-ring-width) solid var(--focus);
+  outline-offset: var(--focus-ring-offset);
+}
+
+.editor :global(.cm-scroller) {
+  font-family: var(--font-mono);
+  line-height: var(--type-13-line);
+}
+
+.editor :global(.cm-content) {
+  padding-block: var(--space-2);
+  caret-color: var(--text-1);
+}
+
+.editor :global(.cm-cursor) {
+  border-inline-start-color: var(--text-1);
+}
+
+.editor :global(.cm-gutters) {
+  border-inline-end: var(--border-width) solid var(--border);
+  background: var(--surface-2);
+  color: var(--text-2);
+}
+
+.editor :global(.cm-activeLine),
+.editor :global(.cm-activeLineGutter) {
+  background: var(--surface-2);
+}
+
+.editor :global(.cm-selectionBackground),
+.editor :global(.cm-focused .cm-selectionBackground),
+.editor :global(.cm-content ::selection) {
+  background: var(--surface-3);
+}
+
+.editor :global(.cm-matchingBracket) {
+  outline: var(--border-width) solid var(--border-strong);
+  background: none;
+}
+
+.key {
+  color: var(--text-1);
+  font-weight: var(--weight-medium);
+}
+
+.string {
+  color: var(--text-2);
+}
+
+.number,
+.atom {
+  color: var(--accent);
+}
+
+/* Diagnostic ranges: the line style carries the severity, the colour only repeats it. */
+.editor :global(.cm-lintRange) {
+  padding-block-end: 0;
+  background: none;
+  text-decoration-line: underline;
+  text-decoration-thickness: var(--focus-ring-width);
+  text-underline-offset: var(--space-1);
+}
+
+.editor :global(.cm-lintRange-error) {
+  text-decoration-style: solid;
+  text-decoration-color: var(--signal-error);
+}
+
+.editor :global(.cm-lintRange-warning) {
+  text-decoration-style: dashed;
+  text-decoration-color: var(--signal-warning);
+}
+
+.editor :global(.cm-lintRange-info),
+.editor :global(.cm-lintRange-hint) {
+  text-decoration-style: dotted;
+  text-decoration-color: var(--text-2);
+}
+
+/* Gutter marks: a shape and a sign each, drawn with the text colour of their severity. */
+.editor :global(.cm-lint-marker) {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  inline-size: var(--space-4);
+  block-size: var(--space-4);
+  border: var(--border-width) solid currentcolor;
+  background: none;
+  font-family: var(--font-sans);
+  font-size: var(--type-11-size);
+  font-weight: var(--weight-semibold);
+  line-height: var(--type-11-line);
+  /* CodeMirror draws its marks as `content` images; show the box and its sign instead. */
+  content: normal;
+}
+
+.editor :global(.cm-lint-marker-error) {
+  border-radius: var(--radius-2);
+  color: var(--signal-error);
+}
+
+.editor :global(.cm-lint-marker-error)::before {
+  content: "\00d7";
+}
+
+.editor :global(.cm-lint-marker-warning) {
+  border: none;
+  color: var(--signal-warning);
+}
+
+.editor :global(.cm-lint-marker-warning)::before {
+  content: "!";
+  padding-block-start: var(--space-1);
+  padding-inline: var(--space-1);
+  border-block-end: var(--border-width) solid currentcolor;
+}
+
+.editor :global(.cm-lint-marker-info) {
+  border-radius: 0;
+  color: var(--text-2);
+}
+
+.editor :global(.cm-lint-marker-info)::before {
+  content: "i";
+}
+
+/* Tooltips, the completion list and the search panel. */
+.editor :global(.cm-tooltip) {
+  border: var(--border-width) solid var(--border-strong);
+  border-radius: var(--radius-1);
+  background: var(--surface-0);
+  box-shadow: var(--shadow-overlay);
+  color: var(--text-1);
+  font-family: var(--font-sans);
+  font-size: var(--type-13-size);
+  line-height: var(--type-13-line);
+}
+
+.editor :global(.cm-tooltip-autocomplete > ul > li) {
+  padding-block: var(--space-1);
+  padding-inline: var(--space-2);
+}
+
+.editor :global(.cm-tooltip-autocomplete > ul > li[aria-selected]) {
+  outline: var(--focus-ring-width) solid var(--focus);
+  outline-offset: calc(-1 * var(--focus-ring-width));
+  background: var(--surface-3);
+  color: var(--text-1);
+}
+
+.editor :global(.cm-completionDetail),
+.editor :global(.cm-completionInfo) {
+  color: var(--text-2);
+}
+
+.editor :global(.cm-diagnostic) {
+  padding-block: var(--space-1);
+  padding-inline: var(--space-2);
+}
+
+.editor :global(.cm-diagnostic-error),
+.editor :global(.cm-diagnostic-warning),
+.editor :global(.cm-diagnostic-info),
+.editor :global(.cm-diagnostic-hint) {
+  border-inline-start: var(--focus-ring-width) solid var(--border-strong);
+}
+
+.editor :global(.cm-lintRange-active) {
+  background: var(--surface-3);
+}
+
+.editor :global(.cm-panels) {
+  border-color: var(--border);
+  background: var(--surface-2);
+  color: var(--text-1);
+}
+
+.editor :global(.cm-panel.cm-search) {
+  padding: var(--space-2);
+  font-family: var(--font-sans);
+  font-size: var(--type-13-size);
+}
+
+.editor :global(.cm-textfield),
+.editor :global(.cm-button) {
+  min-block-size: var(--target-min);
+  border: var(--border-width) solid var(--border-strong);
+  border-radius: var(--radius-1);
+  background: var(--surface-1);
+  color: var(--text-1);
+  font-family: var(--font-sans);
+  font-size: var(--type-13-size);
+}
+
+.editor :global(.cm-textfield:focus-visible),
+.editor :global(.cm-button:focus-visible),
+.editor :global(.cm-search label:focus-within) {
+  outline: var(--focus-ring-width) solid var(--focus);
+  outline-offset: var(--focus-ring-offset);
+}
+
+.editor :global(.cm-searchMatch) {
+  outline: var(--border-width) dashed var(--border-strong);
+  background: none;
+}
+
+.editor :global(.cm-searchMatch-selected) {
+  outline-style: solid;
+  background: var(--surface-3);
+}
+
+@media (forced-colors: active) {
+  .editor :global(.cm-lintRange) {
+    text-decoration-color: CanvasText;
+  }
+
+  .editor :global(.cm-lint-marker) {
+    color: CanvasText;
+  }
+
+  .editor :global(.cm-selectionBackground),
+  .editor :global(.cm-content ::selection) {
+    background: Highlight;
+  }
+}

@@ -813,7 +813,8 @@ export type SpecState = {
  */
 text: string | null, 
 /**
- * The undo token of the edit that produced it, when the request was an edit.
+ * The undo token of the edit that produced it, when the request was an edit. `null` when
+ * `spec_set` received the text the spec already had: nothing was recorded.
  */
 undoToken: number | null, };
 
@@ -1733,7 +1734,12 @@ gpu: GpuPreference,
  * The braille line's mode and the display's cell count (B03-T10). Added after
  * settings version 1 was written, so files without it read the default.
  */
-braille: BrailleSettings, };
+braille: BrailleSettings, 
+/**
+ * The spec editor's behaviour (B05-T03). Added after settings version 1 was written,
+ * so files without it read the default.
+ */
+editor: EditorSettings, };
 
 /**
  * Audio output settings.
@@ -1855,6 +1861,17 @@ mode: BrailleMode,
  * fits nothing and the screen reader pans the line.
  */
 cells?: number | null, };
+
+/**
+ * Spec editor settings (B05-T03, keyboard-and-navigation §5.9).
+ */
+export type EditorSettings = { 
+/**
+ * Whether the completion list opens on its own while typing. Off by default: a list
+ * that opens while typing interrupts the screen reader's speech, so completion opens on
+ * request (Primary+I). INFER: to be checked in the OD-30 walkthrough with NVDA.
+ */
+autoComplete: boolean, };
 
 /**
  * Where announcements are spoken (A11Y-19).

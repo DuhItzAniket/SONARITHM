@@ -46,6 +46,11 @@ test("kb_08_letters_bind_by_character_and_punctuation_by_physical_key", () => {
     chordOf(key({ key: "Shift", code: "ShiftLeft", shiftKey: true })),
     null,
   );
+  // macOS Option turns F into "Ï"; the chord keeps the letter key (B05-T03, spec.format).
+  assert.equal(
+    chordOf(key({ key: "Ï", code: "KeyF", altKey: true, shiftKey: true })),
+    "Alt+Shift+F",
+  );
   assert.equal(normalize("Shift+Ctrl+P"), "Ctrl+Shift+P");
   assert.equal(displayChord("Shift+Meta+P", "mac"), "Shift+Cmd+P");
 });
@@ -153,7 +158,11 @@ test("a11y_15_stop_all_audio_runs_even_in_an_overlay", () => {
 
 test("scope_precedence_a_text_field_keeps_its_editing_keys", () => {
   const reg = new CommandRegistry(
-    [{ id: "b.letter", name: "x", scope: "global", keys: ["K"] }, ...SPECS],
+    [
+      { id: "b.letter", name: "x", scope: "global", keys: ["K"] },
+      { id: "edit.undo", name: "x", scope: "global", keys: ["Ctrl+Z"] },
+      ...SPECS,
+    ],
     "windows",
   );
   reg.register("b.letter", { run: () => undefined });
@@ -163,6 +172,18 @@ test("scope_precedence_a_text_field_keeps_its_editing_keys", () => {
   assert.equal(reg.resolve("K", typing), null);
   assert.equal(reg.resolve("Ctrl+F", typing)?.id, "a.global");
   assert.equal(reg.resolve("F6", typing)?.id, "a.f6");
+  // Primary+Z in a text field undoes typing, not the spec (keyboard §2; B05-T03).
+  reg.register("edit.undo", { run: () => undefined });
+  assert.equal(reg.resolve("Ctrl+Z", typing), null);
+  assert.equal(
+    reg.resolve("Ctrl+Z", { scopes: ["global"], typing: false })?.id,
+    "edit.undo",
+  );
+  // The spec editor handles its editing keys itself and passes on the rest.
+  assert.equal(
+    reg.resolve("Ctrl+Z", { scopes: ["editor", "global"], typing: true })?.id,
+    "edit.undo",
+  );
 });
 
 test("kb_01_only_registered_commands_are_available_and_run", () => {
