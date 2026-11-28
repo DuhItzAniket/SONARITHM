@@ -10,17 +10,20 @@ use std::sync::Arc;
 
 use arrow_array::cast::AsArray;
 use arrow_array::types::{
-    Float32Type, Float64Type, Int8Type, Int16Type, Int32Type, Int64Type, UInt8Type, UInt16Type,
-    UInt32Type, UInt64Type,
+    Date32Type, Date64Type, Decimal128Type, DurationMicrosecondType, DurationMillisecondType,
+    DurationNanosecondType, DurationSecondType, Float32Type, Float64Type, Int8Type, Int16Type,
+    Int32Type, Int64Type, TimestampMicrosecondType, TimestampMillisecondType,
+    TimestampNanosecondType, TimestampSecondType, UInt8Type, UInt16Type, UInt32Type, UInt64Type,
 };
 use arrow_array::{Array, ArrowPrimitiveType, PrimitiveArray};
-use arrow_schema::DataType;
+use arrow_schema::{DataType, TimeUnit};
 use sonarithm_core::diagnostic::Diagnostic;
 use sonarithm_core::engine::{
     AnalysisRequest, Analyzer, Annotation, AnnotationParam, CompileContext, CompileError, Engine,
     EngineManifest, Registrar, RegistryError,
 };
 use sonarithm_core::ids::{AnalyzerId, EngineId, RowRange, RuleId};
+use sonarithm_core::math;
 use sonarithm_core::provenance::Confidence;
 use sonarithm_core::score::EngineVersion;
 use sonarithm_data::{DataBundle, RowProvenance, Table};
@@ -169,16 +172,19 @@ impl Analyzer<DataBundle> for Detector {
         // whose provenance columns cannot be read is treated as exact, as the encoder does.
         let provenance = RowProvenance::read(table).ok();
         for analyzed in request.fields {
-            let Some(series) = series_of(table, &analyzed.field, analyzed.rows.as_deref()) else {
-                cx.report(Diagnostic::new(
-                    &codes::FIELD_NOT_ANALYZED,
-                    format!(
-                        "The `{}` detector did not analyze `{}`: it is not a numeric field of the data.",
-                        self.id(),
-                        analyzed.field
-                    ),
-                ));
-                continue;
+            let series = match series_of(table, &analyzed.field, analyzed.rows.as_deref()) {
+                Ok(series) => series,
+                Err(why) => {
+                    cx.report(Diagnostic::new(
+                        &codes::FIELD_NOT_ANALYZED,
+                        format!(
+                            "The `{}` detector did not analyze `{}`: {why}.",
+                            self.id(),
+                            analyzed.field
+                        ),
+                    ));
+                    continue;
+                }
             };
             cx.check_cancelled()?;
             for finding in self.findings(&series) {
@@ -231,7 +237,9 @@ fn annotation(detector: Detector, table: &Table, field: &str, finding: &Finding)
 
 /// The lowest confidence among the rows `finding` covers: the series' rows from its first to
 /// its last, in the order the track plays them (03 §4 rule 2, AGENTS rule 7). A row with no
-/// confidence (exact data) counts as certain, so an insight on exact data stays certain.
+/// confidence counts by its class ([`Confidence::of`], SDR-43's rule): exact data as
+/// certain, so an insight on exact data stays certain, and an estimate without one as zero,
+/// so it is never certain.
 fn confidence_of(
     provenance: Option<&RowProvenance>,
     series: &Series,
@@ -247,18 +255,27 @@ fn confidence_of(
         // A finding's rows are always the series' own; the endpoints are the fallback.
         _ => vec![finding.first, finding.last],
     };
-    provenance
-        .combine(covered.iter().filter_map(|&row| usize::try_from(row).ok()))
-        .confidence
-        .unwrap_or(Confidence::CERTAIN)
+    covered
+        .iter()
+        .filter_map(|&row| usize::try_from(row).ok())
+        .map(|row| Confidence::of(provenance.get(row)))
+        .fold(Confidence::CERTAIN, Confidence::min)
 }
 
 /// The finite numbers of `field` at `rows` of `table`, in that order (every row in table
-/// order when `rows` is `None`), or `None` when the field is absent or not numeric.
-fn series_of(table: &Table, field: &str, rows: Option<&[u64]>) -> Option<Series> {
-    let column = table.column(field).ok()?;
-    let values = numbers(column.as_ref())?;
-    Some(match rows {
+/// order when `rows` is `None`), or why there are none: the field is absent, or its values
+/// are not numbers (categories, which the detectors do not analyze).
+fn series_of(table: &Table, field: &str, rows: Option<&[u64]>) -> Result<Series, String> {
+    let column = table
+        .column(field)
+        .map_err(|_| "the data has no such field".to_owned())?;
+    let values = numbers(column.as_ref()).ok_or_else(|| {
+        format!(
+            "its values are {}, not numbers, which the detectors do not analyze",
+            column.data_type()
+        )
+    })?;
+    Ok(match rows {
         // The track's rows, in the order it plays them (RFC-0009 §1).
         Some(rows) => Series::new(rows.iter().map(|&row| {
             let value = usize::try_from(row)
@@ -294,6 +311,77 @@ fn numbers(array: &dyn Array) -> Option<Vec<Option<f64>>> {
         DataType::UInt16 => convert::<UInt16Type>(array, f64::from),
         DataType::UInt32 => convert::<UInt32Type>(array, f64::from),
         DataType::UInt64 => convert::<UInt64Type>(array, |v| v as f64),
+        // What NUMISONA also plays (its encoder's `numbers`), so every series that sounds is
+        // analyzed (#506 review): decimals, and dates, times and durations in their units.
+        DataType::Decimal128(_, scale) => {
+            let divisor = math::pow(10.0, f64::from(*scale));
+            convert::<Decimal128Type>(array, |v| v as f64 / divisor)
+        }
+        DataType::Date32 => convert::<Date32Type>(array, f64::from),
+        DataType::Date64 => convert::<Date64Type>(array, |v| v as f64),
+        DataType::Timestamp(TimeUnit::Second, _) => {
+            convert::<TimestampSecondType>(array, |v| v as f64)
+        }
+        DataType::Timestamp(TimeUnit::Millisecond, _) => {
+            convert::<TimestampMillisecondType>(array, |v| v as f64)
+        }
+        DataType::Timestamp(TimeUnit::Microsecond, _) => {
+            convert::<TimestampMicrosecondType>(array, |v| v as f64)
+        }
+        DataType::Timestamp(TimeUnit::Nanosecond, _) => {
+            convert::<TimestampNanosecondType>(array, |v| v as f64)
+        }
+        DataType::Duration(TimeUnit::Second) => {
+            convert::<DurationSecondType>(array, |v| v as f64)
+        }
+        DataType::Duration(TimeUnit::Millisecond) => {
+            convert::<DurationMillisecondType>(array, |v| v as f64)
+        }
+        DataType::Duration(TimeUnit::Microsecond) => {
+            convert::<DurationMicrosecondType>(array, |v| v as f64)
+        }
+        DataType::Duration(TimeUnit::Nanosecond) => {
+            convert::<DurationNanosecondType>(array, |v| v as f64)
+        }
         _ => None,
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use std::sync::Arc;
+
+    use arrow_array::{
+        ArrayRef, Date32Array, Decimal128Array, DictionaryArray, Float16Array, Int8Array,
+        StringArray, TimestampMillisecondArray,
+    };
+
+    use super::*;
+
+    /// #506 review: the detectors read what NUMISONA plays, decimals and dates and times
+    /// among them, not only integers and floats.
+    #[test]
+    fn decimals_dates_and_timestamps_are_numbers() {
+        let decimals = Decimal128Array::from(vec![Some(1234), None, Some(-50)])
+            .with_precision_and_scale(10, 2)
+            .unwrap();
+        assert_eq!(
+            numbers(&decimals),
+            Some(vec![Some(12.34), None, Some(-0.5)])
+        );
+        let dates = Date32Array::from(vec![Some(0), Some(31)]);
+        assert_eq!(numbers(&dates), Some(vec![Some(0.0), Some(31.0)]));
+        let times = TimestampMillisecondArray::from(vec![Some(1_000), None]);
+        assert_eq!(numbers(&times), Some(vec![Some(1_000.0), None]));
+    }
+
+    /// What NUMISONA does not play is not analyzed either, and the reason names the type.
+    #[test]
+    fn categories_and_half_floats_are_not_numbers() {
+        assert_eq!(numbers(&StringArray::from(vec!["a"])), None);
+        assert_eq!(numbers(&Float16Array::from(vec![None])), None);
+        let values: ArrayRef = Arc::new(StringArray::from(vec!["low", "high"]));
+        let dictionary = DictionaryArray::try_new(Int8Array::from(vec![0, 1]), values).unwrap();
+        assert_eq!(numbers(&dictionary), None);
     }
 }

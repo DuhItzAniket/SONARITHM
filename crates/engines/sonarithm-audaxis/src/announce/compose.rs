@@ -22,6 +22,7 @@ use std::collections::BTreeSet;
 use sonarithm_core::nav::{
     AxisName, NavKind, NavNode, NavNodeId, NavTree, PointNode, Polarity, XType, XValue,
 };
+use sonarithm_core::ids::RowRange;
 use sonarithm_core::provenance::Provenance;
 use sonarithm_i18n::{
     Args, DateLength, DatePattern, I18nError, Localizer, Number, NumberOptions, UnitRef, UnitStyle,
@@ -957,9 +958,15 @@ impl<'l> Composer<'l> {
                         units,
                     )?);
                     pieces.x = self.x_label(tree, point.x.as_ref(), verbose)?;
-                    // An insight on an estimate says so, as the point itself does (AGENTS
-                    // rule 7, A11Y-23; #506 review).
-                    pieces.provenance = self.provenance(point.provenance, verbose)?;
+                    // An insight on estimates says so (AGENTS rule 7, A11Y-23; #506 review):
+                    // one row as the point itself does, several (a trend segment) as a
+                    // segment does, over every point it covers.
+                    let covered = insight_points(tree, target, insight.rows);
+                    pieces.provenance = if covered.len() > 1 {
+                        self.estimates_among(tree, &covered, verbose, false)?
+                    } else {
+                        self.provenance(point.provenance, verbose)?
+                    };
                 }
                 pieces.position = Some(position_part);
                 pieces.hint = hint("announce-hint-insight", &keys.activate)?;
@@ -1064,7 +1071,17 @@ impl<'l> Composer<'l> {
         verbose: bool,
         stretch: bool,
     ) -> Result<Option<String>, I18nError> {
-        let points = points_under(tree, id);
+        self.estimates_among(tree, &points_under(tree, id), verbose, stretch)
+    }
+
+    /// [`Self::estimates`] over any set of points, such as those an insight covers.
+    fn estimates_among(
+        &self,
+        tree: &NavTree,
+        points: &[&PointNode],
+        verbose: bool,
+        stretch: bool,
+    ) -> Result<Option<String>, I18nError> {
         let estimated: Vec<&PointNode> = points
             .iter()
             .copied()
@@ -1369,6 +1386,29 @@ fn names_level(kind: &NavKind, verbose: bool) -> bool {
         NavKind::Series(_) | NavKind::Segment(_) | NavKind::Point(_) => !verbose,
         _ => false,
     }
+}
+
+/// The points an insight covers: those of its target's series whose rows are in its range
+/// (the series plays them in its own order, so the range is in table order, RFC-0009 §1).
+fn insight_points(tree: &NavTree, target: NavNodeId, rows: RowRange) -> Vec<&PointNode> {
+    let mut series = Some(target);
+    while let Some(id) = series {
+        if matches!(tree.node(id).map(|n| &n.kind), Some(NavKind::Series(_))) {
+            break;
+        }
+        series = tree.parent(id);
+    }
+    let Some(series) = series else {
+        return Vec::new();
+    };
+    points_under(tree, series)
+        .into_iter()
+        .filter(|p| {
+            p.row.table == rows.table
+                && p.row.generation == rows.generation
+                && (rows.start..rows.end).contains(&p.row.row)
+        })
+        .collect()
 }
 
 /// The series containing `node`.

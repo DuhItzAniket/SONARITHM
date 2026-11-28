@@ -300,3 +300,40 @@ fn a11y_23_an_insight_on_an_estimate_carries_its_confidence() {
     }
     assert_eq!(at("minimum").confidence, Confidence::CERTAIN);
 }
+
+/// SDR-43's rule for an insight's confidence (#506 review): an estimate without a stated
+/// confidence counts as zero, so the insight is never reported as certain.
+#[test]
+fn sdr_43_an_insight_on_an_unstated_estimate_is_not_certain() {
+    let rows: Vec<Value> = (0..20_u32)
+        .map(|i| {
+            let estimated = i == 12;
+            let y = if estimated {
+                95.0
+            } else {
+                40.0 + f64::from(i % 4) * 0.5
+            };
+            json!({
+                "t": i,
+                "y": y,
+                "__snr_prov": if estimated { "cv_estimate" } else { "exact" },
+                "__snr_conf": Value::Null,
+            })
+        })
+        .collect();
+    let spec = json!({
+        "specVersion": "0.1",
+        "data": { "source": { "kind": "inline", "values": rows } },
+        "substrate": { "time": { "field": "t" } },
+        "tracks": [{ "id": "y", "mark": "tone", "channels": { "pitch": { "field": "y" } } }],
+        "analysis": { "detect": ["extrema"] }
+    });
+    let compiled = compile(&spec);
+    let maximum = compiled
+        .annotations
+        .iter()
+        .find(|a| a.label == "maximum")
+        .unwrap();
+    assert_eq!(maximum.range.start, 12);
+    assert_eq!(maximum.confidence, Confidence::ZERO);
+}

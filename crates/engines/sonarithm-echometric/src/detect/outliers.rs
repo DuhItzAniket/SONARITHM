@@ -38,7 +38,9 @@ const MEAN_AD_SCALE: f64 = 1.253_314;
 /// least this many times the largest residual among the other values. Without it, the
 /// fallback's scale is tiny when few values differ, and every small step is an outlier: a
 /// flat 20 °C with two 21s, or daily counts of mostly 0 with a few 1s and a 2 (#506 review,
-/// F-208). INFER (ADR-0031).
+/// F-208). Its cost: on that path a spike is not reported whenever another residual is at
+/// least a third of its size (two equal spikes, or counts with a 12 and a 5). INFER
+/// (ADR-0031).
 pub const FALLBACK_SEPARATION: f64 = 3.0;
 
 /// The fewest values a series needs before any is called an outlier: with fewer, the median
@@ -295,6 +297,19 @@ mod tests {
     fn f_208_two_equal_spikes_in_a_flat_series_are_not_separated() {
         let found = detect(&series(&[5.0, 5.0, 50.0, 5.0, 5.0, 5.0, 50.0, 5.0, 5.0]));
         assert_eq!(found, []);
+    }
+
+    /// F-208's cost, stated exactly: a spike within three times another residual is not
+    /// reported, whether or not the two are equal (counts with a 12 and a 5).
+    #[test]
+    fn f_208_a_spike_within_three_times_another_is_not_separated() {
+        let mut values = vec![0.0; 60];
+        values[20] = 12.0;
+        values[40] = 5.0;
+        assert_eq!(detect(&series(&values)), [], "12 < 3 × 5");
+        values[40] = 3.0;
+        let found: Vec<u64> = detect(&series(&values)).iter().map(|f| f.first).collect();
+        assert_eq!(found, [20], "12 ≥ 3 × 3: the 12 stands apart");
     }
 
     #[test]

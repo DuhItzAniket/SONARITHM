@@ -19,10 +19,12 @@ use sonarithm_audaxis::announce::{
     Announcement, AnnouncementQueue, Class, Composer, Part, Settings, Verbosity,
 };
 use sonarithm_audaxis::nav::{Cursor, Landmark, Outcome, Verb, XTarget};
+use sonarithm_core::engine::Annotation;
+use sonarithm_core::ids::{AnalyzerId, RowRange};
 use sonarithm_core::nav::{NavKind, NavNodeId, NavTree};
 use sonarithm_core::provenance::{Confidence, Provenance, ProvenanceClass};
 use sonarithm_i18n::{Localizer, PSEUDO_LOCALE, check_pseudo};
-use support::weather;
+use support::{inline_bundle, tree_with, weather, weather_spec};
 
 fn english() -> Localizer {
     Localizer::new("en-US").unwrap()
@@ -581,4 +583,48 @@ fn a11y_23_an_insight_on_an_estimate_says_so() {
         let spoken = speak(&plain, insight, Verbosity::Verbose);
         assert!(!spoken.contains("estimated"), "{spoken}");
     }
+}
+
+/// AGENTS rule 7 (#506 review): an insight over several rows, such as a trend segment, says
+/// how many of its points are estimates, as a segment does, not only its first point's.
+#[test]
+fn a11y_23_a_partly_estimated_trend_segment_says_so() {
+    let spec = weather_spec();
+    let rows = inline_bundle(&spec).primary().unwrap().rows();
+    let mut rising = Annotation::new(
+        AnalyzerId::from_static("trend-segments"),
+        "rising",
+        RowRange {
+            start: 2,
+            end: 8,
+            ..rows
+        },
+    );
+    rising.field = Some("temp".to_owned());
+    let base = tree_with(&spec, &[rising]);
+    let points = base.points(base.series().next().unwrap());
+    let mut tree = base.clone();
+    // Points 3 and 4 of the six (rows 2 to 7) are estimates; the first point is exact.
+    for &point in &points[3..5] {
+        tree = with_provenance(
+            &tree,
+            point,
+            Provenance {
+                class: ProvenanceClass::CvEstimate,
+                confidence: Confidence::new(0.6),
+            },
+        );
+    }
+    let insight = tree
+        .iter()
+        .find(|(_, node)| matches!(node.kind, NavKind::Insight(_)))
+        .map(|(id, _)| id)
+        .unwrap();
+    let terse = speak(&tree, insight, Verbosity::Terse);
+    assert!(terse.contains("partly estimated"), "{terse}");
+    let verbose = speak(&tree, insight, Verbosity::Verbose);
+    assert!(verbose.contains("2 of 6 points estimated"), "{verbose}");
+    // The same insight on exact points says nothing of the kind.
+    let plain = speak(&base, insight, Verbosity::Verbose);
+    assert!(!plain.contains("estimated"), "{plain}");
 }
