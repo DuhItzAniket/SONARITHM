@@ -80,6 +80,7 @@ export const REPLY_KINDS = {
   modality_toggle: "effective",
   choices_reset: "effective",
   braille_route: "cursor",
+  nav_query: "announce",
 } as const;
 
 /** The channel that carries each event. */
@@ -473,7 +474,11 @@ modality: ToggleTarget, } } | { "command": "choices_reset" } | { "command": "bra
 /**
  * The cell, from 0.
  */
-cell: number, } } | { "command": "view_get", "args": { 
+cell: number, } } | { "command": "nav_query", "args": { 
+/**
+ * The question.
+ */
+query: NavQuery, } } | { "command": "view_get", "args": { 
 /**
  * The dataset's ID.
  */
@@ -1292,6 +1297,15 @@ braille?: boolean | null,
 visual?: boolean | null, };
 
 /**
+ * A question of the query menu (keyboard-and-navigation §7; the B03 subset).
+ */
+export type NavQuery = { "query": "summary" } | { "query": "minimum" } | { "query": "maximum" } | { "query": "range" } | { "query": "valueAt", 
+/**
+ * The x value.
+ */
+x: NavX, };
+
+/**
  * Where [`NavVerb::GoTo`] goes.
  */
 export type NavX = { "number": number } | { "category": string };
@@ -1333,6 +1347,12 @@ earcon: string | null,
  * The x span to highlight: the node's, when it has one.
  */
 highlight: NavSpan | null, 
+/**
+ * Whether the move played the point's cue (A11Y-10, A11Y-20): a move onto a point with
+ * sonification on, while playback is not playing (the transport drops the cue then,
+ * keyboard §9.2 item 3) and an output could open. `false` otherwise.
+ */
+cue: boolean, 
 /**
  * Whether the outcome was announced (on the `announcements` channel, never here).
  */
@@ -1703,9 +1723,15 @@ verbosity: Verbosity,
  */
 modalities: Modalities, 
 /**
- * Keymap overrides: command ID → key combination (keyboard-and-navigation §13).
+ * Keymap overrides: command ID → keys (keyboard-and-navigation §13): chords separated
+ * by spaces, or the empty string to unbind the command. Reserved chords are refused
+ * (`SNR-APP-091`, §13 rule 6).
  */
 keymap: { [key in string]: string }, 
+/**
+ * Keyboard choices beyond single bindings (B03-T09).
+ */
+keyboard: KeyboardSettings, 
 /**
  * Consent for features that use the network (ADR-0012). `None` means not asked yet.
  */
@@ -1793,6 +1819,18 @@ braille: boolean,
  * The visual plot.
  */
 visual: boolean, };
+
+/**
+ * Keyboard choices beyond single bindings (keyboard-and-navigation §13).
+ */
+export type KeyboardSettings = { 
+/**
+ * The group switch of KB-02 and §13 rule 3: "Single-key commands in the chart
+ * explorer". Off unbinds every single-character binding there (letters, Shift+letters,
+ * punctuation); arrows, Home, End, Page Up, Page Down, Space and Escape stay. On by
+ * default: focus scoping already satisfies WCAG 2.1.4.
+ */
+singleKeyCommands: boolean, };
 
 /**
  * Consent to network features (ADR-0012). Each is `None` until the user answers.

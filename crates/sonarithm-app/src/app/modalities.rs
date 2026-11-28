@@ -125,6 +125,8 @@ impl App {
         self.settings = settings;
         self.session_prefs = crate::profile::choices_layer(&self.settings.choices);
         self.transport.configure(self.output_config())?;
+        // B turns the braille line on or off at once, not at the next move (#513 review).
+        self.send_cursor(None, false);
         Ok(())
     }
 

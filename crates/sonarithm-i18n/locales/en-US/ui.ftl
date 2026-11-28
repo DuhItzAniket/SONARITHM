@@ -127,6 +127,63 @@ ui-cursor-step =
 # its data name.
 ui-cursor-excluded = { $name } excluded from playback and view
 
+## Preferences › Keyboard (B03-T09; keyboard-and-navigation §13). $name is a command's
+## name, $keys a key combination as shown, $other another command's name.
+
+ui-braille = Braille
+ui-braille-cells = Braille display cells
+ui-braille-cells-note = A web page cannot read your display's size. Leave this empty and the screen reader pans the line; set it and the line is fitted to the display, whole parts only.
+
+## The braille line (B03-T10; keyboard-and-navigation §10, §14). $mode is review or
+## sparkline.
+
+ui-braille-line =
+    { $mode ->
+        [sparkline] Braille sparkline
+       *[review] Braille line
+    }
+ui-braille-hint =
+    { $mode ->
+        [sparkline] One cell per point of the segment; a routing key moves the cursor to that point. Shift+B in the chart explorer shows the review line.
+       *[review] The cursor's value and position. Shift+B in the chart explorer shows a sparkline of the segment.
+    }
+# Said after Shift+B.
+# The braille field with no line (#513 review): it stays, so the focus never falls to the
+# page.
+ui-braille-off = Braille output is off. Press B in the chart explorer to turn it on.
+ui-braille-waiting = The braille line shows the cursor's point once the cursor is on the chart.
+ui-braille-mode-changed =
+    { $mode ->
+        [sparkline] Braille sparkline
+       *[review] Braille review line
+    }
+
+ui-keyboard = Keyboard
+ui-single-keys = Single-key commands in the chart explorer
+ui-single-keys-note = Off: letters do nothing in the explorer. Arrows, Home, End and the Page keys still work, and every command stays in the menus and the palette.
+ui-keys-preset-default = Use the default keys
+ui-keys-preset-no-single = No single-key commands
+ui-keys-caption = Every command and its keys. Keys are saved in your settings, never in a project.
+ui-keys-command = Command
+ui-keys-keys = Keys
+ui-keys-actions = Change
+ui-keys-change = Change…
+ui-keys-change-for = Change keys for { $name }
+ui-keys-reset = Reset
+ui-keys-reset-for = Reset keys for { $name }
+ui-keys-recorder = New keys
+ui-keys-press = Press the new keys. Tab moves on and Escape cancels.
+ui-keys-refused =
+    { $keys } cannot be used: { $rule ->
+        [KB-02] single keys work only in the chart explorer
+        [KB-03] a screen reader uses it
+        [KB-04] it conflicts with a keyboard layout or a screen reader
+       *[reserved] it is reserved
+    }.
+ui-keys-shadows = { $keys } is already used by { $other }. Save to give it to both; the one listed first runs.
+ui-keys-free = { $keys } is free.
+ui-keys-save = Save
+
 ## The chart explorer (B03-T09; 08 §5, keyboard-and-navigation §4, §5.5). $name is the
 ## dataset's name, shown as it is.
 
@@ -139,6 +196,15 @@ ui-explorer-go-to-action = Go
 ui-explorer-find = Find a value
 ui-explorer-find-value = Value
 ui-explorer-find-action = Find
+# The query menu (Q; keyboard §7): answers are announced and never move the cursor.
+ui-explorer-query = Ask
+ui-query-summary = Summary
+ui-query-minimum = Minimum
+ui-query-maximum = Maximum
+ui-query-range = Range
+ui-query-value-at = Value at x…
+ui-explorer-value-at = Value at an x value
+ui-explorer-value-at-action = Ask
 # The cursor's row in the dataset's own order, from 1; $index is a number.
 ui-cursor-row = Data row { $index }
 ui-cursor-none = No row is selected.
@@ -294,11 +360,13 @@ command-nav-go-to = Go to an x value…
 command-nav-find-value = Find a value…
 command-nav-where-am-i = Where am I
 command-nav-repeat = Repeat the last announcement
+command-query-menu = Ask about this series…
 command-help-explorer = Explorer keys
 command-mod-speech = Speech on or off
 command-mod-verbosity = Terse or verbose announcements
 command-mod-sonification = Sonification on or off
 command-mod-braille = Braille on or off
+command-mod-braille-mode = Braille review line or sparkline
 command-mod-visual = Visual highlight on or off
 command-mod-reset = Reset the toggles to the profile's defaults
 # The palette's result count, announced as it filters; $count is a number.

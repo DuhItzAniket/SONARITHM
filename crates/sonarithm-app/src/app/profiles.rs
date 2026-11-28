@@ -254,7 +254,30 @@ impl App {
         self.store.save(&settings)?;
         self.settings = settings;
         self.transport.configure(self.output_config())?;
+        self.notice_reserved_profile_keys();
         Ok(self.profile_list(&[]))
+    }
+
+    /// Says once, as a settings notice, that the active profile's file binds a command to
+    /// a reserved combination, which the effective keymap leaves out (keyboard §13 rule 6;
+    /// a file edited by hand, since saving and importing refuse it). It names the command,
+    /// not the chord the file holds. Sent when the profile becomes active: at start-up and
+    /// on `profile_activate`.
+    pub(super) fn notice_reserved_profile_keys(&self) {
+        let Some(profile) = self.active_profile() else {
+            return;
+        };
+        if let Some((command, _)) = crate::keymap::first_reserved(&profile.interaction.keymap) {
+            self.sink.emit(crate::ipc::Event::SettingsNotice {
+                error: IpcError::new(
+                    &codes::KEYMAP_RESERVED,
+                    format!(
+                        "Your profile binds {command} to a reserved combination, so that \
+                         binding is not used. Set its keys in Preferences › Keyboard."
+                    ),
+                ),
+            });
+        }
     }
 
     /// A new user ID for `name`: its slug, made unique.
@@ -309,6 +332,7 @@ impl App {
         profile: &Profile,
     ) -> Result<Reply, IpcError> {
         profile::validate(profile)?;
+        profile::check_keys(profile)?;
         match id {
             Some(PROJECT_ID) => {
                 let bytes = profile::write(profile)?;
@@ -346,6 +370,7 @@ impl App {
             )
         })?;
         let (imported, warnings) = profile::parse(&bytes)?;
+        profile::check_keys(&imported)?;
         let id = self.new_id(&imported.name);
         self.write_user(&id, &imported)?;
         Ok(self.profile_list(&warnings))

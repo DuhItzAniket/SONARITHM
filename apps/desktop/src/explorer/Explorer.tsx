@@ -1,12 +1,19 @@
 // SPDX-FileCopyrightText: 2026 SONARITHM contributors
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
-import type { CursorState, DatasetSummary } from "@sonarithm/ipc";
+import type {
+  Client,
+  CursorState,
+  DatasetSummary,
+  NavQuery,
+} from "@sonarithm/ipc";
+import { MenuButton, MenuItem } from "@sonarithm/ui";
 import type { RefObject } from "react";
-import { useId } from "react";
+import { useId, useState } from "react";
 
 import { useLocalizer } from "../i18n.ts";
 import styles from "./explorer.module.css";
+import { ValueDialog } from "./ValueDialog.tsx";
 
 /**
  * The chart explorer's surface (B03-T09; 08 §5, keyboard-and-navigation §4, §5.4): one Tab
@@ -18,19 +25,37 @@ import styles from "./explorer.module.css";
  * visible hint. It has no `aria-activedescendant`: each move is spoken once, by the app
  * core's announcement, never also as a focus change (OD-30). It holds no position of its
  * own: it shows the level of Rust's one cursor.
+ *
+ * The query menu (Q, `query.menu`; keyboard §7) sits beside the surface. Its answers are
+ * announced by the app core (`nav_query`) and never move the cursor; closing it returns
+ * the focus to the surface. The app opens it, so the palette can too.
  */
 export function Explorer({
+  client,
   dataset,
   cursor,
   surface,
+  queryOpen,
+  onQueryOpenChange,
 }: {
+  readonly client: Client;
   readonly dataset: DatasetSummary;
   readonly cursor: CursorState | null;
   /** The surface, for `view.focusExplorer`. */
   readonly surface: RefObject<HTMLDivElement | null>;
+  /** Whether the query menu is open. */
+  readonly queryOpen: boolean;
+  readonly onQueryOpenChange: (open: boolean) => void;
 }) {
   const t = useLocalizer();
   const hint = useId();
+  // Value at x asks for the x first (the go-to dialog's "valueAt" kind).
+  const [valueAt, setValueAt] = useState(false);
+  const ask = (query: NavQuery) => {
+    void client
+      .call({ command: "nav_query", args: { query } })
+      .catch(() => undefined);
+  };
   const position = cursor?.path.at(-1);
   return (
     <div className={styles.explorer}>
@@ -58,6 +83,46 @@ export function Explorer({
       <p id={hint} className={styles.hint}>
         {t.format("ui-explorer-hint")}
       </p>
+      <MenuButton
+        label={t.format("ui-explorer-query")}
+        isOpen={queryOpen}
+        onOpenChange={(open) => {
+          onQueryOpenChange(open);
+          if (!open) requestAnimationFrame(() => surface.current?.focus());
+        }}
+        // APG menu button: an opened menu puts the focus on its first item, also when Q
+        // opens it.
+        // eslint-disable-next-line jsx-a11y/no-autofocus -- see above
+        autoFocus="first"
+        onAction={(key) => {
+          if (key === "valueAt") {
+            setValueAt(true);
+          } else if (
+            key === "summary" ||
+            key === "minimum" ||
+            key === "maximum" ||
+            key === "range"
+          ) {
+            ask({ query: key });
+          }
+        }}
+      >
+        <MenuItem id="summary">{t.format("ui-query-summary")}</MenuItem>
+        <MenuItem id="minimum">{t.format("ui-query-minimum")}</MenuItem>
+        <MenuItem id="maximum">{t.format("ui-query-maximum")}</MenuItem>
+        <MenuItem id="range">{t.format("ui-query-range")}</MenuItem>
+        <MenuItem id="valueAt">{t.format("ui-query-value-at")}</MenuItem>
+      </MenuButton>
+      <ValueDialog
+        kind={valueAt ? "valueAt" : null}
+        onClose={() => {
+          setValueAt(false);
+          surface.current?.focus();
+        }}
+        onGo={(_kind, value) => {
+          ask({ query: "valueAt", x: { number: value } });
+        }}
+      />
     </div>
   );
 }

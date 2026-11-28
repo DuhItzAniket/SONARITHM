@@ -96,6 +96,8 @@ The app core computes it on the control thread when it builds the anchor, never 
 | 2026-11-01 | `modality_toggle` and `choices_reset` added (B03-T09), with `Settings.choices`, `AnnouncementInfo.muted` and `TransportState.muted`; speech, sonification and braille are never all off (`SNR-APP-094`), and errors and alarms are never muted (both INFER, OD-30); approved by the coordinator, additive |
 | 2026-11-01 | `braille_route`, `CursorOrigin::braille` and `CursorState.braille` (a `BrailleState`) added, and the settings gain `braille` (`mode`, `cells`) (B03-T10); approved by the coordinator, additive |
 | 2026-11-26 | Functions, Projects: project format 1.1 stores a function dataset as its definition, so `SNR-APP-089` and the autosave notice are retired (C03-T08, RFC-0002 §12); no command or reply changes |
+| 2026-11-28 | `nav_query` and `NavQuery` added (B03-T09): the query menu's summary, minimum, maximum, range and value at x, answered as a response announcement without moving the cursor; `NavQuery` is non-exhaustive for ECHOMETRIC's statistics (C05-T06). `NavResult.cue` added: whether the move played the point's cue. Designed 2026-11-01; approved by the coordinator under the owner's delegation, 2026-11-28; additive |
+| 2026-11-28 | The settings gain `keyboard.singleKeyCommands` (KB-02's group switch) beside the existing `keymap` (B03-T09). `settings_set` refuses a reserved combination with `SNR-APP-091`; keys in a project's profile are ignored with the settings notice `SNR-APP-092` (ADR-0020, amended the same day). Designed 2026-11-01; approved by the coordinator under the owner's delegation, 2026-11-28; additive |
 
 #### Cursor
 
@@ -152,14 +154,16 @@ No event is added. A `cursor` event follows only under the rules above (Cursor).
 
 * `nav_move { verb }` applies a verb (keyboard-and-navigation §4.2) and replies `nav`. `verb` is tagged by `verb`: `next`, `previous`, `jumpForward`, `jumpBack`, `first`, `last`, `into`, `out`, `activate`, `nextSeries`, `previousSeries`, `maximum`, `minimum`, `nextInsight`, `previousInsight`, `{ verb: "landmark", landmark }` (`xAxis`, `yAxis`, `insights`, `filters`, `dataset`), `{ verb: "goTo", x }` (`{ number }` or `{ category }`) and `{ verb: "findValue", value }`. It sends a `cursor` event with origin `nav` for every verb, also one that kept the cursor.
 * `nav_where` announces "where am I" (keyboard §6, A11Y-07) and replies `announce`. The cursor does not move, and no `cursor` event is sent.
-* Either fails with `SNR-APP-090` when no compiled Score has a navigation tree.
+* `nav_query { query }` answers a question of the query menu about the cursor's series (keyboard §7), as a response announcement, and replies `announce`. `query` is tagged by `query`: `summary`, `minimum`, `maximum`, `range` or `{ query: "valueAt", x }` (the B03 subset; the statistics join with ECHOMETRIC). The targets are found on a copy of the cursor, so it does not move, and no `cursor` event is sent. Added 2026-11-01, additive.
+* Each fails with `SNR-APP-090` when no compiled Score has a navigation tree.
 
-**`NavResult`.** `{ cursor, outcome, edge, reason, included, earcon, highlight, announced }`:
+**`NavResult`.** `{ cursor, outcome, edge, reason, included, earcon, highlight, cue, announced }`:
 
 * `cursor` is the `CursorState` the `cursor` event carried.
 * `outcome` is `moved`, `boundary`, `invalid`, `describe` (Enter on a point) or `toggled` (Enter on a filter).
 * `edge` (`first`, `last`, `top`, `bottom`), `reason` (such as `oneSeries`, `noInsights`, `notHere`) and `included` belong to a boundary, an invalid verb and a toggle.
 * `earcon` is the outcome's earcon ID, such as `E-BOUNDARY` (A11Y-08). `highlight` is the node's x span.
+* `cue` says whether the move played the point's cue: `false` off a point, with sonification off, during playback (the transport drops the cue) or when no output could open.
 * `announced` says whether an announcement was queued. Its text goes out on the `announcements` channel only, never in the reply, so nothing is spoken twice. Explorer moves are announced, as plot moves are (INFER, OD-30).
 
 **`CursorState`, widened.** `node` may be any node of the navigation tree, not only a point. `path` levels add `axes`, `axis`, `insights`, `insightGroup`, `insight`, `filters` and `filter`; a group's label is empty. A reader that meets a level it does not know shows the label alone. `excluded` lists `{ node, label }` for each series a filter took out.
@@ -171,7 +175,7 @@ No event is added. A `cursor` event follows only under the rules above (Cursor).
 * The exclusion is recorded where it applies, so what is playing is never taken for the canonical Score: `CursorState.excluded` in the session, and `TransportState.excludedTracks` (the removed track IDs, empty when the compiled Score plays as it is) in the transport. Live windows keep the exclusions made before monitoring started. While a live stream is monitored a filter cannot change, because reloading playback would end monitoring: Enter on a filter is invalid (`reason: "liveMonitoring"`, `E-INVALID`) and announced.
 * Exports render the whole compiled Score: the filter is session state, not part of the spec or the project. While a series is excluded, starting an export announces "Export includes all series; exclusions apply to playback only" (`announce-export-all-series`), until the export dialog (B05-T05) says it. A spec-level filter can follow with `spec_apply` (B05-T01).
 
-**Point cue (A11Y-10, A11Y-20).** A move is to play the point's cue, then speak. The transport has no one-shot cue path yet, so the cue arrives in its own change, with a `cue` field added to `NavResult` then.
+**Point cue (A11Y-10, A11Y-20).** A move onto a point plays the point's cue, then speaks: from the table, the plot or the explorer. The cue is the point's own note in the compiled Score (pitch, level, pan and the track's instrument; sound-design §3.2), played on the render graph's live cue voices. It is not played during playback (keyboard §9.2 item 3) or with sonification off. The output opens on the first cue and stays open until a load or a device change. `NavResult.cue` (added 2026-11-01, additive) says whether the cue played. Speech waits for the cue as heard: the output latency (the device's calibrated one, else the backend's report) plus the cue's length (#513 review; by ear on HW-01 is TODO(verify)). The key-to-onset budget of 50 ms p95 is TODO(verify) on HW-01.
 
 #### Modality toggles
 

@@ -27,10 +27,11 @@ export interface CommandSpec {
  * scoped to the explorer: its single keys work only there (KB-02, WCAG 2.1.4), Jump is Ctrl
  * on Windows and Linux and Option on macOS, and no binding takes a screen reader's keys
  * (§12: never Insert, CapsLock, the numpad or Ctrl+Option). Compare (C), selection
- * (Shift+arrows), polarity (P), the query menu (Q), the legend (L), zoom to the node (Z,
- * Shift+Z) and the braille mode (Shift+B) join with their features; A, J, K, M, O and U
- * stay free and E reserved. The modality and verbosity toggles (T, S, B, V, Shift+T) flip
- * the effective value in the app core (`modality_toggle`), which saves and announces it.
+ * (Shift+arrows), polarity (P), the legend (L) and zoom to the node (Z, Shift+Z) join
+ * with their features; A, J, K, M, O and U stay free and E reserved. The modality and
+ * verbosity toggles (T, S, B, V, Shift+T) flip the effective value in the app core
+ * (`modality_toggle`), which saves and announces it. Shift+B switches the braille line
+ * between the review line and the sparkline, a device setting (`settings.braille.mode`).
  */
 export const DEFAULT_KEYMAP: readonly CommandSpec[] = [
   {
@@ -368,6 +369,12 @@ export const DEFAULT_KEYMAP: readonly CommandSpec[] = [
     keys: ["R"],
   },
   {
+    id: "query.menu",
+    name: "command-query-menu",
+    scope: "explorer",
+    keys: ["Q"],
+  },
+  {
     id: "help.explorer",
     name: "command-help-explorer",
     scope: "explorer",
@@ -396,6 +403,13 @@ export const DEFAULT_KEYMAP: readonly CommandSpec[] = [
     name: "command-mod-braille",
     scope: "explorer",
     keys: ["B"],
+  },
+  {
+    // Keyboard §5.5 (B03-T10): the braille line's review line or sparkline.
+    id: "mod.brailleMode",
+    name: "command-mod-braille-mode",
+    scope: "explorer",
+    keys: ["Shift+B"],
   },
   {
     id: "mod.visual",

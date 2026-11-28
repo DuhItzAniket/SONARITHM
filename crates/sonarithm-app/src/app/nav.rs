@@ -18,7 +18,7 @@
 use std::collections::BTreeSet;
 use std::sync::Arc;
 
-use sonarithm_audaxis::announce::Composer;
+use sonarithm_audaxis::announce::{Composer, Query};
 use sonarithm_audaxis::nav::{Cursor, Edge, Invalid, Landmark, Outcome, Verb, XTarget};
 use sonarithm_core::nav::{NavKind, NavNodeId, NavTree};
 use sonarithm_core::{Score, TrackId};
@@ -27,7 +27,8 @@ use super::App;
 use super::cursor::CursorAt;
 use crate::codes;
 use crate::ipc::{
-    CursorOrigin, IpcError, NavLandmark, NavOutcome, NavResult, NavSpan, NavVerb, NavX, Reply,
+    CursorOrigin, IpcError, NavLandmark, NavOutcome, NavQuery, NavResult, NavSpan, NavVerb, NavX,
+    Reply,
 };
 
 /// What a verb changed, worked out while the tree is borrowed.
@@ -136,6 +137,8 @@ impl App {
                     .to_owned(),
             ),
             highlight: None,
+            // A refused move stays where it was, so no cue plays.
+            cue: false,
             announced,
         })
     }
@@ -150,6 +153,13 @@ impl App {
         if step.excluded_changed {
             self.load_playback();
         }
+        // A move onto a point plays its cue before the announcement (A11Y-10, A11Y-20).
+        let cue = matches!(step.outcome, Outcome::Moved(_))
+            && self
+                .cursor
+                .nav
+                .as_ref()
+                .is_some_and(|cursor| self.play_cue(cursor.node()));
         let announced = step.announcement.is_some();
         if let Some(announcement) = step.announcement {
             self.transport.announce(announcement);
@@ -175,6 +185,7 @@ impl App {
             included,
             earcon: step.outcome.earcon().map(|earcon| earcon.id().to_owned()),
             highlight: step.highlight,
+            cue,
             announced,
         })
     }
@@ -254,6 +265,43 @@ impl App {
                 _ => None,
             })
             .collect()
+    }
+
+    /// `nav_query`: answers a query about the cursor's series (keyboard §7), announced as a
+    /// response. The cursor does not move and no `cursor` event is sent.
+    ///
+    /// # Errors
+    ///
+    /// `SNR-APP-090` when no compiled Score has a navigation tree.
+    pub(super) fn nav_query(&self, query: &NavQuery) -> Result<Reply, IpcError> {
+        let settings = self.composer_settings();
+        let tree = self
+            .compiled
+            .as_ref()
+            .and_then(sonarithm::Compiled::nav)
+            .ok_or_else(no_tree)?;
+        let query = match query {
+            NavQuery::Summary => Query::Summary,
+            NavQuery::Minimum => Query::Minimum,
+            NavQuery::Maximum => Query::Maximum,
+            NavQuery::Range => Query::Range,
+            NavQuery::ValueAt { x } => Query::ValueAt(x_target(x)),
+        };
+        let cursor = self.cursor.nav.clone().unwrap_or_else(|| {
+            let mut cursor = Cursor::new();
+            cursor.set_excluded(self.cursor.excluded.iter().copied());
+            cursor
+        });
+        let announcement = self.localizer.as_ref().and_then(|localizer| {
+            Composer::with_memory(localizer, settings, self.cursor.memory.clone())
+                .query(tree, &cursor, &query)
+                .ok()
+        });
+        let queued = announcement.is_some();
+        if let Some(announcement) = announcement {
+            self.transport.announce(announcement);
+        }
+        Ok(Reply::Announce { queued })
     }
 
     /// The Score the transport plays: the compiled Score with the excluded series' tracks
@@ -381,11 +429,15 @@ fn to_verb(verb: &NavVerb) -> Verb {
             NavLandmark::Filters => Landmark::Filters,
             NavLandmark::Dataset => Landmark::Dataset,
         }),
-        NavVerb::GoTo { x } => Verb::GoTo(match x {
-            NavX::Number(value) => XTarget::Number(*value),
-            NavX::Category(name) => XTarget::Category(name.clone()),
-        }),
+        NavVerb::GoTo { x } => Verb::GoTo(x_target(x)),
         NavVerb::FindValue { value } => Verb::FindValue(*value),
+    }
+}
+
+fn x_target(x: &NavX) -> XTarget {
+    match x {
+        NavX::Number(value) => XTarget::Number(*value),
+        NavX::Category(name) => XTarget::Category(name.clone()),
     }
 }
 

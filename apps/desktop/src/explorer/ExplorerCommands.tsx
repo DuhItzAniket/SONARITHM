@@ -9,7 +9,10 @@ import type {
 } from "@sonarithm/ipc";
 import { useState } from "react";
 
+import type { Announcer } from "../announcer/announcer.ts";
 import { useCommand, useCommandTable } from "../commands/context.tsx";
+import { useLocalizer } from "../i18n.ts";
+import { settingsOf } from "../preferences/settings.ts";
 import type { ValueKind } from "./ValueDialog.tsx";
 import { ValueDialog } from "./ValueDialog.tsx";
 
@@ -58,14 +61,27 @@ const TOGGLES: readonly (readonly [string, ToggleTarget])[] = [
  * (`modality_toggle`), which saves the choice over the profile, acts on it and announces
  * it; `onEffective` gets the effective settings it replies with. A refusal (the last
  * non-visual output, SNR-APP-094) is announced by the app core.
+ *
+ * Q (`query.menu`, keyboard §7) asks the app to open the explorer's query menu, which
+ * lives with the explorer in the Plot tab (`onQueryMenu`).
+ *
+ * Shift+B (`mod.brailleMode`, keyboard §5.5, B03-T10) switches the braille line between
+ * the review line and the sparkline. That is a device setting, not a modality, so it is
+ * saved in the settings (`settings.braille.mode`, ADR-0017 "Braille"), never a profile or
+ * the toggles' layer, and the change is said here.
  */
 export function ExplorerCommands({
   client,
+  announcer,
   onEffective,
+  onQueryMenu,
 }: {
   readonly client: Client | null;
+  readonly announcer: Announcer;
   readonly onEffective: (settings: readonly EffectiveSetting[]) => void;
+  readonly onQueryMenu: () => void;
 }) {
+  const t = useLocalizer();
   const [dialog, setDialog] = useState<ValueKind | null>(null);
   const move = (verb: NavVerb) => {
     void client
@@ -86,6 +102,7 @@ export function ExplorerCommands({
   useCommand("nav.findValue", () => {
     setDialog("find");
   });
+  useCommand("query.menu", onQueryMenu);
   useCommand("nav.whereAmI", () => {
     void client?.call({ command: "nav_where" }).catch(() => undefined);
   });
@@ -105,6 +122,30 @@ export function ExplorerCommands({
       },
     ]),
   );
+  useCommand("mod.brailleMode", () => {
+    if (client === null) return;
+    void client
+      .call({ command: "settings_get" })
+      .then((current) => {
+        const settings = settingsOf(current);
+        const mode =
+          settings.braille.mode === "sparkline" ? "review" : "sparkline";
+        return client
+          .call({
+            command: "settings_set",
+            args: {
+              settings: { ...settings, braille: { ...settings.braille, mode } },
+            },
+          })
+          .then(() => {
+            announcer.announce({
+              text: t.format("ui-braille-mode-changed", { mode }),
+              assertive: false,
+            });
+          });
+      })
+      .catch(() => undefined);
+  });
   useCommand("mod.reset", () => {
     void client
       ?.call({ command: "choices_reset" })

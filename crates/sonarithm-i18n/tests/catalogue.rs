@@ -115,6 +115,12 @@ fn sample_args(style: UnitStyle) -> Args {
         .text("modality", "speech")
         .text("on", "yes")
         .text("verbosity", "verbose")
+        // The query answers (B03-T09).
+        .text("span", "19")
+        // Preferences › Keyboard (B03-T09).
+        .text("keys", "20")
+        .text("rule", "reserved")
+        .text("other", "21")
 }
 
 #[test]

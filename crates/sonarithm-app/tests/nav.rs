@@ -167,7 +167,9 @@ fn a11y_10_explorer_verbs_move_the_one_cursor_and_its_row() {
         h.ok(&json!({ "command": "cursor_get" }))["node"],
         next["cursor"]["node"]
     );
-    h.wait_for_announcements(4);
+    // Speech waits for each point cue, and only the newest navigation announcement
+    // survives the wait (A11Y-17, A11Y-20): four quick moves are heard as fewer.
+    h.wait_for_announcements(1);
 }
 
 /// A11Y-10: a table move puts the explorer on that row's point, so the next verb starts
@@ -262,6 +264,61 @@ fn b03_t09_a_filter_excludes_its_series_until_the_data_is_replaced() {
         h.ok(&json!({ "command": "cursor_get" }))["excluded"],
         json!([])
     );
+}
+
+/// Keyboard §7 (B03-T09): a query answers about the cursor's series as an announcement,
+/// and neither moves the cursor nor sends a `cursor` event.
+#[test]
+fn keyboard_7_a_query_is_announced_and_moves_nothing() {
+    let mut h = Harness::new("nav-query");
+    h.compile(&["temp"]);
+    h.ok(&json!({ "command": "cursor_set", "args": { "dataset": "d1", "row": 1, "origin": "table" } }));
+    let events = h.cursors().len();
+    let before = h.ok(&json!({ "command": "cursor_get" }));
+    let answers = |h: &Harness| -> Vec<String> {
+        h.sink
+            .events()
+            .into_iter()
+            .filter_map(|event| match event {
+                Event::Announcement(info) => Some(info.speech),
+                _ => None,
+            })
+            .collect()
+    };
+    // An answer is a response, superseded by the next command while it waits behind the
+    // point cue (keyboard §9.1), so each question waits for its own answer.
+    for (query, starts) in [
+        (json!({ "query": "summary" }), ""),
+        (json!({ "query": "minimum" }), "Minimum of "),
+        (json!({ "query": "maximum" }), "Maximum of "),
+        (json!({ "query": "range" }), "Range of "),
+        (
+            json!({ "query": "valueAt", "x": { "number": 3.0 } }),
+            "At 3",
+        ),
+    ] {
+        let said = answers(&h).len();
+        let reply = h.ok(&json!({ "command": "nav_query", "args": { "query": query } }));
+        assert_eq!(
+            reply,
+            json!({ "reply": "announce", "queued": true }),
+            "{query}"
+        );
+        let start = Instant::now();
+        let answer = loop {
+            if let Some(answer) = answers(&h).get(said).cloned() {
+                break answer;
+            }
+            assert!(
+                start.elapsed() < Duration::from_secs(5),
+                "no answer to {query}"
+            );
+            std::thread::sleep(Duration::from_millis(10));
+        };
+        assert!(answer.starts_with(starts), "{query}: {answer}");
+    }
+    assert_eq!(h.cursors().len(), events);
+    assert_eq!(h.ok(&json!({ "command": "cursor_get" })), before);
 }
 
 /// ADR-0017 "Navigation": an export renders every series, so while a filter excludes one,
@@ -473,6 +530,48 @@ fn b03_t09_the_toggles_clock_anchor_carries_the_exclusions() {
     assert_eq!(first, ["temp"]);
 }
 
+fn device(h: &mut Harness) -> Value {
+    h.ok(&json!({ "command": "transport_state" }))["device"].clone()
+}
+
+/// A11Y-10: the one cursor drives the cue from every origin, the table, the plot and the
+/// explorer. The first cue opens the output, which the transport then reports as a device;
+/// nothing else here opens it (B03-T09).
+#[test]
+fn a11y_10_every_cursor_origin_plays_the_point_cue() {
+    for origin in ["table", "plot", "nav"] {
+        let mut h = Harness::new(&format!("cue-{origin}"));
+        h.compile(&["temp"]);
+        assert_eq!(device(&mut h), Value::Null, "{origin}");
+        if origin == "nav" {
+            assert_eq!(h.step("into")["cue"], false, "a series is not a point");
+            h.step("into");
+            assert_eq!(h.step("into")["cue"], true);
+        } else {
+            h.ok(&json!({ "command": "cursor_set", "args": { "dataset": "d1", "row": 1, "origin": origin } }));
+        }
+        assert!(
+            device(&mut h).is_string(),
+            "{origin}: the cue opened the output"
+        );
+    }
+}
+
+/// Sound-design §3.2: the sonification toggle silences cues and playback together.
+#[test]
+fn sonification_off_plays_no_point_cue() {
+    let mut h = Harness::new("cue-off");
+    let mut settings = h.ok(&json!({ "command": "settings_get" }));
+    let settings = settings.as_object_mut().unwrap();
+    settings.remove("reply");
+    settings.get_mut("modalities").unwrap()["sonification"] = json!(false);
+    h.ok(&json!({ "command": "settings_set", "args": { "settings": settings } }));
+    h.compile(&["temp"]);
+    h.ok(&json!({ "command": "cursor_set", "args": { "dataset": "d1", "row": 1, "origin": "table" } }));
+    assert_eq!(h.step("next")["cue"], false);
+    assert_eq!(device(&mut h), Value::Null);
+}
+
 /// ADR-0017 "Cursor": closing the dataset clears the row, and the explorer leaves its node.
 #[test]
 fn b03_t09_closing_the_dataset_clears_the_explorer_node() {
@@ -486,4 +585,60 @@ fn b03_t09_closing_the_dataset_clears_the_explorer_node() {
         (cleared.dataset, cleared.row, cleared.node),
         (None, None, None)
     );
+}
+
+/// A11Y-20, keyboard §9.2 item 1 (#513 review): speech waits for the cue as it is heard,
+/// one output latency after it is sent, plus the cue's own length. The null device stands
+/// in for a slow one through a calibrated latency of 0.4 s (ADR-0016); by ear on HW-01 is
+/// TODO(verify).
+#[test]
+fn a11y_20_speech_waits_for_the_cue_through_the_output_latency() {
+    let mut h = Harness::new("cue-latency");
+    let mut settings = h.ok(&json!({ "command": "settings_get" }));
+    let settings = settings.as_object_mut().unwrap();
+    settings.remove("reply");
+    settings.get_mut("audio").unwrap()["calibratedLatencyS"] = json!({ "null": 0.4 });
+    h.ok(&json!({ "command": "settings_set", "args": { "settings": settings } }));
+    h.compile(&["temp"]);
+    let announcements = |h: &Harness| {
+        h.sink
+            .events()
+            .into_iter()
+            .filter(|event| matches!(event, Event::Announcement(_)))
+            .count()
+    };
+    h.step("into");
+    h.step("into");
+    // Let the earlier announcements out, so the next one is the point's.
+    std::thread::sleep(Duration::from_millis(800));
+    let before = announcements(&h);
+    let start = Instant::now();
+    assert_eq!(
+        h.step("into")["cue"],
+        true,
+        "a move onto a point plays its cue"
+    );
+    while announcements(&h) == before {
+        assert!(start.elapsed() < Duration::from_secs(5), "no announcement");
+        std::thread::sleep(Duration::from_millis(5));
+    }
+    // 0.4 s of latency and the 0.12 s cue, less a little for timer resolution.
+    assert!(
+        start.elapsed() >= Duration::from_millis(500),
+        "spoke after {:?}",
+        start.elapsed()
+    );
+}
+
+/// Keyboard §9.2 item 3 (#513 review): during playback the transport drops the cue, and
+/// `NavResult.cue` says so.
+#[test]
+fn b03_t09_cue_is_false_when_playback_drops_it() {
+    let mut h = Harness::new("cue-playing");
+    h.compile(&["temp"]);
+    h.step("into");
+    h.step("into");
+    h.ok(&json!({ "command": "transport_set_loop", "args": { "range": { "startS": 0.0, "endS": 0.5 } } }));
+    h.ok(&json!({ "command": "transport_play" }));
+    assert_eq!(h.step("next")["cue"], false);
 }

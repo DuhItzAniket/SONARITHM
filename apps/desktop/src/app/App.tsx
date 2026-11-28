@@ -13,6 +13,7 @@ import { useAnnouncementFeed } from "../announcer/feed.ts";
 import { AnnouncementLog } from "../announcer/AnnouncementLog.tsx";
 import { CommandPalette } from "../commands/CommandPalette.tsx";
 import { useCommand, useCommands, useKeymap } from "../commands/context.tsx";
+import { useKeymapSettings } from "../commands/useKeymapSettings.ts";
 import { KeyboardReference } from "../commands/KeyboardReference.tsx";
 import type { Scope } from "../commands/scopes.ts";
 import { activeScopes } from "../commands/scopes.ts";
@@ -20,8 +21,9 @@ import { useLocalizer } from "../i18n.ts";
 import { Preferences } from "../preferences/Preferences.tsx";
 import { TransportBar } from "../transport/TransportBar.tsx";
 import { CursorReadout } from "../cursor/CursorReadout.tsx";
+import { BrailleField } from "../braille/BrailleField.tsx";
 import { Explorer } from "../explorer/Explorer.tsx";
-import { visualOn } from "../explorer/effective.ts";
+import { brailleOn, visualOn } from "../explorer/effective.ts";
 import { ExplorerCommands } from "../explorer/ExplorerCommands.tsx";
 import { FunctionCommands } from "../function/FunctionCommands.tsx";
 import type { OpenedFunction } from "../function/FunctionDialog.tsx";
@@ -82,6 +84,8 @@ export function App({
   const transportView = useTransport(client);
   const registry = useCommands();
   useKeymap(registry);
+  // The user's keys and the single-key switch (B03-T09; keyboard §13).
+  const reloadKeys = useKeymapSettings(client, registry);
   const [paletteOpen, setPaletteOpen] = useState(false);
   const [referenceScopes, setReferenceScopes] = useState<
     readonly Scope[] | null
@@ -126,6 +130,8 @@ export function App({
   const [opened, setOpened] = useState<OpenedFunction | null>(null);
   // The visual highlight (V, B03-T09): the plot shows the cursor only while it is on.
   const [visual, setVisual] = useState(true);
+  // Braille output (B, B03-T10): the braille field says when it is off.
+  const [braille, setBraille] = useState(false);
   useEffect(() => {
     if (client === null) {
       return;
@@ -133,7 +139,10 @@ export function App({
     let live = true;
     client.call({ command: "settings_effective" }).then(
       (reply) => {
-        if (live) setVisual(visualOn(reply.settings));
+        if (live) {
+          setVisual(visualOn(reply.settings));
+          setBraille(brailleOn(reply.settings));
+        }
       },
       () => undefined,
     );
@@ -152,6 +161,15 @@ export function App({
     });
     explorer.current?.focus();
   });
+  // The query menu (Q; keyboard §7) belongs to the explorer, so asking for it from another
+  // tab selects the Plot tab first.
+  const [queryOpen, setQueryOpen] = useState(false);
+  const openQueryMenu = () => {
+    flushSync(() => {
+      setWorkspaceTab("plot");
+    });
+    setQueryOpen(true);
+  };
   const [preferencesOpen, setPreferencesOpen] = useState(false);
   useCommand("app.preferences", () => {
     setPreferencesOpen(true);
@@ -207,9 +225,19 @@ export function App({
               {client !== null && dataset !== null ? (
                 <>
                   <Explorer
+                    client={client}
                     dataset={dataset}
                     cursor={cursor}
                     surface={explorer}
+                    queryOpen={queryOpen}
+                    onQueryOpenChange={setQueryOpen}
+                  />
+                  {/* The one cursor's braille line (B03-T10). It stays mounted when
+                      braille is off, so the focus never falls to the page (#513 review). */}
+                  <BrailleField
+                    client={client}
+                    braille={cursor?.braille ?? null}
+                    on={braille}
                   />
                   <DatasetPlot
                     client={client}
@@ -274,9 +302,12 @@ export function App({
       />
       <ExplorerCommands
         client={client}
+        announcer={announcer}
         onEffective={(settings) => {
           setVisual(visualOn(settings));
+          setBraille(brailleOn(settings));
         }}
+        onQueryMenu={openQueryMenu}
       />
       <FunctionCommands
         client={client}
@@ -290,6 +321,7 @@ export function App({
         client={client}
         isOpen={preferencesOpen}
         onOpenChange={setPreferencesOpen}
+        onKeysChange={reloadKeys}
       />
       <CommandPalette
         isOpen={paletteOpen}

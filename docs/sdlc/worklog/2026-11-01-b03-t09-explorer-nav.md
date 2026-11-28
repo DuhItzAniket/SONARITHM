@@ -72,8 +72,46 @@ None.
 - Sonification off sets the master to -120 dB (`TransportState.muted`). Visual off hides the plot's crosshair; the UI reads it from `settings_effective` and the toggles' replies. Braille off is read by the braille line (#453) through the effective modalities.
 - Tests: one Rust test per toggle's effect, the order of "Speech off" and "Speech on", persistence across a restart, the reset, and the lockout; E2E for the keys, the spoken change, the highlight and the refusal; a unit test for muted delivery.
 
+## The point cue (2026-11-01)
+
+- The design was approved before code. The render graph already had `Command::Cue` and preallocated cue voices under `no_alloc`, so the control thread does most of the work: `Transport::cue`, dropped while playing (keyboard §9.2 item 3), the output opened on the first cue, then `Sequencer::cue` so speech waits (A11Y-20).
+- The cue is the point's own note: a binary search of its track's events by the point's time, then the note whose `src` is the row. That avoids a per-row index, which would cost about 80 MB at a million rows.
+- **The steal clicked** (F-211): `Voice::start` replaces a voice at once. Now there are 8 cue slots with at most 4 sounding, and the oldest sounding cue fades over the ramp. Tests: the step at the fade stays within twice a sine's own steepest step; a full pool steals a fading voice and counts it; `no_alloc` sends ten cues in one block.
+- Not measured: the 50 ms key-to-onset budget, which needs the loopback harness on HW-01 (an owner step on #129).
+
+## The query menu (2026-11-01)
+
+- AUDAXIS `Composer::query`, with the composer's own formatting (values with spoken and symbol units, x labels): summary, minimum, maximum, range with its span, and the value at an x. It finds its targets with the cursor's own verbs (`Minimum`, `Maximum`, `GoTo`) on a copy, so the cursor never moves (keyboard §7).
+- `nav_query` replies `announce`; the answer is a response announcement.
+- Q (`query.menu`) is registered with the other explorer commands in `ExplorerCommands`, so the palette runs it from any tab: the app selects the Plot tab and opens the explorer's menu (`MenuButton` can now be opened by a command), with type-ahead. Value at x… asks for the x in a value dialog. Focus returns to the explorer.
+- The statistics (mean, median, mode, standard deviation, sum, count) wait for ECHOMETRIC.
+
+## Remapping (2026-11-01)
+
+- **App core.** `sonarithm_app::keymap` mirrors §13 rule 6, which the desktop lint also enforces. `Settings::validate` refuses a reserved chord (`SNR-APP-091`). A hand-edited file loses only that binding, gets a notice, and is written back, so the notice comes once. `Settings.keyboard.singleKeyCommands` defaults to true, so older files load. The keymap merge skips the project layer, and opening a project whose profile sets keys sends `SNR-APP-092` as a settings notice.
+- **UI.** `CommandRegistry.configure` applies the effective keymap (`settings_effective`: the settings and the active profile) and the group switch. Off unbinds letters, Shift+letters and punctuation, while arrows, Home, End, the Page keys and chords stay. Preferences › Keyboard holds the switch, the "Default" and "No single-key commands" presets, and a table of every command with Change… and Reset. The recorder (`commands/recorder.ts`) refuses what the lint refuses, with the reason, and names a command in the same scope that already uses the keys.
+- Tests: Rust for reserved chords, persistence across a reload, the hand-edited file, and the project layer; Node for overrides, the group switch and the recorder; E2E for the switch and the recorder.
+
+## The batched PR (2026-11-26)
+
+- **One PR, not four.** The point cue, the query menu, remapping and the braille field, per the owner's rule to batch related work and check it all locally first.
+- **Replayed, not merged.** Parts of these branches had already reached `main` in squashed PRs (#447, #451, #453, #479). Merging the old branches would have re-conflicted with that work, so only the unmerged commits were replayed onto `main`. PLOTSONA's two braille commits and the ADR change were already in.
+- **Fitted to `main`'s structure:**
+  - The query's Q is an app-wide command (`query.menu`) in `ExplorerCommands`. The app selects the Plot tab and opens the explorer's menu, so the palette runs it from any tab.
+  - Shift+B moved there too. It saves `settings.braille.mode`, a device setting, and says the change. B goes through `modality_toggle` like the other toggles.
+  - The old UI-side modality code is gone.
+- **Seams the local checks found:**
+  - `NavResult.cue` was missing on the live-filter refusal.
+  - `is_fading` was defined twice.
+  - The mock host had two `settings_effective` handlers, and its braille line read the base modality instead of the effective one.
+  - The query test asked five questions at once. With the point cue, speech waits for the cue, and each answer, a response, is superseded by the next command (keyboard §9.1), so only the last was spoken. That is the intended policy; the test now waits for each answer.
+- **Checked locally:**
+  - Rust: codegen, fmt, and clippy on app, AUDAXIS, i18n and render; 355 tests; render's and the audio device's `no_alloc`.
+  - Frontend: lint, typecheck, unit tests, stories with axe, and desktop E2E, 65/65 in Chromium and in WebKit.
+  - Not run locally: Firefox (it does not launch on Windows here), the visual baselines (Linux screenshots) and the 60 s allocation soak (shared machine). CI runs them.
+
 ## Next steps
 
-- PR (2): the Explorer component, keymap v0, the query menu, modality and verbosity toggles, E2E for every verb.
-- PR (3): remapping.
-- The point cue, after PR (1).
+- **Before the PR opens (paused 2026-11-26 for a usage reset):** #503 merged into this branch (572f2152) after the checks above. Re-run codegen, clippy and the app core's tests in one short builder slot, after merging `main` again if the fingerprint hotfix #509 or CURVASONA's #506 (`Annotation.track`) has landed, then typecheck if the protocol changed, push, and open the PR with auto-merge on.
+- The query menu's statistics: the "Values" and "Statistics" sections and six items, after ECHOMETRIC's C05-T06 (approved 2026-11-26).
+- The 50 ms key-to-onset check of the point cue on HW-01 (#129), and the NVDA walkthrough of the explorer, the toggles, the query menu and the braille line (B07).

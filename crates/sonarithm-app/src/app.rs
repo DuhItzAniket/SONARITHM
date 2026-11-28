@@ -33,6 +33,7 @@ use crate::transport::{Action, AudioOutput, OutputConfig, Transport};
 
 mod braille;
 mod corrections;
+mod cue;
 mod cursor;
 mod functions;
 mod modalities;
@@ -223,6 +224,8 @@ impl App {
         };
         // The active profile's speech preferences (ADR-0020 §3).
         app.transport.configure(app.output_config())?;
+        // A reserved binding edited into the active profile's file is said once (#513).
+        app.notice_reserved_profile_keys();
         Ok(app)
     }
 
@@ -346,6 +349,7 @@ impl App {
             Request::ModalityToggle { modality } => self.modality_toggle(modality),
             Request::ChoicesReset => self.choices_reset(),
             Request::BrailleRoute { cell } => self.braille_route(cell),
+            Request::NavQuery { query } => self.nav_query(&query),
         }
     }
 
@@ -858,6 +862,8 @@ impl App {
         self.settings = settings;
         self.session_prefs = crate::profile::choices_layer(&self.settings.choices);
         self.transport.configure(self.output_config())?;
+        // The braille line follows its mode, cell count and modality at once (B03-T10).
+        self.send_cursor(None, false);
         Ok(Reply::Settings(self.settings.clone()))
     }
 

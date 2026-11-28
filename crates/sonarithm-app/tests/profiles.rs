@@ -341,6 +341,75 @@ fn the_project_profile_travels_in_the_bundle() {
     assert_eq!(other.effective("sound.timbre.temp").1, "project");
 }
 
+/// Keyboard §13 (B03-T09): keys in a project's profile are never applied, and opening the
+/// project says so (`SNR-APP-092`), while the rest of that profile still applies.
+#[test]
+fn keyboard_13_a_projects_keys_are_ignored_with_a_notice() {
+    let dir = Arc::new(TempDir::new("projectkeys"));
+    let mut h = Harness::in_dir(Arc::clone(&dir));
+    h.compile(&spec(&json!({})));
+    h.ok(
+        &json!({ "command": "profile_save", "args": { "id": "project",
+        "profile": profile(&json!({}), &json!({ "verbosity": "verbose", "keymap": { "nav.next": "L" } })) } }),
+    );
+    let bundle = dir.path().join("keys.sonarithm");
+    h.ok(&json!({ "command": "project_save_as", "args": { "path": bundle, "embedData": true } }));
+    drop(h);
+    let sink = sonarithm_app::CollectingSink::new();
+    let config = AppConfig::new(dir.path().join("config")).with_audio(AudioOutput::null());
+    let mut app = App::new(config, Arc::new(sink.clone())).unwrap();
+    let open = json!({ "command": "project_open", "args": { "path": bundle } });
+    app.dispatch_json(&open.to_string()).unwrap();
+    let notices: Vec<(String, String)> = sink
+        .events()
+        .into_iter()
+        .filter_map(|event| match event {
+            sonarithm_app::ipc::Event::SettingsNotice { error } => {
+                Some((error.code, error.message))
+            }
+            _ => None,
+        })
+        .collect();
+    // A notice, once, and the project still opened (ADR-0020's one layer exception).
+    let codes: Vec<&str> = notices.iter().map(|(code, _)| code.as_str()).collect();
+    assert_eq!(codes, ["SNR-APP-092"]);
+    // It says the keys were ignored without listing them.
+    let message = &notices[0].1;
+    assert!(
+        !message.contains("nav.next") && !message.contains("\"L\""),
+        "{message}"
+    );
+    // The listener's own keys are unchanged.
+    let settings = app
+        .dispatch_json(&json!({ "command": "settings_get" }).to_string())
+        .unwrap();
+    assert_eq!(settings["keymap"], json!({}), "{settings}");
+    let effective = app
+        .dispatch_json(&json!({ "command": "settings_effective" }).to_string())
+        .unwrap();
+    let keys: Vec<&Value> = effective["settings"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .filter(|s| {
+            s["key"]
+                .as_str()
+                .is_some_and(|k| k.starts_with("interaction.keymap."))
+        })
+        .collect();
+    assert!(keys.is_empty(), "{keys:?}");
+    let verbosity = effective["settings"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .find(|s| s["key"] == "interaction.verbosity")
+        .cloned();
+    assert_eq!(
+        verbosity.map(|s| s["layer"].clone()),
+        Some(json!("project"))
+    );
+}
+
 /// ADR-0020's acceptance condition: a Score compiled with a profile re-renders from the
 /// spec its manifest records, with no profile at all, to the same Score hash.
 #[test]
@@ -384,4 +453,77 @@ fn adr_0020_a_score_re_renders_from_its_manifest_without_the_profile() {
         Some(again.score_hash().unwrap()),
         report["score"]["scoreHash"].as_str().map(str::to_owned)
     );
+}
+
+/// Keyboard §13 rule 6 (#513 review): a profile the user saves or imports may set keys,
+/// but never a reserved one, so it cannot turn Tab into a keyboard trap.
+#[test]
+fn keyboard_13_rule_6_a_profile_cannot_bind_a_reserved_key() {
+    let mut h = Harness::new("reserved");
+    let trap = profile(
+        &json!({}),
+        &json!({ "keymap": { "app.preferences": "Tab" } }),
+    );
+    let saved = h.send(&json!({ "command": "profile_save", "args": { "profile": trap } }));
+    assert_eq!(saved.unwrap_err().code, "SNR-APP-091");
+    let file = h.dir.path().join("trap.json");
+    std::fs::write(&file, serde_json::to_vec(&trap).unwrap()).unwrap();
+    let imported = h.send(&json!({ "command": "profile_import", "args": { "path": file } }));
+    assert_eq!(imported.unwrap_err().code, "SNR-APP-091");
+    // Other keys are the listener's to set in a profile they activate (ADR-0020).
+    let other_keys = profile(&json!({}), &json!({ "keymap": { "nav.next": "L" } }));
+    h.ok(&json!({ "command": "profile_save", "args": { "profile": other_keys } }));
+}
+
+/// Keyboard §13 rule 6: a profile file edited by hand to bind Tab is still read, but the
+/// reserved binding is dropped from the effective keymap, and the rest of it applies.
+#[test]
+fn keyboard_13_rule_6_a_hand_edited_profile_never_binds_tab() {
+    let mut h = Harness::new("handedit");
+    let id = h.activate(&profile(&json!({}), &json!({ "verbosity": "verbose" })));
+    let edited = profile(
+        &json!({}),
+        &json!({ "verbosity": "verbose", "keymap": { "app.preferences": "Tab", "nav.next": "L" } }),
+    );
+    let path = h
+        .dir
+        .path()
+        .join("config")
+        .join("profiles")
+        .join(format!("{id}.json"));
+    assert!(path.is_file(), "{}", path.display());
+    std::fs::write(&path, serde_json::to_vec_pretty(&edited).unwrap()).unwrap();
+    assert_eq!(
+        h.effective("interaction.keymap.app.preferences").1,
+        "default"
+    );
+    assert_eq!(
+        h.effective("interaction.keymap.nav.next"),
+        (json!("L"), "profile".to_owned())
+    );
+    assert_eq!(
+        h.effective("interaction.verbosity"),
+        (json!("verbose"), "profile".to_owned())
+    );
+    // At the next start the dropped binding is said once, by command, never by the chord
+    // the file holds (#513 review).
+    let dir = Arc::clone(&h.dir);
+    drop(h);
+    let sink = sonarithm_app::CollectingSink::new();
+    let config = AppConfig::new(dir.path().join("config")).with_audio(AudioOutput::null());
+    let _app = App::new(config, Arc::new(sink.clone())).unwrap();
+    let notices: Vec<(String, String)> = sink
+        .events()
+        .into_iter()
+        .filter_map(|event| match event {
+            sonarithm_app::ipc::Event::SettingsNotice { error } => {
+                Some((error.code, error.message))
+            }
+            _ => None,
+        })
+        .collect();
+    assert_eq!(notices.len(), 1, "{notices:?}");
+    assert_eq!(notices[0].0, "SNR-APP-091");
+    assert!(notices[0].1.contains("app.preferences"), "{}", notices[0].1);
+    assert!(!notices[0].1.contains("Tab"), "{}", notices[0].1);
 }

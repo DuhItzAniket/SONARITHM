@@ -15,6 +15,7 @@ import {
 import { useEffect, useState } from "react";
 
 import { useLocalizer } from "../i18n.ts";
+import { KeyboardPreferences } from "./KeyboardPreferences.tsx";
 import styles from "./preferences.module.css";
 import { settingsOf } from "./settings.ts";
 
@@ -43,10 +44,13 @@ export function Preferences({
   client,
   isOpen,
   onOpenChange,
+  onKeysChange,
 }: {
   readonly client: Client | null;
   readonly isOpen: boolean;
   readonly onOpenChange: (isOpen: boolean) => void;
+  /** Called after the keyboard section saved, so the app applies the new keys. */
+  readonly onKeysChange?: () => void;
 }) {
   const t = useLocalizer();
   const [settings, setSettings] = useState<Settings | null>(null);
@@ -242,6 +246,54 @@ export function Preferences({
               {t.format("ui-gpu-high-performance")}
             </Switch>
           </section>
+          <section
+            aria-labelledby="preferences-braille"
+            className={styles.section}
+          >
+            <h3 id="preferences-braille" className={styles.heading}>
+              {t.format("ui-braille")}
+            </h3>
+            {/* B03-T10: unset by default, since a page cannot read the display's size. */}
+            <NumberField
+              label={t.format("ui-braille-cells")}
+              description={t.format("ui-braille-cells-note")}
+              value={settings?.braille.cells ?? Number.NaN}
+              minValue={1}
+              maxValue={160}
+              step={1}
+              isDisabled={settings === null}
+              onChange={(value) => {
+                if (settings === null) return;
+                const cells = Number.isFinite(value) ? value : null;
+                const next: Settings = {
+                  ...settings,
+                  braille: { ...settings.braille, cells },
+                };
+                client
+                  ?.call({ command: "settings_set", args: { settings: next } })
+                  .then(
+                    (saved) => {
+                      setSettings(settingsOf(saved));
+                    },
+                    () => undefined,
+                  );
+              }}
+            />
+          </section>
+          <KeyboardPreferences
+            settings={settings}
+            onChange={(next) => {
+              client
+                ?.call({ command: "settings_set", args: { settings: next } })
+                .then(
+                  (saved) => {
+                    setSettings(settingsOf(saved));
+                    onKeysChange?.();
+                  },
+                  () => undefined,
+                );
+            }}
+          />
           <DialogActions>
             <Button onPress={close}>{t.format("ui-close-window")}</Button>
           </DialogActions>

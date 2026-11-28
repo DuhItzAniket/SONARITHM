@@ -68,6 +68,7 @@ let settings: Settings = {
     visual: true,
   },
   keymap: {},
+  keyboard: { singleKeyCommands: true },
   consent: { updateCheck: null },
   speech: {
     route: "screenReader",
@@ -100,6 +101,12 @@ function effective(): EffectiveSetting[] {
       key: `interaction.modalities.${modality}`,
       value: choices[modality] ?? settings.modalities[modality],
       layer: layer(choices[modality]),
+    })),
+    // The user's key bindings; the mock host has no profiles to add more.
+    ...Object.entries(settings.keymap).map(([command, keys]) => ({
+      key: `interaction.keymap.${command}`,
+      value: keys,
+      layer: "settings" as const,
     })),
   ];
 }
@@ -159,6 +166,8 @@ function toggle(target: ToggleTarget) {
   if (target === "sonification") {
     transport = { ...transport, muted: !on };
   }
+  // The braille line follows the modality at once, as the app core's does.
+  if (cursor.row !== null) moveCursor(cursor.row, cursor.origin ?? "nav");
   const name = {
     speech: "Speech",
     sonification: "Sonification",
@@ -267,6 +276,25 @@ let cursor: CursorState = {
   braille: null,
 };
 
+/**
+ * The braille line as the app core would send it (B03-T10), simplified: a fake line of
+ * ten cells around the row while braille is on, the caret on the row's cell.
+ */
+function brailleOf(row: number): CursorState["braille"] {
+  // The effective modality: the toggles' choice (B) over the base setting.
+  const on = settings.choices.braille ?? settings.modalities.braille;
+  if (!on || dataset === null) return null;
+  const sparkline = settings.braille.mode === "sparkline";
+  return {
+    mode: sparkline ? "sparkline" : "review",
+    text: sparkline
+      ? "⣀⣠⣤⣴⣶⣾⣿⣷⣦⣄"
+      : `15.${String(row % 10)} °C day ${String(row + 1)}`,
+    caret: sparkline ? row % 10 : 0,
+    cells: settings.braille.cells ?? null,
+  };
+}
+
 function moveCursor(
   row: number,
   origin: CursorOrigin,
@@ -281,7 +309,7 @@ function moveCursor(
     path: dataset === null ? [] : [{ level: "dataset", label: dataset.name }],
     excluded: [],
     origin,
-    braille: null,
+    braille: brailleOf(row),
   };
   emit({ event: "cursor", ...cursor });
   return cursor;
@@ -529,6 +557,8 @@ const handlers: MockHandlers = {
       included: null,
       earcon: step.outcome === "boundary" ? "E-BOUNDARY" : null,
       highlight: null,
+      // Every mock move lands on a point, so it plays the cue unless sonification is off.
+      cue: step.outcome === "moved" && !transport.muted,
       announced: true,
     };
   },
@@ -544,6 +574,16 @@ const handlers: MockHandlers = {
     reply: "effective" as const,
     settings: effective(),
   }),
+  // A sparkline cell moves the cursor to its point, silently; the review line does not.
+  braille_route: (request) => {
+    const line = cursor.braille;
+    if (line?.mode !== "sparkline" || cursor.row === null) {
+      return { reply: "cursor" as const, ...cursor };
+    }
+    const row = cursor.row - line.caret + request.args.cell;
+    return { reply: "cursor" as const, ...moveCursor(row, "braille") };
+  },
+  nav_query: () => ({ reply: "announce" as const, queued: true }),
   announce_repeat: () => ({ reply: "announce" as const, queued: true }),
   cursor_set: (request) => ({
     reply: "cursor" as const,
@@ -569,6 +609,8 @@ const handlers: MockHandlers = {
   settings_get: () => ({ reply: "settings" as const, ...settings }),
   settings_set: (request) => {
     settings = request.args.settings;
+    // The cursor's braille line follows the modality and mode, as the app core's does.
+    if (cursor.row !== null) moveCursor(cursor.row, "nav");
     return { reply: "settings" as const, ...settings };
   },
   devices_list: () => ({
@@ -690,6 +732,14 @@ Reflect.set(window, "__SONARITHM_MOCK__", {
   /** The commands the UI sent through `ipc_dispatch`, oldest first. */
   commands(): string[] {
     return host.requests.map((request) => request.command);
+  },
+  /** The questions of the explorer's `nav_query` requests, oldest first, as JSON. */
+  navQueries(): string[] {
+    return host.requests.flatMap((request) =>
+      request.command === "nav_query"
+        ? [JSON.stringify(request.args.query)]
+        : [],
+    );
   },
   /** The verbs of the explorer's `nav_move` requests, oldest first, as JSON. */
   navVerbs(): string[] {

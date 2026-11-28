@@ -375,6 +375,25 @@ pub fn validate(profile: &Profile) -> Result<(), IpcError> {
     Ok(())
 }
 
+/// Keyboard §13 rule 6 for a profile the user saves or imports: a profile may set keys
+/// (the listener chooses to activate it), but never a reserved combination (ADR-0020's
+/// amendment of 2026-11-28). A profile file edited by hand is still read, and
+/// [`effective`] drops its reserved bindings, so it can neither trap Tab nor lose its other
+/// preferences.
+///
+/// # Errors
+///
+/// `SNR-APP-091` naming the first reserved chord and its command.
+pub fn check_keys(profile: &Profile) -> Result<(), IpcError> {
+    match crate::keymap::first_reserved(&profile.interaction.keymap) {
+        Some((command, chord)) => Err(IpcError::new(
+            &codes::KEYMAP_RESERVED,
+            format!("{chord} is reserved and cannot be bound to {command} (keyboard §13 rule 6)."),
+        )),
+        None => Ok(()),
+    }
+}
+
 /// Whether any string or key looks like an absolute path (ADR-0012, ADR-0020 §1).
 fn has_path(value: &Value) -> bool {
     let absolute = |text: &str| {
@@ -625,20 +644,30 @@ pub fn effective(layers: &Layers<'_>) -> Interaction {
         as_value(ss.rate_wpm),
         upper(&|p| p.speech.and_then(|s| s.rate_wpm).map(as_value)),
     );
-    // The keymap merges key by key.
+    // The keymap merges key by key. A project's profile never sets keys: a shared file
+    // must not rebind someone's keyboard (B03-T09; keyboard §13). Opening such a project
+    // sends `SNR-APP-092` as a settings notice.
+    // A binding with a reserved chord is dropped from every layer (keyboard §13 rule 6), so
+    // a hand-edited settings or profile file cannot trap Tab or F6 either; the checks on
+    // the way in (`settings_set`, and `check_keys` on save and import) refuse them with
+    // `SNR-APP-091`.
+    let allowed =
+        |command: &str, keys: &str| crate::keymap::reserved_chord(command, keys).is_none();
     let mut keymap: BTreeMap<String, (String, Layer)> = layers
         .settings
         .keymap
         .iter()
+        .filter(|(k, v)| allowed(k, v))
         .map(|(k, v)| (k.clone(), (v.clone(), Layer::Settings)))
         .collect();
     for (layer, prefs) in [
         (Layer::Profile, profile.as_ref()),
-        (Layer::Project, project.as_ref()),
         (Layer::Session, session.as_ref()),
     ] {
         for (command, keys) in prefs.map(|p| &p.keymap).into_iter().flatten() {
-            keymap.insert(command.clone(), (keys.clone(), layer));
+            if allowed(command, keys) {
+                keymap.insert(command.clone(), (keys.clone(), layer));
+            }
         }
     }
     for (command, (keys, layer)) in &keymap {
