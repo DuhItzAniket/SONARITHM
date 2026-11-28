@@ -45,8 +45,8 @@ use std::sync::Arc;
 use arrow_array::{ArrayRef, Float64Array, RecordBatch};
 use arrow_schema::{DataType, Field, Schema};
 use sonarithm_core::engine::{
-    Analyzer, Annotation, CompileContext, CompileError, Engine, EngineManifest, Registrar,
-    RegistryError, Source, SourceKind, SpecFragment,
+    AnalysisRequest, Analyzer, Annotation, CompileContext, CompileError, Engine, EngineManifest,
+    Registrar, RegistryError, Source, SourceKind, SpecFragment,
 };
 use sonarithm_core::{
     AnalyzerId, Diagnostic, EngineId, EngineVersion, Provenance, ProvenanceClass, RowRange, RuleId,
@@ -69,6 +69,9 @@ pub const ENGINE: EngineId = EngineId::from_static("curvasona");
 
 /// The table ID of a sampled function in its bundle.
 pub const FUNCTION_TABLE: TableId = TableId(0);
+
+/// The function table's value field, the one series its critical points are about.
+const Y_FIELD: &str = "y";
 
 /// The extractor name recorded in the bundle's source descriptor.
 pub const EXTRACTOR: &str = "sonarithm-curvasona/function";
@@ -421,7 +424,7 @@ fn function_table(
                 .apply(Field::new("x", DataType::Float64, false)),
             quantitative()
                 .with_role(Role::Y)
-                .apply(Field::new("y", DataType::Float64, true)),
+                .apply(Field::new(Y_FIELD, DataType::Float64, true)),
             quantitative().apply(Field::new("dy", DataType::Float64, true)),
         ])
         .with_metadata(std::collections::HashMap::from([
@@ -596,7 +599,7 @@ impl Analyzer<DataBundle> for CriticalPoints {
     fn analyze(
         &self,
         data: &DataBundle,
-        _params: &SpecFragment,
+        _request: &AnalysisRequest<'_>,
         cx: &mut CompileContext,
     ) -> Result<Vec<Annotation>, CompileError> {
         match function_features(data, &self.budgets) {
@@ -785,6 +788,8 @@ pub fn function_features(data: &DataBundle, budgets: &Budgets) -> Result<Vec<Ann
         let covered = range(start, end);
         let mut annotation = Annotation::new(CRITICAL_POINTS, feature.kind.label(), covered);
         annotation.value = feature.y;
+        // A function table has one series, its y (RFC-0009 §1).
+        annotation.field = Some(Y_FIELD.to_owned());
         annotation.rules = vec![RuleId::from_static("A11Y-28")];
         annotations.push(annotation);
     }

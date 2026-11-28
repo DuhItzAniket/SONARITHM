@@ -70,4 +70,4 @@ Implemented in `sonarithm_core::engine` (A03-T04); 05 §3 links here. Related: [
 | Date | Change | Approved |
 |---|---|---|
 | 2026-11-26 | Lint is a core `Linter` pass over the finished compile, not a `Shaper`; it writes nothing to the Score ([ADR-0032](0032-the-lint-pass.md)). `ShaperStage::Lint` stays in the IR, unused | Coordinator, under the owner's delegation (C05 phase plan, D2) |
-| 2026-11-26 | `Analyzer::analyze` takes an `AnalysisRequest` (the `analysis` fragment and the fields the spec's tracks play) instead of the bare fragment, and `Annotation` gains `field` and `params` ([RFC-0009](../rfcs/0009-echometric-insights-in-the-score.md) §1) | Coordinator, under the owner's delegation (RFC-0009 acceptance) |
+| 2026-11-26 | `Analyzer::analyze` takes an `AnalysisRequest` (the `analysis` fragment and, per data track, its field and the rows it plays in play order) instead of the bare fragment, and `Annotation` gains `field`, `track` and `params` ([RFC-0009](../rfcs/0009-echometric-insights-in-the-score.md) §1). `CompilerData` gains `play_rows` | Coordinator, under the owner's delegation (RFC-0009 acceptance; the per-track form after #506's review) |

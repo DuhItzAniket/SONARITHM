@@ -20,4 +20,8 @@
 )]
 
 pub mod codes;
+pub mod detect;
+pub mod engine;
 pub mod harness;
+
+pub use engine::Echometric;

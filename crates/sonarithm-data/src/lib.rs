@@ -18,6 +18,7 @@ pub mod error;
 pub mod fingerprint;
 mod infer;
 pub mod meta;
+pub mod play;
 pub mod provenance;
 pub mod slots;
 pub mod source;
@@ -35,6 +36,7 @@ pub use fingerprint::{
     FINGERPRINT_SCHEME, bundle_fingerprint, table_fingerprint, table_fingerprint_v1,
 };
 pub use meta::{Concept, FieldMeta, FieldType, Role, Unit};
+pub use play::play_rows;
 pub use provenance::{ProvenanceMix, RowProvenance};
 pub use source::{CsvOptions, JsonOptions, Limits, Loaded, ReadOptions, read_batches, read_bytes};
 #[cfg(feature = "xlsx")]

@@ -8,34 +8,12 @@
 import type { Locator, Page } from "@playwright/test";
 import { expect, test } from "@playwright/test";
 
-import { seriousViolations } from "./axe.ts";
+// The calibration dialog's axe scan is skipped in Firefox by the shared helper (F-226, #487).
+import { expectNoSeriousViolations } from "./axe.ts";
 
 async function primary(page: Page): Promise<"Meta" | "Control"> {
   const mac = await page.evaluate(() => navigator.userAgent.includes("Mac"));
   return mac ? "Meta" : "Control";
-}
-
-/**
- * The axe check of the calibration dialog. Playwright 1.65's Firefox (build 1572) crashes the
- * page when axe reads `ariaLabelledByElements` after a named lookup has read it in
- * Playwright's own world (microsoft/playwright#43967, Mozilla bug 2090055; F-226): here the
- * next lookup after the scan crashed. Firefox skips only this scan, with a fixme note in the
- * report; every other step still runs in Firefox, and Chromium and WebKit run the scan, as
- * `audio.spec.ts` does. Remove the skip with #487.
- *
- * TODO(#487): use the shared `expectNoSeriousViolations` from `./axe.ts` once #498 lands, so
- * the workaround is removed in one place.
- */
-async function expectNoSeriousViolations(page: Page, browserName: string) {
-  if (browserName === "firefox") {
-    test.info().annotations.push({
-      type: "fixme",
-      description:
-        "axe scan skipped in Firefox (F-226): microsoft/playwright#43967 (Mozilla bug 2090055); remove with #487",
-    });
-    return;
-  }
-  expect(await seriousViolations(page)).toEqual([]);
 }
 
 const polite = (page: Page) =>

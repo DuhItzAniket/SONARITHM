@@ -10,6 +10,7 @@ use sonarithm_compiler::{Compiler, Failure, Platform};
 use sonarithm_core::engine::{CancelToken, Engine, EngineManifest};
 use sonarithm_curvasona::Curvasona;
 use sonarithm_data::{DataBundle, Snapshot};
+use sonarithm_echometric::Echometric;
 use sonarithm_numisona::Numisona;
 use sonarithm_numisona::polarity::PolarityProfile;
 use sonarithm_plotsona::Plotsona;
@@ -78,6 +79,7 @@ impl Sonarithm {
             engines.push(Engine::<DataBundle>::manifest(numisona));
             engines.push(Plotsona::manifest());
             engines.push(Curvasona::manifest());
+            engines.push(Echometric::manifest());
         }
         if let Some(audaxis) = &self.audaxis {
             engines.push(Engine::<DataBundle>::manifest(audaxis));
@@ -159,12 +161,20 @@ impl Sonarithm {
             .base_dir()
             .map_or_else(Plotsona::new, Plotsona::with_base_dir);
         let curvasona = Curvasona::new();
+        let echometric = Echometric;
         let mut engines: Vec<&dyn Engine<DataBundle>> = vec![&platform];
         if let Some(numisona) = &self.numisona {
             engines.push(numisona);
             engines.push(&plotsona);
-            if uses_curvasona(spec.text()) {
+            let parsed = serde_json::from_str::<serde_json::Value>(spec.text()).ok();
+            if parsed.as_ref().is_some_and(sonarithm_curvasona::is_used_by) {
                 engines.push(&curvasona);
+            }
+            if parsed
+                .as_ref()
+                .is_some_and(sonarithm_echometric::engine::is_used_by)
+            {
+                engines.push(&echometric);
             }
         }
         if let Some(audaxis) = &self.audaxis {
@@ -249,11 +259,13 @@ impl Builder {
         let platform = Platform::new();
         let plotsona = Plotsona::new();
         let curvasona = Curvasona::new();
+        let echometric = Echometric;
         let mut engines: Vec<&dyn Engine<DataBundle>> = vec![&platform];
         if let Some(numisona) = &snr.numisona {
             engines.push(numisona);
             engines.push(&plotsona);
             engines.push(&curvasona);
+            engines.push(&echometric);
         }
         if let Some(audaxis) = &snr.audaxis {
             engines.push(audaxis);
@@ -265,13 +277,6 @@ impl Builder {
         })?;
         Ok(snr)
     }
-}
-
-/// Whether the spec `text` uses CURVASONA ([`sonarithm_curvasona::is_used_by`]). A spec
-/// that is not JSON does not, and its compile reports why.
-fn uses_curvasona(text: &str) -> bool {
-    serde_json::from_str::<serde_json::Value>(text)
-        .is_ok_and(|spec| sonarithm_curvasona::is_used_by(&spec))
 }
 
 /// Data the caller holds, by ID, for `dataset` sources.

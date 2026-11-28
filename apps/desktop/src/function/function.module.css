@@ -1,0 +1,59 @@
+/* SPDX-FileCopyrightText: 2026 SONARITHM contributors */
+/* SPDX-License-Identifier: MIT OR Apache-2.0 */
+
+/* Functions (C03-T08b): the New function dialog and the Inspector's function and
+   audification sections. Errors are text with a sign, never colour alone (DL-X08). */
+
+.form,
+.inspector,
+.calculator {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  align-items: end;
+}
+
+.summary,
+.note,
+.failure {
+  margin: 0;
+  color: var(--text-1);
+  font-size: var(--type-13-size);
+  line-height: var(--type-13-line);
+}
+
+.note {
+  color: var(--text-2);
+}
+
+.failure::before {
+  content: "\26A0\FE0E\00A0";
+  color: var(--signal-error);
+}
+
+.readout {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: var(--space-1) var(--space-3);
+  margin: 0;
+  font-size: var(--type-13-size);
+  font-variant-numeric: var(--numeric);
+  line-height: var(--type-13-line);
+}
+
+.readout dt {
+  color: var(--text-2);
+}
+
+.readout dd {
+  margin: 0;
+  color: var(--text-1);
+  font-family: var(--font-mono);
+  font-variant-numeric: var(--numeric);
+}

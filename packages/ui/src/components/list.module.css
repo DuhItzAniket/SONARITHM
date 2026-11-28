@@ -38,6 +38,18 @@
   border-style: dashed;
 }
 
+/* A row that acts (ActionList): its text from the start, a bar at the start when current. */
+.action {
+  padding-inline: var(--space-2);
+  cursor: default;
+}
+
+.action[data-current] {
+  border-inline-start-width: var(--space-1);
+  border-inline-start-color: var(--text-1);
+  font-weight: var(--weight-semibold);
+}
+
 .handle {
   display: inline-flex;
   align-items: center;

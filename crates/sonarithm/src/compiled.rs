@@ -45,6 +45,13 @@ impl Compiled {
         self.inner.nav.as_ref()
     }
 
+    /// Every analyzer's annotations, with the field each is about and the parameters that
+    /// produced it (RFC-0009 §1). Not part of the Score.
+    #[must_use]
+    pub fn annotations(&self) -> &[sonarithm_core::engine::Annotation] {
+        &self.inner.annotations
+    }
+
     /// The Score, consumed.
     #[must_use]
     pub fn into_score(self) -> Score {

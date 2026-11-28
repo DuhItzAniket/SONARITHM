@@ -45,6 +45,10 @@ impl CompilerData for DataBundle {
         sonarithm_data::bundle_fingerprint(self).map_err(|err| Box::new(err.to_diagnostic()))
     }
 
+    fn play_rows(&self, filter: Option<&str>, time: Option<&str>) -> Option<Vec<u64>> {
+        sonarithm_data::play_rows(self.primary()?, filter, time).ok()
+    }
+
     fn fingerprint_scheme(&self) -> u32 {
         sonarithm_data::FINGERPRINT_SCHEME
     }

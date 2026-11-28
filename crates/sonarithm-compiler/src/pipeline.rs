@@ -15,8 +15,8 @@ use serde::Serialize;
 use sonarithm_core::diagnostic::{Diagnostic, Diagnostics, SpecPointer};
 use sonarithm_core::digest::Sha256Digest;
 use sonarithm_core::engine::{
-    Annotation, Budget, CancelToken, CompileContext, CompileError, Engine, MarkKind, Registry,
-    SourceKind, SpecFragment, TrackRequest,
+    AnalysisRequest, AnalyzedField, Annotation, Budget, CancelToken, CompileContext, CompileError,
+    Engine, MarkKind, Registry, SourceKind, SpecFragment, TrackRequest,
 };
 use sonarithm_core::ids::{AnalyzerId, EngineId, RuleId, TrackId};
 use sonarithm_core::nav::NavTree;
@@ -24,6 +24,7 @@ use sonarithm_core::score::{EngineVersion, Score, ScoreHeader, ShaperStage};
 use sonarithm_core::units::Seconds;
 use sonarithm_spec::data::Source;
 use sonarithm_spec::sections::Detector;
+use sonarithm_spec::track::ChannelName;
 use sonarithm_spec::v02::TemplateRef;
 use sonarithm_spec::{Prepared, Spec, Transform, prepare};
 
@@ -69,6 +70,13 @@ pub trait CompilerData {
     fn provenance_mix(&self) -> BTreeMap<String, f64> {
         BTreeMap::new()
     }
+
+    /// The rows a track plays, in play order (RFC-0009 §1): those `filter` keeps, ordered by
+    /// the `time` field (or the data's own role-`x` field). `None` when this data type cannot
+    /// tell; analyzers then read every row in table order.
+    fn play_rows(&self, _filter: Option<&str>, _time: Option<&str>) -> Option<Vec<u64>> {
+        None
+    }
 }
 
 /// A successful compile.
@@ -90,6 +98,9 @@ pub struct Compiled {
     /// The keys of the experimental switches that are on (RFC-0006), sorted, for the
     /// render manifest and the description.
     pub experiments: Vec<String>,
+    /// Every analyzer's annotations, in `analysis.detect` order (RFC-0009 §1): with their
+    /// field and parameters. Not part of the Score.
+    pub annotations: Vec<Annotation>,
 }
 
 /// Why a compile produced no Score.
@@ -171,6 +182,7 @@ impl<D: CompilerData> Compiler<D> {
                 score,
                 provenance,
                 nav,
+                annotations,
             }) => {
                 let mut diagnostics = run.diagnostics;
                 diagnostics.extend(run.cx.take_diagnostics());
@@ -184,6 +196,7 @@ impl<D: CompilerData> Compiler<D> {
                     provenance,
                     nav,
                     experiments,
+                    annotations,
                 })
             }
             Err(Stop::Cancelled) => Err(Failure::Cancelled),
@@ -207,6 +220,7 @@ struct Finished {
     score: Score,
     provenance: BTreeMap<String, f64>,
     nav: Option<NavTree>,
+    annotations: Vec<Annotation>,
 }
 
 /// Why the stages stopped early.
@@ -287,6 +301,7 @@ impl<D: CompilerData> Run<'_, D> {
             provenance: data.provenance_mix(),
             score,
             nav,
+            annotations,
         })
     }
 
@@ -389,11 +404,14 @@ impl<D: CompilerData> Run<'_, D> {
     fn analyze(&mut self, spec: &Spec, data: &D) -> Result<Vec<Annotation>, Stop> {
         let registry = self.registry;
         let mut annotations = Vec::new();
-        let Some(analysis) = &spec.analysis else {
+        let Some(analysis) = spec.analysis.as_ref().filter(|a| !a.detect.is_empty()) else {
+            // No detector: no rows are gathered for one (RFC-0009 §1).
             return Ok(annotations);
         };
         let at = SpecPointer::root().key("analysis");
         let params = fragment(at.clone(), analysis)?;
+        let fields = analyzed_fields(spec, data);
+        let request = AnalysisRequest::new(&params, &fields);
         for (index, detector) in analysis.detect.iter().enumerate() {
             let id = AnalyzerId::from_static(detector_id(*detector));
             let (engine, analyzer) = registry.analyzer(&id).ok_or_else(|| {
@@ -407,7 +425,7 @@ impl<D: CompilerData> Run<'_, D> {
             self.use_engine(&engine.clone());
             annotations.extend(
                 analyzer
-                    .analyze(data, &params, &mut self.cx)
+                    .analyze(data, &request, &mut self.cx)
                     .map_err(stop)?,
             );
         }
@@ -718,6 +736,50 @@ fn detector_id(detector: Detector) -> &'static str {
     }
 }
 
+/// The series the spec's tracks play (RFC-0009 §1), one per track that maps a field: its
+/// pitch field, else its first channel mapped to a field other than timbre (nominal,
+/// SDR-25), over the rows it plays in play order. The time field is chosen as the encoders
+/// choose it: the substrate's, else the spec's field with role `x`, else the data's own.
+fn analyzed_fields<D: CompilerData>(spec: &Spec, data: &D) -> Vec<AnalyzedField> {
+    let time = spec
+        .substrate
+        .as_ref()
+        .and_then(|s| s.time.as_ref())
+        .and_then(|t| t.field.clone())
+        .or_else(|| {
+            spec.data
+                .fields
+                .iter()
+                .find(|(_, field)| field.role == Some(sonarithm_spec::data::Role::X))
+                .map(|(name, _)| name.clone())
+        });
+    let mut fields: Vec<AnalyzedField> = Vec::new();
+    for track in &spec.tracks {
+        let present = track.channels.present();
+        let pitch = present
+            .iter()
+            .find(|(name, _)| *name == ChannelName::Pitch)
+            .and_then(|(_, channel)| channel.field.as_ref());
+        let main = pitch.or_else(|| {
+            present
+                .iter()
+                .filter(|(name, _)| *name != ChannelName::Timbre)
+                .find_map(|(_, channel)| channel.field.as_ref())
+        });
+        let Some(field) = main else {
+            continue;
+        };
+        let filter = track.filter.as_ref().map(|f| f.expr.as_str());
+        let rows = data.play_rows(filter, time.as_deref());
+        fields.push(AnalyzedField::new(
+            field.clone(),
+            TrackId::new(track.id.clone()),
+            rows,
+        ));
+    }
+    fields
+}
+
 fn detector_owner(detector: Detector) -> &'static str {
     if detector == Detector::CriticalPoints {
         "curvasona"
@@ -731,7 +793,61 @@ mod tests {
     use proptest::prelude::*;
     use sonarithm_core::testing::valid_score;
 
-    use super::duration;
+    use super::{analyzed_fields, duration};
+
+    /// Data with no rows of its own, for the analyzed-field rule.
+    struct NoRows;
+
+    impl super::CompilerData for NoRows {
+        fn fingerprint(&self) -> sonarithm_core::digest::Sha256Digest {
+            sonarithm_core::digest::Sha256Digest::ZERO
+        }
+
+        fn transform(
+            &mut self,
+            _transforms: &[sonarithm_spec::Transform],
+            _at: &sonarithm_core::diagnostic::SpecPointer,
+        ) -> Option<
+            Result<
+                sonarithm_core::diagnostic::Diagnostics,
+                Box<sonarithm_core::diagnostic::Diagnostic>,
+            >,
+        > {
+            None
+        }
+    }
+
+    /// RFC-0009 §1: one series per track that maps a field, its pitch field, else its first
+    /// non-timbre field, in spec order; a track with no field adds nothing. Two tracks of one
+    /// field are two series (each plays its own rows).
+    #[test]
+    fn rfc_0009_analyzed_fields_follow_the_tracks() {
+        let spec = sonarithm_spec::parse(
+            r#"{
+                "specVersion": "0.1",
+                "data": { "source": { "kind": "inline", "values": [{ "t": 1, "a": 2, "b": 3, "c": "x" }] } },
+                "tracks": [
+                    { "id": "one", "mark": "tone", "channels": { "pitch": { "field": "a" }, "loudness": { "field": "b" } } },
+                    { "id": "two", "mark": "tone", "channels": { "timbre": { "field": "c" }, "duration": { "field": "b" } } },
+                    { "id": "three", "mark": "tone", "channels": { "pitch": { "field": "a" } } },
+                    { "id": "four", "mark": "tone", "channels": { "pitch": { "value": 60 } } }
+                ]
+            }"#,
+        )
+        .expect("the spec parses");
+        let fields: Vec<(String, String, Option<Vec<u64>>)> = analyzed_fields(&spec, &NoRows)
+            .into_iter()
+            .map(|f| (f.field, f.track.as_str().to_owned(), f.rows))
+            .collect();
+        assert_eq!(
+            fields,
+            [
+                ("a".to_owned(), "one".to_owned(), None),
+                ("b".to_owned(), "two".to_owned(), None),
+                ("a".to_owned(), "three".to_owned(), None),
+            ]
+        );
+    }
 
     proptest! {
         /// The header duration the compiler stamps covers every event of any valid Score,
