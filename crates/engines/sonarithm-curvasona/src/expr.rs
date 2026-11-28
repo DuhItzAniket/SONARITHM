@@ -43,7 +43,9 @@ mod ops;
 /// Size limits for one expression. Engineering safety limits, not research defaults.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub struct Limits {
-    /// The most characters an expression may have.
+    /// The most characters an expression may have, and its canonical form too: an
+    /// expression whose canonical form would be longer is refused with this limit, so a
+    /// canonical form always reads back (`e` and `pi` print as their digits).
     pub max_chars: usize,
     /// The deepest nesting of parentheses, signs, powers and function calls.
     pub max_depth: usize,
@@ -1101,7 +1103,19 @@ impl Expr {
         }
         let names: Vec<String> = names.into_iter().map(str::to_owned).collect();
         let values: Vec<f64> = variables.values().copied().collect();
-        Self::from_node(node, names, &values, limits.max_derivative_chars)
+        let expr = Self::from_node(node, names, &values, limits.max_derivative_chars)?;
+        // The canonical form must read back under the same limits. It can be longer than the
+        // text it came from: `e` and `pi` are written as their digits, `1e20` in full, and
+        // `+` and `-` get spaces. An expression whose canonical form would pass the character
+        // limit is refused with that limit, so every accepted expression's canonical form
+        // parses to itself (fuzzing found 245 characters of `e`s whose form ran past 1024).
+        if expr.canonical.chars().count() > limits.max_chars {
+            return Err(ExprError::TooLarge {
+                limit: Limit::Chars,
+                max: limits.max_chars,
+            });
+        }
+        Ok(expr)
     }
 
     /// Prints, lowers and compiles a tree whose `Var` indices point into `names`.

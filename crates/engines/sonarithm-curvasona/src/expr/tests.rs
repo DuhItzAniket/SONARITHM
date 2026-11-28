@@ -547,3 +547,40 @@ fn adr_0013_every_function_evaluates_with_libm_bit_for_bit() {
         assert!(same(value(&text, x), libm::pow(x, y)), "{text} at {x}");
     }
 }
+
+/// The `expr_parse` fuzz target found 245 characters of `e`s and stacked minuses whose
+/// canonical form, with every `e` written as its 17 digits, ran past the 1024-character
+/// limit and then did not read back. Such an expression is now refused with that limit,
+/// and whatever is accepted reads back to itself.
+#[test]
+fn a_canonical_form_always_reads_back_under_the_same_limits() {
+    let variables = BTreeMap::new();
+    let limits = Limits::DEFAULT;
+    let found = include_str!("../../fuzz/corpus/expr_parse/seed-regression-canonical-too-long.txt");
+    let mut long = String::from("e");
+    while long.len() + 2 <= 300 {
+        long.push_str("-e");
+    }
+    for text in [found, long.as_str()] {
+        match Expr::parse(text, &variables, &limits) {
+            Ok(expr) => {
+                let again = Expr::parse(expr.canonical(), &variables, &limits).unwrap();
+                assert_eq!(again.canonical(), expr.canonical());
+            }
+            Err(err) => assert_eq!(
+                err,
+                ExprError::TooLarge {
+                    limit: Limit::Chars,
+                    max: limits.max_chars
+                },
+                "{text}"
+            ),
+        }
+    }
+    // 300 characters of `e-e-…` print as about 2900: refused, though the text fits.
+    assert!(long.chars().count() <= limits.max_chars);
+    assert!(Expr::parse(&long, &variables, &limits).is_err());
+    // A short one still reads, digits and all.
+    let short = Expr::parse("e - e", &variables, &limits).unwrap();
+    assert_eq!(short.canonical(), "2.718281828459045 - 2.718281828459045");
+}
