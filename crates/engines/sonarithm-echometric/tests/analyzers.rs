@@ -316,8 +316,8 @@ fn sdr_43_an_insight_on_an_unstated_estimate_is_not_certain() {
             json!({
                 "t": i,
                 "y": y,
+                // No `__snr_conf` column at all: the estimate states no confidence.
                 "__snr_prov": if estimated { "cv_estimate" } else { "exact" },
-                "__snr_conf": Value::Null,
             })
         })
         .collect();

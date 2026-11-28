@@ -264,6 +264,7 @@ Owner: `sonarithm-curvasona`. Numbers SNR-ENG-400 to SNR-ENG-499.
 | `SNR-ENG-463` | error | The audification speed-up is out of range | k must be a finite number from 0.001 to 1 000 000 (RFC-0007 amendment 3). | SDR-31 |
 | `SNR-ENG-464` | error | The series is too long to audify | An audification holds at most 4 194 304 samples (RFC-0007). Filter or resample the data first, or audify a shorter stretch. | — |
 | `SNR-ENG-465` | error | There is no series to audify | The `audify` mark plays the field with the y role, else the first numeric field that is not the time field. Give the data a numeric field. | — |
+| `SNR-ENG-466` | error | The audify track's filter cannot be applied | An `audify` track plays the rows its `filter` keeps, as every encoder does. Check the filter's expression against the data's fields. | — |
 
 Owner: `sonarithm-echometric`. Numbers SNR-ENG-600 to SNR-ENG-699.
 

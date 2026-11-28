@@ -70,8 +70,9 @@ pub(crate) fn read(array: &ArrayRef) -> Result<Column, String> {
             let labels =
                 texts(dictionary.values().as_ref()).ok_or_else(|| data_type.to_string())?;
             // Not arrow's `normalized_keys`, which panics on an empty dictionary (#508).
-            let keys = sonarithm_data::dictionary_keys(array.as_ref())
-                .map_err(|err| format!("{data_type} (row {}: a key outside its values)", err.row))?;
+            let keys = sonarithm_data::dictionary_keys(array.as_ref()).map_err(|err| {
+                format!("{data_type} (row {}: a key outside its values)", err.row)
+            })?;
             let values = keys
                 .iter()
                 .map(|key| key.and_then(|key| labels.get(key).cloned().flatten()))

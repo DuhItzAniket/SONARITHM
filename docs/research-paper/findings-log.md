@@ -1042,6 +1042,33 @@ A05 (render engine, audio backends, export) uses F-050 to F-069.
 - **Evidence level / confidence:** EV-D / Strong for the cause (the failing OS set, the zero-change local re-record, and exmex's operator source); cross-platform agreement after the fix is shown by #449's CI, not yet
 - **Affects:** ADR-0013 §1; every function spec's Score and manifest (C03-T02, C03-T06, C03-T07); the curvasona-suite records; any snapshot that holds a function's full-precision values
 
+### F-209 · One spike widened the extrema band until it hid every other reversal
+
+- **Date:** 2026-11-28 · **Phase:** C05 · **Type:** engineering (detector design) · **Status:** new
+- **Statement:** a02-closeout's review of #506 found that `extrema`'s hysteresis band was 10 % of the full value range, outliers included. One spike could therefore widen it past every real swing.
+  - **The test series:** in `two_series`, humidity is a 1.5-unit sawtooth around 40 with one spike to 95. Its band was 5.5, so no reversal of the sawtooth counted.
+  - **Fix:** the band is 10 % of the robust range, from the 5th to the 95th percentile (`RANGE_PERCENTILES`, INFER), or of the full range when that is zero, so a lone spike in a flat series is still a turn.
+- **Measured effect:**
+  - The humidity band falls to 0.15, and the sawtooth's turns appear: the reviewed `two_series_annotations` snapshot gains the humidity series' local extrema (rows 3, 4, 7, 8, 13, 15, 16, …).
+  - GEN-001's reversal counts are still found exactly, and T03's trend-segment and change-point tests pass unchanged.
+  - `f_209_one_spike_does_not_hide_the_reversals` holds a spike of 100 over swings of 5.
+- **Evidence level / confidence:** EV-D / Moderate: constructed and generated series. The percentiles are INFER (ADR-0031), not measured on real data.
+- **Affects:** `detect/extrema.rs` (`extrema` and `trend-segments` through `turns`); their annotations' parameters (`rangeLow`, `rangeHigh`).
+
+### F-207 · Theil–Sen end lines find every end spike, but raise false alarms at ordinary ends to seven times the interior rate
+
+- **Date:** 2026-11-28 · **Phase:** C05 · **Type:** engineering (detector design) · **Status:** new
+- **Statement:** #507 asked whether the outliers' first and last values, which the symmetric moving median never judges (F-205), can be judged by predicting each from a Theil–Sen line through its next 10 values. Measured on GEN-011 (5 spikes of 8σ, noise σ = 1, 200 points), on flat, sloped (0.05 per row) and periodic (sine of amplitude 2) bases, on HW-01, with both halves reported.
+- **End spikes found (spikes forced at both ends, 1000 seeds per base, 2000 end spikes):** `Skip` finds none, by design. `TheilSen` finds all of them (recall 1.0) on every base, the periodic one included, where the line's curvature error was the worry. End precision is 1.0 here by construction: with both ends spiked, every end finding is a hit.
+- **False alarms at ordinary ends (the same bases and seeds, no end spikes, 2000 end values per base):** `Skip` gives 0. `TheilSen` gives 16 (0.80 %), 17 (0.85 %) and 18 (0.90 %) on the flat, sloped and periodic bases.
+  - The interior's rate is about 0.12 % per value: some 240 false alarms in 198 000 interior values, from its precision of 0.930 to 0.955.
+  - So the ends would be judged with about seven times the interior's false-alarm rate. A first run with 100 seeds had 1 false alarm per base and could not tell the two apart.
+- **Interior:** recall 1.0 in every case. Its precision rises slightly with `TheilSen` (0.940 → 0.955 flat, 0.938 → 0.954 sloped, 0.930 → 0.945 periodic), because the judged end residuals enter the MAD.
+- **Decision (rule 5, the coordinator's bar "ends at least as good as the interior"):** the recall half supports the change and the false-alarm half does not. So `END_FIT` stays `Skip`, and `TheilSen` stays an experimental option. Descriptions and the module documentation say the first and last values are not judged.
+- **Evidence:** `f_207_outlier_ends_against_the_interior` (100 seeds in CI; the 1000-seed run was local, with only the seed count changed).
+- **Evidence level / confidence:** EV-D / Moderate: one spike size (8σ) and one window (10). A smaller window, or a curvature term, might lower the end false alarms; not measured.
+- **Affects:** `detect/outliers.rs` (`EndFit`, `END_FIT`, `END_WINDOW`; annotations record `endFit` and `endWindow`); GEN-011's `ends` and `slope` options.
+
 ### F-208 · The outlier detector's zero-MAD fallback called every small step in sparse or integer data an outlier
 
 - **Date:** 2026-11-28 · **Phase:** C05 · **Type:** engineering (detector design) · **Status:** new

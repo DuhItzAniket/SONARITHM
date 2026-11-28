@@ -20,7 +20,7 @@ use arrow_schema::{DataType, Field, Schema};
 use serde_json::json;
 use sonarithm_core::ids::TableId;
 use sonarithm_data::{
-    BundleId, DataBundle, FieldMeta, FieldType, Role, SourceDescriptor, SourceKind, Table,
+    BundleId, DataBundle, FieldMeta, FieldType, Format, Role, SourceDescriptor, SourceKind, Table,
 };
 use support::{compile, notes};
 
@@ -59,7 +59,7 @@ fn all_null_fruit() -> DataBundle {
         .unwrap();
     DataBundle::single(
         BundleId(1),
-        SourceDescriptor::new(SourceKind::File, "fruit.json", "test"),
+        SourceDescriptor::new(SourceKind::File(Format::Json), "fruit.json", "test"),
         table,
     )
 }
@@ -73,5 +73,7 @@ fn an_all_null_dictionary_column_compiles_as_missing_categories() {
                      "channels": { "pitch": { "field": "sold" }, "timbre": { "field": "fruit" } } }],
     });
     let compiled = compile(&spec.to_string(), Some(all_null_fruit()));
-    assert_eq!(notes(&compiled.score).len(), 4, "every sale still sounds; its category is missing");
+    // Every row's category is missing, and a missing value is silent by default
+    // (`data.missing`), so the compile succeeds and no note sounds.
+    assert_eq!(notes(&compiled.score).len(), 0);
 }

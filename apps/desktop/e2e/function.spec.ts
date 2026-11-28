@@ -274,6 +274,9 @@ test("c03_t08b_a_second_function_shows_its_own_critical_points", async ({
   const inspector = page.getByRole("complementary", { name: "Inspector" });
   await expect(inspector.getByText(/^f\(x\) = x\^3 - 3\*x from/)).toBeVisible();
   await newFunction(page);
+  // The dialog keeps the last expression; select it and type over it.
+  await page.keyboard.press("Home");
+  await page.keyboard.press("Shift+End");
   await page.keyboard.type("x^2 - 1");
   await expect(expression(page)).toHaveAccessibleDescription(
     "Reads as: x^2 - 1",
@@ -281,7 +284,9 @@ test("c03_t08b_a_second_function_shows_its_own_critical_points", async ({
   await page.keyboard.press("Enter");
   await expect(dialog(page)).toHaveCount(0);
   await expect(inspector.getByText(/^f\(x\) = x\^2 - 1 from/)).toBeVisible();
-  await expect(inspector.getByText(/^f\(x\) = x\^3 - 3\*x from/)).toHaveCount(0);
+  await expect(inspector.getByText(/^f\(x\) = x\^3 - 3\*x from/)).toHaveCount(
+    0,
+  );
   expect(
     (await (await host(page)).evaluate((mock) => mock.commands())).filter(
       (command) => command === "function_info",

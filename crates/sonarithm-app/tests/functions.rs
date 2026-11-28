@@ -306,14 +306,28 @@ fn function_info_finds_each_function_by_its_dataset() {
     let sine_id = sine_open["dataset"]["id"].as_str().unwrap().to_owned();
     let cubic = info(&mut h, &cubic_id);
     assert_eq!(cubic["reply"], "function_details");
-    assert_eq!(cubic["function"], cubic_open["function"], "the same as function_open gave");
+    assert_eq!(
+        cubic["function"], cubic_open["function"],
+        "the same as function_open gave"
+    );
     assert_eq!(info(&mut h, &sine_id)["function"], sine_open["function"]);
-    assert_eq!(info(&mut h, "d1")["function"], Value::Null, "a CSV is not a function");
+    assert_eq!(
+        info(&mut h, "d1")["function"],
+        Value::Null,
+        "a CSV is not a function"
+    );
     let unknown = h
         .send(&json!({ "command": "function_info", "args": { "dataset": "d99" } }))
         .unwrap_err();
     assert!(unknown.code.starts_with("SNR-APP-"), "{unknown}");
     // Reopened from a project, the functions still describe themselves.
+    let spec = json!({
+        "specVersion": "0.4",
+        "data": { "source": { "kind": "dataset", "id": sine_id } },
+        "tracks": [{ "id": "t", "mark": "glide", "channels": { "pitch": { "field": "y" } } }]
+    })
+    .to_string();
+    h.ok(&json!({ "command": "spec_set", "args": { "text": spec } }));
     let path = h.dir.path().join("functions.sonarithm");
     h.ok(&json!({ "command": "project_save_as", "args": { "path": path, "embedData": true } }));
     let reopened = h.ok(&json!({ "command": "project_open", "args": { "path": path } }));

@@ -331,15 +331,24 @@ mod tests {
         values[0] = 40.0;
         let found = detect_with(&series(&values), EndFit::TheilSen);
         assert_eq!(found.iter().map(|f| f.first).collect::<Vec<_>>(), [0]);
-        assert_eq!(detect_with(&series(&values), EndFit::Skip), [], "skipped ends");
+        assert_eq!(
+            detect_with(&series(&values), EndFit::Skip),
+            [],
+            "skipped ends"
+        );
     }
 
     #[test]
     fn theil_sen_ignores_one_spike_among_its_points() {
-        let mut points: Vec<(f64, f64)> = (1..=10).map(|i| (f64::from(i), 3.0 * f64::from(i) + 1.0)).collect();
+        let mut points: Vec<(f64, f64)> = (1..=10)
+            .map(|i| (f64::from(i), 3.0 * f64::from(i) + 1.0))
+            .collect();
         points[4].1 = 500.0;
         let (slope, intercept) = theil_sen(&points).unwrap();
-        assert!((slope - 3.0).abs() < 1e-9 && (intercept - 1.0).abs() < 1e-9, "{slope} {intercept}");
+        assert!(
+            (slope - 3.0).abs() < 1e-9 && (intercept - 1.0).abs() < 1e-9,
+            "{slope} {intercept}"
+        );
     }
 
     #[test]

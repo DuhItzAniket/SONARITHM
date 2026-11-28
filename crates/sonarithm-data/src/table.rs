@@ -501,7 +501,8 @@ mod tests {
     #[test]
     fn dictionary_keys_of_a_zero_row_dictionary_are_empty() {
         let empty: ArrayRef = Arc::new(StringArray::from(Vec::<&str>::new()));
-        let dictionary = DictionaryArray::try_new(Int8Array::from(Vec::<i8>::new()), empty).unwrap();
+        let dictionary =
+            DictionaryArray::try_new(Int8Array::from(Vec::<i8>::new()), empty).unwrap();
         assert_eq!(dictionary_keys(&dictionary), Ok(Vec::new()));
     }
 
@@ -510,17 +511,14 @@ mod tests {
     #[test]
     fn dictionary_keys_of_a_nested_dictionary_index_its_outer_values() {
         let labels: ArrayRef = Arc::new(StringArray::from(vec!["a", "b"]));
-        let inner: ArrayRef = Arc::new(
-            DictionaryArray::try_new(Int8Array::from(vec![1, 0, 1]), labels).unwrap(),
-        );
-        let outer =
-            DictionaryArray::try_new(UInt8Array::from(vec![Some(2), None, Some(0)]), inner)
-                .unwrap();
+        let inner: ArrayRef =
+            Arc::new(DictionaryArray::try_new(Int8Array::from(vec![1, 0, 1]), labels).unwrap());
+        let outer = DictionaryArray::try_new(UInt8Array::from(vec![Some(2), None, Some(0)]), inner)
+            .unwrap();
         assert_eq!(dictionary_keys(&outer), Ok(vec![Some(2), None, Some(0)]));
         let empty: ArrayRef = Arc::new(StringArray::from(Vec::<&str>::new()));
-        let inner: ArrayRef = Arc::new(
-            DictionaryArray::try_new(Int8Array::from(Vec::<i8>::new()), empty).unwrap(),
-        );
+        let inner: ArrayRef =
+            Arc::new(DictionaryArray::try_new(Int8Array::from(Vec::<i8>::new()), empty).unwrap());
         let outer = DictionaryArray::try_new(UInt8Array::from(vec![None]), inner).unwrap();
         assert_eq!(dictionary_keys(&outer), Ok(vec![None]));
     }
@@ -545,7 +543,10 @@ mod tests {
             ))
             .child_data(vec![values.to_data()])
             .build();
-        assert!(data.is_err(), "Arrow now builds a dictionary with a key past the end");
+        assert!(
+            data.is_err(),
+            "Arrow now builds a dictionary with a key past the end"
+        );
         assert_eq!(
             dictionary_keys(&Int64Array::from(vec![1, 2])),
             Err(DictionaryKeyError { row: 0 })

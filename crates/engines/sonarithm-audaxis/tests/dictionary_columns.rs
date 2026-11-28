@@ -21,7 +21,7 @@ use serde_json::json;
 use sonarithm_core::ids::TableId;
 use sonarithm_core::nav::NavKind;
 use sonarithm_data::{
-    BundleId, DataBundle, FieldMeta, FieldType, Role, SourceDescriptor, SourceKind, Table,
+    BundleId, DataBundle, FieldMeta, FieldType, Format, Role, SourceDescriptor, SourceKind, Table,
 };
 use support::{compile, tree};
 
@@ -61,7 +61,7 @@ fn all_null_fruit() -> DataBundle {
         .unwrap();
     DataBundle::single(
         BundleId(1),
-        SourceDescriptor::new(SourceKind::File, "fruit.json", "test"),
+        SourceDescriptor::new(SourceKind::File(Format::Json), "fruit.json", "test"),
         table,
     )
 }

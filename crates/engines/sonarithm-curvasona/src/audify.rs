@@ -213,7 +213,7 @@ impl Encoder<DataBundle> for AudifyEncoder {
         // the filter used to be ignored here, so the detectors analysed another series).
         let filter = spec.pointer("/filter/expr").and_then(Value::as_str);
         let rows = rows_of(table, filter, time.as_deref())
-            .map_err(|err| CompileError::from(err).at_spec(at.key("filter").key("expr")))?;
+            .map_err(|err| CompileError::from(*err).at_spec(at.key("filter").key("expr")))?;
         let (values, fs) = series_grid(table, time.as_deref(), &series, &rows);
         let count = values.len();
         if count > Audify::MAX_SAMPLES {
@@ -362,15 +362,15 @@ fn rows_of(
     table: &Table,
     filter: Option<&str>,
     time: Option<&str>,
-) -> Result<Vec<u64>, Diagnostic> {
+) -> Result<Vec<u64>, Box<Diagnostic>> {
     sonarithm_data::play_rows(table, filter, time).map_err(|err| {
-        Diagnostic::new(
+        Box::new(Diagnostic::new(
             &codes::AUDIFY_FILTER_FAILED,
             format!(
                 "The track filter `{}` cannot be applied: {err}",
                 filter.unwrap_or_default()
             ),
-        )
+        ))
     })
 }
 
@@ -423,7 +423,7 @@ pub fn readout(
         ))
     })?;
     // The calculator has no track, so no filter: every timed row, in time order.
-    let rows = rows_of(table, None, time.as_deref()).map_err(Box::new)?;
+    let rows = rows_of(table, None, time.as_deref())?;
     let (values, fs) = series_grid(table, time.as_deref(), &series, &rows);
     let count = values.len();
     if count > Audify::MAX_SAMPLES {

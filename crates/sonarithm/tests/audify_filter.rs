@@ -35,7 +35,7 @@ fn spec(filter: Option<&str>) -> Spec {
         track["filter"] = json!({ "expr": expr });
     }
     Spec::from_json_str(
-        &json!({
+        json!({
             "specVersion": "0.1",
             "data": { "source": { "kind": "inline", "values": rows } },
             "substrate": { "time": { "field": "t" } },
@@ -75,7 +75,13 @@ fn a_filtered_audify_track_plays_and_analyses_only_its_rows() {
         .find(|a| a.label == "maximum")
         .unwrap();
     assert_eq!(maximum.range.start, 10);
-    assert_eq!(maximum.track.as_ref().map(|t| t.as_str()), Some("a"));
+    assert_eq!(
+        maximum
+            .track
+            .as_ref()
+            .map(sonarithm_core::ids::TrackId::as_str),
+        Some("a")
+    );
     assert_eq!(maximum.field.as_deref(), Some("y"));
 }
 

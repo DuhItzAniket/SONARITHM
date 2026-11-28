@@ -45,7 +45,8 @@ export function FunctionInspector({
       .call({ command: "function_info", args: { dataset: dataset.id } })
       .then(
         (reply) => {
-          if (live) setDetails({ dataset: reply.dataset, info: reply.function });
+          if (live)
+            setDetails({ dataset: reply.dataset, info: reply.function });
         },
         () => undefined,
       );

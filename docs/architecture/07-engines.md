@@ -188,11 +188,13 @@ The `function` source adds a row at each zero, extremum and inflection (as at po
 
 | Detector | Method | Parameters |
 |---|---|---|
-| `extrema` | the global minimum and maximum (first row on ties); local extrema at reversals beyond a hysteresis band | `hysteresis` 0.1 of the value range |
+| `extrema` | the global minimum and maximum (first row on ties); local extrema at reversals beyond a hysteresis band, a turn at a global extreme's own row not listed again; the first and last values are never turns | `hysteresis` 0.1 of the robust value range, the 5th to 95th percentile (`rangeLow` 0.05, `rangeHigh` 0.95), or the full range when that is zero (F-209) |
 | `outliers` | each value's residual from a 21-value moving median (symmetric, so the first and last values are not judged), then the robust z-score of the residuals from their median and MAD (Iglewicz & Hoaglin 1993), with the scaled mean absolute deviation when the MAD is 0 ([F-205](../research-paper/findings-log.md)) | `threshold` 3.5; `window` 21; `minValues` 5; each annotation adds its `robustZ`. The first and last values are never judged (#507) |
 | `changepoints` | PELT (Killick et al. 2012) with an L2 cost (a change in mean), penalty β = 2·σ²·ln n with σ from the MAD of the first differences | `penalty` 2; `minSegment` 5; each annotation adds its `shift` |
 | `periodicity` | the first local peak of the normalised autocorrelation (mean removed) that reaches 0.5 and is within 0.1 of the highest peak, so a period beats its multiples; lags up to half the series | `minCorrelation` 0.5; `minLag` 2; `minPeriods` 2; the annotation's value is the period in rows, with its `correlation` |
-| `trend-segments` | the runs between `extrema`'s turns, `rising`, `falling` or `flat`, so the segments, the local extrema and SDR-21's reversal count agree | `hysteresis` 0.1 |
+| `trend-segments` | the runs between `extrema`'s turns, `rising`, `falling` or `flat`, so the segments, the local extrema and SDR-21's reversal count agree | `hysteresis` 0.1, of the same robust range |
+
+An annotation's confidence is the lowest among the rows it covers (an estimate with no stated confidence counts as 0, SDR-43's rule), and AUDAXIS says an insight on estimates is one. The detectors read every column type NUMISONA plays, decimals, dates, timestamps and durations among them; a played field they cannot read is reported with its type (`SNR-ENG-640`). An `audify` track, which has no field channel, is analysed on the field it plays (`sonarithm_data::default_series`), over the rows its `filter` keeps. The outliers' first and last values stay unjudged by default (`endFit` `none`): Theil–Sen end lines found every end spike but raised false alarms at ordinary ends to about seven times the interior's rate (F-207).
 
 GEN-011 (labelled outliers) and GEN-012 (labelled level shifts and periods) join the harness (DS-010) for the precision and recall tests; `crates/engines/sonarithm-echometric/reference` checks the robust z-scores against statrs.
 

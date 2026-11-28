@@ -264,7 +264,10 @@ fn f_207_outlier_ends_against_the_interior() {
                 rate(mid_hits, mid_found),
                 rate(mid_hits, mid_truth),
             );
-            assert!(rate(mid_hits, mid_truth) >= 0.95, "{base} {ends:?} interior recall");
+            assert!(
+                rate(mid_hits, mid_truth) >= 0.95,
+                "{base} {ends:?} interior recall"
+            );
             if ends == outliers::EndFit::Skip {
                 assert_eq!(end_found, 0, "skipped ends are never reported");
             }

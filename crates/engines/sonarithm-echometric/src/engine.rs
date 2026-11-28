@@ -331,9 +331,7 @@ fn numbers(array: &dyn Array) -> Option<Vec<Option<f64>>> {
         DataType::Timestamp(TimeUnit::Nanosecond, _) => {
             convert::<TimestampNanosecondType>(array, |v| v as f64)
         }
-        DataType::Duration(TimeUnit::Second) => {
-            convert::<DurationSecondType>(array, |v| v as f64)
-        }
+        DataType::Duration(TimeUnit::Second) => convert::<DurationSecondType>(array, |v| v as f64),
         DataType::Duration(TimeUnit::Millisecond) => {
             convert::<DurationMillisecondType>(array, |v| v as f64)
         }

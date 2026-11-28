@@ -49,7 +49,10 @@ pub struct Turn {
 /// between the closest ranks.
 fn quantile(sorted: &[f64], at: f64) -> f64 {
     let last = sorted.len().saturating_sub(1);
-    #[expect(clippy::cast_precision_loss, reason = "series lengths are far below 2^52")]
+    #[expect(
+        clippy::cast_precision_loss,
+        reason = "series lengths are far below 2^52"
+    )]
     let position = at * last as f64;
     #[expect(
         clippy::cast_possible_truncation,
@@ -232,7 +235,9 @@ mod tests {
     /// With the full range, the spike of 100 makes the band 10 and the swings of 5 vanish.
     #[test]
     fn f_209_one_spike_does_not_hide_the_reversals() {
-        let mut values: Vec<f64> = (0..40).map(|i| if (i / 5) % 2 == 0 { 0.0 } else { 5.0 }).collect();
+        let mut values: Vec<f64> = (0..40)
+            .map(|i| if (i / 5) % 2 == 0 { 0.0 } else { 5.0 })
+            .collect();
         values[22] = 100.0;
         let found = turns(&series(&values), HYSTERESIS);
         assert!(found.len() >= 6, "{found:?}");

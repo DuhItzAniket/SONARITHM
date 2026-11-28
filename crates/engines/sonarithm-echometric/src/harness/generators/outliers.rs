@@ -151,7 +151,8 @@ pub(crate) fn generate(params: &OutlierParams, seed: u64) -> Result<Stimulus, Ge
     let values: Vec<f64> = (0..points)
         .map(|row| {
             let phase = std::f64::consts::TAU * params.periods * row as f64 / points as f64;
-            let base = params.amplitude * math::sin(phase) + params.slope * params.noise * row as f64;
+            let base =
+                params.amplitude * math::sin(phase) + params.slope * params.noise * row as f64;
             let noise = params.noise * rng.normal();
             let spike = if rows.binary_search(&row).is_ok() {
                 let sign = if rng.below(2) == 0 { 1.0 } else { -1.0 };

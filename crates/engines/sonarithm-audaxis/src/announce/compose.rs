@@ -19,10 +19,10 @@
 
 use std::collections::BTreeSet;
 
+use sonarithm_core::ids::RowRange;
 use sonarithm_core::nav::{
     AxisName, NavKind, NavNode, NavNodeId, NavTree, PointNode, Polarity, XType, XValue,
 };
-use sonarithm_core::ids::RowRange;
 use sonarithm_core::provenance::Provenance;
 use sonarithm_i18n::{
     Args, DateLength, DatePattern, I18nError, Localizer, Number, NumberOptions, UnitRef, UnitStyle,
