@@ -59,9 +59,11 @@ test("kb_01_every_registered_command_runs_from_the_palette", async ({
   // The results list the registered commands in this order; the explorer's commands are
   // the app's (B03-T09), so there are dozens, and the walk is checked once per command.
   // Reaching command n takes n arrow presses, so the walk grows with the square of the
-  // count: on CI it took 26 s to 1.6 min on main (2026-11-28), and the spec commands
-  // (B05-T03) took Firefox past two minutes on a slow runner.
-  test.setTimeout(240_000);
+  // count. On CI (2026-11-28, about 46 commands) it took 26 s to 1.6 min on main, that is
+  // up to about 47 ms per count squared in Firefox, and with the spec commands (B05-T03)
+  // a slow Firefox runner passed the old fixed two minutes. The budget scales with the
+  // count at 60 ms per count squared, plus 30 s to start.
+  test.setTimeout(30_000 + ids.length * ids.length * 60);
   for (const [index, id] of ids.entries()) {
     await openPalette(page);
     const input = palette(page).getByRole("searchbox");
@@ -69,16 +71,23 @@ test("kb_01_every_registered_command_runs_from_the_palette", async ({
     for (let i = 0; i <= index; i++) {
       await page.keyboard.press("ArrowDown");
     }
+    // A command that hangs fails here, by name, long before the walk's budget runs out.
     await expect
-      .poll(async () => {
-        const active = await input.getAttribute("aria-activedescendant");
-        return page.locator(`[id="${active ?? ""}"]`).getAttribute("data-key");
-      })
+      .poll(
+        async () => {
+          const active = await input.getAttribute("aria-activedescendant");
+          return page
+            .locator(`[id="${active ?? ""}"]`)
+            .getAttribute("data-key");
+        },
+        { message: `the arrows reach ${id}`, timeout: 10_000 },
+      )
       .toBe(id);
     await page.keyboard.press("Enter");
     await expect
-      .poll(() =>
-        page.evaluate(() => document.documentElement.dataset.lastCommand),
+      .poll(
+        () => page.evaluate(() => document.documentElement.dataset.lastCommand),
+        { message: `${id} runs from the palette`, timeout: 10_000 },
       )
       .toBe(id);
     // These open a dialog of their own, just after the palette closes: the palette again,
