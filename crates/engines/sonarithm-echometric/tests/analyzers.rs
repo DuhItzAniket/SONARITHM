@@ -111,9 +111,7 @@ fn c05_t01_annotations_carry_their_field_and_parameters() {
     let humidity: Vec<&str> = compiled
         .annotations
         .iter()
-        .filter(|a| {
-            a.source.as_str() == "trend-segments" && a.field.as_deref() == Some("humidity")
-        })
+        .filter(|a| a.source.as_str() == "trend-segments" && a.field.as_deref() == Some("humidity"))
         .map(|a| a.label.as_str())
         .collect();
     assert!(

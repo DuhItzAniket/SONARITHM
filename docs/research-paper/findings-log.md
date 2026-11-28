@@ -1042,6 +1042,29 @@ A05 (render engine, audio backends, export) uses F-050 to F-069.
 - **Evidence level / confidence:** EV-D / Strong for the cause (the failing OS set, the zero-change local re-record, and exmex's operator source); cross-platform agreement after the fix is shown by #449's CI, not yet
 - **Affects:** ADR-0013 §1; every function spec's Score and manifest (C03-T02, C03-T06, C03-T07); the curvasona-suite records; any snapshot that holds a function's full-precision values
 
+### F-260 · Removing only the mean made a noisy trend look periodic; removing a least-squares line fixed it
+
+- **Date:** 2026-11-28 · **Phase:** C05 · **Type:** engineering (detector design) · **Status:** new
+- **Statement:** a02-closeout's review of #520 found that `periodicity` reported false periods on ordinary trending data.
+  - **The method:** the autocorrelation removed only the series' mean. A trend's slowly decaying autocorrelation then had noise peaks above the 0.5 threshold.
+  - **The size of it, in the review's simulation:** 100 points of 0.1·i + N(0, 1) gave a period in about 51 % of seeds ("period 11 rows, r = 0.62"). White noise gave 0 of 200, and a random walk 2 of 200.
+  - **Why the tests missed it:** they used a noise-free ramp only.
+- **Fix:** subtract the least-squares line over the row index before the autocorrelation (`detrended`, O(n)). If what the line leaves is below a 10⁻¹² share of the spread, it is a straight line's rounding residue, and the series is not periodic. The method is recorded as `detrended-autocorrelation`.
+- **Measured after the fix (HW-01, 100 seeds each):**
+  - **GEN-012 with a 25-point sine:** period found 100 of 100 (as before).
+  - **GEN-012 noise alone:** 0 of 100 false alarms (as before).
+  - **A noisy trend (GEN-011 with no spikes or sine, slope 0.1 per point, σ = 1, 100 points):** 0 of 100 false alarms. It joins the false-alarm set.
+  - **The noisy-ramp unit test:** 200 seeds, at most 10 allowed.
+  - **Agreement with augurs-seasons' periodogram:** still 50 of 50 GEN-012 series.
+- **Also from the review:**
+  - Trend-segment labels now use the same robust range as the turns (F-209). On humidity's sawtooth with one spike, every segment had been "flat".
+  - `changepoints` takes the smallest step as the noise when the differences' MAD is 0, so a noise-free step is a change (INFER).
+  - It centres values before its prefix sums, so an offset of 10⁸ adds no false changes.
+  - Change points on GEN-012: precision 0.9868, recall 1.0 (unchanged).
+- **Evidence:** `f_260_a_noisy_ramp_is_not_periodic`, `c05_t03_periodicity_on_gen_012` (with the noisy-trend set), `a_noise_free_step_is_a_change`, `a_large_offset_changes_nothing`, and the `two_series_annotations` snapshot with trend segments.
+- **Evidence level / confidence:** EV-D / Strong for the noisy trend (a generated set with ground truth); Moderate for the zero-noise fallback (constructed cases, INFER).
+- **Affects:** `detect/periodicity.rs`, `detect/trends.rs`, `detect/changepoints.rs`; `periodicity`'s and `trend-segments`' parameters.
+
 ### F-209 · One spike widened the extrema band until it hid every other reversal
 
 - **Date:** 2026-11-28 · **Phase:** C05 · **Type:** engineering (detector design) · **Status:** new

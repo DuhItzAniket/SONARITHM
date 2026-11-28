@@ -200,7 +200,10 @@ fn c05_t03_periodicity_on_gen_012() {
     );
     assert!(right >= 95, "{right}/100");
     assert!(false_alarms <= 5, "{false_alarms}/100");
-    assert!(trend_alarms <= 5, "{trend_alarms}/100 noisy trends called periodic");
+    assert!(
+        trend_alarms <= 5,
+        "{trend_alarms}/100 noisy trends called periodic"
+    );
 }
 
 /// SDR-21: trend segments are the reversals plus one, and the reversal count is GEN-001's.

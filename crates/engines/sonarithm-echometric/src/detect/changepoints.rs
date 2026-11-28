@@ -246,7 +246,11 @@ mod tests {
             .collect();
         assert_eq!(starts(&step), [30]);
         let found = detect(&series(&step));
-        assert!((found[0].value - (offset + 1.0)).abs() < 0.01, "{:?}", found[0]);
+        assert!(
+            (found[0].value - (offset + 1.0)).abs() < 0.01,
+            "{:?}",
+            found[0]
+        );
     }
 
     /// A small deterministic wiggle, so the noise estimate is not zero.

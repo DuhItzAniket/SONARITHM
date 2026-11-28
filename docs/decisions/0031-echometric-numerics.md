@@ -108,3 +108,8 @@ Revisit if statrs or augurs gains a `libm` mode or a deterministic build option.
 - **`extrema`'s band:** it is 10 % of the robust range, the 5th to 95th percentile (INFER, [F-209](../research-paper/findings-log.md)), so one spike no longer hides every reversal.
 - **The outliers' ends:** they stay unjudged by default. Theil–Sen end lines (`endFit` `theil-sen`, experimental) found every end spike, but raised false alarms at ordinary ends to about seven times the interior's rate ([F-207](../research-paper/findings-log.md)).
 - **Confidence:** an estimate without a stated confidence counts as 0 in an annotation's confidence (SDR-43's rule).
+
+**Amendment (2026-11-28, #520 review).**
+- **`periodicity`:** removes a least-squares line before its autocorrelation (`detrended-autocorrelation`), so a noisy trend is not called periodic ([F-260](../research-paper/findings-log.md)).
+- **`trend-segments`:** its labels use the robust range, as its turns do.
+- **`changepoints`:** takes the series' smallest step as the noise when the differences' MAD is 0 (INFER), and centres the values before its prefix sums.

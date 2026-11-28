@@ -3,7 +3,7 @@ source: crates/engines/sonarithm-echometric/tests/detectors.rs
 expression: "shown(periodicity::params())"
 ---
 [
-    "method=Text(\"autocorrelation\")",
+    "method=Text(\"detrended-autocorrelation\")",
     "minCorrelation=Number(0.5)",
     "minLag=Number(2.0)",
     "minPeriods=Number(2.0)",

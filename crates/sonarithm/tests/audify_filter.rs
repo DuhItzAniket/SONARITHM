@@ -98,11 +98,11 @@ fn an_unfiltered_audify_track_plays_every_row() {
 }
 
 /// A filter that cannot be applied is refused with `SNR-ENG-466`, never ignored (it used to
-/// be ignored). It reads as an expression but names a field the data does not have, so only
-/// applying it fails.
+/// be ignored). (A filter on a field the data does not have is not an error: the data layer
+/// warns and keeps no rows.)
 #[test]
 fn an_audify_filter_that_cannot_be_applied_is_refused() {
-    let Err(err) = Sonarithm::new().compile(&spec(Some("missing > 3"))) else {
+    let Err(err) = Sonarithm::new().compile(&spec(Some("t <"))) else {
         panic!("a filter on a missing field must be refused");
     };
     let diagnostics = err.diagnostics();

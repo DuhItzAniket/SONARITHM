@@ -15,6 +15,8 @@ pub fn params() -> Params {
     Params::from([
         ("method", Param::Text("reversal-hysteresis")),
         ("hysteresis", Param::Number(HYSTERESIS)),
+        ("rangeLow", Param::Number(extrema::RANGE_PERCENTILES.0)),
+        ("rangeHigh", Param::Number(extrema::RANGE_PERCENTILES.1)),
     ])
 }
 

@@ -5,4 +5,6 @@ expression: "shown(trends::params())"
 [
     "hysteresis=Number(0.1)",
     "method=Text(\"reversal-hysteresis\")",
+    "rangeHigh=Number(0.95)",
+    "rangeLow=Number(0.05)",
 ]

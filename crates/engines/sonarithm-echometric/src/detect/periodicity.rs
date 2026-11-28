@@ -180,7 +180,7 @@ mod tests {
     /// (GEN-011 without spikes or sine), is not periodic. With only the mean removed, about
     /// half the seeds reported a period.
     #[test]
-    fn f_210_a_noisy_ramp_is_not_periodic() {
+    fn f_260_a_noisy_ramp_is_not_periodic() {
         use crate::harness::generators::outliers::OutlierParams;
         use crate::harness::{Params, generate};
         let ramp = OutlierParams {
@@ -198,7 +198,10 @@ mod tests {
                 false_alarms += 1;
             }
         }
-        assert!(false_alarms <= 10, "{false_alarms}/200 noisy ramps called periodic");
+        assert!(
+            false_alarms <= 10,
+            "{false_alarms}/200 noisy ramps called periodic"
+        );
     }
 
     #[test]
