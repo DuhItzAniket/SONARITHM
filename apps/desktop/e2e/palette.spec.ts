@@ -99,9 +99,10 @@ test("kb_01_every_registered_command_runs_from_the_palette", async ({
   // The palette lists every registered command, in the registry's order.
   expect(commands.map((c) => c.id)).toEqual(ids);
   // Each command is reached as users mostly do: type its name, take the match, Enter. The
-  // walk is linear in the count (the arrow walk is its own test, below), so a fixed second
-  // per command is ample.
-  test.setTimeout(30_000 + ids.length * 1_000);
+  // walk is linear in the count (the arrow walk is its own test, below). A step takes about
+  // 0.7 s locally, 0.5 s of it React Aria's pause after typing; 2 s per command covers CI
+  // runners up to three times slower (Firefox on CI ran 1.8 times Chromium's time).
+  test.setTimeout(30_000 + ids.length * 2_000);
   for (const { id, name } of commands) {
     await openPalette(page);
     // The name arrives as one input, as from a paste or dictation: key by key, each
