@@ -286,3 +286,56 @@ fn rfc_0002_12_autosave_keeps_a_function_and_recovers_it() {
     assert_eq!(datasets[1]["available"], true);
     next.shutdown();
 }
+
+/// #498 review: `function_info` gives the function behind any open dataset by its ID: a
+/// second function as well as the first, one reopened from a project, and `null` for a
+/// dataset that is not a function.
+#[test]
+fn function_info_finds_each_function_by_its_dataset() {
+    let mut h = Harness::new("function-info");
+    let csv = h.dir.path().join("temps.csv");
+    std::fs::write(&csv, "day,temp\n1,20.5\n2,21.0\n3,19.8\n").unwrap();
+    h.ok(&json!({ "command": "dataset_open", "args": { "path": csv } }));
+    let cubic_open = h.ok(&cubic());
+    let sine_open = h.ok(&json!({ "command": "function_open",
+        "args": { "expr": "sin(x)", "domain": [0, 10] } }));
+    let info = |h: &mut Harness, id: &str| {
+        h.ok(&json!({ "command": "function_info", "args": { "dataset": id } }))
+    };
+    let cubic_id = cubic_open["dataset"]["id"].as_str().unwrap().to_owned();
+    let sine_id = sine_open["dataset"]["id"].as_str().unwrap().to_owned();
+    let cubic = info(&mut h, &cubic_id);
+    assert_eq!(cubic["reply"], "function_details");
+    assert_eq!(
+        cubic["function"], cubic_open["function"],
+        "the same as function_open gave"
+    );
+    assert_eq!(info(&mut h, &sine_id)["function"], sine_open["function"]);
+    assert_eq!(
+        info(&mut h, "d1")["function"],
+        Value::Null,
+        "a CSV is not a function"
+    );
+    let unknown = h
+        .send(&json!({ "command": "function_info", "args": { "dataset": "d99" } }))
+        .unwrap_err();
+    assert!(unknown.code.starts_with("SNR-APP-"), "{unknown}");
+    // Reopened from a project, the functions still describe themselves.
+    let spec = json!({
+        "specVersion": "0.4",
+        "data": { "source": { "kind": "dataset", "id": sine_id } },
+        "tracks": [{ "id": "t", "mark": "glide", "channels": { "pitch": { "field": "y" } } }]
+    })
+    .to_string();
+    h.ok(&json!({ "command": "spec_set", "args": { "text": spec } }));
+    let path = h.dir.path().join("functions.sonarithm");
+    h.ok(&json!({ "command": "project_save_as", "args": { "path": path, "embedData": true } }));
+    let reopened = h.ok(&json!({ "command": "project_open", "args": { "path": path } }));
+    let datasets = reopened["datasets"].as_array().unwrap();
+    let sine = datasets
+        .iter()
+        .find(|d| d["name"] == "f(x) = sin(x)")
+        .unwrap_or_else(|| panic!("{reopened}"));
+    let id = sine["id"].as_str().unwrap().to_owned();
+    assert_eq!(info(&mut h, &id)["function"], sine_open["function"]);
+}

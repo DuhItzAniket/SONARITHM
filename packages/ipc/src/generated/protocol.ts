@@ -74,6 +74,7 @@ export const REPLY_KINDS = {
   cursor_get: "cursor",
   function_check: "function_check",
   function_open: "function",
+  function_info: "function_details",
   audify_calculate: "audify_readout",
   nav_move: "nav",
   nav_where: "announce",
@@ -445,7 +446,11 @@ variables: { [key in string]: number },
 /**
  * A name for the dataset; by default `f(x) = ` and the canonical expression.
  */
-name: string | null, } } | { "command": "audify_calculate", "args": { 
+name: string | null, } } | { "command": "function_info", "args": { 
+/**
+ * The dataset's ID.
+ */
+dataset: string, } } | { "command": "audify_calculate", "args": { 
 /**
  * The dataset's ID.
  */
@@ -563,7 +568,15 @@ dataset: DatasetSummary,
 /**
  * The function and its critical points.
  */
-function: FunctionInfo, } | { "reply": "audify_readout", 
+function: FunctionInfo, } | { "reply": "function_details", 
+/**
+ * The dataset's ID.
+ */
+dataset: string, 
+/**
+ * The function and its critical points; `None` when the dataset is not a function.
+ */
+function: FunctionInfo | null, } | { "reply": "audify_readout", 
 /**
  * The speed-up.
  */

@@ -17,9 +17,10 @@
 use std::collections::BTreeSet;
 
 use proptest::prelude::*;
-use sonarithm_echometric::detect::{Series, extrema, outliers};
+use sonarithm_echometric::detect::{Series, changepoints, extrema, outliers, periodicity, trends};
 use sonarithm_echometric::harness::generators::outliers::OutlierParams;
 use sonarithm_echometric::harness::generators::reversals::{ReversalParams, STUDIED_RATES};
+use sonarithm_echometric::harness::generators::shifts::ShiftParams;
 use sonarithm_echometric::harness::{Params, Stimulus, Truth, generate};
 
 fn series(stimulus: &Stimulus, column: &str) -> Series {
@@ -111,9 +112,225 @@ fn c05_t01_detector_parameters_are_pinned() {
     };
     insta::assert_debug_snapshot!("extrema_params", shown(extrema::params()));
     insta::assert_debug_snapshot!("outliers_params", shown(outliers::params()));
+    insta::assert_debug_snapshot!("changepoints_params", shown(changepoints::params()));
+    insta::assert_debug_snapshot!("periodicity_params", shown(periodicity::params()));
+    insta::assert_debug_snapshot!("trend_segments_params", shown(trends::params()));
+}
+
+/// GEN-012's level shifts over 100 seeds: a change point within one minimum segment of a true
+/// shift is a hit, each truth matched once. The measured rates are printed for C05-T03's
+/// record; the floors catch a regression.
+#[test]
+fn c05_t03_changepoints_precision_and_recall_on_gen_012() {
+    let (mut hits, mut found_all, mut truth_all) = (0usize, 0usize, 0usize);
+    for seed in 0..100 {
+        let stimulus = generate(&Params::Shifts(ShiftParams::default()), seed).unwrap();
+        let Truth::Shifts(truth) = &stimulus.truth else {
+            panic!("GEN-012 has shift truth");
+        };
+        let found: Vec<u64> = changepoints::detect(&series(&stimulus, "value"))
+            .iter()
+            .map(|f| f.first)
+            .collect();
+        let mut unmatched: Vec<u64> = truth.change_rows.iter().map(|&r| r as u64).collect();
+        for row in &found {
+            if let Some(at) = unmatched
+                .iter()
+                .position(|t| t.abs_diff(*row) <= changepoints::MIN_SEGMENT as u64)
+            {
+                unmatched.remove(at);
+                hits += 1;
+            }
+        }
+        found_all += found.len();
+        truth_all += truth.change_rows.len();
+    }
+    let precision = hits as f64 / found_all.max(1) as f64;
+    let recall = hits as f64 / truth_all.max(1) as f64;
+    println!(
+        "changepoints on GEN-012 (100 seeds, defaults): precision {precision:.4}, recall {recall:.4}"
+    );
+    assert!(precision >= 0.9, "precision {precision}");
+    assert!(recall >= 0.9, "recall {recall}");
+}
+
+/// GEN-012 with a 25-point sine and no shifts: the period is found within a point; with
+/// noise alone, none is reported.
+#[test]
+fn c05_t03_periodicity_on_gen_012() {
+    let periodic = ShiftParams {
+        shifts: 0,
+        period: Some(25),
+        ..ShiftParams::default()
+    };
+    let noise = ShiftParams {
+        shifts: 0,
+        ..ShiftParams::default()
+    };
+    let (mut right, mut false_alarms) = (0usize, 0usize);
+    for seed in 0..100 {
+        let stimulus = generate(&Params::Shifts(periodic.clone()), seed).unwrap();
+        let found = periodicity::period(series(&stimulus, "value").values());
+        if found.is_some_and(|(lag, _)| lag.abs_diff(25) <= 1) {
+            right += 1;
+        }
+        let stimulus = generate(&Params::Shifts(noise.clone()), seed).unwrap();
+        if periodicity::period(series(&stimulus, "value").values()).is_some() {
+            false_alarms += 1;
+        }
+    }
+    // The realistic false alarm (#520 review, F-260): a noisy trend, 0.1 per row plus noise
+    // of σ 1 over 100 points (GEN-011 without spikes or sine).
+    let ramp = OutlierParams {
+        points: 100,
+        outliers: 0,
+        amplitude: 0.0,
+        slope: 0.1,
+        ..OutlierParams::default()
+    };
+    let mut trend_alarms = 0usize;
+    for seed in 0..100 {
+        let stimulus = generate(&Params::Outliers(ramp.clone()), seed).unwrap();
+        if periodicity::period(series(&stimulus, "value").values()).is_some() {
+            trend_alarms += 1;
+        }
+    }
+    println!(
+        "periodicity on GEN-012 (100 seeds): period found {right}/100, false alarms {false_alarms}/100; noisy trend (GEN-011, slope 0.1): false alarms {trend_alarms}/100"
+    );
+    assert!(right >= 95, "{right}/100");
+    assert!(false_alarms <= 5, "{false_alarms}/100");
+    assert!(
+        trend_alarms <= 5,
+        "{trend_alarms}/100 noisy trends called periodic"
+    );
+}
+
+/// SDR-21: trend segments are the reversals plus one, and the reversal count is GEN-001's.
+#[test]
+fn sdr_21_trend_segments_follow_the_reversals_of_gen_001() {
+    for rate in STUDIED_RATES {
+        for reversals in 0..=3 {
+            for seed in 0..10 {
+                let params = ReversalParams::cell(rate, reversals);
+                let stimulus = generate(&Params::TrendReversals(params), seed).unwrap();
+                let s = series(&stimulus, "price");
+                assert_eq!(
+                    trends::reversals(&s),
+                    reversals as usize,
+                    "rate {rate}, seed {seed}"
+                );
+                let segments = trends::detect(&s);
+                assert_eq!(segments.len(), reversals as usize + 1);
+                for pair in segments.windows(2) {
+                    assert_ne!(pair[0].label, pair[1].label, "directions alternate");
+                }
+            }
+        }
+    }
+}
+
+/// #507 (F-207): the outliers' ends against the interior, on GEN-011 with spikes forced at
+/// both ends, over flat, sloped and periodic bases, with the ends skipped and with Theil–Sen
+/// end lines. The measured rates are printed for F-207; only the interior has floors here,
+/// so the ends are reported as measured, not tuned to pass.
+#[test]
+fn f_207_outlier_ends_against_the_interior() {
+    let bases = [
+        ("flat", 0.0, 0.0),
+        ("sloped", 0.0, 0.05),
+        ("periodic", 2.0, 0.0),
+    ];
+    for (base, amplitude, slope) in bases {
+        for ends in [outliers::EndFit::Skip, outliers::EndFit::TheilSen] {
+            let (mut end_hits, mut end_found, mut end_truth) = (0usize, 0usize, 0usize);
+            let (mut mid_hits, mut mid_found, mut mid_truth) = (0usize, 0usize, 0usize);
+            for seed in 0..100 {
+                let params = OutlierParams {
+                    amplitude,
+                    slope,
+                    ends: true,
+                    ..OutlierParams::default()
+                };
+                let stimulus = generate(&Params::Outliers(params), seed).unwrap();
+                let Truth::Outliers(truth) = &stimulus.truth else {
+                    panic!("GEN-011 has outlier truth");
+                };
+                let last = (stimulus.rows() - 1) as u64;
+                let is_end = |row: u64| row == 0 || row == last;
+                let truth: BTreeSet<u64> = truth.rows.iter().map(|&r| r as u64).collect();
+                let found: BTreeSet<u64> = outliers::detect_with(&series(&stimulus, "value"), ends)
+                    .iter()
+                    .map(|f| f.first)
+                    .collect();
+                for row in &found {
+                    let hit = truth.contains(row);
+                    if is_end(*row) {
+                        end_found += 1;
+                        end_hits += usize::from(hit);
+                    } else {
+                        mid_found += 1;
+                        mid_hits += usize::from(hit);
+                    }
+                }
+                end_truth += truth.iter().filter(|r| is_end(**r)).count();
+                mid_truth += truth.iter().filter(|r| !is_end(**r)).count();
+            }
+            let rate = |hits: usize, of: usize| hits as f64 / of.max(1) as f64;
+            println!(
+                "F-207 {base:>8} {ends:?}: ends precision {:.4} recall {:.4}; interior precision {:.4} recall {:.4}",
+                rate(end_hits, end_found),
+                rate(end_hits, end_truth),
+                rate(mid_hits, mid_found),
+                rate(mid_hits, mid_truth),
+            );
+            assert!(
+                rate(mid_hits, mid_truth) >= 0.95,
+                "{base} {ends:?} interior recall"
+            );
+            if ends == outliers::EndFit::Skip {
+                assert_eq!(end_found, 0, "skipped ends are never reported");
+            }
+            // The other half: with spikes forced at both ends, an end finding is always a
+            // hit, so the precision above cannot show false alarms. The same bases and seeds
+            // with no end spikes give the false-alarm rate of the ordinary end values.
+            let mut false_alarms = 0usize;
+            for seed in 0..100 {
+                let params = OutlierParams {
+                    amplitude,
+                    slope,
+                    ..OutlierParams::default()
+                };
+                let stimulus = generate(&Params::Outliers(params), seed).unwrap();
+                let last = (stimulus.rows() - 1) as u64;
+                false_alarms += outliers::detect_with(&series(&stimulus, "value"), ends)
+                    .iter()
+                    .filter(|f| f.first == 0 || f.first == last)
+                    .count();
+            }
+            println!(
+                "F-207 {base:>8} {ends:?}: false alarms at ordinary ends {false_alarms} of 200 ({:.4})",
+                rate(false_alarms, 200),
+            );
+        }
+    }
 }
 
 proptest! {
+    /// Change points never make a segment shorter than the minimum, and the same series gives
+    /// the same ones (ADR-0013).
+    #[test]
+    fn changepoints_keep_the_minimum_segment(values in prop::collection::vec(-100.0f64..100.0, 0..150)) {
+        let found = changepoints::starts(&values);
+        prop_assert_eq!(&found, &changepoints::starts(&values));
+        let mut bounds = vec![0];
+        bounds.extend(&found);
+        bounds.push(values.len());
+        for pair in bounds.windows(2) {
+            prop_assert!(found.is_empty() || pair[1] - pair[0] >= changepoints::MIN_SEGMENT);
+        }
+    }
+
     /// The robust z-score is unchanged by shifting and by positive scaling, so the outliers
     /// do not depend on units (ADR-0031).
     #[test]

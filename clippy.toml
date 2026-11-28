@@ -6,3 +6,10 @@ allow-dbg-in-tests = true
 allow-print-in-tests = true
 # Webview product names in the desktop host's docs (B01-T03), plus clippy's defaults.
 doc-valid-idents = ["WebView2", "WKWebView", "WebKitGTK", ".."]
+
+# Arrow's dictionary keys (#508): `normalized_keys` panics on an empty dictionary. `allow-invalid`
+# because some crates this file covers do not use arrow; the crates with their own clippy.toml
+# that do (data, NUMISONA, CURVASONA, ECHOMETRIC) list it without, which checks the path.
+disallowed-methods = [
+    { path = "arrow_array::array::AnyDictionaryArray::normalized_keys", allow-invalid = true, reason = "panics on a dictionary with no values and clamps a key past the end; use sonarithm_data::dictionary_keys (#508, F-071)" },
+]

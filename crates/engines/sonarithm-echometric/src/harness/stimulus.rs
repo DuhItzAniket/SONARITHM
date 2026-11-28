@@ -25,6 +25,7 @@ use super::generators::correlation::CorrelationTruth;
 use super::generators::outliers::OutlierTruth;
 use super::generators::prices::PriceTruth;
 use super::generators::reversals::ReversalTruth;
+use super::generators::shifts::ShiftTruth;
 use super::generators::transits::TransitTruth;
 
 /// A registered stimulus generator (docs/research-paper/datasets.md).
@@ -45,6 +46,9 @@ pub enum GeneratorId {
     /// GEN-011: labelled outliers, a detector test set (DS-010).
     #[serde(rename = "GEN-011")]
     Outliers,
+    /// GEN-012: labelled level shifts and periods, a detector test set (DS-010).
+    #[serde(rename = "GEN-012")]
+    Shifts,
 }
 
 impl GeneratorId {
@@ -57,6 +61,7 @@ impl GeneratorId {
             Self::Transits => "GEN-003",
             Self::CorrelationTriplets => "GEN-004",
             Self::Outliers => "GEN-011",
+            Self::Shifts => "GEN-012",
         }
     }
 
@@ -70,7 +75,8 @@ impl GeneratorId {
             | Self::PriceSeries
             | Self::Transits
             | Self::CorrelationTriplets
-            | Self::Outliers => 1,
+            | Self::Outliers
+            | Self::Shifts => 1,
         }
     }
 
@@ -83,6 +89,7 @@ impl GeneratorId {
             Self::Transits => "tuckerbrown2022evaluating",
             Self::CorrelationTriplets => "elmquist2024parallel",
             Self::Outliers => "iglewicz1993detect",
+            Self::Shifts => "killick2012optimal",
         }
     }
 }
@@ -166,6 +173,8 @@ pub enum Truth {
     Correlations(CorrelationTruth),
     /// GEN-011.
     Outliers(OutlierTruth),
+    /// GEN-012.
+    Shifts(ShiftTruth),
 }
 
 /// Why a stimulus needs a second look: it leaves the published design or the evidence.

@@ -540,21 +540,28 @@ fn segments(series: &Series, annotations: &[Annotation]) -> Vec<(bool, Range<usi
 }
 
 /// Trend-segment annotations as runs of points, if they partition the series exactly.
+///
+/// Only this track's segments count (an annotation without a track, any series'), and a
+/// segment's run is taken from its two endpoint rows in the series' own point order, never
+/// from the rows between them in table order: a filtered or time-ordered track's range spans
+/// rows of other tracks (RFC-0009 §1).
 fn semantic_segments(series: &Series, annotations: &[Annotation]) -> Option<Vec<Range<usize>>> {
     let first_row = series.points.first()?.row;
+    let index_of = |row: u64| {
+        series.points.iter().position(|p| {
+            p.row.table == first_row.table
+                && p.row.generation == first_row.generation
+                && p.row.row == row
+        })
+    };
     let mut runs: Vec<Range<usize>> = annotations
         .iter()
         .filter(|a| a.source.as_str() == TREND_SEGMENTS && a.range.table == first_row.table)
+        .filter(|a| a.track.as_ref().is_none_or(|track| track == &series.track))
         .filter_map(|a| {
-            let members: Vec<usize> = series
-                .points
-                .iter()
-                .enumerate()
-                .filter(|(_, p)| (a.range.start..a.range.end).contains(&p.row.row))
-                .map(|(i, _)| i)
-                .collect();
-            let (&lo, &hi) = (members.first()?, members.last()?);
-            (hi - lo + 1 == members.len()).then_some(lo..hi + 1)
+            let first = index_of(a.range.start)?;
+            let last = index_of(a.range.end.checked_sub(1)?)?;
+            Some(first.min(last)..first.max(last) + 1)
         })
         .collect();
     if runs.is_empty() {

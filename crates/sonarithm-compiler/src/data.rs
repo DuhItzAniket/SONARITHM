@@ -51,6 +51,10 @@ impl CompilerData for DataBundle {
         sonarithm_data::FINGERPRINT_SCHEME
     }
 
+    fn default_series(&self, time: Option<&str>) -> Option<String> {
+        sonarithm_data::default_series(self.primary()?, time)
+    }
+
     fn transform(
         &mut self,
         transforms: &[Transform],

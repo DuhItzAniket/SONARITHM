@@ -147,6 +147,7 @@ fn requests(dir: &TempDir) -> Vec<Value> {
         json!({ "command": "corrections_import", "args": { "dataset": "d2", "path": corrections } }),
         json!({ "command": "function_check", "args": { "expr": "x^2 - 1" } }),
         json!({ "command": "function_open", "args": { "expr": "sin(x)", "domain": [0, 10] } }),
+        json!({ "command": "function_info", "args": { "dataset": "d3" } }),
         json!({ "command": "audify_calculate", "args": { "dataset": "d3", "k": 1000 } }),
         json!({ "command": "dataset_close", "args": { "id": "d1" } }),
         json!({ "command": "project_new" }),

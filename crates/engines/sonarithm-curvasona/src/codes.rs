@@ -178,6 +178,16 @@ pub const AUDIFY_NO_SERIES: CodeInfo = CodeInfo {
     status: CodeStatus::Active,
 };
 
+/// An `audify` track's `filter` cannot be applied.
+pub const AUDIFY_FILTER_FAILED: CodeInfo = CodeInfo {
+    code: "SNR-ENG-466",
+    severity: Severity::Error,
+    summary: "The audify track's filter cannot be applied",
+    help: "An `audify` track plays the rows its `filter` keeps, as every encoder does. Check the filter's expression against the data's fields.",
+    rules: &[],
+    status: CodeStatus::Active,
+};
+
 /// Every code CURVASONA emits.
 pub const CODES: CodeTable = CodeTable {
     area: Area::Eng,
@@ -198,6 +208,7 @@ pub const CODES: CodeTable = CodeTable {
         AUDIFY_K_OUT_OF_RANGE,
         AUDIFY_TOO_MANY_SAMPLES,
         AUDIFY_NO_SERIES,
+        AUDIFY_FILTER_FAILED,
     ],
 };
 

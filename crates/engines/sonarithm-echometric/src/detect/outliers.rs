@@ -11,6 +11,13 @@
 //! values let the base inflate the MAD and missed spikes that ran against it (recall 0.66);
 //! a robust z inside each small window estimated the MAD from too few values and called
 //! noise an outlier (precision 0.87). Residuals keep the base out and use every value.
+//!
+//! **The ends.** The windows are symmetric and shrink toward the ends, so the first and last
+//! values' windows are only themselves. With [`EndFit::Skip`] they are never judged and a
+//! spike in either is not reported (F-205); descriptions say so (C05-T05). With
+//! [`EndFit::TheilSen`] (#507, experimental) each end is predicted from the robust line
+//! through its next [`END_WINDOW`] values, and its residual is judged with the rest.
+//! [`END_FIT`] is the default, chosen by measurement (F-207).
 
 use super::{Finding, Param, Params, Series, median};
 
@@ -31,7 +38,9 @@ const MEAN_AD_SCALE: f64 = 1.253_314;
 /// least this many times the largest residual among the other values. Without it, the
 /// fallback's scale is tiny when few values differ, and every small step is an outlier: a
 /// flat 20 °C with two 21s, or daily counts of mostly 0 with a few 1s and a 2 (#506 review,
-/// F-208). INFER (ADR-0031).
+/// F-208). Its cost: on that path a spike is not reported whenever another residual is at
+/// least a third of its size (two equal spikes, or counts with a 12 and a 5). INFER
+/// (ADR-0031).
 pub const FALLBACK_SEPARATION: f64 = 3.0;
 
 /// The fewest values a series needs before any is called an outlier: with fewer, the median
@@ -42,6 +51,33 @@ pub const MIN_VALUES: usize = 5;
 /// the ends). INFER (ADR-0031, F-205).
 pub const HALF_WINDOW: usize = 10;
 
+/// How the first and last values are judged (#507).
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum EndFit {
+    /// Not at all: their windows are only themselves.
+    Skip,
+    /// Against the Theil–Sen line through the next [`END_WINDOW`] values (the median of
+    /// their pairwise slopes, then the median intercept), extrapolated to the end.
+    /// Experimental: INFER.
+    TheilSen,
+}
+
+impl EndFit {
+    const fn name(self) -> &'static str {
+        match self {
+            Self::Skip => "none",
+            Self::TheilSen => "theil-sen",
+        }
+    }
+}
+
+/// The end treatment the detector uses. INFER (ADR-0031): it stays [`EndFit::Skip`] unless
+/// the ends-and-interior measurement supports a change (F-207, rule 5).
+pub const END_FIT: EndFit = EndFit::Skip;
+
+/// How many values next to an end its line is fitted to. INFER (ADR-0031, #507).
+pub const END_WINDOW: usize = 10;
+
 /// The parameters recorded with every `outliers` finding (RFC-0009 §1).
 #[must_use]
 pub fn params() -> Params {
@@ -51,6 +87,8 @@ pub fn params() -> Params {
         ("minValues", Param::Number(MIN_VALUES as f64)),
         ("window", Param::Number((2 * HALF_WINDOW + 1) as f64)),
         ("fallbackSeparation", Param::Number(FALLBACK_SEPARATION)),
+        ("endFit", Param::Text(END_FIT.name())),
+        ("endWindow", Param::Number(END_WINDOW as f64)),
     ])
 }
 
@@ -61,8 +99,27 @@ pub fn params() -> Params {
 /// are never judged.
 #[must_use]
 pub fn residuals(values: &[f64]) -> Vec<f64> {
-    (0..values.len())
+    residuals_with(values, END_FIT)
+}
+
+/// [`residuals`] with the end treatment `ends`.
+#[must_use]
+pub fn residuals_with(values: &[f64], ends: EndFit) -> Vec<f64> {
+    let n = values.len();
+    (0..n)
         .map(|at| {
+            if ends == EndFit::TheilSen && n > END_WINDOW && (at == 0 || at == n - 1) {
+                // The end's neighbours, by their distance from it: 1, 2, … END_WINDOW.
+                let neighbours: Vec<(f64, f64)> = (1..=END_WINDOW)
+                    .filter_map(|step| {
+                        let index = if at == 0 { step } else { n - 1 - step };
+                        values.get(index).map(|&v| (step as f64, v))
+                    })
+                    .collect();
+                if let (Some(line), Some(&value)) = (theil_sen(&neighbours), values.get(at)) {
+                    return value - line.1;
+                }
+            }
             let half = HALF_WINDOW.min(at).min(values.len() - 1 - at);
             let start = at - half;
             let end = at + half + 1;
@@ -70,6 +127,27 @@ pub fn residuals(values: &[f64]) -> Vec<f64> {
             values.get(at).map_or(f64::NAN, |v| v - centre)
         })
         .collect()
+}
+
+/// The Theil–Sen line through `points` (x, y): the median of the pairwise slopes, then the
+/// median of y − slope·x, as `(slope, intercept)`; the intercept is the prediction at x = 0.
+/// `None` for fewer than two points.
+#[must_use]
+pub fn theil_sen(points: &[(f64, f64)]) -> Option<(f64, f64)> {
+    let mut slopes = Vec::with_capacity(points.len() * points.len() / 2);
+    for (i, &(x1, y1)) in points.iter().enumerate() {
+        for &(x2, y2) in points.iter().skip(i + 1) {
+            if (x2 - x1).abs() > 0.0 {
+                slopes.push((y2 - y1) / (x2 - x1));
+            }
+        }
+    }
+    if slopes.is_empty() {
+        return None;
+    }
+    let slope = median(&slopes);
+    let intercepts: Vec<f64> = points.iter().map(|&(x, y)| y - slope * x).collect();
+    Some((slope, median(&intercepts)))
 }
 
 /// The robust z-scores of `values` (Iglewicz & Hoaglin 1993), or `None` when there are
@@ -96,7 +174,13 @@ pub fn robust_z(values: &[f64]) -> Option<Vec<f64>> {
 /// the series is too short or has no spread.
 #[must_use]
 pub fn scores(series: &Series) -> Option<Vec<f64>> {
-    robust_z(&residuals(series.values()))
+    scores_with(series, END_FIT)
+}
+
+/// [`scores`] with the end treatment `ends`.
+#[must_use]
+pub fn scores_with(series: &Series, ends: EndFit) -> Option<Vec<f64>> {
+    robust_z(&residuals_with(series.values(), ends))
 }
 
 /// Whether each residual stands apart from the others on the fallback path: at least
@@ -138,7 +222,13 @@ fn separated(residuals: &[f64]) -> Vec<bool> {
 /// apart from the other residuals ([`FALLBACK_SEPARATION`]).
 #[must_use]
 pub fn detect(series: &Series) -> Vec<Finding> {
-    let residuals = residuals(series.values());
+    detect_with(series, END_FIT)
+}
+
+/// [`detect`] with the end treatment `ends`, for measuring it (F-207).
+#[must_use]
+pub fn detect_with(series: &Series, ends: EndFit) -> Vec<Finding> {
+    let residuals = residuals_with(series.values(), ends);
     let Some(scores) = robust_z(&residuals) else {
         return Vec::new();
     };
@@ -209,11 +299,56 @@ mod tests {
         assert_eq!(found, []);
     }
 
+    /// F-208's cost, stated exactly: a spike within three times another residual is not
+    /// reported, whether or not the two are equal (counts with a 12 and a 5).
+    #[test]
+    fn f_208_a_spike_within_three_times_another_is_not_separated() {
+        let mut values = vec![0.0; 60];
+        values[20] = 12.0;
+        values[40] = 5.0;
+        assert_eq!(detect(&series(&values)), [], "12 < 3 × 5");
+        values[40] = 3.0;
+        let found: Vec<u64> = detect(&series(&values)).iter().map(|f| f.first).collect();
+        assert_eq!(found, [20], "12 ≥ 3 × 3: the 12 stands apart");
+    }
+
     #[test]
     fn a_zero_mad_falls_back_to_the_mean_absolute_deviation() {
         // Most values equal: the MAD is 0, but the one far value is still found.
         let found = detect(&series(&[5.0, 5.0, 5.0, 50.0, 5.0, 5.0, 5.0]));
         assert_eq!(found.iter().map(|f| f.first).collect::<Vec<_>>(), [3]);
+    }
+
+    #[test]
+    fn theil_sen_ends_find_an_end_spike_on_a_slope_and_leave_a_plain_slope_alone() {
+        let mut values: Vec<f64> = (0..40).map(|i| f64::from(i) * 2.0).collect();
+        // A small deterministic wiggle, so the residuals have a spread.
+        for (i, v) in values.iter_mut().enumerate() {
+            *v += [0.3, -0.2, 0.1, -0.4][i % 4];
+        }
+        let plain = detect_with(&series(&values), EndFit::TheilSen);
+        assert_eq!(plain, [], "a slope's ends are on its line");
+        values[0] = 40.0;
+        let found = detect_with(&series(&values), EndFit::TheilSen);
+        assert_eq!(found.iter().map(|f| f.first).collect::<Vec<_>>(), [0]);
+        assert_eq!(
+            detect_with(&series(&values), EndFit::Skip),
+            [],
+            "skipped ends"
+        );
+    }
+
+    #[test]
+    fn theil_sen_ignores_one_spike_among_its_points() {
+        let mut points: Vec<(f64, f64)> = (1..=10)
+            .map(|i| (f64::from(i), 3.0 * f64::from(i) + 1.0))
+            .collect();
+        points[4].1 = 500.0;
+        let (slope, intercept) = theil_sen(&points).unwrap();
+        assert!(
+            (slope - 3.0).abs() < 1e-9 && (intercept - 1.0).abs() < 1e-9,
+            "{slope} {intercept}"
+        );
     }
 
     #[test]

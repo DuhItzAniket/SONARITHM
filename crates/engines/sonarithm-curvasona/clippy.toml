@@ -12,6 +12,7 @@ doc-valid-idents = ["WebView2", "WKWebView", "WebKitGTK", ".."]
 # whose operators are libm's; anything else uses libm or sonarithm_core::math. `sqrt`,
 # `abs` and rounding are exact in IEEE 754 and stay allowed.
 disallowed-methods = [
+    { path = "arrow_array::array::AnyDictionaryArray::normalized_keys", reason = "panics on a dictionary with no values and clamps a key past the end; use sonarithm_data::dictionary_keys (#508, F-071)" },
     { path = "f64::sin", reason = "platform-dependent; use libm::sin (ADR-0013, F-204)" },
     { path = "f64::cos", reason = "platform-dependent; use libm::cos (ADR-0013, F-204)" },
     { path = "f64::tan", reason = "platform-dependent; use libm::tan (ADR-0013, F-204)" },

@@ -5,8 +5,10 @@
 //! local extrema at each trend reversal.
 //!
 //! A reversal counts only when the series moves back from a running extreme by more than a
-//! hysteresis band, a fraction of its value range, so noise does not make every wiggle an
-//! extremum (ADR-0031). The same reversals give SDR-21's count and the trend segments
+//! hysteresis band, a fraction of its robust value range (the 5th to 95th percentile), so
+//! noise does not make every wiggle an extremum and one spike does not widen the band until
+//! it hides every other reversal (ADR-0031, F-209). The first and last values are never
+//! turns: a turn needs values on both sides. The same reversals give SDR-21's count and the trend segments
 //! (C05-T03), so `extrema`, `trend-segments` and the lint agree on them.
 
 use super::{Finding, Param, Params, Series};
@@ -17,12 +19,20 @@ use super::{Finding, Param, Params, Series};
 /// C05-T03's precision and recall.
 pub const HYSTERESIS: f64 = 0.1;
 
+/// The percentiles whose distance is the range the band is a fraction of: the 5th and
+/// 95th, so a few spikes (up to 5 % of the values at each end) do not set the band. When
+/// they are equal (a flat series with a spike), the full range is used, so the spike is
+/// still a turn. INFER (ADR-0031, F-209; #506 review).
+pub const RANGE_PERCENTILES: (f64, f64) = (0.05, 0.95);
+
 /// The parameters recorded with every `extrema` finding (RFC-0009 §1).
 #[must_use]
 pub fn params() -> Params {
     Params::from([
         ("method", Param::Text("reversal-hysteresis")),
         ("hysteresis", Param::Number(HYSTERESIS)),
+        ("rangeLow", Param::Number(RANGE_PERCENTILES.0)),
+        ("rangeHigh", Param::Number(RANGE_PERCENTILES.1)),
     ])
 }
 
@@ -35,15 +45,52 @@ pub struct Turn {
     pub maximum: bool,
 }
 
-/// The reversals of `series` with a band of `hysteresis` times its value range, in order. A
-/// flat series has none. The first and last values are never turns.
+/// The `at`-th quantile (0 to 1) of `sorted`, which must not be empty, interpolated linearly
+/// between the closest ranks.
+fn quantile(sorted: &[f64], at: f64) -> f64 {
+    let last = sorted.len().saturating_sub(1);
+    #[expect(
+        clippy::cast_precision_loss,
+        reason = "series lengths are far below 2^52"
+    )]
+    let position = at * last as f64;
+    #[expect(
+        clippy::cast_possible_truncation,
+        clippy::cast_sign_loss,
+        reason = "position is in [0, last]"
+    )]
+    let below = (position.floor() as usize).min(last);
+    let above = (below + 1).min(last);
+    #[expect(clippy::cast_precision_loss, reason = "as above")]
+    let fraction = position - below as f64;
+    let (Some(&low), Some(&high)) = (sorted.get(below), sorted.get(above)) else {
+        return f64::NAN;
+    };
+    low + fraction * (high - low)
+}
+
+/// The range the band is a fraction of: from the 5th to the 95th percentile
+/// ([`RANGE_PERCENTILES`]), or the full range when those are equal. `None` for no values.
+#[must_use]
+pub fn robust_range(series: &Series) -> Option<f64> {
+    let (lo, hi) = series.bounds()?;
+    let mut sorted = series.values().to_vec();
+    sorted.sort_by(f64::total_cmp);
+    let (low, high) = RANGE_PERCENTILES;
+    let robust = quantile(&sorted, high) - quantile(&sorted, low);
+    Some(if robust > 0.0 { robust } else { hi - lo })
+}
+
+/// The reversals of `series` with a band of `hysteresis` times its robust value range
+/// ([`robust_range`]), in order. A flat series has none. The first and last values are never
+/// turns.
 #[must_use]
 pub fn turns(series: &Series, hysteresis: f64) -> Vec<Turn> {
     let values = series.values();
-    let Some((lo, hi)) = series.bounds() else {
+    let Some(range) = robust_range(series) else {
         return Vec::new();
     };
-    let band = hysteresis * (hi - lo);
+    let band = hysteresis * range;
     if band.is_nan() || band <= 0.0 {
         return Vec::new();
     }
@@ -182,6 +229,32 @@ mod tests {
             .map(|t| (t.index, t.maximum))
             .collect();
         assert_eq!(found, [(1, true), (2, false), (3, true)]);
+    }
+
+    /// #506 review, F-209: one spike does not widen the band until it hides the reversals.
+    /// With the full range, the spike of 100 makes the band 10 and the swings of 5 vanish.
+    #[test]
+    fn f_209_one_spike_does_not_hide_the_reversals() {
+        let mut values: Vec<f64> = (0..40)
+            .map(|i| if (i / 5) % 2 == 0 { 0.0 } else { 5.0 })
+            .collect();
+        values[22] = 100.0;
+        let found = turns(&series(&values), HYSTERESIS);
+        assert!(found.len() >= 6, "{found:?}");
+        // A flat series with one spike still turns at the spike.
+        let mut flat = vec![1.0; 30];
+        flat[12] = 9.0;
+        let found = turns(&series(&flat), HYSTERESIS);
+        assert_eq!(found.iter().map(|t| t.index).collect::<Vec<_>>(), [12]);
+    }
+
+    #[test]
+    fn the_robust_range_ignores_a_few_spikes() {
+        let mut values: Vec<f64> = (0..100).map(f64::from).collect();
+        values[50] = 10_000.0;
+        let range = robust_range(&series(&values)).unwrap();
+        assert!((range - 90.0).abs() < 1.0, "{range}");
+        assert_eq!(robust_range(&series(&[])), None);
     }
 
     /// #506 review: the global maximum's own turn is not listed again as a local maximum,

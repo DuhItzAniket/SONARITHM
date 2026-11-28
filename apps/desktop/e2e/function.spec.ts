@@ -264,3 +264,32 @@ test("sdr_31_the_calculator_reads_out_and_an_inaudible_band_will_not_compile", a
   // Named lookups precede this scan: F-226 (Firefox skips it).
   await expectNoSeriousViolations(page, browserName);
 });
+
+test("c03_t08b_a_second_function_shows_its_own_critical_points", async ({
+  page,
+}) => {
+  // #498 review: the Inspector asks the app core for the function behind the shown
+  // dataset by its ID, so a second function replaces the first one's points.
+  await openCubic(page);
+  const inspector = page.getByRole("complementary", { name: "Inspector" });
+  await expect(inspector.getByText(/^f\(x\) = x\^3 - 3\*x from/)).toBeVisible();
+  await newFunction(page);
+  // The dialog keeps the last expression; select it and type over it.
+  await page.keyboard.press("Home");
+  await page.keyboard.press("Shift+End");
+  await page.keyboard.type("x^2 - 1");
+  await expect(expression(page)).toHaveAccessibleDescription(
+    "Reads as: x^2 - 1",
+  );
+  await page.keyboard.press("Enter");
+  await expect(dialog(page)).toHaveCount(0);
+  await expect(inspector.getByText(/^f\(x\) = x\^2 - 1 from/)).toBeVisible();
+  await expect(inspector.getByText(/^f\(x\) = x\^3 - 3\*x from/)).toHaveCount(
+    0,
+  );
+  expect(
+    (await (await host(page)).evaluate((mock) => mock.commands())).filter(
+      (command) => command === "function_info",
+    ).length,
+  ).toBeGreaterThanOrEqual(2);
+});

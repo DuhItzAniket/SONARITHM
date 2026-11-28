@@ -284,6 +284,33 @@ pub(crate) fn text_values(array: &dyn Array) -> Option<Vec<Option<&str>>> {
     })
 }
 
+/// Why a dictionary's keys cannot be read: the first row whose key has no value, or row 0
+/// when the array is not an integer-keyed dictionary (#508).
+#[derive(Clone, Copy, Debug, PartialEq, Eq, thiserror::Error)]
+#[error("dictionary key at row {row} is outside its values")]
+pub struct DictionaryKeyError {
+    /// The first offending row.
+    pub row: usize,
+}
+
+/// The keys of a dictionary array, one per row, as indices into its values: `None` for a
+/// null key (#508). Use it instead of arrow's `normalized_keys`, which panics on a
+/// dictionary with no values (an all-null or zero-row column, F-071) and clamps a key past
+/// the end to the last value: here every key of an empty dictionary is null, and a key past
+/// the end is an error.
+///
+/// # Errors
+///
+/// [`DictionaryKeyError`] naming the first row whose key is outside the values, or row 0
+/// when `array` is not an integer-keyed dictionary.
+pub fn dictionary_keys(array: &dyn Array) -> Result<Vec<Option<usize>>, DictionaryKeyError> {
+    let indices = dictionary_indices(array).map_err(|row| DictionaryKeyError { row })?;
+    Ok(indices
+        .iter()
+        .map(|key| key.and_then(|key| usize::try_from(key).ok()))
+        .collect())
+}
+
 /// The keys of a dictionary array as `UInt32` indices into its values, ready for
 /// `arrow_select::take`. Null keys stay null.
 ///
@@ -454,6 +481,75 @@ mod tests {
         assert_eq!(
             dictionary_indices(&dictionary).unwrap(),
             UInt32Array::from(vec![None, None])
+        );
+    }
+
+    /// #508: an all-null dictionary has only null keys, whether or not it has values.
+    #[test]
+    fn dictionary_keys_of_an_all_null_dictionary_are_null() {
+        let empty: ArrayRef = Arc::new(StringArray::from(Vec::<&str>::new()));
+        let dictionary =
+            DictionaryArray::try_new(Int8Array::from(vec![None, None, None]), empty).unwrap();
+        assert_eq!(dictionary_keys(&dictionary), Ok(vec![None, None, None]));
+        let values: ArrayRef = Arc::new(StringArray::from(vec!["a"]));
+        let dictionary =
+            DictionaryArray::try_new(UInt8Array::from(vec![None, None]), values).unwrap();
+        assert_eq!(dictionary_keys(&dictionary), Ok(vec![None, None]));
+    }
+
+    /// #508: a dictionary with no rows and no values has no keys.
+    #[test]
+    fn dictionary_keys_of_a_zero_row_dictionary_are_empty() {
+        let empty: ArrayRef = Arc::new(StringArray::from(Vec::<&str>::new()));
+        let dictionary =
+            DictionaryArray::try_new(Int8Array::from(Vec::<i8>::new()), empty).unwrap();
+        assert_eq!(dictionary_keys(&dictionary), Ok(Vec::new()));
+    }
+
+    /// #508: a dictionary whose values are a dictionary gives its own keys into those
+    /// values, and an empty inner dictionary does not panic.
+    #[test]
+    fn dictionary_keys_of_a_nested_dictionary_index_its_outer_values() {
+        let labels: ArrayRef = Arc::new(StringArray::from(vec!["a", "b"]));
+        let inner: ArrayRef =
+            Arc::new(DictionaryArray::try_new(Int8Array::from(vec![1, 0, 1]), labels).unwrap());
+        let outer = DictionaryArray::try_new(UInt8Array::from(vec![Some(2), None, Some(0)]), inner)
+            .unwrap();
+        assert_eq!(dictionary_keys(&outer), Ok(vec![Some(2), None, Some(0)]));
+        let empty: ArrayRef = Arc::new(StringArray::from(Vec::<&str>::new()));
+        let inner: ArrayRef =
+            Arc::new(DictionaryArray::try_new(Int8Array::from(Vec::<i8>::new()), empty).unwrap());
+        let outer = DictionaryArray::try_new(UInt8Array::from(vec![None]), inner).unwrap();
+        assert_eq!(dictionary_keys(&outer), Ok(vec![None]));
+    }
+
+    /// #508: a key past the end never reaches `dictionary_keys` as a clamped value. Every
+    /// safe way to build one refuses it (`try_new`, `ArrayData::build`, and the IPC reader,
+    /// which validates unless told otherwise through an unsafe flag), and this crate forbids
+    /// unsafe code, so the case is pinned here: if Arrow ever accepts such a key,
+    /// `dictionary_keys` returns the row as an error (its `Err` path, also taken for a plain
+    /// array below) and this test fails to say so.
+    #[test]
+    fn a_dictionary_key_past_the_end_is_refused() {
+        let values: ArrayRef = Arc::new(StringArray::from(vec!["a", "b"]));
+        let keys = Int8Array::from(vec![0, 1, 5]);
+        assert!(DictionaryArray::try_new(keys.clone(), Arc::clone(&values)).is_err());
+        let data = keys
+            .into_data()
+            .into_builder()
+            .data_type(DataType::Dictionary(
+                Box::new(DataType::Int8),
+                Box::new(DataType::Utf8),
+            ))
+            .child_data(vec![values.to_data()])
+            .build();
+        assert!(
+            data.is_err(),
+            "Arrow now builds a dictionary with a key past the end"
+        );
+        assert_eq!(
+            dictionary_keys(&Int64Array::from(vec![1, 2])),
+            Err(DictionaryKeyError { row: 0 })
         );
     }
 

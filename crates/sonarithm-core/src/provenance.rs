@@ -77,6 +77,10 @@ impl Confidence {
     /// Full confidence.
     pub const CERTAIN: Self = Self(1.0);
 
+    /// No confidence: what an estimate without a stated confidence counts as when a single
+    /// confidence must stand for it (SDR-43's rule; an insight's confidence, #506 review).
+    pub const ZERO: Self = Self(0.0);
+
     /// A confidence, or `None` unless `value` is in [0, 1].
     #[must_use]
     pub fn new(value: f32) -> Option<Self> {
@@ -87,6 +91,18 @@ impl Confidence {
     #[must_use]
     pub const fn get(self) -> f32 {
         self.0
+    }
+
+    /// The confidence `provenance` states, or the one its class implies when it states
+    /// none: [`Self::ZERO`] for an estimate (SDR-43's rule, as NUMISONA's low-confidence
+    /// timbre counts it) and [`Self::CERTAIN`] otherwise.
+    #[must_use]
+    pub fn of(provenance: Provenance) -> Self {
+        match provenance.confidence {
+            Some(confidence) => confidence,
+            None if provenance.class.is_estimate() => Self::ZERO,
+            None => Self::CERTAIN,
+        }
     }
 
     /// The lower of two confidences (03 §4 rule 2).
@@ -255,6 +271,28 @@ mod tests {
             Provenance::EXACT
         );
         assert_eq!(Provenance::EXACT.combine(estimate), estimate);
+    }
+
+    /// SDR-43's rule, used for an insight's confidence (#506 review): a stated confidence
+    /// stands; without one, an estimate counts as zero and anything else as certain.
+    #[test]
+    fn sdr_43_an_estimate_without_a_confidence_counts_as_zero() {
+        let stated = Provenance {
+            class: ProvenanceClass::CvEstimate,
+            confidence: Confidence::new(0.75),
+        };
+        assert_eq!(Confidence::of(stated), Confidence::new(0.75).unwrap());
+        let unstated = Provenance {
+            class: ProvenanceClass::CvEstimate,
+            confidence: None,
+        };
+        assert_eq!(Confidence::of(unstated), Confidence::ZERO);
+        assert_eq!(Confidence::of(Provenance::EXACT), Confidence::CERTAIN);
+        let derived = Provenance {
+            class: ProvenanceClass::Derived,
+            confidence: None,
+        };
+        assert_eq!(Confidence::of(derived), Confidence::CERTAIN);
     }
 
     #[test]

@@ -84,6 +84,7 @@ impl App {
                     name,
                 })
             }),
+            Request::FunctionInfo { dataset } => self.function_info(&dataset),
             Request::AudifyCalculate {
                 dataset,
                 time,
@@ -138,22 +139,7 @@ impl App {
             .name
             .unwrap_or_else(|| format!("f(x) = {}", function.expr()));
         let summary = summarize(&id, &name, function.bundle(), &function.diagnostics());
-        let info = FunctionInfo {
-            canonical: function.expr().to_owned(),
-            summary: function.summary(),
-            critical_points: function
-                .critical_points()
-                .into_iter()
-                .map(|point| CriticalPointInfo {
-                    kind: point.kind.to_owned(),
-                    x: point.x,
-                    end: point.end,
-                    y: point.y,
-                    row: point.row,
-                    text: point.text,
-                })
-                .collect(),
-        };
+        let info = info_of(&function);
         self.datasets.insert(
             number,
             Open {
@@ -168,6 +154,33 @@ impl App {
         Ok(Reply::Function {
             dataset: summary,
             function: info,
+        })
+    }
+
+    /// `function_info`: the function behind an open dataset, sampled again from the source
+    /// the dataset keeps (as a project reopens it), so its critical points are the ones
+    /// `function_open` gave.
+    fn function_info(&self, dataset: &str) -> Result<Reply, IpcError> {
+        let open = self
+            .datasets
+            .values()
+            .find(|open| open.summary.id == dataset)
+            .ok_or_else(|| unknown_dataset(dataset))?;
+        let function = match &open.function {
+            Some(source) => {
+                let function = sonarithm::read_function(source).map_err(|err| {
+                    err.diagnostics().iter().next().map_or_else(
+                        || IpcError::new(&codes::BAD_REQUEST, err.to_string()),
+                        IpcError::from_diagnostic,
+                    )
+                })?;
+                Some(info_of(&function))
+            }
+            None => None,
+        };
+        Ok(Reply::FunctionDetails {
+            dataset: dataset.to_owned(),
+            function,
         })
     }
 
@@ -205,5 +218,25 @@ impl App {
                 .map(|code| (*code).to_owned())
                 .collect(),
         })
+    }
+}
+
+/// The protocol's view of a function: its canonical form, summary and critical points.
+fn info_of(function: &sonarithm::Function) -> FunctionInfo {
+    FunctionInfo {
+        canonical: function.expr().to_owned(),
+        summary: function.summary(),
+        critical_points: function
+            .critical_points()
+            .into_iter()
+            .map(|point| CriticalPointInfo {
+                kind: point.kind.to_owned(),
+                x: point.x,
+                end: point.end,
+                y: point.y,
+                row: point.row,
+                text: point.text,
+            })
+            .collect(),
     }
 }

@@ -209,7 +209,12 @@ impl Encoder<DataBundle> for AudifyEncoder {
             )
             .at_spec(at.clone())
         })?;
-        let (values, fs) = series_grid(table, time.as_deref(), &series);
+        // The rows the track's `filter` keeps, as every encoder selects them (#506 review:
+        // the filter used to be ignored here, so the detectors analysed another series).
+        let filter = spec.pointer("/filter/expr").and_then(Value::as_str);
+        let rows = rows_of(table, filter, time.as_deref())
+            .map_err(|err| CompileError::from(*err).at_spec(at.key("filter").key("expr")))?;
+        let (values, fs) = series_grid(table, time.as_deref(), &series, &rows);
         let count = values.len();
         if count > Audify::MAX_SAMPLES {
             return Err(refuse(
@@ -231,11 +236,12 @@ impl Encoder<DataBundle> for AudifyEncoder {
             .collect();
         let mut event = Audify::new(Seconds::ZERO, k * fs, samples);
         event.gain = loudness(&spec);
+        // The table rows it plays: from the first to the last of them, in table order.
         event.src = Some(RowRange {
             table: table.id(),
             generation: table.generation(),
-            start: 0,
-            end: u64::try_from(count).unwrap_or(u64::MAX),
+            start: rows.iter().min().copied().unwrap_or(0),
+            end: rows.iter().max().map_or(0, |&last| last.saturating_add(1)),
         });
         cx.charge_events(1)?;
         let mut out = ScoreTrack::new(
@@ -258,20 +264,8 @@ fn fields(table: &Table, substrate: Option<&Value>) -> Option<(Option<String>, S
         .and_then(Value::as_str)
         .map(str::to_owned)
         .or_else(|| field_with_role(table, "x"));
-    let series = field_with_role(table, "y")
-        .filter(|name| numbers(table, name).is_some())
-        .or_else(|| {
-            table
-                .schema()
-                .fields()
-                .iter()
-                .map(|f| f.name().clone())
-                .find(|name| {
-                    Some(name) != time.as_ref()
-                        && !name.starts_with("__snr_")
-                        && numbers(table, name).is_some()
-                })
-        })?;
+    // The same choice the compiler makes for the detectors (RFC-0009 §1).
+    let series = sonarithm_data::default_series(table, time.as_deref())?;
     Some((time, series))
 }
 
@@ -340,11 +334,44 @@ fn speedup_of(
 /// The series on a uniform grid over the time field, whose rate `fs` is the series' own;
 /// one sample per row (`fs` = 1) without a usable time field. The encoder and
 /// [`readout`] share it, so the calculator and a compile always agree.
-fn series_grid(table: &Table, time: Option<&str>, series: &str) -> (Vec<Option<f64>>, f64) {
-    let raw = numbers(table, series).unwrap_or_default();
+fn series_grid(
+    table: &Table,
+    time: Option<&str>,
+    series: &str,
+    rows: &[u64],
+) -> (Vec<Option<f64>>, f64) {
+    let at = |column: &[Option<f64>]| -> Vec<Option<f64>> {
+        rows.iter()
+            .map(|&row| {
+                usize::try_from(row)
+                    .ok()
+                    .and_then(|row| column.get(row).copied().flatten())
+            })
+            .collect()
+    };
+    let raw = at(&numbers(table, series).unwrap_or_default());
     time.and_then(|name| times(table, name))
-        .and_then(|t| uniform(&raw, &t))
+        .and_then(|t| uniform(&raw, &at(&t)))
         .unwrap_or((raw, 1.0))
+}
+
+/// The rows a track plays, in play order: those its `filter` keeps that have a time value,
+/// ordered by time ([`sonarithm_data::play_rows`], as NUMISONA's encoders and the
+/// detectors select them, RFC-0009 §1). An error names the filter.
+fn rows_of(
+    table: &Table,
+    filter: Option<&str>,
+    time: Option<&str>,
+) -> Result<Vec<u64>, Box<Diagnostic>> {
+    sonarithm_data::play_rows(table, filter, time).map_err(|err| {
+        Box::new(Diagnostic::new(
+            &codes::AUDIFY_FILTER_FAILED,
+            format!(
+                "The track filter `{}` cannot be applied: {err}",
+                filter.unwrap_or_default()
+            ),
+        ))
+    })
 }
 
 /// k from `audify.k`, else from the top of `audify.band` (`k = 2·hi/fs`), else the SDR-44
@@ -395,7 +422,9 @@ pub fn readout(
             "The data has no numeric field to audify.",
         ))
     })?;
-    let (values, fs) = series_grid(table, time.as_deref(), &series);
+    // The calculator has no track, so no filter: every timed row, in time order.
+    let rows = rows_of(table, None, time.as_deref())?;
+    let (values, fs) = series_grid(table, time.as_deref(), &series, &rows);
     let count = values.len();
     if count > Audify::MAX_SAMPLES {
         return Err(Box::new(Diagnostic::new(

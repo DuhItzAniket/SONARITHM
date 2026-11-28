@@ -1042,6 +1042,56 @@ A05 (render engine, audio backends, export) uses F-050 to F-069.
 - **Evidence level / confidence:** EV-D / Strong for the cause (the failing OS set, the zero-change local re-record, and exmex's operator source); cross-platform agreement after the fix is shown by #449's CI, not yet
 - **Affects:** ADR-0013 §1; every function spec's Score and manifest (C03-T02, C03-T06, C03-T07); the curvasona-suite records; any snapshot that holds a function's full-precision values
 
+### F-260 · Removing only the mean made a noisy trend look periodic; removing a least-squares line fixed it
+
+- **Date:** 2026-11-28 · **Phase:** C05 · **Type:** engineering (detector design) · **Status:** new
+- **Statement:** a02-closeout's review of #520 found that `periodicity` reported false periods on ordinary trending data.
+  - **The method:** the autocorrelation removed only the series' mean. A trend's slowly decaying autocorrelation then had noise peaks above the 0.5 threshold.
+  - **The size of it, in the review's simulation:** 100 points of 0.1·i + N(0, 1) gave a period in about 51 % of seeds ("period 11 rows, r = 0.62"). White noise gave 0 of 200, and a random walk 2 of 200.
+  - **Why the tests missed it:** they used a noise-free ramp only.
+- **Fix:** subtract the least-squares line over the row index before the autocorrelation (`detrended`, O(n)). If what the line leaves is below a 10⁻¹² share of the spread, it is a straight line's rounding residue, and the series is not periodic. The method is recorded as `detrended-autocorrelation`.
+- **Measured after the fix (HW-01, 100 seeds each):**
+  - **GEN-012 with a 25-point sine:** period found 100 of 100 (as before).
+  - **GEN-012 noise alone:** 0 of 100 false alarms (as before).
+  - **A noisy trend (GEN-011 with no spikes or sine, slope 0.1 per point, σ = 1, 100 points):** 0 of 100 false alarms. It joins the false-alarm set.
+  - **The noisy-ramp unit test:** 200 seeds, at most 10 allowed.
+  - **Agreement with augurs-seasons' periodogram:** still 50 of 50 GEN-012 series.
+- **Also from the review:**
+  - Trend-segment labels now use the same robust range as the turns (F-209). On humidity's sawtooth with one spike, every segment had been "flat".
+  - `changepoints` takes the smallest step as the noise when the differences' MAD is 0, so a noise-free step is a change (INFER).
+  - It centres values before its prefix sums, so an offset of 10⁸ adds no false changes.
+  - Change points on GEN-012: precision 0.9868, recall 1.0 (unchanged).
+- **Evidence:** `f_260_a_noisy_ramp_is_not_periodic`, `c05_t03_periodicity_on_gen_012` (with the noisy-trend set), `a_noise_free_step_is_a_change`, `a_large_offset_changes_nothing`, and the `two_series_annotations` snapshot with trend segments.
+- **Evidence level / confidence:** EV-D / Strong for the noisy trend (a generated set with ground truth); Moderate for the zero-noise fallback (constructed cases, INFER).
+- **Affects:** `detect/periodicity.rs`, `detect/trends.rs`, `detect/changepoints.rs`; `periodicity`'s and `trend-segments`' parameters.
+
+### F-209 · One spike widened the extrema band until it hid every other reversal
+
+- **Date:** 2026-11-28 · **Phase:** C05 · **Type:** engineering (detector design) · **Status:** new
+- **Statement:** a02-closeout's review of #506 found that `extrema`'s hysteresis band was 10 % of the full value range, outliers included. One spike could therefore widen it past every real swing.
+  - **The test series:** in `two_series`, humidity is a 1.5-unit sawtooth around 40 with one spike to 95. Its band was 5.5, so no reversal of the sawtooth counted.
+  - **Fix:** the band is 10 % of the robust range, from the 5th to the 95th percentile (`RANGE_PERCENTILES`, INFER), or of the full range when that is zero, so a lone spike in a flat series is still a turn.
+- **Measured effect:**
+  - The humidity band falls to 0.15, and the sawtooth's turns appear: the reviewed `two_series_annotations` snapshot gains the humidity series' local extrema (rows 3, 4, 7, 8, 13, 15, 16, …).
+  - GEN-001's reversal counts are still found exactly, and T03's trend-segment and change-point tests pass unchanged.
+  - `f_209_one_spike_does_not_hide_the_reversals` holds a spike of 100 over swings of 5.
+- **Evidence level / confidence:** EV-D / Moderate: constructed and generated series. The percentiles are INFER (ADR-0031), not measured on real data.
+- **Affects:** `detect/extrema.rs` (`extrema` and `trend-segments` through `turns`); their annotations' parameters (`rangeLow`, `rangeHigh`).
+
+### F-207 · Theil–Sen end lines find every end spike, but raise false alarms at ordinary ends to seven times the interior rate
+
+- **Date:** 2026-11-28 · **Phase:** C05 · **Type:** engineering (detector design) · **Status:** new
+- **Statement:** #507 asked whether the outliers' first and last values, which the symmetric moving median never judges (F-205), can be judged by predicting each from a Theil–Sen line through its next 10 values. Measured on GEN-011 (5 spikes of 8σ, noise σ = 1, 200 points), on flat, sloped (0.05 per row) and periodic (sine of amplitude 2) bases, on HW-01, with both halves reported.
+- **End spikes found (spikes forced at both ends, 1000 seeds per base, 2000 end spikes):** `Skip` finds none, by design. `TheilSen` finds all of them (recall 1.0) on every base, the periodic one included, where the line's curvature error was the worry. End precision is 1.0 here by construction: with both ends spiked, every end finding is a hit.
+- **False alarms at ordinary ends (the same bases and seeds, no end spikes, 2000 end values per base):** `Skip` gives 0. `TheilSen` gives 16 (0.80 %), 17 (0.85 %) and 18 (0.90 %) on the flat, sloped and periodic bases.
+  - The interior's rate is about 0.12 % per value: some 240 false alarms in 198 000 interior values, from its precision of 0.930 to 0.955.
+  - So the ends would be judged with about seven times the interior's false-alarm rate. A first run with 100 seeds had 1 false alarm per base and could not tell the two apart.
+- **Interior:** recall 1.0 in every case. Its precision rises slightly with `TheilSen` (0.940 → 0.955 flat, 0.938 → 0.954 sloped, 0.930 → 0.945 periodic), because the judged end residuals enter the MAD.
+- **Decision (rule 5, the coordinator's bar "ends at least as good as the interior"):** the recall half supports the change and the false-alarm half does not. So `END_FIT` stays `Skip`, and `TheilSen` stays an experimental option. Descriptions and the module documentation say the first and last values are not judged.
+- **Evidence:** `f_207_outlier_ends_against_the_interior` (100 seeds in CI; the 1000-seed run was local, with only the seed count changed).
+- **Evidence level / confidence:** EV-D / Moderate: one spike size (8σ) and one window (10). A smaller window, or a curvature term, might lower the end false alarms; not measured.
+- **Affects:** `detect/outliers.rs` (`EndFit`, `END_FIT`, `END_WINDOW`; annotations record `endFit` and `endWindow`); GEN-011's `ends` and `slope` options.
+
 ### F-208 · The outlier detector's zero-MAD fallback called every small step in sparse or integer data an outlier
 
 - **Date:** 2026-11-28 · **Phase:** C05 · **Type:** engineering (detector design) · **Status:** new
@@ -1051,7 +1101,7 @@ A05 (render engine, audio backends, export) uses F-050 to F-069.
   - **A flat integer reading:** 20 °C with two 21s gave both 21s (z 16).
   - **Fix:** on the fallback path only, a value is an outlier if its z exceeds 3.5 **and** its residual is at least `FALLBACK_SEPARATION` = 3 times the largest residual among the other values. Both cases above then give none, and a lone spike in a flat series (50 among 5s) is still found.
 - **Why not a share of the value range (the review's suggestion):** the range includes the value being judged, so a lone step is 100 % of it in every case. The 21 among 20s, the 2 among 0s and 1s, and the 50 among 5s all score the same, and no share can keep the third while dropping the first two. Separation from the other residuals does.
-- **Cost:** two equal spikes in a flat series do not stand apart from each other, so neither is reported (`f_208_two_equal_spikes_in_a_flat_series_are_not_separated`). The normal path (a nonzero MAD), which F-205 measured, is unchanged.
+- **Cost, stated exactly (a02-closeout's check):** in zero-MAD data, a spike is not reported whenever another residual is at least a third of its size. Two equal spikes in a flat series are one case. Another is daily counts of mostly 0 with a 12 and a 5: the 12 is less than 3 × 5, so neither is reported. Tests: `f_208_two_equal_spikes_in_a_flat_series_are_not_separated` and `f_208_a_spike_within_three_times_another_is_not_separated`. The normal path (a nonzero MAD), which F-205 measured, is unchanged.
 - **Evidence:** the unit tests `f_208_a_flat_integer_series_with_small_steps_has_no_outliers`, `f_208_sparse_counts_have_no_outliers` and `a_zero_mad_falls_back_to_the_mean_absolute_deviation`. GEN-011's precision and recall are as before, since its noise never gives a zero MAD.
 - **Evidence level / confidence:** EV-D / Moderate: a review finding with constructed cases. The factor 3 is INFER (ADR-0031), not measured on real sparse data.
 - **Affects:** `detect/outliers.rs`; every `outliers` annotation's parameters (`fallbackSeparation`); ADR-0031's INFER list.
@@ -1075,6 +1125,7 @@ A05 (render engine, audio backends, export) uses F-050 to F-069.
   - **Inside each 21-value window (the Hampel identifier):** precision 0.8657 and recall 0.9800, with 76 false positives. Twenty-one values estimate the MAD too loosely, and noise crosses 3.5.
   - **Adopted: the residual from a 21-value moving median, then one robust z over all residuals:** precision 0.9579 and recall 1.0000, with 22 false positives. The moving median removes the base, and the MAD comes from every value.
 - **A second effect:** a window cut short at an end is not centred, so on a slope its median leaves every value near the end looking like an outlier. A unit test on a straight rise found it. Windows are therefore symmetric and shrink toward the ends, so the first and last values are never judged.
+- **Limitation:** the first and last values of a series are never judged, so a spike in either is not reported. The detector's documentation says so, C05-T05's descriptions will, and judging the ends against a local trend is #507.
 - **Not a result:** the threshold (3.5) and the window (21) are INFER (ADR-0031). No sonification study sets them, and the rates above are for GEN-011's defaults only.
 - **Evidence:** `crates/engines/sonarithm-echometric/src/detect/outliers.rs`; `c05_t02_outliers_precision_and_recall_on_gen_011` (it asserts both rates ≥ 0.95 and prints the measured ones); `a_spike_against_a_slope_is_found`; the reference test `robust_z_scores_match_statrs` (statrs's medians, `crates/engines/sonarithm-echometric/reference`).
 - **Evidence level / confidence:** EV-D / Moderate: measured on one synthetic generator. Real series with level shifts or seasonality need C05-T03's change points before outliers are trusted on them.

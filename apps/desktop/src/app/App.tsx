@@ -24,7 +24,6 @@ import { Explorer } from "../explorer/Explorer.tsx";
 import { visualOn } from "../explorer/effective.ts";
 import { ExplorerCommands } from "../explorer/ExplorerCommands.tsx";
 import { FunctionCommands } from "../function/FunctionCommands.tsx";
-import type { OpenedFunction } from "../function/FunctionDialog.tsx";
 import { FunctionInspector } from "../function/FunctionInspector.tsx";
 import { DatasetPlot } from "../plot/DatasetPlot.tsx";
 import { useCursor } from "../cursor/useCursor.ts";
@@ -121,9 +120,6 @@ export function App({
   }, [client]);
   // The one cursor, Rust's (B04-T06): the table and the readout show it.
   const cursor = useCursor(client);
-  // A function opened with "New function…" (C03-T08b) becomes the shown dataset, and the
-  // Inspector lists its critical points.
-  const [opened, setOpened] = useState<OpenedFunction | null>(null);
   // The visual highlight (V, B03-T09): the plot shows the cursor only while it is on.
   const [visual, setVisual] = useState(true);
   useEffect(() => {
@@ -243,7 +239,6 @@ export function App({
             <FunctionInspector
               client={client}
               dataset={dataset}
-              opened={opened}
               cursor={cursor}
               announcer={announcer}
             />
@@ -281,8 +276,9 @@ export function App({
       <FunctionCommands
         client={client}
         announcer={announcer}
+        // A function opened with "New function…" (C03-T08b) becomes the shown dataset;
+        // the Inspector asks the app core for its critical points by the dataset's ID.
         onOpened={(next) => {
-          setOpened(next);
           setDataset(next.dataset);
         }}
       />

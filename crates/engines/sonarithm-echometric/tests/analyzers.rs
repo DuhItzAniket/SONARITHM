@@ -103,9 +103,21 @@ fn a11y_23_an_outlier_in_the_second_series_links_to_that_series() {
 /// every compile (ADR-0013).
 #[test]
 fn c05_t01_annotations_carry_their_field_and_parameters() {
-    let spec = two_series(&["extrema", "outliers"]);
+    let spec = two_series(&["extrema", "outliers", "trend-segments"]);
     let compiled = compile(&spec);
     let json = serde_json::to_string_pretty(&compiled.annotations).unwrap();
+    // #520 review: on humidity's sawtooth with one spike, the segments rise and fall; with
+    // the full range's band, the spike made every one "flat".
+    let humidity: Vec<&str> = compiled
+        .annotations
+        .iter()
+        .filter(|a| a.source.as_str() == "trend-segments" && a.field.as_deref() == Some("humidity"))
+        .map(|a| a.label.as_str())
+        .collect();
+    assert!(
+        humidity.contains(&"rising") && humidity.contains(&"falling"),
+        "{humidity:?}"
+    );
     assert_eq!(
         json,
         serde_json::to_string_pretty(&compile(&spec).annotations).unwrap(),
@@ -299,4 +311,41 @@ fn a11y_23_an_insight_on_an_estimate_carries_its_confidence() {
         assert_eq!(at(label).confidence, estimate, "{label}");
     }
     assert_eq!(at("minimum").confidence, Confidence::CERTAIN);
+}
+
+/// SDR-43's rule for an insight's confidence (#506 review): an estimate without a stated
+/// confidence counts as zero, so the insight is never reported as certain.
+#[test]
+fn sdr_43_an_insight_on_an_unstated_estimate_is_not_certain() {
+    let rows: Vec<Value> = (0..20_u32)
+        .map(|i| {
+            let estimated = i == 12;
+            let y = if estimated {
+                95.0
+            } else {
+                40.0 + f64::from(i % 4) * 0.5
+            };
+            json!({
+                "t": i,
+                "y": y,
+                // No `__snr_conf` column at all: the estimate states no confidence.
+                "__snr_prov": if estimated { "cv_estimate" } else { "exact" },
+            })
+        })
+        .collect();
+    let spec = json!({
+        "specVersion": "0.1",
+        "data": { "source": { "kind": "inline", "values": rows } },
+        "substrate": { "time": { "field": "t" } },
+        "tracks": [{ "id": "y", "mark": "tone", "channels": { "pitch": { "field": "y" } } }],
+        "analysis": { "detect": ["extrema"] }
+    });
+    let compiled = compile(&spec);
+    let maximum = compiled
+        .annotations
+        .iter()
+        .find(|a| a.label == "maximum")
+        .unwrap();
+    assert_eq!(maximum.range.start, 12);
+    assert_eq!(maximum.confidence, Confidence::ZERO);
 }

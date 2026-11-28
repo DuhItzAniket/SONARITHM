@@ -3,6 +3,8 @@ source: crates/engines/sonarithm-echometric/tests/detectors.rs
 expression: "shown(outliers::params())"
 ---
 [
+    "endFit=Text(\"none\")",
+    "endWindow=Number(10.0)",
     "fallbackSeparation=Number(3.0)",
     "method=Text(\"moving-median-robust-z\")",
     "minValues=Number(5.0)",

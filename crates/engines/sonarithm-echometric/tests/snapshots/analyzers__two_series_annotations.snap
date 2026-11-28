@@ -21,7 +21,9 @@ expression: json
     ],
     "params": {
       "hysteresis": 0.1,
-      "method": "reversal-hysteresis"
+      "method": "reversal-hysteresis",
+      "rangeHigh": 0.95,
+      "rangeLow": 0.05
     }
   },
   {
@@ -42,7 +44,9 @@ expression: json
     ],
     "params": {
       "hysteresis": 0.1,
-      "method": "reversal-hysteresis"
+      "method": "reversal-hysteresis",
+      "rangeHigh": 0.95,
+      "rangeLow": 0.05
     }
   },
   {
@@ -63,7 +67,9 @@ expression: json
     ],
     "params": {
       "hysteresis": 0.1,
-      "method": "reversal-hysteresis"
+      "method": "reversal-hysteresis",
+      "rangeHigh": 0.95,
+      "rangeLow": 0.05
     }
   },
   {
@@ -84,7 +90,9 @@ expression: json
     ],
     "params": {
       "hysteresis": 0.1,
-      "method": "reversal-hysteresis"
+      "method": "reversal-hysteresis",
+      "rangeHigh": 0.95,
+      "rangeLow": 0.05
     }
   },
   {
@@ -105,7 +113,9 @@ expression: json
     ],
     "params": {
       "hysteresis": 0.1,
-      "method": "reversal-hysteresis"
+      "method": "reversal-hysteresis",
+      "rangeHigh": 0.95,
+      "rangeLow": 0.05
     }
   },
   {
@@ -126,7 +136,9 @@ expression: json
     ],
     "params": {
       "hysteresis": 0.1,
-      "method": "reversal-hysteresis"
+      "method": "reversal-hysteresis",
+      "rangeHigh": 0.95,
+      "rangeLow": 0.05
     }
   },
   {
@@ -147,7 +159,9 @@ expression: json
     ],
     "params": {
       "hysteresis": 0.1,
-      "method": "reversal-hysteresis"
+      "method": "reversal-hysteresis",
+      "rangeHigh": 0.95,
+      "rangeLow": 0.05
     }
   },
   {
@@ -168,7 +182,9 @@ expression: json
     ],
     "params": {
       "hysteresis": 0.1,
-      "method": "reversal-hysteresis"
+      "method": "reversal-hysteresis",
+      "rangeHigh": 0.95,
+      "rangeLow": 0.05
     }
   },
   {
@@ -189,7 +205,9 @@ expression: json
     ],
     "params": {
       "hysteresis": 0.1,
-      "method": "reversal-hysteresis"
+      "method": "reversal-hysteresis",
+      "rangeHigh": 0.95,
+      "rangeLow": 0.05
     }
   },
   {
@@ -210,7 +228,9 @@ expression: json
     ],
     "params": {
       "hysteresis": 0.1,
-      "method": "reversal-hysteresis"
+      "method": "reversal-hysteresis",
+      "rangeHigh": 0.95,
+      "rangeLow": 0.05
     }
   },
   {
@@ -231,7 +251,9 @@ expression: json
     ],
     "params": {
       "hysteresis": 0.1,
-      "method": "reversal-hysteresis"
+      "method": "reversal-hysteresis",
+      "rangeHigh": 0.95,
+      "rangeLow": 0.05
     }
   },
   {
@@ -252,7 +274,9 @@ expression: json
     ],
     "params": {
       "hysteresis": 0.1,
-      "method": "reversal-hysteresis"
+      "method": "reversal-hysteresis",
+      "rangeHigh": 0.95,
+      "rangeLow": 0.05
     }
   },
   {
@@ -273,7 +297,9 @@ expression: json
     ],
     "params": {
       "hysteresis": 0.1,
-      "method": "reversal-hysteresis"
+      "method": "reversal-hysteresis",
+      "rangeHigh": 0.95,
+      "rangeLow": 0.05
     }
   },
   {
@@ -294,7 +320,9 @@ expression: json
     ],
     "params": {
       "hysteresis": 0.1,
-      "method": "reversal-hysteresis"
+      "method": "reversal-hysteresis",
+      "rangeHigh": 0.95,
+      "rangeLow": 0.05
     }
   },
   {
@@ -315,7 +343,170 @@ expression: json
     ],
     "params": {
       "hysteresis": 0.1,
-      "method": "reversal-hysteresis"
+      "method": "reversal-hysteresis",
+      "rangeHigh": 0.95,
+      "rangeLow": 0.05
+    }
+  },
+  {
+    "source": "extrema",
+    "label": "local maximum",
+    "range": {
+      "table": 0,
+      "generation": 0,
+      "start": 3,
+      "end": 4
+    },
+    "field": "humidity",
+    "track": "humidity",
+    "value": 41.5,
+    "confidence": 1.0,
+    "rules": [
+      "A11Y-23"
+    ],
+    "params": {
+      "hysteresis": 0.1,
+      "method": "reversal-hysteresis",
+      "rangeHigh": 0.95,
+      "rangeLow": 0.05
+    }
+  },
+  {
+    "source": "extrema",
+    "label": "local minimum",
+    "range": {
+      "table": 0,
+      "generation": 0,
+      "start": 4,
+      "end": 5
+    },
+    "field": "humidity",
+    "track": "humidity",
+    "value": 40.0,
+    "confidence": 1.0,
+    "rules": [
+      "A11Y-23"
+    ],
+    "params": {
+      "hysteresis": 0.1,
+      "method": "reversal-hysteresis",
+      "rangeHigh": 0.95,
+      "rangeLow": 0.05
+    }
+  },
+  {
+    "source": "extrema",
+    "label": "local maximum",
+    "range": {
+      "table": 0,
+      "generation": 0,
+      "start": 7,
+      "end": 8
+    },
+    "field": "humidity",
+    "track": "humidity",
+    "value": 41.5,
+    "confidence": 1.0,
+    "rules": [
+      "A11Y-23"
+    ],
+    "params": {
+      "hysteresis": 0.1,
+      "method": "reversal-hysteresis",
+      "rangeHigh": 0.95,
+      "rangeLow": 0.05
+    }
+  },
+  {
+    "source": "extrema",
+    "label": "local minimum",
+    "range": {
+      "table": 0,
+      "generation": 0,
+      "start": 8,
+      "end": 9
+    },
+    "field": "humidity",
+    "track": "humidity",
+    "value": 40.0,
+    "confidence": 1.0,
+    "rules": [
+      "A11Y-23"
+    ],
+    "params": {
+      "hysteresis": 0.1,
+      "method": "reversal-hysteresis",
+      "rangeHigh": 0.95,
+      "rangeLow": 0.05
+    }
+  },
+  {
+    "source": "extrema",
+    "label": "local minimum",
+    "range": {
+      "table": 0,
+      "generation": 0,
+      "start": 13,
+      "end": 14
+    },
+    "field": "humidity",
+    "track": "humidity",
+    "value": 40.5,
+    "confidence": 1.0,
+    "rules": [
+      "A11Y-23"
+    ],
+    "params": {
+      "hysteresis": 0.1,
+      "method": "reversal-hysteresis",
+      "rangeHigh": 0.95,
+      "rangeLow": 0.05
+    }
+  },
+  {
+    "source": "extrema",
+    "label": "local maximum",
+    "range": {
+      "table": 0,
+      "generation": 0,
+      "start": 15,
+      "end": 16
+    },
+    "field": "humidity",
+    "track": "humidity",
+    "value": 41.5,
+    "confidence": 1.0,
+    "rules": [
+      "A11Y-23"
+    ],
+    "params": {
+      "hysteresis": 0.1,
+      "method": "reversal-hysteresis",
+      "rangeHigh": 0.95,
+      "rangeLow": 0.05
+    }
+  },
+  {
+    "source": "extrema",
+    "label": "local minimum",
+    "range": {
+      "table": 0,
+      "generation": 0,
+      "start": 16,
+      "end": 17
+    },
+    "field": "humidity",
+    "track": "humidity",
+    "value": 40.0,
+    "confidence": 1.0,
+    "rules": [
+      "A11Y-23"
+    ],
+    "params": {
+      "hysteresis": 0.1,
+      "method": "reversal-hysteresis",
+      "rangeHigh": 0.95,
+      "rangeLow": 0.05
     }
   },
   {
@@ -335,12 +526,520 @@ expression: json
       "A11Y-23"
     ],
     "params": {
+      "endFit": "none",
+      "endWindow": 10.0,
       "fallbackSeparation": 3.0,
       "method": "moving-median-robust-z",
       "minValues": 5.0,
       "robustZ": 72.846,
       "threshold": 3.5,
       "window": 21.0
+    }
+  },
+  {
+    "source": "trend-segments",
+    "label": "rising",
+    "range": {
+      "table": 0,
+      "generation": 0,
+      "start": 0,
+      "end": 2
+    },
+    "field": "temp",
+    "track": "temp",
+    "value": 0.1999999999999993,
+    "confidence": 1.0,
+    "rules": [
+      "A11Y-23"
+    ],
+    "params": {
+      "hysteresis": 0.1,
+      "method": "reversal-hysteresis",
+      "rangeHigh": 0.95,
+      "rangeLow": 0.05
+    }
+  },
+  {
+    "source": "trend-segments",
+    "label": "falling",
+    "range": {
+      "table": 0,
+      "generation": 0,
+      "start": 2,
+      "end": 3
+    },
+    "field": "temp",
+    "track": "temp",
+    "value": -0.1999999999999993,
+    "confidence": 1.0,
+    "rules": [
+      "A11Y-23"
+    ],
+    "params": {
+      "hysteresis": 0.1,
+      "method": "reversal-hysteresis",
+      "rangeHigh": 0.95,
+      "rangeLow": 0.05
+    }
+  },
+  {
+    "source": "trend-segments",
+    "label": "rising",
+    "range": {
+      "table": 0,
+      "generation": 0,
+      "start": 3,
+      "end": 5
+    },
+    "field": "temp",
+    "track": "temp",
+    "value": 0.1999999999999993,
+    "confidence": 1.0,
+    "rules": [
+      "A11Y-23"
+    ],
+    "params": {
+      "hysteresis": 0.1,
+      "method": "reversal-hysteresis",
+      "rangeHigh": 0.95,
+      "rangeLow": 0.05
+    }
+  },
+  {
+    "source": "trend-segments",
+    "label": "falling",
+    "range": {
+      "table": 0,
+      "generation": 0,
+      "start": 5,
+      "end": 6
+    },
+    "field": "temp",
+    "track": "temp",
+    "value": -0.1999999999999993,
+    "confidence": 1.0,
+    "rules": [
+      "A11Y-23"
+    ],
+    "params": {
+      "hysteresis": 0.1,
+      "method": "reversal-hysteresis",
+      "rangeHigh": 0.95,
+      "rangeLow": 0.05
+    }
+  },
+  {
+    "source": "trend-segments",
+    "label": "rising",
+    "range": {
+      "table": 0,
+      "generation": 0,
+      "start": 6,
+      "end": 8
+    },
+    "field": "temp",
+    "track": "temp",
+    "value": 0.1999999999999993,
+    "confidence": 1.0,
+    "rules": [
+      "A11Y-23"
+    ],
+    "params": {
+      "hysteresis": 0.1,
+      "method": "reversal-hysteresis",
+      "rangeHigh": 0.95,
+      "rangeLow": 0.05
+    }
+  },
+  {
+    "source": "trend-segments",
+    "label": "falling",
+    "range": {
+      "table": 0,
+      "generation": 0,
+      "start": 8,
+      "end": 9
+    },
+    "field": "temp",
+    "track": "temp",
+    "value": -0.1999999999999993,
+    "confidence": 1.0,
+    "rules": [
+      "A11Y-23"
+    ],
+    "params": {
+      "hysteresis": 0.1,
+      "method": "reversal-hysteresis",
+      "rangeHigh": 0.95,
+      "rangeLow": 0.05
+    }
+  },
+  {
+    "source": "trend-segments",
+    "label": "rising",
+    "range": {
+      "table": 0,
+      "generation": 0,
+      "start": 9,
+      "end": 11
+    },
+    "field": "temp",
+    "track": "temp",
+    "value": 0.1999999999999993,
+    "confidence": 1.0,
+    "rules": [
+      "A11Y-23"
+    ],
+    "params": {
+      "hysteresis": 0.1,
+      "method": "reversal-hysteresis",
+      "rangeHigh": 0.95,
+      "rangeLow": 0.05
+    }
+  },
+  {
+    "source": "trend-segments",
+    "label": "falling",
+    "range": {
+      "table": 0,
+      "generation": 0,
+      "start": 11,
+      "end": 12
+    },
+    "field": "temp",
+    "track": "temp",
+    "value": -0.1999999999999993,
+    "confidence": 1.0,
+    "rules": [
+      "A11Y-23"
+    ],
+    "params": {
+      "hysteresis": 0.1,
+      "method": "reversal-hysteresis",
+      "rangeHigh": 0.95,
+      "rangeLow": 0.05
+    }
+  },
+  {
+    "source": "trend-segments",
+    "label": "rising",
+    "range": {
+      "table": 0,
+      "generation": 0,
+      "start": 12,
+      "end": 14
+    },
+    "field": "temp",
+    "track": "temp",
+    "value": 0.1999999999999993,
+    "confidence": 1.0,
+    "rules": [
+      "A11Y-23"
+    ],
+    "params": {
+      "hysteresis": 0.1,
+      "method": "reversal-hysteresis",
+      "rangeHigh": 0.95,
+      "rangeLow": 0.05
+    }
+  },
+  {
+    "source": "trend-segments",
+    "label": "falling",
+    "range": {
+      "table": 0,
+      "generation": 0,
+      "start": 14,
+      "end": 15
+    },
+    "field": "temp",
+    "track": "temp",
+    "value": -0.1999999999999993,
+    "confidence": 1.0,
+    "rules": [
+      "A11Y-23"
+    ],
+    "params": {
+      "hysteresis": 0.1,
+      "method": "reversal-hysteresis",
+      "rangeHigh": 0.95,
+      "rangeLow": 0.05
+    }
+  },
+  {
+    "source": "trend-segments",
+    "label": "rising",
+    "range": {
+      "table": 0,
+      "generation": 0,
+      "start": 15,
+      "end": 17
+    },
+    "field": "temp",
+    "track": "temp",
+    "value": 0.1999999999999993,
+    "confidence": 1.0,
+    "rules": [
+      "A11Y-23"
+    ],
+    "params": {
+      "hysteresis": 0.1,
+      "method": "reversal-hysteresis",
+      "rangeHigh": 0.95,
+      "rangeLow": 0.05
+    }
+  },
+  {
+    "source": "trend-segments",
+    "label": "falling",
+    "range": {
+      "table": 0,
+      "generation": 0,
+      "start": 17,
+      "end": 18
+    },
+    "field": "temp",
+    "track": "temp",
+    "value": -0.1999999999999993,
+    "confidence": 1.0,
+    "rules": [
+      "A11Y-23"
+    ],
+    "params": {
+      "hysteresis": 0.1,
+      "method": "reversal-hysteresis",
+      "rangeHigh": 0.95,
+      "rangeLow": 0.05
+    }
+  },
+  {
+    "source": "trend-segments",
+    "label": "rising",
+    "range": {
+      "table": 0,
+      "generation": 0,
+      "start": 18,
+      "end": 20
+    },
+    "field": "temp",
+    "track": "temp",
+    "value": 0.09999999999999964,
+    "confidence": 1.0,
+    "rules": [
+      "A11Y-23"
+    ],
+    "params": {
+      "hysteresis": 0.1,
+      "method": "reversal-hysteresis",
+      "rangeHigh": 0.95,
+      "rangeLow": 0.05
+    }
+  },
+  {
+    "source": "trend-segments",
+    "label": "rising",
+    "range": {
+      "table": 0,
+      "generation": 0,
+      "start": 0,
+      "end": 3
+    },
+    "field": "humidity",
+    "track": "humidity",
+    "value": 1.5,
+    "confidence": 1.0,
+    "rules": [
+      "A11Y-23"
+    ],
+    "params": {
+      "hysteresis": 0.1,
+      "method": "reversal-hysteresis",
+      "rangeHigh": 0.95,
+      "rangeLow": 0.05
+    }
+  },
+  {
+    "source": "trend-segments",
+    "label": "falling",
+    "range": {
+      "table": 0,
+      "generation": 0,
+      "start": 3,
+      "end": 4
+    },
+    "field": "humidity",
+    "track": "humidity",
+    "value": -1.5,
+    "confidence": 1.0,
+    "rules": [
+      "A11Y-23"
+    ],
+    "params": {
+      "hysteresis": 0.1,
+      "method": "reversal-hysteresis",
+      "rangeHigh": 0.95,
+      "rangeLow": 0.05
+    }
+  },
+  {
+    "source": "trend-segments",
+    "label": "rising",
+    "range": {
+      "table": 0,
+      "generation": 0,
+      "start": 4,
+      "end": 7
+    },
+    "field": "humidity",
+    "track": "humidity",
+    "value": 1.5,
+    "confidence": 1.0,
+    "rules": [
+      "A11Y-23"
+    ],
+    "params": {
+      "hysteresis": 0.1,
+      "method": "reversal-hysteresis",
+      "rangeHigh": 0.95,
+      "rangeLow": 0.05
+    }
+  },
+  {
+    "source": "trend-segments",
+    "label": "falling",
+    "range": {
+      "table": 0,
+      "generation": 0,
+      "start": 7,
+      "end": 8
+    },
+    "field": "humidity",
+    "track": "humidity",
+    "value": -1.5,
+    "confidence": 1.0,
+    "rules": [
+      "A11Y-23"
+    ],
+    "params": {
+      "hysteresis": 0.1,
+      "method": "reversal-hysteresis",
+      "rangeHigh": 0.95,
+      "rangeLow": 0.05
+    }
+  },
+  {
+    "source": "trend-segments",
+    "label": "rising",
+    "range": {
+      "table": 0,
+      "generation": 0,
+      "start": 8,
+      "end": 12
+    },
+    "field": "humidity",
+    "track": "humidity",
+    "value": 55.0,
+    "confidence": 1.0,
+    "rules": [
+      "A11Y-23"
+    ],
+    "params": {
+      "hysteresis": 0.1,
+      "method": "reversal-hysteresis",
+      "rangeHigh": 0.95,
+      "rangeLow": 0.05
+    }
+  },
+  {
+    "source": "trend-segments",
+    "label": "falling",
+    "range": {
+      "table": 0,
+      "generation": 0,
+      "start": 12,
+      "end": 13
+    },
+    "field": "humidity",
+    "track": "humidity",
+    "value": -54.5,
+    "confidence": 1.0,
+    "rules": [
+      "A11Y-23"
+    ],
+    "params": {
+      "hysteresis": 0.1,
+      "method": "reversal-hysteresis",
+      "rangeHigh": 0.95,
+      "rangeLow": 0.05
+    }
+  },
+  {
+    "source": "trend-segments",
+    "label": "rising",
+    "range": {
+      "table": 0,
+      "generation": 0,
+      "start": 13,
+      "end": 15
+    },
+    "field": "humidity",
+    "track": "humidity",
+    "value": 1.0,
+    "confidence": 1.0,
+    "rules": [
+      "A11Y-23"
+    ],
+    "params": {
+      "hysteresis": 0.1,
+      "method": "reversal-hysteresis",
+      "rangeHigh": 0.95,
+      "rangeLow": 0.05
+    }
+  },
+  {
+    "source": "trend-segments",
+    "label": "falling",
+    "range": {
+      "table": 0,
+      "generation": 0,
+      "start": 15,
+      "end": 16
+    },
+    "field": "humidity",
+    "track": "humidity",
+    "value": -1.5,
+    "confidence": 1.0,
+    "rules": [
+      "A11Y-23"
+    ],
+    "params": {
+      "hysteresis": 0.1,
+      "method": "reversal-hysteresis",
+      "rangeHigh": 0.95,
+      "rangeLow": 0.05
+    }
+  },
+  {
+    "source": "trend-segments",
+    "label": "rising",
+    "range": {
+      "table": 0,
+      "generation": 0,
+      "start": 16,
+      "end": 20
+    },
+    "field": "humidity",
+    "track": "humidity",
+    "value": 1.5,
+    "confidence": 1.0,
+    "rules": [
+      "A11Y-23"
+    ],
+    "params": {
+      "hysteresis": 0.1,
+      "method": "reversal-hysteresis",
+      "rangeHigh": 0.95,
+      "rangeLow": 0.05
     }
   }
 ]

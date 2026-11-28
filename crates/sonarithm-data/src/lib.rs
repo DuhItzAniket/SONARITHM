@@ -36,7 +36,7 @@ pub use fingerprint::{
     FINGERPRINT_SCHEME, bundle_fingerprint, table_fingerprint, table_fingerprint_v1,
 };
 pub use meta::{Concept, FieldMeta, FieldType, Role, Unit};
-pub use play::play_rows;
+pub use play::{default_series, play_rows};
 pub use provenance::{ProvenanceMix, RowProvenance};
 pub use source::{CsvOptions, JsonOptions, Limits, Loaded, ReadOptions, read_batches, read_bytes};
 #[cfg(feature = "xlsx")]
@@ -44,7 +44,7 @@ pub use source::{SheetOptions, SheetRef};
 #[cfg(feature = "fs")]
 pub use source::{read_file, read_parquet_at};
 pub use stream::{Appended, Capacity, Snapshot, StreamTable};
-pub use table::Table;
+pub use table::{DictionaryKeyError, Table, dictionary_keys};
 pub use transform::{
     AggregateFn, AggregateOp, BinMethod, NormalizeMethod, ResampleMethod, SmoothMethod, SortOrder,
     Transform, TransformRecord, apply, apply_all,

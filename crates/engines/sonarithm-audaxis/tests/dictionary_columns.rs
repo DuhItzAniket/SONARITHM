@@ -1,0 +1,90 @@
+// SPDX-FileCopyrightText: 2026 SONARITHM contributors
+// SPDX-License-Identifier: MIT OR Apache-2.0
+
+//! #508: AUDAXIS builds a navigation tree over a dictionary column with no values (every
+//! key null, valid Arrow). Arrow's `normalized_keys` panicked on it; its keys now read as
+//! missing labels.
+
+#![allow(
+    clippy::unwrap_used,
+    clippy::panic,
+    reason = "integration test; clippy treats its helpers as non-test code"
+)]
+
+mod support;
+
+use std::sync::Arc;
+
+use arrow_array::{ArrayRef, DictionaryArray, Float64Array, Int8Array, RecordBatch, StringArray};
+use arrow_schema::{DataType, Field, Schema};
+use serde_json::json;
+use sonarithm_core::ids::TableId;
+use sonarithm_core::nav::NavKind;
+use sonarithm_data::{
+    BundleId, DataBundle, FieldMeta, FieldType, Format, Role, SourceDescriptor, SourceKind, Table,
+};
+use support::{compile, tree};
+
+/// Four sales labelled by a `fruit` category column whose dictionary is empty: every key is
+/// null.
+fn all_null_fruit() -> DataBundle {
+    let dictionary = DataType::Dictionary(Box::new(DataType::Int8), Box::new(DataType::Utf8));
+    let schema = Arc::new(Schema::new(vec![
+        Field::new("sold", DataType::Float64, false),
+        Field::new("fruit", dictionary, true),
+    ]));
+    let empty: ArrayRef = Arc::new(StringArray::from(Vec::<&str>::new()));
+    let fruit = DictionaryArray::try_new(Int8Array::from(vec![None; 4]), empty).unwrap();
+    let batch = RecordBatch::try_new(
+        Arc::clone(&schema),
+        vec![
+            Arc::new(Float64Array::from(vec![42.0, 57.0, 18.0, 33.0])),
+            Arc::new(fruit),
+        ],
+    )
+    .unwrap();
+    let table = Table::new(TableId(1), "fruit", schema, vec![batch])
+        .unwrap()
+        .with_field_meta(
+            "fruit",
+            &FieldMeta::new()
+                .with_type(FieldType::Nominal)
+                .with_role(Role::Category),
+        )
+        .unwrap()
+        .with_field_meta(
+            "sold",
+            &FieldMeta::new()
+                .with_type(FieldType::Quantitative)
+                .with_role(Role::Y),
+        )
+        .unwrap();
+    DataBundle::single(
+        BundleId(1),
+        SourceDescriptor::new(SourceKind::File(Format::Json), "fruit.json", "test"),
+        table,
+    )
+}
+
+#[test]
+fn a_tree_over_an_all_null_dictionary_column_has_unlabelled_points() {
+    let spec = json!({
+        "specVersion": "0.1",
+        "data": { "source": { "kind": "file", "path": "fruit.json" } },
+        "tracks": [{ "id": "data", "mark": "tone", "channels": { "pitch": { "field": "sold" } } }],
+    });
+    let compiled = compile(&spec.to_string(), Some(all_null_fruit()));
+    let tree = tree(&compiled);
+    let points: Vec<_> = tree
+        .iter()
+        .filter_map(|(_, node)| match &node.kind {
+            NavKind::Point(point) => Some(point),
+            _ => None,
+        })
+        .collect();
+    assert_eq!(points.len(), 4, "every sale is a point");
+    assert!(
+        points.iter().all(|point| point.x.is_none()),
+        "no point has a label: every key is null"
+    );
+}
